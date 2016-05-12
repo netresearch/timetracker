@@ -1,0 +1,9 @@
+.idea
+.buildpath
+.project
+.settings
+/app/config/parameters.ini
+/app/logs/*.log
+/app/cache/*
+/app/build/
+/.idea

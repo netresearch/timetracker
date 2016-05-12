@@ -1,0 +1,28 @@
+{
+	"pageSetup": { 
+		"size":"A4",
+		"margin-top": "1cm",
+		"margin-bottom": "2cm",
+		"margin-left":"2cm",
+		"margin-right":"2cm"
+	},
+	"styles": [
+		["heading", {
+			"textColor": "00889A",
+			"alignment": "left"
+		}],
+		["footertable", {
+			"commands": [
+				[ "VALIGN", [ 0, 0 ], [ -1, -1 ], "TOP" ]
+			]
+		}],
+		["rightalign" , {
+			"parent": "bodytext",
+			"alignment": "TA_RIGHT"
+		}],
+		["centeralign" , {
+			"parent": "bodytext",
+			"alignment": "TA_CENTER"
+		}]
+	]
+}
