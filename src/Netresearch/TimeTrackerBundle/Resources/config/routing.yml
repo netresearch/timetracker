@@ -1,0 +1,168 @@
+_start:
+    pattern:  /
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:index }
+
+user_add:
+    pattern: /user/add
+    defaults: { _controller: NetresearchTimeTrackerBundle:User:add }
+
+time_summary:
+    pattern: /getTimeSummary
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getTimeSummary }
+
+interpretation_activity:
+    pattern: /interpretation/activity
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:groupByActivity }
+    
+interpretation_time:
+    pattern: /interpretation/time
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:groupByWorktime }
+    
+interpretation_customer:
+    pattern: /interpretation/customer
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:groupByCustomer }
+
+interpretation_project:
+    pattern: /interpretation/project
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:groupByProject }
+
+interpretation_ticket:
+    pattern: /interpretation/ticket
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:groupByTicket }
+
+interpretation_user:
+    pattern: /interpretation/user
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:groupByUser }
+
+interpretation_entries:
+    pattern: /interpretation/entries
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:getLastEntries }
+
+timetracking_save:
+    pattern: /tracking/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Crud:save }
+
+timetracking_delete:
+    pattern: /tracking/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Crud:delete }
+
+timetracking_bulkentry:
+    pattern: /tracking/bulkentry
+    defaults: { _controller: NetresearchTimeTrackerBundle:Crud:bulkentry }
+
+_getSummary:
+    pattern: /getSummary
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getSummary }
+
+_getData:
+    pattern:  /getData
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getData }
+
+_getDataDays:
+    pattern:  /getData/days/{days}
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getData, days: 3 }
+    requirements:
+        days:  \d{1,2}
+
+_getCustomers:
+    pattern:  /getCustomers
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getCustomers }
+
+_getAllCustomers:
+    pattern:  /getAllCustomers
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getCustomers }
+
+_getCustomer:
+    pattern:  /getCustomer
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getCustomer }
+
+_getAllTeams:
+    pattern:  /getAllTeams
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getTeams }
+
+_getUsers:
+    pattern:  /getUsers
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getUsers }
+    
+_getAllUsers:
+    pattern:  /getAllUsers
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getUsers }
+    
+_getProjects:
+    pattern:  /getProjects
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getProjects }
+    
+_getAllProjects:
+    pattern:  /getAllProjects
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getAllProjects }
+
+_getActivities:
+    pattern:  /getActivities
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getActivities }
+
+_getTicketSystems:
+    pattern:  /getTicketSystems
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getTicketSystems }
+
+_getHolidays:
+    pattern:  /getHolidays
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getHolidays }
+
+_getAllPresets:
+    pattern:  /getAllPresets
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getPresets }
+
+_login:
+    pattern:  /login
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:login }
+
+_logout:
+    pattern:  /logout
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:logout }
+
+_export:
+    pattern: /export/{days}
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:export, days: 10000 }
+    requirements:
+        days: \d+
+
+_controllingExport:
+    pattern: /controlling/export/{userid}/{year}/{month}
+    defaults: { _controller: NetresearchTimeTrackerBundle:Controlling:export, userid:0, year:0, month: 0 }
+    requirements: { year: \d+, userid: \d+}
+
+check_status:
+    pattern: /status/check
+    defaults: { _controller: NetresearchTimeTrackerBundle:Status:check }
+
+check_page:
+    pattern: /status/page
+    defaults: { _controller: NetresearchTimeTrackerBundle:Status:page }
+
+saveProject:
+    pattern: /project/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveProject }
+
+saveCustomer:
+    pattern: /customer/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveCustomer }
+
+saveUser:
+    pattern: /user/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveUser }
+
+savePreset:
+    pattern: /preset/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:savePreset }
+
+saveTicketSystem:
+    pattern: /ticketsystem/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveTicketSystem }
+
+deletePreset:
+    pattern: /preset/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deletePreset }
+
+saveSettings:
+    pattern: /settings/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Settings:save }
