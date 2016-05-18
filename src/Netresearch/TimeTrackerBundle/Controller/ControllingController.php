@@ -1,4 +1,16 @@
 <?php
+/**
+ * Netresearch Timetracker
+ *
+ * PHP version 5
+ *
+ * @category   Netresearch
+ * @package    Timetracker
+ * @subpackage Controller
+ * @author     Various Artists <info@netresearch.de>
+ * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
+ * @link       http://www.netresearch.de
+ */
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
@@ -10,12 +22,29 @@ use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Symfony\Component\HttpFoundation\Response;
 use Netresearch\TimeTrackerBundle\Helper;
 
+/**
+ * Class ControllingController
+ *
+ * @package Netresearch\TimeTrackerBundle\Controller
+ */
 
+/**
+ * Base Exception for Netresearch Cache
+ *
+ * @category   Netresearch
+ * @package    Timetracker
+ * @subpackage Controller
+ * @author     Various Artists <info@netresearch.de>
+ * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
+ * @link       http://www.netresearch.de
+ */
 class ControllingController extends BaseController
 {
 
     /**
      * Exports a users timetable from one specific year and month
+     *
+     * @return Response
      */
     public function exportAction()
     {
@@ -28,7 +57,7 @@ class ControllingController extends BaseController
         $month  = $this->getRequest()->get('month');
 
         $service = $this->get('nr.timetracker.export');
-        $entries = $service->exportEntries($userId,$year, $month);
+        $entries = $service->exportEntries($userId, $year, $month);
         $username = $service->getUsername($userId);
 
 
@@ -41,11 +70,12 @@ class ControllingController extends BaseController
         );
 
         $filename = strtolower(
-                $year . '_'
-                . str_pad($month,2,'0',STR_PAD_LEFT)
-                . '_'
-                . str_replace(' ', '-', $username)
-                . '.csv');
+            $year . '_'
+            . str_pad($month, 2, '0', STR_PAD_LEFT)
+            . '_'
+            . str_replace(' ', '-', $username)
+            . '.csv'
+        );
 
         $response = new Response();
         $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
