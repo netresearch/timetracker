@@ -18,39 +18,44 @@ Netresearch TimeTracker
 
 .. sectnum::
 
-.. contents:: Inhaltsverzeichnis
+.. contents:: Table of Contents
 
-Einträge Hinzufügen
-===================
-
-Über den Button **Eintrag hinzufügen** oder den Shortcut **a** kann ein neuer
-Eintrag hinzugefügt werden. Zusätzlich gibt es die Möglichkeit die Arbeitszeit
-schnell zu starten und zu stoppen. Die Arbeitszeit kann mit dem Button 
-**Start** bzw. mit dem Shortcut **s** gestartet werden. Gestoppt wird die
-Arbeitszeit mit dem Button **Stop** bzw. Shortcut **d**. Möchte man die 
-Arbeitszeit starten und es gibt bereits eine geöffnete Arbeitszeit, muss man
-die alte Arbeitszeit erst schließen. Entweder klickt man auf den Button **Stop**
-(Shortcut **d**) oder klickt auf den Button **Start** (Shortcut **s**). Dann
-öffnet sich ein Fenster mit der alten Arbeitszeit und muss diese erst schließen
-und Bearbeiten.
-
-Einträge bearbeiten
-===================
-
-Einträge kann man mit doppelklick auf die Zeile bearbeiten. Oder mit rechtsklick
-auf die Zeile und dann auf den Button **Bearbeiten** klicken.
-
-Einträge löschen
-================
-
-Einträge können durch rechtsklick auf die Zeile und den Button **Löschen** 
-gelöscht werden.
-
-Fokus
+Usage
 =====
 
-Der Fokus wird weiterhin initial auf die Startzeit gesetzt.
-Wird aber ein Vorgänger-Eintrag am gleichen Tag gefunden, ist davon auszugehen, dass diese nahtlos aneinanderliegen und
-der Fokus wird auf den Kunden gesetzt. Sind Kunde und Projekt bekannt, weil zB ein Ticket-Prefix benutzt wurde, so wird
-der Fokus auf die Beschreibung gesetzt.
+Add worklog entry
+-----------------
 
+Click the button **Add Entry**.
+Use the keyboard shortcut **a**.
+
+Edit worklog entry
+------------------
+
+Just click inside any field of any existing worklog entry.
+
+Delete worklog entry
+--------------------
+
+Rightclick on an worklog entry and select **Delete** from context menu.
+Use keyboard shortcut **d** to delete focused worklog entry.
+
+Focus
+-----
+
+Worklog entry with focus has a yellow background.
+Move the focus with keyboard **up** and **down** keys.
+
+Install
+=======
+
+Vendors
+-------
+
+bin/vendors install
+
+
+Web-Bundles
+-----------
+
+php app/console assets:install web --symlink
