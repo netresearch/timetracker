@@ -76,29 +76,68 @@ class EntryRepository extends EntityRepository
      * @param int $userId 
      * @param int $year
      * @param int $month
+     * @param array $arSort Sort result by given fields
+     *
      * @return \Netresearch\TimeTrackerBundle\Entity\Entry[]
      */
-    public function findByDate($userId, $year, $month = null)
+    public function findByDate($userId, $year, $month = null, array $arSort = null)
     {
+        if (null === $arSort) {
+            $arSort = array(
+                'entry.day' => true,
+                'entry.start' => true,
+            );
+        }
+
+        $strOrderBy = $this->getOrderByClause($arSort);
+
         $em = $this->getEntityManager();
         $pattern = $this->getDatePattern($year, $month);
         if (0 < (int) $userId) {
             $query = $em->createQuery(
-                'SELECT e FROM NetresearchTimeTrackerBundle:Entry e'
-                . ' WHERE e.user = :user_id'
-                . ' AND e.day LIKE :month'
-                . ' ORDER BY e.day, e.start ASC'
+                'SELECT entry FROM NetresearchTimeTrackerBundle:Entry entry'
+                . ' WHERE entry.user = :user_id'
+                . ' AND entry.day LIKE :month'
+                . ' ORDER BY ' . $strOrderBy
             )->setParameter('user_id', $userId)
             ->setParameter('month', $pattern);
         } else {
             $query = $em->createQuery(
-                'SELECT e FROM NetresearchTimeTrackerBundle:Entry e'
-                . ' WHERE e.day LIKE :month'
-                . ' ORDER BY e.day, e.start ASC'
+                'SELECT entry FROM NetresearchTimeTrackerBundle:Entry entry'
+                . ' WHERE entry.day LIKE :month'
+                . ' ORDER BY ' . $strOrderBy
             )->setParameter('month', $pattern);
         }
         return $query->getResult();
     }
+
+
+
+    /**
+     * Returns SQL ORDER BY clause from $arSort options.
+     *
+     * <code>
+     * $arSort = array(
+     *  'foofield' => true // first sort by this field ASCending
+     *  'barfield' => false // second sort by this field DESCending
+     * )
+     * </code>
+     *
+     * @param array $arSort Fields for ORDER BY clause
+     *
+     * @return string
+     */
+    protected function getOrderByClause(array $arSort)
+    {
+        $arOrderBy = array();
+
+        foreach ($arSort as $strField => $bAsc) {
+            $arOrderBy[] = $strField . ($bAsc ? ' ASC' : ' DESC');
+        }
+
+        return implode(', ', $arOrderBy);
+    }
+
 
 
     /**

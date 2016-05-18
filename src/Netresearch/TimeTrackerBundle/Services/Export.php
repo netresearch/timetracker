@@ -96,10 +96,11 @@ class Export
      * @param $userId
      * @param $year
      * @param $month
+     * @param array $arSort Sort result by given fields
      *
      * @return mixed
      */
-    public function exportEntries($userId,$year, $month)
+    public function exportEntries($userId,$year, $month, array $arSort = null)
     {
         $entriesRequireAdditionalInformation = $this->getEntriesRequireAddInfo($userId, $year, $month);
         if (0 < count($entriesRequireAdditionalInformation)) {
@@ -107,7 +108,7 @@ class Export
             $this->fetchAdditionalInfoFromExternalJira();
         }
 
-        return $this->getEnrichedEntries($userId, $year, $month);
+        return $this->getEnrichedEntries($userId, $year, $month, $arSort);
     }
 
     /**
@@ -319,14 +320,15 @@ class Export
      * @param integer $userId
      * @param integer $year
      * @param integer $month
+     * @param array $arSort Sort result by given fields
      *
      * @return \Netresearch\TimeTrackerBundle\Entity\Entry[]
      */
-    protected function getEnrichedEntries($userId, $year, $month)
+    protected function getEnrichedEntries($userId, $year, $month, array $arSort = null)
     {
         /** @var \Netresearch\TimeTrackerBundle\Entity\Entry[] $arEntries */
         $arEntries = $this->getEntryRepository()
-            ->findByDate($userId, $year, $month);
+            ->findByDate($userId, $year, $month, $arSort);
 
         foreach ($arEntries as $entry) {
             if (array_key_exists($entry->getTicket(), $this->additionalInformation)
