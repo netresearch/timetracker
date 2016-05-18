@@ -1,4 +1,16 @@
 <?php
+/**
+ * Netresearch Timetracker
+ *
+ * PHP version 5
+ *
+ * @category   Netresearch
+ * @package    Timetracker
+ * @subpackage Repository
+ * @author     Various Artists <info@netresearch.de>
+ * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
+ * @link       http://www.netresearch.de
+ */
 
 namespace Netresearch\TimeTrackerBundle\Entity;
 
@@ -6,6 +18,16 @@ use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
 use Doctrine\ORM\EntityRepository;
 
+/**
+ * Class EntryRepository
+ * 
+ * @category   Netresearch
+ * @package    Timetracker
+ * @subpackage Repository
+ * @author     Various Artists <info@netresearch.de>
+ * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
+ * @link       http://www.netresearch.de
+ */
 class EntryRepository extends EntityRepository
 {
     const PERIOD_DAY = 1;
@@ -13,47 +35,57 @@ class EntryRepository extends EntityRepository
     const PERIOD_MONTH = 3;
 
     /**
-     * get all entries of a user in a given period of days
+     * Returns count of calendar days which include given amount of working days.
      * 
-     * @param int $userId 
-     * @param int $days 
-     * @return array
+     * @param int $workingDays Amount of working days.
+     *
+     * @return integer
      */
-
-    public static function getCalendarDaysByWorkDays($days)
+    public static function getCalendarDaysByWorkDays($workingDays)
     {
-        $days = (int) $days;
-        if ($days < 1)
+        $workingDays = (int) $workingDays;
+        if ($workingDays < 1)
             return 0;
 
         // Calculate calendar days from given work days
-        $weeks = floor((int) $days / 5);
-        $restDays = ((int) $days) % 5;
+        $weeks = floor((int) $workingDays / 5);
+        $restDays = ((int) $workingDays) % 5;
 
         if ($restDays == 0) {
             return $weeks * 7;
         }
 
-        $dow = date("w");
+        $dayOfWeek = date("w");
 
-        switch ($dow) {
-            case 6:
-                $restDays++;
-                break;
-            case 7:
+        switch ($dayOfWeek) {
+        case 6:
+            $restDays++;
+            break;
+        case 7:
+            $restDays += 2;
+            break;
+        default:
+            if ($dayOfWeek <= $restDays)
                 $restDays += 2;
-                break;
-            default:
-                if ($dow <= $restDays)
-                    $restDays += 2;
-                break;
+            break;
         }
 
         $calendarDays = ($weeks * 7) + $restDays;
+
         return $calendarDays;
     }
 
-    public function findByRecentDaysOfUser($userId, $days=3)
+
+
+    /**
+     * Returns work log entries for user and recent days.
+     *
+     * @param integer $userId Filter by user ID
+     * @param integer $days   Filter by recent days
+     *
+     * @return array
+     */
+    public function findByRecentDaysOfUser($userId, $days = 3)
     {
         $fromDate = new \DateTime();
         $fromDate->setTime(0, 0);
@@ -70,13 +102,15 @@ class EntryRepository extends EntityRepository
         return $query->getResult();
     }
 
+
+
     /**
      * get all entries of a user in a given year and month
-     * 
-     * @param int $userId 
-     * @param int $year
-     * @param int $month
-     * @param array $arSort Sort result by given fields
+     *
+     * @param integer $userId Filter entries by user
+     * @param integer $year   Filter entries by year
+     * @param integer $month  Filter entries by month
+     * @param array   $arSort Sort result by given fields
      *
      * @return \Netresearch\TimeTrackerBundle\Entity\Entry[]
      */
@@ -100,7 +134,7 @@ class EntryRepository extends EntityRepository
                 . ' AND entry.day LIKE :month'
                 . ' ORDER BY ' . $strOrderBy
             )->setParameter('user_id', $userId)
-            ->setParameter('month', $pattern);
+                ->setParameter('month', $pattern);
         } else {
             $query = $em->createQuery(
                 'SELECT entry FROM NetresearchTimeTrackerBundle:Entry entry'
@@ -144,8 +178,8 @@ class EntryRepository extends EntityRepository
      * Returns the date pattern for the repository queries according to year
      * an month
      *
-     * @param int $year   the year, e.g. 2015
-     * @param int $month  the month, e.g. 1 or null
+     * @param int $year  the year, e.g. 2015
+     * @param int $month the month, e.g. 1 or null
      *
      * @return string e.g. 2015-01-%, 2015-%, if no month is set
      */
@@ -154,18 +188,20 @@ class EntryRepository extends EntityRepository
         $pattern = $year . '-';
         if (0 < intval($month)) {
             $pattern .= str_pad($month, 2, '0', STR_PAD_LEFT) . '-';
-
         }
         $pattern .= '%';
+
         return $pattern;
     }
 
+
+
     /**
-     * fetches the information needed for the additional query calls
+     * Fetch information needed for the additional query calls.
      *
-     * @param $userId
-     * @param $year
-     * @param $month
+     * @param integer $userId Filter entries by user
+     * @param integer $year   Filter entries by year
+     * @param integer $month  Filter entries by month
      *
      * @return array
      */
@@ -182,8 +218,8 @@ class EntryRepository extends EntityRepository
             ->andWhere('e.day LIKE :month')
             ->andWhere('p.jiraId IS NOT NULL')
             ->orderBy('ts.id')
-            ->setParameter(':month', $pattern)
-        ;
+            ->setParameter(':month', $pattern);
+
         if (0 < $userId) {
             $qb->andWhere('e.user = :user_id')
                 ->setParameter(':user_id', $userId);
@@ -192,14 +228,16 @@ class EntryRepository extends EntityRepository
         $result = $qb->getQuery()->getResult();
 
         return $result;
-
     }
-    
+
+
+
     /**
      * get all entries of a user on a specific day
      * 
-     * @param int $userId 
-     * @param date $day
+     * @param int  $userId Filter by user ID
+     * @param date $day    Filter by date
+     *
      * @return array
      */
     public function findByDay($userId, $day)
@@ -211,18 +249,20 @@ class EntryRepository extends EntityRepository
             . ' WHERE e.user = :user_id'
             . ' AND e.day = :day'
             . ' ORDER BY e.start ASC, e.end ASC, e.id ASC'
-            )->setParameter('user_id', $userId)
+        )->setParameter('user_id', $userId)
             ->setParameter('day', $day);
     
         return $query->getResult();
     }
 
 
+
     /**
-     * get array of entries of given user
+     * Get array of entries of given user.
      * 
-     * @param int $userId 
-     * @param int $days 
+     * @param integer $userId     Filter by user ID
+     * @param integer $days       Filter by x days in past
+     * @param boolean $showFuture Include work log entries from future
      *
      * @return array
      */
@@ -247,8 +287,9 @@ class EntryRepository extends EntityRepository
         $sql['from'] = "FROM entries e";
         $sql['where_day'] = "WHERE day >= DATE_ADD(CURDATE(), INTERVAL -" . $calendarDays . " DAY)";
 
-        if (! $showFuture)
+        if (! $showFuture) {
             $sql['where_future'] = "AND day <= CURDATE()";
+        }
 
         $sql['where_user'] = "AND user_id = $userId";
         $sql['order'] = "ORDER BY day DESC, start DESC";
@@ -270,14 +311,17 @@ class EntryRepository extends EntityRepository
         
         return $data;
     }
+
+
     
     /**
      * Query summary information regarding the current entry for the following
      * scopes: customer, project, activity, ticket
      * 
-     * @param int $entryId The current entry's identifier
-     * @param int $userId The current user's identifier
-     * @param array $data The initial (default) summary
+     * @param integer $entryId The current entry's identifier
+     * @param integer $userId  The current user's identifier
+     * @param array   $data    The initial (default) summary
+     *
      * @return array
      */
     public function getEntrySummary($entryId, $userId, $data)
@@ -346,10 +390,11 @@ class EntryRepository extends EntityRepository
         }
 
         $stmt = $connection->query(
-                    implode(" ", $sql['customer']) 
-                    . ' UNION ' . implode(" ", $sql['project'])
-                    . ' UNION ' . implode(" ", $sql['activity']) 
-                    . ' UNION ' . implode(" ", $sql['ticket']));
+            implode(" ", $sql['customer'])
+            . ' UNION ' . implode(" ", $sql['project'])
+            . ' UNION ' . implode(" ", $sql['activity'])
+            . ' UNION ' . implode(" ", $sql['ticket'])
+        );
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $data['customer']   = $result[0];
@@ -360,11 +405,14 @@ class EntryRepository extends EntityRepository
         return $data;
     }
 
+
+
     /**
      * Query the current user's work by given period
      * 
      * @param int $userId The current user's identifier
      * @param int $period The requested period (day / week / month)
+     *
      * @return array
      */
     public function getWorkByUser($userId, $period = self::PERIOD_DAY)
@@ -376,23 +424,26 @@ class EntryRepository extends EntityRepository
         $sql['where_user'] = "WHERE user_id = " . $userId;
         
         switch($period) {
-            case self::PERIOD_DAY :
-                $sql['where_day'] = "AND day = CURDATE()";
-                break;
-            case self::PERIOD_WEEK :
-                $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
-                $sql['where_week'] = "AND WEEK(day, 1) = WEEK(CURDATE(), 1)";
-                break;
-            case self::PERIOD_MONTH :
-                $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
-                $sql['where_month']= "AND MONTH(day) = MONTH(CURDATE())";
-                break;
+        case self::PERIOD_DAY :
+            $sql['where_day'] = "AND day = CURDATE()";
+            break;
+        case self::PERIOD_WEEK :
+            $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
+            $sql['where_week'] = "AND WEEK(day, 1) = WEEK(CURDATE(), 1)";
+            break;
+        case self::PERIOD_MONTH :
+            $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
+            $sql['where_month']= "AND MONTH(day) = MONTH(CURDATE())";
+            break;
         }
 
-        $stmt = $connection->query(implode(" ", $sql));
+        $stmt   = $connection->query(implode(" ", $sql));
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
-        $data = array('duration' => $result[0]['duration'], 'count' => FALSE);
+        $data = array(
+            'duration' => $result[0]['duration'],
+            'count'    => false,
+        );
         
         return $data;
     }

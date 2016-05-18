@@ -25,12 +25,6 @@ use Netresearch\TimeTrackerBundle\Helper;
 /**
  * Class ControllingController
  *
- * @package Netresearch\TimeTrackerBundle\Controller
- */
-
-/**
- * Base Exception for Netresearch Cache
- *
  * @category   Netresearch
  * @package    Timetracker
  * @subpackage Controller

@@ -1,13 +1,17 @@
 <?php
 /**
- * @author      Michael Lühr <michael.luehr@netresearch.de> 
- * @category    Netresearch
- * @package     ${MODULENAME}
- * @copyright   Copyright (c) 2013 Netresearch GmbH & Co. KG (http://www.netresearch.de)
- * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * Netresearch Timetracker
+ *
+ * PHP version 5
+ *
+ * @category   Netresearch
+ * @package    Timetracker
+ * @subpackage Service
+ * @author     Michael Lühr <michael.luehr@netresearch.de>
+ * @author     Various Artists <info@netresearch.de>
+ * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
+ * @link       http://www.netresearch.de
  */
-
-
 
 namespace Netresearch\TimeTrackerBundle\Services;
 
@@ -18,7 +22,17 @@ use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use \chobie\Jira;
 
-
+/**
+ * Class Export
+ *
+ * @category   Netresearch
+ * @package    Timetracker
+ * @subpackage Service
+ * @author     Michael Lühr <michael.luehr@netresearch.de>
+ * @author     Various Artists <info@netresearch.de>
+ * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
+ * @link       http://www.netresearch.de
+ */
 class Export
 {
     /**
@@ -81,6 +95,8 @@ class Export
      */
     protected $ticketSystems = array();
 
+
+
     /**
      * mandatory dependency the service container
      *
@@ -91,12 +107,15 @@ class Export
         $this->container = $container;
     }
 
+
+
     /**
+     * Returns entries filtered and ordered.
      *
-     * @param $userId
-     * @param $year
-     * @param $month
-     * @param array $arSort Sort result by given fields
+     * @param integer $userId Filter entries by user
+     * @param integer $year   Filter entries by year
+     * @param integer $month  Filter entries by month
+     * @param array   $arSort Sort result by given fields
      *
      * @return mixed
      */
@@ -111,14 +130,19 @@ class Export
         return $this->getEnrichedEntries($userId, $year, $month, $arSort);
     }
 
+
+
     /**
-     * @param $userId
+     * Returns user name for given user ID.
+     *
+     * @param integer $userId User ID
+     *
      * @return string $username - the name of the user or all if no valid user id is provided
      */
     public function getUsername($userId = null)
     {
         $username = 'all';
-        if (0 < (int)$userId) {
+        if (0 < (int) $userId) {
             $user     = $this->container->get('doctrine')
                 ->getRepository('NetresearchTimeTrackerBundle:User')
                 ->find($userId);
@@ -128,10 +152,15 @@ class Export
         return $username;
     }
 
+
+
     /**
-     * @param integer $userId
-     * @param integer $year
-     * @param integer $month
+     * Returns entries which require additional information from external ticket
+     * systems.
+     *
+     * @param integer $userId Filter entries by user
+     * @param integer $year   Filter entries by year
+     * @param integer $month  Filter entries by month
      *
      * @return array[]
      */
@@ -150,17 +179,18 @@ class Export
         return $this->additionalInformation;
     }
 
+
+
     /**
-     * separates the tickets by it's related ticket system
+     * Separates the work log entries by it's related ticket system.
      *
-     * @param $entriesRequireAdditionalInformation
-     * @param $ticketSystems
+     * @param Entry[] $entries List of work log entries
      *
      * @return $this
      */
-    protected function extractTicketSystems($entriesRequireAdditionalInformation)
+    protected function extractTicketSystems($entries)
     {
-        foreach ($entriesRequireAdditionalInformation as $infoEntry) {
+        foreach ($entries as $infoEntry) {
             if (!array_key_exists($infoEntry['id'], $this->ticketSystems)) {
                 $this->ticketSystems[$infoEntry['id']]
                     = new ExternalTicketSystem($infoEntry['url'], $infoEntry['login'], $infoEntry['password']);
@@ -170,6 +200,7 @@ class Export
 
         return $this;
     }
+
 
 
     /**
@@ -184,16 +215,20 @@ class Export
     {
         $arIssues = array_combine($arIssues, $arIssues);
         $arIssuesReturn = $arIssues;
-        foreach($arIssues as $strKey) {
+        foreach ($arIssues as $strKey) {
             // filter issues like SOME-0
             if (preg_match('/\-0$/', $strKey)) {
                 unset($arIssuesReturn[$strKey]);
             }
         }
+
         return $arIssuesReturn;
     }
 
+
+
     /**
+     * Fetches additional information from external Ticketsystem.
      *
      * @return void
      */
@@ -218,6 +253,7 @@ class Export
                         // skip issues that do not exist
                         continue;
                     }
+                    /** @var Jira\Issue $issue */
                     foreach ($walker as $issue) {
                         $arFields = $issue->getFields();
                         $this->additionalInformation[$issue->getKey()]['reporter']
@@ -233,6 +269,7 @@ class Export
             }
         }
     }
+
 
 
     /**
@@ -253,9 +290,11 @@ class Export
 
     }
 
+
+
     /**
-     * Adds information about labels to the  additionalInformation data
-     * structure.
+     * Adds information about labels to the additionalInformation data structure.
+     *
      * <code>
      * array(
      *      'issue key' =>
@@ -269,10 +308,10 @@ class Export
      *          ),
      *      ),
      * )
-     * <code>
+     * </code>
      *
-     * @param Entry $issue
-     * @param array $arFields
+     * @param Jira\Issue $issue    Ticketsystem issue
+     * @param array      $arFields Labels assigned to issue
      *
      * @return void
      */
@@ -303,8 +342,10 @@ class Export
 
         // add all other labels to MISC column
         $this->additionalInformation[$issue->getKey()]['labels'][self::LABEL_OTHER]
-            = implode(',' , array_keys($arLabels));
+            = implode(',', array_keys($arLabels));
     }
+
+
 
     /**
      * returns the entry repository
@@ -313,14 +354,19 @@ class Export
      */
     protected function getEntryRepository()
     {
-       return $this->container->get('doctrine')->getRepository('NetresearchTimeTrackerBundle:Entry');
+        return $this->container->get('doctrine')->getRepository('NetresearchTimeTrackerBundle:Entry');
     }
 
+
+
     /**
-     * @param integer $userId
-     * @param integer $year
-     * @param integer $month
-     * @param array $arSort Sort result by given fields
+     * Returns filtered and ordered work log entries enriched with additional
+     * data from external ticket systems.
+     *
+     * @param integer $userId Filter entries by user
+     * @param integer $year   Filter entries by year
+     * @param integer $month  Filter entries by month
+     * @param array   $arSort Sort result by given fields
      *
      * @return \Netresearch\TimeTrackerBundle\Entity\Entry[]
      */
@@ -334,8 +380,8 @@ class Export
             if (array_key_exists($entry->getTicket(), $this->additionalInformation)
                 && array_key_exists('reporter', $this->additionalInformation[$entry->getTicket()])
             ) {
-                $arAdditionalInformation =
-                    $this->additionalInformation[$entry->getTicket()];
+                $arAdditionalInformation
+                    = $this->additionalInformation[$entry->getTicket()];
                 $entry->setExternalReporter(
                     $arAdditionalInformation['reporter']
                 );
