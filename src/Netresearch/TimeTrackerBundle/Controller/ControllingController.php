@@ -53,7 +53,7 @@ class ControllingController extends BaseController
         $service = $this->get('nr.timetracker.export');
         $entries = $service->exportEntries(
             $userId, $year, $month, array(
-                'entry.user'  => true,
+                'user.username'  => true,
                 'entry.day'   => true,
                 'entry.start' => true,
             )
