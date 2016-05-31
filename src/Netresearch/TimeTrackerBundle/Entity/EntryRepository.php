@@ -123,53 +123,28 @@ class EntryRepository extends EntityRepository
             );
         }
 
-        $strOrderBy = $this->getOrderByClause($arSort);
+        $qb = $this->getEntityManager()->createQueryBuilder();
 
-        $em = $this->getEntityManager();
-        $pattern = $this->getDatePattern($year, $month);
-        if (0 < (int) $userId) {
-            $query = $em->createQuery(
-                'SELECT entry FROM NetresearchTimeTrackerBundle:Entry entry'
-                . ' WHERE entry.user = :user_id'
-                . ' AND entry.day LIKE :month'
-                . ' ORDER BY ' . $strOrderBy
-            )->setParameter('user_id', $userId)
-                ->setParameter('month', $pattern);
-        } else {
-            $query = $em->createQuery(
-                'SELECT entry FROM NetresearchTimeTrackerBundle:Entry entry'
-                . ' WHERE entry.day LIKE :month'
-                . ' ORDER BY ' . $strOrderBy
-            )->setParameter('month', $pattern);
-        }
-        return $query->getResult();
-    }
-
-
-
-    /**
-     * Returns SQL ORDER BY clause from $arSort options.
-     *
-     * <code>
-     * $arSort = array(
-     *  'foofield' => true // first sort by this field ASCending
-     *  'barfield' => false // second sort by this field DESCending
-     * )
-     * </code>
-     *
-     * @param array $arSort Fields for ORDER BY clause
-     *
-     * @return string
-     */
-    protected function getOrderByClause(array $arSort)
-    {
-        $arOrderBy = array();
+        $qb->select('entry')
+            ->from('NetresearchTimeTrackerBundle:Entry', 'entry')
+            ->leftJoin('entry.user', 'user')
+            ->andWhere(
+                $qb->expr()->like('entry.day', ':month')
+            )
+        ;
 
         foreach ($arSort as $strField => $bAsc) {
-            $arOrderBy[] = $strField . ($bAsc ? ' ASC' : ' DESC');
+            $qb->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
         }
 
-        return implode(', ', $arOrderBy);
+        $qb->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
+
+        if (0 < (int) $userId) {
+            $qb->andWhere('entry.user = :user_id');
+            $qb->setParameter('user_id', $userId, \PDO::PARAM_INT);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
 
