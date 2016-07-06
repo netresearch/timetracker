@@ -64,19 +64,19 @@ class JiraClient
 
 
     /**
-     * send request to the api server
+     * Send request to the JIRA API.
      *
-     * @param string $method
-     * @param string $url
-     * @param array  $arData
-     * @param string $strUser
+     * @param string $method  HTTP request method
+     * @param string $url     Target URL
+     * @param array  $arData  Request data
+     * @param string $strUser Optional JIRA user name
      *
-     * @return array|string
+     * @return string
      * @throws \Exception
      */
-    public function sendRequest($method, $url, $arData = array(), $strUser = '')
+    public function sendRequest($method, $url, array $arData = array(), $strUser = null)
     {
-        $this->curl = curl_init();
+        $this->initCurl();
 
         switch ($method) {
         case "GET":
@@ -102,6 +102,63 @@ class JiraClient
         }
 
         $this->setOpt(CURLOPT_URL, $this->strEndpoint . $url);
+
+        $this->setOpt(CURLOPT_HTTPHEADER, $arHeaders);
+
+        return $this->exec();
+    }
+
+
+
+    /**
+     * Execute request to JIRA API.
+     *
+     * @return string
+     * @throws \Exception
+     */
+    protected function exec()
+    {
+        $strResult = curl_exec($this->curl);
+
+        $errorNumber = curl_errno($this->curl);
+        if ($errorNumber > 0) {
+            throw new \Exception(
+                sprintf(
+                    'JIRA request failed, curl says: code = %s, "%s"',
+                    $errorNumber, curl_error($this->curl)
+                )
+            );
+        }
+
+        if (curl_getinfo($this->curl, CURLINFO_HTTP_CODE) == 401) {
+            throw new \Exception("Unauthorized: contact your Admin.");
+        }
+
+        // if empty result and status != "204 No Content"
+        if (empty($strResult)
+            && !in_array(curl_getinfo($this->curl, CURLINFO_HTTP_CODE), array(201, 204))
+        ) {
+            throw new \Exception(
+                'JIRA REST API returned empty result and HTTP status: '
+                . curl_getinfo($this->curl, CURLINFO_HTTP_CODE)
+                . ' for ' . curl_getinfo($this->curl, CURLINFO_EFFECTIVE_URL)
+            );
+        }
+
+        return $strResult;
+    }
+
+
+
+    /**
+     * Initialize curl handler.
+     *
+     * @return void
+     */
+    protected function initCurl()
+    {
+        $this->curl = curl_init();
+
         $this->setOpt(CURLOPT_HEADER, 0);
         $this->setOpt(CURLOPT_RETURNTRANSFER, 1);
 
@@ -117,47 +174,26 @@ class JiraClient
         $this->setOpt(CURLOPT_SSL_VERIFYHOST, 0);
         $this->setOpt(CURLOPT_VERBOSE, $this->bDebug);
 
-        $this->setOpt(CURLOPT_HTTPHEADER, $arHeaders);
-
         //$this->setOpt(CURLOPT_HEADER, true);
         //$this->setOpt(CURLINFO_HEADER_OUT, true);
-
-        $strResult = curl_exec($this->curl);
-
-        $errorNumber = curl_errno($this->curl);
-        if ($errorNumber > 0) {
-            throw new \Exception(
-                sprintf('JIRA request failed, curl says: code = %s, "%s"', $errorNumber, curl_error($this->curl))
-            );
-        }
-
-        if (curl_getinfo($this->curl, CURLINFO_HTTP_CODE) == 401) {
-            throw new \Exception("Unauthorized: contact your Admin.");
-        }
-
-        // if empty result and status != "204 No Content"
-        if (empty($strResult)
-            && !in_array(curl_getinfo($this->curl, CURLINFO_HTTP_CODE), array(201, 204))
-        ) {
-            throw new \Exception(
-                'JIRA REST API returned empty result and HTTP status: '
-                . curl_getinfo($this->curl, CURLINFO_HTTP_CODE)
-                .' for ' . $url
-            );
-        }
-
-        return $strResult;
     }
 
 
 
     /**
+     * Set curl options.
+     *
      * @see curl_setopt()
      * @param integer $option
      * @param mixed   $value
+     * @return void
      */
     protected function setOpt($option, $value)
     {
+        if (null === $this->curl) {
+            $this->initCurl();
+        }
+
         curl_setopt($this->curl, $option, $value);
     }
 }
