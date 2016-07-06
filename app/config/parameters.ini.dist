@@ -17,3 +17,9 @@
     locale            = en
 
     secret            = ThisTokenIsNotSoSecretChangeIt
+
+    ldap_host         = "127.0.0.1"
+    ldap_port         = 389
+    ldap_readuser     = "readuser"
+    ldap_readpass     = "readuser"
+    ldap_basedn       = "dc=company,dc=org"
