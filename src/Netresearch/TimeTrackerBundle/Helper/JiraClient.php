@@ -8,18 +8,26 @@ namespace Netresearch\TimeTrackerBundle\Helper;
 class JiraClient
 {
     /**
-     * @var string[]
+     * @var string[] JIRA API credentials.
      */
     protected $arAuth = null;
 
+    /**
+     * @var string JIRA API endpoint URL.
+     */
     protected $strEndpoint = '';
 
+    /**
+     * @var bool Debugging switch.
+     */
     protected $bDebug = false;
 
     /**
-     * @var resource
+     * @var resource curl handler.
      */
     protected $curl = null;
+
+
 
     /**
      * JiraClient constructor.
@@ -33,6 +41,8 @@ class JiraClient
         $this->arAuth['pass'] = $ticketSystem->getPassword();
         $this->strEndpoint = $ticketSystem->getUrl();
     }
+
+
 
     /**
      * send request to specified host
@@ -61,6 +71,7 @@ class JiraClient
             return false;
         }
     }
+
 
 
     /**

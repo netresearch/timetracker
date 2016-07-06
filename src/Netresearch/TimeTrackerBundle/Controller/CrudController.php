@@ -132,7 +132,7 @@ class CrudController extends BaseController
                     $entityManager->persist($entry);
                     $entityManager->flush();
                 }
-                continue; 
+                continue;
             }
 
             if ($entry->getStart()->format("H:i") < $previous->getEnd()->format("H:i")) {
@@ -141,7 +141,7 @@ class CrudController extends BaseController
                     $entityManager->persist($entry);
                     $entityManager->flush();
                 }
-                continue; 
+                continue;
             }
 
             if ($entry->getClass() != Entry::CLASS_PLAIN) {
@@ -457,7 +457,7 @@ class CrudController extends BaseController
         }
     }
 
-    private function logDataToFile(array $data, $raw = FALSE) 
+    private function logDataToFile(array $data, $raw = FALSE)
     {
         $file = $this->get('kernel')->getRootDir() . '/logs/' . self::LOG_FILE;
         if (!file_exists($file)) {
