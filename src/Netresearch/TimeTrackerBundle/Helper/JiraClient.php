@@ -168,6 +168,10 @@ class JiraClient
      */
     protected function initCurl()
     {
+        if (null !== $this->curl) {
+            return;
+        }
+
         $this->curl = curl_init();
 
         $this->setOpt(CURLOPT_HEADER, 0);
@@ -206,5 +210,17 @@ class JiraClient
         }
 
         curl_setopt($this->curl, $option, $value);
+    }
+
+
+
+    /**
+     * Sets HTTP proxy for curl handler.
+     *
+     * @param string $strHttpProxy HTTP proxy
+     */
+    public function setProxy($strHttpProxy)
+    {
+        $this->setOpt(CURLOPT_PROXY, $strHttpProxy);
     }
 }

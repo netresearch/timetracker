@@ -23,3 +23,5 @@
     ldap_readuser     = "readuser"
     ldap_readpass     = "readuser"
     ldap_basedn       = "dc=company,dc=org"
+
+    proxy_http        =
