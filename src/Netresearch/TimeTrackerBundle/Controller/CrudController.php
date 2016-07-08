@@ -657,6 +657,8 @@ class CrudController extends BaseController
 
         $client = new JiraClient($ticketSystem);
 
+        $client->setProxy($this->container->getParameter('proxy_http'));
+
         $arResult = $client->api(
             $strMethod, $strPath, $arData,
             $this->get('request')->getSession()->get('loginUsername')
