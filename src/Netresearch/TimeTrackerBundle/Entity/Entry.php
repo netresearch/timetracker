@@ -144,7 +144,7 @@ class Entry extends Base
     }
 
     /**
-     * Returns the array of external lables.
+     * Returns the array of external labels.
      *
      * @return array
      */
@@ -154,7 +154,7 @@ class Entry extends Base
     }
 
     /**
-     * Sets the array of external lables.
+     * Sets the array of external labels.
      *
      * @param array $arExternalLabels
      */
@@ -633,7 +633,7 @@ class Entry extends Base
     /**
      * Get customer
      *
-     * @return Customer $customer
+     * @return Customer
      */
     public function getCustomer()
     {

@@ -88,11 +88,11 @@ class TicketSystem extends Base
     protected $ticketUrl;
 
 
-    
+
     /**
      * Get id
      *
-     * @return integer 
+     * @return integer
      */
     public function getId()
     {
@@ -103,6 +103,8 @@ class TicketSystem extends Base
      * Set name
      *
      * @param string $name
+     *
+     * @return $this
      */
     public function setName($name)
     {
@@ -113,7 +115,7 @@ class TicketSystem extends Base
     /**
      * Get name
      *
-     * @return string 
+     * @return string
      */
     public function getName()
     {
@@ -125,6 +127,8 @@ class TicketSystem extends Base
      * Set bookTime
      *
      * @param boolean $bookTime
+     *
+     * @return $this
      */
     public function setBookTime($bookTime)
     {
@@ -147,6 +151,8 @@ class TicketSystem extends Base
      * Set type
      *
      * @param string $type
+     *
+     * @return $this
      */
     public function setType($type)
     {
@@ -169,6 +175,8 @@ class TicketSystem extends Base
      * Set url
      *
      * @param string $url
+     *
+     * @return $this
      */
     public function setUrl($url)
     {
@@ -213,6 +221,8 @@ class TicketSystem extends Base
      * Set login
      *
      * @param string $login
+     *
+     * @return $this
      */
     public function setLogin($login)
     {
@@ -235,6 +245,8 @@ class TicketSystem extends Base
      * Set password
      *
      * @param string $password
+     *
+     * @return $this
      */
     public function setPassword($password)
     {
@@ -257,6 +269,8 @@ class TicketSystem extends Base
      * Set public key
      *
      * @param string $publicKey
+     *
+     * @return $this
      */
     public function setPublicKey($publicKey)
     {
@@ -279,6 +293,8 @@ class TicketSystem extends Base
      * Set private key
      *
      * @param string $privateKey
+     *
+     * @return $this
      */
     public function setPrivateKey($privateKey)
     {
@@ -313,5 +329,5 @@ class TicketSystem extends Base
         $this->ticketUrl = $ticketUrl;
         return $this;
     }
-
 }
+

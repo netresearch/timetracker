@@ -8,11 +8,12 @@ class UserRepository extends EntityRepository
 {
     public function getUsers($currentUserId)
     {
+        /* @var $users \Netresearch\TimeTrackerBundle\Entity\User[] */
         $users = $this->createQueryBuilder('u')
             ->orderBy('u.username', 'ASC')
             ->getQuery()
             ->getResult();
-        
+
         $data = array();
         foreach ($users as $user) {
             if ($currentUserId == $user->getId()) {
@@ -27,7 +28,7 @@ class UserRepository extends EntityRepository
                 )));
 
             } else {
-                
+
                 $data[] = array('user' => array(
                     'id'    => $user->getId(),
                     'username'  => $user->getUsername(),
@@ -35,10 +36,10 @@ class UserRepository extends EntityRepository
                     'abbr' => $user->getAbbr(),
                     'locale'    => $user->getLocale(),
                 ));
-                
+
             }
         }
-        
+
         return $data;
     }
 

@@ -16,7 +16,7 @@
 namespace Netresearch\TimeTrackerBundle\Services;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
-use Netresearch\TimeTrackerBundle\Entity\User as User;
+use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Model\ExternalTicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -143,6 +143,7 @@ class Export
     {
         $username = 'all';
         if (0 < (int) $userId) {
+            /* @var $user User */
             $user     = $this->container->get('doctrine')
                 ->getRepository('NetresearchTimeTrackerBundle:User')
                 ->find($userId);

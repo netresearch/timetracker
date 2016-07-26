@@ -2,15 +2,13 @@
 
 namespace Netresearch\TimeTrackerBundle\Entity;
 
-use Netresearch\TimeTrackerBundle\Controller\DefaultController;
 use Doctrine\ORM\EntityRepository;
-use Doctrine\Common\Collections\ArrayCollection;
 
 class HolidayRepository extends EntityRepository
 {
     /**
      * get all holidays in a given year and month
-     * 
+     *
      * @param int $year
      * @param int $month
      * @return array

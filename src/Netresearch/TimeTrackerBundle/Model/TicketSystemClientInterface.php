@@ -31,7 +31,7 @@ interface TicketSystemClientInterface
     /**
      * Constructs a new client with passed ticket system data
      *
-     * @param TicketSystem
+     * @param TicketSystem $ticketSystem
      */
     public function __construct(TicketSystem $ticketSystem);
 

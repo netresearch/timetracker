@@ -87,6 +87,8 @@ class Customer extends Base
      * Set name
      *
      * @param string $name
+     *
+     * @return $this
      */
     public function setName($name)
     {
@@ -108,6 +110,8 @@ class Customer extends Base
      * Set active
      *
      * @param boolean $active
+     *
+     * @return $this
      */
     public function setActive($active)
     {
@@ -130,6 +134,8 @@ class Customer extends Base
      * Set global
      *
      * @param boolean $global
+     *
+     * @return $this
      */
     public function setGlobal($global)
     {
@@ -151,7 +157,9 @@ class Customer extends Base
     /**
      * Add projects
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Project $projects
+     * @param \Netresearch\TimeTrackerBundle\Entity\Project $projects
+     *
+     * @return $this
      */
     public function addProjects(\Netresearch\TimeTrackerBundle\Entity\Project $projects)
     {
@@ -162,7 +170,7 @@ class Customer extends Base
     /**
      * Get projects
      *
-     * @return Doctrine\Common\Collections\Collection $projects
+     * @return \Doctrine\Common\Collections\Collection $projects
      */
     public function getProjects()
     {
@@ -172,7 +180,9 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     *
+     * @return $this
      */
     public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
@@ -183,7 +193,7 @@ class Customer extends Base
     /**
      * Get entries
      *
-     * @return Doctrine\Common\Collections\Collection $entries
+     * @return \Doctrine\Common\Collections\Collection $entries
      */
     public function getEntries()
     {
@@ -193,7 +203,7 @@ class Customer extends Base
     /**
      * Reset teams
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @return $this
      */
     public function resetTeams()
     {
@@ -204,18 +214,20 @@ class Customer extends Base
     /**
      * Add teams
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @param \Netresearch\TimeTrackerBundle\Entity\Team $teams
+     *
+     * @return $this
      */
-    public function addTeam(\Netresearch\TimeTrackerBundle\Entity\Team $team)
+    public function addTeam(\Netresearch\TimeTrackerBundle\Entity\Team $teams)
     {
-        $this->teams[] = $team;
+        $this->teams[] = $teams;
         return $this;
     }
 
     /**
      * Get teams
      *
-     * @return Doctrine\Common\Collections\Collection $teams
+     * @return \Doctrine\Common\Collections\Collection $teams
      */
     public function getTeams()
     {
@@ -285,7 +297,7 @@ class Customer extends Base
     public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
         $this->entries[] = $entries;
-    
+
         return $this;
     }
 }
