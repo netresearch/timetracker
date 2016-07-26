@@ -35,6 +35,11 @@ class LdapClient
 	protected $_baseDn = 'dc=netresearch,dc=nr';
 
     /**
+     * @var string Accountname-Field in LDAP.
+     */
+	protected $_userNameField = 'sAMAccountName';
+
+    /**
      * @var string LDAP user auth name.
      */
     protected $_userName;
@@ -43,6 +48,11 @@ class LdapClient
      * @var string LDAP user auth password
      */
     protected $_userPass;
+
+    /**
+     * @var boolean Use SSL for LDAP-connection.
+     */
+    protected $_useSSL = false;
 
     /**
      * @var \Symfony\Bridge\Monolog\Logger
@@ -61,6 +71,7 @@ class LdapClient
     protected function _verifyUsername()
     {
         $ldap = new Ldap\Ldap(array(
+            'useSsl'    => $this->_useSSL,
             'host'      => $this->_host,
             'username'  => $this->_readUser,
             'password'  => $this->_readPass,
@@ -76,7 +87,7 @@ class LdapClient
 
         /* @var $result Ldap\Collection */
         $result = $ldap->search(
-            '(sAMAccountName=' . $this->_userName . ')',
+            '('.$this->_userNameField.'=' . ldap_escape($this->_userName) . ')',
             $this->_baseDn, Ldap\Ldap::SEARCH_SCOPE_SUB, array('cn', 'dn')
         );
 
@@ -100,10 +111,11 @@ class LdapClient
     {
         $ldap = new Ldap\Ldap(array(
             'host'      => $this->_host,
-            'username'  => $ldapEntry['cn'][0],
+            'username'  => $ldapEntry['dn'],
             'password'  => $this->_userPass,
             'baseDn'    => $this->_baseDn,
             'port'      => $this->_port,
+            'useSsl'    => $this->_useSSL,
         ));
 
         try {
@@ -222,6 +234,34 @@ class LdapClient
     public function setBaseDn($base_dn)
     {
         $this->_baseDn = $base_dn;
+        return $this;
+    }
+
+
+
+    /**
+     * Determines whether SSL will be used for LDAP-connection or not
+     *
+     * @param boolean $useSSL
+     * @return $this
+     */
+    public function setUseSSL($useSSL)
+    {
+        $this->_useSSL = !empty($useSSL) && $this->_useSSL !== 0;
+        return $this;
+    }
+
+
+
+    /**
+     * Set LDAP field name used to identify the user account ("user.name")
+     *
+     * @param string $userNameField
+     * @return $this
+     */
+    public function setUserNameField($userNameField)
+    {
+        $this->_userNameField = $userNameField;
         return $this;
     }
 

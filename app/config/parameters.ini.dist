@@ -23,5 +23,7 @@
     ldap_readuser     = "readuser"
     ldap_readpass     = "readuser"
     ldap_basedn       = "dc=company,dc=org"
+    ldap_usernamefield = sAMAccountName
+    ldap_usessl       = false
 
     proxy_http        =

@@ -80,13 +80,17 @@ class DefaultController extends BaseController
 
             $client = new LdapClient();
             $client->setLogger($this->get('logger'));
+
             $client->setHost($this->container->getParameter('ldap_host'))
                 ->setPort($this->container->getParameter('ldap_port'))
                 ->setReadUser($this->container->getParameter('ldap_readuser'))
-                ->setReadPass($this->container->getParameter('ldap_readuser'))
+                ->setReadPass($this->container->getParameter('ldap_readpass'))
+                ->setBaseDn($this->container->getParameter('ldap_basedn'))
                 ->setBaseDn($this->container->getParameter('ldap_basedn'))
                 ->setUserName($username)
                 ->setUserPass($password)
+                ->setUseSSL($this->container->getParameter('ldap_usessl'))
+                ->setUserNameField($this->container->getParameter('ldap_usernamefield'))
                 ->login();
 
         } catch (\Exception $e) {
