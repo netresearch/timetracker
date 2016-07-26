@@ -19,7 +19,7 @@ use Symfony\Component\Translation\Translator;
 /**
  * Class NrArrayTranslator
  *
- * @category Twig_Extenstion
+ * @category Twig_Extension
  * @package  Netresearch\TimeTrackerBundle\Extension
  * @author   Norman Kante <norman.kante@netresearch.de>
  * @license  No license

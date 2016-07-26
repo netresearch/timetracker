@@ -114,6 +114,7 @@ class User
      * Set username
      *
      * @param string $username
+     *
      * @return $this
      */
     public function setUsername($username)
@@ -136,6 +137,7 @@ class User
      * Set abbr
      *
      * @param string $abbr
+     *
      * @return $this
      */
     public function setAbbr($abbr)
@@ -158,6 +160,7 @@ class User
      * Set type
      *
      * @param string $type
+     *
      * @return $this
      */
     public function setType($type)
@@ -217,6 +220,7 @@ class User
      * Add entries
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     *
      * @return $this
      */
     public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
@@ -238,6 +242,8 @@ class User
     /**
      * Reset teams
      *
+     * @param \Netresearch\TimeTrackerBundle\Entity\Team $teams
+     *
      * @return $this
      */
     public function resetTeams()
@@ -250,6 +256,7 @@ class User
      * Add team
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\Team $team
+     *
      * @return $this
      */
     public function addTeam(\Netresearch\TimeTrackerBundle\Entity\Team $team)
@@ -340,7 +347,7 @@ class User
     public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
         $this->entries[] = $entries;
-    
+
         return $this;
     }
 

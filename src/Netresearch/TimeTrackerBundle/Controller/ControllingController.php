@@ -18,6 +18,13 @@ use Netresearch\TimeTrackerBundle\Model\Response;
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
+use Netresearch\TimeTrackerBundle\Entity\User as User;
+use Netresearch\TimeTrackerBundle\Model\ExternalTicketSystem;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
+use Netresearch\TimeTrackerBundle\Helper;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class ControllingController
@@ -35,20 +42,22 @@ class ControllingController extends BaseController
     /**
      * Exports a users timetable from one specific year and month
      *
+     * @param Request $request
+     *
      * @return Response
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-    public function exportAction()
+    public function exportAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        $userId = $this->getRequest()->get('userid');
-        $year   = $this->getRequest()->get('year');
-        $month  = $this->getRequest()->get('month');
+        $userId = $request->get('userid');
+        $year   = $request->get('year');
+        $month  = $request->get('month');
 
         $service = $this->get('nr.timetracker.export');
         /** @var \Netresearch\TimeTrackerBundle\Entity\Entry[] $entries */

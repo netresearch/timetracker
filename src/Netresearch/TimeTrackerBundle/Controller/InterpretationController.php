@@ -2,11 +2,11 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
-use Netresearch\TimeTrackerBundle\Entity\User as User;
+use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
+use Symfony\Component\HttpFoundation\Request;
 
 use \Zend_Ldap as Zend_Ldap;
 use \Zend_Ldap_Exception as Zend_Ldap_Exception;
@@ -20,14 +20,14 @@ class InterpretationController extends BaseController
         return strcmp($b['name'], $a['name']);
     }
 
-    public function getLastEntriesAction()
+    public function getLastEntriesAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $query = $this->getQuery();
+            $query = $this->getQuery($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -48,12 +48,12 @@ class InterpretationController extends BaseController
         return new Response(json_encode($entrylist));
     }
 
-    private function getCachedResult()
+    private function getCachedResult(Request $request)
     {
         if (null != $this->cache)
             return $this->cache;
 
-        $query = $this->getQuery();
+        $query = $this->getQuery($request);
         $this->cache = $query->getQuery()->getResult();
         return $this->cache;
     }
@@ -80,22 +80,20 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    public function groupByCustomerAction()
+    public function groupByCustomerAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedResult();
+            $entries = $this->getCachedResult($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $times = array();
-        $data = array();
         $customers = array();
 
         foreach($entries as $entry) {
@@ -122,25 +120,23 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($customers)));
     }
 
-    public function groupByProjectAction()
+    public function groupByProjectAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedResult();
+            $entries = $this->getCachedResult($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $times = array();
-        $data = array();
         $projects = array();
 
-        foreach($entries as $entry) {
+        foreach ($entries as $entry) {
             if (! is_object($entry->getProject()))
                 continue;
             $project = $entry->getProject()->getId();
@@ -165,22 +161,19 @@ class InterpretationController extends BaseController
     }
 
 
-    public function groupByTicketAction()
+    public function groupByTicketAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedResult();
+            $entries = $this->getCachedResult($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
-
-        $times = array();
-        $data = array();
 
         $tickets = array();
 
@@ -214,25 +207,23 @@ class InterpretationController extends BaseController
      *
      * @return Response
      */
-    public function groupByUserAction()
+    public function groupByUserAction(Request $request)
     {
         #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
-        $this->getRequest()->query->set('user', $this->_getUserId());
+        $request->query->set('user', $this->_getUserId());
 
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedResult();
+            $entries = $this->getCachedResult($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $times = array();
-        $data = array();
         $users = array();
 
         foreach($entries as $entry) {
@@ -257,14 +248,15 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($users)));
     }
 
-    public function groupByWorktimeAction()
+
+    public function groupByWorktimeAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedResult();
+            $entries = $this->getCachedResult($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -272,7 +264,6 @@ class InterpretationController extends BaseController
         }
 
         $times = array();
-        $data = array();
 
         foreach($entries as $entry) {
             $day_r = $entry->getDay()->format('y-m-d');
@@ -298,22 +289,19 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData(array_reverse($times))));
     }
 
-    public function groupByActivityAction()
+    public function groupByActivityAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedResult();
+            $entries = $this->getCachedResult($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
-
-        $times = array();
-        $data = array();
 
         $activities = array();
 
@@ -339,9 +327,16 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($activities)));
     }
 
-    private function getQuery()
+
+
+    /**
+     * @param Request $request
+     * @return \Doctrine\ORM\QueryBuilder
+     * @throws \Exception
+     */
+    private function getQuery(Request $request)
     {
-        $request = $this->getRequest();
+        /* @var $repository EntryRepository */
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry');
         $query = $repository->createQueryBuilder('e');
 
@@ -425,9 +420,8 @@ class InterpretationController extends BaseController
         return $query;
     }
 
-    private function getConditions()
+    private function getConditions(Request $request)
     {
-        $request = $this->getRequest();
         $conditions = array();
 
         strlen($request->query->get('customer')) ?

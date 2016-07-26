@@ -50,8 +50,8 @@ class Preset extends Base
      */
     protected $description;
 
-    
-    
+
+
     public function setId($id)
     {
         $this->id = $id;
@@ -67,12 +67,14 @@ class Preset extends Base
     {
         return $this->id;
     }
-    
-    
+
+
     /**
      * Set name
      * *
      * @param string $name
+     *
+     * @return $this
      */
     public function setName($name)
     {
@@ -129,6 +131,8 @@ class Preset extends Base
      * Set description
      *
      * @param string $description
+     *
+     * @return $this
      */
     public function setDescription($description)
     {
@@ -150,7 +154,9 @@ class Preset extends Base
     /**
      * Set customer
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     *
+     * @return $this
      */
     public function setCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customer)
     {
@@ -161,7 +167,7 @@ class Preset extends Base
     /**
      * Get customer
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @return \Netresearch\TimeTrackerBundle\Entity\Customer $customer
      */
     public function getCustomer()
     {
@@ -172,9 +178,9 @@ class Preset extends Base
     /**
      * Set project
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @param \Netresearch\TimeTrackerBundle\Entity\Project $project
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Entry
+     * @return $this
      */
     public function setProject(\Netresearch\TimeTrackerBundle\Entity\Project $project)
     {
@@ -185,7 +191,7 @@ class Preset extends Base
     /**
      * Get project
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @return \Netresearch\TimeTrackerBundle\Entity\Project $project
      */
     public function getProject()
     {
@@ -196,7 +202,9 @@ class Preset extends Base
     /**
      * Set activity
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @param \Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     *
+     * @return $this
      */
     public function setActivity(\Netresearch\TimeTrackerBundle\Entity\Activity $activity)
     {
@@ -207,14 +215,14 @@ class Preset extends Base
     /**
      * Get activity
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @return \Netresearch\TimeTrackerBundle\Entity\Activity $activity
      */
     public function getActivity()
     {
         return $this->activity;
     }
 
-    
+
     /**
      * Get array representation of a preset object
      *
@@ -230,5 +238,5 @@ class Preset extends Base
             'activity'      => $this->getActivity() ? $this->getActivity()->getId() : null,
             'description'   => $this->getDescription()
         );
-    } 
+    }
 }

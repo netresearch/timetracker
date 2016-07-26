@@ -144,7 +144,7 @@ class Project extends Base
     /**
      * Sets the additional Information.
      *
-     * @param boolean $additonalInformationFromExternal
+     * @param boolean $additionalInformationFromExternal
      *
      * @return $this
      */
@@ -225,6 +225,8 @@ class Project extends Base
      * Set name
      *
      * @param string $name
+     *
+     * @return $this
      */
     public function setName($name)
     {
@@ -248,6 +250,8 @@ class Project extends Base
      * Set active
      *
      * @param boolean $active
+     *
+     * @return $this
      */
     public function setActive($active)
     {
@@ -271,6 +275,8 @@ class Project extends Base
      * Set customer
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     *
+     * @return $this
      */
     public function setCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customer)
     {
@@ -295,6 +301,8 @@ class Project extends Base
      * Set global
      *
      * @param boolean $global
+     *
+     * @return $this
      */
     public function setGlobal($global)
     {
@@ -453,14 +461,14 @@ class Project extends Base
     public function setInternalReference($internalReference)
     {
         $this->internalReference = $internalReference;
-    
+
         return $this;
     }
 
     /**
      * Get internalReference
      *
-     * @return string 
+     * @return string
      */
     public function getInternalReference()
     {
@@ -482,7 +490,7 @@ class Project extends Base
     /**
      * Get externalReference
      *
-     * @return string 
+     * @return string
      */
     public function getExternalReference()
     {
@@ -520,7 +528,7 @@ class Project extends Base
     public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
         $this->entries[] = $entries;
-    
+
         return $this;
     }
 
@@ -535,7 +543,7 @@ class Project extends Base
     }
 
     /**
-     * Returns true, if a internJiraProjectKey is konfigured.
+     * Returns true, if a internJiraProjectKey is configured.
      *
      * @return bool
      */

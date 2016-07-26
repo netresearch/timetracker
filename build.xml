@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="timetracker" default="build">    
+<project name="timetracker" default="build">
     <target name="build" depends="prepare, parameters,lint,phploc,pdepend,phpmd-ci,phpcs-ci,phpcpd,phpunit-report"/>
-    
+
     <target name="build-parallel" depends="prepare,lint,tools-parallel"/>
 
     <target name="tools-parallel" description="Run tools in parallel">
@@ -108,22 +108,22 @@
             <arg path="${basedir}/src" />
         </exec>
     </target>
-    
+
    <target name="phpunit-report">
         <exec executable="phpunit" failonerror="true">
             <arg value="-c" />
-            <arg path="${basedir}/app/phpunit.xml" /> 
-            <arg value="--coverage-html"/> 
+            <arg path="${basedir}/app/phpunit.xml" />
+            <arg value="--coverage-html"/>
             <arg path="app/build/coverage" />
-            <arg value="--coverage-clover"/> 
+            <arg value="--coverage-clover"/>
             <arg path="app/build/logs/clover.xml"/>
         </exec>
     </target>
        
     <target name="parameters" description="Copy parameters">
         <exec executable="cp" failonerror="true">
-            <arg path="app/config/parameters.ini.dist" />
-            <arg path="app/config/parameters.ini" />
+            <arg path="app/config/parameters.yml.dist" />
+            <arg path="app/config/parameters.yml" />
         </exec>
     </target>
 </project>
