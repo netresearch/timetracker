@@ -15,16 +15,14 @@ namespace Symfony\Component\HttpFoundation;
  * ResponseHeaderBag is a container for Response HTTP headers.
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @api
  */
 class ResponseHeaderBag extends HeaderBag
 {
-    const COOKIES_FLAT           = 'flat';
-    const COOKIES_ARRAY          = 'array';
+    const COOKIES_FLAT = 'flat';
+    const COOKIES_ARRAY = 'array';
 
     const DISPOSITION_ATTACHMENT = 'attachment';
-    const DISPOSITION_INLINE     = 'inline';
+    const DISPOSITION_INLINE = 'inline';
 
     /**
      * @var array
@@ -34,21 +32,24 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * @var array
      */
-    protected $cookies              = array();
+    protected $cookies = array();
+
+    /**
+     * @var array
+     */
+    protected $headerNames = array();
 
     /**
      * Constructor.
      *
      * @param array $headers An array of HTTP headers
-     *
-     * @api
      */
     public function __construct(array $headers = array())
     {
         parent::__construct($headers);
 
         if (!isset($this->headers['cache-control'])) {
-            $this->set('cache-control', '');
+            $this->set('Cache-Control', '');
         }
     }
 
@@ -62,50 +63,65 @@ class ResponseHeaderBag extends HeaderBag
             $cookies .= 'Set-Cookie: '.$cookie."\r\n";
         }
 
+        ksort($this->headerNames);
+
         return parent::__toString().$cookies;
     }
 
     /**
-     * {@inheritdoc}
+     * Returns the headers, with original capitalizations.
      *
-     * @api
+     * @return array An array of headers
+     */
+    public function allPreserveCase()
+    {
+        return array_combine($this->headerNames, $this->headers);
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function replace(array $headers = array())
     {
+        $this->headerNames = array();
+
         parent::replace($headers);
 
         if (!isset($this->headers['cache-control'])) {
-            $this->set('cache-control', '');
+            $this->set('Cache-Control', '');
         }
     }
 
     /**
      * {@inheritdoc}
-     *
-     * @api
      */
     public function set($key, $values, $replace = true)
     {
         parent::set($key, $values, $replace);
 
+        $uniqueKey = strtr(strtolower($key), '_', '-');
+        $this->headerNames[$uniqueKey] = $key;
+
         // ensure the cache-control header has sensible defaults
-        if (in_array(strtr(strtolower($key), '_', '-'), array('cache-control', 'etag', 'last-modified', 'expires'))) {
+        if (in_array($uniqueKey, array('cache-control', 'etag', 'last-modified', 'expires'))) {
             $computed = $this->computeCacheControlValue();
             $this->headers['cache-control'] = array($computed);
+            $this->headerNames['cache-control'] = 'Cache-Control';
             $this->computedCacheControl = $this->parseCacheControl($computed);
         }
     }
 
     /**
      * {@inheritdoc}
-     *
-     * @api
      */
     public function remove($key)
     {
         parent::remove($key);
 
-        if ('cache-control' === strtr(strtolower($key), '_', '-')) {
+        $uniqueKey = strtr(strtolower($key), '_', '-');
+        unset($this->headerNames[$uniqueKey]);
+
+        if ('cache-control' === $uniqueKey) {
             $this->computedCacheControl = array();
         }
     }
@@ -130,8 +146,6 @@ class ResponseHeaderBag extends HeaderBag
      * Sets a cookie.
      *
      * @param Cookie $cookie
-     *
-     * @api
      */
     public function setCookie(Cookie $cookie)
     {
@@ -139,13 +153,11 @@ class ResponseHeaderBag extends HeaderBag
     }
 
     /**
-     * Removes a cookie from the array, but does not unset it in the browser
+     * Removes a cookie from the array, but does not unset it in the browser.
      *
      * @param string $name
      * @param string $path
      * @param string $domain
-     *
-     * @api
      */
     public function removeCookie($name, $path = '/', $domain = null)
     {
@@ -165,15 +177,13 @@ class ResponseHeaderBag extends HeaderBag
     }
 
     /**
-     * Returns an array with all cookies
+     * Returns an array with all cookies.
      *
      * @param string $format
      *
      * @throws \InvalidArgumentException When the $format is invalid
      *
      * @return array
-     *
-     * @api
      */
     public function getCookies($format = self::COOKIES_FLAT)
     {
@@ -198,17 +208,17 @@ class ResponseHeaderBag extends HeaderBag
     }
 
     /**
-     * Clears a cookie in the browser
+     * Clears a cookie in the browser.
      *
      * @param string $name
      * @param string $path
      * @param string $domain
-     *
-     * @api
+     * @param bool   $secure
+     * @param bool   $httpOnly
      */
-    public function clearCookie($name, $path = '/', $domain = null)
+    public function clearCookie($name, $path = '/', $domain = null, $secure = false, $httpOnly = true)
     {
-        $this->setCookie(new Cookie($name, null, 1, $path, $domain));
+        $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly));
     }
 
     /**
@@ -223,6 +233,7 @@ class ResponseHeaderBag extends HeaderBag
      * @return string A string suitable for use as a Content-Disposition field-value.
      *
      * @throws \InvalidArgumentException
+     *
      * @see RFC 6266
      */
     public function makeDisposition($disposition, $filename, $filenameFallback = '')

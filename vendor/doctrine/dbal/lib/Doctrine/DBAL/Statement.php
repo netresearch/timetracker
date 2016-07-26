@@ -167,7 +167,12 @@ class Statement implements \IteratorAggregate, DriverStatement
             if ($logger) {
                 $logger->stopQuery();
             }
-            throw DBALException::driverExceptionDuringQuery($ex, $this->sql, $this->conn->resolveParams($this->params, $this->types));
+            throw DBALException::driverExceptionDuringQuery(
+                $this->conn->getDriver(),
+                $ex,
+                $this->sql,
+                $this->conn->resolveParams($this->params, $this->types)
+            );
         }
 
         if ($logger) {
@@ -226,7 +231,7 @@ class Statement implements \IteratorAggregate, DriverStatement
     {
         if ($arg2 === null) {
             return $this->stmt->setFetchMode($fetchMode);
-        } else if ($arg3 === null) {
+        } elseif ($arg3 === null) {
             return $this->stmt->setFetchMode($fetchMode, $arg2);
         }
 

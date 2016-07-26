@@ -16,13 +16,13 @@ use Symfony\Component\HttpKernel\Profiler\Profile;
 
 class FileProfilerStorageTest extends AbstractProfilerStorageTest
 {
-    protected static $tmpDir;
-    protected static $storage;
+    private $tmpDir;
+    private $storage;
 
-    protected static function cleanDir()
+    protected function cleanDir()
     {
         $flags = \FilesystemIterator::SKIP_DOTS;
-        $iterator = new \RecursiveDirectoryIterator(self::$tmpDir, $flags);
+        $iterator = new \RecursiveDirectoryIterator($this->tmpDir, $flags);
         $iterator = new \RecursiveIteratorIterator($iterator, \RecursiveIteratorIterator::SELF_FIRST);
 
         foreach ($iterator as $file) {
@@ -32,23 +32,19 @@ class FileProfilerStorageTest extends AbstractProfilerStorageTest
         }
     }
 
-    public static function setUpBeforeClass()
-    {
-        self::$tmpDir = sys_get_temp_dir() . '/sf2_profiler_file_storage';
-        if (is_dir(self::$tmpDir)) {
-            self::cleanDir();
-        }
-        self::$storage = new FileProfilerStorage('file:'.self::$tmpDir);
-    }
-
-    public static function tearDownAfterClass()
-    {
-        self::cleanDir();
-    }
-
     protected function setUp()
     {
-        self::$storage->purge();
+        $this->tmpDir = sys_get_temp_dir().'/sf2_profiler_file_storage';
+        if (is_dir($this->tmpDir)) {
+            self::cleanDir();
+        }
+        $this->storage = new FileProfilerStorage('file:'.$this->tmpDir);
+        $this->storage->purge();
+    }
+
+    protected function tearDown()
+    {
+        self::cleanDir();
     }
 
     /**
@@ -56,16 +52,16 @@ class FileProfilerStorageTest extends AbstractProfilerStorageTest
      */
     protected function getStorage()
     {
-        return self::$storage;
+        return $this->storage;
     }
 
     public function testMultiRowIndexFile()
     {
         $iteration = 3;
-        for ($i = 0; $i < $iteration; $i++) {
-            $profile = new Profile('token' . $i);
-            $profile->setIp('127.0.0.' . $i);
-            $profile->setUrl('http://foo.bar/' . $i);
+        for ($i = 0; $i < $iteration; ++$i) {
+            $profile = new Profile('token'.$i);
+            $profile->setIp('127.0.0.'.$i);
+            $profile->setUrl('http://foo.bar/'.$i);
             $storage = $this->getStorage();
 
             $storage->write($profile);
@@ -73,13 +69,28 @@ class FileProfilerStorageTest extends AbstractProfilerStorageTest
             $storage->write($profile);
         }
 
-        $handle = fopen(self::$tmpDir . '/index.csv', 'r');
-        for ($i = 0; $i < $iteration; $i++) {
+        $handle = fopen($this->tmpDir.'/index.csv', 'r');
+        for ($i = 0; $i < $iteration; ++$i) {
             $row = fgetcsv($handle);
-            $this->assertEquals('token' . $i, $row[0]);
-            $this->assertEquals('127.0.0.' . $i, $row[1]);
-            $this->assertEquals('http://foo.bar/' . $i, $row[3]);
+            $this->assertEquals('token'.$i, $row[0]);
+            $this->assertEquals('127.0.0.'.$i, $row[1]);
+            $this->assertEquals('http://foo.bar/'.$i, $row[3]);
         }
         $this->assertFalse(fgetcsv($handle));
+    }
+
+    public function testReadLineFromFile()
+    {
+        $r = new \ReflectionMethod($this->storage, 'readLineFromFile');
+
+        $r->setAccessible(true);
+
+        $h = tmpfile();
+
+        fwrite($h, "line1\n\n\nline2\n");
+        fseek($h, 0, SEEK_END);
+
+        $this->assertEquals('line2', $r->invoke($this->storage, $h));
+        $this->assertEquals('line1', $r->invoke($this->storage, $h));
     }
 }

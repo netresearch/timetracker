@@ -11,40 +11,38 @@
 
 namespace Symfony\Component\Translation\Loader;
 
-use Symfony\Component\Config\Resource\FileResource;
-use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Translation\Exception\InvalidResourceException;
+use Symfony\Component\Yaml\Parser as YamlParser;
+use Symfony\Component\Yaml\Exception\ParseException;
 
 /**
  * YamlFileLoader loads translations from Yaml files.
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @api
  */
-class YamlFileLoader extends ArrayLoader implements LoaderInterface
+class YamlFileLoader extends FileLoader
 {
+    private $yamlParser;
+
     /**
      * {@inheritdoc}
-     *
-     * @api
      */
-    public function load($resource, $locale, $domain = 'messages')
+    protected function loadResource($resource)
     {
-        $messages = Yaml::parse($resource);
+        if (null === $this->yamlParser) {
+            if (!class_exists('Symfony\Component\Yaml\Parser')) {
+                throw new \LogicException('Loading translations from the YAML format requires the Symfony Yaml component.');
+            }
 
-        // empty file
-        if (null === $messages) {
-            $messages = array();
+            $this->yamlParser = new YamlParser();
         }
 
-        // not an array
-        if (!is_array($messages)) {
-            throw new \InvalidArgumentException(sprintf('The file "%s" must contain a YAML array.', $resource));
+        try {
+            $messages = $this->yamlParser->parse(file_get_contents($resource));
+        } catch (ParseException $e) {
+            throw new InvalidResourceException(sprintf('Error parsing YAML, invalid file "%s"', $resource), 0, $e);
         }
 
-        $catalogue = parent::load($messages, $locale, $domain);
-        $catalogue->addResource(new FileResource($resource));
-
-        return $catalogue;
+        return $messages;
     }
 }

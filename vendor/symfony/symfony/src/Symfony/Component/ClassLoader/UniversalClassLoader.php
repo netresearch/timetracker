@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\ClassLoader;
 
+@trigger_error('The '.__NAMESPACE__.'\UniversalClassLoader class is deprecated since version 2.7 and will be removed in 3.0. Use the Symfony\Component\ClassLoader\ClassLoader class instead.', E_USER_DEPRECATED);
+
 /**
  * UniversalClassLoader implements a "universal" autoloader for PHP 5.3.
  *
@@ -32,8 +34,8 @@ namespace Symfony\Component\ClassLoader;
  *     // register classes with namespaces
  *     $loader->registerNamespaces(array(
  *         'Symfony\Component' => __DIR__.'/component',
- *         'Symfony'           => __DIR__.'/framework',
- *         'Sensio'            => array(__DIR__.'/src', __DIR__.'/vendor'),
+ *         'Symfony' => __DIR__.'/framework',
+ *         'Sensio' => array(__DIR__.'/src', __DIR__.'/vendor'),
  *     ));
  *
  *     // register a library using the PEAR naming convention
@@ -56,7 +58,8 @@ namespace Symfony\Component\ClassLoader;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  *
- * @api
+ * @deprecated since version 2.4, to be removed in 3.0.
+ *             Use the {@link ClassLoader} class instead.
  */
 class UniversalClassLoader
 {
@@ -68,20 +71,20 @@ class UniversalClassLoader
 
     /**
      * Turns on searching the include for class files. Allows easy loading
-     * of installed PEAR packages
+     * of installed PEAR packages.
      *
-     * @param Boolean $useIncludePath
+     * @param bool $useIncludePath
      */
     public function useIncludePath($useIncludePath)
     {
-        $this->useIncludePath = $useIncludePath;
+        $this->useIncludePath = (bool) $useIncludePath;
     }
 
     /**
      * Can be used to check if the autoloader uses the include path to check
      * for classes.
      *
-     * @return Boolean
+     * @return bool
      */
     public function getUseIncludePath()
     {
@@ -132,8 +135,6 @@ class UniversalClassLoader
      * Registers the directory to use as a fallback for namespaces.
      *
      * @param array $dirs An array of directories
-     *
-     * @api
      */
     public function registerNamespaceFallbacks(array $dirs)
     {
@@ -154,8 +155,6 @@ class UniversalClassLoader
      * Registers directories to use as a fallback for class prefixes.
      *
      * @param array $dirs An array of directories
-     *
-     * @api
      */
     public function registerPrefixFallbacks(array $dirs)
     {
@@ -173,11 +172,9 @@ class UniversalClassLoader
     }
 
     /**
-     * Registers an array of namespaces
+     * Registers an array of namespaces.
      *
      * @param array $namespaces An array of namespaces (namespaces as keys and locations as values)
-     *
-     * @api
      */
     public function registerNamespaces(array $namespaces)
     {
@@ -191,8 +188,6 @@ class UniversalClassLoader
      *
      * @param string       $namespace The namespace
      * @param array|string $paths     The location(s) of the namespace
-     *
-     * @api
      */
     public function registerNamespace($namespace, $paths)
     {
@@ -203,8 +198,6 @@ class UniversalClassLoader
      * Registers an array of classes using the PEAR naming convention.
      *
      * @param array $classes An array of classes (prefixes as keys and locations as values)
-     *
-     * @api
      */
     public function registerPrefixes(array $classes)
     {
@@ -218,8 +211,6 @@ class UniversalClassLoader
      *
      * @param string       $prefix The classes prefix
      * @param array|string $paths  The location(s) of the classes
-     *
-     * @api
      */
     public function registerPrefix($prefix, $paths)
     {
@@ -229,9 +220,7 @@ class UniversalClassLoader
     /**
      * Registers this instance as an autoloader.
      *
-     * @param Boolean $prepend Whether to prepend the autoloader or not
-     *
-     * @api
+     * @param bool $prepend Whether to prepend the autoloader or not
      */
     public function register($prepend = false)
     {
@@ -242,11 +231,15 @@ class UniversalClassLoader
      * Loads the given class or interface.
      *
      * @param string $class The name of the class
+     *
+     * @return bool|null True, if loaded
      */
     public function loadClass($class)
     {
         if ($file = $this->findFile($class)) {
             require $file;
+
+            return true;
         }
     }
 
@@ -259,10 +252,6 @@ class UniversalClassLoader
      */
     public function findFile($class)
     {
-        if ('\\' == $class[0]) {
-            $class = substr($class, 1);
-        }
-
         if (false !== $pos = strrpos($class, '\\')) {
             // namespaced class name
             $namespace = substr($class, 0, $pos);
@@ -287,7 +276,6 @@ class UniversalClassLoader
                     return $file;
                 }
             }
-
         } else {
             // PEAR-like class name
             $normalizedClass = str_replace('_', DIRECTORY_SEPARATOR, $class).'.php';

@@ -23,7 +23,7 @@ class ChainExtractor implements ExtractorInterface
     /**
      * The extractors.
      *
-     * @var array
+     * @var ExtractorInterface[]
      */
     private $extractors = array();
 
@@ -39,7 +39,7 @@ class ChainExtractor implements ExtractorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function setPrefix($prefix)
     {
@@ -49,7 +49,7 @@ class ChainExtractor implements ExtractorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function extract($directory, MessageCatalogue $catalogue)
     {

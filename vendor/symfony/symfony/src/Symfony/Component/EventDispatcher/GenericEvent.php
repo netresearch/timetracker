@@ -21,7 +21,7 @@ namespace Symfony\Component\EventDispatcher;
 class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
 {
     /**
-     * Observer pattern subject.
+     * Event subject.
      *
      * @var mixed usually object or callable
      */
@@ -71,7 +71,7 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
             return $this->arguments[$key];
         }
 
-        throw new \InvalidArgumentException(sprintf('%s not found in %s', $key, $this->getName()));
+        throw new \InvalidArgumentException(sprintf('Argument "%s" not found.', $key));
     }
 
     /**
@@ -118,7 +118,7 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $key Key of arguments array.
      *
-     * @return boolean
+     * @return bool
      */
     public function hasArgument($key)
     {
@@ -144,8 +144,6 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $key   Array key to set.
      * @param mixed  $value Value.
-     *
-     * @return void
      */
     public function offsetSet($key, $value)
     {
@@ -156,8 +154,6 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
      * ArrayAccess for unset argument.
      *
      * @param string $key Array key.
-     *
-     * @return void
      */
     public function offsetUnset($key)
     {
@@ -171,7 +167,7 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $key Array key.
      *
-     * @return boolean
+     * @return bool
      */
     public function offsetExists($key)
     {
@@ -179,7 +175,7 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
     }
 
     /**
-     * IteratorAggregate for iterating over the object like an array
+     * IteratorAggregate for iterating over the object like an array.
      *
      * @return \ArrayIterator
      */

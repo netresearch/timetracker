@@ -136,7 +136,7 @@ class Entry extends Base
     }
 
     /**
-     * Returns the array of external lables.
+     * Returns the array of external labels.
      *
      * @return array
      */
@@ -146,9 +146,9 @@ class Entry extends Base
     }
 
     /**
-     * Sets the array of external lables.
+     * Sets the array of external labels.
      *
-     * @param array $externalLabels
+     * @param array $arExternalLabels
      */
     public function setExternalLabels(array $arExternalLabels)
     {
@@ -271,6 +271,8 @@ class Entry extends Base
      * Set ticket
      *
      * @param string $ticket
+     *
+     * @return $this
      */
     public function setTicket($ticket)
     {
@@ -292,6 +294,8 @@ class Entry extends Base
      * Set JIRA WorklogId
      *
      * @param int $worklog_id
+     *
+     * @return $this
      */
     public function setWorklogId($worklog_id)
     {
@@ -313,6 +317,8 @@ class Entry extends Base
      * Set description
      *
      * @param string $description
+     *
+     * @return $this
      */
     public function setDescription($description)
     {
@@ -334,6 +340,8 @@ class Entry extends Base
      * Set day
      *
      * @param string $day
+     *
+     * @return $this
      */
     public function setDay($day)
     {
@@ -348,7 +356,7 @@ class Entry extends Base
     /**
      * Get day
      *
-     * @return string $day
+     * @return DateTime $day
      */
     public function getDay()
     {
@@ -359,6 +367,8 @@ class Entry extends Base
      * Set start
      *
      * @param string $start
+     *
+     * @return $this
      */
     public function setStart($start)
     {
@@ -376,7 +386,7 @@ class Entry extends Base
     /**
      * Get start
      *
-     * @return string $start
+     * @return DateTime $start
      */
     public function getStart()
     {
@@ -387,6 +397,8 @@ class Entry extends Base
      * Set end
      *
      * @param string $end
+     *
+     * @return $this
      */
     public function setEnd($end)
     {
@@ -435,6 +447,7 @@ class Entry extends Base
      * Set duration
      *
      * @param integer $duration
+     *
      * @return $this
      */
     public function setDuration($duration)
@@ -480,6 +493,7 @@ class Entry extends Base
      * Set user
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\User $user
+     *
      * @return $this
      */
     public function setUser(\Netresearch\TimeTrackerBundle\Entity\User $user)
@@ -502,6 +516,7 @@ class Entry extends Base
      * Set account
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\Account $account
+     *
      * @return $this
      */
     public function setAccount(\Netresearch\TimeTrackerBundle\Entity\Account $account)
@@ -523,7 +538,9 @@ class Entry extends Base
     /**
      * Set activity
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @param \Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     *
+     * @return $this
      */
     public function setActivity(\Netresearch\TimeTrackerBundle\Entity\Activity $activity)
     {
@@ -534,7 +551,7 @@ class Entry extends Base
     /**
      * Get activity
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @return \Netresearch\TimeTrackerBundle\Entity\Activity $activity
      */
     public function getActivity()
     {
@@ -598,7 +615,9 @@ class Entry extends Base
     /**
      * Set customer
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     *
+     * @return $this
      */
     public function setCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customer)
     {
@@ -609,7 +628,7 @@ class Entry extends Base
     /**
      * Get customer
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @return \Netresearch\TimeTrackerBundle\Entity\Customer $customer
      */
     public function getCustomer()
     {
@@ -621,7 +640,9 @@ class Entry extends Base
     /**
      * Set class
      *
-     * @param integer class
+     * @param integer $class
+     *
+     * @return $this
      */
     public function setClass($class)
     {

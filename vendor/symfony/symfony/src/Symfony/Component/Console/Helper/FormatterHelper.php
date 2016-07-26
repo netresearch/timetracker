@@ -39,13 +39,15 @@ class FormatterHelper extends Helper
      *
      * @param string|array $messages The message to write in the block
      * @param string       $style    The style to apply to the whole block
-     * @param Boolean      $large    Whether to return a large block
+     * @param bool         $large    Whether to return a large block
      *
      * @return string The formatter message
      */
     public function formatBlock($messages, $style, $large = false)
     {
-        $messages = (array) $messages;
+        if (!is_array($messages)) {
+            $messages = array($messages);
+        }
 
         $len = 0;
         $lines = array();
@@ -56,44 +58,22 @@ class FormatterHelper extends Helper
         }
 
         $messages = $large ? array(str_repeat(' ', $len)) : array();
-        foreach ($lines as $line) {
-            $messages[] = $line.str_repeat(' ', $len - $this->strlen($line));
+        for ($i = 0; isset($lines[$i]); ++$i) {
+            $messages[] = $lines[$i].str_repeat(' ', $len - $this->strlen($lines[$i]));
         }
         if ($large) {
             $messages[] = str_repeat(' ', $len);
         }
 
-        foreach ($messages as &$message) {
-            $message = sprintf('<%s>%s</%s>', $style, $message, $style);
+        for ($i = 0; isset($messages[$i]); ++$i) {
+            $messages[$i] = sprintf('<%s>%s</%s>', $style, $messages[$i], $style);
         }
 
         return implode("\n", $messages);
     }
 
     /**
-     * Returns the length of a string, using mb_strlen if it is available.
-     *
-     * @param string $string The string to check its length
-     *
-     * @return integer The length of the string
-     */
-    private function strlen($string)
-    {
-        if (!function_exists('mb_strlen')) {
-            return strlen($string);
-        }
-
-        if (false === $encoding = mb_detect_encoding($string)) {
-            return strlen($string);
-        }
-
-        return mb_strlen($string, $encoding);
-    }
-
-    /**
-     * Returns the helper's canonical name.
-     *
-     * @return string The canonical name of the helper
+     * {@inheritdoc}
      */
     public function getName()
     {

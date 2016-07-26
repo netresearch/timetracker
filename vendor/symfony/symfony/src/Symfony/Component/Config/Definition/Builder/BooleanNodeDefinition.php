@@ -21,7 +21,7 @@ use Symfony\Component\Config\Definition\BooleanNode;
 class BooleanNodeDefinition extends ScalarNodeDefinition
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function __construct($name, NodeParentInterface $parent = null)
     {
@@ -31,7 +31,19 @@ class BooleanNodeDefinition extends ScalarNodeDefinition
     }
 
     /**
-     * Instantiate a Node
+     * {@inheritdoc}
+     *
+     * @deprecated Deprecated since version 2.8, to be removed in 3.0.
+     */
+    public function cannotBeEmpty()
+    {
+        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.8 and will be removed in 3.0.', E_USER_DEPRECATED);
+
+        return parent::cannotBeEmpty();
+    }
+
+    /**
+     * Instantiate a Node.
      *
      * @return BooleanNode The node
      */
@@ -39,5 +51,4 @@ class BooleanNodeDefinition extends ScalarNodeDefinition
     {
         return new BooleanNode($this->name, $this->parent);
     }
-
 }

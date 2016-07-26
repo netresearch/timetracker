@@ -19,7 +19,7 @@ use Symfony\Component\Form\Exception\TransformationFailedException;
 class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function transform($dateTime)
     {
@@ -27,20 +27,20 @@ class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
             return '';
         }
 
-        if (!$dateTime instanceof \DateTime) {
-            throw new TransformationFailedException('Expected a \DateTime.');
+        if (!$dateTime instanceof \DateTime && !$dateTime instanceof \DateTimeInterface) {
+            throw new TransformationFailedException('Expected a \DateTime or \DateTimeInterface.');
         }
 
         if ($this->inputTimezone !== $this->outputTimezone) {
             $dateTime = clone $dateTime;
-            $dateTime->setTimezone(new \DateTimeZone($this->outputTimezone));
+            $dateTime = $dateTime->setTimezone(new \DateTimeZone($this->outputTimezone));
         }
 
         return preg_replace('/\+00:00$/', 'Z', $dateTime->format('c'));
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function reverseTransform($rfc3339)
     {
@@ -49,7 +49,7 @@ class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
         }
 
         if ('' === $rfc3339) {
-            return null;
+            return;
         }
 
         try {
@@ -58,7 +58,7 @@ class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
             throw new TransformationFailedException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if ($this->outputTimezone !== $this->inputTimezone) {
+        if ($this->outputTimezone !== $dateTime->getTimezone()->getName()) {
             try {
                 $dateTime->setTimezone(new \DateTimeZone($this->inputTimezone));
             } catch (\Exception $e) {

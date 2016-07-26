@@ -11,51 +11,19 @@
 
 namespace Symfony\Component\Locale\Stub\DateFormat;
 
+@trigger_error('The '.__NAMESPACE__.'\Hour2400Transformer class is deprecated since version 2.3 and will be removed in 3.0. Use the Symfony\Component\Intl\DateFormatter\DateFormat\Hour2400Transformer class instead.', E_USER_DEPRECATED);
+
+use Symfony\Component\Intl\DateFormatter\DateFormat\Hour2400Transformer as BaseHour2400Transformer;
+
 /**
- * Parser and formatter for 24 hour format (0-23)
+ * Alias of {@link \Symfony\Component\Intl\DateFormatter\DateFormat\Hour2400Transformer}.
  *
- * @author Igor Wiedler <igor@wiedler.ch>
+ * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated since version 2.3, to be removed in 3.0.
+ *             Use {@link \Symfony\Component\Intl\DateFormatter\DateFormat\Hour2400Transformer}
+ *             instead.
  */
-class Hour2400Transformer extends HourTransformer
+class Hour2400Transformer extends BaseHour2400Transformer
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function format(\DateTime $dateTime, $length)
-    {
-        return $this->padLeft($dateTime->format('G'), $length);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function normalizeHour($hour, $marker = null)
-    {
-        if ('AM' == $marker) {
-            $hour = 0;
-        } elseif ('PM' == $marker) {
-            $hour = 12;
-        }
-
-        return $hour;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getReverseMatchingRegExp($length)
-    {
-        return '\d{1,2}';
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function extractDateOptions($matched, $length)
-    {
-        return array(
-            'hour' => (int) $matched,
-            'hourInstance' => $this
-        );
-    }
 }

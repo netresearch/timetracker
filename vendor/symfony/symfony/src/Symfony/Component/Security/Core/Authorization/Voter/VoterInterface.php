@@ -22,14 +22,16 @@ interface VoterInterface
 {
     const ACCESS_GRANTED = 1;
     const ACCESS_ABSTAIN = 0;
-    const ACCESS_DENIED  = -1;
+    const ACCESS_DENIED = -1;
 
     /**
      * Checks if the voter supports the given attribute.
      *
      * @param string $attribute An attribute
      *
-     * @return Boolean true if this Voter supports the attribute, false otherwise
+     * @return bool true if this Voter supports the attribute, false otherwise
+     *
+     * @deprecated since version 2.8, to be removed in 3.0.
      */
     public function supportsAttribute($attribute);
 
@@ -38,7 +40,9 @@ interface VoterInterface
      *
      * @param string $class A class name
      *
-     * @return Boolean true if this Voter can process the class
+     * @return bool true if this Voter can process the class
+     *
+     * @deprecated since version 2.8, to be removed in 3.0.
      */
     public function supportsClass($class);
 
@@ -49,10 +53,10 @@ interface VoterInterface
      * ACCESS_GRANTED, ACCESS_DENIED, or ACCESS_ABSTAIN.
      *
      * @param TokenInterface $token      A TokenInterface instance
-     * @param object         $object     The object to secure
+     * @param object|null    $object     The object to secure
      * @param array          $attributes An array of attributes associated with the method being invoked
      *
-     * @return integer either ACCESS_GRANTED, ACCESS_ABSTAIN, or ACCESS_DENIED
+     * @return int either ACCESS_GRANTED, ACCESS_ABSTAIN, or ACCESS_DENIED
      */
     public function vote(TokenInterface $token, $object, array $attributes);
 }

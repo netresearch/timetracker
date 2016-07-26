@@ -11,38 +11,19 @@
 
 namespace Symfony\Component\Locale\Stub\DateFormat;
 
+@trigger_error('The '.__NAMESPACE__.'\MinuteTransformer class is deprecated since version 2.3 and will be removed in 3.0. Use the Symfony\Component\Intl\DateFormatter\DateFormat\MinuteTransformer class instead.', E_USER_DEPRECATED);
+
+use Symfony\Component\Intl\DateFormatter\DateFormat\MinuteTransformer as BaseMinuteTransformer;
+
 /**
- * Parser and formatter for minute format
+ * Alias of {@link \Symfony\Component\Intl\DateFormatter\DateFormat\MinuteTransformer}.
  *
- * @author Igor Wiedler <igor@wiedler.ch>
+ * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated since version 2.3, to be removed in 3.0.
+ *             Use {@link \Symfony\Component\Intl\DateFormatter\DateFormat\MinuteTransformer}
+ *             instead.
  */
-class MinuteTransformer extends Transformer
+class MinuteTransformer extends BaseMinuteTransformer
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function format(\DateTime $dateTime, $length)
-    {
-        $minuteOfHour = (int) $dateTime->format('i');
-
-        return $this->padLeft($minuteOfHour, $length);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getReverseMatchingRegExp($length)
-    {
-        return 1 === $length ? '\d{1,2}' : '\d{'.$length.'}';
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function extractDateOptions($matched, $length)
-    {
-        return array(
-            'minute' => (int) $matched,
-        );
-    }
 }

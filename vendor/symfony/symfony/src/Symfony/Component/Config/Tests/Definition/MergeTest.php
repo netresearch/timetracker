@@ -16,7 +16,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 class MergeTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @expectedException Symfony\Component\Config\Definition\Exception\ForbiddenOverwriteException
+     * @expectedException \Symfony\Component\Config\Definition\Exception\ForbiddenOverwriteException
      */
     public function testForbiddenOverwrite()
     {
@@ -92,7 +92,7 @@ class MergeTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
+     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
      */
     public function testDoesNotAllowNewKeysInSubsequentConfigs()
     {
@@ -115,14 +115,14 @@ class MergeTest extends \PHPUnit_Framework_TestCase
 
         $a = array(
             'test' => array(
-                'a' => array('value' => 'foo')
-            )
+                'a' => array('value' => 'foo'),
+            ),
         );
 
         $b = array(
             'test' => array(
-                'b' => array('value' => 'foo')
-            )
+                'b' => array('value' => 'foo'),
+            ),
         );
 
         $tree->merge($a, $b);
@@ -157,13 +157,13 @@ class MergeTest extends \PHPUnit_Framework_TestCase
         $b = array(
             'no_deep_merging' => array(
                 'c' => 'd',
-            )
+            ),
         );
 
         $this->assertEquals(array(
             'no_deep_merging' => array(
                 'c' => 'd',
-            )
+            ),
         ), $tree->merge($a, $b));
     }
 

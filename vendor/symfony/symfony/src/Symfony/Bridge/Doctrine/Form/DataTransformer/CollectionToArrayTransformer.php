@@ -36,6 +36,12 @@ class CollectionToArrayTransformer implements DataTransformerInterface
             return array();
         }
 
+        // For cases when the collection getter returns $collection->toArray()
+        // in order to prevent modifications of the returned collection
+        if (is_array($collection)) {
+            return $collection;
+        }
+
         if (!$collection instanceof Collection) {
             throw new TransformationFailedException('Expected a Doctrine\Common\Collections\Collection object.');
         }
@@ -48,7 +54,7 @@ class CollectionToArrayTransformer implements DataTransformerInterface
      *
      * @param mixed $array An array of entities
      *
-     * @return Collection   A collection of entities
+     * @return Collection A collection of entities
      */
     public function reverseTransform($array)
     {

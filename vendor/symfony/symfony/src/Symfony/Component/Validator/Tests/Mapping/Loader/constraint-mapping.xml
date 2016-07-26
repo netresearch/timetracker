@@ -21,6 +21,16 @@
     <!-- Custom constraint with namespace abbreviation-->
     <constraint name="custom:ConstraintB" />
 
+    <!-- Callbacks -->
+    <constraint name="Callback">validateMe</constraint>
+
+    <constraint name="Callback">validateMeStatic</constraint>
+
+    <constraint name="Callback">
+        <value>Symfony\Component\Validator\Tests\Fixtures\CallbackClass</value>
+        <value>callback</value>
+    </constraint>
+
     <!-- PROPERTY CONSTRAINTS -->
 
     <property name="firstName">
@@ -29,7 +39,9 @@
       <constraint name="NotNull" />
 
       <!-- Constraint with single value -->
-      <constraint name="Min">3</constraint>
+      <constraint name="Range">
+         <option name="min">3</option>
+      </constraint>
 
       <!-- Constraint with multiple values -->
       <constraint name="Choice">
@@ -40,14 +52,19 @@
       <!-- Constraint with child constraints -->
       <constraint name="All">
         <constraint name="NotNull" />
-        <constraint name="Min">3</constraint>
+        <constraint name="Range">
+           <option name="min">3</option>
+        </constraint>
+
       </constraint>
 
       <!-- Option with child constraints -->
       <constraint name="All">
         <option name="constraints">
           <constraint name="NotNull" />
-          <constraint name="Min">3</constraint>
+          <constraint name="Range">
+             <option name="min">3</option>
+          </constraint>
         </option>
       </constraint>
 
@@ -56,10 +73,14 @@
         <option name="fields">
           <value key="foo">
             <constraint name="NotNull" />
-            <constraint name="Min">3</constraint>
+            <constraint name="Range">
+               <option name="min">3</option>
+            </constraint>
           </value>
           <value key="bar">
-            <constraint name="Min">5</constraint>
+            <constraint name="Range">
+               <option name="min">5</option>
+            </constraint>
           </value>
         </option>
       </constraint>
@@ -67,7 +88,7 @@
       <!-- Constraint with options -->
       <constraint name="Choice">
         <!-- Option with single value -->
-        <option name="message">Must be one of %choices%</option>
+        <option name="message"> Must be one of %choices% </option>
         <!-- Option with multiple values -->
         <option name="choices">
           <value>A</value>
@@ -80,6 +101,12 @@
 
     <getter property="lastName">
       <constraint name="NotNull" />
+    </getter>
+    <getter property="valid">
+      <constraint name="IsTrue" />
+    </getter>
+    <getter property="permissions">
+      <constraint name="IsTrue" />
     </getter>
   </class>
 

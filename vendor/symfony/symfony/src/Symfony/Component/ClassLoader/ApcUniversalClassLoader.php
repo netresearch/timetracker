@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\ClassLoader;
 
+@trigger_error('The '.__NAMESPACE__.'\ApcUniversalClassLoader class is deprecated since version 2.7 and will be removed in 3.0. Use the Symfony\Component\ClassLoader\ApcClassLoader class instead.', E_USER_DEPRECATED);
+
 /**
  * ApcUniversalClassLoader implements a "universal" autoloader cached in APC for PHP 5.3.
  *
@@ -37,8 +39,8 @@ namespace Symfony\Component\ClassLoader;
  *     // register classes with namespaces
  *     $loader->registerNamespaces(array(
  *         'Symfony\Component' => __DIR__.'/component',
- *         'Symfony'           => __DIR__.'/framework',
- *         'Sensio'            => array(__DIR__.'/src', __DIR__.'/vendor'),
+ *         'Symfony' => __DIR__.'/framework',
+ *         'Sensio' => array(__DIR__.'/src', __DIR__.'/vendor'),
  *     ));
  *
  *     // register a library using the PEAR naming convention
@@ -58,7 +60,8 @@ namespace Symfony\Component\ClassLoader;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Kris Wallsmith <kris@symfony.com>
  *
- * @api
+ * @deprecated since version 2.4, to be removed in 3.0.
+ *             Use the {@link ClassLoader} class instead.
  */
 class ApcUniversalClassLoader extends UniversalClassLoader
 {
@@ -69,7 +72,7 @@ class ApcUniversalClassLoader extends UniversalClassLoader
      *
      * @param string $prefix A prefix to create a namespace in APC
      *
-     * @api
+     * @throws \RuntimeException
      */
     public function __construct($prefix)
     {

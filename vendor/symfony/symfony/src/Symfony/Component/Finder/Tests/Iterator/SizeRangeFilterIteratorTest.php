@@ -30,15 +30,24 @@ class SizeRangeFilterIteratorTest extends RealIteratorTestCase
 
     public function getAcceptData()
     {
+        $lessThan1KGreaterThan05K = array(
+            '.foo',
+            '.git',
+            'foo',
+            'test.php',
+            'toto',
+            'toto/.git',
+        );
+
         return array(
-            array(array(new NumberComparator('< 1K'), new NumberComparator('> 0.5K')), array(sys_get_temp_dir().'/symfony2_finder/.foo', sys_get_temp_dir().'/symfony2_finder/.git', sys_get_temp_dir().'/symfony2_finder/foo', sys_get_temp_dir().'/symfony2_finder/test.php', sys_get_temp_dir().'/symfony2_finder/toto')),
+            array(array(new NumberComparator('< 1K'), new NumberComparator('> 0.5K')), $this->toAbsolute($lessThan1KGreaterThan05K)),
         );
     }
 }
 
 class InnerSizeIterator extends \ArrayIterator
 {
-   public function current()
+    public function current()
     {
         return new \SplFileInfo(parent::current());
     }

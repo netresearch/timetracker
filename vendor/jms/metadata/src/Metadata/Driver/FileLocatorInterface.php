@@ -4,5 +4,11 @@ namespace Metadata\Driver;
 
 interface FileLocatorInterface
 {
-    function findFileForClass(\ReflectionClass $class, $extension);
+    /**
+     * @param \ReflectionClass $class
+     * @param string           $extension
+     *
+     * @return string|null
+     */
+    public function findFileForClass(\ReflectionClass $class, $extension);
 }

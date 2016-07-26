@@ -23,14 +23,27 @@ class EnumNodeTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage $values must contain at least one element.
      */
+    public function testConstructionWithNoValues()
+    {
+        new EnumNode('foo', null, array());
+    }
+
     public function testConstructionWithOneValue()
     {
-        new EnumNode('foo', null, array('foo', 'foo'));
+        $node = new EnumNode('foo', null, array('foo'));
+        $this->assertSame('foo', $node->finalize('foo'));
+    }
+
+    public function testConstructionWithOneDistinctValue()
+    {
+        $node = new EnumNode('foo', null, array('foo', 'foo'));
+        $this->assertSame('foo', $node->finalize('foo'));
     }
 
     /**
-     * @expectedException Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
+     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
      * @expectedExceptionMessage The value "foobar" is not allowed for path "foo". Permissible values: "foo", "bar"
      */
     public function testFinalizeWithInvalidValue()

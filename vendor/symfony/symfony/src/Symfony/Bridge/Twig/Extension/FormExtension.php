@@ -21,7 +21,7 @@ use Symfony\Component\Form\Extension\Core\View\ChoiceView;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class FormExtension extends \Twig_Extension
+class FormExtension extends \Twig_Extension implements \Twig_Extension_InitRuntimeInterface
 {
     /**
      * This property is public so that it can be accessed directly from compiled
@@ -61,13 +61,16 @@ class FormExtension extends \Twig_Extension
     public function getFunctions()
     {
         return array(
-            'form_enctype' => new \Twig_Function_Node('Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', array('is_safe' => array('html'))),
-            'form_widget'  => new \Twig_Function_Node('Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', array('is_safe' => array('html'))),
-            'form_errors'  => new \Twig_Function_Node('Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', array('is_safe' => array('html'))),
-            'form_label'   => new \Twig_Function_Node('Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', array('is_safe' => array('html'))),
-            'form_row'     => new \Twig_Function_Node('Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', array('is_safe' => array('html'))),
-            'form_rest'    => new \Twig_Function_Node('Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', array('is_safe' => array('html'))),
-            'csrf_token'   => new \Twig_Function_Method($this, 'renderer->renderCsrfToken'),
+            new \Twig_SimpleFunction('form_enctype', null, array('node_class' => 'Symfony\Bridge\Twig\Node\FormEnctypeNode', 'is_safe' => array('html'), 'deprecated' => true, 'alternative' => 'form_start')),
+            new \Twig_SimpleFunction('form_widget', null, array('node_class' => 'Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('form_errors', null, array('node_class' => 'Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('form_label', null, array('node_class' => 'Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('form_row', null, array('node_class' => 'Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('form_rest', null, array('node_class' => 'Symfony\Bridge\Twig\Node\SearchAndRenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('form', null, array('node_class' => 'Symfony\Bridge\Twig\Node\RenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('form_start', null, array('node_class' => 'Symfony\Bridge\Twig\Node\RenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('form_end', null, array('node_class' => 'Symfony\Bridge\Twig\Node\RenderBlockNode', 'is_safe' => array('html'))),
+            new \Twig_SimpleFunction('csrf_token', array($this, 'renderCsrfToken')),
         );
     }
 
@@ -77,7 +80,7 @@ class FormExtension extends \Twig_Extension
     public function getFilters()
     {
         return array(
-            'humanize' => new \Twig_Filter_Method($this, 'renderer->humanize'),
+            new \Twig_SimpleFilter('humanize', array($this, 'humanize')),
         );
     }
 
@@ -87,8 +90,32 @@ class FormExtension extends \Twig_Extension
     public function getTests()
     {
         return array(
-            'selectedchoice' => new \Twig_Test_Method($this, 'isSelectedChoice'),
+            new \Twig_SimpleTest('selectedchoice', array($this, 'isSelectedChoice')),
         );
+    }
+
+    /**
+     * Renders a CSRF token.
+     *
+     * @param string $intention The intention of the protected action.
+     *
+     * @return string A CSRF token.
+     */
+    public function renderCsrfToken($intention)
+    {
+        return $this->renderer->renderCsrfToken($intention);
+    }
+
+    /**
+     * Makes a technical name human readable.
+     *
+     * @param string $text The text to humanize.
+     *
+     * @return string The humanized text.
+     */
+    public function humanize($text)
+    {
+        return $this->renderer->humanize($text);
     }
 
     /**
@@ -110,14 +137,14 @@ class FormExtension extends \Twig_Extension
      * @param ChoiceView   $choice        The choice to check.
      * @param string|array $selectedValue The selected value to compare.
      *
-     * @return Boolean Whether the choice is selected.
+     * @return bool Whether the choice is selected.
      *
      * @see ChoiceView::isSelected()
      */
     public function isSelectedChoice(ChoiceView $choice, $selectedValue)
     {
         if (is_array($selectedValue)) {
-            return false !== array_search($choice->value, $selectedValue, true);
+            return in_array($choice->value, $selectedValue, true);
         }
 
         return $choice->value === $selectedValue;

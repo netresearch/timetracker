@@ -19,8 +19,6 @@
 
 namespace Doctrine\Common\Persistence;
 
-use Doctrine\Common\Persistence\ManagerRegistry;
-
 /**
  * Abstract implementation of the ManagerRegistry contract.
  *
@@ -192,13 +190,18 @@ abstract class AbstractManagerRegistry implements ManagerRegistry
     {
         // Check for namespace alias
         if (strpos($class, ':') !== false) {
-            list($namespaceAlias, $simpleClassName) = explode(':', $class);
+            list($namespaceAlias, $simpleClassName) = explode(':', $class, 2);
             $class = $this->getAliasNamespace($namespaceAlias) . '\\' . $simpleClassName;
         }
 
         $proxyClass = new \ReflectionClass($class);
+
         if ($proxyClass->implementsInterface($this->proxyInterfaceName)) {
-            $class = $proxyClass->getParentClass()->getName();
+            if (! $parentClass = $proxyClass->getParentClass()) {
+                return null;
+            }
+
+            $class = $parentClass->getName();
         }
 
         foreach ($this->managers as $id) {

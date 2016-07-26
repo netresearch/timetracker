@@ -11,25 +11,13 @@
 
 namespace Symfony\Component\Validator\Constraints;
 
-use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\ConstraintValidator;
+@trigger_error('The '.__NAMESPACE__.'\FalseValidator class is deprecated since version 2.7 and will be removed in 3.0. Use the IsFalseValidator class in the same namespace instead.', E_USER_DEPRECATED);
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @api
+ * @deprecated since version 2.7, to be removed in 3.0. Use IsFalseValidator instead.
  */
-class FalseValidator extends ConstraintValidator
+class FalseValidator extends IsFalseValidator
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($value, Constraint $constraint)
-    {
-        if (null === $value || false === $value || 0 === $value || '0' === $value) {
-            return;
-        }
-
-        $this->context->addViolation($constraint->message);
-    }
 }

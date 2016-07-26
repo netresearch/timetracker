@@ -12,9 +12,7 @@
 namespace Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory;
 
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
-
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
-
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -27,10 +25,11 @@ class X509Factory implements SecurityFactoryInterface
 {
     public function create(ContainerBuilder $container, $id, $config, $userProvider, $defaultEntryPoint)
     {
-        $provider = 'security.authentication.provider.pre_authenticated.'.$id;
+        $providerId = 'security.authentication.provider.pre_authenticated.'.$id;
         $container
-            ->setDefinition($provider, new DefinitionDecorator('security.authentication.provider.pre_authenticated'))
+            ->setDefinition($providerId, new DefinitionDecorator('security.authentication.provider.pre_authenticated'))
             ->replaceArgument(0, new Reference($userProvider))
+            ->replaceArgument(1, new Reference('security.user_checker.'.$id))
             ->addArgument($id)
         ;
 
@@ -41,7 +40,7 @@ class X509Factory implements SecurityFactoryInterface
         $listener->replaceArgument(3, $config['user']);
         $listener->replaceArgument(4, $config['credentials']);
 
-        return array($provider, $listenerId, $defaultEntryPoint);
+        return array($providerId, $listenerId, $defaultEntryPoint);
     }
 
     public function getPosition()

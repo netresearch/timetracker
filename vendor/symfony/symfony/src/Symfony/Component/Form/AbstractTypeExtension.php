@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Form;
 
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
@@ -44,33 +45,19 @@ abstract class AbstractTypeExtension implements FormTypeExtensionInterface
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setDefaults($this->getDefaultOptions());
-        $resolver->addAllowedValues($this->getAllowedOptionValues());
+        if (!$resolver instanceof OptionsResolver) {
+            throw new \InvalidArgumentException(sprintf('Custom resolver "%s" must extend "Symfony\Component\OptionsResolver\OptionsResolver".', get_class($resolver)));
+        }
+
+        $this->configureOptions($resolver);
     }
 
     /**
-     * Overrides the default options form the extended type.
+     * Configures the options for this type.
      *
-     * @return array
-     *
-     * @deprecated Deprecated since version 2.1, to be removed in 2.3.
-     *             Use {@link setDefaultOptions()} instead.
+     * @param OptionsResolver $resolver The resolver for the options.
      */
-    public function getDefaultOptions()
+    public function configureOptions(OptionsResolver $resolver)
     {
-        return array();
-    }
-
-    /**
-     * Returns the allowed option values for each option (if any).
-     *
-     * @return array The allowed option values
-     *
-     * @deprecated Deprecated since version 2.1, to be removed in 2.3.
-     *             Use {@link setDefaultOptions()} instead.
-     */
-    public function getAllowedOptionValues()
-    {
-        return array();
     }
 }

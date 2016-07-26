@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Extension;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * ConfigurationExtensionInterface is the interface implemented by container extension classes.
@@ -21,9 +22,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 interface ConfigurationExtensionInterface
 {
     /**
-     * Returns extension configuration
+     * Returns extension configuration.
      *
-     * @param array            $config    $config    An array of configuration values
+     * @param array            $config    An array of configuration values
      * @param ContainerBuilder $container A ContainerBuilder instance
      *
      * @return ConfigurationInterface|null The configuration or null

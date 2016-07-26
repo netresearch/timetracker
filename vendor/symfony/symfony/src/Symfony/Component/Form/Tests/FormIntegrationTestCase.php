@@ -11,31 +11,20 @@
 
 namespace Symfony\Component\Form\Tests;
 
-use Symfony\Component\Form\Forms;
+use Symfony\Component\Form\Test\FormIntegrationTestCase as BaseFormIntegrationTestCase;
 
 /**
- * @author Bernhard Schussek <bschussek@gmail.com>
+ * @deprecated since version 2.3, to be removed in 3.0.
+ *             Use {@link \Symfony\Component\Form\Test\FormIntegrationTestCase} instead.
  */
-abstract class FormIntegrationTestCase extends \PHPUnit_Framework_TestCase
+abstract class FormIntegrationTestCase extends BaseFormIntegrationTestCase
 {
     /**
-     * @var \Symfony\Component\Form\FormFactoryInterface
+     * {@inheritdoc}
      */
-    protected $factory;
-
     protected function setUp()
     {
-        if (!class_exists('Symfony\Component\EventDispatcher\EventDispatcher')) {
-            $this->markTestSkipped('The "EventDispatcher" component is not available');
-        }
-
-        $this->factory = Forms::createFormFactoryBuilder()
-            ->addExtensions($this->getExtensions())
-            ->getFormFactory();
-    }
-
-    protected function getExtensions()
-    {
-        return array();
+        @trigger_error('The '.__CLASS__.' class is deprecated since version 2.3 and will be removed in 3.0. Use the Symfony\Component\Form\Test\FormIntegrationTestCase class instead.', E_USER_DEPRECATED);
+        parent::setUp();
     }
 }

@@ -11,25 +11,29 @@
 
 namespace Symfony\Component\HttpKernel\Profiler;
 
-use Memcache;
+@trigger_error('The '.__NAMESPACE__.'\MemcacheProfilerStorage class is deprecated since Symfony 2.8 and will be removed in 3.0. Use FileProfilerStorage instead.', E_USER_DEPRECATED);
 
 /**
- * Memcache Profiler Storage
+ * Memcache Profiler Storage.
  *
  * @author Andrej Hudec <pulzarraider@gmail.com>
+ *
+ * @deprecated Deprecated since Symfony 2.8, to be removed in Symfony 3.0.
+ *             Use {@link FileProfilerStorage} instead.
  */
 class MemcacheProfilerStorage extends BaseMemcacheProfilerStorage
 {
-
     /**
-     * @var Memcache
+     * @var \Memcache
      */
     private $memcache;
 
     /**
-     * Internal convenience method that returns the instance of the Memcache
+     * Internal convenience method that returns the instance of the Memcache.
      *
-     * @return Memcache
+     * @return \Memcache
+     *
+     * @throws \RuntimeException
      */
     protected function getMemcache()
     {
@@ -41,8 +45,8 @@ class MemcacheProfilerStorage extends BaseMemcacheProfilerStorage
             $host = $matches[1] ?: $matches[2];
             $port = $matches[3];
 
-            $memcache = new Memcache;
-            $memcache->addServer($host, $port);
+            $memcache = new \Memcache();
+            $memcache->addserver($host, $port);
 
             $this->memcache = $memcache;
         }
@@ -51,9 +55,9 @@ class MemcacheProfilerStorage extends BaseMemcacheProfilerStorage
     }
 
     /**
-     * Set instance of the Memcache
+     * Set instance of the Memcache.
      *
-     * @param Memcache $memcache
+     * @param \Memcache $memcache
      */
     public function setMemcache($memcache)
     {
@@ -92,8 +96,7 @@ class MemcacheProfilerStorage extends BaseMemcacheProfilerStorage
         $memcache = $this->getMemcache();
 
         if (method_exists($memcache, 'append')) {
-
-            //Memcache v3.0
+            // Memcache v3.0
             if (!$result = $memcache->append($key, $value, false, $expiration)) {
                 return $memcache->set($key, $value, false, $expiration);
             }
@@ -101,10 +104,9 @@ class MemcacheProfilerStorage extends BaseMemcacheProfilerStorage
             return $result;
         }
 
-        //simulate append in Memcache <3.0
+        // simulate append in Memcache <3.0
         $content = $memcache->get($key);
 
-        return $memcache->set($key, $content . $value, false, $expiration);
+        return $memcache->set($key, $content.$value, false, $expiration);
     }
-
 }

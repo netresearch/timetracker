@@ -11,27 +11,13 @@
 
 namespace Symfony\Component\Validator\Constraints;
 
-use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\ConstraintValidator;
+@trigger_error('The '.__NAMESPACE__.'\TrueValidator class is deprecated since version 2.7 and will be removed in 3.0. Use the IsTrueValidator class in the same namespace instead.', E_USER_DEPRECATED);
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @api
+ * @deprecated since version 2.7, to be removed in 3.0. Use IsTrueValidator instead.
  */
-class TrueValidator extends ConstraintValidator
+class TrueValidator extends IsTrueValidator
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function validate($value, Constraint $constraint)
-    {
-        if (null === $value) {
-            return;
-        }
-
-        if (true !== $value && 1 !== $value && '1' !== $value) {
-            $this->context->addViolation($constraint->message);
-        }
-    }
 }

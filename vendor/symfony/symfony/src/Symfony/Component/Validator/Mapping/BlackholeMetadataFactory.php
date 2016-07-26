@@ -11,15 +11,18 @@
 
 namespace Symfony\Component\Validator\Mapping;
 
+@trigger_error('The '.__NAMESPACE__.'\BlackholeMetadataFactory class is deprecated since version 2.5 and will be removed in 3.0. Use the Symfony\Component\Validator\Mapping\Factory\BlackHoleMetadataFactory class instead.', E_USER_DEPRECATED);
+
+use Symfony\Component\Validator\Mapping\Factory\BlackHoleMetadataFactory as MappingBlackHoleMetadataFactory;
+
 /**
- * Simple implementation of ClassMetadataFactoryInterface that can be used when using ValidatorInterface::validateValue().
+ * Alias of {@link Factory\BlackHoleMetadataFactory}.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ *
+ * @deprecated since version 2.5, to be removed in 3.0.
+ *             Use {@link Factory\BlackHoleMetadataFactory} instead.
  */
-class BlackholeMetadataFactory implements ClassMetadataFactoryInterface
+class BlackholeMetadataFactory extends MappingBlackHoleMetadataFactory
 {
-    public function getClassMetadata($class)
-    {
-        throw new \LogicException('BlackholeClassMetadataFactory only works with ValidatorInterface::validateValue().');
-    }
 }

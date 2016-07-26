@@ -12,6 +12,7 @@
 namespace Symfony\Component\Routing\Loader;
 
 use Symfony\Component\Config\Loader\Loader;
+use Symfony\Component\Routing\RouteCollection;
 
 /**
  * ClosureLoader loads routes from a PHP closure.
@@ -19,28 +20,24 @@ use Symfony\Component\Config\Loader\Loader;
  * The Closure must return a RouteCollection instance.
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @api
  */
 class ClosureLoader extends Loader
 {
     /**
      * Loads a Closure.
      *
-     * @param \Closure $closure A Closure
-     * @param string   $type    The resource type
+     * @param \Closure    $closure A Closure
+     * @param string|null $type    The resource type
      *
-     * @api
+     * @return RouteCollection A RouteCollection instance
      */
     public function load($closure, $type = null)
     {
-        return call_user_func($closure);
+        return $closure();
     }
 
     /**
      * {@inheritdoc}
-     *
-     * @api
      */
     public function supports($resource, $type = null)
     {

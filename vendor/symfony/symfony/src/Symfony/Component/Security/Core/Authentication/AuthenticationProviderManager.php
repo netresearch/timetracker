@@ -38,7 +38,9 @@ class AuthenticationProviderManager implements AuthenticationManagerInterface
      * Constructor.
      *
      * @param AuthenticationProviderInterface[] $providers        An array of AuthenticationProviderInterface instances
-     * @param Boolean                           $eraseCredentials Whether to erase credentials after authentication or not
+     * @param bool                              $eraseCredentials Whether to erase credentials after authentication or not
+     *
+     * @throws \InvalidArgumentException
      */
     public function __construct(array $providers, $eraseCredentials = true)
     {
@@ -46,8 +48,14 @@ class AuthenticationProviderManager implements AuthenticationManagerInterface
             throw new \InvalidArgumentException('You must at least add one authentication provider.');
         }
 
+        foreach ($providers as $provider) {
+            if (!$provider instanceof AuthenticationProviderInterface) {
+                throw new \InvalidArgumentException(sprintf('Provider "%s" must implement the AuthenticationProviderInterface.', get_class($provider)));
+            }
+        }
+
         $this->providers = $providers;
-        $this->eraseCredentials = (Boolean) $eraseCredentials;
+        $this->eraseCredentials = (bool) $eraseCredentials;
     }
 
     public function setEventDispatcher(EventDispatcherInterface $dispatcher)
@@ -75,7 +83,7 @@ class AuthenticationProviderManager implements AuthenticationManagerInterface
                     break;
                 }
             } catch (AccountStatusException $e) {
-                $e->setExtraInformation($token);
+                $e->setToken($token);
 
                 throw $e;
             } catch (AuthenticationException $e) {
@@ -103,7 +111,7 @@ class AuthenticationProviderManager implements AuthenticationManagerInterface
             $this->eventDispatcher->dispatch(AuthenticationEvents::AUTHENTICATION_FAILURE, new AuthenticationFailureEvent($token, $lastException));
         }
 
-        $lastException->setExtraInformation($token);
+        $lastException->setToken($token);
 
         throw $lastException;
     }

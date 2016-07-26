@@ -16,13 +16,6 @@ use Symfony\Component\Config\Resource\FileResource;
 
 class CsvFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
-    protected function setUp()
-    {
-        if (!class_exists('Symfony\Component\Config\Loader\Loader')) {
-            $this->markTestSkipped('The "Config" component is not available');
-        }
-    }
-
     public function testLoad()
     {
         $loader = new CsvFileLoader();
@@ -46,9 +39,9 @@ class CsvFileLoaderTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException \Symfony\Component\Translation\Exception\NotFoundResourceException
      */
-    public function testLoadThrowsAnExceptionIfFileNotExists()
+    public function testLoadNonExistingResource()
     {
         $loader = new CsvFileLoader();
         $resource = __DIR__.'/../fixtures/not-exists.csv';
@@ -56,9 +49,9 @@ class CsvFileLoaderTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException \Symfony\Component\Translation\Exception\InvalidResourceException
      */
-    public function testLoadThrowsAnExceptionIfFileNotLocal()
+    public function testLoadNonLocalResource()
     {
         $loader = new CsvFileLoader();
         $resource = 'http://example.com/resources.csv';

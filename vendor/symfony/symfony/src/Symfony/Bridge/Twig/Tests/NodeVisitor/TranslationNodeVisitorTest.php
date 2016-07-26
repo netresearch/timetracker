@@ -12,14 +12,13 @@
 namespace Symfony\Bridge\Twig\Tests\NodeVisitor;
 
 use Symfony\Bridge\Twig\NodeVisitor\TranslationNodeVisitor;
-use Symfony\Bridge\Twig\Tests\TestCase;
 
-class TranslationNodeVisitorTest extends TestCase
+class TranslationNodeVisitorTest extends \PHPUnit_Framework_TestCase
 {
     /** @dataProvider getMessagesExtractionTestData */
     public function testMessagesExtraction(\Twig_Node $node, array $expectedMessages)
     {
-        $env = new \Twig_Environment(new \Twig_Loader_String(), array('cache' => false, 'autoescape' => false, 'optimizations' => 0));
+        $env = new \Twig_Environment($this->getMock('Twig_LoaderInterface'), array('cache' => false, 'autoescape' => false, 'optimizations' => 0));
         $visitor = new TranslationNodeVisitor();
         $visitor->enable();
         $visitor->enterNode($node, $env);

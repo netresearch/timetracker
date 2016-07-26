@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Validator\Tests\Mapping\Loader;
 
-use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
 
 class FilesLoaderTest extends \PHPUnit_Framework_TestCase
 {
@@ -34,10 +34,10 @@ class FilesLoaderTest extends \PHPUnit_Framework_TestCase
     public function getFilesLoader(LoaderInterface $loader)
     {
         return $this->getMockForAbstractClass('Symfony\Component\Validator\Tests\Fixtures\FilesLoader', array(array(
-            __DIR__ . '/constraint-mapping.xml',
-            __DIR__ . '/constraint-mapping.yaml',
-            __DIR__ . '/constraint-mapping.test',
-            __DIR__ . '/constraint-mapping.txt',
+            __DIR__.'/constraint-mapping.xml',
+            __DIR__.'/constraint-mapping.yaml',
+            __DIR__.'/constraint-mapping.test',
+            __DIR__.'/constraint-mapping.txt',
         ), $loader));
     }
 

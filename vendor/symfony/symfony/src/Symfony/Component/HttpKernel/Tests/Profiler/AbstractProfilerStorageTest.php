@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Symfony package.
  *
@@ -16,7 +17,7 @@ abstract class AbstractProfilerStorageTest extends \PHPUnit_Framework_TestCase
 {
     public function testStore()
     {
-        for ($i = 0; $i < 10; $i ++) {
+        for ($i = 0; $i < 10; ++$i) {
             $profile = new Profile('token_'.$i);
             $profile->setIp('127.0.0.1');
             $profile->setUrl('http://foo.bar');
@@ -43,7 +44,7 @@ abstract class AbstractProfilerStorageTest extends \PHPUnit_Framework_TestCase
 
         // Load them from storage
         $parentProfile = $this->getStorage()->read('token_parent');
-        $childProfile  = $this->getStorage()->read('token_child');
+        $childProfile = $this->getStorage()->read('token_child');
 
         // Check child has link to parent
         $this->assertNotNull($childProfile->getParent());
@@ -156,7 +157,9 @@ abstract class AbstractProfilerStorageTest extends \PHPUnit_Framework_TestCase
     public function testStoreTime()
     {
         $dt = new \DateTime('now');
-        for ($i = 0; $i < 3; $i++) {
+        $start = $dt->getTimestamp();
+
+        for ($i = 0; $i < 3; ++$i) {
             $dt->modify('+1 minute');
             $profile = new Profile('time_'.$i);
             $profile->setIp('127.0.0.1');
@@ -165,16 +168,20 @@ abstract class AbstractProfilerStorageTest extends \PHPUnit_Framework_TestCase
             $profile->setMethod('GET');
             $this->getStorage()->write($profile);
         }
-        $records = $this->getStorage()->find('', '', 3, 'GET');
+
+        $records = $this->getStorage()->find('', '', 3, 'GET', $start, time() + 3 * 60);
         $this->assertCount(3, $records, '->find() returns all previously added records');
         $this->assertEquals($records[0]['token'], 'time_2', '->find() returns records ordered by time in descendant order');
         $this->assertEquals($records[1]['token'], 'time_1', '->find() returns records ordered by time in descendant order');
         $this->assertEquals($records[2]['token'], 'time_0', '->find() returns records ordered by time in descendant order');
+
+        $records = $this->getStorage()->find('', '', 3, 'GET', $start, time() + 2 * 60);
+        $this->assertCount(2, $records, '->find() should return only first two of the previously added records');
     }
 
     public function testRetrieveByEmptyUrlAndIp()
     {
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 5; ++$i) {
             $profile = new Profile('token_'.$i);
             $profile->setMethod('GET');
             $this->getStorage()->write($profile);
@@ -186,7 +193,7 @@ abstract class AbstractProfilerStorageTest extends \PHPUnit_Framework_TestCase
     public function testRetrieveByMethodAndLimit()
     {
         foreach (array('POST', 'GET') as $method) {
-            for ($i = 0; $i < 5; $i++) {
+            for ($i = 0; $i < 5; ++$i) {
                 $profile = new Profile('token_'.$i.$method);
                 $profile->setMethod($method);
                 $this->getStorage()->write($profile);
@@ -226,8 +233,8 @@ abstract class AbstractProfilerStorageTest extends \PHPUnit_Framework_TestCase
 
     public function testDuplicates()
     {
-        for ($i = 1; $i <= 5; $i++) {
-            $profile = new Profile('foo' . $i);
+        for ($i = 1; $i <= 5; ++$i) {
+            $profile = new Profile('foo'.$i);
             $profile->setIp('127.0.0.1');
             $profile->setUrl('http://example.net/');
             $profile->setMethod('GET');
@@ -238,6 +245,22 @@ abstract class AbstractProfilerStorageTest extends \PHPUnit_Framework_TestCase
             $this->getStorage()->write($profile);
         }
         $this->assertCount(3, $this->getStorage()->find('127.0.0.1', 'http://example.net/', 3, 'GET'), '->find() method returns incorrect number of entries');
+    }
+
+    public function testStatusCode()
+    {
+        $profile = new Profile('token1');
+        $profile->setStatusCode(200);
+        $this->getStorage()->write($profile);
+
+        $profile = new Profile('token2');
+        $profile->setStatusCode(404);
+        $this->getStorage()->write($profile);
+
+        $tokens = $this->getStorage()->find('', '', 10, '');
+        $this->assertCount(2, $tokens);
+        $this->assertContains($tokens[0]['status_code'], array(200, 404));
+        $this->assertContains($tokens[1]['status_code'], array(200, 404));
     }
 
     /**

@@ -15,20 +15,19 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Allows to create a response for the return value of a controller
+ * Allows to create a response for the return value of a controller.
  *
  * Call setResponse() to set the response that will be returned for the
  * current request. The propagation of this event is stopped as soon as a
  * response is set.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @api
  */
 class GetResponseForControllerResultEvent extends GetResponseEvent
 {
     /**
-     * The return value of the controller
+     * The return value of the controller.
+     *
      * @var mixed
      */
     private $controllerResult;
@@ -41,14 +40,22 @@ class GetResponseForControllerResultEvent extends GetResponseEvent
     }
 
     /**
-     * Returns the return value of the controller
+     * Returns the return value of the controller.
      *
      * @return mixed The controller return value
-     *
-     * @api
      */
     public function getControllerResult()
     {
         return $this->controllerResult;
+    }
+
+    /**
+     * Assigns the return value of the controller.
+     *
+     * @param mixed $controllerResult The controller return value
+     */
+    public function setControllerResult($controllerResult)
+    {
+        $this->controllerResult = $controllerResult;
     }
 }

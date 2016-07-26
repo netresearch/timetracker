@@ -11,12 +11,13 @@
 
 namespace Symfony\Bundle\TwigBundle\Loader;
 
-use Symfony\Component\Templating\TemplateNameParserInterface;
 use Symfony\Component\Config\FileLocatorInterface;
+use Symfony\Component\Templating\TemplateNameParserInterface;
+use Symfony\Component\Templating\TemplateReferenceInterface;
 
 /**
  * FilesystemLoader extends the default Twig filesystem loader
- * to work with the Symfony2 paths.
+ * to work with the Symfony paths and template references.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
@@ -37,7 +38,16 @@ class FilesystemLoader extends \Twig_Loader_Filesystem
 
         $this->locator = $locator;
         $this->parser = $parser;
-        $this->cache = array();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * The name parameter might also be a TemplateReferenceInterface.
+     */
+    public function exists($name)
+    {
+        return parent::exists((string) $name);
     }
 
     /**
@@ -53,7 +63,7 @@ class FilesystemLoader extends \Twig_Loader_Filesystem
      *
      * @throws \Twig_Error_Loader if the template could not be found
      */
-    protected function findTemplate($template)
+    protected function findTemplate($template, $throw = true)
     {
         $logicalName = (string) $template;
 
@@ -64,16 +74,15 @@ class FilesystemLoader extends \Twig_Loader_Filesystem
         $file = null;
         $previous = null;
         try {
-            $template = $this->parser->parse($template);
+            $file = parent::findTemplate($logicalName);
+        } catch (\Twig_Error_Loader $e) {
+            $previous = $e;
+
+            // for BC
             try {
+                $template = $this->parser->parse($template);
                 $file = $this->locator->locate($template);
-            } catch (\InvalidArgumentException $e) {
-                $previous = $e;
-            }
-        } catch (\Exception $e) {
-            try {
-                $file = parent::findTemplate($template);
-            } catch (\Twig_Error_Loader $e) {
+            } catch (\Exception $e) {
                 $previous = $e;
             }
         }

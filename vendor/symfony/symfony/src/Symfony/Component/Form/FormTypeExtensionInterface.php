@@ -39,9 +39,9 @@ interface FormTypeExtensionInterface
      *
      * @see FormTypeInterface::buildView()
      *
-     * @param FormView $view    The view
-     * @param FormInterface     $form    The form
-     * @param array             $options The options
+     * @param FormView      $view    The view
+     * @param FormInterface $form    The form
+     * @param array         $options The options
      */
     public function buildView(FormView $view, FormInterface $form, array $options);
 
@@ -53,9 +53,9 @@ interface FormTypeExtensionInterface
      *
      * @see FormTypeInterface::finishView()
      *
-     * @param FormView $view    The view
-     * @param FormInterface     $form    The form
-     * @param array             $options The options
+     * @param FormView      $view    The view
+     * @param FormInterface $form    The form
+     * @param array         $options The options
      */
     public function finishView(FormView $view, FormInterface $form, array $options);
 
@@ -63,6 +63,10 @@ interface FormTypeExtensionInterface
      * Overrides the default options from the extended type.
      *
      * @param OptionsResolverInterface $resolver The resolver for the options.
+     *
+     * @deprecated since version 2.7, to be removed in 3.0.
+     *             Use the method configureOptions instead. This method will be
+     *             added to the FormTypeExtensionInterface with Symfony 3.0
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver);
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * @author      Michael Lühr <michael.luehr@netresearch.de> 
+ * @author      Michael Lühr <michael.luehr@netresearch.de>
  * @category    Netresearch
  * @package     ${MODULENAME}
  * @copyright   Copyright (c) 2013 Netresearch GmbH & Co. KG (http://www.netresearch.de)
@@ -46,6 +46,8 @@ class ExternalTicketSystem
 
     /**
      * @param null $password
+     *
+     * @return $this
      */
     public function setPassword($password)
     {
@@ -64,6 +66,8 @@ class ExternalTicketSystem
 
     /**
      * @param null $url
+     *
+     * @return $this
      */
     public function setUrl($url)
     {
@@ -82,6 +86,8 @@ class ExternalTicketSystem
 
     /**
      * @param null $id
+     *
+     * @return $this
      */
     public function setId($id)
     {
@@ -111,4 +117,4 @@ class ExternalTicketSystem
     {
         return $this->tickets;
     }
-} 
+}

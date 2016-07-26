@@ -12,22 +12,47 @@
 namespace Symfony\Component\Form\Util;
 
 /**
- * Iterator that traverses fields of a field group
+ * Iterator that traverses an array of forms.
  *
- * If the iterator encounters a virtual field group, it enters the field
- * group and traverses its children as well.
+ * You can wrap the iterator into a {@link \RecursiveIterator} in order to
+ * enter any child form that inherits its parent's data and iterate the children
+ * of that form as well.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated since version 2.3, to be removed in 3.0.
+ *             Use {@link InheritDataAwareIterator} instead.
  */
-class VirtualFormAwareIterator extends \ArrayIterator implements \RecursiveIterator
+class VirtualFormAwareIterator extends \IteratorIterator implements \RecursiveIterator
 {
-    public function getChildren()
+    public function __construct(\Traversable $iterator)
     {
-        return new self($this->current()->getChildren());
+        /*
+         * Prevent to trigger deprecation notice when already using the
+         * InheritDataAwareIterator class that extends this deprecated one.
+         * The {@link Symfony\Component\Form\Util\InheritDataAwareIterator::__construct} method
+         * forces this argument to false.
+         */
+        if (__CLASS__ === get_class($this)) {
+            @trigger_error('The '.__CLASS__.' class is deprecated since version 2.3 and will be removed in 3.0. Use the Symfony\Component\Form\Util\InheritDataAwareIterator class instead.', E_USER_DEPRECATED);
+        }
+
+        parent::__construct($iterator);
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function getChildren()
+    {
+        return new static($this->current());
+    }
+
+    /**
+     *{@inheritdoc}
+     */
     public function hasChildren()
     {
-        return $this->current()->getConfig()->getVirtual();
+        return (bool) $this->current()->getConfig()->getInheritData();
     }
 }

@@ -15,8 +15,6 @@ namespace Symfony\Component\HttpFoundation;
  * ParameterBag is a container for key/value pairs.
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @api
  */
 class ParameterBag implements \IteratorAggregate, \Countable
 {
@@ -31,8 +29,6 @@ class ParameterBag implements \IteratorAggregate, \Countable
      * Constructor.
      *
      * @param array $parameters An array of parameters
-     *
-     * @api
      */
     public function __construct(array $parameters = array())
     {
@@ -43,8 +39,6 @@ class ParameterBag implements \IteratorAggregate, \Countable
      * Returns the parameters.
      *
      * @return array An array of parameters
-     *
-     * @api
      */
     public function all()
     {
@@ -55,8 +49,6 @@ class ParameterBag implements \IteratorAggregate, \Countable
      * Returns the parameter keys.
      *
      * @return array An array of parameter keys
-     *
-     * @api
      */
     public function keys()
     {
@@ -67,8 +59,6 @@ class ParameterBag implements \IteratorAggregate, \Countable
      * Replaces the current parameters by a new set.
      *
      * @param array $parameters An array of parameters
-     *
-     * @api
      */
     public function replace(array $parameters = array())
     {
@@ -79,8 +69,6 @@ class ParameterBag implements \IteratorAggregate, \Countable
      * Adds parameters.
      *
      * @param array $parameters An array of parameters
-     *
-     * @api
      */
     public function add(array $parameters = array())
     {
@@ -90,29 +78,35 @@ class ParameterBag implements \IteratorAggregate, \Countable
     /**
      * Returns a parameter by name.
      *
-     * @param string  $path    The key
-     * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
+     * Note: Finding deep items is deprecated since version 2.8, to be removed in 3.0.
+     *
+     * @param string $key     The key
+     * @param mixed  $default The default value if the parameter key does not exist
+     * @param bool   $deep    If true, a path like foo[bar] will find deeper items
      *
      * @return mixed
      *
-     * @api
+     * @throws \InvalidArgumentException
      */
-    public function get($path, $default = null, $deep = false)
+    public function get($key, $default = null, $deep = false)
     {
-        if (!$deep || false === $pos = strpos($path, '[')) {
-            return array_key_exists($path, $this->parameters) ? $this->parameters[$path] : $default;
+        if ($deep) {
+            @trigger_error('Using paths to find deeper items in '.__METHOD__.' is deprecated since version 2.8 and will be removed in 3.0. Filter the returned value in your own code instead.', E_USER_DEPRECATED);
         }
 
-        $root = substr($path, 0, $pos);
+        if (!$deep || false === $pos = strpos($key, '[')) {
+            return array_key_exists($key, $this->parameters) ? $this->parameters[$key] : $default;
+        }
+
+        $root = substr($key, 0, $pos);
         if (!array_key_exists($root, $this->parameters)) {
             return $default;
         }
 
         $value = $this->parameters[$root];
         $currentKey = null;
-        for ($i = $pos, $c = strlen($path); $i < $c; $i++) {
-            $char = $path[$i];
+        for ($i = $pos, $c = strlen($key); $i < $c; ++$i) {
+            $char = $key[$i];
 
             if ('[' === $char) {
                 if (null !== $currentKey) {
@@ -152,8 +146,6 @@ class ParameterBag implements \IteratorAggregate, \Countable
      *
      * @param string $key   The key
      * @param mixed  $value The value
-     *
-     * @api
      */
     public function set($key, $value)
     {
@@ -165,9 +157,7 @@ class ParameterBag implements \IteratorAggregate, \Countable
      *
      * @param string $key The key
      *
-     * @return Boolean true if the parameter exists, false otherwise
-     *
-     * @api
+     * @return bool true if the parameter exists, false otherwise
      */
     public function has($key)
     {
@@ -178,8 +168,6 @@ class ParameterBag implements \IteratorAggregate, \Countable
      * Removes a parameter.
      *
      * @param string $key The key
-     *
-     * @api
      */
     public function remove($key)
     {
@@ -189,13 +177,11 @@ class ParameterBag implements \IteratorAggregate, \Countable
     /**
      * Returns the alphabetic characters of the parameter value.
      *
-     * @param string  $key     The parameter key
-     * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
+     * @param string $key     The parameter key
+     * @param string $default The default value if the parameter key does not exist
+     * @param bool   $deep    If true, a path like foo[bar] will find deeper items
      *
      * @return string The filtered value
-     *
-     * @api
      */
     public function getAlpha($key, $default = '', $deep = false)
     {
@@ -205,13 +191,11 @@ class ParameterBag implements \IteratorAggregate, \Countable
     /**
      * Returns the alphabetic characters and digits of the parameter value.
      *
-     * @param string  $key     The parameter key
-     * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
+     * @param string $key     The parameter key
+     * @param string $default The default value if the parameter key does not exist
+     * @param bool   $deep    If true, a path like foo[bar] will find deeper items
      *
      * @return string The filtered value
-     *
-     * @api
      */
     public function getAlnum($key, $default = '', $deep = false)
     {
@@ -221,30 +205,26 @@ class ParameterBag implements \IteratorAggregate, \Countable
     /**
      * Returns the digits of the parameter value.
      *
-     * @param string  $key     The parameter key
-     * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
+     * @param string $key     The parameter key
+     * @param string $default The default value if the parameter key does not exist
+     * @param bool   $deep    If true, a path like foo[bar] will find deeper items
      *
      * @return string The filtered value
-     *
-     * @api
      */
     public function getDigits($key, $default = '', $deep = false)
     {
         // we need to remove - and + because they're allowed in the filter
-        return str_replace(array('-', '+'), '', $this->filter($key, $default, $deep, FILTER_SANITIZE_NUMBER_INT));
+        return str_replace(array('-', '+'), '', $this->filter($key, $default, FILTER_SANITIZE_NUMBER_INT, array(), $deep));
     }
 
     /**
      * Returns the parameter value converted to integer.
      *
-     * @param string  $key     The parameter key
-     * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
+     * @param string $key     The parameter key
+     * @param int    $default The default value if the parameter key does not exist
+     * @param bool   $deep    If true, a path like foo[bar] will find deeper items
      *
-     * @return integer The filtered value
-     *
-     * @api
+     * @return int The filtered value
      */
     public function getInt($key, $default = 0, $deep = false)
     {
@@ -252,20 +232,49 @@ class ParameterBag implements \IteratorAggregate, \Countable
     }
 
     /**
+     * Returns the parameter value converted to boolean.
+     *
+     * @param string $key     The parameter key
+     * @param mixed  $default The default value if the parameter key does not exist
+     * @param bool   $deep    If true, a path like foo[bar] will find deeper items
+     *
+     * @return bool The filtered value
+     */
+    public function getBoolean($key, $default = false, $deep = false)
+    {
+        return $this->filter($key, $default, FILTER_VALIDATE_BOOLEAN, array(), $deep);
+    }
+
+    /**
      * Filter key.
      *
-     * @param string  $key     Key.
-     * @param mixed   $default Default = null.
-     * @param boolean $deep    Default = false.
-     * @param integer $filter  FILTER_* constant.
-     * @param mixed   $options Filter options.
+     * @param string $key     Key.
+     * @param mixed  $default Default = null.
+     * @param int    $filter  FILTER_* constant.
+     * @param mixed  $options Filter options.
+     * @param bool   $deep    Default = false.
      *
      * @see http://php.net/manual/en/function.filter-var.php
      *
      * @return mixed
      */
-    public function filter($key, $default = null, $deep = false, $filter=FILTER_DEFAULT, $options=array())
+    public function filter($key, $default = null, $filter = FILTER_DEFAULT, $options = array(), $deep = false)
     {
+        static $filters = null;
+
+        if (null === $filters) {
+            foreach (filter_list() as $tmp) {
+                $filters[filter_id($tmp)] = 1;
+            }
+        }
+        if (is_bool($filter) || !isset($filters[$filter]) || is_array($deep)) {
+            @trigger_error('Passing the $deep boolean as 3rd argument to the '.__METHOD__.' method is deprecated since version 2.8 and will be removed in 3.0. Remove it altogether as the $deep argument will be removed in 3.0.', E_USER_ERROR);
+            $tmp = $deep;
+            $deep = $filter;
+            $filter = $options;
+            $options = $tmp;
+        }
+
         $value = $this->get($key, $default, $deep);
 
         // Always turn $options into an array - this allows filter_var option shortcuts.

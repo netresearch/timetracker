@@ -11,29 +11,18 @@
 
 namespace Symfony\Component\Translation\Loader;
 
-use Symfony\Component\Config\Resource\FileResource;
-
 /**
  * IniFileLoader loads translations from an ini file.
  *
  * @author stealth35
  */
-class IniFileLoader extends ArrayLoader implements LoaderInterface
+class IniFileLoader extends FileLoader
 {
     /**
      * {@inheritdoc}
      */
-    public function load($resource, $locale, $domain = 'messages')
+    protected function loadResource($resource)
     {
-        if (!is_file($resource)) {
-            throw new \InvalidArgumentException(sprintf('Error opening file "%s".', $resource));
-        }
-
-        $messages = parse_ini_file($resource, true);
-
-        $catalogue = parent::load($messages, $locale, $domain);
-        $catalogue->addResource(new FileResource($resource));
-
-        return $catalogue;
+        return parse_ini_file($resource, true);
     }
 }

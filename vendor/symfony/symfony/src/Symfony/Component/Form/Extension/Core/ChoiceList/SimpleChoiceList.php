@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Form\Extension\Core\ChoiceList;
 
+@trigger_error('The '.__NAMESPACE__.'\SimpleChoiceList class is deprecated since version 2.7 and will be removed in 3.0. Use Symfony\Component\Form\ChoiceList\ArrayChoiceList instead.', E_USER_DEPRECATED);
+
 /**
  * A choice list for choices of type string or integer.
  *
@@ -28,17 +30,20 @@ namespace Symfony\Component\Form\Extension\Core\ChoiceList;
  * </code>
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated since version 2.7, to be removed in 3.0.
+ *             Use {@link \Symfony\Component\Form\ChoiceList\ArrayChoiceList} instead.
  */
 class SimpleChoiceList extends ChoiceList
 {
     /**
      * Creates a new simple choice list.
      *
-     * @param array $choices The array of choices with the choices as keys and
-     *                       the labels as values. Choices may also be given
-     *                       as hierarchy of unlimited depth by creating nested
-     *                       arrays. The title of the sub-hierarchy is stored
-     *                       in the array key pointing to the nested array.
+     * @param array $choices          The array of choices with the choices as keys and
+     *                                the labels as values. Choices may also be given
+     *                                as hierarchy of unlimited depth by creating nested
+     *                                arrays. The title of the sub-hierarchy is stored
+     *                                in the array key pointing to the nested array.
      * @param array $preferredChoices A flat array of choices that should be
      *                                presented to the user with priority.
      */
@@ -124,7 +129,7 @@ class SimpleChoiceList extends ChoiceList
      * @param mixed $choice           The choice to test.
      * @param array $preferredChoices An array of preferred choices.
      *
-     * @return Boolean Whether the choice is preferred.
+     * @return bool Whether the choice is preferred.
      */
     protected function isPreferred($choice, array $preferredChoices)
     {
@@ -135,9 +140,9 @@ class SimpleChoiceList extends ChoiceList
     /**
      * Converts the choice to a valid PHP array key.
      *
-     * @param mixed $choice The choice.
+     * @param mixed $choice The choice
      *
-     * @return string|integer A valid PHP array key.
+     * @return string|int A valid PHP array key
      */
     protected function fixChoice($choice)
     {

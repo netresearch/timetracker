@@ -3,7 +3,6 @@
 namespace Netresearch\TimeTrackerBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  *
@@ -40,6 +39,8 @@ class Team
      * Set id
      *
      * @param string $id
+     *
+     * @return $this
      */
     public function setId($id)
     {
@@ -61,6 +62,8 @@ class Team
      * Set name
      *
      * @param string $name
+     *
+     * @return $this
      */
     public function setName($name)
     {
@@ -81,7 +84,9 @@ class Team
     /**
      * Set lead user
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\User $leadUser
+     * @param \Netresearch\TimeTrackerBundle\Entity\User $leadUser
+     *
+     * @return $this
      */
     public function setLeadUser(\Netresearch\TimeTrackerBundle\Entity\User $leadUser)
     {
@@ -92,7 +97,7 @@ class Team
     /**
      * Get lead user
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\User $leadUser
+     * @return \Netresearch\TimeTrackerBundle\Entity\User $leadUser
      */
     public function getLeadUser()
     {
@@ -132,7 +137,7 @@ class Team
     /**
      * Get customers
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return \Doctrine\Common\Collections\Collection
      */
     public function getCustomers()
     {

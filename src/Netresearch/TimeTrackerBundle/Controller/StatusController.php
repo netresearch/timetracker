@@ -2,9 +2,8 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-use Netresearch\TimeTrackerBundle\Entity\User as User;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 
 class StatusController extends BaseController
 {
@@ -28,19 +27,17 @@ class StatusController extends BaseController
 
     public function checkAction()
     {
-		$request = $this->getRequest();
         $userId = $this->get('request')->getSession()->get('loginId');
 
         $status = $this->getStatus($userId);
         return new Response(json_encode($status));
     }
 
-    public function pageAction()
+    public function pageAction(Request $request)
     {
         // use Auto-Cookie-Login from BaseClass
-        $this->checkLogin();
+        $this->checkLogin($request);
 
-		$request = $this->getRequest();
         $userId = $this->get('request')->getSession()->get('loginId');
         $status = $this->getStatus($userId);
         return $this->render('NetresearchTimeTrackerBundle:Default:status.html.twig', array(

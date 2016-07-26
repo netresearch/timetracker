@@ -18,10 +18,11 @@
 
 namespace Metadata;
 
+use Metadata\Driver\AdvancedDriverInterface;
 use Metadata\Driver\DriverInterface;
 use Metadata\Cache\CacheInterface;
 
-final class MetadataFactory implements MetadataFactoryInterface
+class MetadataFactory implements AdvancedMetadataFactoryInterface
 {
     private $driver;
     private $cache;
@@ -31,16 +32,24 @@ final class MetadataFactory implements MetadataFactoryInterface
     private $includeInterfaces = false;
     private $debug;
 
+    /**
+     * @param DriverInterface $driver
+     * @param string          $hierarchyMetadataClass
+     * @param boolean         $debug
+     */
     public function __construct(DriverInterface $driver, $hierarchyMetadataClass = 'Metadata\ClassHierarchyMetadata', $debug = false)
     {
         $this->driver = $driver;
         $this->hierarchyMetadataClass = $hierarchyMetadataClass;
-        $this->debug = $debug;
+        $this->debug = (Boolean) $debug;
     }
 
-    public function setIncludeInterfaces($bool)
+    /**
+     * @param boolean $include
+     */
+    public function setIncludeInterfaces($include)
     {
-        $this->includeInterfaces = (Boolean) $bool;
+        $this->includeInterfaces = (Boolean) $include;
     }
 
     public function setCache(CacheInterface $cache)
@@ -48,28 +57,45 @@ final class MetadataFactory implements MetadataFactoryInterface
         $this->cache = $cache;
     }
 
+    /**
+     * @param string $className
+     *
+     * @return ClassHierarchyMetadata|MergeableClassMetadata|null
+     */
     public function getMetadataForClass($className)
     {
         if (isset($this->loadedMetadata[$className])) {
-            return $this->loadedMetadata[$className];
+            return $this->filterNullMetadata($this->loadedMetadata[$className]);
         }
 
         $metadata = null;
         foreach ($this->getClassHierarchy($className) as $class) {
             if (isset($this->loadedClassMetadata[$name = $class->getName()])) {
-                $this->addClassMetadata($metadata, $this->loadedClassMetadata[$name]);
+                if (null !== $classMetadata = $this->filterNullMetadata($this->loadedClassMetadata[$name])) {
+                    $this->addClassMetadata($metadata, $classMetadata);
+                }
                 continue;
             }
 
             // check the cache
-            if (null !== $this->cache
-                && (null !== $classMetadata = $this->cache->loadClassMetadataFromCache($class))) {
-                if ($this->debug && !$classMetadata->isFresh()) {
-                    $this->cache->evictClassMetadataFromCache($classMetadata->reflection);
-                } else {
+            if (null !== $this->cache) {
+                if (($classMetadata = $this->cache->loadClassMetadataFromCache($class)) instanceof NullMetadata) {
                     $this->loadedClassMetadata[$name] = $classMetadata;
-                    $this->addClassMetadata($metadata, $classMetadata);
                     continue;
+                }
+
+                if (null !== $classMetadata) {
+                    if ( ! $classMetadata instanceof ClassMetadata) {
+                        throw new \LogicException(sprintf('The cache must return instances of ClassMetadata, but got %s.', var_export($classMetadata, true)));
+                    }
+
+                    if ($this->debug && !$classMetadata->isFresh()) {
+                        $this->cache->evictClassMetadataFromCache($classMetadata->reflection);
+                    } else {
+                        $this->loadedClassMetadata[$name] = $classMetadata;
+                        $this->addClassMetadata($metadata, $classMetadata);
+                        continue;
+                    }
                 }
             }
 
@@ -84,11 +110,37 @@ final class MetadataFactory implements MetadataFactoryInterface
 
                 continue;
             }
+
+            if (null !== $this->cache && !$this->debug) {
+                $this->cache->putClassMetadataInCache(new NullMetadata($class->getName()));
+            }
         }
 
-        return $this->loadedMetadata[$className] = $metadata;
+        if (null === $metadata) {
+            $metadata = new NullMetadata($className);
+        }
+
+        return $this->filterNullMetadata($this->loadedMetadata[$className] = $metadata);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function getAllClassNames()
+    {
+        if (!$this->driver instanceof AdvancedDriverInterface) {
+            throw new \RuntimeException(
+                sprintf('Driver "%s" must be an instance of "AdvancedDriverInterface".', get_class($this->driver))
+            );
+        }
+
+        return $this->driver->getAllClassNames();
+    }
+
+    /**
+     * @param ClassMetadata|null $metadata
+     * @param ClassMetadata      $toAdd
+     */
     private function addClassMetadata(&$metadata, $toAdd)
     {
         if ($toAdd instanceof MergeableInterface) {
@@ -106,6 +158,9 @@ final class MetadataFactory implements MetadataFactoryInterface
         }
     }
 
+    /**
+     * @param string $class
+     */
     private function getClassHierarchy($class)
     {
         $classes = array();
@@ -113,7 +168,8 @@ final class MetadataFactory implements MetadataFactoryInterface
 
         do {
             $classes[] = $refl;
-        } while (false !== $refl = $refl->getParentClass());
+            $refl = $refl->getParentClass();
+        } while (false !== $refl);
 
         $classes = array_reverse($classes, false);
 
@@ -138,5 +194,15 @@ final class MetadataFactory implements MetadataFactoryInterface
         }
 
         return $newHierarchy;
+    }
+
+    /**
+     * @param NullMetadata|null $metadata
+     *
+     * @return ClassMetadata|null
+     */
+    private function filterNullMetadata($metadata = null)
+    {
+        return !$metadata instanceof NullMetadata ? $metadata : null;
     }
 }

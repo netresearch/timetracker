@@ -2,8 +2,8 @@
     "name": "symfony/routing",
     "type": "library",
     "description": "Symfony Routing Component",
-    "keywords": [],
-    "homepage": "http://symfony.com",
+    "keywords": ["routing", "router", "URL", "URI"],
+    "homepage": "https://symfony.com",
     "license": "MIT",
     "authors": [
         {
@@ -12,26 +12,41 @@
         },
         {
             "name": "Symfony Community",
-            "homepage": "http://symfony.com/contributors"
+            "homepage": "https://symfony.com/contributors"
         }
     ],
     "require": {
-        "php": ">=5.3.3"
+        "php": ">=5.3.9"
     },
     "require-dev": {
-        "symfony/config": "2.1.*",
-        "symfony/yaml": "2.1.*",
-        "symfony/http-kernel": "2.1.*",
-        "doctrine/common": "~2.2"
+        "symfony/config": "~2.7|~3.0.0",
+        "symfony/http-foundation": "~2.3|~3.0.0",
+        "symfony/yaml": "~2.0,>=2.0.5|~3.0.0",
+        "symfony/expression-language": "~2.4|~3.0.0",
+        "doctrine/annotations": "~1.0",
+        "doctrine/common": "~2.2",
+        "psr/log": "~1.0"
+    },
+    "conflict": {
+        "symfony/config": "<2.7"
     },
     "suggest": {
-        "symfony/config": "2.1.*",
-        "symfony/yaml": "2.1.*",
-        "doctrine/common": "~2.2"
+        "symfony/config": "For using the all-in-one router or any loader",
+        "symfony/yaml": "For using the YAML loader",
+        "symfony/expression-language": "For using expression matching",
+        "doctrine/annotations": "For using the annotation loader",
+        "symfony/dependency-injection": "For loading routes from a service"
     },
     "autoload": {
-        "psr-0": { "Symfony\\Component\\Routing": "" }
+        "psr-4": { "Symfony\\Component\\Routing\\": "" },
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
     },
-    "target-dir": "Symfony/Component/Routing",
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "2.8-dev"
+        }
+    }
 }

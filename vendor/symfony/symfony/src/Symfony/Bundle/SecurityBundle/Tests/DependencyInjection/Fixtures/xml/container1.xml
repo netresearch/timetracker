@@ -16,6 +16,10 @@
 
         <encoder class="JMS\FooBundle\Entity\User4" id="security.encoder.foo" />
 
+        <encoder class="JMS\FooBundle\Entity\User5" algorithm="pbkdf2" hash-algorithm="sha1" encode-as-base64="false" iterations="5" key-length="30" />
+
+        <encoder class="JMS\FooBundle\Entity\User6" algorithm="bcrypt" cost="15" />
+
         <provider name="default">
             <memory>
                 <user name="foo" password="foo" roles="ROLE_USER" />
@@ -45,12 +49,26 @@
 
         <firewall name="secure" stateless="true">
             <http-basic />
-            <http-digest key="TheKey" />
+            <http-digest secret="TheSecret" />
             <form-login />
             <anonymous />
             <switch-user />
             <x509 />
+            <remote-user />
+            <user-checker />
             <logout />
+            <remember-me secret="TheSecret"/>
+        </firewall>
+
+        <firewall name="host" pattern="/test" host="foo\.example\.org" methods="GET,POST">
+            <anonymous />
+            <http-basic />
+        </firewall>
+
+        <firewall name="with_user_checker">
+            <anonymous />
+            <http-basic />
+            <user-checker>app.user_checker</user-checker>
         </firewall>
 
         <role id="ROLE_ADMIN">ROLE_USER</role>
@@ -59,5 +77,6 @@
 
         <rule path="/blog/524" role="ROLE_USER" requires-channel="https" methods="get,POST" />
         <rule role='IS_AUTHENTICATED_ANONYMOUSLY' path="/blog/.*" />
+        <rule role='IS_AUTHENTICATED_ANONYMOUSLY' allow-if="token.getUsername() matches '/^admin/'" path="/blog/524" />
     </config>
 </srv:container>

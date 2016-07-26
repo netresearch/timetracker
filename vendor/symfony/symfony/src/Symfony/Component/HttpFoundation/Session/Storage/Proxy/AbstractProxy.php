@@ -21,12 +21,12 @@ abstract class AbstractProxy
     /**
      * Flag if handler wraps an internal PHP session handler (using \SessionHandler).
      *
-     * @var boolean
+     * @var bool
      */
     protected $wrapper = false;
 
     /**
-     * @var boolean
+     * @var bool
      */
     protected $active = false;
 
@@ -48,7 +48,7 @@ abstract class AbstractProxy
     /**
      * Is this proxy handler and instance of \SessionHandlerInterface.
      *
-     * @return boolean
+     * @return bool
      */
     public function isSessionHandlerInterface()
     {
@@ -58,7 +58,7 @@ abstract class AbstractProxy
     /**
      * Returns true if this handler wraps an internal PHP session save handler using \SessionHandler.
      *
-     * @return Boolean
+     * @return bool
      */
     public function isWrapper()
     {
@@ -68,20 +68,35 @@ abstract class AbstractProxy
     /**
      * Has a session started?
      *
-     * @return Boolean
+     * @return bool
      */
     public function isActive()
     {
+        if (PHP_VERSION_ID >= 50400) {
+            return $this->active = \PHP_SESSION_ACTIVE === session_status();
+        }
+
         return $this->active;
     }
 
     /**
      * Sets the active flag.
      *
-     * @param Boolean $flag
+     * Has no effect under PHP 5.4+ as status is detected
+     * automatically in isActive()
+     *
+     * @internal
+     *
+     * @param bool $flag
+     *
+     * @throws \LogicException
      */
     public function setActive($flag)
     {
+        if (PHP_VERSION_ID >= 50400) {
+            throw new \LogicException('This method is disabled in PHP 5.4.0+');
+        }
+
         $this->active = (bool) $flag;
     }
 
@@ -99,6 +114,8 @@ abstract class AbstractProxy
      * Sets the session ID.
      *
      * @param string $id
+     *
+     * @throws \LogicException
      */
     public function setId($id)
     {
@@ -123,6 +140,8 @@ abstract class AbstractProxy
      * Sets the session name.
      *
      * @param string $name
+     *
+     * @throws \LogicException
      */
     public function setName($name)
     {

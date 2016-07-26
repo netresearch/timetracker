@@ -23,11 +23,11 @@
                 <target>Väärtus peaks olema üks etteantud valikutest.</target>
             </trans-unit>
             <trans-unit id="6">
-                <source>You must select at least {{ limit }} choices.</source>
+                <source>You must select at least {{ limit }} choice.|You must select at least {{ limit }} choices.</source>
                 <target>Valima peaks vähemalt {{ limit }} valikut.</target>
             </trans-unit>
             <trans-unit id="7">
-                <source>You must select at most {{ limit }} choices.</source>
+                <source>You must select at most {{ limit }} choice.|You must select at most {{ limit }} choices.</source>
                 <target>Valima peaks mitte rohkem kui  {{ limit }} valikut.</target>
             </trans-unit>
             <trans-unit id="8">
@@ -35,12 +35,12 @@
                 <target>One or more of the given values is invalid.</target>
             </trans-unit>
             <trans-unit id="9">
-                <source>The fields {{ fields }} were not expected.</source>
-                <target>Väljad {{ fields }} olid ootamatud.</target>
+                <source>This field was not expected.</source>
+                <target>See väli ei oodatud.</target>
             </trans-unit>
             <trans-unit id="10">
-                <source>The fields {{ fields }} are missing.</source>
-                <target>Väljad {{ fields }} on puudu.</target>
+                <source>This field is missing.</source>
+                <target>See väli on puudu.</target>
             </trans-unit>
             <trans-unit id="11">
                 <source>This value is not a valid date.</source>
@@ -75,7 +75,7 @@
                 <target>Väärtus peaks olema {{ limit }} või vähem.</target>
             </trans-unit>
             <trans-unit id="19">
-                <source>This value is too long. It should have {{ limit }} characters or less.</source>
+                <source>This value is too long. It should have {{ limit }} character or less.|This value is too long. It should have {{ limit }} characters or less.</source>
                 <target>Väärtus on liiga pikk. Pikkus peaks olema {{ limit }} tähemärki või vähem.</target>
             </trans-unit>
             <trans-unit id="20">
@@ -83,7 +83,7 @@
                 <target>Väärtus peaks olema {{ limit }} või rohkem.</target>
             </trans-unit>
             <trans-unit id="21">
-                <source>This value is too short. It should have {{ limit }} characters or more.</source>
+                <source>This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.</source>
                 <target>Väärtus on liiga lühike. Pikkus peaks  olema {{ limit }} tähemärki või rohkem.</target>
             </trans-unit>
             <trans-unit id="22">
@@ -125,7 +125,7 @@
             <trans-unit id="34">
                 <source>The file could not be uploaded.</source>
                 <target>Faili ei saa üles laadida.</target>
-             </trans-unit>
+            </trans-unit>
             <trans-unit id="35">
                 <source>This value should be a valid number.</source>
                 <target>Väärtus peaks olema korrektne number.</target>
@@ -175,7 +175,7 @@
                 <target>Pilt pole piisavalt pikk ({{ height }}px). Lubatud vähim pikkus on {{ min_height }}px.</target>
             </trans-unit>
             <trans-unit id="47">
-                <source>This value should be the user current password.</source>
+                <source>This value should be the user's current password.</source>
                 <target>Väärtus peaks olema kasutaja kehtiv salasõna.</target>
             </trans-unit>
             <trans-unit id="48">
@@ -213,6 +213,70 @@
             <trans-unit id="56">
                 <source>This collection should contain exactly {{ limit }} elements.</source>
                 <target>Kogumikus peaks olema täpselt {{ limit }} element.|Kogumikus peaks olema täpselt {{ limit }}|elementi.</target>
+            </trans-unit>
+            <trans-unit id="57">
+                <source>Invalid card number.</source>
+                <target>Vigane kaardi number.</target>
+            </trans-unit>
+            <trans-unit id="58">
+                <source>Unsupported card type or invalid card number.</source>
+                <target>Kaardi tüüpi ei toetata või kaardi number on vigane.</target>
+            </trans-unit>
+            <trans-unit id="59">
+                <source>This is not a valid International Bank Account Number (IBAN).</source>
+                <target>Väärtus pole korrektne IBAN-number.</target>
+            </trans-unit>
+            <trans-unit id="60">
+                <source>This value is not a valid ISBN-10.</source>
+                <target>Väärtus pole korrektne ISBN-10.</target>
+            </trans-unit>
+            <trans-unit id="61">
+                <source>This value is not a valid ISBN-13.</source>
+                <target>Väärtus pole korrektne ISBN-13.</target>
+            </trans-unit>
+            <trans-unit id="62">
+                <source>This value is neither a valid ISBN-10 nor a valid ISBN-13.</source>
+                <target>Väärtus pole korrektne ISBN-10 ega ISBN-13.</target>
+            </trans-unit>
+            <trans-unit id="63">
+                <source>This value is not a valid ISSN.</source>
+                <target>Väärtus pole korrektne ISSN.</target>
+            </trans-unit>
+            <trans-unit id="64">
+                <source>This value is not a valid currency.</source>
+                <target>Väärtus pole korrektne valuuta.</target>
+            </trans-unit>
+            <trans-unit id="65">
+                <source>This value should be equal to {{ compared_value }}.</source>
+                <target>Väärtus peaks olema võrdne {{ compared_value }}-ga.</target>
+            </trans-unit>
+            <trans-unit id="66">
+                <source>This value should be greater than {{ compared_value }}.</source>
+                <target>Väärtus peaks olema suurem kui {{ compared_value }}.</target>
+            </trans-unit>
+            <trans-unit id="67">
+                <source>This value should be greater than or equal to {{ compared_value }}.</source>
+                <target>Väärtus peaks olema suurem kui või võrduma {{ compared_value }}-ga.</target>
+            </trans-unit>
+            <trans-unit id="68">
+                <source>This value should be identical to {{ compared_value_type }} {{ compared_value }}.</source>
+                <target>Väärtus peaks olema identne väärtusega {{ compared_value_type }} {{ compared_value }}.</target>
+            </trans-unit>
+            <trans-unit id="69">
+                <source>This value should be less than {{ compared_value }}.</source>
+                <target>Väärtus peaks olema väiksem kui {{ compared_value }}.</target>
+            </trans-unit>
+            <trans-unit id="70">
+                <source>This value should be less than or equal to {{ compared_value }}.</source>
+                <target>Väärtus peaks olema väiksem kui või võrduma {{ compared_value }}-ga.</target>
+            </trans-unit>
+            <trans-unit id="71">
+                <source>This value should not be equal to {{ compared_value }}.</source>
+                <target>Väärtus ei tohiks võrduda {{ compared_value }}-ga.</target>
+            </trans-unit>
+            <trans-unit id="72">
+                <source>This value should not be identical to {{ compared_value_type }} {{ compared_value }}.</source>
+                <target>Väärtus ei tohiks olla identne väärtusega {{ compared_value_type }} {{ compared_value }}.</target>
             </trans-unit>
         </body>
     </file>

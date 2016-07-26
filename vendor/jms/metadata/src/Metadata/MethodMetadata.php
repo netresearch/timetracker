@@ -41,6 +41,12 @@ class MethodMetadata implements \Serializable
         $this->reflection->setAccessible(true);
     }
 
+    /**
+     * @param object $obj
+     * @param array  $args
+     *
+     * @return mixed
+     */
     public function invoke($obj, array $args = array())
     {
         return $this->reflection->invokeArgs($obj, $args);

@@ -25,7 +25,7 @@ use Symfony\Bundle\WebProfilerBundle\EventListener\WebDebugToolbarListener;
  *     <webprofiler:config
  *        toolbar="true"
  *        intercept-redirects="true"
- *    />
+ *     />
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
@@ -43,18 +43,15 @@ class WebProfilerExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('toolbar.xml');
-
-        $container->setParameter('web_profiler.debug_toolbar.intercept_redirects', $config['intercept_redirects']);
-
-        if (!$config['toolbar']) {
-            $mode = WebDebugToolbarListener::DISABLED;
-        } else {
-            $mode = WebDebugToolbarListener::ENABLED;
-        }
-
-        $container->setParameter('web_profiler.debug_toolbar.mode', $mode);
+        $loader->load('profiler.xml');
         $container->setParameter('web_profiler.debug_toolbar.position', $config['position']);
+
+        if ($config['toolbar'] || $config['intercept_redirects']) {
+            $loader->load('toolbar.xml');
+            $container->getDefinition('web_profiler.debug_toolbar')->replaceArgument(5, $config['excluded_ajax_paths']);
+            $container->setParameter('web_profiler.debug_toolbar.intercept_redirects', $config['intercept_redirects']);
+            $container->setParameter('web_profiler.debug_toolbar.mode', $config['toolbar'] ? WebDebugToolbarListener::ENABLED : WebDebugToolbarListener::DISABLED);
+        }
     }
 
     /**

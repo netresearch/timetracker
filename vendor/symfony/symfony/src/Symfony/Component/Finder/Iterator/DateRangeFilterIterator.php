@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Finder\Iterator;
 
+use Symfony\Component\Finder\Comparator\DateComparator;
+
 /**
  * DateRangeFilterIterator filters out files that are not in the given date range (last modified dates).
  *
@@ -23,8 +25,8 @@ class DateRangeFilterIterator extends FilterIterator
     /**
      * Constructor.
      *
-     * @param \Iterator $iterator    The Iterator to filter
-     * @param array     $comparators An array of \DateCompare instances
+     * @param \Iterator        $iterator    The Iterator to filter
+     * @param DateComparator[] $comparators An array of DateComparator instances
      */
     public function __construct(\Iterator $iterator, array $comparators)
     {
@@ -36,14 +38,14 @@ class DateRangeFilterIterator extends FilterIterator
     /**
      * Filters the iterator values.
      *
-     * @return Boolean true if the value should be kept, false otherwise
+     * @return bool true if the value should be kept, false otherwise
      */
     public function accept()
     {
         $fileinfo = $this->current();
 
-        if (!$fileinfo->isFile()) {
-            return true;
+        if (!file_exists($fileinfo->getRealPath())) {
+            return false;
         }
 
         $filedate = $fileinfo->getMTime();

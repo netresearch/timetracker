@@ -11,63 +11,42 @@
 
 namespace Symfony\Component\Translation\Loader;
 
-use Symfony\Component\Config\Resource\FileResource;
+use Symfony\Component\Translation\Exception\NotFoundResourceException;
 
 /**
  * CsvFileLoader loads translations from CSV files.
  *
  * @author Saša Stamenković <umpirsky@gmail.com>
- *
- * @api
  */
-class CsvFileLoader extends ArrayLoader implements LoaderInterface
+class CsvFileLoader extends FileLoader
 {
     private $delimiter = ';';
     private $enclosure = '"';
-    private $escape    = '\\';
+    private $escape = '\\';
 
     /**
      * {@inheritdoc}
-     *
-     * @api
      */
-    public function load($resource, $locale, $domain = 'messages')
+    protected function loadResource($resource)
     {
         $messages = array();
-
-        if (!stream_is_local($resource)) {
-            throw new \InvalidArgumentException(sprintf('This is not a local file "%s".', $resource));
-        }
 
         try {
             $file = new \SplFileObject($resource, 'rb');
         } catch (\RuntimeException $e) {
-            throw new \InvalidArgumentException(sprintf('Error opening file "%s".', $resource));
+            throw new NotFoundResourceException(sprintf('Error opening file "%s".', $resource), 0, $e);
         }
 
         $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::SKIP_EMPTY);
         $file->setCsvControl($this->delimiter, $this->enclosure, $this->escape);
 
         foreach ($file as $data) {
-            if (substr($data[0], 0, 1) === '#') {
-                continue;
-            }
-
-            if (!isset($data[1])) {
-                continue;
-            }
-
-            if (count($data) == 2) {
+            if ('#' !== substr($data[0], 0, 1) && isset($data[1]) && 2 === count($data)) {
                 $messages[$data[0]] = $data[1];
-            } else {
-                 continue;
             }
         }
 
-        $catalogue = parent::load($messages, $locale, $domain);
-        $catalogue->addResource(new FileResource($resource));
-
-        return $catalogue;
+        return $messages;
     }
 
     /**
@@ -81,6 +60,6 @@ class CsvFileLoader extends ArrayLoader implements LoaderInterface
     {
         $this->delimiter = $delimiter;
         $this->enclosure = $enclosure;
-        $this->escape    = $escape;
+        $this->escape = $escape;
     }
 }

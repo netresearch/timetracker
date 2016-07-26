@@ -21,19 +21,21 @@ interface ProfilerStorageInterface
     /**
      * Finds profiler tokens for the given criteria.
      *
-     * @param string $ip     The IP
-     * @param string $url    The URL
-     * @param string $limit  The maximum number of tokens to return
-     * @param string $method The request method
+     * @param string   $ip     The IP
+     * @param string   $url    The URL
+     * @param string   $limit  The maximum number of tokens to return
+     * @param string   $method The request method
+     * @param int|null $start  The start date to search from
+     * @param int|null $end    The end date to search to
      *
      * @return array An array of tokens
      */
-    public function find($ip, $url, $limit, $method);
+    public function find($ip, $url, $limit, $method, $start = null, $end = null);
 
     /**
      * Reads data associated with the given token.
      *
-     * The method returns false if the token does not exists in the storage.
+     * The method returns false if the token does not exist in the storage.
      *
      * @param string $token A token
      *
@@ -46,7 +48,7 @@ interface ProfilerStorageInterface
      *
      * @param Profile $profile A Profile instance
      *
-     * @return Boolean Write operation successful
+     * @return bool Write operation successful
      */
     public function write(Profile $profile);
 

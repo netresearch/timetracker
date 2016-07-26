@@ -25,20 +25,22 @@ final class PersistentToken implements PersistentTokenInterface
     private $lastUsed;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param string    $class
      * @param string    $username
      * @param string    $series
      * @param string    $tokenValue
      * @param \DateTime $lastUsed
+     *
+     * @throws \InvalidArgumentException
      */
     public function __construct($class, $username, $series, $tokenValue, \DateTime $lastUsed)
     {
         if (empty($class)) {
             throw new \InvalidArgumentException('$class must not be empty.');
         }
-        if (empty($username)) {
+        if ('' === $username || null === $username) {
             throw new \InvalidArgumentException('$username must not be empty.');
         }
         if (empty($series)) {
@@ -56,9 +58,7 @@ final class PersistentToken implements PersistentTokenInterface
     }
 
     /**
-     * Returns the class of the user
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getClass()
     {
@@ -66,9 +66,7 @@ final class PersistentToken implements PersistentTokenInterface
     }
 
     /**
-     * Returns the username
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getUsername()
     {
@@ -76,9 +74,7 @@ final class PersistentToken implements PersistentTokenInterface
     }
 
     /**
-     * Returns the series
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getSeries()
     {
@@ -86,9 +82,7 @@ final class PersistentToken implements PersistentTokenInterface
     }
 
     /**
-     * Returns the token value
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getTokenValue()
     {
@@ -96,9 +90,7 @@ final class PersistentToken implements PersistentTokenInterface
     }
 
     /**
-     * Returns the time the token was last used
-     *
-     * @return DateTime
+     * {@inheritdoc}
      */
     public function getLastUsed()
     {

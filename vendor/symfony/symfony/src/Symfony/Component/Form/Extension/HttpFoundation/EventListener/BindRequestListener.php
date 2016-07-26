@@ -13,19 +13,21 @@ namespace Symfony\Component\Form\Extension\HttpFoundation\EventListener;
 
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\Exception\FormException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated since version 2.3, to be removed in 3.0.
+ *             Pass the Request instance to {@link \Symfony\Component\Form\Form::handleRequest()} instead.
  */
 class BindRequestListener implements EventSubscriberInterface
 {
     public static function getSubscribedEvents()
     {
         // High priority in order to supersede other listeners
-        return array(FormEvents::PRE_BIND => array('preBind', 128));
+        return array(FormEvents::PRE_SUBMIT => array('preBind', 128));
     }
 
     public function preBind(FormEvent $event)
@@ -40,15 +42,24 @@ class BindRequestListener implements EventSubscriberInterface
             return;
         }
 
+        @trigger_error('The '.__CLASS__.' class is deprecated since version 2.3 and will be removed in 3.0. Pass the Request instance to the \Symfony\Component\Form\Form::handleRequest() method instead.', E_USER_DEPRECATED);
+
         $name = $form->getConfig()->getName();
         $default = $form->getConfig()->getCompound() ? array() : null;
 
-        // Store the bound data in case of a post request
+        // For request methods that must not have a request body we fetch data
+        // from the query string. Otherwise we look for data in the request body.
         switch ($request->getMethod()) {
-            case 'POST':
-            case 'PUT':
-            case 'DELETE':
-            case 'PATCH':
+            case 'GET':
+            case 'HEAD':
+            case 'TRACE':
+                $data = '' === $name
+                    ? $request->query->all()
+                    : $request->query->get($name, $default);
+
+                break;
+
+            default:
                 if ('' === $name) {
                     // Form bound without name
                     $params = $request->request->all();
@@ -65,19 +76,6 @@ class BindRequestListener implements EventSubscriberInterface
                 }
 
                 break;
-
-            case 'GET':
-                $data = '' === $name
-                    ? $request->query->all()
-                    : $request->query->get($name, $default);
-
-                break;
-
-            default:
-                throw new FormException(sprintf(
-                    'The request method "%s" is not supported',
-                    $request->getMethod()
-                ));
         }
 
         $event->setData($data);

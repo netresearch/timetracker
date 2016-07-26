@@ -14,6 +14,12 @@ namespace Symfony\Component\HttpFoundation;
 /**
  * Response represents an HTTP response in JSON format.
  *
+ * Note that this class does not force the returned JSON content to be an
+ * object. It is however recommended that you do return an object as it
+ * protects yourself against XSSI and JSON-JavaScript Hijacking.
+ *
+ * @see https://www.owasp.org/index.php/OWASP_AJAX_Security_Guidelines#Always_return_JSON_with_an_Object_on_the_outside
+ *
  * @author Igor Wiedler <igor@wiedler.ch>
  */
 class JsonResponse extends Response
@@ -21,24 +27,32 @@ class JsonResponse extends Response
     protected $data;
     protected $callback;
 
+    // Encode <, >, ', &, and " for RFC4627-compliant JSON, which may also be embedded into HTML.
+    // 15 === JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+    protected $encodingOptions = 15;
+
     /**
      * Constructor.
      *
-     * @param mixed   $data    The response data
-     * @param integer $status  The response status code
-     * @param array   $headers An array of response headers
+     * @param mixed $data    The response data
+     * @param int   $status  The response status code
+     * @param array $headers An array of response headers
      */
-    public function __construct($data = array(), $status = 200, $headers = array())
+    public function __construct($data = null, $status = 200, $headers = array())
     {
         parent::__construct('', $status, $headers);
+
+        if (null === $data) {
+            $data = new \ArrayObject();
+        }
 
         $this->setData($data);
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public static function create($data = array(), $status = 200, $headers = array())
+    public static function create($data = null, $status = 200, $headers = array())
     {
         return new static($data, $status, $headers);
     }
@@ -46,9 +60,11 @@ class JsonResponse extends Response
     /**
      * Sets the JSONP callback.
      *
-     * @param string $callback
+     * @param string|null $callback The JSONP callback or null to use none
      *
      * @return JsonResponse
+     *
+     * @throws \InvalidArgumentException When the callback name is not valid
      */
     public function setCallback($callback = null)
     {
@@ -69,27 +85,97 @@ class JsonResponse extends Response
     }
 
     /**
-     * Sets the data to be sent as json.
+     * Sets the data to be sent as JSON.
      *
      * @param mixed $data
      *
      * @return JsonResponse
+     *
+     * @throws \InvalidArgumentException
      */
     public function setData($data = array())
     {
-        // root should be JSON object, not array
-        if (is_array($data) && 0 === count($data)) {
-            $data = new \ArrayObject();
+        if (defined('HHVM_VERSION')) {
+            // HHVM does not trigger any warnings and let exceptions
+            // thrown from a JsonSerializable object pass through.
+            // If only PHP did the same...
+            $data = json_encode($data, $this->encodingOptions);
+        } else {
+            try {
+                if (PHP_VERSION_ID < 50400) {
+                    // PHP 5.3 triggers annoying warnings for some
+                    // types that can't be serialized as JSON (INF, resources, etc.)
+                    // but doesn't provide the JsonSerializable interface.
+                    set_error_handler('var_dump', 0);
+                    $data = @json_encode($data, $this->encodingOptions);
+                } else {
+                    // PHP 5.4 and up wrap exceptions thrown by JsonSerializable
+                    // objects in a new exception that needs to be removed.
+                    // Fortunately, PHP 5.5 and up do not trigger any warning anymore.
+                    if (PHP_VERSION_ID < 50500) {
+                        // Clear json_last_error()
+                        json_encode(null);
+                        $errorHandler = set_error_handler('var_dump');
+                        restore_error_handler();
+                        set_error_handler(function () use ($errorHandler) {
+                            if (JSON_ERROR_NONE === json_last_error()) {
+                                return $errorHandler && false !== call_user_func_array($errorHandler, func_get_args());
+                            }
+                        });
+                    }
+
+                    $data = json_encode($data, $this->encodingOptions);
+                }
+
+                if (PHP_VERSION_ID < 50500) {
+                    restore_error_handler();
+                }
+            } catch (\Exception $e) {
+                if (PHP_VERSION_ID < 50500) {
+                    restore_error_handler();
+                }
+                if (PHP_VERSION_ID >= 50400 && 'Exception' === get_class($e) && 0 === strpos($e->getMessage(), 'Failed calling ')) {
+                    throw $e->getPrevious() ?: $e;
+                }
+                throw $e;
+            }
         }
 
-        // Encode <, >, ', &, and " for RFC4627-compliant JSON, which may also be embedded into HTML.
-        $this->data = json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new \InvalidArgumentException(json_last_error_msg());
+        }
+
+        $this->data = $data;
 
         return $this->update();
     }
 
     /**
-     * Updates the content and headers according to the json data and callback.
+     * Returns options used while encoding data to JSON.
+     *
+     * @return int
+     */
+    public function getEncodingOptions()
+    {
+        return $this->encodingOptions;
+    }
+
+    /**
+     * Sets options used while encoding data to JSON.
+     *
+     * @param int $encodingOptions
+     *
+     * @return JsonResponse
+     */
+    public function setEncodingOptions($encodingOptions)
+    {
+        $this->encodingOptions = (int) $encodingOptions;
+
+        return $this->setData(json_decode($this->data));
+    }
+
+    /**
+     * Updates the content and headers according to the JSON data and callback.
      *
      * @return JsonResponse
      */
@@ -99,7 +185,7 @@ class JsonResponse extends Response
             // Not using application/javascript for compatibility reasons with older browsers.
             $this->headers->set('Content-Type', 'text/javascript');
 
-            return $this->setContent(sprintf('%s(%s);', $this->callback, $this->data));
+            return $this->setContent(sprintf('/**/%s(%s);', $this->callback, $this->data));
         }
 
         // Only set the header when there is none or when it equals 'text/javascript' (from a previous update with callback)

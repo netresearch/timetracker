@@ -14,16 +14,17 @@ namespace Symfony\Bundle\SecurityBundle\DependencyInjection\Compiler;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\Exception\LogicException;
 
 /**
- * Adds all configured security voters to the access decision manager
+ * Adds all configured security voters to the access decision manager.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class AddSecurityVotersPass implements CompilerPassInterface
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
@@ -40,6 +41,10 @@ class AddSecurityVotersPass implements CompilerPassInterface
         $voters = iterator_to_array($voters);
         ksort($voters);
 
-        $container->getDefinition('security.access.decision_manager')->replaceArgument(0, array_values($voters));
+        if (!$voters) {
+            throw new LogicException('No security voters found. You need to tag at least one with "security.voter"');
+        }
+
+        $container->getDefinition('security.access.decision_manager')->addMethodCall('setVoters', array(array_values($voters)));
     }
 }

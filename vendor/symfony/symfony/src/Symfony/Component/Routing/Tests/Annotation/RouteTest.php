@@ -35,11 +35,24 @@ class RouteTest extends \PHPUnit_Framework_TestCase
     public function getValidParameters()
     {
         return array(
-           array('value', '/Blog', 'getPattern'),
-           array('requirements', array('_method' => 'GET'), 'getRequirements'),
-           array('options', array('compiler_class' => 'RouteCompiler'), 'getOptions'),
-           array('name', 'blog_index', 'getName'),
-           array('defaults', array('_controller' => 'MyBlogBundle:Blog:index'), 'getDefaults')
+            array('value', '/Blog', 'getPath'),
+            array('requirements', array('locale' => 'en'), 'getRequirements'),
+            array('options', array('compiler_class' => 'RouteCompiler'), 'getOptions'),
+            array('name', 'blog_index', 'getName'),
+            array('defaults', array('_controller' => 'MyBlogBundle:Blog:index'), 'getDefaults'),
+            array('schemes', array('https'), 'getSchemes'),
+            array('methods', array('GET', 'POST'), 'getMethods'),
+            array('host', '{locale}.example.com', 'getHost'),
+            array('condition', 'context.getMethod() == "GET"', 'getCondition'),
         );
+    }
+
+    /**
+     * @group legacy
+     */
+    public function testLegacyGetPattern()
+    {
+        $route = new Route(array('value' => '/Blog'));
+        $this->assertEquals($route->getPattern(), '/Blog');
     }
 }

@@ -14,20 +14,11 @@ namespace Symfony\Component\Translation\Tests\Loader;
 use Symfony\Component\Translation\Loader\IcuResFileLoader;
 use Symfony\Component\Config\Resource\DirectoryResource;
 
+/**
+ * @requires extension intl
+ */
 class IcuResFileLoaderTest extends LocalizedTestCase
 {
-    protected function setUp()
-    {
-        if (!class_exists('Symfony\Component\Config\Loader\Loader')) {
-            $this->markTestSkipped('The "Config" component is not available');
-        }
-
-        if (!extension_loaded('intl')) {
-            $this->markTestSkipped('This test requires intl extension to work.');
-        }
-
-    }
-
     public function testLoad()
     {
         // resource is build using genrb command
@@ -41,11 +32,20 @@ class IcuResFileLoaderTest extends LocalizedTestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException \Symfony\Component\Translation\Exception\NotFoundResourceException
+     */
+    public function testLoadNonExistingResource()
+    {
+        $loader = new IcuResFileLoader();
+        $loader->load(__DIR__.'/../fixtures/non-existing.txt', 'en', 'domain1');
+    }
+
+    /**
+     * @expectedException \Symfony\Component\Translation\Exception\InvalidResourceException
      */
     public function testLoadInvalidResource()
     {
         $loader = new IcuResFileLoader();
-        $catalogue = $loader->load(__DIR__.'/../fixtures/resourcebundle/res/en.txt', 'en', 'domain1');
+        $loader->load(__DIR__.'/../fixtures/resourcebundle/corrupted', 'en', 'domain1');
     }
 }

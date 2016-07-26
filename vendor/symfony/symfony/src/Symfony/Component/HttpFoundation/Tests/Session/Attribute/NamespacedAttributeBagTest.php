@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpFoundation\Tests;
+namespace Symfony\Component\HttpFoundation\Tests\Session\Attribute;
 
 use Symfony\Component\HttpFoundation\Session\Attribute\NamespacedAttributeBag;
 
 /**
- * Tests NamespacedAttributeBag
+ * Tests NamespacedAttributeBag.
  *
  * @author Drak <drak@zikula.org>
  */
@@ -43,7 +43,7 @@ class NamespacedAttributeBagTest extends \PHPUnit_Framework_TestCase
             'category' => array(
                 'fishing' => array(
                     'first' => 'cod',
-                    'second' => 'sole')
+                    'second' => 'sole',),
                 ),
         );
         $this->bag = new NamespacedAttributeBag('_sf2', '/');
@@ -141,6 +141,16 @@ class NamespacedAttributeBagTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('drak', $this->bag->get('user.login'));
         $this->bag->remove('user.login');
         $this->assertNull($this->bag->get('user.login'));
+    }
+
+    public function testRemoveExistingNamespacedAttribute()
+    {
+        $this->assertSame('cod', $this->bag->remove('category/fishing/first'));
+    }
+
+    public function testRemoveNonexistingNamespacedAttribute()
+    {
+        $this->assertNull($this->bag->remove('foo/bar/baz'));
     }
 
     public function testClear()

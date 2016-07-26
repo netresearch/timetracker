@@ -20,7 +20,7 @@ use Symfony\Component\DependencyInjection\Exception\ScopeCrossingInjectionExcept
 use Symfony\Component\DependencyInjection\Exception\ScopeWideningInjectionException;
 
 /**
- * Checks the validity of references
+ * Checks the validity of references.
  *
  * The following checks are performed by this pass:
  * - target definitions are not abstract
@@ -33,7 +33,6 @@ class CheckReferenceValidityPass implements CompilerPassInterface
 {
     private $container;
     private $currentId;
-    private $currentDefinition;
     private $currentScope;
     private $currentScopeAncestors;
     private $currentScopeChildren;
@@ -47,10 +46,10 @@ class CheckReferenceValidityPass implements CompilerPassInterface
     {
         $this->container = $container;
 
-        $children = $this->container->getScopeChildren();
+        $children = $this->container->getScopeChildren(false);
         $ancestors = array();
 
-        $scopes = $this->container->getScopes();
+        $scopes = $this->container->getScopes(false);
         foreach ($scopes as $name => $parent) {
             $ancestors[$name] = array($parent);
 
@@ -65,15 +64,14 @@ class CheckReferenceValidityPass implements CompilerPassInterface
             }
 
             $this->currentId = $id;
-            $this->currentDefinition = $definition;
-            $this->currentScope = $scope = $definition->getScope();
+            $this->currentScope = $scope = $definition->getScope(false);
 
             if (ContainerInterface::SCOPE_CONTAINER === $scope) {
                 $this->currentScopeChildren = array_keys($scopes);
                 $this->currentScopeAncestors = array();
             } elseif (ContainerInterface::SCOPE_PROTOTYPE !== $scope) {
-                $this->currentScopeChildren = $children[$scope];
-                $this->currentScopeAncestors = $ancestors[$scope];
+                $this->currentScopeChildren = isset($children[$scope]) ? $children[$scope] : array();
+                $this->currentScopeAncestors = isset($ancestors[$scope]) ? $ancestors[$scope] : array();
             }
 
             $this->validateReferences($definition->getArguments());
@@ -126,7 +124,7 @@ class CheckReferenceValidityPass implements CompilerPassInterface
             return;
         }
 
-        if (!$reference->isStrict()) {
+        if (!$reference->isStrict(false)) {
             return;
         }
 
@@ -134,7 +132,7 @@ class CheckReferenceValidityPass implements CompilerPassInterface
             return;
         }
 
-        if ($this->currentScope === $scope = $definition->getScope()) {
+        if ($this->currentScope === $scope = $definition->getScope(false)) {
             return;
         }
 
@@ -159,7 +157,7 @@ class CheckReferenceValidityPass implements CompilerPassInterface
     private function getDefinition($id)
     {
         if (!$this->container->hasDefinition($id)) {
-            return null;
+            return;
         }
 
         return $this->container->getDefinition($id);

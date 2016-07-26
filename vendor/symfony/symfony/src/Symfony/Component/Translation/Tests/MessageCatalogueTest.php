@@ -82,10 +82,6 @@ class MessageCatalogueTest extends \PHPUnit_Framework_TestCase
 
     public function testAddCatalogue()
     {
-        if (!class_exists('Symfony\Component\Config\Loader\Loader')) {
-            $this->markTestSkipped('The "Config" component is not available');
-        }
-
         $r = $this->getMock('Symfony\Component\Config\Resource\ResourceInterface');
         $r->expects($this->any())->method('__toString')->will($this->returnValue('r'));
 
@@ -108,10 +104,6 @@ class MessageCatalogueTest extends \PHPUnit_Framework_TestCase
 
     public function testAddFallbackCatalogue()
     {
-        if (!class_exists('Symfony\Component\Config\Loader\Loader')) {
-            $this->markTestSkipped('The "Config" component is not available');
-        }
-
         $r = $this->getMock('Symfony\Component\Config\Resource\ResourceInterface');
         $r->expects($this->any())->method('__toString')->will($this->returnValue('r'));
 
@@ -133,9 +125,9 @@ class MessageCatalogueTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException LogicException
+     * @expectedException \LogicException
      */
-    public function testAddFallbackCatalogueWithCircularReference()
+    public function testAddFallbackCatalogueWithParentCircularReference()
     {
         $main = new MessageCatalogue('en_US');
         $fallback = new MessageCatalogue('fr_FR');
@@ -145,7 +137,21 @@ class MessageCatalogueTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException LogicException
+     * @expectedException \LogicException
+     */
+    public function testAddFallbackCatalogueWithFallbackCircularReference()
+    {
+        $fr = new MessageCatalogue('fr');
+        $en = new MessageCatalogue('en');
+        $es = new MessageCatalogue('es');
+
+        $fr->addFallbackCatalogue($en);
+        $es->addFallbackCatalogue($en);
+        $en->addFallbackCatalogue($fr);
+    }
+
+    /**
+     * @expectedException \LogicException
      */
     public function testAddCatalogueWhenLocaleIsNotTheSameAsTheCurrentOne()
     {
@@ -155,10 +161,6 @@ class MessageCatalogueTest extends \PHPUnit_Framework_TestCase
 
     public function testGetAddResource()
     {
-        if (!class_exists('Symfony\Component\Config\Loader\Loader')) {
-            $this->markTestSkipped('The "Config" component is not available');
-        }
-
         $catalogue = new MessageCatalogue('en');
         $r = $this->getMock('Symfony\Component\Config\Resource\ResourceInterface');
         $r->expects($this->any())->method('__toString')->will($this->returnValue('r'));
@@ -169,5 +171,44 @@ class MessageCatalogueTest extends \PHPUnit_Framework_TestCase
         $catalogue->addResource($r1);
 
         $this->assertEquals(array($r, $r1), $catalogue->getResources());
+    }
+
+    public function testMetadataDelete()
+    {
+        $catalogue = new MessageCatalogue('en');
+        $this->assertEquals(array(), $catalogue->getMetadata('', ''), 'Metadata is empty');
+        $catalogue->deleteMetadata('key', 'messages');
+        $catalogue->deleteMetadata('', 'messages');
+        $catalogue->deleteMetadata();
+    }
+
+    public function testMetadataSetGetDelete()
+    {
+        $catalogue = new MessageCatalogue('en');
+        $catalogue->setMetadata('key', 'value');
+        $this->assertEquals('value', $catalogue->getMetadata('key', 'messages'), "Metadata 'key' = 'value'");
+
+        $catalogue->setMetadata('key2', array());
+        $this->assertEquals(array(), $catalogue->getMetadata('key2', 'messages'), 'Metadata key2 is array');
+
+        $catalogue->deleteMetadata('key2', 'messages');
+        $this->assertNull($catalogue->getMetadata('key2', 'messages'), 'Metadata key2 should is deleted.');
+
+        $catalogue->deleteMetadata('key2', 'domain');
+        $this->assertNull($catalogue->getMetadata('key2', 'domain'), 'Metadata key2 should is deleted.');
+    }
+
+    public function testMetadataMerge()
+    {
+        $cat1 = new MessageCatalogue('en');
+        $cat1->setMetadata('a', 'b');
+        $this->assertEquals(array('messages' => array('a' => 'b')), $cat1->getMetadata('', ''), 'Cat1 contains messages metadata.');
+
+        $cat2 = new MessageCatalogue('en');
+        $cat2->setMetadata('b', 'c', 'domain');
+        $this->assertEquals(array('domain' => array('b' => 'c')), $cat2->getMetadata('', ''), 'Cat2 contains domain metadata.');
+
+        $cat1->addCatalogue($cat2);
+        $this->assertEquals(array('messages' => array('a' => 'b'), 'domain' => array('b' => 'c')), $cat1->getMetadata('', ''), 'Cat1 contains merged metadata.');
     }
 }

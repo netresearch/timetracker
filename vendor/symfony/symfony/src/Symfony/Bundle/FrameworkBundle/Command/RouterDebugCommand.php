@@ -11,21 +11,25 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Command;
 
+use Symfony\Bundle\FrameworkBundle\Console\Helper\DescriptorHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Console\Output\Output;
+use Symfony\Component\Routing\Route;
 
 /**
- * A console command for retrieving information about routes
+ * A console command for retrieving information about routes.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ * @author Tobias Schultze <http://tobion.de>
  */
 class RouterDebugCommand extends ContainerAwareCommand
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function isEnabled()
     {
@@ -41,134 +45,86 @@ class RouterDebugCommand extends ContainerAwareCommand
     }
 
     /**
-     * @see Command
+     * {@inheritdoc}
      */
     protected function configure()
     {
         $this
-            ->setName('router:debug')
+            ->setName('debug:router')
+            ->setAliases(array(
+                'router:debug',
+            ))
             ->setDefinition(array(
                 new InputArgument('name', InputArgument::OPTIONAL, 'A route name'),
+                new InputOption('show-controllers', null, InputOption::VALUE_NONE, 'Show assigned controllers in overview'),
+                new InputOption('format', null, InputOption::VALUE_REQUIRED, 'The output format (txt, xml, json, or md)', 'txt'),
+                new InputOption('raw', null, InputOption::VALUE_NONE, 'To output raw route(s)'),
             ))
             ->setDescription('Displays current routes for an application')
             ->setHelp(<<<EOF
 The <info>%command.name%</info> displays the configured routes:
 
   <info>php %command.full_name%</info>
+
 EOF
             )
         ;
     }
 
     /**
-     * @see Command
+     * {@inheritdoc}
+     *
+     * @throws \InvalidArgumentException When route does not exist
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $output = new SymfonyStyle($input, $output);
+
+        if (false !== strpos($input->getFirstArgument(), ':d')) {
+            $output->caution('The use of "router:debug" command is deprecated since version 2.7 and will be removed in 3.0. Use the "debug:router" instead.');
+        }
+
         $name = $input->getArgument('name');
+        $helper = new DescriptorHelper();
 
         if ($name) {
-            $this->outputRoute($output, $name);
+            $route = $this->getContainer()->get('router')->getRouteCollection()->get($name);
+            if (!$route) {
+                throw new \InvalidArgumentException(sprintf('The route "%s" does not exist.', $name));
+            }
+
+            $this->convertController($route);
+
+            $helper->describe($output, $route, array(
+                'format' => $input->getOption('format'),
+                'raw_text' => $input->getOption('raw'),
+                'name' => $name,
+                'output' => $output,
+            ));
         } else {
-            $this->outputRoutes($output);
-        }
-    }
+            $routes = $this->getContainer()->get('router')->getRouteCollection();
 
-    protected function outputRoutes(OutputInterface $output, $routes = null)
-    {
-        if (null === $routes) {
-            $routes = $this->getContainer()->get('router')->getRouteCollection()->all();
-        }
-
-        $output->writeln($this->getHelper('formatter')->formatSection('router', 'Current routes'));
-
-        $maxName = 4;
-        $maxMethod = 6;
-        foreach ($routes as $name => $route) {
-            $requirements = $route->getRequirements();
-            $method = isset($requirements['_method'])
-                ? strtoupper(is_array($requirements['_method'])
-                    ? implode(', ', $requirements['_method']) : $requirements['_method']
-                )
-                : 'ANY';
-
-            if (strlen($name) > $maxName) {
-                $maxName = strlen($name);
+            foreach ($routes as $route) {
+                $this->convertController($route);
             }
 
-            if (strlen($method) > $maxMethod) {
-                $maxMethod = strlen($method);
+            $helper->describe($output, $routes, array(
+                'format' => $input->getOption('format'),
+                'raw_text' => $input->getOption('raw'),
+                'show_controllers' => $input->getOption('show-controllers'),
+                'output' => $output,
+            ));
+        }
+    }
+
+    private function convertController(Route $route)
+    {
+        $nameParser = $this->getContainer()->get('controller_name_converter');
+        if ($route->hasDefault('_controller')) {
+            try {
+                $route->setDefault('_controller', $nameParser->build($route->getDefault('_controller')));
+            } catch (\InvalidArgumentException $e) {
             }
         }
-        $format  = '%-'.$maxName.'s %-'.$maxMethod.'s %s';
-
-        // displays the generated routes
-        $format1  = '%-'.($maxName + 19).'s %-'.($maxMethod + 19).'s %s';
-        $output->writeln(sprintf($format1, '<comment>Name</comment>', '<comment>Method</comment>', '<comment>Pattern</comment>'));
-        foreach ($routes as $name => $route) {
-            $requirements = $route->getRequirements();
-            $method = isset($requirements['_method'])
-                ? strtoupper(is_array($requirements['_method'])
-                    ? implode(', ', $requirements['_method']) : $requirements['_method']
-                )
-                : 'ANY';
-            $output->writeln(sprintf($format, $name, $method, $route->getPattern()));
-        }
-    }
-
-    /**
-     * @throws \InvalidArgumentException When route does not exist
-     */
-    protected function outputRoute(OutputInterface $output, $name)
-    {
-        $route = $this->getContainer()->get('router')->getRouteCollection()->get($name);
-        if (!$route) {
-            throw new \InvalidArgumentException(sprintf('The route "%s" does not exist.', $name));
-        }
-
-        $output->writeln($this->getHelper('formatter')->formatSection('router', sprintf('Route "%s"', $name)));
-
-        $output->writeln(sprintf('<comment>Name</comment>         %s', $name));
-        $output->writeln(sprintf('<comment>Pattern</comment>      %s', $route->getPattern()));
-        $output->writeln(sprintf('<comment>Class</comment>        %s', get_class($route)));
-
-        $defaults = '';
-        $d = $route->getDefaults();
-        ksort($d);
-        foreach ($d as $name => $value) {
-            $defaults .= ($defaults ? "\n".str_repeat(' ', 13) : '').$name.': '.$this->formatValue($value);
-        }
-        $output->writeln(sprintf('<comment>Defaults</comment>     %s', $defaults));
-
-        $requirements = '';
-        $r = $route->getRequirements();
-        ksort($r);
-        foreach ($r as $name => $value) {
-            $requirements .= ($requirements ? "\n".str_repeat(' ', 13) : '').$name.': '.$this->formatValue($value);
-        }
-        $output->writeln(sprintf('<comment>Requirements</comment> %s', $requirements));
-
-        $options = '';
-        $o = $route->getOptions();
-        ksort($o);
-        foreach ($o as $name => $value) {
-            $options .= ($options ? "\n".str_repeat(' ', 13) : '').$name.': '.$this->formatValue($value);
-        }
-        $output->writeln(sprintf('<comment>Options</comment>      %s', $options));
-        $output->write('<comment>Regex</comment>        ');
-        $output->writeln(preg_replace('/^             /', '', preg_replace('/^/m', '             ', $route->compile()->getRegex())), OutputInterface::OUTPUT_RAW);
-    }
-
-    protected function formatValue($value)
-    {
-        if (is_object($value)) {
-            return sprintf('object(%s)', get_class($value));
-        }
-
-        if (is_string($value)) {
-            return $value;
-        }
-
-        return preg_replace("/\n\s*/s", '', var_export($value, true));
     }
 }

@@ -13,29 +13,29 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class Activity
 {
-	
+
 	/**
      * @ORM\Id
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
-    
+
     /**
      * @ORM\Column(type="string", length=50)
      */
     protected $name;
-    
+
     /**
      * @ORM\Column(name="needs_ticket", type="boolean")
      */
     protected $needsTicket;
-	
+
     /**
      * @ORM\Column(name="factor", type="float")
      */
     protected $factor;
-	
+
     /**
      * @ORM\OneToMany(targetEntity="Entry", mappedBy="activity")
      */
@@ -45,7 +45,7 @@ class Activity
     {
     	$this->entries = new ArrayCollection();
     }
-	
+
 
     /**
      * Set id
@@ -73,6 +73,8 @@ class Activity
      * Set name
      *
      * @param string $name
+     *
+     * @return $this
      */
     public function setName($name)
     {
@@ -94,6 +96,8 @@ class Activity
      * Set needsTicket
      *
      * @param boolean $needsTicket
+     *
+     * @return $this
      */
     public function setNeedsTickets($needsTicket)
     {
@@ -127,6 +131,8 @@ class Activity
      * Set factor
      *
      * @param float $factor
+     *
+     * @return $this
      */
     public function setFactor($factor)
     {
@@ -137,7 +143,9 @@ class Activity
     /**
      * Add entries
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     *
+     * @return $this
      */
     public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
@@ -148,7 +156,7 @@ class Activity
     /**
      * Get entries
      *
-     * @return Doctrine\Common\Collections\Collection $entries
+     * @return \Doctrine\Common\Collections\Collection $entries
      */
     public function getEntries()
     {
@@ -164,7 +172,7 @@ class Activity
     public function setNeedsTicket($needsTicket)
     {
         $this->needsTicket = $needsTicket;
-    
+
         return $this;
     }
 
@@ -177,7 +185,7 @@ class Activity
     public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
         $this->entries[] = $entries;
-    
+
         return $this;
     }
 

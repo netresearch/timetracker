@@ -14,17 +14,15 @@ namespace Symfony\Bundle\WebProfilerBundle\Profiler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
 use Symfony\Component\HttpKernel\Profiler\Profile;
-use Symfony\Component\Templating\EngineInterface;
 
 /**
- * Profiler Templates Manager
+ * Profiler Templates Manager.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Artur Wielogórski <wodor@wodor.net>
  */
 class TemplateManager
 {
-    protected $templating;
     protected $twig;
     protected $templates;
     protected $profiler;
@@ -33,14 +31,12 @@ class TemplateManager
      * Constructor.
      *
      * @param Profiler          $profiler
-     * @param EngineInterface   $templating
      * @param \Twig_Environment $twig
      * @param array             $templates
      */
-    public function __construct(Profiler $profiler, EngineInterface $templating, \Twig_Environment $twig, array $templates)
+    public function __construct(Profiler $profiler, \Twig_Environment $twig, array $templates)
     {
         $this->profiler = $profiler;
-        $this->templating = $templating;
         $this->twig = $twig;
         $this->templates = $templates;
     }
@@ -76,6 +72,7 @@ class TemplateManager
     public function getTemplates(Profile $profile)
     {
         $templates = $this->getNames($profile);
+
         foreach ($templates as $name => $template) {
             $templates[$name] = $this->twig->loadTemplate($template);
         }
@@ -111,7 +108,7 @@ class TemplateManager
                 $template = substr($template, 0, -10);
             }
 
-            if (!$this->templating->exists($template.'.html.twig')) {
+            if (!$this->templateExists($template.'.html.twig')) {
                 throw new \UnexpectedValueException(sprintf('The profiler template "%s.html.twig" for data collector "%s" does not exist.', $template, $name));
             }
 
@@ -119,5 +116,23 @@ class TemplateManager
         }
 
         return $templates;
+    }
+
+    // to be removed when the minimum required version of Twig is >= 2.0
+    protected function templateExists($template)
+    {
+        $loader = $this->twig->getLoader();
+        if ($loader instanceof \Twig_ExistsLoaderInterface) {
+            return $loader->exists($template);
+        }
+
+        try {
+            $loader->getSource($template);
+
+            return true;
+        } catch (\Twig_Error_Loader $e) {
+        }
+
+        return false;
     }
 }

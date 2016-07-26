@@ -23,24 +23,31 @@ use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 abstract class ContainerAwareCommand extends Command implements ContainerAwareInterface
 {
     /**
-     * @var ContainerInterface
+     * @var ContainerInterface|null
      */
     private $container;
 
     /**
      * @return ContainerInterface
+     *
+     * @throws \LogicException
      */
     protected function getContainer()
     {
         if (null === $this->container) {
-            $this->container = $this->getApplication()->getKernel()->getContainer();
+            $application = $this->getApplication();
+            if (null === $application) {
+                throw new \LogicException('The container cannot be retrieved as the application instance is not yet set.');
+            }
+
+            $this->container = $application->getKernel()->getContainer();
         }
 
         return $this->container;
     }
 
     /**
-     * @see ContainerAwareInterface::setContainer()
+     * {@inheritdoc}
      */
     public function setContainer(ContainerInterface $container = null)
     {

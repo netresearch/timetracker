@@ -13,7 +13,7 @@ namespace Symfony\Bundle\FrameworkBundle\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Tests\TestCase;
 use Symfony\Bundle\FrameworkBundle\Controller\ControllerNameParser;
-use Symfony\Component\ClassLoader\UniversalClassLoader;
+use Symfony\Component\ClassLoader\ClassLoader;
 
 class ControllerNameParserTest extends TestCase
 {
@@ -21,15 +21,15 @@ class ControllerNameParserTest extends TestCase
 
     protected function setUp()
     {
-        $this->loader = new UniversalClassLoader();
-        $this->loader->registerNamespaces(array(
-            'TestBundle'      => __DIR__.'/../Fixtures',
+        $this->loader = new ClassLoader();
+        $this->loader->addPrefixes(array(
+            'TestBundle' => __DIR__.'/../Fixtures',
             'TestApplication' => __DIR__.'/../Fixtures',
         ));
         $this->loader->register();
     }
 
-    public function tearDown()
+    protected function tearDown()
     {
         spl_autoload_unregister(array($this->loader, 'loadClass'));
 
@@ -52,6 +52,35 @@ class ControllerNameParserTest extends TestCase
             $this->fail('->parse() throws an \InvalidArgumentException if the controller is not an a:b:c string');
         } catch (\Exception $e) {
             $this->assertInstanceOf('\InvalidArgumentException', $e, '->parse() throws an \InvalidArgumentException if the controller is not an a:b:c string');
+        }
+    }
+
+    public function testBuild()
+    {
+        $parser = $this->createParser();
+
+        $this->assertEquals('FooBundle:Default:index', $parser->build('TestBundle\FooBundle\Controller\DefaultController::indexAction'), '->parse() converts a class::method string to a short a:b:c notation string');
+        $this->assertEquals('FooBundle:Sub\Default:index', $parser->build('TestBundle\FooBundle\Controller\Sub\DefaultController::indexAction'), '->parse() converts a class::method string to a short a:b:c notation string');
+
+        try {
+            $parser->build('TestBundle\FooBundle\Controller\DefaultController::index');
+            $this->fail('->parse() throws an \InvalidArgumentException if the controller is not an aController::cAction string');
+        } catch (\Exception $e) {
+            $this->assertInstanceOf('\InvalidArgumentException', $e, '->parse() throws an \InvalidArgumentException if the controller is not an aController::cAction string');
+        }
+
+        try {
+            $parser->build('TestBundle\FooBundle\Controller\Default::indexAction');
+            $this->fail('->parse() throws an \InvalidArgumentException if the controller is not an aController::cAction string');
+        } catch (\Exception $e) {
+            $this->assertInstanceOf('\InvalidArgumentException', $e, '->parse() throws an \InvalidArgumentException if the controller is not an aController::cAction string');
+        }
+
+        try {
+            $parser->build('Foo\Controller\DefaultController::indexAction');
+            $this->fail('->parse() throws an \InvalidArgumentException if the controller is not an aController::cAction string');
+        } catch (\Exception $e) {
+            $this->assertInstanceOf('\InvalidArgumentException', $e, '->parse() throws an \InvalidArgumentException if the controller is not an aController::cAction string');
         }
     }
 
@@ -78,6 +107,36 @@ class ControllerNameParserTest extends TestCase
         );
     }
 
+    /**
+     * @expectedException
+     * @dataProvider getInvalidBundleNameTests
+     */
+    public function testInvalidBundleName($bundleName, $suggestedBundleName)
+    {
+        $parser = $this->createParser();
+
+        try {
+            $parser->parse($bundleName);
+        } catch (\Exception $e) {
+            $this->assertInstanceOf('\InvalidArgumentException', $e, '->parse() throws a \InvalidArgumentException if the bundle does not exist');
+
+            if (false === $suggestedBundleName) {
+                // make sure we don't have a suggestion
+                $this->assertNotContains('Did you mean', $e->getMessage());
+            } else {
+                $this->assertContains(sprintf('Did you mean "%s"', $suggestedBundleName), $e->getMessage());
+            }
+        }
+    }
+
+    public function getInvalidBundleNameTests()
+    {
+        return array(
+            array('FoodBundle:Default:index', 'FooBundle:Default:index'),
+            array('CrazyBundle:Default:index', false),
+        );
+    }
+
     private function createParser()
     {
         $bundles = array(
@@ -92,8 +151,24 @@ class ControllerNameParserTest extends TestCase
             ->expects($this->any())
             ->method('getBundle')
             ->will($this->returnCallback(function ($bundle) use ($bundles) {
+                if (!isset($bundles[$bundle])) {
+                    throw new \InvalidArgumentException(sprintf('Invalid bundle name "%s"', $bundle));
+                }
+
                 return $bundles[$bundle];
             }))
+        ;
+
+        $bundles = array(
+            'SensioFooBundle' => $this->getBundle('TestBundle\Fabpot\FooBundle', 'FabpotFooBundle'),
+            'SensioCmsFooBundle' => $this->getBundle('TestBundle\Sensio\Cms\FooBundle', 'SensioCmsFooBundle'),
+            'FooBundle' => $this->getBundle('TestBundle\FooBundle', 'FooBundle'),
+            'FabpotFooBundle' => $this->getBundle('TestBundle\Fabpot\FooBundle', 'FabpotFooBundle'),
+        );
+        $kernel
+            ->expects($this->any())
+            ->method('getBundles')
+            ->will($this->returnValue($bundles))
         ;
 
         return new ControllerNameParser($kernel);

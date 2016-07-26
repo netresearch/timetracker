@@ -16,13 +16,13 @@ use Symfony\Component\ClassLoader\ClassMapGenerator;
 class ClassMapGeneratorTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var string $workspace
+     * @var string|null
      */
     private $workspace = null;
 
     public function prepare_workspace()
     {
-        $this->workspace = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.time().rand(0, 1000);
+        $this->workspace = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.time().mt_rand(0, 1000);
         mkdir($this->workspace, 0777, true);
         $this->workspace = realpath($this->workspace);
     }
@@ -47,7 +47,7 @@ class ClassMapGeneratorTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getTestCreateMapTests
      */
-    public function testDump($directory, $expected)
+    public function testDump($directory)
     {
         $this->prepare_workspace();
 
@@ -75,7 +75,8 @@ class ClassMapGeneratorTest extends \PHPUnit_Framework_TestCase
                 'Namespaced\\Bar' => realpath(__DIR__).'/Fixtures/Namespaced/Bar.php',
                 'Namespaced\\Foo' => realpath(__DIR__).'/Fixtures/Namespaced/Foo.php',
                 'Namespaced\\Baz' => realpath(__DIR__).'/Fixtures/Namespaced/Baz.php',
-                )
+                'Namespaced\\WithComments' => realpath(__DIR__).'/Fixtures/Namespaced/WithComments.php',
+                ),
             ),
             array(__DIR__.'/Fixtures/beta/NamespaceCollision', array(
                 'NamespaceCollision\\A\\B\\Bar' => realpath(__DIR__).'/Fixtures/beta/NamespaceCollision/A/B/Bar.php',
@@ -87,22 +88,23 @@ class ClassMapGeneratorTest extends \PHPUnit_Framework_TestCase
                 'Pearlike_Foo' => realpath(__DIR__).'/Fixtures/Pearlike/Foo.php',
                 'Pearlike_Bar' => realpath(__DIR__).'/Fixtures/Pearlike/Bar.php',
                 'Pearlike_Baz' => realpath(__DIR__).'/Fixtures/Pearlike/Baz.php',
+                'Pearlike_WithComments' => realpath(__DIR__).'/Fixtures/Pearlike/WithComments.php',
             )),
             array(__DIR__.'/Fixtures/classmap', array(
-                'Foo\\Bar\\A'             => realpath(__DIR__).'/Fixtures/classmap/sameNsMultipleClasses.php',
-                'Foo\\Bar\\B'             => realpath(__DIR__).'/Fixtures/classmap/sameNsMultipleClasses.php',
-                'A'                       => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
-                'Alpha\\A'                => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
-                'Alpha\\B'                => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
-                'Beta\\A'                 => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
-                'Beta\\B'                 => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
+                'Foo\\Bar\\A' => realpath(__DIR__).'/Fixtures/classmap/sameNsMultipleClasses.php',
+                'Foo\\Bar\\B' => realpath(__DIR__).'/Fixtures/classmap/sameNsMultipleClasses.php',
+                'A' => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
+                'Alpha\\A' => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
+                'Alpha\\B' => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
+                'Beta\\A' => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
+                'Beta\\B' => realpath(__DIR__).'/Fixtures/classmap/multipleNs.php',
                 'ClassMap\\SomeInterface' => realpath(__DIR__).'/Fixtures/classmap/SomeInterface.php',
-                'ClassMap\\SomeParent'    => realpath(__DIR__).'/Fixtures/classmap/SomeParent.php',
-                'ClassMap\\SomeClass'     => realpath(__DIR__).'/Fixtures/classmap/SomeClass.php',
+                'ClassMap\\SomeParent' => realpath(__DIR__).'/Fixtures/classmap/SomeParent.php',
+                'ClassMap\\SomeClass' => realpath(__DIR__).'/Fixtures/classmap/SomeClass.php',
             )),
         );
 
-        if (version_compare(PHP_VERSION, '5.4', '>=')) {
+        if (PHP_VERSION_ID >= 50400) {
             $data[] = array(__DIR__.'/Fixtures/php5.4', array(
                 'TFoo' => __DIR__.'/Fixtures/php5.4/traits.php',
                 'CFoo' => __DIR__.'/Fixtures/php5.4/traits.php',
@@ -113,17 +115,19 @@ class ClassMapGeneratorTest extends \PHPUnit_Framework_TestCase
             ));
         }
 
+        if (PHP_VERSION_ID >= 50500) {
+            $data[] = array(__DIR__.'/Fixtures/php5.5', array(
+                'ClassCons\\Foo' => __DIR__.'/Fixtures/php5.5/class_cons.php',
+            ));
+        }
+
         return $data;
     }
 
     public function testCreateMapFinderSupport()
     {
-        if (!class_exists('Symfony\\Component\\Finder\\Finder')) {
-            $this->markTestSkipped('Finder component is not available');
-        }
-
         $finder = new \Symfony\Component\Finder\Finder();
-        $finder->files()->in(__DIR__ . '/Fixtures/beta/NamespaceCollision');
+        $finder->files()->in(__DIR__.'/Fixtures/beta/NamespaceCollision');
 
         $this->assertEqualsNormalized(array(
             'NamespaceCollision\\A\\B\\Bar' => realpath(__DIR__).'/Fixtures/beta/NamespaceCollision/A/B/Bar.php',
@@ -136,10 +140,10 @@ class ClassMapGeneratorTest extends \PHPUnit_Framework_TestCase
     protected function assertEqualsNormalized($expected, $actual, $message = null)
     {
         foreach ($expected as $ns => $path) {
-            $expected[$ns] = strtr($path, '\\', '/');
+            $expected[$ns] = str_replace('\\', '/', $path);
         }
         foreach ($actual as $ns => $path) {
-            $actual[$ns] = strtr($path, '\\', '/');
+            $actual[$ns] = str_replace('\\', '/', $path);
         }
         $this->assertEquals($expected, $actual, $message);
     }

@@ -12,11 +12,13 @@
 namespace Symfony\Component\DependencyInjection\Dumper;
 
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\DependencyInjection\Scope;
 
 /**
  * GraphvizDumper dumps a service container as a graphviz file.
@@ -33,8 +35,8 @@ class GraphvizDumper extends Dumper
     private $edges;
     private $options = array(
             'graph' => array('ratio' => 'compress'),
-            'node'  => array('fontsize' => 11, 'fontname' => 'Arial', 'shape' => 'record'),
-            'edge'  => array('fontsize' => 9, 'fontname' => 'Arial', 'color' => 'grey', 'arrowhead' => 'open', 'arrowsize' => 0.5),
+            'node' => array('fontsize' => 11, 'fontname' => 'Arial', 'shape' => 'record'),
+            'edge' => array('fontsize' => 9, 'fontname' => 'Arial', 'color' => 'grey', 'arrowhead' => 'open', 'arrowsize' => 0.5),
             'node.instance' => array('fillcolor' => '#9999ff', 'style' => 'filled'),
             'node.definition' => array('fillcolor' => '#eeeeee'),
             'node.missing' => array('fillcolor' => '#ff9999', 'style' => 'filled'),
@@ -121,10 +123,10 @@ class GraphvizDumper extends Dumper
     /**
      * Finds all edges belonging to a specific service id.
      *
-     * @param string  $id        The service id used to find edges
-     * @param array   $arguments An array of arguments
-     * @param Boolean $required
-     * @param string  $name
+     * @param string $id        The service id used to find edges
+     * @param array  $arguments An array of arguments
+     * @param bool   $required
+     * @param string $name
      *
      * @return array An array of edges
      */
@@ -132,7 +134,7 @@ class GraphvizDumper extends Dumper
     {
         $edges = array();
         foreach ($arguments as $argument) {
-            if (is_object($argument) && $argument instanceof Parameter) {
+            if ($argument instanceof Parameter) {
                 $argument = $this->container->hasParameter($argument) ? $this->container->getParameter($argument) : null;
             } elseif (is_string($argument) && preg_match('/^%([^%]+)%$/', $argument, $match)) {
                 $argument = $this->container->hasParameter($match[1]) ? $this->container->getParameter($match[1]) : null;
@@ -164,15 +166,25 @@ class GraphvizDumper extends Dumper
         $container = $this->cloneContainer();
 
         foreach ($container->getDefinitions() as $id => $definition) {
-            $nodes[$id] = array('class' => str_replace('\\', '\\\\', $this->container->getParameterBag()->resolveValue($definition->getClass())), 'attributes' => array_merge($this->options['node.definition'], array('style' => ContainerInterface::SCOPE_PROTOTYPE !== $definition->getScope() ? 'filled' : 'dotted')));
+            $class = $definition->getClass();
 
+            if ('\\' === substr($class, 0, 1)) {
+                $class = substr($class, 1);
+            }
+
+            try {
+                $class = $this->container->getParameterBag()->resolveValue($class);
+            } catch (ParameterNotFoundException $e) {
+            }
+
+            $nodes[$id] = array('class' => str_replace('\\', '\\\\', $class), 'attributes' => array_merge($this->options['node.definition'], array('style' => $definition->isShared() && ContainerInterface::SCOPE_PROTOTYPE !== $definition->getScope(false) ? 'filled' : 'dotted')));
             $container->setDefinition($id, new Definition('stdClass'));
         }
 
         foreach ($container->getServiceIds() as $id) {
             $service = $container->get($id);
 
-            if (in_array($id, array_keys($container->getAliases()))) {
+            if (array_key_exists($id, $container->getAliases())) {
                 continue;
             }
 
@@ -193,8 +205,8 @@ class GraphvizDumper extends Dumper
         $container->setDefinitions($this->container->getDefinitions());
         $container->setAliases($this->container->getAliases());
         $container->setResources($this->container->getResources());
-        foreach ($this->container->getScopes() as $scope) {
-            $container->addScope($scope);
+        foreach ($this->container->getScopes(false) as $scope => $parentScope) {
+            $container->addScope(new Scope($scope, $parentScope));
         }
         foreach ($this->container->getExtensions() as $extension) {
             $container->registerExtension($extension);
@@ -228,7 +240,7 @@ class GraphvizDumper extends Dumper
     }
 
     /**
-     * Adds attributes
+     * Adds attributes.
      *
      * @param array $attributes An array of attributes
      *
@@ -245,7 +257,7 @@ class GraphvizDumper extends Dumper
     }
 
     /**
-     * Adds options
+     * Adds options.
      *
      * @param array $options An array of options
      *
@@ -270,7 +282,7 @@ class GraphvizDumper extends Dumper
      */
     private function dotize($id)
     {
-        return strtolower(preg_replace('/[^\w]/i', '_', $id));
+        return strtolower(preg_replace('/\W/i', '_', $id));
     }
 
     /**

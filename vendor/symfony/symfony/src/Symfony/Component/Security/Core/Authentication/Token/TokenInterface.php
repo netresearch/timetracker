@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Core\Authentication\Token;
 
+use Symfony\Component\Security\Core\Role\RoleInterface;
+
 /**
  * TokenInterface is the interface for the user authentication information.
  *
@@ -31,7 +33,7 @@ interface TokenInterface extends \Serializable
     /**
      * Returns the user roles.
      *
-     * @return Role[] An array of Role instances.
+     * @return RoleInterface[] An array of RoleInterface instances.
      */
     public function getRoles();
 
@@ -45,8 +47,10 @@ interface TokenInterface extends \Serializable
     /**
      * Returns a user representation.
      *
-     * @return mixed either returns an object which implements __toString(), or
-     *                  a primitive string is returned.
+     * @return mixed Can be a UserInterface instance, an object implementing a __toString method,
+     *               or the username as a regular string
+     *
+     * @see AbstractToken::setUser()
      */
     public function getUser();
 
@@ -67,14 +71,14 @@ interface TokenInterface extends \Serializable
     /**
      * Returns whether the user is authenticated or not.
      *
-     * @return Boolean true if the token has been authenticated, false otherwise
+     * @return bool true if the token has been authenticated, false otherwise
      */
     public function isAuthenticated();
 
     /**
      * Sets the authenticated flag.
      *
-     * @param Boolean $isAuthenticated The authenticated flag
+     * @param bool $isAuthenticated The authenticated flag
      */
     public function setAuthenticated($isAuthenticated);
 
@@ -102,7 +106,7 @@ interface TokenInterface extends \Serializable
      *
      * @param string $name The attribute name
      *
-     * @return Boolean true if the attribute exists, false otherwise
+     * @return bool true if the attribute exists, false otherwise
      */
     public function hasAttribute($name);
 

@@ -20,35 +20,14 @@ use Symfony\Component\Finder\Glob;
  */
 class FilenameFilterIterator extends MultiplePcreFilterIterator
 {
-
     /**
      * Filters the iterator values.
      *
-     * @return Boolean true if the value should be kept, false otherwise
+     * @return bool true if the value should be kept, false otherwise
      */
     public function accept()
     {
-        $filename = $this->current()->getFilename();
-
-        // should at least not match one rule to exclude
-        foreach ($this->noMatchRegexps as $regex) {
-            if (preg_match($regex, $filename)) {
-                return false;
-            }
-        }
-
-        // should at least match one rule
-        $match = true;
-        if ($this->matchRegexps) {
-            $match = false;
-            foreach ($this->matchRegexps as $regex) {
-                if (preg_match($regex, $filename)) {
-                    return true;
-                }
-            }
-        }
-
-        return $match;
+        return $this->isAccepted($this->current()->getFilename());
     }
 
     /**

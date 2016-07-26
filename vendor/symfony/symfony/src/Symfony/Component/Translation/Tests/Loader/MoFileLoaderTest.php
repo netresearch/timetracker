@@ -16,13 +16,6 @@ use Symfony\Component\Config\Resource\FileResource;
 
 class MoFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
-    protected function setUp()
-    {
-        if (!class_exists('Symfony\Component\Config\Loader\Loader')) {
-            $this->markTestSkipped('The "Config" component is not available');
-        }
-    }
-
     public function testLoad()
     {
         $loader = new MoFileLoader();
@@ -46,12 +39,33 @@ class MoFileLoaderTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException \Symfony\Component\Translation\Exception\NotFoundResourceException
+     */
+    public function testLoadNonExistingResource()
+    {
+        $loader = new MoFileLoader();
+        $resource = __DIR__.'/../fixtures/non-existing.mo';
+        $loader->load($resource, 'en', 'domain1');
+    }
+
+    /**
+     * @expectedException \Symfony\Component\Translation\Exception\InvalidResourceException
      */
     public function testLoadInvalidResource()
     {
         $loader = new MoFileLoader();
         $resource = __DIR__.'/../fixtures/empty.mo';
-        $catalogue = $loader->load($resource, 'en', 'domain1');
+        $loader->load($resource, 'en', 'domain1');
+    }
+
+    public function testLoadEmptyTranslation()
+    {
+        $loader = new MoFileLoader();
+        $resource = __DIR__.'/../fixtures/empty-translation.mo';
+        $catalogue = $loader->load($resource, 'en', 'message');
+
+        $this->assertEquals(array(), $catalogue->all('message'));
+        $this->assertEquals('en', $catalogue->getLocale());
+        $this->assertEquals(array(new FileResource($resource)), $catalogue->getResources());
     }
 }

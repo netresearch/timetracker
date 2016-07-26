@@ -4,5 +4,10 @@ namespace Metadata;
 
 interface MergeableInterface
 {
-    function merge(MergeableInterface $object);
+    /**
+     * @param MergeableInterface $object
+     *
+     * @return void
+     */
+    public function merge(MergeableInterface $object);
 }

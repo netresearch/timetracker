@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\ClassLoader;
 
+@trigger_error('The '.__NAMESPACE__.'\DebugClassLoader class is deprecated since version 2.4 and will be removed in 3.0. Use the Symfony\Component\Debug\DebugClassLoader class instead.', E_USER_DEPRECATED);
+
 /**
  * Autoloader checking if the class is really defined in the file found.
  *
@@ -21,7 +23,8 @@ namespace Symfony\Component\ClassLoader;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Christophe Coevoet <stof@notk.org>
  *
- * @api
+ * @deprecated since version 2.4, to be removed in 3.0.
+ *             Use {@link \Symfony\Component\Debug\DebugClassLoader} instead.
  */
 class DebugClassLoader
 {
@@ -31,12 +34,20 @@ class DebugClassLoader
      * Constructor.
      *
      * @param object $classFinder
-     *
-     * @api
      */
     public function __construct($classFinder)
     {
         $this->classFinder = $classFinder;
+    }
+
+    /**
+     * Gets the wrapped class loader.
+     *
+     * @return object a class loader instance
+     */
+    public function getClassLoader()
+    {
+        return $this->classFinder;
     }
 
     /**
@@ -70,7 +81,7 @@ class DebugClassLoader
     }
 
     /**
-     * Finds a file by class name
+     * Finds a file by class name.
      *
      * @param string $class A class name to resolve to file
      *
@@ -86,7 +97,9 @@ class DebugClassLoader
      *
      * @param string $class The name of the class
      *
-     * @return Boolean|null True, if loaded
+     * @return bool|null True, if loaded
+     *
+     * @throws \RuntimeException
      */
     public function loadClass($class)
     {

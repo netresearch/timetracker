@@ -12,18 +12,18 @@
 namespace Symfony\Bundle\FrameworkBundle\Translation;
 
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Translation\Extractor\AbstractFileExtractor;
 use Symfony\Component\Translation\MessageCatalogue;
 use Symfony\Component\Translation\Extractor\ExtractorInterface;
 
 /**
- * PhpExtractor extracts translation messages from a php template.
+ * PhpExtractor extracts translation messages from a PHP template.
  *
  * @author Michel Salib <michelsalib@hotmail.com>
  */
-class PhpExtractor implements ExtractorInterface
+class PhpExtractor extends AbstractFileExtractor implements ExtractorInterface
 {
     const MESSAGE_TOKEN = 300;
-    const IGNORE_TOKEN = 400;
 
     /**
      * Prefix for new found message.
@@ -39,33 +39,32 @@ class PhpExtractor implements ExtractorInterface
      */
     protected $sequences = array(
         array(
-            '$view',
-            '[',
-            '\'translator\'',
-            ']',
             '->',
             'trans',
             '(',
             self::MESSAGE_TOKEN,
-            ')',
+        ),
+        array(
+            '->',
+            'transChoice',
+            '(',
+            self::MESSAGE_TOKEN,
         ),
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function extract($directory, MessageCatalogue $catalog)
+    public function extract($resource, MessageCatalogue $catalog)
     {
-        // load any existing translation files
-        $finder = new Finder();
-        $files = $finder->files()->name('*.php')->in($directory);
+        $files = $this->extractFiles($resource);
         foreach ($files as $file) {
             $this->parseTokens(token_get_all(file_get_contents($file)), $catalog);
         }
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function setPrefix($prefix)
     {
@@ -76,6 +75,7 @@ class PhpExtractor implements ExtractorInterface
      * Normalizes a token.
      *
      * @param mixed $token
+     *
      * @return string
      */
     protected function normalizeToken($token)
@@ -88,30 +88,83 @@ class PhpExtractor implements ExtractorInterface
     }
 
     /**
-     * Extracts trans message from php tokens.
+     * Seeks to a non-whitespace token.
+     */
+    private function seekToNextRelevantToken(\Iterator $tokenIterator)
+    {
+        for (; $tokenIterator->valid(); $tokenIterator->next()) {
+            $t = $tokenIterator->current();
+            if (!is_array($t) || ($t[0] !== T_WHITESPACE)) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Extracts the message from the iterator while the tokens
+     * match allowed message tokens.
+     */
+    private function getMessage(\Iterator $tokenIterator)
+    {
+        $message = '';
+        $docToken = '';
+
+        for (; $tokenIterator->valid(); $tokenIterator->next()) {
+            $t = $tokenIterator->current();
+            if (!is_array($t)) {
+                break;
+            }
+
+            switch ($t[0]) {
+                case T_START_HEREDOC:
+                    $docToken = $t[1];
+                    break;
+                case T_ENCAPSED_AND_WHITESPACE:
+                case T_CONSTANT_ENCAPSED_STRING:
+                    $message .= $t[1];
+                    break;
+                case T_END_HEREDOC:
+                    return PhpStringTokenParser::parseDocString($docToken, $message);
+                default:
+                    break 2;
+            }
+        }
+
+        if ($message) {
+            $message = PhpStringTokenParser::parse($message);
+        }
+
+        return $message;
+    }
+
+    /**
+     * Extracts trans message from PHP tokens.
      *
      * @param array            $tokens
      * @param MessageCatalogue $catalog
      */
     protected function parseTokens($tokens, MessageCatalogue $catalog)
     {
-        foreach ($tokens as $key => $token) {
+        $tokenIterator = new \ArrayIterator($tokens);
+
+        for ($key = 0; $key < $tokenIterator->count(); ++$key) {
             foreach ($this->sequences as $sequence) {
                 $message = '';
+                $tokenIterator->seek($key);
 
-                foreach ($sequence as $id => $item) {
-                    if ($this->normalizeToken($tokens[$key + $id]) == $item) {
+                foreach ($sequence as $item) {
+                    $this->seekToNextRelevantToken($tokenIterator);
+
+                    if ($this->normalizeToken($tokenIterator->current()) == $item) {
+                        $tokenIterator->next();
                         continue;
                     } elseif (self::MESSAGE_TOKEN == $item) {
-                        $message = $this->normalizeToken($tokens[$key + $id]);
-                    } elseif (self::IGNORE_TOKEN == $item) {
-                        continue;
+                        $message = $this->getMessage($tokenIterator);
+                        break;
                     } else {
                         break;
                     }
                 }
-
-                $message = trim($message, '\'');
 
                 if ($message) {
                     $catalog->set($message, $this->prefix.$message);
@@ -119,5 +172,29 @@ class PhpExtractor implements ExtractorInterface
                 }
             }
         }
+    }
+
+    /**
+     * @param string $file
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return bool
+     */
+    protected function canBeExtracted($file)
+    {
+        return $this->isFile($file) && 'php' === pathinfo($file, PATHINFO_EXTENSION);
+    }
+
+    /**
+     * @param string|array $directory
+     *
+     * @return array
+     */
+    protected function extractFromDirectory($directory)
+    {
+        $finder = new Finder();
+
+        return $finder->files()->name('*.php')->in($directory);
     }
 }

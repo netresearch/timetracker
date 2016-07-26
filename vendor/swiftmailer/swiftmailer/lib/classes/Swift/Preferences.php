@@ -11,8 +11,7 @@
 /**
  * Changes some global preference settings in Swift Mailer.
  *
- * @package Swift
- * @author  Chris Corbyn
+ * @author Chris Corbyn
  */
 class Swift_Preferences
 {
@@ -86,7 +85,7 @@ class Swift_Preferences
     /**
      * Set the QuotedPrintable dot escaper preference.
      *
-     * @param boolean $dotEscape
+     * @param bool $dotEscape
      *
      * @return Swift_Preferences
      */
@@ -94,10 +93,10 @@ class Swift_Preferences
     {
         $dotEscape = !empty($dotEscape);
         Swift_DependencyContainer::getInstance()
-            -> register('mime.qpcontentencoder')
-            -> asNewInstanceOf('Swift_Mime_ContentEncoder_QpContentEncoder')
-            -> withDependencies(array('mime.charstream', 'mime.bytecanonicalizer'))
-            -> addConstructorValue($dotEscape);
+            ->register('mime.qpcontentencoder')
+            ->asNewInstanceOf('Swift_Mime_ContentEncoder_QpContentEncoder')
+            ->withDependencies(array('mime.charstream', 'mime.bytecanonicalizer'))
+            ->addConstructorValue($dotEscape);
 
         return $this;
     }

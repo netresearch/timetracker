@@ -22,11 +22,6 @@ use Symfony\Bundle\WebProfilerBundle\Profiler\TemplateManager;
 class TemplateManagerTest extends TestCase
 {
     /**
-     * @var \Symfony\Bundle\TwigBundle\TwigEngine
-     */
-    protected $twigEngine;
-
-    /**
      * @var \Twig_Environment
      */
     protected $twigEnvironment;
@@ -46,24 +41,23 @@ class TemplateManagerTest extends TestCase
      */
     protected $templateManager;
 
-    public function setUp()
+    protected function setUp()
     {
         parent::setUp();
 
         $profiler = $this->mockProfiler();
-        $twigEngine = $this->mockTwigEngine();
         $twigEnvironment = $this->mockTwigEnvironment();
         $templates = array(
-            'data_collector.foo'=>array('foo','FooBundle:Collector:foo'),
-            'data_collector.bar'=>array('bar','FooBundle:Collector:bar'),
-            'data_collector.baz'=>array('baz','FooBundle:Collector:baz')
+            'data_collector.foo' => array('foo','FooBundle:Collector:foo'),
+            'data_collector.bar' => array('bar','FooBundle:Collector:bar'),
+            'data_collector.baz' => array('baz','FooBundle:Collector:baz'),
             );
 
-        $this->templateManager = new TemplateManager($profiler, $twigEngine, $twigEnvironment, $templates);
+        $this->templateManager = new TemplateManager($profiler, $twigEnvironment, $templates);
     }
 
     /**
-     * @expectedException Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     * @expectedException \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
     public function testGetNameOfInvalidTemplate()
     {
@@ -72,7 +66,7 @@ class TemplateManagerTest extends TestCase
     }
 
     /**
-     * if template exists in both profile and profiler then its name should be returned
+     * if template exists in both profile and profiler then its name should be returned.
      */
     public function testGetNameValidTemplate()
     {
@@ -86,16 +80,15 @@ class TemplateManagerTest extends TestCase
             ->method('hasCollector')
             ->will($this->returnCallback(array($this, 'profileHasCollectorCallback')));
 
-       $this->assertEquals('FooBundle:Collector:foo.html.twig', $this->templateManager->getName($profile, 'foo'));
+        $this->assertEquals('FooBundle:Collector:foo.html.twig', $this->templateManager->getName($profile, 'foo'));
     }
 
     /**
      * template should be loaded for 'foo' because other collectors are
-     * missing in profile or in profiler
+     * missing in profile or in profiler.
      */
     public function testGetTemplates()
     {
-
         $profile = $this->mockProfile();
         $profile->expects($this->any())
             ->method('hasCollector')
@@ -107,9 +100,9 @@ class TemplateManagerTest extends TestCase
             ->will($this->returnCallback(array($this, 'profileHasCollectorCallback')));
 
         $result = $this->templateManager->getTemplates($profile);
-        $this->assertArrayHasKey('foo',$result);
-        $this->assertArrayNotHasKey('bar',$result);
-        $this->assertArrayNotHasKey('baz',$result);
+        $this->assertArrayHasKey('foo', $result);
+        $this->assertArrayNotHasKey('bar', $result);
+        $this->assertArrayNotHasKey('baz', $result);
     }
 
     public function profilerHasCallback($panel)
@@ -145,26 +138,17 @@ class TemplateManagerTest extends TestCase
 
     protected function mockTwigEnvironment()
     {
-        $this->twigEnvironment = $this->getMockBuilder('Twig_Environment')->getMock();
+        $this->twigEnvironment = $this->getMockBuilder('Twig_Environment')->disableOriginalConstructor()->getMock();
 
         $this->twigEnvironment->expects($this->any())
             ->method('loadTemplate')
             ->will($this->returnValue('loadedTemplate'));
 
+        $this->twigEnvironment->expects($this->any())
+            ->method('getLoader')
+            ->will($this->returnValue($this->getMock('\Twig_LoaderInterface')));
+
         return $this->twigEnvironment;
-    }
-
-    protected function mockTwigEngine()
-    {
-        $this->twigEngine = $this->getMockBuilder('Symfony\Bundle\TwigBundle\TwigEngine')
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->twigEngine->expects($this->any())
-            ->method('exists')
-            ->will($this->returnValue(true));
-
-        return $this->twigEngine;
     }
 
     protected function mockProfiler()

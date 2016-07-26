@@ -11,12 +11,17 @@
 
 namespace Symfony\Component\Form\Extension\Core\DataTransformer;
 
-use Symfony\Component\Form\Extension\Core\ChoiceList\ChoiceListInterface;
+@trigger_error('The class '.__NAMESPACE__.'\ChoicesToBooleanArrayTransformer is deprecated since version 2.7 and will be removed in 3.0. Use Symfony\Component\Form\Extension\Core\DataMapper\CheckboxListMapper instead.', E_USER_DEPRECATED);
+
+use Symfony\Component\Form\ChoiceList\ChoiceListInterface;
 use Symfony\Component\Form\DataTransformerInterface;
 use Symfony\Component\Form\Exception\TransformationFailedException;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated since version 2.7, to be removed in 3.0.
+ *             Use {@link \Symfony\Component\Form\ChoiceList\LazyChoiceList} instead.
  */
 class ChoicesToBooleanArrayTransformer implements DataTransformerInterface
 {
@@ -58,10 +63,10 @@ class ChoicesToBooleanArrayTransformer implements DataTransformerInterface
             throw new TransformationFailedException('Can not get the choice list', $e->getCode(), $e);
         }
 
-        $indexMap = array_flip($this->choiceList->getIndicesForChoices($array));
+        $valueMap = array_flip($this->choiceList->getValuesForChoices($array));
 
         foreach ($values as $i => $value) {
-            $values[$i] = isset($indexMap[$i]);
+            $values[$i] = isset($valueMap[$value]);
         }
 
         return $values;
@@ -109,9 +114,7 @@ class ChoicesToBooleanArrayTransformer implements DataTransformerInterface
         }
 
         if (count($unknown) > 0) {
-            throw new TransformationFailedException(
-                sprintf('The choices "%s" were not found', implode('", "', $unknown))
-            );
+            throw new TransformationFailedException(sprintf('The choices "%s" were not found', implode('", "', $unknown)));
         }
 
         return $result;

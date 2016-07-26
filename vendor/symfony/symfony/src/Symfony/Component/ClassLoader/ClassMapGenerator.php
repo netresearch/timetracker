@@ -11,15 +11,23 @@
 
 namespace Symfony\Component\ClassLoader;
 
+if (!defined('SYMFONY_TRAIT')) {
+    if (PHP_VERSION_ID >= 50400) {
+        define('SYMFONY_TRAIT', T_TRAIT);
+    } else {
+        define('SYMFONY_TRAIT', 0);
+    }
+}
+
 /**
- * ClassMapGenerator
+ * ClassMapGenerator.
  *
  * @author Gyula Sallai <salla016@gmail.com>
  */
 class ClassMapGenerator
 {
     /**
-     * Generate a class map file
+     * Generate a class map file.
      *
      * @param array|string $dirs Directories or a single path to search in
      * @param string       $file The name of the class map file
@@ -37,9 +45,9 @@ class ClassMapGenerator
     }
 
     /**
-     * Iterate over all files in the given directory searching for classes
+     * Iterate over all files in the given directory searching for classes.
      *
-     * @param Iterator|string $dir The directory to search in or an iterator
+     * @param \Iterator|string $dir The directory to search in or an iterator
      *
      * @return array A class map array
      */
@@ -67,14 +75,13 @@ class ClassMapGenerator
             foreach ($classes as $class) {
                 $map[$class] = $path;
             }
-
         }
 
         return $map;
     }
 
     /**
-     * Extract the classes in the given file
+     * Extract the classes in the given file.
      *
      * @param string $path The file to check
      *
@@ -83,13 +90,12 @@ class ClassMapGenerator
     private static function findClasses($path)
     {
         $contents = file_get_contents($path);
-        $tokens   = token_get_all($contents);
-        $T_TRAIT  = version_compare(PHP_VERSION, '5.4', '<') ? -1 : T_TRAIT;
+        $tokens = token_get_all($contents);
 
         $classes = array();
 
         $namespace = '';
-        for ($i = 0, $max = count($tokens); $i < $max; $i++) {
+        for ($i = 0, $max = count($tokens); $i < $max; ++$i) {
             $token = $tokens[$i];
 
             if (is_string($token)) {
@@ -111,7 +117,26 @@ class ClassMapGenerator
                     break;
                 case T_CLASS:
                 case T_INTERFACE:
-                case $T_TRAIT:
+                case SYMFONY_TRAIT:
+                    // Skip usage of ::class constant
+                    $isClassConstant = false;
+                    for ($j = $i - 1; $j > 0; --$j) {
+                        if (is_string($tokens[$j])) {
+                            break;
+                        }
+
+                        if (T_DOUBLE_COLON === $tokens[$j][0]) {
+                            $isClassConstant = true;
+                            break;
+                        } elseif (!in_array($tokens[$j][0], array(T_WHITESPACE, T_DOC_COMMENT, T_COMMENT))) {
+                            break;
+                        }
+                    }
+
+                    if ($isClassConstant) {
+                        continue;
+                    }
+
                     // Find the classname
                     while (($t = $tokens[++$i]) && is_array($t)) {
                         if (T_STRING === $t[0]) {
@@ -121,7 +146,7 @@ class ClassMapGenerator
                         }
                     }
 
-                    $classes[] = ltrim($namespace . $class, '\\');
+                    $classes[] = ltrim($namespace.$class, '\\');
                     break;
                 default:
                     break;

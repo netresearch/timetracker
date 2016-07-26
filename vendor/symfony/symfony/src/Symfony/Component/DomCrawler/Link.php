@@ -12,22 +12,22 @@
 namespace Symfony\Component\DomCrawler;
 
 /**
- * Link represents an HTML link (an HTML a tag).
+ * Link represents an HTML link (an HTML a, area or link tag).
  *
  * @author Fabien Potencier <fabien@symfony.com>
- *
- * @api
  */
 class Link
 {
     /**
-     * @var \DOMNode A \DOMNode instance
+     * @var \DOMElement
      */
     protected $node;
+
     /**
      * @var string The method to use for the link
      */
     protected $method;
+
     /**
      * @var string The URI of the page where the link is embedded (or the base href)
      */
@@ -36,15 +36,13 @@ class Link
     /**
      * Constructor.
      *
-     * @param \DOMNode $node       A \DOMNode instance
-     * @param string   $currentUri The URI of the page where the link is embedded (or the base href)
-     * @param string   $method     The method to use for the link (get by default)
+     * @param \DOMElement $node       A \DOMElement instance
+     * @param string      $currentUri The URI of the page where the link is embedded (or the base href)
+     * @param string      $method     The method to use for the link (get by default)
      *
      * @throws \InvalidArgumentException if the node is not a link
-     *
-     * @api
      */
-    public function __construct(\DOMNode $node, $currentUri, $method = 'GET')
+    public function __construct(\DOMElement $node, $currentUri, $method = 'GET')
     {
         if (!in_array(strtolower(substr($currentUri, 0, 4)), array('http', 'file'))) {
             throw new \InvalidArgumentException(sprintf('Current URI must be an absolute URL ("%s").', $currentUri));
@@ -58,7 +56,7 @@ class Link
     /**
      * Gets the node associated with this link.
      *
-     * @return \DOMNode A \DOMNode instance
+     * @return \DOMElement A \DOMElement instance
      */
     public function getNode()
     {
@@ -69,8 +67,6 @@ class Link
      * Gets the method associated with this link.
      *
      * @return string The method
-     *
-     * @api
      */
     public function getMethod()
     {
@@ -81,8 +77,6 @@ class Link
      * Gets the URI associated with this link.
      *
      * @return string The URI
-     *
-     * @api
      */
     public function getUri()
     {
@@ -98,29 +92,23 @@ class Link
             return $this->currentUri;
         }
 
-        // only an anchor
+        // an anchor
         if ('#' === $uri[0]) {
-            $baseUri = $this->currentUri;
-            if (false !== $pos = strpos($baseUri, '#')) {
-                $baseUri = substr($baseUri, 0, $pos);
-            }
-
-            return $baseUri.$uri;
+            return $this->cleanupAnchor($this->currentUri).$uri;
         }
 
-        // only a query string
+        $baseUri = $this->cleanupUri($this->currentUri);
+
         if ('?' === $uri[0]) {
-            $baseUri = $this->currentUri;
-
-            // remove the query string from the current uri
-            if (false !== $pos = strpos($baseUri, '?')) {
-                $baseUri = substr($baseUri, 0, $pos);
-            }
-
             return $baseUri.$uri;
         }
 
-        $baseUri = preg_replace('#^(.*?//[^/]+)(?:\/.*)?$#', '$1', $this->currentUri);
+        // absolute URL with relative schema
+        if (0 === strpos($uri, '//')) {
+            return preg_replace('#^([^/]*)//.*$#', '$1', $baseUri).$uri;
+        }
+
+        $baseUri = preg_replace('#^(.*?//[^/]*)(?:\/.*)?$#', '$1', $baseUri);
 
         // absolute path
         if ('/' === $uri[0]) {
@@ -135,7 +123,7 @@ class Link
     }
 
     /**
-     * Returns raw uri data
+     * Returns raw URI data.
      *
      * @return string
      */
@@ -145,7 +133,7 @@ class Link
     }
 
     /**
-     * Returns the canonicalized URI path (see RFC 3986, section 5.2.4)
+     * Returns the canonicalized URI path (see RFC 3986, section 5.2.4).
      *
      * @param string $path URI path
      *
@@ -158,7 +146,7 @@ class Link
         }
 
         if ('.' === substr($path, -1)) {
-            $path = $path.'/';
+            $path .= '/';
         }
 
         $output = array();
@@ -167,7 +155,7 @@ class Link
             if ('..' === $segment) {
                 array_pop($output);
             } elseif ('.' !== $segment) {
-                array_push($output, $segment);
+                $output[] = $segment;
             }
         }
 
@@ -175,18 +163,62 @@ class Link
     }
 
     /**
-     * Sets current \DOMNode instance
+     * Sets current \DOMElement instance.
      *
-     * @param \DOMNode $node A \DOMNode instance
+     * @param \DOMElement $node A \DOMElement instance
      *
      * @throws \LogicException If given node is not an anchor
      */
-    protected function setNode(\DOMNode $node)
+    protected function setNode(\DOMElement $node)
     {
-        if ('a' != $node->nodeName) {
-            throw new \LogicException(sprintf('Unable to click on a "%s" tag.', $node->nodeName));
+        if ('a' !== $node->nodeName && 'area' !== $node->nodeName && 'link' !== $node->nodeName) {
+            throw new \LogicException(sprintf('Unable to navigate from a "%s" tag.', $node->nodeName));
         }
 
         $this->node = $node;
+    }
+
+    /**
+     * Removes the query string and the anchor from the given uri.
+     *
+     * @param string $uri The uri to clean
+     *
+     * @return string
+     */
+    private function cleanupUri($uri)
+    {
+        return $this->cleanupQuery($this->cleanupAnchor($uri));
+    }
+
+    /**
+     * Remove the query string from the uri.
+     *
+     * @param string $uri
+     *
+     * @return string
+     */
+    private function cleanupQuery($uri)
+    {
+        if (false !== $pos = strpos($uri, '?')) {
+            return substr($uri, 0, $pos);
+        }
+
+        return $uri;
+    }
+
+    /**
+     * Remove the anchor from the uri.
+     *
+     * @param string $uri
+     *
+     * @return string
+     */
+    private function cleanupAnchor($uri)
+    {
+        if (false !== $pos = strpos($uri, '#')) {
+            return substr($uri, 0, $pos);
+        }
+
+        return $uri;
     }
 }

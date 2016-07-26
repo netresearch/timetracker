@@ -25,7 +25,7 @@ use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToTimestampTra
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToRfc3339Transformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\ArrayToPartsTransformer;
 use Symfony\Component\OptionsResolver\Options;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class DateTimeType extends AbstractType
 {
@@ -37,7 +37,7 @@ class DateTimeType extends AbstractType
      * This is not quite the HTML5 format yet, because ICU lacks the
      * capability of parsing and generating RFC 3339 dates, which
      * are like the below pattern but with a timezone suffix. The
-     * timezone suffix is
+     * timezone suffix is.
      *
      *  * "Z" for UTC
      *  * "(-|+)HH:mm" for other timezones (note the colon!)
@@ -69,9 +69,14 @@ class DateTimeType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $parts = array('year', 'month', 'day', 'hour', 'minute');
+        $parts = array('year', 'month', 'day', 'hour');
         $dateParts = array('year', 'month', 'day');
-        $timeParts = array('hour', 'minute');
+        $timeParts = array('hour');
+
+        if ($options['with_minutes']) {
+            $parts[] = 'minute';
+            $timeParts[] = 'minute';
+        }
 
         if ($options['with_seconds']) {
             $parts[] = 'second';
@@ -110,18 +115,29 @@ class DateTimeType extends AbstractType
                 'months',
                 'days',
                 'empty_value',
+                'placeholder',
+                'choice_translation_domain',
                 'required',
                 'translation_domain',
+                'html5',
+                'invalid_message',
+                'invalid_message_parameters',
             )));
 
             $timeOptions = array_intersect_key($options, array_flip(array(
                 'hours',
                 'minutes',
                 'seconds',
+                'with_minutes',
                 'with_seconds',
                 'empty_value',
+                'placeholder',
+                'choice_translation_domain',
                 'required',
                 'translation_domain',
+                'html5',
+                'invalid_message',
+                'invalid_message_parameters',
             )));
 
             if (null !== $options['date_widget']) {
@@ -147,8 +163,8 @@ class DateTimeType extends AbstractType
                         'time' => $timeParts,
                     )),
                 )))
-                ->add('date', 'date', $dateOptions)
-                ->add('time', 'time', $timeOptions)
+                ->add('date', __NAMESPACE__.'\DateType', $dateOptions)
+                ->add('time', __NAMESPACE__.'\TimeType', $timeOptions)
             ;
         }
 
@@ -174,10 +190,11 @@ class DateTimeType extends AbstractType
     {
         $view->vars['widget'] = $options['widget'];
 
-        // Change the input to a HTML5 date input if
+        // Change the input to a HTML5 datetime input if
         //  * the widget is set to "single_text"
         //  * the format matches the one expected by HTML5
-        if ('single_text' === $options['widget'] && self::HTML5_FORMAT === $options['format']) {
+        //  * the html5 is set to true
+        if ($options['html5'] && 'single_text' === $options['widget'] && self::HTML5_FORMAT === $options['format']) {
             $view->vars['type'] = 'datetime';
         }
     }
@@ -185,7 +202,7 @@ class DateTimeType extends AbstractType
     /**
      * {@inheritdoc}
      */
-    public function setDefaultOptions(OptionsResolverInterface $resolver)
+    public function configureOptions(OptionsResolver $resolver)
     {
         $compound = function (Options $options) {
             return $options['widget'] !== 'single_text';
@@ -201,45 +218,36 @@ class DateTimeType extends AbstractType
             return $options['widget'];
         };
 
-        // BC until Symfony 2.3
-        $modelTimezone = function (Options $options) {
-            return $options['data_timezone'];
-        };
-
-        // BC until Symfony 2.3
-        $viewTimezone = function (Options $options) {
-            return $options['user_timezone'];
-        };
-
         $resolver->setDefaults(array(
-            'input'          => 'datetime',
-            'model_timezone' => $modelTimezone,
-            'view_timezone'  => $viewTimezone,
-            // Deprecated timezone options
-            'data_timezone'  => null,
-            'user_timezone'  => null,
-            'format'         => self::HTML5_FORMAT,
-            'date_format'    => null,
-            'widget'         => null,
-            'date_widget'    => $dateWidget,
-            'time_widget'    => $timeWidget,
-            'with_seconds'   => false,
+            'input' => 'datetime',
+            'model_timezone' => null,
+            'view_timezone' => null,
+            'format' => self::HTML5_FORMAT,
+            'date_format' => null,
+            'widget' => null,
+            'date_widget' => $dateWidget,
+            'time_widget' => $timeWidget,
+            'with_minutes' => true,
+            'with_seconds' => false,
+            'html5' => true,
             // Don't modify \DateTime classes by reference, we treat
             // them like immutable value objects
-            'by_reference'   => false,
+            'by_reference' => false,
             'error_bubbling' => false,
             // If initialized with a \DateTime object, FormType initializes
             // this option to "\DateTime". Since the internal, normalized
             // representation is not \DateTime, but an array, we need to unset
             // this option.
-            'data_class'     => null,
-            'compound'       => $compound,
+            'data_class' => null,
+            'compound' => $compound,
         ));
 
         // Don't add some defaults in order to preserve the defaults
         // set in DateType and TimeType
-        $resolver->setOptional(array(
-            'empty_value',
+        $resolver->setDefined(array(
+            'empty_value', // deprecated
+            'placeholder',
+            'choice_translation_domain',
             'years',
             'months',
             'days',
@@ -248,47 +256,45 @@ class DateTimeType extends AbstractType
             'seconds',
         ));
 
-        $resolver->setAllowedValues(array(
-            'input'       => array(
-                'datetime',
-                'string',
-                'timestamp',
-                'array',
-            ),
-            'date_widget' => array(
-                null, // inherit default from DateType
-                'single_text',
-                'text',
-                'choice',
-            ),
-            'time_widget' => array(
-                null, // inherit default from TimeType
-                'single_text',
-                'text',
-                'choice',
-            ),
-            // This option will overwrite "date_widget" and "time_widget" options
-            'widget'     => array(
-                null, // default, don't overwrite options
-                'single_text',
-                'text',
-                'choice',
-            ),
+        $resolver->setAllowedValues('input', array(
+            'datetime',
+            'string',
+            'timestamp',
+            'array',
+        ));
+        $resolver->setAllowedValues('date_widget', array(
+            null, // inherit default from DateType
+            'single_text',
+            'text',
+            'choice',
+        ));
+        $resolver->setAllowedValues('time_widget', array(
+            null, // inherit default from TimeType
+            'single_text',
+            'text',
+            'choice',
+        ));
+        // This option will overwrite "date_widget" and "time_widget" options
+        $resolver->setAllowedValues('widget', array(
+            null, // default, don't overwrite options
+            'single_text',
+            'text',
+            'choice',
         ));
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getParent()
+    public function getName()
     {
-        return 'field';
+        return $this->getBlockPrefix();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getName()
+    public function getBlockPrefix()
     {
         return 'datetime';
     }

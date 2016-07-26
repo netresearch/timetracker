@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Core\Authentication\Token;
 
+use Symfony\Component\Security\Core\Role\RoleInterface;
+
 /**
  * UsernamePasswordToken implements a username and password token.
  *
@@ -24,10 +26,10 @@ class UsernamePasswordToken extends AbstractToken
     /**
      * Constructor.
      *
-     * @param string $user        The username (like a nickname, email address, etc.), or a UserInterface instance or an object implementing a __toString method.
-     * @param string $credentials This usually is the password of the user
-     * @param string $providerKey The provider key
-     * @param array  $roles       An array of roles
+     * @param string|object            $user        The username (like a nickname, email address, etc.), or a UserInterface instance or an object implementing a __toString method.
+     * @param string                   $credentials This usually is the password of the user
+     * @param string                   $providerKey The provider key
+     * @param RoleInterface[]|string[] $roles       An array of roles
      *
      * @throws \InvalidArgumentException
      */
@@ -58,11 +60,19 @@ class UsernamePasswordToken extends AbstractToken
         parent::setAuthenticated(false);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getCredentials()
     {
         return $this->credentials;
     }
 
+    /**
+     * Returns the provider key.
+     *
+     * @return string The provider key
+     */
     public function getProviderKey()
     {
         return $this->providerKey;
@@ -78,14 +88,20 @@ class UsernamePasswordToken extends AbstractToken
         $this->credentials = null;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function serialize()
     {
         return serialize(array($this->credentials, $this->providerKey, parent::serialize()));
     }
 
-    public function unserialize($str)
+    /**
+     * {@inheritdoc}
+     */
+    public function unserialize($serialized)
     {
-        list($this->credentials, $this->providerKey, $parentStr) = unserialize($str);
+        list($this->credentials, $this->providerKey, $parentStr) = unserialize($serialized);
         parent::unserialize($parentStr);
     }
 }
