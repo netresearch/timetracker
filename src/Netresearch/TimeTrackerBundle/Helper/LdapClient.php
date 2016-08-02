@@ -44,6 +44,10 @@ class LdapClient
      */
     protected $_userPass;
 
+    /**
+     * @var \Symfony\Bridge\Monolog\Logger
+     */
+    protected $logger;
 
 
     /**
@@ -105,6 +109,7 @@ class LdapClient
         try {
             $ldap->bind();
         } catch (Ldap\Exception\LdapException $e) {
+            $this->logger->addError($e->getMessage());
             throw new \Exception('Login data could not be validated.');
         }
 
@@ -232,5 +237,13 @@ class LdapClient
         return $this->_verifyPassword(
             $this->_verifyUsername()
         );
+    }
+
+    /**
+     * @param \Symfony\Bridge\Monolog\Logger $logger
+     */
+    public function setLogger(\Symfony\Bridge\Monolog\Logger $logger)
+    {
+        $this->logger = $logger;
     }
 }
