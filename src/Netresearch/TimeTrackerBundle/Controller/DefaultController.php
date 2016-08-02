@@ -109,6 +109,21 @@ class DefaultController extends BaseController
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->findOneByUsername($username);
 
+        if (!$user) {
+            // create new user if users.username doesn't exist for valid ldap-authentication
+            $user = new User();
+            $user->setUsername($username)
+                ->setType('DEV')
+                ->setShowEmptyLine('0')
+                ->setSuggestTime('1')
+                ->setShowFuture('1')
+                ->setLocale('de');
+
+            $em = $this->getDoctrine()->getEntityManager();
+            $em->persist($user);
+            $em->flush();
+        }
+
         return $this->setLoggedIn($user, $request->request->has('loginCookie'));
     }
 
