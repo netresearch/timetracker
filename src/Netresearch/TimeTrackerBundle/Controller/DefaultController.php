@@ -54,6 +54,12 @@ class DefaultController extends BaseController
             ->getActivities();
 
         return $this->render('NetresearchTimeTrackerBundle:Default:index.html.twig', array(
+            'globalConfig'  => json_encode([
+                'logo_url'              => $this->container->getParameter('app_logo_url'),
+                'monthly_overview_url'  => $this->container->getParameter('app_monthly_overview_url'),
+                'header_url'            => $this->container->getParameter('app_header_url'),
+            ]),
+            'apptitle'      => $this->container->getParameter('app_title'),
             'environment'   => $this->get('kernel')->getEnvironment(),
             'customers'     => json_encode($customers),
             'projects'      => json_encode($projects),
@@ -69,7 +75,10 @@ class DefaultController extends BaseController
 
         if ($request->getMethod() != 'POST') {
             return $this->render('NetresearchTimeTrackerBundle:Default:login.html.twig',
-                array('locale'  => 'en')
+                array(
+                    'locale'  => 'en',
+                    'apptitle' => $this->container->getParameter('app_title'),
+                )
             );
         }
 
@@ -100,7 +109,8 @@ class DefaultController extends BaseController
                 'login'     => false, 
                 'message'   => $this->get('translator')->trans($e->getMessage()),
                 'username'  => $username,
-                'locale'    => 'en'
+                'locale'    => 'en',
+                'apptitle' => $this->container->getParameter('app_title'),
             ));
 
         }
