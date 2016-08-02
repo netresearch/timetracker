@@ -3,11 +3,8 @@
 }
 
 #logo {
-	background-image: url(../images/logo.png);
-	background-repeat: no-repeat;
-	width: 218px;
-	height: 100px;
-	margin: 10px 0 0 10px;
+    height: 43px;
+    margin: 7px 0 0 7px;
 }
 
 .icon-info {
