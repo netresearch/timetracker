@@ -189,7 +189,11 @@ class BaseController extends Controller
 
             return $this->render(
                 'NetresearchTimeTrackerBundle:Default:login.html.twig',
-                array('locale' => 'en')
+                array(
+                    'locale' => 'en',
+                    'apptitle' => $this->container->getParameter('app_title'),
+
+                )
             );
         }
 
