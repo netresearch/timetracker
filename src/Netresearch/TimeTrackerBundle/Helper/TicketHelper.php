@@ -7,7 +7,7 @@ namespace Netresearch\TimeTrackerBundle\Helper;
  */
 class TicketHelper
 {
-    const TICKET_REGEXP = '/^([A-Z]+)(::[0-9A-Z]+)?-([0-9]+)$/i';
+    const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
 
     public static function checkFormat($ticket)
     {

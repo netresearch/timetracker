@@ -361,7 +361,7 @@ function showNotification(title, message, success)
  */
 function extractTicketPrefix(ticket)
 {
-    var regexp = /([A-Za-z]+)(::.+)?-[0-9]+/;
+    var regexp = /([A-Za-z]+[A-Za-z0-9]*)-[0-9]+/;
     var ticket = ticket.toUpperCase() + '';
     var result = ticket.match(regexp);
     if (!result) {
