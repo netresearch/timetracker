@@ -12,10 +12,6 @@ class ComposerStaticInitd8c0ae5a805451ccd59f556e8ca1ed85
     );
 
     public static $prefixLengthsPsr4 = array (
-        'c' => 
-        array (
-            'chobie\\' => 7,
-        ),
         'Z' => 
         array (
             'Zend\\Stdlib\\' => 12,
@@ -28,10 +24,6 @@ class ComposerStaticInitd8c0ae5a805451ccd59f556e8ca1ed85
     );
 
     public static $prefixDirsPsr4 = array (
-        'chobie\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/jpastoor/jira-api-restclient/src',
-        ),
         'Zend\\Stdlib\\' => 
         array (
             0 => __DIR__ . '/..' . '/zendframework/zend-stdlib/src',

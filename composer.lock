@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d5898539c341ee529f262759472fd291",
-    "content-hash": "3c583ae5771434f34ced9c4e32762acb",
+    "hash": "9b8a776c6f51b0684d98ce57f96568db",
+    "content-hash": "42d5cbac5882cf71595899fc99e4ad8b",
     "packages": [
         {
             "name": "ci/restclientbundle",
@@ -1207,51 +1207,6 @@
                 "security"
             ],
             "time": "2012-09-06 16:12:03"
-        },
-        {
-            "name": "jpastoor/jira-api-restclient",
-            "version": "v2.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jpastoor/jira-api-restclient.git",
-                "reference": "dec4785baa6376cff20ad705310820c8ececb3b9"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jpastoor/jira-api-restclient/zipball/dec4785baa6376cff20ad705310820c8ececb3b9",
-                "reference": "dec4785baa6376cff20ad705310820c8ececb3b9",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "4.1.*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "chobie\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Shuhei Tanuma",
-                    "email": "chobieeee@php.net",
-                    "homepage": "http://chobie.github.io/"
-                }
-            ],
-            "description": "JIRA REST API.",
-            "keywords": [
-                "api",
-                "jira",
-                "rest"
-            ],
-            "time": "2015-12-27 18:58:00"
         },
         {
             "name": "kriswallsmith/assetic",
