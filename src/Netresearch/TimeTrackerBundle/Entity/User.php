@@ -76,6 +76,13 @@ class User
     protected $locale;
 
 
+    /**
+     * @ORM\OneToMany(targetEntity="UserTicketsystem", mappedBy="user")
+     */
+    protected $userTicketsystems;
+
+
+
     public function __construct()
     {
         $this->entries = new ArrayCollection();
@@ -335,5 +342,51 @@ class User
         $this->entries[] = $entries;
     
         return $this;
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection $userTicketSystems
+     */
+    public function getUserTicketsystems()
+    {
+        return $this->userTicketsystems;
+    }
+
+
+    /**
+     * Get Users accesstoken for a Ticketsystem
+     *
+     * @param TicketSystem $ticketsystem
+     * @return null|string
+     */
+    public function getTicketSystemAccessToken(TicketSystem $ticketsystem)
+    {
+        $return = null;
+        /** @var $userTicketsystem UserTicketsystem */
+        foreach ($this->userTicketsystems as $userTicketsystem) {
+            if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
+                $return = $userTicketsystem->getAccessToken();
+            }
+        }
+        return $return;
+    }
+
+
+    /**
+     * Get Users tokensecret for a Ticketsystem
+     *
+     * @param TicketSystem $ticketsystem
+     * @return null|string
+     */
+    public function getTicketSystemAccessTokenSecret(TicketSystem $ticketsystem)
+    {
+        $return = null;
+        /** @var $userTicketsystem UserTicketsystem */
+        foreach ($this->userTicketsystems as $userTicketsystem) {
+            if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
+                $return = $userTicketsystem->getTokenSecret();
+            }
+        }
+        return $return;
     }
 }

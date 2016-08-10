@@ -765,7 +765,11 @@ Ext.define('Netresearch.widget.Tracking', {
                 failure: function(response) {
                     record.saveInProgress=undefined;
                     record.dirty = true;
-                    showNotification(grid._errorTitle, response.responseText, false);
+                    var responseContent = JSON.parse(response.responseText);
+                    showNotification(grid._errorTitle, responseContent.message, false);
+                    if (typeof responseContent.forwardUrl != 'undefined') {
+                        setTimeout("window.location.href = '" + responseContent.forwardUrl + "'", 2000);
+                    }
                 }
             });
 
@@ -1028,13 +1032,22 @@ Ext.define('Netresearch.widget.Tracking', {
             },
             scope: this,
             success: function(response) {
+                var data = Ext.decode(response.responseText);
+
                 this.getStore().remove(record);
                 this.clearProjectStore();
                 this.selectRow(index);
                 this.getView().refresh();
+                if (data.alert) {
+                    showNotification(grid._attentionTitle, data.alert, false);
+                }
             },
             failure: function(response) {
-                showNotification(this._errorTitle, response.responseText, false);
+                var data = Ext.decode(response.responseText);
+                showNotification(grid._errorTitle, data.message, false);
+                if (typeof data.forwardUrl != 'undefined') {
+                    setTimeout("window.location.href = '" + data.forwardUrl + "'", 2000);
+                }
             }
         });
     },

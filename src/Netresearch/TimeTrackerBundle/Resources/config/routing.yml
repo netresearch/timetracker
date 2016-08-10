@@ -166,3 +166,10 @@ deletePreset:
 saveSettings:
     pattern: /settings/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Settings:save }
+
+jira_login:
+    pattern: /connectjira/check
+
+avoidJiraConnection:
+    pattern: /avoidjiraconnection
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:avoidJiraConnection }

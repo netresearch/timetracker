@@ -297,7 +297,7 @@ function countTime() {
  */
 function handleRedirect(response, title, message) {
     if (response.status === 403) {
-        showNotification(title, message);
+        showNotification(title, message, false);
         setTimeout("window.location.href = '" + response.responseText + "'", 2000);
     } else {
         showNotification('Fehler', response.responseText);
