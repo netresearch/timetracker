@@ -9,7 +9,6 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\Ticket;
 
 use Netresearch\TimeTrackerBundle\Helper\JiraClient;
-use Netresearch\TimeTrackerBundle\Model\EscalationException;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
 use Symfony\Component\HttpFoundation\Response;
@@ -594,48 +593,6 @@ class CrudController extends BaseController
         }
 
         $entry->setWorklogId($worklog['id']);
-    }
-
-    private function checkEscalationTime(Entry $entry)
-    {
-        // Check escalation time
-        $ticket = $client->getIssue($entry->getTicket());
-
-        if (is_array($ticket->customFieldValues)) {
-            // does this ticket wait for escalation?
-            // Aufwand = 'customfield_10001'
-            foreach($ticket->customFieldValues AS $customField) {
-                if ('customfield_10001' != $customField->customfieldId)
-                    continue;
-
-                if (
-                    preg_match('/Eskalation nach ([0-9,\.]+)[ ]?h/i', $customField->values[0], $matches)
-                    || preg_match('/([0-9,\.]+)[ ]?h!/i', $customField->values[0], $matches)
-                ) {
-                    $escalationHours = $matches[1];
-                    $escalationSeconds = 60 * 60 * (float) str_replace(',', '.', $escalationHours);
-
-                    if ($escalationSeconds < 1)
-                        return true;
-
-                    // Now calculate all worklogs
-                    $worklogs = $client->getWorklogs($entry->getTicket());
-                    if (! is_array($worklogs))
-                        return true;
-
-                    $sumSeconds = 0;
-                    foreach ($worklogs as $worklog) {
-                        $sumSeconds += $worklog->timeSpentInSeconds;
-                    }
-
-                    if ($escalationSeconds <= $sumSeconds) {
-                        throw new EscalationException($entry->getTicket(), $escalationSeconds, $sumSeconds, $this->get('translator'));
-                    }
-                }
-
-                break;
-            }
-        }
     }
 
 
