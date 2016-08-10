@@ -1217,51 +1217,6 @@
             "time": "2012-09-06T16:12:03+00:00"
         },
         {
-            "name": "jpastoor/jira-api-restclient",
-            "version": "v2.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jpastoor/jira-api-restclient.git",
-                "reference": "dec4785baa6376cff20ad705310820c8ececb3b9"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jpastoor/jira-api-restclient/zipball/dec4785baa6376cff20ad705310820c8ececb3b9",
-                "reference": "dec4785baa6376cff20ad705310820c8ececb3b9",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "4.1.*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "chobie\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Shuhei Tanuma",
-                    "email": "chobieeee@php.net",
-                    "homepage": "http://chobie.github.io/"
-                }
-            ],
-            "description": "JIRA REST API.",
-            "keywords": [
-                "api",
-                "jira",
-                "rest"
-            ],
-            "time": "2015-12-27T18:58:00+00:00"
-        },
-        {
             "name": "kriswallsmith/assetic",
             "version": "v1.1.3",
             "source": {
