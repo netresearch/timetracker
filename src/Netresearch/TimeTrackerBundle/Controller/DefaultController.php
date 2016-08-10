@@ -6,6 +6,7 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository;
 use Netresearch\TimeTrackerBundle\Entity\HolidayRepository;
 
+use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Helper\LocalizationHelper;
@@ -14,8 +15,11 @@ use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
 use Netresearch\TimeTrackerBundle\Entity\User as User;
+use OAuth;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
+use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Helper;
 
 use \Zend_Ldap as Zend_Ldap;
@@ -357,5 +361,43 @@ class DefaultController extends BaseController
         return $response;
     }
 
+    public function avoidJiraConnectionAction()
+    {
+        $user = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:User')
+            ->find($this->_getUserId());
+
+        $jiraBaseUrl = $this->container->getParameter('jira_base_url');
+        /** @var $ticketSystem TicketSystem */
+        $ticketSystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Ticketsystem')->findOneBy([
+            'url' => $jiraBaseUrl
+        ]);
+
+        if ($ticketSystem && $user) {
+            /** @var $userTicketsystem UserTicketsystem */
+            $userTicketsystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:UserTicketsystem')->findOneBy([
+                'user' => $user,
+                'ticketSystem' => $ticketSystem,
+            ]);
+
+            if($userTicketsystem){
+                $userTicketsystem->setAvoidConnection(true);
+            } else {
+                $userTicketsystem = new UserTicketsystem();
+                $userTicketsystem->setUser($user)
+                    ->setTicketSystem($ticketSystem)
+                    ->setTokenSecret(null)
+                    ->setAccessToken(null)
+                    ->setAvoidConnection(true);
+            }
+
+            $em = $this->getDoctrine()->getEntityManager();
+            $em->persist($userTicketsystem);
+            $em->flush();
+        }
+
+        $url = $this->generateUrl($this->container->getParameter('jira_auth_redirect_route'));
+        return $this->redirect($url);
+    }
 }
 

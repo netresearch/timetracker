@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS `teams_users`;
 DROP TABLE IF EXISTS `teams_customers`;
 DROP TABLE IF EXISTS `projects`;
 DROP TABLE IF EXISTS `tickets`;
+DROP TABLE IF EXISTS `users_ticket_systems`;
 DROP TABLE IF EXISTS `ticket_systems`;
 DROP TABLE IF EXISTS `customers`;
 DROP TABLE IF EXISTS `teams`;
@@ -266,8 +267,22 @@ CREATE TABLE IF NOT EXISTS `holidays` (
   `name` varchar(31) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
-
+--
+-- Tabellenstruktur für Tabelle `users_ticket_systems`
+--
+CREATE TABLE IF NOT EXISTS `users_ticket_systems` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `ticket_system_id` int(11) NOT NULL,
+  `accesstoken` varchar(50) NOT NULL,
+  `tokensecret` varchar(50) NOT NULL,
+  `avoidconnection` TINYINT(1) unsigned DEFAULT '0' NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_user_id_idx` (`user_id`),
+  KEY `fk_ticket_system_id_idx` (`ticket_system_id`),
+  CONSTRAINT `fk_ticket_system_id` FOREIGN KEY (`ticket_system_id`) REFERENCES `ticket_systems` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------

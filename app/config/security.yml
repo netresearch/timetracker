@@ -34,10 +34,23 @@ security:
             logout:
                 path:   /demo/secured/logout
                 target: /demo/
+
+        oauh_area:
+            anonymous: ~
+            pattern: ^/connectjira/
+            oauth:
+                resource_owners:
+                    jira: /connectjira/check
+                login_path:        /connectjira
+                use_forward:       false
+                failure_path:      /avoidjiraconnection
+
+                oauth_user_provider:
+                    service: oauth_jira_user_provider
+
             #anonymous: ~
             #http_basic:
             #    realm: "Secured Demo Area"
-
     access_control:
         #- { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY, requires_channel: https }
         #

@@ -32,3 +32,8 @@
     app_header_url              = "https://www.netresearch.de/corpnav-intern/zeiterfassung/"
 
     proxy_http        =
+
+    jira_client_id              =
+    jira_client_secret          =
+    jira_base_url               =
+    jira_auth_redirect_route    = _start
