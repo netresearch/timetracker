@@ -1,0 +1,34 @@
+{
+  "name" : "ci/restclientbundle",
+  "description" : "Provides REST request methods. Mapper bundle for php internal curl library",
+  "type" : "symfony-bundle",
+  "authors" : [{
+    "name" : "Circle.ai",
+    "email" : "info@circle.ai"
+  }],
+  "keywords" : [
+    "REST client curl POST GET PUT DELETE OPTIONS CONNECT PATCH TRACE HEAD content-type payload library plugin"
+  ],
+  "license" : [
+    "GPL"
+  ],
+  "require-dev" : {
+    "php": ">=5.4",
+    "ext-curl": "*",
+    "symfony/http-kernel": ">=2.1",
+    "symfony/dependency-injection": ">=2.1",
+    "symfony/config": ">=2.1",
+    "symfony/yaml": ">=2.1"
+  },
+  "autoload" : {
+    "psr-0" : {
+      "Circle\\RestClientBundle" : ""
+    }
+  },
+  "target-dir" : "Circle/RestClientBundle",
+  "extra" : {
+    "branch-alias" : {
+      "dev-master" : "1.0-dev"
+    }
+  }
+}

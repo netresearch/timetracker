@@ -1,0 +1,197 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="hwi_oauth.authentication.listener.oauth.class">HWI\Bundle\OAuthBundle\Security\Http\Firewall\OAuthListener</parameter>
+        <parameter key="hwi_oauth.authentication.provider.oauth.class">HWI\Bundle\OAuthBundle\Security\Core\Authentication\Provider\OAuthProvider</parameter>
+        <parameter key="hwi_oauth.authentication.entry_point.oauth.class">HWI\Bundle\OAuthBundle\Security\Http\EntryPoint\OAuthEntryPoint</parameter>
+        <parameter key="hwi_oauth.user.provider.class">HWI\Bundle\OAuthBundle\Security\Core\User\OAuthUserProvider</parameter>
+        <parameter key="hwi_oauth.user.provider.entity.class">HWI\Bundle\OAuthBundle\Security\Core\User\EntityUserProvider</parameter>
+        <parameter key="hwi_oauth.user.provider.fosub_bridge.class">HWI\Bundle\OAuthBundle\Security\Core\User\FOSUBUserProvider</parameter>
+        <parameter key="hwi_oauth.registration.form.handler.fosub_bridge.class">HWI\Bundle\OAuthBundle\Form\FOSUBRegistrationFormHandler</parameter>
+
+        <parameter key="hwi_oauth.resource_owner.oauth1.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GenericOAuth1ResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.oauth2.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GenericOAuth2ResourceOwner</parameter>
+
+        <parameter key="hwi_oauth.resource_owner.amazon.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\AmazonResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.bitbucket.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\BitbucketResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.bitly.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\BitlyResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.box.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\BoxResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.dailymotion.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\DailymotionResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.deviantart.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\DeviantartResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.disqus.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\DisqusResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.dropbox.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\DropboxResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.eventbrite.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\EventbriteResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.facebook.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FacebookResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.flickr.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FlickrResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.foursquare.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\FoursquareResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.github.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GitHubResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.google.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GoogleResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.instagram.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\InstagramResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.jira.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\JiraResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.linkedin.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\LinkedinResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.mailru.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\MailRuResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.qq.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\QQResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.sensio_connect.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SensioConnectResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.sina_weibo.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SinaWeiboResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.stack_exchange.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\StackExchangeResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.stereomood.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\StereomoodResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.trello.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\TrelloResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.twitch.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\TwitchResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.twitter.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\TwitterResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.vkontakte.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\VkontakteResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.windows_live.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\WindowsLiveResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.wordpress.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\WordpressResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.yahoo.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\YahooResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.yandex.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\YandexResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.odnoklassniki.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\OdnoklassnikiResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.37signals.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\ThirtySevenSignalsResourceOwner</parameter>
+        <parameter key="hwi_oauth.resource_owner.salesforce.class">HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SalesforceResourceOwner</parameter>
+
+        <parameter key="hwi_oauth.resource_ownermap.class">HWI\Bundle\OAuthBundle\Security\Http\ResourceOwnerMap</parameter>
+        <parameter key="hwi_oauth.security.oauth_utils.class">HWI\Bundle\OAuthBundle\Security\OAuthUtils</parameter>
+
+        <parameter key="hwi_oauth.storage.session.class">HWI\Bundle\OAuthBundle\OAuth\RequestDataStorage\SessionStorage</parameter>
+    </parameters>
+
+    <services>
+        <!--
+        Hey there, welcome to this bundle's DIC configuration !
+
+        Did you know that most of these services definition
+        are modified by the OAuthFactory? Or setup in the Extension?
+
+        Cheers!
+        -->
+        <service id="hwi_oauth.authentication.listener.oauth" class="%hwi_oauth.authentication.listener.oauth.class%"
+                 parent="security.authentication.listener.abstract" public="false" abstract="true" />
+        <service id="hwi_oauth.authentication.provider.oauth" class="%hwi_oauth.authentication.provider.oauth.class%" public="false" />
+        <service id="hwi_oauth.authentication.entry_point.oauth" class="%hwi_oauth.authentication.entry_point.oauth.class%" public="false" abstract="true">
+            <argument type="service" id="security.http_utils" />
+        </service>
+        <service id="hwi_oauth.user.provider" class="%hwi_oauth.user.provider.class%" public="false" />
+        <service id="hwi_oauth.user.provider.entity" class="%hwi_oauth.user.provider.entity.class%" abstract="true" public="false">
+            <argument type="service" id="doctrine" />
+        </service>
+
+        <!-- fosub bridges -->
+        <service id="hwi_oauth.user.provider.fosub_bridge.def" class="%hwi_oauth.user.provider.fosub_bridge.class%" abstract="true">
+            <argument type="service" id="fos_user.user_manager" />
+        </service>
+        <service id="hwi_oauth.registration.form.handler.fosub_bridge.def" class="%hwi_oauth.registration.form.handler.fosub_bridge.class%" abstract="true">
+            <argument type="service" id="fos_user.user_manager" />
+            <argument type="service" id="fos_user.mailer" />
+            <argument type="service" id="fos_user.util.token_generator" on-invalid="null" />
+            <call method="setFormHandler">
+                <argument type="service" id="fos_user.registration.form.handler" on-invalid="null" />
+            </call>
+        </service>
+
+        <!-- Session storage -->
+        <service id="hwi_oauth.storage.session" class="%hwi_oauth.storage.session.class%" public="false">
+            <argument type="service" id="session" />
+        </service>
+
+        <service id="hwi_oauth.security.oauth_utils" class="%hwi_oauth.security.oauth_utils.class%">
+            <argument type="service" id="security.http_utils" />
+            <argument type="service" id="security.context" />
+            <argument>%hwi_oauth.connect%</argument>
+        </service>
+
+        <!-- resource owners -->
+        <service id="hwi_oauth.abstract_resource_ownermap" class="%hwi_oauth.resource_ownermap.class%" abstract="true">
+            <argument type="service" id="security.http_utils" />
+            <argument>%hwi_oauth.resource_owners%</argument>
+            <argument type="collection" /><!-- map -->
+            <call method="setContainer"><argument type="service" id="service_container" /> </call>
+        </service>
+
+        <service id="hwi_oauth.abstract_resource_owner.generic" abstract="true">
+            <argument type="service" id="hwi_oauth.http_client" />
+            <argument type="service" id="security.http_utils" />
+            <argument type="collection" /><!-- options -->
+            <argument /><!-- name -->
+        </service>
+
+        <service id="hwi_oauth.abstract_resource_owner.oauth2" class="%hwi_oauth.resource_owner.oauth2.class%"
+                 parent="hwi_oauth.abstract_resource_owner.generic" abstract="true">
+            <argument type="service" id="hwi_oauth.storage.session" />
+        </service>
+        <service id="hwi_oauth.abstract_resource_owner.amazon" class="%hwi_oauth.resource_owner.amazon.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.bitly" class="%hwi_oauth.resource_owner.bitly.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.box" class="%hwi_oauth.resource_owner.box.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.dailymotion" class="%hwi_oauth.resource_owner.dailymotion.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.deviantart" class="%hwi_oauth.resource_owner.deviantart.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.disqus" class="%hwi_oauth.resource_owner.disqus.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.eventbrite" class="%hwi_oauth.resource_owner.eventbrite.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.facebook" class="%hwi_oauth.resource_owner.facebook.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.foursquare" class="%hwi_oauth.resource_owner.foursquare.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.github" class="%hwi_oauth.resource_owner.github.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.google" class="%hwi_oauth.resource_owner.google.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.instagram" class="%hwi_oauth.resource_owner.instagram.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.linkedin" class="%hwi_oauth.resource_owner.linkedin.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.mailru" class="%hwi_oauth.resource_owner.mailru.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.qq" class="%hwi_oauth.resource_owner.qq.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.sensio_connect" class="%hwi_oauth.resource_owner.sensio_connect.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.sina_weibo" class="%hwi_oauth.resource_owner.sina_weibo.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.stack_exchange" class="%hwi_oauth.resource_owner.stack_exchange.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.twitch" class="%hwi_oauth.resource_owner.twitch.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.windows_live" class="%hwi_oauth.resource_owner.windows_live.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.wordpress" class="%hwi_oauth.resource_owner.wordpress.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.vkontakte" class="%hwi_oauth.resource_owner.vkontakte.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.yandex" class="%hwi_oauth.resource_owner.yandex.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.37signals" class="%hwi_oauth.resource_owner.37signals.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.odnoklassniki" class="%hwi_oauth.resource_owner.odnoklassniki.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.salesforce" class="%hwi_oauth.resource_owner.salesforce.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth2" abstract="true" />
+
+        <service id="hwi_oauth.abstract_resource_owner.oauth1" class="%hwi_oauth.resource_owner.oauth1.class%"
+                 parent="hwi_oauth.abstract_resource_owner.generic" abstract="true">
+            <argument type="service" id="hwi_oauth.storage.session" />
+        </service>
+        <service id="hwi_oauth.abstract_resource_owner.bitbucket" class="%hwi_oauth.resource_owner.bitbucket.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.dropbox" class="%hwi_oauth.resource_owner.dropbox.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.flickr" class="%hwi_oauth.resource_owner.flickr.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.jira" class="%hwi_oauth.resource_owner.jira.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.stereomood" class="%hwi_oauth.resource_owner.stereomood.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.trello" class="%hwi_oauth.resource_owner.trello.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.twitter" class="%hwi_oauth.resource_owner.twitter.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+        <service id="hwi_oauth.abstract_resource_owner.yahoo" class="%hwi_oauth.resource_owner.yahoo.class%"
+                 parent="hwi_oauth.abstract_resource_owner.oauth1" abstract="true" />
+    </services>
+</container>

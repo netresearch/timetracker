@@ -21,6 +21,7 @@ return array(
     'JMS\\SecurityExtraBundle' => array($vendorDir . '/jms/security-extra-bundle'),
     'JMS\\DiExtraBundle' => array($vendorDir . '/jms/di-extra-bundle'),
     'JMS\\AopBundle' => array($vendorDir . '/jms/aop-bundle'),
+    'HWI\\Bundle\\OAuthBundle' => array($vendorDir . '/hwi/oauth-bundle'),
     'Doctrine\\ORM\\' => array($vendorDir . '/doctrine/orm/lib'),
     'Doctrine\\DBAL\\Migrations' => array($vendorDir . '/doctrine/migrations/lib'),
     'Doctrine\\DBAL\\' => array($vendorDir . '/doctrine/dbal/lib'),
@@ -31,7 +32,9 @@ return array(
     'Doctrine\\Common\\' => array($vendorDir . '/doctrine/common/lib'),
     'Doctrine\\Bundle\\MigrationsBundle' => array($vendorDir . '/doctrine/doctrine-migrations-bundle'),
     'Doctrine\\Bundle\\DoctrineBundle' => array($vendorDir . '/doctrine/doctrine-bundle'),
+    'Circle\\RestClientBundle' => array($vendorDir . '/ci/restclientbundle'),
     'CG\\' => array($vendorDir . '/jms/cg/src'),
+    'Buzz' => array($vendorDir . '/kriswallsmith/buzz/lib'),
     'Assetic' => array($vendorDir . '/kriswallsmith/assetic/src'),
     '' => array($baseDir . '/src'),
 );

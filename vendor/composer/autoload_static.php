@@ -119,6 +119,13 @@ class ComposerStaticInitd8c0ae5a805451ccd59f556e8ca1ed85
                 0 => __DIR__ . '/..' . '/jms/aop-bundle',
             ),
         ),
+        'H' => 
+        array (
+            'HWI\\Bundle\\OAuthBundle' => 
+            array (
+                0 => __DIR__ . '/..' . '/hwi/oauth-bundle',
+            ),
+        ),
         'D' => 
         array (
             'Doctrine\\ORM\\' => 
@@ -164,9 +171,20 @@ class ComposerStaticInitd8c0ae5a805451ccd59f556e8ca1ed85
         ),
         'C' => 
         array (
+            'Circle\\RestClientBundle' => 
+            array (
+                0 => __DIR__ . '/..' . '/ci/restclientbundle',
+            ),
             'CG\\' => 
             array (
                 0 => __DIR__ . '/..' . '/jms/cg/src',
+            ),
+        ),
+        'B' => 
+        array (
+            'Buzz' => 
+            array (
+                0 => __DIR__ . '/..' . '/kriswallsmith/buzz/lib',
             ),
         ),
         'A' => 

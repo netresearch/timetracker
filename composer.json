@@ -29,7 +29,9 @@
         "jms/di-extra-bundle": "1.1.*",
         "kriswallsmith/assetic": "1.1.*@dev",
         "jpastoor/jira-api-restclient": "2.0.*",
-        "zendframework/zend-ldap": "*"
+        "zendframework/zend-ldap": "*",
+        "hwi/oauth-bundle": "^0.3.0",
+        "ci/restclientbundle": "^2.0"
     },
     "scripts": {
         "post-install-cmd": [
