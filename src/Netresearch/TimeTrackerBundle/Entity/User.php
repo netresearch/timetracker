@@ -107,6 +107,7 @@ class User
      * Set username
      *
      * @param string $username
+     * @return $this
      */
     public function setUsername($username)
     {
@@ -128,6 +129,7 @@ class User
      * Set abbr
      *
      * @param string $abbr
+     * @return $this
      */
     public function setAbbr($abbr)
     {
@@ -149,6 +151,7 @@ class User
      * Set type
      *
      * @param string $type
+     * @return $this
      */
     public function setType($type)
     {
@@ -206,7 +209,8 @@ class User
     /**
      * Add entries
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @return $this
      */
     public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
@@ -217,7 +221,7 @@ class User
     /**
      * Get entries
      *
-     * @return Doctrine\Common\Collections\Collection $entries
+     * @return \Doctrine\Common\Collections\Collection $entries
      */
     public function getEntries()
     {
@@ -227,7 +231,7 @@ class User
     /**
      * Reset teams
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @return $this
      */
     public function resetTeams()
     {
@@ -236,9 +240,10 @@ class User
     }
 
     /**
-     * Add teams
+     * Add team
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @param \Netresearch\TimeTrackerBundle\Entity\Team $team
+     * @return $this
      */
     public function addTeam(\Netresearch\TimeTrackerBundle\Entity\Team $team)
     {
@@ -249,7 +254,7 @@ class User
     /**
      * Get teams
      *
-     * @return Doctrine\Common\Collections\Collection $teams
+     * @return \Doctrine\Common\Collections\Collection $teams
      */
     public function getTeams()
     {
@@ -284,11 +289,14 @@ class User
         );
     }
 
+
+
+
     /**
      * Add entry
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
-     * @return User
+     * @return $this
      */
     public function addEntry(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
@@ -320,7 +328,7 @@ class User
      * Add entries
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
-     * @return User
+     * @return $this
      */
     public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {

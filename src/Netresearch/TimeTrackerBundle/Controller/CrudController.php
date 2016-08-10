@@ -450,6 +450,8 @@ class CrudController extends BaseController
      * TTT-199: check if ticket prefix matches project's jira id
      * @param Project $project
      * @param string $ticket
+     * @return bool
+     * @throws \Exception
      */
     private function checkJiraProjectMatch(Project $project, $ticket)
     {
