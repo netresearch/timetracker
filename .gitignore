@@ -7,3 +7,4 @@
 /app/cache/*
 /app/build/
 /.idea
+/web/.htaccess
