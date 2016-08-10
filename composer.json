@@ -31,6 +31,8 @@
         "jpastoor/jira-api-restclient": "2.0.*",
         "zendframework/zend-ldap": "*",
         "phpoffice/phpspreadsheet": "^1.4"
+        "hwi/oauth-bundle": "^0.3.0",
+        "ci/restclientbundle": "^2.0"
     },
     "scripts": {
         "post-install-cmd": [
