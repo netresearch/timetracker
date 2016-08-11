@@ -64,7 +64,8 @@ Ext.define('Netresearch.widget.Admin', {
     _ticketSystemManagementTitle: 'Ticket system management',
     _ticketSystemSavedTitle: 'The ticket system has been successfully saved.',
     _urlTitle: 'URL',
-    _ticketurlTitle: 'Ticket URL',
+    _ticketUrlTitle: 'Ticket URL',
+    _ticketUrlHint: '"%s" as placeholder for ticket name',
     _timebookingTitle: 'Time booking',
     _loginTitle: 'Login',
     _passwordTitle: 'Password',
@@ -1266,8 +1267,8 @@ Ext.define('Netresearch.widget.Admin', {
                         xtype: 'textfield'
                     }
                 }, {
-                    header: this._ticketurlTitle,
-                    dataIndex: 'ticketurl',
+                    header: this._ticketUrlTitle,
+                    dataIndex: 'ticketUrl',
                     flex: 1,
                     field: {
                         xtype: 'textfield'
@@ -1369,10 +1370,10 @@ Ext.define('Netresearch.widget.Admin', {
                                     anchor: '100%',
                                     value: record.url ? record.url : ''
                                 }, {
-                                    fieldLabel: panel._ticketurlTitle,
-                                    name: 'ticketurl',
+                                    fieldLabel: panel._ticketUrlTitle + '<br />' + panel._ticketUrlHint,
+                                    name: 'ticketUrl',
                                     anchor: '100%',
-                                    value: record.ticketurl ? record.ticketurl : ''
+                                    value: record.ticketUrl ? record.ticketUrl : ''
                                 }, {
                                     fieldLabel: panel._loginTitle,
                                     name: 'login',
@@ -1573,7 +1574,8 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _ticketSystemSavedTitle: 'Das Ticket-System wurde erfolgreich gespeichert.',
         _addTicketSystemTitle: 'Neues Ticket-System',
         _urlTitle: 'URL',
-        _ticketurlTitle: 'Ticket URL',
+        _ticketUrlTitle: 'Ticket URL',
+        _ticketUrlHint: '"%s" als Platzhalter für Ticketnamen',
         _timebookingTitle: 'Zeitbuchung',
         _loginTitle: 'Login',
         _passwordTitle: 'Passwort',
