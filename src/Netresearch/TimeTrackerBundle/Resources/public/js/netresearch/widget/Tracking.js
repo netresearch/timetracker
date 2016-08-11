@@ -683,14 +683,19 @@ Ext.define('Netresearch.widget.Tracking', {
      * Returns the Ticketsystem-URL for a Ticket
      */
     getTicketsystemUrlByTicket: function(ticket) {
-        var baseUrl = 'http://bugs.nr/%s';
+        var baseUrl;
 
         try{
             var projectMapping = this.mapTicketToProject(ticket);
             var project = this.projectStore.getById(projectMapping.id);
             var ticketSystem = this.ticketSystemStore.getById(project.get('ticket_system'));
             baseUrl = ticketSystem.get('ticketUrl');
-        } catch(err){}
+            if (baseUrl == '') {
+                throw "empty baseUrl";
+            }
+        } catch(err){
+            baseUrl = 'http://bugs.nr/%s';
+        }
 
         return baseUrl.split("%s").join(ticket);
     },
