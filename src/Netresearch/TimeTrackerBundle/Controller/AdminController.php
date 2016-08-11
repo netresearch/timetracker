@@ -456,6 +456,7 @@ class AdminController extends BaseController
         $password       = $this->getRequest()->get('password');
         $publicKey      = $this->getRequest()->get('publicKey');
         $privateKey     = $this->getRequest()->get('privateKey');
+        $ticketUrl      = $this->getRequest()->get('ticketUrl');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -486,7 +487,8 @@ class AdminController extends BaseController
                 ->setLogin($login)
                 ->setPassword($password)
                 ->setPublicKey($publicKey)
-                ->setPrivateKey($privateKey);
+                ->setPrivateKey($privateKey)
+                ->setTicketUrl($ticketUrl);
 
             $em = $this->getDoctrine()->getEntityManager();
             $em->persist($ticketSystem);
