@@ -81,6 +81,12 @@ class TicketSystem extends Base
      */
     protected $privateKey;
 
+    /**
+     * @var string $ticketUrl
+     * @ORM\Column(type="string", name="ticketurl")
+     */
+    protected $ticketUrl;
+
 
     
     /**
@@ -288,6 +294,24 @@ class TicketSystem extends Base
     public function getPrivateKey()
     {
         return $this->privateKey;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTicketUrl()
+    {
+        return $this->ticketUrl;
+    }
+
+    /**
+     * @param string $ticketUrl
+     * @return $this
+     */
+    public function setTicketUrl($ticketUrl)
+    {
+        $this->ticketUrl = $ticketUrl;
+        return $this;
     }
 
 }

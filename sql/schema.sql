@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS `ticket_systems` (
   `password` varchar(63) NOT NULL,
   `public_key` text NOT NULL,
   `private_key` text NOT NULL,
+  `ticketurl` VARCHAR(255),
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

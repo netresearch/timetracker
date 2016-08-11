@@ -16,6 +16,7 @@ Ext.define('Netresearch.widget.Tracking', {
     projectStore: Ext.create('Netresearch.store.Projects'),
     activityStore: Ext.create('Netresearch.store.Activities'),
     userStore: Ext.create('Netresearch.store.AdminUsers'),
+    ticketSystemStore: Ext.create('Netresearch.store.TicketSystems'),
     startTime : null,
 
     /* Strings */
@@ -285,7 +286,8 @@ Ext.define('Netresearch.widget.Tracking', {
                             return '-';
                         }
                         var str = ticket.replace(/ /g,'').toUpperCase();
-                        return '<a href="http://bugs.nr/' + str + '" target="_new">'+ str  +'</a>';
+                        var ticketUrl = this.getTicketsystemUrlByTicket(str);
+                        return '<a href="' + ticketUrl + '" target="_new">'+ str  +'</a>';
                     }
                 }, {
                     header: this._customerTitle,
@@ -400,12 +402,19 @@ Ext.define('Netresearch.widget.Tracking', {
                     },
                     renderer: function(text) {
                         text = new String('' + text);
-                        return text
-                            .replace(/&/g, '&amp;')
+                        text.replace(/&/g, '&amp;')
                             .replace(/</g, '&lt;')
                             .replace(/>/g, '&gt;')
-                            .replace(/"/g, '&quot;')
-                            .replace(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig, '<a href="http:\/\/bugs.nr/$1" target="_new">$1<\/a>');
+                            .replace(/"/g, '&quot;');
+
+                        // replace valid ticketnames with links according to ticket_systems.ticketurl
+                        var arr = text.match(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig) || [];
+                        for (var i = 0; i < arr.length; i++) {
+                            var ticketUrl = this.getTicketsystemUrlByTicket(arr[i]);
+                            text = text.split(arr[i]).join('<a href="' + ticketUrl + '" target="_new">' + arr[i] + '<\/a>');
+                        }
+
+                        return text;
                     }
                 }, {
                     header: this._durationTitle,
@@ -664,6 +673,22 @@ Ext.define('Netresearch.widget.Tracking', {
         }
 
         return 0;
+    },
+
+    /*
+     * Returns the Ticketsystem-URL for a Ticket
+     */
+    getTicketsystemUrlByTicket: function(ticket) {
+        var baseUrl = 'http://bugs.nr/%s';
+
+        try{
+            var projectMapping = this.mapTicketToProject(ticket);
+            var project = this.projectStore.getById(projectMapping.id);
+            var ticketSystem = this.ticketSystemStore.getById(project.get('ticket_system'));
+            baseUrl = ticketSystem.get('ticketUrl');
+        } catch(err){}
+
+        return baseUrl.split("%s").join(ticket);
     },
 
     /*
