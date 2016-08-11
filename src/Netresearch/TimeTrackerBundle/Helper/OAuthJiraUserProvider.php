@@ -24,7 +24,7 @@ class OAuthJiraUserProvider implements OAuthAwareUserProviderInterface
     protected $doctrine;
 
     /**
-     * @var appDevDebugProjectContainer
+     * @var \Symfony\Component\DependencyInjection\Container
      */
     protected $service_container;
 
@@ -40,7 +40,7 @@ class OAuthJiraUserProvider implements OAuthAwareUserProviderInterface
 
 
     public function __construct(Session $session, Registry $doctrine,
-                                appDevDebugProjectContainer $service_container,
+                                \Symfony\Component\DependencyInjection\Container $service_container,
                                 \Symfony\Bundle\FrameworkBundle\Routing\Router $router,
                                 $redirectTargetRoute)
     {
