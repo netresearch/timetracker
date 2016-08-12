@@ -14,8 +14,6 @@
 
             var projectsData = eval("(" + '{{ projects|raw }}' + ")");
 
-            var activityData = eval("(" + '{{ activities|nr_array_translator('activity', 'activities', ['name'])|raw }}' + ")");
-
             var settingsData = eval("(" + '{{ settings|raw }}' + ")");
         </script>
         <script type="text/javascript" src="{{ asset('bundles/netresearchtimetracker/js/ext-js/ext-all.js') }}"></script>
