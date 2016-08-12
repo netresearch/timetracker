@@ -99,7 +99,6 @@ class DefaultController extends BaseController
                 ->setReadUser($this->container->getParameter('ldap_readuser'))
                 ->setReadPass($this->container->getParameter('ldap_readpass'))
                 ->setBaseDn($this->container->getParameter('ldap_basedn'))
-                ->setBaseDn($this->container->getParameter('ldap_basedn'))
                 ->setUserName($username)
                 ->setUserPass($password)
                 ->setUseSSL($this->container->getParameter('ldap_usessl'))
