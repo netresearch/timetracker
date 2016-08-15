@@ -7,12 +7,14 @@ use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
 use Netresearch\TimeTrackerBundle\Entity\User as User;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\Ticket;
-
-use Netresearch\TimeTrackerBundle\Helper\JiraClient;
-use Netresearch\TimeTrackerBundle\Model\EscalationException;
+use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
+use Netresearch\TimeTrackerBundle\Helper\ErrorResponse;
+use Netresearch\TimeTrackerBundle\Helper\JiraUserApi;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 use \Zend_Ldap as Zend_Ldap;
 use \Zend_Ldap_Exception as Zend_Ldap_Exception;
@@ -28,6 +30,7 @@ class CrudController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
+        $alert = null;
         $request = $this->getRequest();
 
         if (0 != $request->request->get('id')) {
@@ -36,7 +39,18 @@ class CrudController extends BaseController
             $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')
                 ->find($request->request->get('id'));
 
-            $this->deleteJiraWorklog($entry);
+            try {
+                $this->deleteJiraWorklog($entry);
+            } catch (AccessDeniedHttpException $e){
+                // forward to jiraLogin if accesstoken is invalid
+                $url = $this->generateUrl('hwi_oauth_service_redirect', array('service' => 'jira'));
+                $message = $this->get('translator')->trans("Invalid Ticketsystem Token (Jira) you're going to be forwarded");
+                return new ErrorResponse($message, 403, $url);
+            }  catch (Exception $e){
+                // Error on connecting Jira
+                $alert = $e->getMessage() . '<br />'.
+                    $this->get('translator')->trans("Dataset was deleted in Timetracker anyway");
+            }
 
             // remember the day to calculate classes afterwards
             $day = $entry->getDay()->format("Y-m-d");
@@ -50,7 +64,7 @@ class CrudController extends BaseController
             $this->calculateClasses($this->_getUserId(), $day);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new Response(json_encode(array('success' => true, 'alert' => $alert)));
     }
 
     /**
@@ -60,6 +74,7 @@ class CrudController extends BaseController
      * @param \Netresearch\TimeTrackerBundle\Entity\Entry
      *
      * @return void
+     * @throws AccessDeniedHttpException
      */
     private function deleteJiraWorklog(\Netresearch\TimeTrackerBundle\Entity\Entry $entry)
     {
@@ -84,15 +99,22 @@ class CrudController extends BaseController
             return;
         }
 
-        $this->queryTicketSystem(
-            $entry,
-            sprintf(
-                "/rest/api/2/issue/%s/worklog/%s",
-                $strTicket,
-                $entry->getWorklogId()
-            ),
-            'DELETE'
-        );
+        /** @var $userTicketsystem UserTicketsystem */
+        $userTicketsystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:UserTicketsystem')->findOneBy([
+            'user' => $entry->getUser(),
+            'ticketSystem' => $ticketSystem,
+        ]);
+        if ($userTicketsystem && $userTicketsystem->getAvoidConnection()) {
+            return;
+        }
+
+
+        $jiraUserApi = new JiraUserApi($entry->getUser(), $ticketSystem, $this->container);
+        $jiraUserApi->delete(sprintf(
+            "/rest/api/2/issue/%s/worklog/%d",
+            $strTicket,
+            $entry->getWorklogId()
+        ));
 
         $entry->setWorklogId(NULL);
     }
@@ -226,14 +248,18 @@ class CrudController extends BaseController
             $this->checkJiraProjectMatch($entry->getProject(), $entry->getTicket());
 
             // update JIRA, if necessary
-            $this->updateJiraWorklog($entry, $oldEntry);
-
             try {
-                //$this->checkEscalationTime($entry);
-            } catch (EscalationException $e) {
-                $alert = $e->getMessage();
+                $this->updateJiraWorklog($entry, $oldEntry);
+            } catch (AccessDeniedHttpException $e){
+                // forward to jiraLogin if accesstoken is invalid
+                $url = $this->generateUrl('hwi_oauth_service_redirect', array('service' => 'jira'));
+                $message = $this->get('translator')->trans("Invalid Ticketsystem Token (Jira) you're going to be forwarded");
+                return new ErrorResponse($message, 403, $url);
+            } catch (Exception $e){
+                // Error on connecting Jira
+                $alert = $e->getMessage() . '<br />'.
+                    $this->get('translator')->trans("Dataset was modified in Timetracker anyway");
             }
-
 
             $em = $doctrine->getEntityManager();
             $em->persist($entry);
@@ -255,9 +281,7 @@ class CrudController extends BaseController
             );
             return new Response(json_encode($response));
         } catch (\Exception $e) {
-            $response = new Response($this->get('translator')->trans($e->getMessage()));
-            $response->setStatusCode(406);
-            return $response;
+            return new ErrorResponse($this->get('translator')->trans($e->getMessage()), 406);
         }
     }
 
@@ -421,6 +445,8 @@ class CrudController extends BaseController
      * TTT-199: check if ticket prefix matches project's jira id
      * @param Project $project
      * @param string $ticket
+     * @return bool
+     * @throws \Exception
      */
     private function checkJiraProjectMatch(Project $project, $ticket)
     {
@@ -481,19 +507,13 @@ class CrudController extends BaseController
      * @param Entry $oldEntry
      *
      * @return void
+     * @throws AccessDeniedHttpException
      *
      * @todo avoid useless ws calls
      * @todo check ticket/worklog for existing before logging work
      */
     private function updateJiraWorklog(Entry $entry, Entry $oldEntry)
     {
-        if ($oldEntry->getTicket() != $entry->getTicket()) {
-            // ticket number changed
-            // delete old worklog - new one will be created later
-            $this->deleteJiraWorklog($oldEntry);
-            $entry->setWorklogId(NULL);
-        }
-
         $project = $entry->getProject();
         if (! $project instanceof \Netresearch\TimeTrackerBundle\Entity\Project) {
             return;
@@ -504,6 +524,24 @@ class CrudController extends BaseController
             || false == $ticketSystem->getBookTime()
         ) {
             return;
+        }
+
+        /** @var $userTicketsystem UserTicketsystem */
+        $userTicketsystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:UserTicketsystem')->findOneBy([
+            'user' => $entry->getUser(),
+            'ticketSystem' => $ticketSystem,
+        ]);
+        if ($userTicketsystem && $userTicketsystem->getAvoidConnection()) {
+            return;
+        }
+
+        $jiraUserApi = new JiraUserApi($entry->getUser(), $ticketSystem, $this->container);
+
+        if ($oldEntry->getTicket() != $entry->getTicket()) {
+            // ticket number changed
+            // delete old worklog - new one will be created later
+            $this->deleteJiraWorklog($oldEntry);
+            $entry->setWorklogId(NULL);
         }
 
         if (!$entry->getDuration()) {
@@ -518,16 +556,10 @@ class CrudController extends BaseController
             return;
         }
 
-        $issue = $this->queryTicketSystem(
-            $entry,
-            sprintf("/rest/api/2/issue/%s", $strTicket),
-            'GET',
-            array(
-                'fields' => null,
-            )
-        );
+        $issue = $jiraUserApi->get(sprintf("/rest/api/2/issue/%s", $strTicket));
 
-        if ($issue['key'] !== $strTicket) {
+
+        if (isset($issue->errorMessages[0]) || $issue->key !== $strTicket) {
             // avoid logging work on non existent issues
             return;
         }
@@ -535,12 +567,10 @@ class CrudController extends BaseController
         if ($entry->getWorklogId()) {
             // check worklog entry for existance
             try {
-                $worklog = $this->queryTicketSystem(
-                    $entry, sprintf(
-                        "/rest/api/2/issue/%s/worklog/%s", $strTicket,
-                        $entry->getWorklogId()
-                    )
-                );
+                $worklog = $jiraUserApi->get(sprintf(
+                    "/rest/api/2/issue/%s/worklog/%d", $strTicket,
+                    $entry->getWorklogId()
+                ));
             } catch (\Exception $e) {
                 if (0 === strpos($e->getMessage(), 'JIRA says: Cannot find worklog with id')) {
                     $entry->setWorklogId(null);
@@ -557,113 +587,27 @@ class CrudController extends BaseController
         }
         //"2016-02-17T14:35:51.000+0100"
         $startDate = $startDate->format('Y-m-d\TH:i:s.000O');
-
-        $arAddData = array(
-            'user'  => $this->get('request')->getSession()->get('loginUsername'),
-            'entry' => $entry->getId(),
-        );
+        $activity = $entry->getActivity()? $entry->getActivity()->getName() : 'no activity specified';
+        $description = !empty($entry->getDescription())? $entry->getDescription() : 'no description given';
+        $comment = '#'.$entry->getId().': '.$activity .': '.$description;
 
         $arData = array(
-            'comment' => $entry->getDescription()
-                ."\n" .  json_encode(array('ttt' => $arAddData)),
+            'comment' => $comment,
             'started' => $startDate,
             'timeSpentSeconds' => $entry->getDuration() * 60,
         );
 
         if ($entry->getWorklogId()) {
             // update old worklog entry
-            $worklog = $this->queryTicketSystem(
-                $entry,
-                sprintf(
-                    "/rest/api/2/issue/%s/worklog/%s",
-                    $strTicket,
-                    $entry->getWorklogId()
-                ),
-                'PUT', $arData
+            $worklog = $jiraUserApi->put(
+                sprintf("/rest/api/2/issue/%s/worklog/%d", $strTicket, $entry->getWorklogId()),
+                $arData
             );
         } else {
             // create new worklog entry
-            $worklog = $this->queryTicketSystem(
-                $entry,
-                sprintf(
-                    "/rest/api/2/issue/%s/worklog",
-                    $strTicket
-                ),
-                'POST', $arData
-            );
+            $worklog = $jiraUserApi->post(sprintf("/rest/api/2/issue/%s/worklog", $strTicket), $arData);
         }
 
-        $entry->setWorklogId($worklog['id']);
-    }
-
-    private function checkEscalationTime(Entry $entry)
-    {
-        // Check escalation time
-        $ticket = $client->getIssue($entry->getTicket());
-
-        if (is_array($ticket->customFieldValues)) {
-            // does this ticket wait for escalation?
-            // Aufwand = 'customfield_10001'
-            foreach($ticket->customFieldValues AS $customField) {
-                if ('customfield_10001' != $customField->customfieldId)
-                    continue;
-
-                if (
-                    preg_match('/Eskalation nach ([0-9,\.]+)[ ]?h/i', $customField->values[0], $matches)
-                    || preg_match('/([0-9,\.]+)[ ]?h!/i', $customField->values[0], $matches)
-                ) {
-                    $escalationHours = $matches[1];
-                    $escalationSeconds = 60 * 60 * (float) str_replace(',', '.', $escalationHours);
-
-                    if ($escalationSeconds < 1)
-                        return true;
-
-                    // Now calculate all worklogs
-                    $worklogs = $client->getWorklogs($entry->getTicket());
-                    if (! is_array($worklogs))
-                        return true;
-
-                    $sumSeconds = 0;
-                    foreach ($worklogs as $worklog) {
-                        $sumSeconds += $worklog->timeSpentInSeconds;
-                    }
-
-                    if ($escalationSeconds <= $sumSeconds) {
-                        throw new EscalationException($entry->getTicket(), $escalationSeconds, $sumSeconds, $this->get('translator'));
-                    }
-                }
-
-                break;
-            }
-        }
-    }
-
-
-
-    /**
-     * @param Entry  $entry
-     * @param string $strPath
-     * @param string $strMethod
-     * @param array  $arData
-     * @return array
-     * @throws \Exception
-     */
-    private function queryTicketSystem(
-        \Netresearch\TimeTrackerBundle\Entity\Entry $entry,
-        $strPath, $strMethod = 'GET', $arData = array()
-    ) {
-        /** @var \Netresearch\TimeTrackerBundle\Entity\TicketSystem $ticketSystem */
-        $ticketSystem = $entry->getProject()->getTicketSystem();
-
-        $client = new JiraClient($ticketSystem);
-
-        $client->setProxy($this->container->getParameter('proxy_http'));
-
-        $arResult = $client->api(
-            $strMethod, $strPath, $arData,
-            $this->get('request')->getSession()->get('loginUsername')
-        );
-
-        return $arResult;
+        $entry->setWorklogId($worklog->id);
     }
 }

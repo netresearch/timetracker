@@ -63,6 +63,8 @@ Ext.define('Netresearch.widget.Admin', {
     _ticketSystemManagementTitle: 'Ticket system management',
     _ticketSystemSavedTitle: 'The ticket system has been successfully saved.',
     _urlTitle: 'URL',
+    _ticketUrlTitle: 'Ticket URL',
+    _ticketUrlHint: '"%s" as placeholder for ticket name',
     _timebookingTitle: 'Time booking',
     _loginTitle: 'Login',
     _passwordTitle: 'Password',
@@ -79,6 +81,12 @@ Ext.define('Netresearch.widget.Admin', {
     _projectLeadTitle: 'Project Lead',
     _technicalLeadTitle: 'Technical Lead',
     _max31CharactersTitle: 'At maximum 31 characters are allowed here',
+    _activityManagementTitle: 'Activity management',
+    _addActivityTitle: 'Add activity',
+    _editActivityTitle: 'Edit activity',
+    _activitySavedTitle: 'The activity has been successfully saved.',
+    _needsTicketTitle: 'Needs ticket',
+    _factorTitle: 'Factor',
 
     initComponent: function () {
         var panel = this;
@@ -1245,6 +1253,13 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'textfield'
                     }
+                }, {
+                    header: this._ticketUrlTitle,
+                    dataIndex: 'ticketUrl',
+                    flex: 1,
+                    field: {
+                        xtype: 'textfield'
+                    }
                 }
             ],
             tbar: [
@@ -1342,6 +1357,11 @@ Ext.define('Netresearch.widget.Admin', {
                                     anchor: '100%',
                                     value: record.url ? record.url : ''
                                 }, {
+                                    fieldLabel: panel._ticketUrlTitle + '<br />' + panel._ticketUrlHint,
+                                    name: 'ticketUrl',
+                                    anchor: '100%',
+                                    value: record.ticketUrl ? record.ticketUrl : ''
+                                }, {
                                     fieldLabel: panel._loginTitle,
                                     name: 'login',
                                     anchor: '100%',
@@ -1407,6 +1427,147 @@ Ext.define('Netresearch.widget.Admin', {
         });
 
 
+        var activityGrid = Ext.create('Ext.grid.Panel', {
+            store: this.activityStore,
+            columns: [
+                {
+                    header: this._nameTitle,
+                    dataIndex: 'name',
+                    flex: 1,
+                    field: {
+                        xtype: 'textfield'
+                    }
+                }, {
+                    header: this._needsTicketTitle,
+                    dataIndex: 'needsTicket',
+                    field: {
+                        xtype: 'checkbox'
+                    },
+                    renderer: function(value) {
+                        return renderCheckbox(value);
+                    }
+                }, {
+                    header: this._factorTitle,
+                    dataIndex: 'factor',
+                    flex: 1,
+                    field: {
+                        xtype: 'number'
+                    }
+                }
+            ],
+            tbar: [
+                {
+                    text: this._addActivityTitle,
+                    iconCls: 'icon-add',
+                    scope: this,
+                    handler: function() {
+                        activityGrid.editActivity();
+                    }
+                }
+            ],
+            listeners: {
+                /* Right-click menu */
+                itemcontextmenu: function(grid, record, item, index, event, options) {
+                    event.stopEvent();
+
+                    var contextMenu = Ext.create('Ext.menu.Menu', {
+                        items: [
+                            {
+                                text: panel._editTitle,
+                                iconCls: 'icon-edit',
+                                scope: this,
+                                handler: function() {
+                                    this.editActivity(record.data);
+                                }
+                            }
+                        ]
+                    });
+
+                    contextMenu.showAt(event.xy);
+                }
+            },
+            editActivity: function(record) {
+                record = record || {};
+
+                var window = Ext.create('Ext.window.Window', {
+                    title: panel._editActivityTitle,
+                    modal: true,
+                    width: 400,
+                    layout: 'fit',
+                    id: 'edit-activity-window',
+                    listeners: {
+                        destroy: {
+                            scope: this,
+                            fn: function() {
+                                this.getStore().load();
+                            }
+                        }
+                    },
+                    items: [
+                        new Ext.form.Panel({
+                            bodyPadding: 5,
+                            defaultType: 'textfield',
+                            items: [
+                                new Ext.form.field.Hidden({
+                                    name: 'id',
+                                    value: record.id ? record.id : 0
+                                }), {
+                                    fieldLabel: panel._nameTitle,
+                                    name: 'name',
+                                    anchor: '100%',
+                                    value: record.name ? record.name : ''
+                                },
+                                new Ext.form.field.Checkbox({
+                                    fieldLabel: panel._needsTicketTitle,
+                                    name: 'needsTicket',
+                                    inputValue: 1,
+                                    checked: record.needsTicket ? record.needsTicket : 0
+                                }),
+                                new Ext.form.field.Number({
+                                    fieldLabel: panel._factorTitle,
+                                    anchor: '100%',
+                                    name: 'factor',
+                                    value: record.factor ? record.factor : 1
+                                })
+                            ],
+                            buttons: [
+                                {
+                                    text: panel._saveTitle,
+                                    scope: this,
+                                    handler: function(btn) {
+                                        var form = btn.up('form').getForm();
+                                        var values = form.getValues();
+
+                                        Ext.Ajax.request({
+                                            url: url + 'activity/save',
+                                            params: values,
+                                            scope: this,
+                                            success: function(response) {
+                                                window.close();
+                                                showNotification(panel._successTitle, panel._activitySavedTitle, true);
+                                            },
+                                            failure: function(response) {
+                                                /*
+                                                 * If responsetext is less than 200 chars long (means not an exception
+                                                 * stack trace), use responsetext. If not, show common help/error text
+                                                 */
+                                                var message = response.responseText.length < 200
+                                                    ? response.responseText
+                                                    : panel._seriousErrorTitle;
+                                                showNotification(panel._errorTitle, message, false);
+                                            }
+                                        });
+                                    }
+                                }
+                            ]
+                        })
+                    ]
+                });
+
+                window.show();
+            }
+        });
+
 
         /* Create container panels for grids */
         var customerPanel = Ext.create('Ext.panel.Panel', {
@@ -1469,9 +1630,19 @@ Ext.define('Netresearch.widget.Admin', {
             items: [ ticketSystemGrid ]
         });
 
+        var activityPanel = Ext.create('Ext.panel.Panel', {
+            layout: 'fit',
+            frame: true,
+            title: this._activityManagementTitle,
+            collapsible: false,
+            width: '100%',
+            margin: '0 0 10 0',
+            items: [ activityGrid ]
+        });
+
         var config = {
             title: this._tabTitle,
-            items: [ customerPanel, projectPanel, userPanel, teamPanel, presetPanel, ticketSystemPanel ]
+            items: [ customerPanel, projectPanel, userPanel, teamPanel, presetPanel, ticketSystemPanel, activityPanel ]
         };
 
         /* Apply config */
@@ -1540,6 +1711,8 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _ticketSystemSavedTitle: 'Das Ticket-System wurde erfolgreich gespeichert.',
         _addTicketSystemTitle: 'Neues Ticket-System',
         _urlTitle: 'URL',
+        _ticketUrlTitle: 'Ticket URL',
+        _ticketUrlHint: '"%s" als Platzhalter für Ticketnamen',
         _timebookingTitle: 'Zeitbuchung',
         _loginTitle: 'Login',
         _passwordTitle: 'Passwort',
@@ -1555,7 +1728,13 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _projectLeadTitle: 'Projekt-Leitung',
         _technicalLeadTitle: 'Technische Leitung',
         _max31CharactersTitle: 'Hier sind maximal 31 Zeichen erlaubt',
-        _additionalInformationFromExternal: 'weitere Informationen aus (externen) Ticket-System beziehen'
+        _additionalInformationFromExternal: 'weitere Informationen aus (externen) Ticket-System beziehen',
+        _activityManagementTitle: 'Verwaltung von Tätigkeiten',
+        _addActivityTitle: 'Neue Tätigkeit',
+        _editActivityTitle: 'Tätigkeit bearbeiten',
+        _activitySavedTitle: 'Die Tätigkeit wurde erfolgreich gespeichert.',
+        _needsTicketTitle: 'Benötigt Ticket',
+        _factorTitle: 'Faktor'
     });
 }
 

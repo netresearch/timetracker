@@ -136,11 +136,11 @@ Ext.onDocumentReady(function() {
             region: 'north',
             height: 100,
             id: 'header',
-            html: '<iframe id="nrnavi" src="https://www.netresearch.de/corpnav-intern/zeiterfassung/"></iframe>'
-                    + '<div id="logo"></div>'
+            html: (globalConfig.header_url != ''? '<iframe id="nrnavi" src="' + globalConfig.header_url + '"></iframe>' : '')
+                    + '<div><img id="logo" src="' + globalConfig.logo_url + '" title="logo" alt="logo" /></div>'
                     + '<iframe id="statusfrm" src="/status/page"></iframe>'
                     + '<div id="worktime"><span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
-                    +   '<br /><span id="sumlink"><a href="https://stats.timetracker.nr/?user=' + settingsData.user_name + '" target="_new">' + strings['Monthly overview'] + '</a></span>'
+                    +   '<br /><span id="sumlink"><a href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_new">' + strings['Monthly overview'] + '</a></span>'
                     + '</div>'
                     + '<div id="logout"><a href="logout">' + strings['Logout'] + '</a></div>'
         },
@@ -297,7 +297,7 @@ function countTime() {
  */
 function handleRedirect(response, title, message) {
     if (response.status === 403) {
-        showNotification(title, message);
+        showNotification(title, message, false);
         setTimeout("window.location.href = '" + response.responseText + "'", 2000);
     } else {
         showNotification('Fehler', response.responseText);

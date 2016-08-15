@@ -435,6 +435,7 @@ class Entry extends Base
      * Set duration
      *
      * @param integer $duration
+     * @return $this
      */
     public function setDuration($duration)
     {
@@ -455,9 +456,9 @@ class Entry extends Base
     /**
      * Set project
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @param \Netresearch\TimeTrackerBundle\Entity\Project $project
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Entry
+     * @return \Netresearch\TimeTrackerBundle\Entity\Entry
      */
     public function setProject(\Netresearch\TimeTrackerBundle\Entity\Project $project)
     {
@@ -478,7 +479,8 @@ class Entry extends Base
     /**
      * Set user
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\User $user
+     * @param \Netresearch\TimeTrackerBundle\Entity\User $user
+     * @return $this
      */
     public function setUser(\Netresearch\TimeTrackerBundle\Entity\User $user)
     {
@@ -489,7 +491,7 @@ class Entry extends Base
     /**
      * Get user
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\User $user
+     * @return \Netresearch\TimeTrackerBundle\Entity\User $user
      */
     public function getUser()
     {
@@ -499,7 +501,8 @@ class Entry extends Base
     /**
      * Set account
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @param \Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @return $this
      */
     public function setAccount(\Netresearch\TimeTrackerBundle\Entity\Account $account)
     {
@@ -510,7 +513,7 @@ class Entry extends Base
     /**
      * Get account
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @return \Netresearch\TimeTrackerBundle\Entity\Account $account
      */
     public function getAccount()
     {

@@ -1,0 +1,14 @@
+build/
+logs/
+reports/
+dist/
+download/
+lib/api/
+lib/Doctrine/Common
+lib/Doctrine/DBAL
+/.settings/
+.buildpath
+.project
+.idea
+vendor/
+composer.lock

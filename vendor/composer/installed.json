@@ -92,69 +92,6 @@
         ]
     },
     {
-        "name": "twig/twig",
-        "version": "v1.24.0",
-        "version_normalized": "1.24.0.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/twigphp/Twig.git",
-            "reference": "3e5aa30ebfbafd5951fb1b01e338e1800ce7e0e8"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/twigphp/Twig/zipball/3e5aa30ebfbafd5951fb1b01e338e1800ce7e0e8",
-            "reference": "3e5aa30ebfbafd5951fb1b01e338e1800ce7e0e8",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.2.7"
-        },
-        "require-dev": {
-            "symfony/debug": "~2.7",
-            "symfony/phpunit-bridge": "~2.7"
-        },
-        "time": "2016-01-25 21:22:18",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "1.24-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-0": {
-                "Twig_": "lib/"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "BSD-3-Clause"
-        ],
-        "authors": [
-            {
-                "name": "Fabien Potencier",
-                "email": "fabien@symfony.com",
-                "homepage": "http://fabien.potencier.org",
-                "role": "Lead Developer"
-            },
-            {
-                "name": "Armin Ronacher",
-                "email": "armin.ronacher@active-4.com",
-                "role": "Project Founder"
-            },
-            {
-                "name": "Twig Team",
-                "homepage": "http://twig.sensiolabs.org/contributors",
-                "role": "Contributors"
-            }
-        ],
-        "description": "Twig, the flexible, fast, and secure template language for PHP",
-        "homepage": "http://twig.sensiolabs.org",
-        "keywords": [
-            "templating"
-        ]
-    },
-    {
         "name": "doctrine/lexer",
         "version": "v1.0.1",
         "version_normalized": "1.0.1.0",
@@ -764,53 +701,6 @@
         ]
     },
     {
-        "name": "jpastoor/jira-api-restclient",
-        "version": "v2.0.0",
-        "version_normalized": "2.0.0.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/jpastoor/jira-api-restclient.git",
-            "reference": "dec4785baa6376cff20ad705310820c8ececb3b9"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/jpastoor/jira-api-restclient/zipball/dec4785baa6376cff20ad705310820c8ececb3b9",
-            "reference": "dec4785baa6376cff20ad705310820c8ececb3b9",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.3.0"
-        },
-        "require-dev": {
-            "phpunit/phpunit": "4.1.*"
-        },
-        "time": "2015-12-27 18:58:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "chobie\\": "src"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Shuhei Tanuma",
-                "email": "chobieeee@php.net",
-                "homepage": "http://chobie.github.io/"
-            }
-        ],
-        "description": "JIRA REST API.",
-        "keywords": [
-            "api",
-            "jira",
-            "rest"
-        ]
-    },
-    {
         "name": "doctrine/dbal",
         "version": "v2.4.5",
         "version_normalized": "2.4.5.0",
@@ -1119,81 +1009,6 @@
             "dbal",
             "migrations",
             "schema"
-        ]
-    },
-    {
-        "name": "doctrine/orm",
-        "version": "v2.4.8",
-        "version_normalized": "2.4.8.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/doctrine/doctrine2.git",
-            "reference": "5aedac1e5c5caaeac14798822c70325dc242d467"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/doctrine/doctrine2/zipball/5aedac1e5c5caaeac14798822c70325dc242d467",
-            "reference": "5aedac1e5c5caaeac14798822c70325dc242d467",
-            "shasum": ""
-        },
-        "require": {
-            "doctrine/collections": "~1.1",
-            "doctrine/dbal": "~2.4",
-            "ext-pdo": "*",
-            "php": ">=5.3.2",
-            "symfony/console": "~2.0"
-        },
-        "require-dev": {
-            "satooshi/php-coveralls": "dev-master",
-            "symfony/yaml": "~2.1"
-        },
-        "suggest": {
-            "symfony/yaml": "If you want to use YAML Metadata Mapping Driver"
-        },
-        "time": "2015-08-31 13:19:01",
-        "bin": [
-            "bin/doctrine",
-            "bin/doctrine.php"
-        ],
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "2.4.x-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-0": {
-                "Doctrine\\ORM\\": "lib/"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Roman Borschel",
-                "email": "roman@code-factory.org"
-            },
-            {
-                "name": "Benjamin Eberlei",
-                "email": "kontakt@beberlei.de"
-            },
-            {
-                "name": "Guilherme Blanco",
-                "email": "guilhermeblanco@gmail.com"
-            },
-            {
-                "name": "Jonathan Wage",
-                "email": "jonwage@gmail.com"
-            }
-        ],
-        "description": "Object-Relational-Mapper for PHP",
-        "homepage": "http://www.doctrine-project.org",
-        "keywords": [
-            "database",
-            "orm"
         ]
     },
     {
@@ -1947,6 +1762,364 @@
         "keywords": [
             "cache",
             "caching"
+        ]
+    },
+    {
+        "name": "twig/twig",
+        "version": "v1.24.1",
+        "version_normalized": "1.24.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/twigphp/Twig.git",
+            "reference": "3566d311a92aae4deec6e48682dc5a4528c4a512"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/twigphp/Twig/zipball/3566d311a92aae4deec6e48682dc5a4528c4a512",
+            "reference": "3566d311a92aae4deec6e48682dc5a4528c4a512",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.2.7"
+        },
+        "require-dev": {
+            "symfony/debug": "~2.7",
+            "symfony/phpunit-bridge": "~2.7"
+        },
+        "time": "2016-05-30 09:11:59",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "1.24-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "Twig_": "lib/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "BSD-3-Clause"
+        ],
+        "authors": [
+            {
+                "name": "Fabien Potencier",
+                "email": "fabien@symfony.com",
+                "homepage": "http://fabien.potencier.org",
+                "role": "Lead Developer"
+            },
+            {
+                "name": "Armin Ronacher",
+                "email": "armin.ronacher@active-4.com",
+                "role": "Project Founder"
+            },
+            {
+                "name": "Twig Team",
+                "homepage": "http://twig.sensiolabs.org/contributors",
+                "role": "Contributors"
+            }
+        ],
+        "description": "Twig, the flexible, fast, and secure template language for PHP",
+        "homepage": "http://twig.sensiolabs.org",
+        "keywords": [
+            "templating"
+        ]
+    },
+    {
+        "name": "doctrine/orm",
+        "version": "v2.4.8",
+        "version_normalized": "2.4.8.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/doctrine/doctrine2.git",
+            "reference": "5aedac1e5c5caaeac14798822c70325dc242d467"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/doctrine/doctrine2/zipball/5aedac1e5c5caaeac14798822c70325dc242d467",
+            "reference": "5aedac1e5c5caaeac14798822c70325dc242d467",
+            "shasum": ""
+        },
+        "require": {
+            "doctrine/collections": "~1.1",
+            "doctrine/dbal": "~2.4",
+            "ext-pdo": "*",
+            "php": ">=5.3.2",
+            "symfony/console": "~2.0"
+        },
+        "require-dev": {
+            "satooshi/php-coveralls": "dev-master",
+            "symfony/yaml": "~2.1"
+        },
+        "suggest": {
+            "symfony/yaml": "If you want to use YAML Metadata Mapping Driver"
+        },
+        "time": "2015-08-31 13:19:01",
+        "bin": [
+            "bin/doctrine",
+            "bin/doctrine.php"
+        ],
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "2.4.x-dev"
+            }
+        },
+        "installation-source": "source",
+        "autoload": {
+            "psr-0": {
+                "Doctrine\\ORM\\": "lib/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Roman Borschel",
+                "email": "roman@code-factory.org"
+            },
+            {
+                "name": "Benjamin Eberlei",
+                "email": "kontakt@beberlei.de"
+            },
+            {
+                "name": "Guilherme Blanco",
+                "email": "guilhermeblanco@gmail.com"
+            },
+            {
+                "name": "Jonathan Wage",
+                "email": "jonwage@gmail.com"
+            }
+        ],
+        "description": "Object-Relational-Mapper for PHP",
+        "homepage": "http://www.doctrine-project.org",
+        "keywords": [
+            "database",
+            "orm"
+        ]
+    },
+    {
+        "name": "kriswallsmith/buzz",
+        "version": "v0.15",
+        "version_normalized": "0.15.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/kriswallsmith/Buzz.git",
+            "reference": "d4041666c3ffb379af02a92dabe81c904b35fab8"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/kriswallsmith/Buzz/zipball/d4041666c3ffb379af02a92dabe81c904b35fab8",
+            "reference": "d4041666c3ffb379af02a92dabe81c904b35fab8",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.3.0"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "3.7.*"
+        },
+        "suggest": {
+            "ext-curl": "*"
+        },
+        "time": "2015-06-25 17:26:56",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "Buzz": "lib/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Kris Wallsmith",
+                "email": "kris.wallsmith@gmail.com",
+                "homepage": "http://kriswallsmith.net/"
+            }
+        ],
+        "description": "Lightweight HTTP client",
+        "homepage": "https://github.com/kriswallsmith/Buzz",
+        "keywords": [
+            "curl",
+            "http client"
+        ]
+    },
+    {
+        "name": "hwi/oauth-bundle",
+        "version": "0.3.9",
+        "version_normalized": "0.3.9.0",
+        "target-dir": "HWI/Bundle/OAuthBundle",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/hwi/HWIOAuthBundle.git",
+            "reference": "ff5d2e3a5af9f665cebd375777ffb8ae437d9262"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/hwi/HWIOAuthBundle/zipball/ff5d2e3a5af9f665cebd375777ffb8ae437d9262",
+            "reference": "ff5d2e3a5af9f665cebd375777ffb8ae437d9262",
+            "shasum": ""
+        },
+        "require": {
+            "kriswallsmith/buzz": "~0.7",
+            "php": ">=5.3.3",
+            "symfony/framework-bundle": "~2.1",
+            "symfony/options-resolver": "~2.1",
+            "symfony/security-bundle": "~2.1"
+        },
+        "conflict": {
+            "twig/twig": "<1.12"
+        },
+        "require-dev": {
+            "doctrine/orm": "~2.2",
+            "symfony/property-access": "~2.3",
+            "symfony/twig-bundle": "~2.1",
+            "symfony/validator": "~2.1"
+        },
+        "suggest": {
+            "doctrine/doctrine-bundle": "to use Doctrine user provider",
+            "friendsofsymfony/user-bundle": "to connect FOSUB with this bundle",
+            "symfony/property-access": "to use FOSUB integration with this bundle",
+            "symfony/twig-bundle": "to use the Twig hwi_oauth_* functions"
+        },
+        "time": "2015-08-28 09:57:17",
+        "type": "symfony-bundle",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "0.3-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "HWI\\Bundle\\OAuthBundle": ""
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Contributors",
+                "homepage": "https://github.com/hwi/HWIOAuthBundle/contributors"
+            },
+            {
+                "name": "Joseph Bielawski",
+                "email": "stloyd@gmail.com"
+            },
+            {
+                "name": "Alexander",
+                "email": "iam.asm89@gmail.com"
+            },
+            {
+                "name": "Geoffrey Bachelet",
+                "email": "geoffrey.bachelet@gmail.com"
+            }
+        ],
+        "description": "Support for authenticating users using both OAuth1.0a and OAuth2 in Symfony2.",
+        "homepage": "http://github.com/hwi/HWIOAuthBundle",
+        "keywords": [
+            "37signals",
+            "Authentication",
+            "amazon",
+            "bitbucket",
+            "bitly",
+            "box",
+            "dailymotion",
+            "deviantart",
+            "disqus",
+            "dropbox",
+            "eventbrite",
+            "facebook",
+            "firewall",
+            "flickr",
+            "foursquare",
+            "github",
+            "google",
+            "instagram",
+            "jira",
+            "linkedin",
+            "mail.ru",
+            "oauth",
+            "oauth1",
+            "oauth2",
+            "odnoklassniki",
+            "qq",
+            "salesforce",
+            "security",
+            "sensio connect",
+            "sina weibo",
+            "stack exchange",
+            "stereomood",
+            "trello",
+            "twitch",
+            "twitter",
+            "vkontakte",
+            "windows live",
+            "wordpress",
+            "yahoo",
+            "yandex"
+        ]
+    },
+    {
+        "name": "ci/restclientbundle",
+        "version": "2.0.1",
+        "version_normalized": "2.0.1.0",
+        "target-dir": "Circle/RestClientBundle",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/CircleOfNice/CiRestClientBundle.git",
+            "reference": "2698ad1d2e87189b536e5628127dd5b985f55a31"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/CircleOfNice/CiRestClientBundle/zipball/2698ad1d2e87189b536e5628127dd5b985f55a31",
+            "reference": "2698ad1d2e87189b536e5628127dd5b985f55a31",
+            "shasum": ""
+        },
+        "require-dev": {
+            "ext-curl": "*",
+            "php": ">=5.4",
+            "symfony/config": ">=2.1",
+            "symfony/dependency-injection": ">=2.1",
+            "symfony/http-kernel": ">=2.1",
+            "symfony/yaml": ">=2.1"
+        },
+        "time": "2016-08-05 10:32:12",
+        "type": "symfony-bundle",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "1.0-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "Circle\\RestClientBundle": ""
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "GPL"
+        ],
+        "authors": [
+            {
+                "name": "Circle.ai",
+                "email": "info@circle.ai"
+            }
+        ],
+        "description": "Provides REST request methods. Mapper bundle for php internal curl library",
+        "keywords": [
+            "REST client curl POST GET PUT DELETE OPTIONS CONNECT PATCH TRACE HEAD content-type payload library plugin"
         ]
     }
 ]

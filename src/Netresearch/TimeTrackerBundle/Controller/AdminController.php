@@ -9,6 +9,7 @@ use Netresearch\TimeTrackerBundle\Entity\Customer;
 use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Entity\Preset;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
+use Netresearch\TimeTrackerBundle\Entity\Activity;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
 use \Doctrine AS Doctrine;
@@ -456,6 +457,7 @@ class AdminController extends BaseController
         $password       = $this->getRequest()->get('password');
         $publicKey      = $this->getRequest()->get('publicKey');
         $privateKey     = $this->getRequest()->get('privateKey');
+        $ticketUrl      = $this->getRequest()->get('ticketUrl');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -486,7 +488,8 @@ class AdminController extends BaseController
                 ->setLogin($login)
                 ->setPassword($password)
                 ->setPublicKey($publicKey)
-                ->setPrivateKey($privateKey);
+                ->setPrivateKey($privateKey)
+                ->setTicketUrl($ticketUrl);
 
             $em = $this->getDoctrine()->getEntityManager();
             $em->persist($ticketSystem);
@@ -498,6 +501,57 @@ class AdminController extends BaseController
         }
 
         return new Response(json_encode($ticketSystem->toArray()));
+    }
+
+
+
+    public function saveActivityAction()
+    {
+        if (!$this->checkLogin()) {
+            return $this->getFailedLoginResponse();
+        }
+
+        if (false == $this->_isPl()) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Activity');
+
+        $id             = (int) $this->getRequest()->get('id');
+        $name           = $this->getRequest()->get('name');
+        $needsTicket    = (boolean) $this->getRequest()->get('needsTicket');
+        $factor         = str_replace(',', '.', $this->getRequest()->get('factor'));
+
+        if ($id) {
+            $activity = $repository->find($id);
+        } else {
+            $activity = new Activity();
+        }
+
+        if ($sameNamedActivity = $repository->findOneByName($name)) {
+            if ($activity->getId() != $sameNamedActivity->getId()) {
+                $response = new Response($this->translate('The activity name provided already exists.'));
+                $response->setStatusCode(406);
+                return $response;
+            }
+        }
+
+        try {
+            $activity
+                ->setName($name)
+                ->setNeedsTicket($needsTicket)
+                ->setFactor($factor);
+
+            $em = $this->getDoctrine()->getEntityManager();
+            $em->persist($activity);
+            $em->flush();
+        } catch (\Exception $e) {
+            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+            $response->setStatusCode(403);
+            return $response;
+        }
+
+        return new Response(json_encode($activity->toArray()));
     }
 
 }

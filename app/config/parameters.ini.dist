@@ -23,5 +23,17 @@
     ldap_readuser     = "readuser"
     ldap_readpass     = "readuser"
     ldap_basedn       = "dc=company,dc=org"
+    ldap_usernamefield = sAMAccountName
+    ldap_usessl       = false
+
+    app_logo_url                = "bundles/netresearchtimetracker/images/logo.png"
+    app_monthly_overview_url    = "https://stats.timetracker.nr/?user="
+    app_title                   = "Netresearch TimeTracker"
+    app_header_url              = "https://www.netresearch.de/corpnav-intern/zeiterfassung/"
 
     proxy_http        =
+
+    jira_client_id              =
+    jira_client_secret          =
+    jira_base_url               =
+    jira_auth_redirect_route    = _start

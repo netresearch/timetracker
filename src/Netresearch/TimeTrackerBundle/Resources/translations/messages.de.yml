@@ -31,3 +31,7 @@
 "This customer is inactive and cannot be used for booking.": "Dieser Kunde ist inaktiv und darf nicht bebucht werden."
 "Please enter a token (min 3 chars)!": "Bitte gib ein Kürzel (mindestens 3 Zeichen) ein!"
 "An User with this token already exists!": "Ein Nutzer mit diesem Kürzel existiert bereits!"
+"Invalid Ticketsystem Token (Jira) you're going to be forwarded": "Ungültiges Jira-Token. Sie werden weitergeleitet."
+"Dataset was modified in Timetracker anyway": "Der Datensatz wurde dennoch Timetracker geändert."
+"Dataset was deleted in Timetracker anyway": "Der Datensatz wurde dennoch im Timetracker entfernt."
+"The activity name provided already exists.": "Der gewählte Name für eine Tätigkeit existiert bereits!"

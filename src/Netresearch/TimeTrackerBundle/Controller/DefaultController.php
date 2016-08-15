@@ -6,6 +6,7 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository;
 use Netresearch\TimeTrackerBundle\Entity\HolidayRepository;
 
+use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Helper\LocalizationHelper;
@@ -14,7 +15,10 @@ use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
 use Netresearch\TimeTrackerBundle\Entity\User as User;
+use OAuth;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Netresearch\TimeTrackerBundle\Helper;
 
@@ -54,6 +58,12 @@ class DefaultController extends BaseController
             ->getActivities();
 
         return $this->render('NetresearchTimeTrackerBundle:Default:index.html.twig', array(
+            'globalConfig'  => json_encode([
+                'logo_url'              => $this->container->getParameter('app_logo_url'),
+                'monthly_overview_url'  => $this->container->getParameter('app_monthly_overview_url'),
+                'header_url'            => $this->container->getParameter('app_header_url'),
+            ]),
+            'apptitle'      => $this->container->getParameter('app_title'),
             'environment'   => $this->get('kernel')->getEnvironment(),
             'customers'     => json_encode($customers),
             'projects'      => json_encode($projects),
@@ -69,7 +79,10 @@ class DefaultController extends BaseController
 
         if ($request->getMethod() != 'POST') {
             return $this->render('NetresearchTimeTrackerBundle:Default:login.html.twig',
-                array('locale'  => 'en')
+                array(
+                    'locale'  => 'en',
+                    'apptitle' => $this->container->getParameter('app_title'),
+                )
             );
         }
 
@@ -79,13 +92,17 @@ class DefaultController extends BaseController
         try {
 
             $client = new LdapClient();
+            $client->setLogger($this->get('logger'));
+
             $client->setHost($this->container->getParameter('ldap_host'))
                 ->setPort($this->container->getParameter('ldap_port'))
                 ->setReadUser($this->container->getParameter('ldap_readuser'))
-                ->setReadPass($this->container->getParameter('ldap_readuser'))
+                ->setReadPass($this->container->getParameter('ldap_readpass'))
                 ->setBaseDn($this->container->getParameter('ldap_basedn'))
                 ->setUserName($username)
                 ->setUserPass($password)
+                ->setUseSSL($this->container->getParameter('ldap_usessl'))
+                ->setUserNameField($this->container->getParameter('ldap_usernamefield'))
                 ->login();
 
         } catch (\Exception $e) {
@@ -95,7 +112,8 @@ class DefaultController extends BaseController
                 'login'     => false, 
                 'message'   => $this->get('translator')->trans($e->getMessage()),
                 'username'  => $username,
-                'locale'    => 'en'
+                'locale'    => 'en',
+                'apptitle' => $this->container->getParameter('app_title'),
             ));
 
         }
@@ -103,6 +121,21 @@ class DefaultController extends BaseController
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->findOneByUsername($username);
+
+        if (!$user) {
+            // create new user if users.username doesn't exist for valid ldap-authentication
+            $user = new User();
+            $user->setUsername($username)
+                ->setType('DEV')
+                ->setShowEmptyLine('0')
+                ->setSuggestTime('1')
+                ->setShowFuture('1')
+                ->setLocale('de');
+
+            $em = $this->getDoctrine()->getEntityManager();
+            $em->persist($user);
+            $em->flush();
+        }
 
         return $this->setLoggedIn($user, $request->request->has('loginCookie'));
     }
@@ -322,5 +355,43 @@ class DefaultController extends BaseController
         return $response;
     }
 
+    public function avoidJiraConnectionAction()
+    {
+        $user = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:User')
+            ->find($this->_getUserId());
+
+        $jiraBaseUrl = $this->container->getParameter('jira_base_url');
+        /** @var $ticketSystem TicketSystem */
+        $ticketSystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Ticketsystem')->findOneBy([
+            'url' => $jiraBaseUrl
+        ]);
+
+        if ($ticketSystem && $user) {
+            /** @var $userTicketsystem UserTicketsystem */
+            $userTicketsystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:UserTicketsystem')->findOneBy([
+                'user' => $user,
+                'ticketSystem' => $ticketSystem,
+            ]);
+
+            if($userTicketsystem){
+                $userTicketsystem->setAvoidConnection(true);
+            } else {
+                $userTicketsystem = new UserTicketsystem();
+                $userTicketsystem->setUser($user)
+                    ->setTicketSystem($ticketSystem)
+                    ->setTokenSecret(null)
+                    ->setAccessToken(null)
+                    ->setAvoidConnection(true);
+            }
+
+            $em = $this->getDoctrine()->getEntityManager();
+            $em->persist($userTicketsystem);
+            $em->flush();
+        }
+
+        $url = $this->generateUrl($this->container->getParameter('jira_auth_redirect_route'));
+        return $this->redirect($url);
+    }
 }
 

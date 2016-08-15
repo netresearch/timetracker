@@ -16,6 +16,7 @@ Ext.define('Netresearch.widget.Tracking', {
     projectStore: Ext.create('Netresearch.store.Projects'),
     activityStore: Ext.create('Netresearch.store.Activities'),
     userStore: Ext.create('Netresearch.store.AdminUsers'),
+    ticketSystemStore: Ext.create('Netresearch.store.TicketSystems'),
     startTime : null,
 
     /* Strings */
@@ -306,7 +307,8 @@ Ext.define('Netresearch.widget.Tracking', {
                             return '-';
                         }
                         var str = ticket.replace(/ /g,'').toUpperCase();
-                        return '<a href="http://bugs.nr/' + str + '" target="_new">'+ str  +'</a>';
+                        var ticketUrl = this.getTicketsystemUrlByTicket(str);
+                        return '<a href="' + ticketUrl + '" target="_new">'+ str  +'</a>';
                     }
                 }, {
                     header: this._customerTitle,
@@ -421,12 +423,19 @@ Ext.define('Netresearch.widget.Tracking', {
                     },
                     renderer: function(text) {
                         text = new String('' + text);
-                        return text
-                            .replace(/&/g, '&amp;')
+                        text.replace(/&/g, '&amp;')
                             .replace(/</g, '&lt;')
                             .replace(/>/g, '&gt;')
-                            .replace(/"/g, '&quot;')
-                            .replace(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig, '<a href="http:\/\/bugs.nr/$1" target="_new">$1<\/a>');
+                            .replace(/"/g, '&quot;');
+
+                        // replace valid ticketnames with links according to ticket_systems.ticketurl
+                        var arr = text.match(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig) || [];
+                        for (var i = 0; i < arr.length; i++) {
+                            var ticketUrl = this.getTicketsystemUrlByTicket(arr[i]);
+                            text = text.split(arr[i]).join('<a href="' + ticketUrl + '" target="_new">' + arr[i] + '<\/a>');
+                        }
+
+                        return text;
                     }
                 }, {
                     header: this._durationTitle,
@@ -671,6 +680,27 @@ Ext.define('Netresearch.widget.Tracking', {
     },
 
     /*
+     * Returns the Ticketsystem-URL for a Ticket
+     */
+    getTicketsystemUrlByTicket: function(ticket) {
+        var baseUrl;
+
+        try{
+            var projectMapping = this.mapTicketToProject(ticket);
+            var project = this.projectStore.getById(projectMapping.id);
+            var ticketSystem = this.ticketSystemStore.getById(project.get('ticket_system'));
+            baseUrl = ticketSystem.get('ticketUrl');
+            if (baseUrl == '') {
+                throw "empty baseUrl";
+            }
+        } catch(err){
+            baseUrl = 'http://bugs.nr/%s';
+        }
+
+        return baseUrl.split("%s").join(ticket);
+    },
+
+    /*
      * Edit selected or first entry and jump to endtime column
      */
     editSelectedEntry: function() {
@@ -765,7 +795,11 @@ Ext.define('Netresearch.widget.Tracking', {
                 failure: function(response) {
                     record.saveInProgress=undefined;
                     record.dirty = true;
-                    showNotification(grid._errorTitle, response.responseText, false);
+                    var responseContent = JSON.parse(response.responseText);
+                    showNotification(grid._errorTitle, responseContent.message, false);
+                    if (typeof responseContent.forwardUrl != 'undefined') {
+                        setTimeout("window.location.href = '" + responseContent.forwardUrl + "'", 2000);
+                    }
                 }
             });
 
@@ -1028,13 +1062,22 @@ Ext.define('Netresearch.widget.Tracking', {
             },
             scope: this,
             success: function(response) {
+                var data = Ext.decode(response.responseText);
+
                 this.getStore().remove(record);
                 this.clearProjectStore();
                 this.selectRow(index);
                 this.getView().refresh();
+                if (data.alert) {
+                    showNotification(grid._attentionTitle, data.alert, false);
+                }
             },
             failure: function(response) {
-                showNotification(this._errorTitle, response.responseText, false);
+                var data = Ext.decode(response.responseText);
+                showNotification(grid._errorTitle, data.message, false);
+                if (typeof data.forwardUrl != 'undefined') {
+                    setTimeout("window.location.href = '" + data.forwardUrl + "'", 2000);
+                }
             }
         });
     },

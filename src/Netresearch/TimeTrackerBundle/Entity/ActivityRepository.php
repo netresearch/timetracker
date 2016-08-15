@@ -16,8 +16,10 @@ class ActivityRepository extends EntityRepository
         $data = array();
         foreach ($activities as $activity) {
             $data[] = array('activity' => array(
-    			'id'    => $activity->getId(),
-                'name'  => $activity->getName()
+                'id'            => $activity->getId(),
+                'name'          => $activity->getName(),
+                'needsTicket'   => $activity->getNeedsTicket(),
+                'factor'        => $activity->getFactor()
             ));
         }
         
