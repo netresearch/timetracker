@@ -8,11 +8,13 @@
         <script type="text/javascript">
             setTimeout(function() { window.location.reload() }, 90000);
         </script>
-        {% if app.session.flash('error') %}
+        {% for flashMessage in app.session.flashbag.get('error') %}
+
             <script type="text/javascript">
-                alert("{{ app.session.flash('error') }}");
+                alert("{{ flashMessage }}");
             </script>
-        {% endif %}
+
+        {% endfor %}
     </head>
     <body class="status_page">
         <div id="loginStatus" class="{{ loginClass }}">Login-Status</div> 
