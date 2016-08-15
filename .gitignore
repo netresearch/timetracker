@@ -8,7 +8,7 @@
 /app/logs/*.log
 /app/cache/*
 /app/build/
-/vendor/*
 /bin/*
 /web/bundles/*
 /web/.htaccess
+/vendor/*
