@@ -18,7 +18,6 @@
         "symfony/symfony": "2.8",
         "doctrine/orm": "^2.4.8",
         "doctrine/doctrine-bundle": "~1.4",
-        "doctrine/migrations": "~1.0@dev",
         "doctrine/doctrine-migrations-bundle": "^1.0",
         "twig/extensions": "1.0.*@dev",
         "symfony/assetic-bundle": "*",

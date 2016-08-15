@@ -1,10 +1,10 @@
-.idea
-.buildpath
-.project
-.settings
+/.idea
+/.buildpath
+/.project
+/.settings
 /app/config/parameters.yml
 /app/logs/*.log
 /app/cache/*
 /app/build/
-/.idea
 /web/.htaccess
+/vendor/*
