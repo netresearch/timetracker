@@ -2,8 +2,8 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-//use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\Customer;
 use Netresearch\TimeTrackerBundle\Entity\User;
@@ -12,13 +12,11 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\Activity;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
-use \Doctrine AS Doctrine;
-
 class AdminController extends BaseController
 {
-    public function getAllProjectsAction()
+    public function getAllProjectsAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
@@ -27,102 +25,103 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
-    public function getCustomersAction()
+    public function getCustomersAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer')->getAllCustomers();
+        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\CustomerRepository */
+        $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer');
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($repo->getAllCustomers()));
     }
 
-    public function getUsersAction()
+    public function getUsersAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getAllUsers();
+        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\UserRepository */
+        $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User');
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($repo->getAllUsers()));
     }
 
-    public function getTeamsAction()
+    public function getTeamsAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Team')->findAll();
-        return new Response(json_encode($data));
+        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\TeamRepository */
+        $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Team');
+
+        return new Response(json_encode($repo->findAll()));
     }
 
-    public function getPresetsAction()
+    public function getPresetsAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Preset')->getAllPresets();
-        return new Response(json_encode($data));
+        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\PresetRepository */
+        $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Preset');
+
+        return new Response(json_encode($repo->getAllPresets()));
     }
 
-    public function getTicketSystemsAction()
+    public function getTicketSystemsAction(Request $request)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem')->getAllTicketSystems();
-        return new Response(json_encode($data));
+        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository */
+        $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
+
+        return new Response(json_encode($repo->getAllTicketSystems()));
     }
 
-    public function saveProjectAction()
+    public function saveProjectAction(Request $request)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $data = null;
-        $projectId  = (int) $this->getRequest()->get('id');
-        $name       = $this->getRequest()->get('name');
+        $projectId  = (int) $request->get('id');
+        $name       = $request->get('name');
 
-        $ticketSystem = $this->getRequest()->get('ticket_system') ?
+        $ticketSystem = $request->get('ticket_system') ?
             $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
-            ->find($this->getRequest()->get('ticket_system'))
+            ->find($request->get('ticket_system'))
             : null;
 
-        $projectLead = $this->getRequest()->get('project_lead') ?
+        $projectLead = $request->get('project_lead') ?
             $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
-            ->find($this->getRequest()->get('project_lead'))
+            ->find($request->get('project_lead'))
             : null;
 
-        $technicalLead = $this->getRequest()->get('technical_lead') ?
+        $technicalLead = $request->get('technical_lead') ?
             $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
-            ->find($this->getRequest()->get('technical_lead'))
+            ->find($request->get('technical_lead'))
             : null;
 
-        $jiraId       = strtoupper($this->getRequest()->get('jiraId'));
-        $active       = $this->getRequest()->get('active') ? $this->getRequest()->get('active') : 0;
-        $global       = $this->getRequest()->get('global') ? $this->getRequest()->get('global') : 0;
-        $estimation   = TimeHelper::readable2minutes($this->getRequest()->get('estimation') ? $this->getRequest()->get('estimation') : '0m');
-        $billing      = $this->getRequest()->get('billing') ? $this->getRequest()->get('billing') : 0;
-        $costCenter   = $this->getRequest()->get('cost_center') ? $this->getRequest()->get('cost_center') : NULL;
-        $offer        = $this->getRequest()->get('offer') ? $this->getRequest()->get('offer') : NULL;
-        $additionalInformationFromExternal = $this->getRequest()->get('additionalInformationFromExternal') ? $this->getRequest()->get('additionalInformationFromExternal') : 0;
+        $jiraId       = strtoupper($request->get('jiraId'));
+        $active       = $request->get('active') ? $request->get('active') : 0;
+        $global       = $request->get('global') ? $request->get('global') : 0;
+        $estimation   = TimeHelper::readable2minutes($request->get('estimation') ? $request->get('estimation') : '0m');
+        $billing      = $request->get('billing') ? $request->get('billing') : 0;
+        $costCenter   = $request->get('cost_center') ? $request->get('cost_center') : NULL;
+        $offer        = $request->get('offer') ? $request->get('offer') : NULL;
+        $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ? $request->get('additionalInformationFromExternal') : 0;
+        /* @var $projectRepository \Netresearch\TimeTrackerBundle\Entity\ProjectRepository */
         $projectRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project');
 
         if ($projectId) {
@@ -132,7 +131,7 @@ class AdminController extends BaseController
 
             $customer = $this->getDoctrine()
                 ->getRepository('NetresearchTimeTrackerBundle:Customer')
-                ->find($this->getRequest()->get('customer'));
+                ->find($request->get('customer'));
 
             if (!$customer) {
                 $response = new Response($this->translate('Please choose a customer.'));
@@ -149,7 +148,10 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if ($sameNamedProject = $projectRepository->findOneBy(array('name' => $name, 'customer' => $project->getCustomer()->getId()))) {
+        $sameNamedProject = $projectRepository->findOneBy(
+            array('name' => $name, 'customer' => $project->getCustomer()->getId())
+        );
+        if ($sameNamedProject) {
             if ($project->getId() != $sameNamedProject->getId()) {
                 $response = new Response($this->translate('The project name provided already exists.'));
                 $response->setStatusCode(406);
@@ -164,7 +166,7 @@ class AdminController extends BaseController
             }
         }
 
-        if (strlen($jiraId) && false == $projectRepository->isValidJiraPrefix($jiraId, $project)) {
+        if (strlen($jiraId) && false == $projectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(406);
             return $response;
@@ -185,7 +187,7 @@ class AdminController extends BaseController
             ->setAdditionalInformationFromExternal($additionalInformationFromExternal);
         ;
 
-        $em = $this->getDoctrine()->getEntityManager();
+        $em = $this->getDoctrine()->getManager();
         $em->persist($project);
         $em->flush();
 
@@ -194,23 +196,20 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
-    public function saveCustomerAction()
+    public function saveCustomerAction(Request $request)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $data = null;
-        $customerId  = (int) $this->getRequest()->get('id');
-        $name       = $this->getRequest()->get('name');
-        $active     = $this->getRequest()->get('active') ? $this->getRequest()->get('active') : 0;
-        $global     = $this->getRequest()->get('global') ? $this->getRequest()->get('global') : 0;
-        $teamIds    = $this->getRequest()->get('teams')  ? $this->getRequest()->get('teams')  : array();
+        $customerId  = (int) $request->get('id');
+        $name       = $request->get('name');
+        $active     = $request->get('active') ? $request->get('active') : 0;
+        $global     = $request->get('global') ? $request->get('global') : 0;
+        $teamIds    = $request->get('teams')  ? $request->get('teams')  : array();
 
+        /* @var $customerRepository \Netresearch\TimeTrackerBundle\Entity\CustomerRepository */
         $customerRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer');
 
         if ($customerId) {
@@ -256,7 +255,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->getDoctrine()->getEntityManager();
+        $em = $this->getDoctrine()->getManager();
         $em->persist($customer);
         $em->flush();
 
@@ -265,23 +264,20 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
-    public function saveUserAction()
+    public function saveUserAction(Request $request)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $userId   = (int) $this->getRequest()->get('id');
-        $name     = $this->getRequest()->get('username');
-        $abbr     = $this->getRequest()->get('abbr');
-        $type     = $this->getRequest()->get('type');
-        $locale   = $this->getRequest()->get('locale');
-        $teamIds  = $this->getRequest()->get('teams')  ? $this->getRequest()->get('teams')  : array();
+        $userId   = (int) $request->get('id');
+        $name     = $request->get('username');
+        $abbr     = $request->get('abbr');
+        $type     = $request->get('type');
+        $locale   = $request->get('locale');
+        $teamIds  = $request->get('teams')  ? $request->get('teams')  : array();
 
+        /* @var $userRepository \Netresearch\TimeTrackerBundle\Entity\UserRepository */
         $userRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User');
 
         if ($userId) {
@@ -347,7 +343,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->getDoctrine()->getEntityManager();
+        $em = $this->getDoctrine()->getManager();
         $em->persist($user);
         $em->flush();
 
@@ -355,51 +351,43 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
-    public function deletePresetAction()
+    public function deletePresetAction(Request $request)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id             = (int) $this->getRequest()->get('id');
+        $id             = (int) $request->get('id');
         $doctrine = $this->getDoctrine();
 
         $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Preset')
                 ->find($id);
 
-        $em = $doctrine->getEntityManager();
+        $em = $doctrine->getManager();
         $em->remove($entry);
         $em->flush();
 
         return new Response(json_encode(array('success' => true)));
     }
 
-    public function savePresetAction()
+    public function savePresetAction(Request $request)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id             = (int) $this->getRequest()->get('id');
-        $name           = $this->getRequest()->get('name');
+        $id             = (int) $request->get('id');
+        $name           = $request->get('name');
         $customer       = $this->getDoctrine()
                         ->getRepository('NetresearchTimeTrackerBundle:Customer')
-                        ->find($this->getRequest()->get('customer'));
+                        ->find($request->get('customer'));
         $project        = $this->getDoctrine()
                         ->getRepository('NetresearchTimeTrackerBundle:Project')
-                        ->find($this->getRequest()->get('project'));
+                        ->find($request->get('project'));
         $activity       = $this->getDoctrine()
                         ->getRepository('NetresearchTimeTrackerBundle:Activity')
-                        ->find($this->getRequest()->get('activity'));
-        $description    = $this->getRequest()->get('description');
+                        ->find($request->get('activity'));
+        $description    = $request->get('description');
 
         if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
@@ -422,7 +410,7 @@ class AdminController extends BaseController
                 ->setActivity($activity)
                 ->setDescription($description);
 
-            $em = $this->getDoctrine()->getEntityManager();
+            $em = $this->getDoctrine()->getManager();
             $em->persist($preset);
             $em->flush();
         } catch (\Exception $e) {
@@ -436,28 +424,24 @@ class AdminController extends BaseController
 
 
 
-    public function saveTicketSystemAction()
+    public function saveTicketSystemAction(Request $request)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
 
-        $id             = (int) $this->getRequest()->get('id');
-        $name           = $this->getRequest()->get('name');
-        $type           = $this->getRequest()->get('type');
-        $bookTime       = $this->getRequest()->get('bookTime');
-        $url            = $this->getRequest()->get('url');
-        $login          = $this->getRequest()->get('login');
-        $password       = $this->getRequest()->get('password');
-        $publicKey      = $this->getRequest()->get('publicKey');
-        $privateKey     = $this->getRequest()->get('privateKey');
-        $ticketUrl      = $this->getRequest()->get('ticketUrl');
+        $id             = (int) $request->get('id');
+        $name           = $request->get('name');
+        $type           = $request->get('type');
+        $bookTime       = $request->get('bookTime');
+        $url            = $request->get('url');
+        $login          = $request->get('login');
+        $password       = $request->get('password');
+        $publicKey      = $request->get('publicKey');
+        $privateKey     = $request->get('privateKey');
+        $privateKey     = $request->get('ticketUrl');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -491,7 +475,7 @@ class AdminController extends BaseController
                 ->setPrivateKey($privateKey)
                 ->setTicketUrl($ticketUrl);
 
-            $em = $this->getDoctrine()->getEntityManager();
+            $em = $this->getDoctrine()->getManager();
             $em->persist($ticketSystem);
             $em->flush();
         } catch (\Exception $e) {

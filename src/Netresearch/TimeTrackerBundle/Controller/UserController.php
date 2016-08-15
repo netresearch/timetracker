@@ -5,11 +5,11 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 use Netresearch\TimeTrackerBundle\Entity\User as User;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends Controller
 {
-	public function addAction() {
-		$request = $this->getRequest();
+	public function addAction(Request $request) {
 		$username = $request->request->get('username');
 
 		if(empty($username)) {
@@ -18,7 +18,7 @@ class UserController extends Controller
 
 		// enforce ldap-style login names
 		$username = str_replace(
-					array(' ','ä','ö','ü','ß','é'), 
+					array(' ','ä','ö','ü','ß','é'),
 					array('.','ae','oe','ue','ss','e'),
 					strtolower($username));
 
@@ -26,7 +26,7 @@ class UserController extends Controller
 		$user->setUsername($username);
 		$user->setType('DEV');
 
-		$em = $this->getDoctrine()->getEntityManager();
+		$em = $this->getDoctrine()->getManager();
 		$em->persist($user);
 		$em->flush();
 

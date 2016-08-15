@@ -3,7 +3,6 @@
 namespace Netresearch\TimeTrackerBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
 use Netresearch\TimeTrackerBundle\Model\Base as Base;
 
 /**
@@ -37,6 +36,8 @@ class Holiday extends Base
      * Set day
      *
      * @param string $day
+     *
+     * @return $this
      */
     public function setDay($day)
     {
@@ -51,7 +52,7 @@ class Holiday extends Base
     /**
      * Get day
      *
-     * @return string
+     * @return \DateTime
      */
     public function getDay()
     {

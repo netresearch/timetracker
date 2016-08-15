@@ -4,17 +4,17 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
-use Netresearch\TimeTrackerBundle\Entity\User as User;
-use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
-use Netresearch\TimeTrackerBundle\Entity\Ticket;
 use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 use Netresearch\TimeTrackerBundle\Helper\ErrorResponse;
 use Netresearch\TimeTrackerBundle\Helper\JiraUserApi;
+use Netresearch\TimeTrackerBundle\Helper\JiraClient;
+use Netresearch\TimeTrackerBundle\Model\EscalationException;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpFoundation\Request;
 
 use \Zend_Ldap as Zend_Ldap;
 use \Zend_Ldap_Exception as Zend_Ldap_Exception;
@@ -24,14 +24,13 @@ class CrudController extends BaseController
 {
     const LOG_FILE = 'trackingsave.log';
 
-    public function deleteAction()
+    public function deleteAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
         $alert = null;
-        $request = $this->getRequest();
 
         if (0 != $request->request->get('id')) {
             $session = $this->get('request')->getSession();
@@ -56,12 +55,12 @@ class CrudController extends BaseController
             $day = $entry->getDay()->format("Y-m-d");
 
             $doctrine = $this->getDoctrine();
-            $entityManager = $doctrine->getEntityManager();
-            $entityManager->remove($entry);
-            $entityManager->flush();
+            $manager = $doctrine->getManager();
+            $manager->remove($entry);
+            $manager->flush();
 
             // We have to update classes after deletion as well
-            $this->calculateClasses($this->_getUserId(), $day);
+            $this->calculateClasses($this->_getUserId($request), $day);
         }
 
         return new Response(json_encode(array('success' => true, 'alert' => $alert)));
@@ -125,7 +124,7 @@ class CrudController extends BaseController
             return false;
 
         $doctrine = $this->getDoctrine();
-        $entityManager = $doctrine->getEntityManager();
+        $manager = $doctrine->getManager();
         $entries = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')
             ->findByDay((int) $userId, $day);
 
@@ -140,8 +139,8 @@ class CrudController extends BaseController
         $entry = $entries[0];
         if ($entry->getClass() != Entry::CLASS_DAYBREAK) {
             $entry->setClass(Entry::CLASS_DAYBREAK);
-            $entityManager->persist($entry);
-            $entityManager->flush();
+            $manager->persist($entry);
+            $manager->flush();
         }
 
         for ($c = 1; $c < count($entries); $c++) {
@@ -151,8 +150,8 @@ class CrudController extends BaseController
             if ($entry->getStart()->format("H:i") > $previous->getEnd()->format("H:i")) {
                 if ($entry->getClass() != Entry::CLASS_PAUSE) {
                     $entry->setClass(Entry::CLASS_PAUSE);
-                    $entityManager->persist($entry);
-                    $entityManager->flush();
+                    $manager->persist($entry);
+                    $manager->flush();
                 }
                 continue;
             }
@@ -160,25 +159,25 @@ class CrudController extends BaseController
             if ($entry->getStart()->format("H:i") < $previous->getEnd()->format("H:i")) {
                 if ($entry->getClass() != Entry::CLASS_OVERLAP) {
                     $entry->setClass(Entry::CLASS_OVERLAP);
-                    $entityManager->persist($entry);
-                    $entityManager->flush();
+                    $manager->persist($entry);
+                    $manager->flush();
                 }
                 continue;
             }
 
             if ($entry->getClass() != Entry::CLASS_PLAIN) {
                 $entry->setClass(Entry::CLASS_PLAIN);
-                $entityManager->persist($entry);
-                $entityManager->flush();
+                $manager->persist($entry);
+                $manager->flush();
             }
         }
 
         return true;
     }
 
-    public function saveAction()
+    public function saveAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
@@ -187,7 +186,6 @@ class CrudController extends BaseController
             $this->logDataToFile($_POST, TRUE);
 
             $doctrine = $this->getDoctrine();
-            $request = $this->getRequest()->request;
 
             if($request->get('id') != 0) {
                 $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')->find($request->get('id'));
@@ -215,7 +213,7 @@ class CrudController extends BaseController
             }
 
             // Retrieve user object
-            $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')->find($this->_getUserId());
+            $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')->find($this->_getUserId($request));
             $entry->setUser($user);
 
             if ($activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')->find($request->get('activity'))) {
@@ -261,7 +259,7 @@ class CrudController extends BaseController
                     $this->get('translator')->trans("Dataset was modified in Timetracker anyway");
             }
 
-            $em = $doctrine->getEntityManager();
+            $em = $doctrine->getManager();
             $em->persist($entry);
             $em->flush();
 
@@ -288,10 +286,14 @@ class CrudController extends BaseController
 
     /**
      * Inserts a series of same entries by preset
+     *
+     * @param Request $request
+     *
+     * @return Response
      */
-    public function bulkentryAction()
+    public function bulkentryAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
@@ -300,18 +302,17 @@ class CrudController extends BaseController
             $this->logDataToFile($_POST, TRUE);
 
             $doctrine = $this->getDoctrine();
-            $request = $this->getRequest()->request;
 
             $preset = $doctrine->getRepository('NetresearchTimeTrackerBundle:Preset')->find((int) $request->get('preset'));
             if (! is_object($preset))
                 throw new \Exception('Preset not found');
 
             // Retrieve needed objects
-            $user     = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')->find($this->_getUserId());
+            $user     = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')->find($this->_getUserId($request));
             $customer = $doctrine->getRepository('NetresearchTimeTrackerBundle:Customer')->find($preset->getCustomerId());
             $project  = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project')->find($preset->getProjectId());
             $activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')->find($preset->getActivityId());
-            $em = $doctrine->getEntityManager();
+            $em = $doctrine->getManager();
 
             $date = new \DateTime($request->get('startdate'));
             $enddate = new \DateTime($request->get('enddate'));
@@ -445,19 +446,19 @@ class CrudController extends BaseController
      * TTT-199: check if ticket prefix matches project's jira id
      * @param Project $project
      * @param string $ticket
-     * @return bool
      * @throws \Exception
+     * @return void
      */
     private function checkJiraProjectMatch(Project $project, $ticket)
     {
         // do not check empty tickets
         if (strlen($ticket) < 1) {
-            return true;
+            return;
         }
 
         // do not check empty jira-projects
         if (strlen($project->getJiraId()) < 1)
-            return true;
+            return;
 
         if (! TicketHelper::checkFormat($ticket)) {
             $message = $this->get('translator')->trans("The ticket's format is not recognized.");

@@ -15,9 +15,11 @@
 					modal: true,
 					draggable: false,
 					items: [
+                    {% for flashMessage in app.session.flashbag.get('error') %}
 						Ext.create('Ext.panel.Panel', {
-							html: "{{ app.session.flash('error') }}"
+							html: "{{ flashMessage }}"
 						}),
+        			{% endfor %}
 					    Ext.create('Ext.form.Panel', {
 					    	bodyPadding: 5,
 					    	standardSubmit: true,
@@ -35,7 +37,7 @@
 					    				specialkey: function(field, e) {
 					    					if(e.getKey() == e.ENTER) {
 					    						form = field.up('form').getForm();
-					    						
+
 					    						form.submit();
 					    					}
                                         },
@@ -53,7 +55,7 @@
 					    				specialkey: function(field, e) {
 					    					if(e.getKey() == e.ENTER) {
 					    						form = field.up('form').getForm();
-					    						
+
 					    						form.submit();
 					    					}
 					    				}
@@ -74,7 +76,7 @@
 				                	scope: this,
 				                	handler: function(btn) {
 				                		var form = btn.up('form').getForm();
-				                		
+
 				                		if(form.isValid()) {
 					                		form.submit();
 				                		}
@@ -84,7 +86,7 @@
 					    })
 					]
 				});
-				
+
 				window.show();
 			});
         </script>

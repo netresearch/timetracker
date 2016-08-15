@@ -80,7 +80,7 @@ class Account
     /**
      * Add entries
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
      */
     public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
@@ -90,7 +90,7 @@ class Account
     /**
      * Get entries
      *
-     * @return Doctrine\Common\Collections\Collection $entries
+     * @return \Doctrine\Common\Collections\Collection $entries
      */
     public function getEntries()
     {
@@ -128,7 +128,7 @@ class Account
     public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
         $this->entries[] = $entries;
-    
+
         return $this;
     }
 }

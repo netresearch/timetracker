@@ -2,8 +2,6 @@
 
 namespace Netresearch\TimeTrackerBundle\Entity;
 
-use Netresearch\TimeTrackerBundle\Controller\DefaultController;
-
 use Doctrine\ORM\EntityRepository;
 
 class TicketSystemRepository extends EntityRepository

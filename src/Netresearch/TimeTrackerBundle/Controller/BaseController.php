@@ -19,9 +19,7 @@ use Netresearch\TimeTrackerBundle\Helper\LocalizationHelper as LocalizationHelpe
 use Netresearch\TimeTrackerBundle\Helper\LoginHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
-use Netresearch\TimeTrackerBundle\Helper;
-
-use \Doctrine AS Doctrine;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class BaseController
@@ -42,14 +40,14 @@ class BaseController extends Controller
      */
     public function preExecute()
     {
-        //$session = $this->getRequest()->getSession();
+        $request = $this->getRequest();
 
-        if (!$this->checkLogin())
+        if (!$this->checkLogin($request))
             return;
 
         $doctrine = $this->getDoctrine();
         $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
-            ->find($this->_getUserId());
+            ->find($this->_getUserId($request));
 
         if (!is_object($user)) {
             return;
@@ -57,40 +55,45 @@ class BaseController extends Controller
 
         $locale = LocalizationHelper::normalizeLocale($user->getLocale());
 
-        $this->getRequest()->setLocale($locale);
-        // $session->setLocale($locale);
+        $request->setLocale($locale);
     }
 
 
     /**
      * check the login status
      *
+     * @param Request $request
+     *
      * @return mixed
      */
-    protected function _isLoggedIn()
+    protected function _isLoggedIn(Request $request)
     {
-        return $this->getRequest()->getSession()->get('loggedIn');
+        return $request->getSession()->get('loggedIn');
     }
 
 
     /**
      * returns the user id
      *
+     * @param Request $request
+     *
      * @return mixed
      */
-    protected function _getUserId()
+    protected function _getUserId(Request $request)
     {
-        return $this->getRequest()->getSession()->get('loginId');
+        return $request->getSession()->get('loginId');
     }
 
     /**
      * Redirects to the login page
      *
+     * @param Request $request
+     *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse|Response
      */
-    protected function _login()
+    protected function _login(Request $request)
     {
-        if (!$this->getRequest()->isXmlHttpRequest()) {
+        if (!$request->isXmlHttpRequest()) {
             return $this->redirect($this->generateUrl('_login'));
         } else {
             return new Response($this->generateUrl('_login'), 403);
@@ -98,13 +101,19 @@ class BaseController extends Controller
     }
 
     /**
-     * checks the usertype to be PL
+     * checks the user type to be PL
+     *
+     * @param Request $request
      *
      * @return bool
      */
-    protected function _isPl()
+    protected function _isPl(Request $request)
     {
-        $userId = $this->_getUserId();
+        if (false === $this->checkLogin($request)) {
+            return false;
+        }
+
+        $userId = $this->_getUserId($request);
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->find($userId);
@@ -116,11 +125,13 @@ class BaseController extends Controller
     /**
      * Returns true if a user is logged in or can authenticate by cookie
      *
+     * @param Request $request
+     *
      * @return bool
      */
-    protected function checkLogin()
+    protected function checkLogin(Request $request)
     {
-        if ($this->_isLoggedIn()) {
+        if ($this->_isLoggedIn($request)) {
             return true;
         }
 
@@ -130,13 +141,14 @@ class BaseController extends Controller
             return false;
         }
 
+        /* @var $user User */
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->findOneById($userId);
 
         // Re-Login by cookie
         if (LoginHelper::checkCookieUserName($user->getUsername())) {
-            $this->setLoggedIn($user, true);
+            $this->setLoggedIn($request, $user, true);
         }
 
         return true;
@@ -172,17 +184,18 @@ class BaseController extends Controller
     /**
      * Handles all after-login stuff
      *
-     * @param User $user      user object
-     * @param bool $setCookie set a cookie or not
+     * @param Request $request
+     * @param User    $user      user object
+     * @param bool    $setCookie set a cookie or not
      *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse|Response
      */
-    protected function setLoggedIn($user, $setCookie = true)
+    protected function setLoggedIn(Request $request, $user, $setCookie = true)
     {
-        $session = $this->getRequest()->getSession();
+        $session = $request->getSession();
 
         if (! is_object($user)) {
-            $session->setFlash(
+            $session->getFlashBag()->add(
                 'error',
                 $this->translate('Could not find user.')
             );
@@ -213,14 +226,16 @@ class BaseController extends Controller
     /**
      * logout of an user
      *
+     * @param Request $request
+     *
      * @return void
      */
-    protected function setLoggedOut()
+    protected function setLoggedOut(Request $request)
     {
         // delete login cookies
         LoginHelper::deleteCookie();
 
-        $this->getRequest()->getSession()->clear();
+        $request->getSession()->clear();
     }
 
 
