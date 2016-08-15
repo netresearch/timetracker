@@ -1,5 +1,5 @@
 .. header::
-   .. image:: netresearch.jpg
+   .. image:: doc/netresearch.jpg
       :height: 0.8cm
       :align: left
 
@@ -49,13 +49,11 @@ Move the focus with keyboard **up** and **down** keys.
 Install
 =======
 
-Vendors
--------
+Fetch a lcoal copy::
+    
+    git clone git@github.com:netresearch/timetracker.git
 
-bin/vendors install
+Install vendor libs::
+    
+    composer install
 
-
-Web-Bundles
------------
-
-php app/console assets:install web --symlink
