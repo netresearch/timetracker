@@ -4,6 +4,7 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 
 //use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
+use Netresearch\TimeTrackerBundle\Entity\Team;
 use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\Customer;
@@ -540,6 +541,61 @@ class AdminController extends BaseController
         }
 
         return new Response(json_encode($activity->toArray()));
+    }
+
+
+
+    public function saveTeamAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Team');
+
+        $id         = (int) $request->get('id');
+        $name       = $request->get('name');
+        $teamLead   = $request->get('lead_user_id') ?
+            $this->getDoctrine()
+                ->getRepository('NetresearchTimeTrackerBundle:User')
+                ->find($request->get('lead_user_id'))
+            : null;
+
+        if ($id) {
+            $team = $repository->find($id);
+        } else {
+            $team = new Team();
+        }
+
+        if ($sameNamedTeam = $repository->findOneByName($name)) {
+            if ($team->getId() != $sameNamedTeam->getId()) {
+                $response = new Response($this->translate('The team name provided already exists.'));
+                $response->setStatusCode(406);
+                return $response;
+            }
+        }
+
+        try {
+            $team
+                ->setName($name)
+                ->setLeadUser($teamLead);
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($team);
+            $em->flush();
+        } catch (\Exception $e) {
+            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+            $response->setStatusCode(403);
+            return $response;
+        }
+
+        $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
+
+        return new Response(json_encode($data));
     }
 
 }
