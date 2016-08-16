@@ -442,7 +442,7 @@ class AdminController extends BaseController
         $password       = $request->get('password');
         $publicKey      = $request->get('publicKey');
         $privateKey     = $request->get('privateKey');
-        $privateKey     = $request->get('ticketUrl');
+        $ticketUrl      = $request->get('ticketUrl');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -490,22 +490,22 @@ class AdminController extends BaseController
 
 
 
-    public function saveActivityAction()
+    public function saveActivityAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Activity');
 
-        $id             = (int) $this->getRequest()->get('id');
-        $name           = $this->getRequest()->get('name');
-        $needsTicket    = (boolean) $this->getRequest()->get('needsTicket');
-        $factor         = str_replace(',', '.', $this->getRequest()->get('factor'));
+        $id             = (int) $request->get('id');
+        $name           = $request->get('name');
+        $needsTicket    = (boolean) $request->get('needsTicket');
+        $factor         = str_replace(',', '.', $request->get('factor'));
 
         if ($id) {
             $activity = $repository->find($id);
@@ -536,7 +536,9 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($activity->toArray()));
+        $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
+
+        return new Response(json_encode($data));
     }
 
 
