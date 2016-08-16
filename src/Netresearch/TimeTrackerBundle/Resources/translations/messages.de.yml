@@ -36,3 +36,4 @@
 "Dataset was deleted in Timetracker anyway": "Der Datensatz wurde dennoch im Timetracker entfernt."
 "The activity name provided already exists.": "Der gewählte Name für eine Tätigkeit existiert bereits!"
 "The team name provided already exists.": "Der gewählte Name für ein Team existiert bereits!"
+"Please provide a valid user as team leader.": "Bitte gib einen gültigen Benutzer als Teamleiter an!"

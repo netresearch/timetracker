@@ -577,6 +577,12 @@ class AdminController extends BaseController
             }
         }
 
+        if (is_null($teamLead)) {
+            $response = new Response($this->translate('Please provide a valid user as team leader.'));
+            $response->setStatusCode(406);
+            return $response;
+        }
+
         try {
             $team
                 ->setName($name)
