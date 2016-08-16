@@ -95,5 +95,3 @@ circle_rest_client:
       defaults:
         CURLOPT_HTTPHEADER:     [ 'Content-Type: application/json' ]
         CURLOPT_FOLLOWLOCATION: true
-        arguments: [@service_container]
-
