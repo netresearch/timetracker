@@ -81,7 +81,7 @@ services:
             arguments: [@session, @doctrine, @service_container, @router, %jira_auth_redirect_route%]
 
 hwi_oauth:
-    firewall_name: oauh_area
+    firewall_name: oauth_area
     resource_owners:
         jira:
             type:                jira
