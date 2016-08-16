@@ -496,11 +496,11 @@ class AdminController extends BaseController
 
     public function saveActivityAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -540,7 +540,9 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($activity->toArray()));
+        $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
+
+        return new Response(json_encode($data));
     }
 
 
