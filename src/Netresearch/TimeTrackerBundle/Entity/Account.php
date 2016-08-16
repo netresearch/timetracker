@@ -26,7 +26,7 @@ class Account
     protected $name;
 
     /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="account")
+     * @ORM\OneToMany(targetEntity="Entry", mappedBy="Account")
      */
     protected $entries;
 
