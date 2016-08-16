@@ -20,6 +20,8 @@ parameters:
     ldap_readuser:     "readuser"
     ldap_readpass:     "readuser"
     ldap_basedn:       "dc=company,dc=org"
+    ldap_usernamefield: uid
+    ldap_usessl: true
 
     app_logo_url:             "bundles/netresearchtimetracker/images/logo.png"
     app_monthly_overview_url: "https://stats.timetracker.nr/?user="
