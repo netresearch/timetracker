@@ -35,7 +35,7 @@ security:
                 path:   /demo/secured/logout
                 target: /demo/
 
-        oauh_area:
+        oauth_area:
             anonymous: ~
             pattern: ^/connectjira
             oauth:
