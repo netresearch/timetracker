@@ -87,7 +87,7 @@ class LdapClient
 
         /* @var $result Ldap\Collection */
         $result = $ldap->search(
-            '('.$this->_userNameField.'=' . ldap_escape($this->_userName) . ')',
+            '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')',
             $this->_baseDn, Ldap\Ldap::SEARCH_SCOPE_SUB, array('cn', 'dn')
         );
 
@@ -121,7 +121,9 @@ class LdapClient
         try {
             $ldap->bind();
         } catch (Ldap\Exception\LdapException $e) {
-            $this->logger->addError($e->getMessage());
+            if ($this->logger) {
+                $this->logger->addError($e->getMessage());
+            }
             throw new \Exception('Login data could not be validated.');
         }
 
@@ -247,7 +249,7 @@ class LdapClient
      */
     public function setUseSSL($useSSL)
     {
-        $this->_useSSL = !empty($useSSL) && $this->_useSSL !== 0;
+        $this->_useSSL = (boolean) $useSSL;
         return $this;
     }
 
