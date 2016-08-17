@@ -41,8 +41,8 @@ class StatusController extends BaseController
         $userId = $this->get('request')->getSession()->get('loginId');
         $status = $this->getStatus($userId);
         return $this->render('NetresearchTimeTrackerBundle:Default:status.html.twig', array(
-            'loginClass' => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),
-            'apptitle' => $this->container->getParameter('app_title'),
+            'loginClass'    => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),
+            'apptitle'      => $this->container->getParameter('app_title'),
         ));
     }
 }

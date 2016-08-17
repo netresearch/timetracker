@@ -171,6 +171,10 @@ saveActivity:
     pattern: /activity/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveActivity }
 
+saveTeam:
+    pattern: /team/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveTeam }
+
 jira_login:
     pattern: /connectjira/check
 

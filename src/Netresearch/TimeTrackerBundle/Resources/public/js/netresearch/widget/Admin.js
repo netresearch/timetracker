@@ -50,6 +50,9 @@ Ext.define('Netresearch.widget.Admin', {
     _controllingTitle: 'Controlling',
     _teamTitle: 'Team',
     _teamLeadTitle: 'Team lead',
+    _addTeamTitle: 'Add team',
+    _editTeamTitle: 'Edit team',
+    _teamSavedTitle: 'The team has been successfully saved.',
     _customerManagementTitle: 'Customer management',
     _projectManagementTitle: 'Project management',
     _userManagementTitle: 'User management',
@@ -959,7 +962,120 @@ Ext.define('Netresearch.widget.Admin', {
                         return record ? record.get('username') : id;
                     }
                 }
-            ]
+            ],
+            tbar: [
+                {
+                    text: this._addTeamTitle,
+                    iconCls: 'icon-add',
+                    scope: this,
+                    handler: function() {
+                        teamGrid.editTeam();
+                    }
+                }
+            ],
+            listeners: {
+                /* Right-click menu */
+                itemcontextmenu: function(grid, record, item, index, event, options) {
+                    event.stopEvent();
+
+                    var contextMenu = Ext.create('Ext.menu.Menu', {
+                        items: [
+                            {
+                                text: panel._editTitle,
+                                iconCls: 'icon-edit',
+                                scope: this,
+                                handler: function() {
+                                    this.editTeam(record.data);
+                                }
+                            }
+                        ]
+                    });
+
+                    contextMenu.showAt(event.xy);
+                }
+            },
+            editTeam: function(record) {
+                var leadUserStore = Ext.create('Netresearch.store.AdminUsers');
+
+                record = record || {};
+
+                var window = Ext.create('Ext.window.Window', {
+                    title: panel._editTeamTitle,
+                    modal: true,
+                    width: 400,
+                    id: 'edit-team-window',
+                    layout: 'fit',
+                    listeners: {
+                        destroy: {
+                            scope: this,
+                            fn: function() {
+                                this.getStore().load();
+                            }
+                        }
+                    },
+                    items: [
+                        new Ext.form.Panel({
+                            bodyPadding: 5,
+                            defaultType: 'textfield',
+                            items: [
+                                new Ext.form.field.Hidden({
+                                    name: 'id',
+                                    value: record.id ? record.id : 0
+                                }), {
+                                    fieldLabel: panel._nameTitle,
+                                    name: 'name',
+                                    anchor: '100%',
+                                    value: record.name ? record.name : ''
+                                }, new Ext.form.ComboBox({
+                                    fieldLabel: panel._teamLeadTitle,
+                                    name: 'lead_user_id',
+                                    store: leadUserStore,
+                                    queryMode: 'local',
+                                    displayField: 'username',
+                                    valueField: 'id',
+                                    multiSelect: false,
+                                    typeAhead: true,
+                                    triggerAction: 'all',
+                                    anchor: '100%',
+                                    value: record.lead_user_id ? record.lead_user_id : ''
+                                })
+                            ],
+                            buttons: [
+                                {
+                                    text: panel._saveTitle,
+                                    scope: this,
+                                    handler: function(btn) {
+                                        var form = btn.up('form').getForm();
+                                        var values = form.getValues();
+
+                                        Ext.Ajax.request({
+                                            url: url + 'team/save',
+                                            params: values,
+                                            scope: this,
+                                            success: function(response) {
+                                                window.close();
+                                                showNotification(panel._successTitle, panel._teamSavedTitle, true);
+                                            },
+                                            failure: function(response) {
+                                                /*
+                                                 * If responsetext is less than 200 chars long (means not an exception
+                                                 * stack trace), use responsetext. If not, show common help/error text
+                                                 */
+                                                var message = response.responseText.length < 200
+                                                    ? response.responseText
+                                                    : panel._seriousErrorTitle;
+                                                showNotification(panel._errorTitle, message, false);
+                                            }
+                                        });
+                                    }
+                                }
+                            ]
+                        })
+                    ]
+                });
+
+                window.show();
+            }
         });
 
 
@@ -1697,6 +1813,9 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _controllingTitle: 'Controlling',
         _teamTitle: 'Team',
         _teamLeadTitle: 'Teamleiter',
+        _addTeamTitle: 'Neues Team',
+        _editTeamTitle: 'Team bearbeiten',
+        _teamSavedTitle: 'Das Team wurde erfolgreich gespeichert',
         _customerManagementTitle: 'Verwaltung von Kunden',
         _projectManagementTitle: 'Verwaltung von Projekten',
         _userManagementTitle: 'Verwaltung von Nutzern',

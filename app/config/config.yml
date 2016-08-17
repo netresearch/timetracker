@@ -81,7 +81,7 @@ services:
             arguments: [@session, @doctrine, @service_container, @router, %jira_auth_redirect_route%]
 
 hwi_oauth:
-    firewall_name: oauh_area
+    firewall_name: oauth_area
     resource_owners:
         jira:
             type:                jira
@@ -95,5 +95,3 @@ circle_rest_client:
       defaults:
         CURLOPT_HTTPHEADER:     [ 'Content-Type: application/json' ]
         CURLOPT_FOLLOWLOCATION: true
-        arguments: [@service_container]
-

@@ -7,6 +7,7 @@ use Netresearch\TimeTrackerBundle\Entity\ProjectRepository;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
+use Netresearch\TimeTrackerBundle\Entity\User as User;
 
 use OAuth;
 use Symfony\Component\Config\Definition\Exception\Exception;
@@ -94,6 +95,29 @@ class DefaultController extends BaseController
                 ->setUserNameField($this->container->getParameter('ldap_usernamefield'))
                 ->login();
 
+            $user = $this->getDoctrine()
+                ->getRepository('NetresearchTimeTrackerBundle:User')
+                ->findOneByUsername($username);
+
+            if (!$user) {
+                if (!(boolean) $this->container->getParameter('ldap_create_user')) {
+                    throw new \Exception('No equivalent timetracker user could be found.');
+                }
+
+                // create new user if users.username doesn't exist for valid ldap-authentication
+                $user = new User();
+                $user->setUsername($username)
+                    ->setType('DEV')
+                    ->setShowEmptyLine('0')
+                    ->setSuggestTime('1')
+                    ->setShowFuture('1')
+                    ->setLocale('de');
+
+                $em = $this->getDoctrine()->getEntityManager();
+                $em->persist($user);
+                $em->flush();
+            }
+
         } catch (\Exception $e) {
 
             $this->get('session')->getFlashBag()->add(
@@ -104,28 +128,9 @@ class DefaultController extends BaseController
                 'message'   => $this->get('translator')->trans($e->getMessage()),
                 'username'  => $username,
                 'locale'    => 'en',
-                'apptitle' => $this->container->getParameter('app_title'),
+                'apptitle'  => $this->container->getParameter('app_title'),
             ));
 
-        }
-
-        $user = $this->getDoctrine()
-            ->getRepository('NetresearchTimeTrackerBundle:User')
-            ->findOneByUsername($username);
-
-        if (!$user) {
-            // create new user if users.username doesn't exist for valid ldap-authentication
-            $user = new User();
-            $user->setUsername($username)
-                ->setType('DEV')
-                ->setShowEmptyLine('0')
-                ->setSuggestTime('1')
-                ->setShowFuture('1')
-                ->setLocale('de');
-
-            $em = $this->getDoctrine()->getEntityManager();
-            $em->persist($user);
-            $em->flush();
         }
 
         return $this->setLoggedIn($request, $user, $request->request->has('loginCookie'));

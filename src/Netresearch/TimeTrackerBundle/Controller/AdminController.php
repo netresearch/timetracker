@@ -2,6 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
+use Netresearch\TimeTrackerBundle\Entity\Team;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Entity\Project;
@@ -441,7 +442,7 @@ class AdminController extends BaseController
         $password       = $request->get('password');
         $publicKey      = $request->get('publicKey');
         $privateKey     = $request->get('privateKey');
-        $privateKey     = $request->get('ticketUrl');
+        $ticketUrl      = $request->get('ticketUrl');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -489,22 +490,22 @@ class AdminController extends BaseController
 
 
 
-    public function saveActivityAction()
+    public function saveActivityAction(Request $request)
     {
-        if (!$this->checkLogin()) {
+        if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false == $this->_isPl()) {
+        if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Activity');
 
-        $id             = (int) $this->getRequest()->get('id');
-        $name           = $this->getRequest()->get('name');
-        $needsTicket    = (boolean) $this->getRequest()->get('needsTicket');
-        $factor         = str_replace(',', '.', $this->getRequest()->get('factor'));
+        $id             = (int) $request->get('id');
+        $name           = $request->get('name');
+        $needsTicket    = (boolean) $request->get('needsTicket');
+        $factor         = str_replace(',', '.', $request->get('factor'));
 
         if ($id) {
             $activity = $repository->find($id);
@@ -535,7 +536,70 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($activity->toArray()));
+        $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
+
+        return new Response(json_encode($data));
+    }
+
+
+
+    public function saveTeamAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Team');
+
+        $id         = (int) $request->get('id');
+        $name       = $request->get('name');
+        $teamLead   = $request->get('lead_user_id') ?
+            $this->getDoctrine()
+                ->getRepository('NetresearchTimeTrackerBundle:User')
+                ->find($request->get('lead_user_id'))
+            : null;
+
+        if ($id) {
+            $team = $repository->find($id);
+        } else {
+            $team = new Team();
+        }
+
+        if ($sameNamedTeam = $repository->findOneByName($name)) {
+            if ($team->getId() != $sameNamedTeam->getId()) {
+                $response = new Response($this->translate('The team name provided already exists.'));
+                $response->setStatusCode(406);
+                return $response;
+            }
+        }
+
+        if (is_null($teamLead)) {
+            $response = new Response($this->translate('Please provide a valid user as team leader.'));
+            $response->setStatusCode(406);
+            return $response;
+        }
+
+        try {
+            $team
+                ->setName($name)
+                ->setLeadUser($teamLead);
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($team);
+            $em->flush();
+        } catch (\Exception $e) {
+            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+            $response->setStatusCode(403);
+            return $response;
+        }
+
+        $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
+
+        return new Response(json_encode($data));
     }
 
 }

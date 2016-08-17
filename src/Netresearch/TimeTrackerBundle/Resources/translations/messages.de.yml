@@ -1,5 +1,6 @@
 "Duration must be greater than 0!": "Die Aktivität muss mindestens eine Minute angedauert haben!"
 "You need to login.": "Bitte anmelden."
+"No equivalent timetracker user could be found.": "Es konnte kein entsprechender Timetracker Benutzer gefunden werden."
 "The ticket's prefix '%ticket_jira_id%' does not match the project's JIRA prefix '%project_jira_id%'.": "Das Präfix des Tickets '%ticket_jira_id%' passt nicht zum JIRA-Präfix '%project_jira_id%' des Projektes."
 "Escalation! You spent more time (%spent% h) than expected (%expected% h) on ticket %ticket%!": "Eskalation! Du hast mehr Zeit für das Ticket investiert (nämlich %spent% Stunden) als erwartet (%expected% Stunden)!"
 "You need to specify at least customer, project, user or month and year.": "Du musst mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat auswählen."
@@ -35,3 +36,5 @@
 "Dataset was modified in Timetracker anyway": "Der Datensatz wurde dennoch Timetracker geändert."
 "Dataset was deleted in Timetracker anyway": "Der Datensatz wurde dennoch im Timetracker entfernt."
 "The activity name provided already exists.": "Der gewählte Name für eine Tätigkeit existiert bereits!"
+"The team name provided already exists.": "Der gewählte Name für ein Team existiert bereits!"
+"Please provide a valid user as team leader.": "Bitte gib einen gültigen Benutzer als Teamleiter an!"

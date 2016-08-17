@@ -423,7 +423,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     },
                     renderer: function(text) {
                         text = new String('' + text);
-                        text.replace(/&/g, '&amp;')
+                        text = text.replace(/&/g, '&amp;')
                             .replace(/</g, '&lt;')
                             .replace(/>/g, '&gt;')
                             .replace(/"/g, '&quot;');
