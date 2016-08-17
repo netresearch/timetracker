@@ -334,7 +334,10 @@ class DefaultController extends BaseController
 
         $content = $this->get('templating')->render(
             'NetresearchTimeTrackerBundle:Default:export.csv.twig',
-            array('entries' => $entries)
+            array(
+                'entries' => $entries,
+                'labels'  => null,
+            )
         );
 
         $filename = strtolower(str_replace(' ', '-', $user->getUsername())) . '.csv';
