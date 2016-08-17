@@ -205,7 +205,6 @@ class BaseController extends Controller
                 array(
                     'locale' => 'en',
                     'apptitle' => $this->container->getParameter('app_title'),
-
                 )
             );
         }

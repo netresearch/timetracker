@@ -104,7 +104,7 @@ class DefaultController extends BaseController
                 'message'   => $this->get('translator')->trans($e->getMessage()),
                 'username'  => $username,
                 'locale'    => 'en',
-                'apptitle' => $this->container->getParameter('app_title'),
+                'apptitle'  => $this->container->getParameter('app_title'),
             ));
 
         }
