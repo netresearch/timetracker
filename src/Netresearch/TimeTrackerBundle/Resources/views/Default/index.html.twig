@@ -6,6 +6,8 @@
         <link rel="stylesheet" href="{{ asset('bundles/netresearchtimetracker/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('bundles/netresearchtimetracker/css/timetracker.css') }}" type="text/css">
         <script type="text/javascript">
+            var statusUrlHtml = {{ url('check_page')|escape|json_encode|raw }};
+            var logoutUrlHtml = {{ url('_logout')|escape|json_encode|raw }};
             var globalConfig = eval("(" + '{{ globalConfig|raw }}' + ")");
 
             var environment = '{{ environment }}';
