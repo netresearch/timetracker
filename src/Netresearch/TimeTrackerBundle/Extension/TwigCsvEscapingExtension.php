@@ -2,7 +2,6 @@
 namespace Netresearch\TimeTrackerBundle\Extension;
 
 use \Twig_Extension as Extension;
-use \Twig_Filter_Method as Method;
 
 class TwigCsvEscapingExtension extends Extension
 {
@@ -13,7 +12,9 @@ class TwigCsvEscapingExtension extends Extension
 
     public function getFilters()
     {
-        return array('csv_escape' => new Method($this, 'csvEscape'));
+        return array(
+            new \Twig_SimpleFilter('csv_escape', array($this, 'csvEscape')),
+        );
     }
 
     public function csvEscape($string)
