@@ -531,7 +531,7 @@ class AdminController extends BaseController
                 ->setNeedsTicket($needsTicket)
                 ->setFactor($factor);
 
-            $em = $this->getDoctrine()->getEntityManager();
+            $em = $this->getDoctrine()->getManager();
             $em->persist($activity);
             $em->flush();
         } catch (\Exception $e) {
