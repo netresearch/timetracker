@@ -254,7 +254,7 @@ class DefaultController extends BaseController
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->find($userId);
 
-        $days = $this->getRequest()->attributes->has('days') ? (int) $this->getRequest()->attributes->get('days') : 3;
+        $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 3;
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry')->getEntriesByUser($userId, $days, $user->getShowFuture());
 
         return new Response(json_encode($data));
@@ -330,7 +330,7 @@ class DefaultController extends BaseController
 
     public function exportAction(Request $request)
     {
-        $days = $request->attributes->has('days') ? (int) $this->getRequest()->attributes->get('days') : 10000;
+        $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 10000;
 
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
