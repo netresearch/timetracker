@@ -7,10 +7,8 @@ use Netresearch\TimeTrackerBundle\Entity\ProjectRepository;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
-use Netresearch\TimeTrackerBundle\Entity\User as User;
+use Netresearch\TimeTrackerBundle\Entity\User;
 
-use OAuth;
-use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
