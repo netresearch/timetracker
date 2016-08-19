@@ -579,22 +579,9 @@ class CrudController extends BaseController
             }
         }
 
-        // Calculate start date
-        $startDate = $entry->getDay() ? $entry->getDay() : new \DateTime();
-        if ($entry->getStart()) {
-            $startDate->setTime(
-                $entry->getStart()->format('H'), $entry->getStart()->format('i')
-            );
-        }
-        //"2016-02-17T14:35:51.000+0100"
-        $startDate = $startDate->format('Y-m-d\TH:i:s.000O');
-        $activity = $entry->getActivity()? $entry->getActivity()->getName() : 'no activity specified';
-        $description = !empty($entry->getDescription())? $entry->getDescription() : 'no description given';
-        $comment = '#'.$entry->getId().': '.$activity .': '.$description;
-
         $arData = array(
-            'comment' => $comment,
-            'started' => $startDate,
+            'comment' => self::getTicketSystemWorkLogComment($entry),
+            'started' => self::getTicketSystemWorkLogStartDate($entry),
             'timeSpentSeconds' => $entry->getDuration() * 60,
         );
 
@@ -610,5 +597,48 @@ class CrudController extends BaseController
         }
 
         $entry->setWorklogId($worklog->id);
+    }
+
+
+
+    /**
+     * //"2016-02-17T14:35:51.000+0100"
+     *
+     * @param  Entry $entry
+     * @return string "2016-02-17T14:35:51.000+0100"
+     * @todo   Move into TimeTracker class, cause target format depends on timetracker?
+     */
+    static function getTicketSystemWorkLogStartDate(Entry $entry)
+    {
+        $startDate = $entry->getDay() ? $entry->getDay() : new \DateTime();
+        if ($entry->getStart()) {
+            $startDate->setTime(
+                $entry->getStart()->format('H'), $entry->getStart()->format('i')
+            );
+        }
+
+        return $startDate->format('Y-m-d\TH:i:s.000O');
+    }
+
+
+
+    /**
+     * Returns work log entry description for ticket system.
+     *
+     * @param  Entry $entry
+     * @return string
+     */
+    static function getTicketSystemWorkLogComment(Entry $entry)
+    {
+        $activity = $entry->getActivity()
+            ? $entry->getActivity()->getName()
+            : 'no activity specified';
+
+        $description = $entry->getDescription();
+        if (empty($description)) {
+            $description = 'no description given';
+        }
+
+        return '#' . $entry->getId() . ': ' . $activity . ': ' . $description;
     }
 }
