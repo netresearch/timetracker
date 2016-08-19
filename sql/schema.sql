@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 CREATE TABLE IF NOT EXISTS `teams` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(31) NOT NULL,
-  `lead_user_id` INT(11) NULL, 
+  `lead_user_id` INT(11) NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
