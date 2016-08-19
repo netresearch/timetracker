@@ -115,7 +115,7 @@ class DefaultController extends BaseController
                     ->setShowFuture('1')
                     ->setLocale('de');
 
-                $em = $this->getDoctrine()->getEntityManager();
+                $em = $this->getDoctrine()->getManager();
                 $em->persist($user);
                 $em->flush();
             }
@@ -385,7 +385,7 @@ class DefaultController extends BaseController
                     ->setAvoidConnection(true);
             }
 
-            $em = $this->getDoctrine()->getEntityManager();
+            $em = $this->getDoctrine()->getManager();
             $em->persist($userTicketsystem);
             $em->flush();
         }
