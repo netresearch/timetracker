@@ -24,7 +24,7 @@ parameters:
     ldap_usessl:        true
     ldap_create_user:   true
 
-    app_logo_url:             "bundles/netresearchtimetracker/images/logo.png"
+    app_logo_url:             "/bundles/netresearchtimetracker/images/logo.png"
     app_monthly_overview_url: "https://stats.timetracker.nr/?user="
     app_title:                "Netresearch TimeTracker"
     app_header_url:           "https://www.netresearch.de/corpnav-intern/zeiterfassung/"
