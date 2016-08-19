@@ -80,7 +80,7 @@ Ext.onDocumentReady(function() {
     // Setup state manager
     Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 
-    var trackingWidget = Ext.create('Netresearch.widget.Tracking', 
+    var trackingWidget = Ext.create('Netresearch.widget.Tracking',
         { itemId: 'tracking', plugins: [cellEditing] }
     );
 
