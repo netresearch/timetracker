@@ -74,7 +74,7 @@ class NrArrayTranslatorTest
         $this->assertTrue(is_array($filters));
         $this->assertTrue(array_key_exists('nr_array_translator', $filters));
         $this->assertTrue(
-            $filters['nr_array_translator'] instanceof \Twig_Filter_Method
+            $filters['nr_array_translator'] instanceof \Twig_SimpleFilter
         );
 
     }

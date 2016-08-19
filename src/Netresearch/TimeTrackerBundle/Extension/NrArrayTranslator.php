@@ -66,8 +66,7 @@ class NrArrayTranslator
     public function getFilters()
     {
         return array(
-            'nr_array_translator' =>
-                new \Twig_Filter_Method($this, 'filterArray')
+            new \Twig_SimpleFilter('nr_array_translator', array($this, 'filterArray')),
         );
     }
 
