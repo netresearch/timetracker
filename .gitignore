@@ -12,3 +12,5 @@
 /web/bundles/*
 /web/.htaccess
 /vendor/*
+/bin/*
+/web/bundles/*
