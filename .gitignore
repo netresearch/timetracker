@@ -8,3 +8,5 @@
 /app/build/
 /web/.htaccess
 /vendor/*
+/bin/*
+/web/bundles/*
