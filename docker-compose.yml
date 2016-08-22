@@ -1,0 +1,31 @@
+version: '2'
+services:
+  web:
+    image: php:7
+    volumes:
+      - ./:/srv/www
+    ports:
+      - 8765:80
+    command:
+      /bin/sh -c "set -ex; apt-get update; apt-get install libldap2-dev -y; docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/; docker-php-ext-install pdo_mysql ldap; php -S 0.0.0.0:80 -t /srv/www"
+    links:
+      - db:db
+
+  db:
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=timetracker_root
+      - MYSQL_DATABASE=timetracker
+      - MYSQL_USER=timetracker
+      - MYSQL_PASSWORD=timetracker
+    volumes:
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/timetracker_setup.sql:ro
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - db
+    ports:
+      - 8080:80
+    links:
+      - db:db
