@@ -50,10 +50,27 @@ Install
 =======
 
 Fetch a lcoal copy::
-    
+
     git clone git@github.com:netresearch/timetracker.git
 
 Install vendor libs::
-    
+
     composer install
+
+Configuration
+=============
+
+Proxy
+-----
+
+- https://github.com/CircleOfNice/CiRestClientBundle#configuration
+- http://php.net/manual/en/function.curl-setopt.php
+
+add the following lines to your app/config/config.yml::
+
+    circle_rest_client:
+        curl:
+          defaults:
+            CURLOPT_PROXY:        "proxy.example.org:8080"
+            CURLOPT_PROXYUSERPWD: "user:password"
 

@@ -29,8 +29,6 @@ parameters:
     app_title:                "Netresearch TimeTracker"
     app_header_url:           "https://www.netresearch.de/corpnav-intern/zeiterfassung/"
 
-    proxy_http:               ~
-
     jira_client_id:           123
     jira_client_secret:       abc
     jira_base_url:            ~
