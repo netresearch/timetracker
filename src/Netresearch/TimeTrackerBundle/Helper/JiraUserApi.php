@@ -64,7 +64,7 @@ class JiraUserApi
     /**
      * @param  string $url
      * @param  array $data
-     * @return stdClass
+     * @return \stdClass
      */
     public function put($url, $data = [])
     {
