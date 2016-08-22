@@ -41,10 +41,10 @@ security:
             oauth:
                 resource_owners:
                     jira: /connectjira/check
-                login_path:        /connectjira
-                use_forward:       false
-                failure_path:      /avoidjiraconnection
-                check_path:     /connectjira
+                login_path:   /connectjira
+                use_forward:  false
+                failure_path: /avoidjiraconnection
+                check_path:   /connectjira
 
                 oauth_user_provider:
                     service: oauth_jira_user_provider
