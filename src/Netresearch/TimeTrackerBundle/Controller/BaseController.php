@@ -39,12 +39,12 @@ class BaseController extends Controller
     /**
      * set up function before actions are dispatched
      *
+     * @param Request $request
+     *
      * @return void
      */
-    public function preExecute()
+    public function preExecute(Request $request)
     {
-        $request = $this->getRequest();
-
         if (!$this->checkLogin($request))
             return;
 

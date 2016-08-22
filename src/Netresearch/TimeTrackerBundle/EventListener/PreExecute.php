@@ -15,7 +15,7 @@ class PreExecute
                 $controller = $controllers[0];
 
                 if (is_object($controller) && method_exists($controller, 'preExecute')) {
-                    $controller->preExecute();
+                    $controller->preExecute($event->getRequest());
                 }
             }
         }
