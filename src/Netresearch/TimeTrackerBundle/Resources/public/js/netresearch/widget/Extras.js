@@ -161,13 +161,13 @@ Ext.define('Netresearch.widget.Extras', {
                         return;
                     }
 
-                    if ((undefined == startdate) || (undefined == enddate) 
+                    if ((undefined == startdate) || (undefined == enddate)
                         || ('' == startdate) || ('' == enddate)) {
                         alert(this._missingDatesTitle);
                         return;
                     }
 
-                    if ((undefined == starttime) || (undefined == endtime) 
+                    if ((undefined == starttime) || (undefined == endtime)
                         || ('' == starttime) || ('' == endtime)) {
                         alert(this._missingTimesTitle);
                         return;

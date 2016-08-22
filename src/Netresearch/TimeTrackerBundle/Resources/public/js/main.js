@@ -12,7 +12,7 @@ Ext.Loader.setConfig({
 Ext.Loader.setPath('Netresearch', '../bundles/netresearchtimetracker/js/netresearch');
 Ext.Loader.setPath('Ext.ux.window', '../bundles/netresearchtimetracker/js');
 
-/* Load neccessary requirements */
+/* Load necessary requirements */
 Ext.require([
     'Ext.grid.*',
     'Ext.data.*',
@@ -122,9 +122,7 @@ Ext.onDocumentReady(function() {
             }
         },
         isActiveTab: function(name) {
-            if (this.getActiveTab() == ttt_tabpanel.child('#' + name))
-                return true;
-            return false;
+            return this.getActiveTab() == ttt_tabpanel.child('#' + name);
         }
     });
 
@@ -148,7 +146,7 @@ Ext.onDocumentReady(function() {
         ]
     });
 
-    /* Keybindings */
+    /* Key bindings */
     var keyMap = new Ext.util.KeyMap(Ext.get(document), [
         {
             key: Ext.EventObject.A,
@@ -292,7 +290,7 @@ function countTime() {
 
 /*
  * Handles redirects
- * - Statuscode 403: Javascript Redirect
+ * - Status code 403: Javascript Redirect
  * - everything else: Error message
  */
 function handleRedirect(response, title, message) {
@@ -398,7 +396,8 @@ function findProjects(customer, ticket)
             return projects;
     }
 
-    var validProjects = new Array();
+    var validProjects = [];
+    var value;
     for (var key in projects) {
         value = projects[key];
 
@@ -426,7 +425,7 @@ function findProjects(customer, ticket)
             if (result[i] == prefix) {
                 // console.log("Found project " + value['id'] + ", " + value['name'] + " of customer " + value['customer'] + " by prefix " + prefix);
                 validProjects.push(value);
-                continue;
+
             }
         }
     }

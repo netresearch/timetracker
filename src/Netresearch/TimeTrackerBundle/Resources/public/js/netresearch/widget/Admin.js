@@ -10,7 +10,7 @@ Ext.define('Netresearch.widget.Admin', {
         'Netresearch.store.TicketSystems',
     ],
 
-    /* Load all neccessary stores */
+    /* Load all necessary stores */
     customerStore: Ext.create('Netresearch.store.AdminCustomers'),
     projectStore: Ext.create('Netresearch.store.AdminProjects'),
     userStore: Ext.create('Netresearch.store.AdminUsers'),
@@ -31,7 +31,7 @@ Ext.define('Netresearch.widget.Admin', {
     _forAllTeamsTitle: 'for all teams',
     _saveTitle: 'Save',
     _deleteTitle: 'Delete',
-    _seriousErrorTitle: 'A serious error occured. Find more details in Firebug or the Chrome Developer Tools.',
+    _seriousErrorTitle: 'A serious error occurred. Find more details in Firebug or the Chrome Developer Tools.',
     _customerTitle: 'Customer',
     _ticketPrefixTitle: 'Ticket prefix',
     _ticketSystemTitle: 'Ticket system',
@@ -127,7 +127,7 @@ Ext.define('Netresearch.widget.Admin', {
                     flex: 1,
                     renderer: function(value) {
                         var output = '';
-                        /* Display space seperated list of related teams */
+                        /* Display space separated list of related teams */
                         Ext.each(value, function(teamId) {
                             if (isNaN(teamId)) {
                               return;
@@ -260,15 +260,15 @@ Ext.define('Netresearch.widget.Admin', {
                                     listeners: {
                                         /* Reload teams column to fit information */
                                         afterrender: function(field, value) {
-                                            teamStore.load({ 
-                                                params: { 
+                                            teamStore.load({
+                                                params: {
                                                     team: field.getValue()
                                                 }
                                             });
                                         },
                                         select: function(field, value) {
-                                            teamStore.load({ 
-                                                params: { 
+                                            teamStore.load({
+                                                params: {
                                                     team: field.getValue()
                                                 }
                                             });
@@ -310,8 +310,8 @@ Ext.define('Netresearch.widget.Admin', {
                                                 window.close();
                                             },
                                             failure: function(response) {
-                                                /* If responsetext is less than 200 chars long (means not an exception
-                                                 * stack trace), use responsetext. If not, show common help/error text
+                                                /* If response text is less than 200 chars long (means not an exception
+                                                 * stack trace), use response text. If not, show common help/error text
                                                  */
                                                 message = response.responseText.length < 200
                                                     ? response.responseText
@@ -555,15 +555,15 @@ Ext.define('Netresearch.widget.Admin', {
                                     disabled: record.customer ? true : false,
                                     listeners: {
                                         afterrender: function(field, value) {
-                                            projectStore.load({ 
-                                                params: { 
+                                            projectStore.load({
+                                                params: {
                                                     customer: field.getValue()
                                                 }
                                             });
                                         },
                                         select: function(field, value) {
-                                            projectStore.load({ 
-                                                params: { 
+                                            projectStore.load({
+                                                params: {
                                                     customer: field.getValue()
                                                 }
                                             });
@@ -699,7 +699,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 window.close();
                                             },
                                             failure: function(response) {
-                                                /* 
+                                                /*
                                                  * If responsetext is less than 200 chars long (means not an exception
                                                  * stack trace), use responsetext. If not, show common help/error text
                                                  */
@@ -899,15 +899,15 @@ Ext.define('Netresearch.widget.Admin', {
                                     anchor: '100%',
                                     listeners: {
                                         afterrender: function(field, value) {
-                                            teamStore.load({ 
-                                                params: { 
+                                            teamStore.load({
+                                                params: {
                                                     team: field.getValue()
                                                 }
                                             });
                                         },
                                         select: function(field, value) {
-                                            teamStore.load({ 
-                                                params: { 
+                                            teamStore.load({
+                                                params: {
                                                     team: field.getValue()
                                                 }
                                             });
@@ -932,7 +932,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 window.close();
                                             },
                                             failure: function(response) {
-                                                /* 
+                                                /*
                                                  * If responsetext is less than 200 chars long (means not an exception
                                                  * stack trace), use responsetext. If not, show common help/error text
                                                  */
@@ -962,7 +962,7 @@ Ext.define('Netresearch.widget.Admin', {
                     dataIndex: 'name',
                     flex: 1,
                     field: {
-                        xtype: 'textfield'     
+                        xtype: 'textfield'
                     }
                 }, {
                     header: this._teamLeadTitle,
@@ -1292,14 +1292,14 @@ Ext.define('Netresearch.widget.Admin', {
                                         scope: this,
                                         focus: function() {
                                             projectStore.load({
-                                                params: { 
+                                                params: {
                                                     customer: Ext.getCmp('preset-edit-customer').getValue()
                                                 }
                                             });
                                         }
                                     }
 
-                                }), 
+                                }),
                                 new Ext.form.ComboBox({
                                     fieldLabel: panel._activityTitle,
                                     name: 'activity',
@@ -1333,7 +1333,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 showNotification(this._successTitle, this._presetSavedTitle, true);
                                             },
                                             failure: function(response) {
-                                                /* 
+                                                /*
                                                  * If responsetext is less than 200 chars long (means not an exception
                                                  * stack trace), use responsetext. If not, show common help/error text
                                                  */

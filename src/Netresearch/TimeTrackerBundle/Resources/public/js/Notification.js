@@ -1,11 +1,11 @@
-/* 
+/*
  *	Notification / Toastwindow extension for Ext JS 4.x
  *
  *	Copyright (c) 2011 Eirik Lorentsen (http://www.eirik.net/)
  *
  *	Examples and documentation at: http://www.eirik.net/Ext/ux/window/Notification.html
  *
- *	Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) 
+ *	Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
  *	and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
  *
  *	Version: 2.0
@@ -139,7 +139,7 @@ Ext.define('Ext.ux.window.Notification', {
 		} else {
 			if (me.position == 'tr' || me.position == 'tl' || me.position == 't') {
 				// Using sibling's width when adding
-				return (sibling.yPos + sibling.el.getHeight() + sibling.spacing);				
+				return (sibling.yPos + sibling.el.getHeight() + sibling.spacing);
 			} else {
 				// Using own width when subtracting
 				return (sibling.yPos - me.el.getHeight() - sibling.spacing);
@@ -266,7 +266,7 @@ Ext.define('Ext.ux.window.Notification', {
 				me.manager.el = Ext.getBody();
 			}
 		}
-		
+
 		if (typeof me.manager.notifications == 'undefined') {
 			me.manager.notifications = {};
 		}
@@ -289,7 +289,7 @@ Ext.define('Ext.ux.window.Notification', {
 			},
 			me
 		);
-		
+
 		if (me.autoHide) {
 			me.task = new Ext.util.DelayedTask(me.doAutoHide, me);
 			me.task.delay(me.autoHideDelay);
@@ -310,7 +310,7 @@ Ext.define('Ext.ux.window.Notification', {
 		Ext.Array.include(notifications, me);
 
 		me.stopAnimation();
-		
+
 		me.el.animate({
 			to: {
 				x: me.xPos,
@@ -328,7 +328,7 @@ Ext.define('Ext.ux.window.Notification', {
 		var me = this;
 
 		var notifications = me.getNotifications(me.managerAlignment);
-		var index = Ext.Array.indexOf(notifications, me)
+		var index = Ext.Array.indexOf(notifications, me);
 
 		// Not animating the element if it already started to hide itself or if the manager is not present in the dom
 		if (!me.isHiding && me.el && me.manager && me.manager.el && me.manager.el.dom && me.manager.el.isVisible()) {
@@ -377,7 +377,7 @@ Ext.define('Ext.ux.window.Notification', {
 			},
 			me
 		);
-		
+
 		if (!(me.stickWhileHover && me.mouseIsOver)) {
 			// Hide immediately
 			me.hide();
