@@ -30,7 +30,7 @@
         "jms/security-extra-bundle": "*",
         "jms/di-extra-bundle": "*",
         "zendframework/zend-ldap": "*",
-        "hwi/oauth-bundle": "^0.3.0",
+        "hwi/oauth-bundle": "^0.4.0",
         "ci/restclientbundle": "^2.0"
     },
     "require-dev": {
