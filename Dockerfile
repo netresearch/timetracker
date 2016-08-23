@@ -1,22 +1,16 @@
-FROM php:7
+FROM php:7-alpine
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN set -ex \
- && apt-get update \
- && apt-get upgrade -y \
- && apt-get install libldap2-dev -y \
-    --no-install-recommends \
- && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ \
+RUN set -x \
+ && echo "http://mirror1.hs-esslingen.de/pub/Mirrors/alpine/v3.4/main" > /etc/apk/repositories \
+ && apk update \
+ && apk upgrade --available \
+ && apk add libldap \
+ && apk add --virtual .build-deps openldap-dev \
  && docker-php-ext-install pdo_mysql ldap \
- && apt-get clean \
- && rm -rf /tmp/* \
- && rm -rf /var/tmp/* \
- && for logs in `find /var/log -type f`; do > $logs; done \
- && rm -rf /usr/share/locale/* \
- && rm -rf /usr/share/man/* \
- && rm -rf /usr/share/doc/* \
- && rm -rf /var/lib/apt/lists/*
+ && apk del .build-deps \
+ && rm -rf /var/cache/apk/*
 
 COPY . /srv/timetracker
 RUN ln -s /srv/timetracker/web/app.php /srv/timetracker/web/index.php
