@@ -1,0 +1,12 @@
+/.idea
+/.buildpath
+/.project
+/.settings
+/app/config/parameters.yml
+/app/logs/*.log
+/app/cache/*
+/app/build/
+/web/.htaccess
+/vendor/*
+/bin/*
+/web/bundles/*

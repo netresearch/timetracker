@@ -1,15 +1,15 @@
 version: '2'
 services:
   web:
-    image: php:7
+    build: ./
+    image: netresearch/timetracker:local
     volumes:
-      - ./:/srv/www
+      - ./app/cache:/srv/timetracker/app/cache
+      - ./app/logs:/srv/timetracker/app/logs
     ports:
       - 8765:80
-    command:
-      /bin/sh -c "set -ex; apt-get update; apt-get install libldap2-dev -y; docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/; docker-php-ext-install pdo_mysql ldap; php -S 0.0.0.0:80 -t /srv/www"
-    links:
-      - db:db
+#    links:
+#      - db:db
 
   db:
     image: mariadb
