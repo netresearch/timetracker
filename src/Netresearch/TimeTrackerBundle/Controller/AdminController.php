@@ -76,8 +76,8 @@ class AdminController extends BaseController
 
     public function getTicketSystemsAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
         }
 
         /* @var $repo \Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository */

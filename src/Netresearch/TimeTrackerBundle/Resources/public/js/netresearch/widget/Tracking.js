@@ -1098,11 +1098,11 @@ Ext.define('Netresearch.widget.Tracking', {
      */
     refresh: function() {
         this.clearProjectStore();
-        this.getStore().load();
         this.customerStore.load();
         this.activityStore.load();
         this.userStore.load();
         this.ticketSystemStore.load();
+        this.getStore().load();
 
         this.getView().refresh();
         countTime();
