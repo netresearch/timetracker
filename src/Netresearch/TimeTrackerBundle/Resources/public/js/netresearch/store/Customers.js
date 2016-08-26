@@ -5,7 +5,7 @@ Ext.define('Netresearch.store.Customers', {
    	    'Netresearch.model.Customer'
    	],
 	
-    autoLoad: true,
+    autoLoad: false,
     model: 'Netresearch.model.Customer',
     proxy: {
         type: 'memory',

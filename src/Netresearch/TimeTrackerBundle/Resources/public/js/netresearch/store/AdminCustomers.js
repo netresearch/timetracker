@@ -5,7 +5,7 @@ Ext.define('Netresearch.store.AdminCustomers', {
    	    'Netresearch.model.Customer'
    	],
 	
-    autoLoad: true,
+    autoLoad: false,
     sortOnLoad: true,
     model: 'Netresearch.model.Customer',
     proxy: {

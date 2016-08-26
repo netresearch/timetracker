@@ -5,7 +5,7 @@ Ext.define('Netresearch.store.Activities', {
    	    'Netresearch.model.Activity'
    	],
 
-    autoLoad: true,
+    autoLoad: false,
     model: 'Netresearch.model.Activity',
     proxy: {
         type: 'ajax',

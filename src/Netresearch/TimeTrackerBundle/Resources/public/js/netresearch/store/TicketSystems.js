@@ -4,7 +4,7 @@ Ext.define('Netresearch.store.TicketSystems', {
         'Netresearch.model.TicketSystem'
     ],
     autoDestroy: false,
-    autoLoad: true,
+    autoLoad: false,
     model: 'Netresearch.model.TicketSystem',
     proxy: {
         type: 'ajax',

@@ -4,7 +4,7 @@ Ext.define('Netresearch.store.Entries', {
         'Netresearch.model.Entry'
     ],
 //    autoDestroy: true,
-    autoLoad: true,
+    autoLoad: false,
     sortOnLoad: true,
     model: 'Netresearch.model.Entry',
     proxy: {
