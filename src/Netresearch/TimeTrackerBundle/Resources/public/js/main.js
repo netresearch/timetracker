@@ -140,7 +140,7 @@ Ext.onDocumentReady(function() {
                         ? '<iframe id="statusfrm" src="' + statusUrlHtml + '"></iframe>' : '')
                     + '<div id="worktime">'
                     + '<span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
-                    + (typeof globalConfig.monthly_overview_url != 'undefined'
+                    + (typeof globalConfig.monthly_overview_url != 'undefined' && globalConfig.monthly_overview_url != null && globalConfig.monthly_overview_url != ''
                         ? '<br><span id="sumlink"><a href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_new">' + strings['Monthly overview'] + '</a></span>' : '')
                     + '</div>'
                     + (typeof logoutUrlHtml != 'undefined'
