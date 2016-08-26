@@ -6,7 +6,7 @@ Ext.define('Netresearch.store.Users', {
    	],
 	
     autoDestroy: true,
-    autoLoad: true,
+    autoLoad: false,
     model: 'Netresearch.model.User',
     proxy: {
         type: 'ajax',

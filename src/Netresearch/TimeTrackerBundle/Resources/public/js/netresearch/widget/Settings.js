@@ -27,6 +27,8 @@ Ext.define('Netresearch.widget.Settings', {
     _successTitle: 'Success',
 
     initComponent: function() {
+        this.on('render', this.refreshStores, this);
+
         /* Little store for yes/no dropdown */
         var yesnoSourceModel = new Ext.data.ArrayStore({
             fields: ['value', 'displayname'],
@@ -136,6 +138,10 @@ Ext.define('Netresearch.widget.Settings', {
         /* Apply settings */
         Ext.applyIf(this, config);
         this.callParent();
+    },
+
+    refreshStores: function () {
+        this.userStore.load();
     }
 });
 

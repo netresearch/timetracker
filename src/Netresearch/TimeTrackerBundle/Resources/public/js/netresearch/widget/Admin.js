@@ -94,6 +94,8 @@ Ext.define('Netresearch.widget.Admin', {
     _factorTitle: 'Factor',
 
     initComponent: function () {
+        this.on('render', this.refreshStores, this);
+
         var panel = this;
 
         var billingStore = new Ext.data.ArrayStore({
@@ -1783,6 +1785,16 @@ Ext.define('Netresearch.widget.Admin', {
         /* Apply config */
         Ext.applyIf(this, config);
         this.callParent();
+    },
+
+    refreshStores: function () {
+        this.customerStore.load();
+        this.projectStore.load();
+        this.userStore.load();
+        this.teamStore.load();
+        this.ticketSystemStore.load();
+        this.activityStore.load();
+        this.presetStore.load();
     }
 });
 
