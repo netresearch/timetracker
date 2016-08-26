@@ -514,6 +514,9 @@ Ext.define('Netresearch.widget.Admin', {
                     autoLoad: false
                 });
 
+                projectLeadStore.load();
+                technicalLeadStore.load();
+
                 if (!record) {
                     record = {};
                 }
@@ -1236,6 +1239,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             editPreset: function(record) {
                 var projectStore = Ext.create('Netresearch.store.AdminProjects');
+                projectStore.load();
                 var presetStore = Ext.create('Netresearch.store.AdminPresets', {
                     autoLoad: false
                 });
@@ -1788,12 +1792,12 @@ Ext.define('Netresearch.widget.Admin', {
     },
 
     refreshStores: function () {
+        this.teamStore.load();
+        this.userStore.load();
         this.customerStore.load();
         this.projectStore.load();
-        this.userStore.load();
-        this.teamStore.load();
-        this.ticketSystemStore.load();
         this.activityStore.load();
+        this.ticketSystemStore.load();
         this.presetStore.load();
     }
 });
