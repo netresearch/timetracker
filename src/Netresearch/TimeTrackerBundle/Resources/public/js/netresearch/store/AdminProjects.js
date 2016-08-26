@@ -6,7 +6,7 @@ Ext.define('Netresearch.store.AdminProjects', {
    	],
 	
     autoDestroy: true,
-    autoLoad: true,
+    autoLoad: false,
     sortOnLoad: true,
     model: 'Netresearch.model.Project',
     proxy: {

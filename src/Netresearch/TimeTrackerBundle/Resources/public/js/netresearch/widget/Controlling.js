@@ -24,7 +24,8 @@ Ext.define('Netresearch.widget.Controlling', {
     
 
     initComponent: function() {
-        
+        this.on('render', this.refreshStores, this);
+
         var monthArray = Ext.Array.map(Ext.Date.monthNames, function (e) { return [e]; });
         var months = [];
         for (var c=1; c <= 12; c++) {
@@ -134,6 +135,10 @@ Ext.define('Netresearch.widget.Controlling', {
         if ((undefined == user) || (null == user) || ('' == user) || (1 > user))
             user = 0;
         window.location.href = 'controlling/export/' + user + '/' + year + '/' + month;
+    },
+
+    refreshStores: function () {
+        this.userStore.load();
     }
 
 });

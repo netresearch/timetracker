@@ -66,6 +66,7 @@ Ext.define('Netresearch.widget.Tracking', {
     /* Initialize tracking widget */
     initComponent: function()
     {
+        this.on('render', this.refresh, this);
         this.startTime = this.roundTime(this.getNewDate());
 
         var entryStore = Ext.create('Netresearch.store.Entries');
@@ -1098,6 +1099,11 @@ Ext.define('Netresearch.widget.Tracking', {
     refresh: function() {
         this.clearProjectStore();
         this.getStore().load();
+        this.customerStore.load();
+        this.activityStore.load();
+        this.userStore.load();
+        this.ticketSystemStore.load();
+
         this.getView().refresh();
         countTime();
     },

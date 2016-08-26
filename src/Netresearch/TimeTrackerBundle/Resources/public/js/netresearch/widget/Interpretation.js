@@ -155,6 +155,8 @@ Ext.define('Netresearch.widget.Interpretation', {
     }),
 
     initComponent: function() {
+        this.on('render', this.refreshStores, this);
+
         var chartWidth = Ext.getBody().getWidth() - 40;
 
         var monthArray = Ext.Array.map(Ext.Date.monthNames, function (e) { return [e]; });
@@ -840,6 +842,15 @@ Ext.define('Netresearch.widget.Interpretation', {
                 description : description
             }
         });
+    },
+
+    refreshStores: function () {
+        this.customerStore.load();
+        this.projectStore.load();
+        this.filterableProjectStore.load();
+        this.teamStore.load();
+        this.userStore.load();
+        this.activityFilterStore.load();
     },
 
     displayShortcuts: function() {
