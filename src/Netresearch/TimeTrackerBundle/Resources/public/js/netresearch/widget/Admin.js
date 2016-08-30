@@ -92,6 +92,8 @@ Ext.define('Netresearch.widget.Admin', {
     _factorTitle: 'Factor',
 
     initComponent: function () {
+        this.on('render', this.refreshStores, this);
+
         var panel = this;
 
         var billingStore = new Ext.data.ArrayStore({
@@ -509,6 +511,9 @@ Ext.define('Netresearch.widget.Admin', {
                 var projectStore = Ext.create('Netresearch.store.AdminProjects', {
                     autoLoad: false
                 });
+
+                projectLeadStore.load();
+                technicalLeadStore.load();
 
                 if (!record) {
                     record = {};
@@ -1215,6 +1220,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             editPreset: function(record) {
                 var projectStore = Ext.create('Netresearch.store.AdminProjects');
+                projectStore.load();
                 var presetStore = Ext.create('Netresearch.store.AdminPresets', {
                     autoLoad: false
                 });
@@ -1764,6 +1770,16 @@ Ext.define('Netresearch.widget.Admin', {
         /* Apply config */
         Ext.applyIf(this, config);
         this.callParent();
+    },
+
+    refreshStores: function () {
+        this.teamStore.load();
+        this.userStore.load();
+        this.customerStore.load();
+        this.projectStore.load();
+        this.activityStore.load();
+        this.ticketSystemStore.load();
+        this.presetStore.load();
     }
 });
 

@@ -5,7 +5,7 @@ Ext.define('Netresearch.store.AdminTeams', {
    	    'Netresearch.model.Team'
    	],
 	
-    autoLoad: true,
+    autoLoad: false,
     model: 'Netresearch.model.Team',
     proxy: {
         type: 'ajax',

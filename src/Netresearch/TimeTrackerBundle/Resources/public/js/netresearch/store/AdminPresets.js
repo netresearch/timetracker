@@ -5,7 +5,7 @@ Ext.define('Netresearch.store.AdminPresets', {
    	    'Netresearch.model.Preset'
    	],
 	
-    autoLoad: true,
+    autoLoad: false,
     sortOnLoad: true,
     model: 'Netresearch.model.Preset',
     proxy: {

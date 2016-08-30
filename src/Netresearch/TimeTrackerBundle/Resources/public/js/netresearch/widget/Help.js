@@ -6,28 +6,35 @@
 Ext.define('Netresearch.widget.Help', {
     extend: 'Ext.tab.Panel',
 
-    initComponent: function() {
+    /* Strings */
+    _usageTitle: 'Usage',
+    _shortcutsTitle: 'Shortcuts',
+    _issuesTitle: 'Known Issues',
+    _linksTitle: 'Links',
+    _helpTitle: 'Help',
 
-        var shortcutText = new Ext.form.Panel({
-            frame: true,
-            title: 'Shortcuts',
-            bodyPadding: '20',
-            width: 300,
-            height: 150
-        });
+    initComponent: function() {
 
         /* Define container panel */
         var usagePanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
-            title: 'Bedienung',
+            title: this._usageTitle,
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
             items: [{
                 html:
-                "<h3>TODO</h3>"
-                + "<p>FIXME<p/>"
+                    "<h3>Add worklog entry</h3>" +
+                    "<p>Click the button <strong>Add Entry</strong>. Use the keyboard shortcut <strong>a</strong>.</p>" +
+                    "<h3>Edit worklog entry</h3>" +
+                    "<p>Just click inside any field of any existing worklog entry.</p>" +
+                    "<h3>Delete worklog entry</h3>" +
+                    "<p>Rightclick on an worklog entry and select <strong>Delete</strong> from context menu." +
+                    "Use keyboard shortcut <strong>d</strong> to delete focused worklog entry.</p>" +
+                    "<h3>Focus</h3>" +
+                    "<p>Worklog entry with focus has a yellow background." +
+                    "Move the focus with keyboard <strong>up</strong> and <strong>down</strong> keys.</p>"
                 ,
                 xtype: "panel"
             }]
@@ -39,7 +46,7 @@ Ext.define('Netresearch.widget.Help', {
         var shortcutPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
-            title: 'Shortcuts',
+            title: this._shortcutsTitle,
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
@@ -80,7 +87,7 @@ Ext.define('Netresearch.widget.Help', {
         var issuesPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
-            title: 'Known Issues',
+            title: this._issuesTitle,
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
@@ -97,7 +104,7 @@ Ext.define('Netresearch.widget.Help', {
         var linksPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
-            title: 'Links',
+            title: this._linksTitle,
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
@@ -116,7 +123,7 @@ Ext.define('Netresearch.widget.Help', {
 
 
         var config = {
-            title: 'Hilfe',
+            title: this._helpTitle,
             items: [ usagePanel, shortcutPanel, issuesPanel, linksPanel ]
         };
 
@@ -126,3 +133,12 @@ Ext.define('Netresearch.widget.Help', {
     }
 });
 
+if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+    Ext.apply(Netresearch.widget.Help.prototype, {
+        _usageTitle: 'Bedienung',
+        _shortcutsTitle: 'Shortcuts',
+        _issuesTitle: 'Bekannte Probleme',
+        _linksTitle: 'Verweise',
+        _helpTitle: 'Hilfe',
+    });
+}

@@ -10,6 +10,8 @@ Ext.define('Netresearch.widget.Extras', {
    	    'Netresearch.store.AdminPresets'
     ],
 
+    presetStore: Ext.create('Netresearch.store.AdminPresets'),
+
     /* Strings */
     _tabTitle: 'Extras',
     _bulkEntryTitle: 'Bulk Entry',
@@ -37,6 +39,7 @@ Ext.define('Netresearch.widget.Extras', {
     _successTitle: 'Success',
 
     initComponent: function() {
+        this.on('render', this.refreshStores, this);
 
         /* Little store for yes/no dropdown */
         var yesnoSourceModel = new Ext.data.ArrayStore({
@@ -44,7 +47,6 @@ Ext.define('Netresearch.widget.Extras', {
             data: [[1, this._yesTitle], [0, this._noTitle]]
         });
 
-        var presetStore = Ext.create('Netresearch.store.AdminPresets');
         /*
         new Ext.data.ArrayStore({
             fields: ['value', 'displayname'],
@@ -63,7 +65,7 @@ Ext.define('Netresearch.widget.Extras', {
             items: [{
                 id: 'cnt-preset',
                 xtype: 'combo',
-                store: presetStore,
+                store: this.presetStore,
                 mode: 'local',
                 fieldLabel: this._presetTitle,
                 name: 'preset',
@@ -232,8 +234,11 @@ Ext.define('Netresearch.widget.Extras', {
         /* Apply settings */
         Ext.applyIf(this, config);
         this.callParent();
-    }
+    },
 
+    refreshStores: function() {
+        this.presetStore.load();
+    }
 });
 
 if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {

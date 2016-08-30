@@ -6,7 +6,7 @@ Ext.define('Netresearch.store.Projects', {
        ],
 
     autoDestroy: true,
-    autoLoad: true,
+    autoLoad: false,
     currentCustomer: null,
     model: 'Netresearch.model.Project',
     proxy: {
