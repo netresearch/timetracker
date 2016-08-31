@@ -9,7 +9,7 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\Ticket;
 use Netresearch\TimeTrackerBundle\Model\Jira as Jira;
 use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
-use Netresearch\TimeTrackerBundle\Helper\ErrorResponse;
+use Netresearch\TimeTrackerBundle\Response\Error;
 use Netresearch\TimeTrackerBundle\Helper\JiraUserApi;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
@@ -42,7 +42,7 @@ class CrudController extends BaseController
                 $url = $this->generateUrl('hwi_oauth_service_redirect', array('service' => 'jira'));
                 $message = $this->get('translator')
                     ->trans("Invalid ticket system token (JIRA) you're going to be forwarded.");
-                return new ErrorResponse($message, 403, $url);
+                return new Error($message, 403, $url);
             }  catch (Exception $e) {
                 // Error on connecting Jira
                 $alert = $e->getMessage() . '<br>'
@@ -202,7 +202,7 @@ class CrudController extends BaseController
      * Save action handler.
      *
      * @param Request $request
-     * @return ErrorResponse|Response
+     * @return Error|Response
      */
     public function saveAction(Request $request)
     {
@@ -290,7 +290,7 @@ class CrudController extends BaseController
                 // forward to jiraLogin if accesstoken is invalid
                 $url = $this->generateUrl('hwi_oauth_service_redirect', array('service' => 'jira'));
                 $message = $this->get('translator')->trans("Invalid Ticketsystem Token (Jira) you're going to be forwarded");
-                return new ErrorResponse($message, 403, $url);
+                return new Error($message, 403, $url);
             } catch (Exception $e){
                 // Error on connecting Jira
                 $alert = $e->getMessage() . '<br />'.
@@ -330,9 +330,9 @@ class CrudController extends BaseController
 
             return new Response(json_encode($response));
         } catch (\Exception $e) {
-            return new ErrorResponse($this->get('translator')->trans($e->getMessage()), 406);
+            return new Error($this->get('translator')->trans($e->getMessage()), 406);
         } catch (\Throwable $exception) {
-            return new ErrorResponse($exception->getMessage(), 503);
+            return new Error($exception->getMessage(), 503);
         }
     }
 
