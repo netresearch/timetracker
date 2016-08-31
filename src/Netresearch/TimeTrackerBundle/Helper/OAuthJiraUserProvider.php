@@ -89,7 +89,7 @@ class OAuthJiraUserProvider implements OAuthAwareUserProviderInterface
                     ->setAvoidConnection(false);
             }
 
-            $em = $this->doctrine->getEntityManager();
+            $em = $this->doctrine->getManager();
             $em->persist($userTicketsystem);
             $em->flush();
         } else {
