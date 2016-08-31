@@ -8,15 +8,15 @@
         <script type="text/javascript">
             var statusUrlHtml = {{ url('check_page')|escape|json_encode|raw }};
             var logoutUrlHtml = {{ url('_logout')|escape|json_encode|raw }};
-            var globalConfig = eval("(" + '{{ globalConfig|raw }}' + ")");
+            var globalConfig = {{ globalConfig|json_encode|raw }};
 
-            var environment = '{{ environment }}';
+            var environment = {{ environment|json_encode|raw }};
 
-            var customersData = eval("(" + '{{ customers|raw }}' + ")");
+            var customersData = {{ customers|json_encode|raw }};
 
-            var projectsData = eval("(" + '{{ projects|raw }}' + ")");
+            var projectsData = {{ projects|json_encode|raw }};
 
-            var settingsData = eval("(" + '{{ settings|raw }}' + ")");
+            var settingsData = {{ settings|json_encode|raw }};
         </script>
         <script type="text/javascript" src="{{ asset('bundles/netresearchtimetracker/js/ext-js/ext-all.js') }}"></script>
         <script type="text/javascript" src="{{ asset('bundles/netresearchtimetracker/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>
@@ -25,7 +25,7 @@
         {% for flashMessage in app.session.flashbag.get('error') %}
 
             <script type="text/javascript">
-                alert("{{ flashMessage }}");
+                alert({{ flashMessage|json_encode|raw }});
             </script>
 
         {% endfor %}
