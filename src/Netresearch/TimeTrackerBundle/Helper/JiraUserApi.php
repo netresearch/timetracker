@@ -13,7 +13,7 @@ class JiraUserApi
 {
 
     /** @var string */
-    protected $tokensecret;
+    protected $tokenSecret;
     /** @var string */
     protected $token;
     /** @var string */
@@ -26,21 +26,32 @@ class JiraUserApi
     protected $restClient;
 
 
-    public function __construct(User $user, TicketSystem $ticketSystem, ContainerInterface $serviceContainer)
-    {
-        $this->token = $user->getTicketSystemAccessToken($ticketSystem);
-        $this->tokensecret = $user->getTicketSystemAccessTokenSecret($ticketSystem);
+
+    /**
+     * JiraUserApi constructor.
+     *
+     * @param User               $user
+     * @param TicketSystem       $ticketSystem
+     * @param ContainerInterface $serviceContainer
+     */
+    public function __construct(
+        User $user, TicketSystem $ticketSystem, ContainerInterface $serviceContainer
+    ) {
+        $this->token              = $user->getTicketSystemAccessToken($ticketSystem);
+        $this->tokenSecret        = $user->getTicketSystemAccessTokenSecret($ticketSystem);
         $this->jira_client_secret = $serviceContainer->getParameter('jira_client_secret');
-        $this->jira_client_id = $serviceContainer->getParameter('jira_client_id');
-        $this->restClient = $serviceContainer->get('circle.restclient');
-        $this->baseUrl = $ticketSystem->getUrl();
+        $this->jira_client_id     = $serviceContainer->getParameter('jira_client_id');
+        $this->restClient         = $serviceContainer->get('circle.restclient');
+        $this->baseUrl            = $ticketSystem->getUrl();
     }
 
 
+
     /**
-     * @param $url
-     * @return Object
-     * @throws AccessDeniedHttpException
+     * Execute GET request and return response as simple object.
+     *
+     * @param string $url
+     * @return \stdClass
      */
     public function get($url)
     {
@@ -51,7 +62,15 @@ class JiraUserApi
     }
 
 
-    public function post($url, $data = [])
+
+    /**
+     * Execute POST request and return response as simple object.
+     *
+     * @param  string $url
+     * @param  array  $data
+     * @return \stdClass
+     */
+    public function post($url, array $data = [])
     {
         /** @var  $response \Symfony\Component\HttpFoundation\Response */
         $response = $this->getResponse('POST', $url, $data);
@@ -62,11 +81,13 @@ class JiraUserApi
 
 
     /**
+     * Execute PUT request and return response as simple object.
+     *
      * @param  string $url
-     * @param  array $data
+     * @param  array  $data
      * @return \stdClass
      */
-    public function put($url, $data = [])
+    public function put($url, array $data = [])
     {
         /** @var  $response \Symfony\Component\HttpFoundation\Response */
         $response = $this->getResponse('PUT', $url, $data);
@@ -75,6 +96,13 @@ class JiraUserApi
     }
 
 
+
+    /**
+     * Execute DELETE request and return response HTTP status.
+     *
+     * @param string $url
+     * @return integer Response HTTP status
+     */
     public function delete($url)
     {
         /** @var  $response \Symfony\Component\HttpFoundation\Response */
@@ -84,10 +112,19 @@ class JiraUserApi
     }
 
 
-    protected function getResponse($method, $url, $data = [])
+
+    /**
+     * Send request and return response.
+     *
+     * @param string $method
+     * @param string $url
+     * @param array  $data
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function getResponse($method, $url, array $data = [])
     {
         /** @var  $response \Symfony\Component\HttpFoundation\Response */
-        $requestUrl = $this->baseUrl.$url;
+        $requestUrl = $this->baseUrl . $url;
 
         try {
             switch ($method){
@@ -119,7 +156,7 @@ class JiraUserApi
                     break;
             }
         } catch (\Exception $e){
-            throw new Exception("Jira Ticketsystem could not be accessed");
+            throw new Exception("JIRA ticket system could not be accessed.");
         }
 
         $this->evaluateStatusCode($response->getStatusCode());
@@ -128,6 +165,14 @@ class JiraUserApi
     }
 
 
+
+    /**
+     * Return curl options.
+     *
+     * @param string $url
+     * @param string $method
+     * @return array
+     */
     protected function getCurlParameters($url, $method)
     {
         return [
@@ -139,8 +184,18 @@ class JiraUserApi
     }
 
 
-    protected function getAuthHeaderEntry($url, $method = 'GET', $extraParameters = [])
-    {
+
+    /**
+     * Returns OAuth HTTP header Authorization:.
+     *
+     * @param string $url
+     * @param string $method
+     * @param array  $extraParameters
+     * @return string
+     */
+    protected function getAuthHeaderEntry(
+        $url, $method = 'GET', array $extraParameters = []
+    ) {
         $parameters = array_merge(array(
             'oauth_consumer_key'     => $this->jira_client_id,
             'oauth_timestamp'        => time(),
@@ -155,7 +210,7 @@ class JiraUserApi
             $url,
             $parameters,
             $this->jira_client_secret,
-            $this->tokensecret,
+            $this->tokenSecret,
             OAuthUtils::SIGNATURE_METHOD_RSA
         );
 
@@ -167,18 +222,30 @@ class JiraUserApi
     }
 
 
+
+    /**
+     * Returns random nonce string.
+     *
+     * @return string
+     */
     protected function generateNonce()
     {
-        return md5(microtime(true).uniqid('', true));
+        return md5(microtime(true) . uniqid('', true));
     }
 
 
+
+    /**
+     * Evaluates status code and throws appropriate exception if required.
+     *
+     * @param number $statusCode
+     */
     protected function evaluateStatusCode($statusCode)
     {
         if ($statusCode == 401) {
             throw new AccessDeniedHttpException();
-        } else if(preg_match("/^2\d\d$/", $statusCode) ==! 1){
-            throw new Exception("Error on requesting Jira Ticket System (Statuscode $statusCode )");
+        } elseif (preg_match('/^2\d\d$/', $statusCode) ==! 1) {
+            throw new Exception("Error on requesting JIRA ticket system (status code $statusCode )");
         }
     }
 }

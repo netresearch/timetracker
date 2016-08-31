@@ -8,10 +8,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 
-use \Zend_Ldap as Zend_Ldap;
-use \Zend_Ldap_Exception as Zend_Ldap_Exception;
-use \Zend_Ldap_Dn as Zend_Ldap_Dn;
-
 class InterpretationController extends BaseController
 {
     private $cache = null;

@@ -16,12 +16,6 @@ use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Helper;
 
-use \Zend_Ldap as Zend_Ldap;
-use \Zend_Ldap_Exception as Zend_Ldap_Exception;
-use \Zend_Ldap_Dn as Zend_Ldap_Dn;
-use \Zend_Ldap_Collection AS Zend_Ldap_Collection;
-use \Zend_Ldap_Collection_Iterator_Default AS Zend_Ldap_Collection_Iterator_Default;
-
 class DefaultController extends BaseController
 {
     public function indexAction(Request $request)
