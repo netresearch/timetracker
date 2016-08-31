@@ -42,17 +42,17 @@ class DefaultController extends BaseController
             ->getActivities();
 
         return $this->render('NetresearchTimeTrackerBundle:Default:index.html.twig', array(
-            'globalConfig'  => json_encode([
+            'globalConfig'  => [
                 'logo_url'              => $this->container->getParameter('app_logo_url'),
                 'monthly_overview_url'  => $this->container->getParameter('app_monthly_overview_url'),
                 'header_url'            => $this->container->getParameter('app_header_url'),
-            ]),
+            ],
             'apptitle'      => $this->container->getParameter('app_title'),
             'environment'   => $this->get('kernel')->getEnvironment(),
-            'customers'     => json_encode($customers),
-            'projects'      => json_encode($projects),
-            'activities'    => json_encode($activities),
-            'settings'      => json_encode($settings),
+            'customers'     => $customers,
+            'projects'      => $projects,
+            'activities'    => $activities,
+            'settings'      => $settings,
             'locale'        => $settings['locale']
         ));
     }
