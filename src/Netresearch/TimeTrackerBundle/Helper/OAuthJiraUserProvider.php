@@ -39,17 +39,20 @@ class OAuthJiraUserProvider implements OAuthAwareUserProviderInterface
     protected $redirectTargetRoute;
 
 
-    public function __construct(Session $session, Registry $doctrine,
-                                \Symfony\Component\DependencyInjection\Container $service_container,
-                                \Symfony\Bundle\FrameworkBundle\Routing\Router $router,
-                                $redirectTargetRoute)
-    {
-        $this->router = $router;
-        $this->session = $session;
-        $this->doctrine = $doctrine;
-        $this->service_container = $service_container;
+    public function __construct(
+        Session $session, Registry $doctrine,
+        \Symfony\Component\DependencyInjection\Container $service_container,
+        \Symfony\Bundle\FrameworkBundle\Routing\Router $router,
+        $redirectTargetRoute
+    ) {
+        $this->router              = $router;
+        $this->session             = $session;
+        $this->doctrine            = $doctrine;
+        $this->service_container   = $service_container;
         $this->redirectTargetRoute = $redirectTargetRoute;
     }
+
+
 
     /**
      * {@inheritdoc}
@@ -58,12 +61,13 @@ class OAuthJiraUserProvider implements OAuthAwareUserProviderInterface
     {
         $jiraBaseUrl = $response->getResourceOwner()->getOption('base_url');
         $accessToken = $response->getAccessToken();
-        $tokensecret = $response->getTokenSecret();
+        $tokenSecret = $response->getTokenSecret();
 
         $user_id = $this->session->get('loginId');
 
         /** @var $user User */
-        $user = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:User')->find($user_id);
+        $user = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:User')
+            ->find($user_id);
 
         /** @var $ticketSystem TicketSystem */
         $ticketSystem = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:Ticketsystem')->findOneBy([
@@ -79,12 +83,12 @@ class OAuthJiraUserProvider implements OAuthAwareUserProviderInterface
 
             if ($userTicketsystem) {
                 $userTicketsystem->setAccessToken($accessToken)
-                    ->setTokenSecret($tokensecret);
+                    ->setTokenSecret($tokenSecret);
             } else {
                 $userTicketsystem = new UserTicketsystem();
                 $userTicketsystem->setUser($user)
                     ->setTicketSystem($ticketSystem)
-                    ->setTokenSecret($tokensecret)
+                    ->setTokenSecret($tokenSecret)
                     ->setAccessToken($accessToken)
                     ->setAvoidConnection(false);
             }
@@ -98,7 +102,7 @@ class OAuthJiraUserProvider implements OAuthAwareUserProviderInterface
 
         // redirect to redirectTargetRoute instead of returning authenticated user
         $url = $this->router->generate($this->redirectTargetRoute);
-        header('Location: '.$url);
+        header('Location: ' . $url);
         exit;
     }
 }

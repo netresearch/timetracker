@@ -436,7 +436,7 @@ class Entry extends Base
     /**
      * Get end
      *
-     * @return string $end
+     * @return \DateTime $end
      */
     public function getEnd()
     {
@@ -594,7 +594,7 @@ class Entry extends Base
 
     /**
      * Calculate difference between start and end
-     *
+     * @param integer $factor
      * @return Entry
      */
     public function calcDuration($factor = 1)

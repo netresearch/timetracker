@@ -20,7 +20,7 @@ use Doctrine\ORM\EntityRepository;
 
 /**
  * Class EntryRepository
- * 
+ *
  * @category   Netresearch
  * @package    Timetracker
  * @subpackage Repository
@@ -36,7 +36,7 @@ class EntryRepository extends EntityRepository
 
     /**
      * Returns count of calendar days which include given amount of working days.
-     * 
+     *
      * @param int $workingDays Amount of working days.
      *
      * @return integer
@@ -91,7 +91,7 @@ class EntryRepository extends EntityRepository
         $fromDate->setTime(0, 0);
         $calendarDays = self::getCalendarDaysByWorkDays($days);
         $fromDate->sub(new \DateInterval('P' . $calendarDays . 'D'));
-        
+
         $em = $this->getEntityManager();
         $query = $em->createQuery(
             'SELECT e FROM NetresearchTimeTrackerBundle:Entry e'
@@ -209,9 +209,9 @@ class EntryRepository extends EntityRepository
 
     /**
      * get all entries of a user on a specific day
-     * 
-     * @param int  $userId Filter by user ID
-     * @param date $day    Filter by date
+     *
+     * @param integer $userId Filter by user ID
+     * @param string  $day    Filter by date
      *
      * @return array
      */
@@ -226,7 +226,7 @@ class EntryRepository extends EntityRepository
             . ' ORDER BY e.start ASC, e.end ASC, e.id ASC'
         )->setParameter('user_id', $userId)
             ->setParameter('day', $day);
-    
+
         return $query->getResult();
     }
 
@@ -234,7 +234,7 @@ class EntryRepository extends EntityRepository
 
     /**
      * Get array of entries of given user.
-     * 
+     *
      * @param integer $userId     Filter by user ID
      * @param integer $days       Filter by x days in past
      * @param boolean $showFuture Include work log entries from future
@@ -270,9 +270,9 @@ class EntryRepository extends EntityRepository
         $sql['order'] = "ORDER BY day DESC, start DESC";
 
         $stmt = $connection->query(implode(" ", $sql));
-        
+
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         $data = array();
         if (count($result)) foreach ($result as &$line) {
             $line['user'] = (int) $line['user'];
@@ -283,16 +283,16 @@ class EntryRepository extends EntityRepository
             $line['class'] = (int) $line['class'];
             $data[] = array('entry' => $line);
         }
-        
+
         return $data;
     }
 
 
-    
+
     /**
      * Query summary information regarding the current entry for the following
      * scopes: customer, project, activity, ticket
-     * 
+     *
      * @param integer $entryId The current entry's identifier
      * @param integer $userId  The current user's identifier
      * @param array   $data    The initial (default) summary
@@ -302,9 +302,9 @@ class EntryRepository extends EntityRepository
     public function getEntrySummary($entryId, $userId, $data)
     {
         $entry = $this->find($entryId);
-        
+
         $connection = $this->getEntityManager()->getConnection();
-        
+
         $sql = array('customer' => array(), 'project' => array(), 'ticket' => array());
 
         // customer total / customer total by current user
@@ -384,7 +384,7 @@ class EntryRepository extends EntityRepository
 
     /**
      * Query the current user's work by given period
-     * 
+     *
      * @param int $userId The current user's identifier
      * @param int $period The requested period (day / week / month)
      *
@@ -393,11 +393,11 @@ class EntryRepository extends EntityRepository
     public function getWorkByUser($userId, $period = self::PERIOD_DAY)
     {
         $connection = $this->getEntityManager()->getConnection();
-        
+
         $sql['select'] = "SELECT COUNT(id) AS count, SUM(duration) AS duration";
         $sql['from'] = "FROM entries";
         $sql['where_user'] = "WHERE user_id = " . $userId;
-        
+
         switch($period) {
         case self::PERIOD_DAY :
             $sql['where_day'] = "AND day = CURDATE()";
@@ -414,12 +414,12 @@ class EntryRepository extends EntityRepository
 
         $stmt   = $connection->query(implode(" ", $sql));
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         $data = array(
             'duration' => $result[0]['duration'],
             'count'    => false,
         );
-        
+
         return $data;
     }
 }
