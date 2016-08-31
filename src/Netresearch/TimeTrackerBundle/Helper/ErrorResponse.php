@@ -13,8 +13,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ErrorResponse extends JsonResponse
 {
-
-    public function __construct($message, $statuscode, $forwardUrl = null)
+    /**
+     * ErrorResponse constructor.
+     *
+     * @param string      $message
+     * @param integer     $statusCode
+     * @param string|null $forwardUrl
+     */
+    public function __construct($message, $statusCode, $forwardUrl = null)
     {
         parent::__construct();
         $values = ['message' => $message];
@@ -22,6 +28,6 @@ class ErrorResponse extends JsonResponse
             $values['forwardUrl'] = $forwardUrl;
         }
         $this->setContent(json_encode($values));
-        $this->setStatusCode($statuscode);
+        $this->setStatusCode($statusCode);
     }
 }

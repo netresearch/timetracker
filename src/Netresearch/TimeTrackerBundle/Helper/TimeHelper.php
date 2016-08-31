@@ -34,6 +34,13 @@ class TimeHelper
         return $sum;
     }
 
+
+
+    /**
+     * @param integer $minutes
+     * @param bool    $useWeeks
+     * @return string
+     */
     public static function minutes2readable($minutes, $useWeeks = true)
     {
         $minutes = (int) $minutes;
@@ -63,8 +70,14 @@ class TimeHelper
         return trim($out);
     }
 
+
+
     /**
      * Formats minutes in H:i format or days, if necessary
+     *
+     * @param number $duration
+     * @param bool   $inDays
+     * @return string
      */
     public static function formatDuration($duration, $inDays = false)
     {
@@ -83,6 +96,15 @@ class TimeHelper
         return $text;
     }
 
+
+
+    /**
+     * Returns percent value of $amount from $sum.
+     *
+     * @param number $amount
+     * @param number $sum
+     * @return string
+     */
     public static function formatQuota($amount, $sum)
     {
         return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';

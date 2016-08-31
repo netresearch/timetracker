@@ -71,8 +71,8 @@ class NrArrayTranslator
     }
 
     /**
-     * this function decodes the json string to an array and interate on it
-     * to translate the defined keys of each row
+     * Decodes the JSON string to an array and iterates over it to translate the
+     * defined keys of each row.
      *
      * @param string $string       json string
      * @param string $arrayKey     key value in the string

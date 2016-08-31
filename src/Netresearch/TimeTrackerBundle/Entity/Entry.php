@@ -443,7 +443,7 @@ class Entry extends Base
     /**
      * Get end
      *
-     * @return DateTime $end
+     * @return \DateTime $end
      */
     public function getEnd()
     {
