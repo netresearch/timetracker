@@ -29,6 +29,9 @@
             </script>
 
         {% endfor %}
+        <script type="text/javascript">
+            var url = {{ url('_start')|escape|json_encode|raw }};
+        </script>
     </head>
     <body>
 		<div id="grid"></div>
