@@ -1003,7 +1003,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             editTeam: function(record) {
                 var leadUserStore = Ext.create('Netresearch.store.AdminUsers');
-
+                leadUserStore.load();
                 record = record || {};
 
                 var window = Ext.create('Ext.window.Window', {
