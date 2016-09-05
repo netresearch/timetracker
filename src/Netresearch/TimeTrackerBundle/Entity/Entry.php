@@ -473,6 +473,20 @@ class Entry extends Base
     }
 
     /**
+     * Returns duration as formated hours:minutes string.
+     *
+     * @return string
+     */
+    public function getDurationString()
+    {
+        $nMinutes = $this->getDuration();
+        $nHours = floor($nMinutes / 60);
+        $nMinutes = $nMinutes % 60;
+
+        return sprintf('%02d:%02d', $nHours, $nMinutes);
+    }
+
+    /**
      * Set project
      *
      * @param \Netresearch\TimeTrackerBundle\Entity\Project $project
@@ -579,20 +593,21 @@ class Entry extends Base
         }
 
         return array(
-            'id'            => $this->getId(),
-            'date'          => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
-            'start'         => $this->getStart() ? $this->getStart()->format('H:i') : null,
-            'end'           => $this->getEnd() ? $this->getEnd()->format('H:i') : null,
-            'user'          => $this->getUser() ? $this->getUser()->getId() : null,
-            'customer'      => $customer,
-            'project'       => $this->getProject() ? $this->getProject()->getId() : null,
-            'activity'      => $this->getActivity() ? $this->getActivity()->getId() : null,
-            'description'   => $this->getDescription(),
-            'ticket'        => $this->getTicket(),
-            'duration'      => $this->getDuration(),
-            'class'         => $this->getClass(),
-            'worklog'       => $this->getWorklogId(),
-            'extTicket'     => $this->getInternalJiraTicketOriginalKey(),
+            'id'             => $this->getId(),
+            'date'           => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
+            'start'          => $this->getStart() ? $this->getStart()->format('H:i') : null,
+            'end'            => $this->getEnd() ? $this->getEnd()->format('H:i') : null,
+            'user'           => $this->getUser() ? $this->getUser()->getId() : null,
+            'customer'       => $customer,
+            'project'        => $this->getProject() ? $this->getProject()->getId() : null,
+            'activity'       => $this->getActivity() ? $this->getActivity()->getId() : null,
+            'description'    => $this->getDescription(),
+            'ticket'         => $this->getTicket(),
+            'duration'       => $this->getDuration(),
+            'durationString' => $this->getDurationString(),
+            'class'          => $this->getClass(),
+            'worklog'        => $this->getWorklogId(),
+            'extTicket'      => $this->getInternalJiraTicketOriginalKey(),
         );
     }
 
