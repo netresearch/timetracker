@@ -87,6 +87,18 @@ class TicketSystem extends Base
      */
     protected $ticketUrl;
 
+    /**
+     * @var string $oauthConsumerKey
+     * @ORM\Column(type="string", name="oauth_consumer_key")
+     */
+    protected $oauthConsumerKey;
+
+    /**
+     * @var string $oauthConsumerSecret
+     * @ORM\Column(type="string", name="oauth_consumer_secret")
+     */
+    protected $oauthConsumerSecret;
+
 
 
     /**
@@ -327,6 +339,42 @@ class TicketSystem extends Base
     public function setTicketUrl($ticketUrl)
     {
         $this->ticketUrl = $ticketUrl;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOauthConsumerKey()
+    {
+        return $this->oauthConsumerKey;
+    }
+
+    /**
+     * @param string $oauthConsumerKey
+     * @return $this
+     */
+    public function setOauthConsumerKey($oauthConsumerKey)
+    {
+        $this->oauthConsumerKey = $oauthConsumerKey;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOauthConsumerSecret()
+    {
+        return $this->oauthConsumerSecret;
+    }
+
+    /**
+     * @param string $oauthConsumerSecret
+     * @return $this
+     */
+    public function setOauthConsumerSecret($oauthConsumerSecret)
+    {
+        $this->oauthConsumerSecret = $oauthConsumerSecret;
         return $this;
     }
 }

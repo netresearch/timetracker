@@ -92,6 +92,8 @@ Ext.define('Netresearch.widget.Admin', {
     _activitySavedTitle: 'The activity has been successfully saved.',
     _needsTicketTitle: 'Needs ticket',
     _factorTitle: 'Factor',
+    _oauthConsumerKeyTitle: 'OAuth consumer key',
+    _oauthConsumerSecretTitle: 'OAuth consumer secret',
 
     initComponent: function () {
         this.on('render', this.refreshStores, this);
@@ -1401,6 +1403,13 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'textfield'
                     }
+                }, {
+                    header: this._oauthConsumerKeyTitle,
+                    dataIndex: 'oauthConsumerKey',
+                    flex: 1,
+                    field: {
+                        xtype: 'textfield'
+                    }
                 }
             ],
             tbar: [
@@ -1527,6 +1536,19 @@ Ext.define('Netresearch.widget.Admin', {
                                     grow: true,
                                     growMin: 130,
                                     value: record.privateKey ? record.privateKey : ''
+                                }), {
+                                    fieldLabel: panel._oauthConsumerKeyTitle,
+                                    name: 'oauthConsumerKey',
+                                    anchor: '100%',
+                                    value: record.oauthConsumerKey ? record.oauthConsumerKey : ''
+                                },
+                                new Ext.form.field.TextArea({
+                                    fieldLabel: panel._oauthConsumerSecretTitle,
+                                    name: 'oauthConsumerSecret',
+                                    anchor: '100%',
+                                    grow: true,
+                                    growMin: 130,
+                                    value: record.oauthConsumerSecret ? record.oauthConsumerSecret : ''
                                 })
                             ],
                             buttons: [
@@ -1890,7 +1912,9 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _editActivityTitle: 'Tätigkeit bearbeiten',
         _activitySavedTitle: 'Die Tätigkeit wurde erfolgreich gespeichert.',
         _needsTicketTitle: 'Benötigt Ticket',
-        _factorTitle: 'Faktor'
+        _factorTitle: 'Faktor',
+        _oauthConsumerKeyTitle: 'OAuth Consumer-Key',
+        _oauthConsumerSecretTitle: 'OAuth Consumer-Secret',
     });
 }
 

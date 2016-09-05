@@ -76,20 +76,6 @@ services:
         class: Netresearch\TimeTrackerBundle\Services\Export
         arguments: [@service_container]
 
-    oauth_jira_user_provider:
-            class: Netresearch\TimeTrackerBundle\Helper\OAuthJiraUserProvider
-            arguments: [@session, @doctrine, @service_container, @router, %jira_auth_redirect_route%]
-
-hwi_oauth:
-    firewall_name: oauth_area
-    resource_owners:
-        jira:
-            type:                jira
-            client_id:           %jira_client_id%
-            client_secret:       %jira_client_secret%
-            # Base URL of your Jira installation with no trailing slash (e.g. https://example.com/jira)
-            base_url:            %jira_base_url%
-
 circle_rest_client:
     curl:
       defaults:

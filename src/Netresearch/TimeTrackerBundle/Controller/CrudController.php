@@ -10,6 +10,7 @@ use Netresearch\TimeTrackerBundle\Entity\Ticket;
 use Netresearch\TimeTrackerBundle\Model\Jira as Jira;
 use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 use Netresearch\TimeTrackerBundle\Response\Error;
+use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
 use Netresearch\TimeTrackerBundle\Helper\JiraUserApi;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
@@ -37,17 +38,12 @@ class CrudController extends BaseController
 
             try {
                 $this->deleteJiraWorklog($entry);
-            } catch (AccessDeniedHttpException $e) {
-                // forward to jiraLogin if access token is invalid
-                $url = $this->generateUrl('hwi_oauth_service_redirect', array('service' => 'jira'));
-                $message = $this->get('translator')
-                    ->trans("Invalid ticket system token (JIRA) you're going to be forwarded.");
-                return new Error($message, 403, $url);
-            }  catch (Exception $e) {
-                // Error on connecting Jira
-                $alert = $e->getMessage() . '<br>'
-                    . $this->get('translator')
-                        ->trans("Dataset was deleted in Timetracker anyway.");
+            } catch (JiraApiException $e) {
+                if ($e->getRedirectUrl()) {
+                    return new Error($e->getMessage(), 403, $e->getRedirectUrl());
+                }
+                $alert = $e->getMessage() . '<br />' .
+                    $this->get('translator')->trans("Dataset was modified in Timetracker anyway");
             }
 
             // remember the day to calculate classes afterwards
@@ -118,11 +114,9 @@ class CrudController extends BaseController
             return;
         }
 
-        $jiraUserApi = new JiraUserApi(
-            $entry->getUser(), $ticketSystem, $this->container
-        );
+        $jiraUserApi = new JiraUserApi($entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
         $jiraUserApi->delete(sprintf(
-            "/rest/api/2/issue/%s/worklog/%d",
+            "/issue/%s/worklog/%d",
             $strTicket,
             $entry->getWorklogId()
         ));
@@ -286,14 +280,11 @@ class CrudController extends BaseController
             // update JIRA, if necessary
             try {
                 $this->updateJiraWorklog($entry, $oldEntry);
-            } catch (AccessDeniedHttpException $e){
-                // forward to jiraLogin if accesstoken is invalid
-                $url = $this->generateUrl('hwi_oauth_service_redirect', array('service' => 'jira'));
-                $message = $this->get('translator')->trans("Invalid Ticketsystem Token (Jira) you're going to be forwarded");
-                return new Error($message, 403, $url);
-            } catch (Exception $e){
-                // Error on connecting Jira
-                $alert = $e->getMessage() . '<br />'.
+            } catch (JiraApiException $e) {
+                if ($e->getRedirectUrl()) {
+                    return new Error($e->getMessage(), 403, $e->getRedirectUrl());
+                }
+                $alert = $e->getMessage() . '<br />' .
                     $this->get('translator')->trans("Dataset was modified in Timetracker anyway");
             }
 
@@ -606,7 +597,8 @@ class CrudController extends BaseController
      * @param Entry $oldEntry
      *
      * @return void
-     * @throws AccessDeniedHttpException
+     * @throws JiraApiException
+     * @throws \Exception
      *
      * @todo avoid useless ws calls
      * @todo check ticket/worklog for existing before logging work
@@ -641,7 +633,7 @@ class CrudController extends BaseController
             return;
         }
 
-        $jiraUserApi = new JiraUserApi($entry->getUser(), $ticketSystem, $this->container);
+        $jiraUserApi = new JiraUserApi($entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
 
         if ($this->shouldTicketBeDeleted($entry, $oldEntry)) {
             // ticket number changed
@@ -662,8 +654,7 @@ class CrudController extends BaseController
             return;
         }
 
-        $issue = $jiraUserApi->get(sprintf("/rest/api/2/issue/%s", $strTicket));
-
+        $issue = $jiraUserApi->get(sprintf("/issue/%s", $strTicket));
         if (isset($issue->errorMessages[0]) || $issue->key !== $strTicket) {
             // avoid logging work on non existent issues
             return;
@@ -673,12 +664,12 @@ class CrudController extends BaseController
             // check work log entry for existence
             try {
                 $workLog = $jiraUserApi->get(sprintf(
-                    "/rest/api/2/issue/%s/worklog/%d", $strTicket,
+                    "/issue/%s/worklog/%d", $strTicket,
                     $entry->getWorklogId()
                 ));
             } catch (\Exception $e) {
                 // @todo replace with specific NoWorkLogEntryException
-                if (0 === strpos($e->getMessage(), 'JIRA says: Cannot find worklog with id')) {
+                if (404 === $e->getCode()) {
                     $entry->setWorklogId(null);
                 }
             }
@@ -693,12 +684,12 @@ class CrudController extends BaseController
         if ($entry->getWorklogId()) {
             // update old work log entry
             $workLog = $jiraUserApi->put(
-                sprintf("/rest/api/2/issue/%s/worklog/%d", $strTicket, $entry->getWorklogId()),
+                sprintf("/issue/%s/worklog/%d", $strTicket, $entry->getWorklogId()),
                 $arData
             );
         } else {
-            // create new work log entry
-            $workLog = $jiraUserApi->post(sprintf("/rest/api/2/issue/%s/worklog", $strTicket), $arData);
+            // create new worklog entry
+            $workLog = $jiraUserApi->post(sprintf("/issue/%s/worklog", $strTicket), $arData);
         }
 
         $entry->setWorklogId($workLog->id);
