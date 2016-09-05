@@ -21,7 +21,6 @@ class AppKernel extends Kernel
             new JMS\DiExtraBundle\JMSDiExtraBundle($this),
             new JMS\SecurityExtraBundle\JMSSecurityExtraBundle(),
             new Netresearch\TimeTrackerBundle\NetresearchTimeTrackerBundle(),
-            new HWI\Bundle\OAuthBundle\HWIOAuthBundle(),
             new Circle\RestClientBundle\CircleRestClientBundle(),
         );
 

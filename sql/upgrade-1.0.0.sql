@@ -17,3 +17,6 @@ CREATE TABLE IF NOT EXISTS `users_ticket_systems` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 ALTER TABLE `users` CHANGE `abbr` `abbr` CHAR(3) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;
+
+ALTER TABLE `ticket_systems` ADD `oauth_consumer_key` VARCHAR(100) NULL;
+ALTER TABLE `ticket_systems` ADD `oauth_consumer_secret` VARCHAR(4000) NULL;
