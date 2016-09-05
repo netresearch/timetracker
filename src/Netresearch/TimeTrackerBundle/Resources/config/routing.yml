@@ -175,9 +175,6 @@ saveTeam:
     path: /team/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveTeam }
 
-jira_login:
-    path: /connectjira/check
-
-avoidJiraConnection:
-    path: /avoidjiraconnection
-    defaults: { _controller: NetresearchTimeTrackerBundle:Default:avoidJiraConnection }
+jiraOAuthCallback:
+    path: /jiraoauthcallback
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:jiraOAuthCallback }

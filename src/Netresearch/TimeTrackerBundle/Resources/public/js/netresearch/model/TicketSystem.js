@@ -10,6 +10,8 @@ Ext.define('Netresearch.model.TicketSystem', {
         {name: 'password', type: 'string'},
         {name: 'publicKey', type: 'string'},
         {name: 'privateKey', type: 'string'},
-        {name: 'ticketurl', type: 'string'}
+        {name: 'ticketUrl', type: 'string'},
+        {name: 'oauthConsumerKey', type: 'string'},
+        {name: 'oauthConsumerSecret', type: 'string'}
     ]
 });

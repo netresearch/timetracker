@@ -28,8 +28,3 @@ parameters:
     app_monthly_overview_url: "https://stats.timetracker.nr/?user="
     app_title:                "Netresearch TimeTracker"
     app_header_url:           "https://www.netresearch.de/corpnav-intern/zeiterfassung/"
-
-    jira_client_id:           123
-    jira_client_secret:       abc
-    jira_base_url:            ~
-    jira_auth_redirect_route: _start

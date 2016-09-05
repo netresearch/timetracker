@@ -437,16 +437,18 @@ class AdminController extends BaseController
 
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
 
-        $id             = (int) $request->get('id');
-        $name           = $request->get('name');
-        $type           = $request->get('type');
-        $bookTime       = $request->get('bookTime');
-        $url            = $request->get('url');
-        $ticketUrl      = $request->get('ticketUrl');
-        $login          = $request->get('login');
-        $password       = $request->get('password');
-        $publicKey      = $request->get('publicKey');
-        $privateKey     = $request->get('privateKey');
+        $id                     = (int) $request->get('id');
+        $name                   = $request->get('name');
+        $type                   = $request->get('type');
+        $bookTime               = $request->get('bookTime');
+        $url                    = $request->get('url');
+        $login                  = $request->get('login');
+        $password               = $request->get('password');
+        $publicKey              = $request->get('publicKey');
+        $privateKey             = $request->get('privateKey');
+        $ticketUrl              = $request->get('ticketUrl');
+        $oauthConsumerKey       = $request->get('oauthConsumerKey');
+        $oauthConsumerSecret    = $request->get('oauthConsumerSecret');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -478,7 +480,9 @@ class AdminController extends BaseController
                 ->setLogin($login)
                 ->setPassword($password)
                 ->setPublicKey($publicKey)
-                ->setPrivateKey($privateKey);
+                ->setPrivateKey($privateKey)
+                ->setOauthConsumerKey($oauthConsumerKey)
+                ->setOauthConsumerSecret($oauthConsumerSecret);
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($ticketSystem);
