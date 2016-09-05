@@ -75,9 +75,3 @@ services:
     nr.timetracker.export:
         class: Netresearch\TimeTrackerBundle\Services\Export
         arguments: [@service_container]
-
-circle_rest_client:
-    curl:
-      defaults:
-        CURLOPT_HTTPHEADER:     [ 'Content-Type: application/json' ]
-        CURLOPT_FOLLOWLOCATION: true
