@@ -816,9 +816,8 @@ Ext.define('Netresearch.widget.Admin', {
             editUser: function(record) {
                 if(!record) record = {};
 
-                var teamStore = Ext.create('Netresearch.store.AdminTeams', {
-                    autoLoad: false
-                });
+                var teamStore = this.teamStore;
+                teamStore.load();
 
                 var localesStore = new Ext.data.ArrayStore({
                     fields: ['value', 'displayname'],
@@ -835,7 +834,6 @@ Ext.define('Netresearch.widget.Admin', {
                     title: panel._editUserTitle,
                     modal: true,
                     width: 400,
-                    layout: 'fit',
                     id: 'edit-user-window',
                     layout: 'fit',
                     listeners: {
