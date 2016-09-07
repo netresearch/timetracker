@@ -3,6 +3,7 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Team;
+use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Entity\Project;
@@ -602,6 +603,47 @@ class AdminController extends BaseController
         }
 
         $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
+
+        return new Response(json_encode($data));
+    }
+
+
+
+    public function jiraSyncEntriesAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        $doctrine = $this->getDoctrine();
+
+        $users = $doctrine
+            ->getRepository('NetresearchTimeTrackerBundle:User')
+            ->findAll();
+
+        $ticketsystems = $doctrine
+            ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
+            ->findAll();
+
+        $data = [];
+
+        /** @var User $user */
+        foreach ($users as $user) {
+            /** @var TicketSystem $ticketsystem */
+            foreach ($ticketsystems as $ticketsystem) {
+                try {
+                    $jiraOauthApi = new JiraOAuthApi($user, $ticketsystem, $doctrine, $this->container->get('router'));
+                    $jiraOauthApi->updateAllEntriesJiraWorkLogs();
+                    $data[$ticketsystem->getName() . ' | ' . $user->getUsername()] = 'success';
+                } catch (\Exception $e) {
+                    $data[$ticketsystem->getName() . ' | ' . $user->getUsername()] = 'error (' . $e->getMessage() . ')';
+                }
+            }
+        }
 
         return new Response(json_encode($data));
     }

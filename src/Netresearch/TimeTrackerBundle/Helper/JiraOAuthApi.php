@@ -2,6 +2,8 @@
 
 namespace Netresearch\TimeTrackerBundle\Helper;
 
+use Netresearch\TimeTrackerBundle\Entity\Entry;
+use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use OAuth;
 
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
@@ -12,7 +14,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
-class JiraUserApi
+class JiraOAuthApi
 {
     /** @var User */
     protected $user;
@@ -82,13 +84,158 @@ class JiraUserApi
         }
     }
 
+    public function updateAllEntriesJiraWorkLogs()
+    {
+        if (!$this->checkUserTicketSystem()) {
+            return;
+        }
+
+        $em = $this->doctrine->getManager();
+        /** @var EntryRepository $repo */
+        $repo = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:Entry');
+        $entries = $repo->findByUserAndTicketSystem($this->user->getId(), $this->ticketSystem->getId());
+
+        /** @var Entry $entry */
+        foreach ($entries as $entry) {
+            try {
+                $this->updateEntryJiraWorkLog($entry);
+                $em->persist($entry);
+                $em->flush();
+            } catch (\Exception $e) {}
+        }
+    }
+
+    /**
+     * Create or Update JIRA workLog entry.
+     *
+     * @param Entry $entry
+     * @throws JiraApiException
+     */
+    public function updateEntryJiraWorkLog(Entry $entry)
+    {
+        $sTicket = $entry->getTicket();
+        if (empty($sTicket)) {
+            return;
+        }
+
+        if (!$this->checkUserTicketSystem()) {
+            return;
+        }
+
+        if (!$this->doesTicketExsist($sTicket)) {
+            return;
+        }
+
+        if (!$entry->getDuration()) {
+            // delete possible old worklog
+            $this->deleteEntryJiraWorkLog($entry);
+            // without duration we do not add any worklog as JIRA complains
+            return;
+        }
+
+        if ($entry->getWorklogId() && !$this->doesWorklogExist($sTicket, $entry->getWorklogId())) {
+            $entry->setWorklogId(null);
+        }
+
+        $arData = [
+            'comment' => $this->getTicketSystemWorkLogComment($entry),
+            'started' => $this->getTicketSystemWorkLogStartDate($entry),
+            'timeSpentSeconds' => $entry->getDuration() * 60,
+        ];
+
+        if ($entry->getWorklogId()) {
+            $workLog = $this->put(
+                sprintf("/issue/%s/worklog/%d", $sTicket, $entry->getWorklogId()),
+                $arData
+            );
+        } else {
+            $workLog = $this->post(sprintf("/issue/%s/worklog", $sTicket), $arData);
+        }
+
+        $entry->setWorklogId($workLog->id);
+    }
+
+    /**
+     * Removes JIRA workLog entry.
+     *
+     * @param Entry $entry
+     * @throws JiraApiException
+     */
+    public function deleteEntryJiraWorkLog(Entry $entry)
+    {
+        $sTicket = $entry->getTicket();
+        if (empty($sTicket)) {
+            return;
+        }
+
+        if ((int) $entry->getWorklogId() <= 0) {
+            return;
+        }
+
+        if (!$this->checkUserTicketSystem()) {
+            return;
+        }
+
+        try {
+            $this->delete(sprintf(
+                "/issue/%s/worklog/%d",
+                $sTicket,
+                $entry->getWorklogId()
+            ));
+
+            $entry->setWorklogId(NULL);
+        } catch (JiraApiInvalidResourceException $e) {}
+    }
+
+    /**
+     * Checks existence of a ticketname in JIRA
+     *
+     * @param string $sTicket
+     * @return bool
+     * @throws JiraApiException
+     */
+    public function doesTicketExsist($sTicket)
+    {
+        return $this->doesResourceExsist(sprintf("/issue/%s", $sTicket));
+    }
+
+    /**
+     * Checks existence of a worklog in JIRA
+     *
+     * @param string    $sTicket
+     * @param integer   $worklogId
+     * @return bool
+     * @throws JiraApiException
+     */
+    public function doesWorklogExist($sTicket, $worklogId)
+    {
+        return $this->doesResourceExsist(sprintf("/issue/%s/worklog/%d", $sTicket, $worklogId));
+    }
+
+    /**
+     * Checks existence of a JIRA resource
+     *
+     * @param string $url
+     * @return bool
+     * @throws JiraApiException
+     */
+    public function doesResourceExsist($url)
+    {
+        try {
+            $this->get($url);
+        } catch (JiraApiInvalidResourceException $e) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Execute GET request and return response as simple object.
      *
      * @param string $url
      * @return \stdClass
+     * @throws JiraApiInvalidResourceException
      * @throws JiraApiException
-     * @throws \Exception
      */
     public function get($url)
     {
@@ -102,8 +249,8 @@ class JiraUserApi
      * @param  string $url
      * @param  array  $data
      * @return \stdClass
+     * @throws JiraApiInvalidResourceException
      * @throws JiraApiException
-     * @throws \Exception
      */
     public function post($url, $data = [])
     {
@@ -117,8 +264,8 @@ class JiraUserApi
      * @param  string $url
      * @param  array  $data
      * @return \stdClass
+     * @throws JiraApiInvalidResourceException
      * @throws JiraApiException
-     * @throws \Exception
      */
     public function put($url, $data = [])
     {
@@ -129,8 +276,8 @@ class JiraUserApi
     /**
      * @param string $url
      * @return \stdClass
+     * @throws JiraApiInvalidResourceException
      * @throws JiraApiException
-     * @throws \Exception
      */
     public function delete($url)
     {
@@ -145,8 +292,8 @@ class JiraUserApi
      * @param string $url
      * @param array $data
      * @return string
+     * @throws JiraApiInvalidResourceException
      * @throws JiraApiException
-     * @throws \Exception
      */
     protected function getResponse($method, $url, $data = [])
     {
@@ -167,14 +314,17 @@ class JiraUserApi
             $response = $this->oAuth->getLastResponse();
         } catch (\Exception $e) {
             $oauthAuthUrl = null;
-            if ($e->getCode() == 401) {
+
+            if ($e->getCode() === 404) {
+                $message = 'Jira: Resource is not available (' . $url . ')';
+                throw new JiraApiInvalidResourceException($message);
+            } else if ($e->getCode() === 401) {
                 $oauthAuthUrl = $this->fetchOAuthRequestToken();
                 $message = 'Invalid Ticketsystem Token (Jira) you\'re going to be forwarded';
+                throw new JiraApiException($message, $e->getCode(), $oauthAuthUrl);
             } else {
-                $message = 'JiraException: ' . $e->getMessage(); // . ' ' . var_dump($this->oAuth->debugInfo);
+                throw new JiraApiException($e->getMessage(), $e->getCode());
             }
-
-            throw new JiraApiException($message, $e->getCode(), $oauthAuthUrl);
         }
 
         return $response;
@@ -215,7 +365,7 @@ class JiraUserApi
      */
     protected function getJiraBaseUrl()
     {
-        return $this->ticketSystem->getUrl();
+        return rtrim($this->ticketSystem->getUrl(), "/");
     }
 
     /**
@@ -298,5 +448,65 @@ class JiraUserApi
     protected function getOAuthConsumerKey()
     {
         return $this->ticketSystem->getOauthConsumerKey();
+    }
+
+    /**
+     * Returns work log entry description for ticket system.
+     *
+     * @param  Entry $entry
+     * @return string
+     */
+    public function getTicketSystemWorkLogComment(Entry $entry)
+    {
+        $activity = $entry->getActivity()
+            ? $entry->getActivity()->getName()
+            : 'no activity specified';
+
+        $description = $entry->getDescription();
+        if (empty($description)) {
+            $description = 'no description given';
+        }
+
+        return '#' . $entry->getId() . ': ' . $activity . ': ' . $description;
+    }
+
+    /**
+     * Returns work log entry start date formatted for JIRA API.
+     * //"2016-02-17T14:35:51.000+0100"
+     *
+     * @param  Entry $entry
+     * @return string "2016-02-17T14:35:51.000+0100"
+     */
+    public function getTicketSystemWorkLogStartDate(Entry $entry)
+    {
+        $startDate = $entry->getDay() ? $entry->getDay() : new \DateTime();
+        if ($entry->getStart()) {
+            $startDate->setTime(
+                $entry->getStart()->format('H'), $entry->getStart()->format('i')
+            );
+        }
+
+        return $startDate->format('Y-m-d\TH:i:s.000O');
+    }
+
+    /**
+     * Checks if JIRA interaction for User and Ticketsystem should take place
+     *
+     * @return boolean
+     */
+    protected function checkUserTicketSystem()
+    {
+        /** @var UserTicketsystem $userTicketsystem */
+        $userTicketsystem = $this->doctrine
+            ->getRepository('NetresearchTimeTrackerBundle:UserTicketsystem')
+            ->findOneBy([
+                'user' => $this->user,
+                'ticketSystem' => $this->ticketSystem,
+            ]
+         );
+
+        return ((bool) $this->ticketSystem->getBookTime()
+            && (!$userTicketsystem || !$userTicketsystem->getAvoidConnection())
+        );
     }
 }
