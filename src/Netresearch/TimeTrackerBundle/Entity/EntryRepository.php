@@ -14,6 +14,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Entity;
 
+use Doctrine\ORM\Query\Expr\Join;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
 use Doctrine\ORM\EntityRepository;
@@ -287,6 +288,31 @@ class EntryRepository extends EntityRepository
         }
 
         return $data;
+    }
+
+
+
+    /**
+     * Get array of entries of given user and ticketsystem.
+     *
+     * @param integer   $userId
+     * @param integer   $ticketSystemId
+     *
+     * @return array
+     */
+    public function findByUserAndTicketSystem($userId, $ticketSystemId)
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb
+            ->select('e')
+            ->from('NetresearchTimeTrackerBundle:Entry', 'e')
+            ->leftJoin('NetresearchTimeTrackerBundle:Project', 'p', Join::WITH, 'e.project = p.id')
+            ->where('e.user = :user_id')
+            ->andWhere('p.ticketSystem = :ticket_system_id')
+            ->setParameter('user_id', $userId)
+            ->setParameter('ticket_system_id', $ticketSystemId)
+            ->orderBy('e.id', 'DESC');
+        return $qb->getQuery()->getResult();
     }
 
 
