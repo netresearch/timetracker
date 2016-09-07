@@ -6,7 +6,7 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 use Netresearch\TimeTrackerBundle\Entity\ProjectRepository;
 use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
-use Netresearch\TimeTrackerBundle\Helper\JiraUserApi;
+use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
@@ -361,12 +361,16 @@ class DefaultController extends BaseController
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->find($this->_getUserId($request));
+
         /** @var TicketSystem $ticketSystem */
-        $ticketSystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Ticketsystem')->find($request->get('tsid'));
+        $ticketSystem = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:Ticketsystem')
+            ->find($request->get('tsid'));
 
         try {
-            $jiraUserApi = new JiraUserApi($user, $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
-            $jiraUserApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
+            $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
+            $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
+            $jiraOAuthApi->updateAllEntriesJiraWorkLogs();
             return $this->redirectToRoute('_start');
         } catch (JiraApiException $e) {
             return new Response($e->getMessage());

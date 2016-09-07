@@ -178,3 +178,7 @@ saveTeam:
 jiraOAuthCallback:
     path: /jiraoauthcallback
     defaults: { _controller: NetresearchTimeTrackerBundle:Default:jiraOAuthCallback }
+
+syncEntriesToJira:
+    path: /syncentries/jira
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:jiraSyncEntries }
