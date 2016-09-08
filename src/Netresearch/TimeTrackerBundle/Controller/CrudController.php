@@ -61,7 +61,6 @@ class CrudController extends BaseController
      * @param \Netresearch\TimeTrackerBundle\Entity\Entry
      *
      * @return void
-     * @throws JiraApiException
      */
     private function deleteJiraWorklog(\Netresearch\TimeTrackerBundle\Entity\Entry $entry)
     {
@@ -547,7 +546,6 @@ class CrudController extends BaseController
      * @param Entry $oldEntry
      *
      * @return void
-     * @throws JiraApiException
      */
     private function updateJiraWorklog(Entry $entry, Entry $oldEntry)
     {
