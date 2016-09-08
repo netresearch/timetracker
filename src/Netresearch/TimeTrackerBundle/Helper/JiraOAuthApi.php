@@ -37,6 +37,15 @@ class JiraOAuthApi
     protected $oAuthAuthUrl = '/plugins/servlet/oauth/authorize';
 
 
+    /**
+     * JiraOAuthApi constructor.
+     *
+     * @param User $user
+     * @param TicketSystem $ticketSystem
+     * @param Registry $doctrine
+     * @param Router $router
+     * @throws JiraApiException
+     */
     public function __construct(User $user, TicketSystem $ticketSystem, Registry $doctrine, Router $router)
     {
         $this->user = $user;
@@ -54,6 +63,13 @@ class JiraOAuthApi
         }
     }
 
+    /**
+     * Fetches and Stores JIRA access token
+     *
+     * @param $oAuthToken
+     * @param $oAuthVerifier
+     * @throws JiraApiException
+     */
     public function fetchOAuthAccessToken($oAuthToken, $oAuthVerifier)
     {
         try {
@@ -71,6 +87,12 @@ class JiraOAuthApi
         }
     }
 
+    /**
+     * Fetches request token
+     *
+     * @return string URL to JIRA where User can allow / denie access
+     * @throws JiraApiException
+     */
     protected function fetchOAuthRequestToken()
     {
         try {
@@ -84,6 +106,9 @@ class JiraOAuthApi
         }
     }
 
+    /**
+     *  Updates JIRA work logs to all user entries and the set ticket system
+     */
     public function updateAllEntriesJiraWorkLogs()
     {
         if (!$this->checkUserTicketSystem()) {
@@ -109,7 +134,6 @@ class JiraOAuthApi
      * Create or Update JIRA workLog entry.
      *
      * @param Entry $entry
-     * @throws JiraApiException
      */
     public function updateEntryJiraWorkLog(Entry $entry)
     {
@@ -159,7 +183,6 @@ class JiraOAuthApi
      * Removes JIRA workLog entry.
      *
      * @param Entry $entry
-     * @throws JiraApiException
      */
     public function deleteEntryJiraWorkLog(Entry $entry)
     {
@@ -192,7 +215,6 @@ class JiraOAuthApi
      *
      * @param string $sTicket
      * @return bool
-     * @throws JiraApiException
      */
     public function doesTicketExsist($sTicket)
     {
@@ -205,7 +227,6 @@ class JiraOAuthApi
      * @param string    $sTicket
      * @param integer   $worklogId
      * @return bool
-     * @throws JiraApiException
      */
     public function doesWorklogExist($sTicket, $worklogId)
     {
@@ -217,7 +238,6 @@ class JiraOAuthApi
      *
      * @param string $url
      * @return bool
-     * @throws JiraApiException
      */
     public function doesResourceExsist($url)
     {
@@ -234,8 +254,6 @@ class JiraOAuthApi
      *
      * @param string $url
      * @return \stdClass
-     * @throws JiraApiInvalidResourceException
-     * @throws JiraApiException
      */
     public function get($url)
     {
@@ -249,8 +267,6 @@ class JiraOAuthApi
      * @param  string $url
      * @param  array  $data
      * @return \stdClass
-     * @throws JiraApiInvalidResourceException
-     * @throws JiraApiException
      */
     public function post($url, $data = [])
     {
@@ -264,8 +280,6 @@ class JiraOAuthApi
      * @param  string $url
      * @param  array  $data
      * @return \stdClass
-     * @throws JiraApiInvalidResourceException
-     * @throws JiraApiException
      */
     public function put($url, $data = [])
     {
@@ -276,8 +290,6 @@ class JiraOAuthApi
     /**
      * @param string $url
      * @return \stdClass
-     * @throws JiraApiInvalidResourceException
-     * @throws JiraApiException
      */
     public function delete($url)
     {

@@ -571,7 +571,6 @@ class CrudController extends BaseController
      * @param Entry $oldEntry
      *
      * @return void
-     * @throws JiraApiException
      */
     private function updateJiraWorklog(
         Entry $entry,
