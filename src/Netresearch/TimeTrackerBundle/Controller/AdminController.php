@@ -85,8 +85,20 @@ class AdminController extends BaseController
 
         /* @var $repo \Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
+        $ticketSystems = $repo->getAllTicketSystems();
 
-        return new Response(json_encode($repo->getAllTicketSystems()));
+        if (false == $this->_isPl($request)) {
+            for ($i = 0; $i < count($ticketSystems); $i++) {
+                unset($ticketSystems[$i]['ticketSystem']['login']);
+                unset($ticketSystems[$i]['ticketSystem']['password']);
+                unset($ticketSystems[$i]['ticketSystem']['publicKey']);
+                unset($ticketSystems[$i]['ticketSystem']['privateKey']);
+                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerSecret']);
+                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerKey']);
+            }
+        }
+
+        return new Response(json_encode($ticketSystems));
     }
 
     public function saveProjectAction(Request $request)
