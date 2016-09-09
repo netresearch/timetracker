@@ -205,7 +205,8 @@ class CrudController extends BaseController
                 ->setStart($request->get('start') ? $request->get('start') : null)
                 ->setEnd($request->get('end') ? $request->get('end') : null)
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
-                ->calcDuration();
+                ->calcDuration()
+                ->setSyncedToTicketsystem(FALSE);
 
             // write log
             $this->logDataToFile($entry->toArray());

@@ -62,6 +62,11 @@ class Entry extends Base
     protected $duration;
 
     /**
+     * @ORM\Column(name="synced_to_ticketsystem", type="boolean")
+     */
+    protected $syncedToTicketsystem;
+
+    /**
      * @ORM\ManyToOne(targetEntity="Project", inversedBy="entries")
      * @ORM\JoinColumn(name="project_id", referencedColumnName="id")
      */
@@ -673,6 +678,25 @@ class Entry extends Base
     public function getClass()
     {
         return $this->class;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getSyncedToTicketsystem()
+    {
+        return $this->syncedToTicketsystem;
+    }
+
+    /**
+     * @param boolean $syncedToTicketsystem
+     *
+     * @return $this
+     */
+    public function setSyncedToTicketsystem($syncedToTicketsystem)
+    {
+        $this->syncedToTicketsystem = $syncedToTicketsystem;
+        return $this;
     }
 
 }
