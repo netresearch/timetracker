@@ -92,6 +92,7 @@ Ext.define('Netresearch.widget.Admin', {
     _factorTitle: 'Factor',
     _oauthConsumerKeyTitle: 'OAuth consumer key',
     _oauthConsumerSecretTitle: 'OAuth consumer secret',
+    _refreshTitle: 'Refresh',
 
     initComponent: function () {
         this.on('render', this.refreshStores, this);
@@ -174,6 +175,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         customerGrid.editCustomer();
                     }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        customerGrid.refresh();
+                    }
                 }
             ],
             listeners: {
@@ -189,6 +197,13 @@ Ext.define('Netresearch.widget.Admin', {
                                 scope: this,
                                 handler: function() {
                                     this.editCustomer(record.data);
+                                }
+                            }, {
+                                text: panel._deleteTitle,
+                                iconCls: 'icon-delete',
+                                scope: this,
+                                handler: function() {
+                                    this.deleteCustomer(record.data);
                                 }
                             }
                         ]
@@ -215,7 +230,7 @@ Ext.define('Netresearch.widget.Admin', {
                         destroy: {
                             scope: this,
                             fn: function() {
-                                this.getStore().load();
+                                this.refresh();
                             }
                         }
                     },
@@ -329,11 +344,37 @@ Ext.define('Netresearch.widget.Admin', {
                 });
 
                 window.show();
+            },
+            deleteCustomer: function(record) {
+                var grid = this;
+                var id = parseInt(record.id);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: url + 'customer/delete',
+                            params: {
+                                id: id
+                            },
+                            scope: this,
+                            success: function(response) {
+                                grid.refresh();
+                            },
+                            failure: function(response) {
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
+                            }
+                        });
+                    }
+                });
+            },
+            refresh: function() {
+                this.store.load();
+                this.teamStore.load();
+                this.getView().refresh();
             }
         });
 
         var projectGrid = Ext.create('Ext.grid.Panel', {
-            ticketSystemStore: this.ticketSystemStore,
             customerStore: this.customerStore,
             ticketSystemStore: this.ticketSystemStore,
             store: this.projectStore,
@@ -484,6 +525,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         projectGrid.editProject();
                     }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        projectGrid.refresh();
+                    }
                 }
             ],
             listeners: {
@@ -499,6 +547,13 @@ Ext.define('Netresearch.widget.Admin', {
                                 scope: this,
                                 handler: function() {
                                     this.editProject(record.data);
+                                }
+                            }, {
+                                text: panel._deleteTitle,
+                                iconCls: 'icon-delete',
+                                scope: this,
+                                handler: function() {
+                                    this.deleteProject(record.data);
                                 }
                             }
                         ]
@@ -531,7 +586,7 @@ Ext.define('Netresearch.widget.Admin', {
                         destroy: {
                             scope: this,
                             fn: function() {
-                                this.getStore().load();
+                                this.refresh();
                             }
                         }
                     },
@@ -705,6 +760,34 @@ Ext.define('Netresearch.widget.Admin', {
                 });
 
                 window.show();
+            },
+            deleteProject: function(record) {
+                var grid = this;
+                var id = parseInt(record.id);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: url + 'project/delete',
+                            params: {
+                                id: id
+                            },
+                            scope: this,
+                            success: function(response) {
+                                grid.refresh();
+                            },
+                            failure: function(response) {
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
+                            }
+                        });
+                    }
+                });
+            },
+            refresh: function() {
+                this.customerStore.load();
+                this.ticketSystemStore.load();
+                this.store.load();
+                this.getView().refresh();
             }
         });
 
@@ -771,6 +854,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         userGrid.editUser();
                     }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        userGrid.refresh();
+                    }
                 }
             ],
             listeners: {
@@ -786,6 +876,13 @@ Ext.define('Netresearch.widget.Admin', {
                                 scope: this,
                                 handler: function() {
                                     this.editUser(record.data);
+                                }
+                            }, {
+                                text: panel._deleteTitle,
+                                iconCls: 'icon-delete',
+                                scope: this,
+                                handler: function() {
+                                    this.deleteUser(record.data);
                                 }
                             }
                         ]
@@ -821,7 +918,7 @@ Ext.define('Netresearch.widget.Admin', {
                         destroy: {
                             scope: this,
                             fn: function() {
-                                this.getStore().load();
+                                this.refresh();
                             }
                         }
                     },
@@ -936,6 +1033,33 @@ Ext.define('Netresearch.widget.Admin', {
                 });
 
                 window.show();
+            },
+            deleteUser: function(record) {
+                var grid = this;
+                var id = parseInt(record.id);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.username, function(btn) {
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: url + 'user/delete',
+                            params: {
+                                id: id
+                            },
+                            scope: this,
+                            success: function(response) {
+                                grid.refresh();
+                            },
+                            failure: function(response) {
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
+                            }
+                        });
+                    }
+                });
+            },
+            refresh: function() {
+                this.teamStore.load();
+                this.store.load();
+                this.getView().refresh();
             }
         });
 
@@ -976,6 +1100,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         teamGrid.editTeam();
                     }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        teamGrid.refresh();
+                    }
                 }
             ],
             listeners: {
@@ -991,6 +1122,13 @@ Ext.define('Netresearch.widget.Admin', {
                                 scope: this,
                                 handler: function() {
                                     this.editTeam(record.data);
+                                }
+                            }, {
+                                text: panel._deleteTitle,
+                                iconCls: 'icon-delete',
+                                scope: this,
+                                handler: function() {
+                                    this.deleteTeam(record.data);
                                 }
                             }
                         ]
@@ -1014,7 +1152,7 @@ Ext.define('Netresearch.widget.Admin', {
                         destroy: {
                             scope: this,
                             fn: function() {
-                                this.getStore().load();
+                                this.refresh();
                             }
                         }
                     },
@@ -1080,6 +1218,33 @@ Ext.define('Netresearch.widget.Admin', {
                 });
 
                 window.show();
+            },
+            deleteTeam: function(record) {
+                var grid = this;
+                var id = parseInt(record.id);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: url + 'team/delete',
+                            params: {
+                                id: id
+                            },
+                            scope: this,
+                            success: function(response) {
+                                grid.refresh();
+                            },
+                            failure: function(response) {
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
+                            }
+                        });
+                    }
+                });
+            },
+            refresh: function() {
+                this.userStore.load();
+                this.store.load();
+                this.getView().refresh();
             }
         });
 
@@ -1166,6 +1331,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         presetGrid.editPreset();
                     }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        presetGrid.refresh();
+                    }
                 }
             ],
             listeners: {
@@ -1208,11 +1380,11 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             scope: this,
                             success: function(response) {
-                                grid.getStore().remove(record);
-                                grid.getView().refresh();
+                                grid.refresh();
                             },
                             failure: function(response) {
-                                showNotification(grid._errorTitle, response.responseText, false);
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -1237,7 +1409,7 @@ Ext.define('Netresearch.widget.Admin', {
                         destroy: {
                             scope: this,
                             fn: function() {
-                                this.getStore().load();
+                                this.refresh();
                             }
                         }
                     },
@@ -1317,7 +1489,6 @@ Ext.define('Netresearch.widget.Admin', {
                                             scope: this,
                                             success: function(response) {
                                                 window.close();
-                                                showNotification(this._successTitle, this._presetSavedTitle, true);
                                             },
                                             failure: function(response) {
                                                 /*
@@ -1338,6 +1509,13 @@ Ext.define('Netresearch.widget.Admin', {
                 });
 
                 window.show();
+            },
+            refresh: function(){
+                this.customerStore.load();
+                this.projectStore.load();
+                this.activityStore.load();
+                this.store.load();
+                this.getView().refresh();
             }
         });
 
@@ -1399,6 +1577,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         ticketSystemGrid.editTicketSystem();
                     }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        ticketSystemGrid.refresh();
+                    }
                 }
             ],
             listeners: {
@@ -1414,6 +1599,13 @@ Ext.define('Netresearch.widget.Admin', {
                                 scope: this,
                                 handler: function() {
                                     this.editTicketSystem(record.data);
+                                }
+                            }, {
+                                text: panel._deleteTitle,
+                                iconCls: 'icon-delete',
+                                scope: this,
+                                handler: function() {
+                                    this.deleteTicketSystem(record.data);
                                 }
                             }
                         ]
@@ -1446,7 +1638,7 @@ Ext.define('Netresearch.widget.Admin', {
                         destroy: {
                             scope: this,
                             fn: function() {
-                                this.getStore().load();
+                                this.refresh();
                             }
                         }
                     },
@@ -1565,6 +1757,32 @@ Ext.define('Netresearch.widget.Admin', {
                 });
 
                 window.show();
+            },
+            deleteTicketSystem: function(record) {
+                var grid = this;
+                var id = parseInt(record.id);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: url + 'ticketsystem/delete',
+                            params: {
+                                id: id
+                            },
+                            scope: this,
+                            success: function(response) {
+                                grid.refresh();
+                            },
+                            failure: function(response) {
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
+                            }
+                        });
+                    }
+                });
+            },
+            refresh: function() {
+                this.store.load();
+                this.getView().refresh();
             }
         });
 
@@ -1605,6 +1823,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         activityGrid.editActivity();
                     }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        activityGrid.refresh();
+                    }
                 }
             ],
             listeners: {
@@ -1620,6 +1845,13 @@ Ext.define('Netresearch.widget.Admin', {
                                 scope: this,
                                 handler: function() {
                                     this.editActivity(record.data);
+                                }
+                            }, {
+                                text: panel._deleteTitle,
+                                iconCls: 'icon-delete',
+                                scope: this,
+                                handler: function() {
+                                    this.deleteActivity(record.data);
                                 }
                             }
                         ]
@@ -1641,7 +1873,7 @@ Ext.define('Netresearch.widget.Admin', {
                         destroy: {
                             scope: this,
                             fn: function() {
-                                this.getStore().load();
+                                this.refresh();
                             }
                         }
                     },
@@ -1707,6 +1939,32 @@ Ext.define('Netresearch.widget.Admin', {
                 });
 
                 window.show();
+            },
+            deleteActivity: function(record) {
+                var grid = this;
+                var id = parseInt(record.id);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: url + 'activity/delete',
+                            params: {
+                                id: id
+                            },
+                            scope: this,
+                            success: function(response) {
+                                grid.refresh();
+                            },
+                            failure: function(response) {
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
+                            }
+                        });
+                    }
+                });
+            },
+            refresh: function() {
+                this.store.load();
+                this.getView().refresh();
             }
         });
 
@@ -1892,6 +2150,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _factorTitle: 'Faktor',
         _oauthConsumerKeyTitle: 'OAuth Consumer-Key',
         _oauthConsumerSecretTitle: 'OAuth Consumer-Secret',
+        _refreshTitle: 'Aktualisieren',
     });
 }
 
