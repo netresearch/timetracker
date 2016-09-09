@@ -6,6 +6,7 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Netresearch\TimeTrackerBundle\Entity\Team;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
+use Netresearch\TimeTrackerBundle\Response\Error;
 use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\Customer;
@@ -202,6 +203,34 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    public function deleteProjectAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $project = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($project);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
+    }
+
     public function saveCustomerAction(Request $request)
     {
         if (false == $this->_isPl($request)) {
@@ -268,6 +297,34 @@ class AdminController extends BaseController
         $data = array($customer->getId(), $name, $active, $global, $teamIds);
 
         return new Response(json_encode($data));
+    }
+
+    public function deleteCustomerAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $customer = $doctrine->getRepository('NetresearchTimeTrackerBundle:Customer')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($customer);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
     }
 
     public function saveUserAction(Request $request)
@@ -357,21 +414,58 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    public function deleteUserAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($user);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
+    }
+
     public function deletePresetAction(Request $request)
     {
         if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id             = (int) $request->get('id');
-        $doctrine = $this->getDoctrine();
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
 
-        $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Preset')
-                ->find($id);
+            $preset = $doctrine->getRepository('NetresearchTimeTrackerBundle:Preset')
+                    ->find($id);
 
-        $em = $doctrine->getManager();
-        $em->remove($entry);
-        $em->flush();
+            $em = $doctrine->getManager();
+            $em->remove($preset);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
 
         return new Response(json_encode(array('success' => true)));
     }
@@ -499,6 +593,36 @@ class AdminController extends BaseController
 
 
 
+    public function deleteTicketSystemAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $ticketSystem = $doctrine->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($ticketSystem);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
+    }
+
+
+
     public function saveActivityAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -548,6 +672,36 @@ class AdminController extends BaseController
         $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
 
         return new Response(json_encode($data));
+    }
+
+
+
+    public function deleteActivityAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($activity);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
     }
 
 
@@ -609,6 +763,36 @@ class AdminController extends BaseController
         $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
 
         return new Response(json_encode($data));
+    }
+
+
+
+    public function deleteTeamAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $team = $doctrine->getRepository('NetresearchTimeTrackerBundle:Team')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($team);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
     }
 
 
