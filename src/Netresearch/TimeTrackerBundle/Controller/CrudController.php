@@ -222,7 +222,8 @@ class CrudController extends BaseController
                 ->setEnd($request->get('end') ? $request->get('end') : null)
                 ->setInternalJiraTicketOriginalKey($request->get('extTicket') ? $request->get('extTicket') : null)
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
-                ->calcDuration();
+                ->calcDuration()
+                ->setSyncedToTicketsystem(FALSE);
 
             // write log
             $this->logDataToFile($entry->toArray());
