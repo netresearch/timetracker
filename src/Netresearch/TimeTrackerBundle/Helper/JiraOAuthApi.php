@@ -111,6 +111,16 @@ class JiraOAuthApi
      */
     public function updateAllEntriesJiraWorkLogs()
     {
+        $this->updateEntriesJiraWorkLogsLimited();
+    }
+
+    /**
+     * Updates JIRA work logs to a set number of user entries and the set ticket system
+     * (entries ordered by date, time desc)
+     *
+     * @param integer $entryLimit  (optional) max number of entries which should be updated (null: no limit)
+     */
+    public function updateEntriesJiraWorkLogsLimited($entryLimit = null){
         if (!$this->checkUserTicketSystem()) {
             return;
         }
@@ -118,7 +128,7 @@ class JiraOAuthApi
         $em = $this->doctrine->getManager();
         /** @var EntryRepository $repo */
         $repo = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:Entry');
-        $entries = $repo->findByUserAndTicketSystem($this->user->getId(), $this->ticketSystem->getId());
+        $entries = $repo->findByUserAndTicketSystem($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
 
         /** @var Entry $entry */
         foreach ($entries as $entry) {
