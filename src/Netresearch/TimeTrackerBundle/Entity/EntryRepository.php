@@ -291,27 +291,33 @@ class EntryRepository extends EntityRepository
     }
 
 
-
     /**
-     * Get array of entries of given user and ticketsystem.
+     * Get array of entries of given user and ticketsystem. Ordered by date, starttime desc
      *
-     * @param integer   $userId
-     * @param integer   $ticketSystemId
-     *
+     * @param integer $userId
+     * @param integer $ticketSystemId
+     * @param integer $maxResults       (optional) max number of results to be returned
+     *                                  if null: no result limitation
      * @return array
      */
-    public function findByUserAndTicketSystem($userId, $ticketSystemId)
+    public function findByUserAndTicketSystem($userId, $ticketSystemId, $maxResults = null)
     {
         $qb = $this->getEntityManager()->createQueryBuilder();
         $qb
             ->select('e')
             ->from('NetresearchTimeTrackerBundle:Entry', 'e')
-            ->leftJoin('NetresearchTimeTrackerBundle:Project', 'p', Join::WITH, 'e.project = p.id')
+            ->join('NetresearchTimeTrackerBundle:Project', 'p', Join::WITH, 'e.project = p.id')
             ->where('e.user = :user_id')
             ->andWhere('p.ticketSystem = :ticket_system_id')
             ->setParameter('user_id', $userId)
             ->setParameter('ticket_system_id', $ticketSystemId)
-            ->orderBy('e.id', 'DESC');
+            ->orderBy('e.day', 'DESC')
+            ->addOrderBy('e.start', 'DESC');
+
+        if ((int) $maxResults > 0) {
+            $qb->setMaxResults((int) $maxResults);
+        }
+
         return $qb->getQuery()->getResult();
     }
 

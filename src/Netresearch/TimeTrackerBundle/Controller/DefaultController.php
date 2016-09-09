@@ -370,7 +370,7 @@ class DefaultController extends BaseController
         try {
             $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
             $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
-            $jiraOAuthApi->updateAllEntriesJiraWorkLogs();
+            $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
             return $this->redirectToRoute('_start');
         } catch (JiraApiException $e) {
             return new Response($e->getMessage());
