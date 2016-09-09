@@ -31,3 +31,6 @@ ALTER TABLE `teams_users` DROP FOREIGN KEY `teams_users_ifbk2`;
 ALTER TABLE `teams_users`
   ADD CONSTRAINT `teams_users_ifbk2`
 FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+
+ALTER TABLE `entries` ADD `synced_to_ticketsystem` TINYINT(1) DEFAULT 0 NULL;

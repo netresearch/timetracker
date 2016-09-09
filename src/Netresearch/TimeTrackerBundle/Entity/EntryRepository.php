@@ -292,7 +292,8 @@ class EntryRepository extends EntityRepository
 
 
     /**
-     * Get array of entries of given user and ticketsystem. Ordered by date, starttime desc
+     * Get array of entries of given user and ticketsystem which should be synced to the ticketsystem.
+     * Ordered by date, starttime desc
      *
      * @param integer $userId
      * @param integer $ticketSystemId
@@ -300,7 +301,7 @@ class EntryRepository extends EntityRepository
      *                                  if null: no result limitation
      * @return array
      */
-    public function findByUserAndTicketSystem($userId, $ticketSystemId, $maxResults = null)
+    public function findByUserAndTicketSystemToSync($userId, $ticketSystemId, $maxResults = null)
     {
         $qb = $this->getEntityManager()->createQueryBuilder();
         $qb
@@ -308,6 +309,7 @@ class EntryRepository extends EntityRepository
             ->from('NetresearchTimeTrackerBundle:Entry', 'e')
             ->join('NetresearchTimeTrackerBundle:Project', 'p', Join::WITH, 'e.project = p.id')
             ->where('e.user = :user_id')
+            ->andWhere('e.syncedToTicketsystem = false')
             ->andWhere('p.ticketSystem = :ticket_system_id')
             ->setParameter('user_id', $userId)
             ->setParameter('ticket_system_id', $ticketSystemId)

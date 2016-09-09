@@ -128,7 +128,7 @@ class JiraOAuthApi
         $em = $this->doctrine->getManager();
         /** @var EntryRepository $repo */
         $repo = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:Entry');
-        $entries = $repo->findByUserAndTicketSystem($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
+        $entries = $repo->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
 
         /** @var Entry $entry */
         foreach ($entries as $entry) {
@@ -187,6 +187,7 @@ class JiraOAuthApi
         }
 
         $entry->setWorklogId($workLog->id);
+        $entry->setSyncedToTicketsystem(TRUE);
     }
 
     /**
