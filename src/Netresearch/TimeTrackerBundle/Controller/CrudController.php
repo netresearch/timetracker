@@ -90,6 +90,10 @@ class CrudController extends BaseController
             return;
         }
 
+        if (! $ticketSystem->getBookTime() || $ticketSystem->getType() != 'JIRA') {
+            return;
+        }
+
         $jiraOAuthApi = new JiraOAuthApi($entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
         $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
     }
@@ -587,6 +591,10 @@ class CrudController extends BaseController
             $ticketSystem = $project->getTicketSystem();
         }
         if (! $ticketSystem instanceof \Netresearch\TimeTrackerBundle\Entity\TicketSystem) {
+            return;
+        }
+
+        if (! $ticketSystem->getBookTime() || $ticketSystem->getType() != 'JIRA') {
             return;
         }
 
