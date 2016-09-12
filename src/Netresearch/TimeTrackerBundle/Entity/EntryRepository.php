@@ -458,4 +458,123 @@ class EntryRepository extends EntityRepository
 
         return $data;
     }
+
+
+
+    /**
+     * Get array of entries for given filter params
+     *
+     * @param array $arFilter every value is optional
+     *
+     *  $arFilter[customer]         => int customer_id
+     *           [project]          => int project_id
+     *           [user]             => int user_id
+     *           [activity]         => int activity_id
+     *           [team]             => int team_id
+     *           [year]             => int
+     *           [month]            => int (requires year)
+     *           [ticket]           => string
+     *           [description]      => string
+     *           [maxResults]       => int max number of returned datasets
+     *           [visibility_user]  => user_id restricts entry visibility by users teams
+     *
+     * @return array
+     */
+    public function findByFilterArray($arFilter = [])
+    {
+        $queryBuilder = $this->createQueryBuilder('e');
+
+        if (isset($arFilter['customer']) && !is_null($arFilter['customer'])) {
+            $queryBuilder
+                ->andWhere('e.customer = :customer')
+                ->setParameter('customer', (int) $arFilter['customer']);
+        }
+
+        if (isset($arFilter['project']) && !is_null($arFilter['project'])) {
+            $queryBuilder
+                ->andWhere('e.project = :project')
+                ->setParameter('project', (int) $arFilter['project']);
+        }
+
+        if (isset($arFilter['user']) && !is_null($arFilter['user'])) {
+            $queryBuilder
+                ->andWhere('e.user = :user')
+                ->setParameter('user', (int) $arFilter['user']);
+        }
+
+        if (isset($arFilter['teams']) && !is_null($arFilter['teams'])) {
+            $queryBuilder
+                ->join('e.user', 'u')
+                ->join('u.teams', 't')
+                ->andWhere('t.id = :team')
+                ->setParameter('team', (int) $arFilter['teams']);
+        }
+
+        if (isset($arFilter['year']) && !is_null($arFilter['year'])) {
+            $year  = $arFilter['year'];
+            $monthStart = '01';
+            $monthEnd   = '12';
+
+            if (strlen($arFilter['month'])) {
+                $monthStart = $arFilter['month'];
+                $monthEnd = $monthStart;
+            }
+
+            $queryBuilder
+                ->andWhere('e.day BETWEEN :start AND :end')
+                ->setParameter('start', $year . '-' . $monthStart . '-01')
+                ->setParameter('end',   $year . '-' . $monthEnd . '-31');
+        }
+
+        if (isset($arFilter['activity']) && !is_null($arFilter['activity'])) {
+            $queryBuilder
+                ->andWhere('e.activity = :activity')
+                ->setParameter('activity', (int) $arFilter['activity']);
+        }
+
+        if (isset($arFilter['ticket']) && !is_null($arFilter['ticket'])) {
+            $queryBuilder
+                ->andWhere('e.ticket LIKE :ticket')
+                ->setParameter('ticket', $arFilter['ticket']);
+        }
+
+        if (isset($arFilter['description']) && !is_null($arFilter['description'])) {
+            $queryBuilder
+                ->andWhere('e.description LIKE :description')
+                ->setParameter('description', '%' . $arFilter['description'] . '%');
+        }
+
+        if (isset($arFilter['maxResults']) && (int) $arFilter['maxResults'] > 0) {
+            $queryBuilder
+                ->orderBy('e.id', 'DESC')
+                ->setMaxResults((int) $arFilter['maxResults']);
+        }
+
+        if (isset($arFilter['visibility_user']) && !is_null($arFilter['visibility_user'])) {
+            /* @var $user \Netresearch\TimeTrackerBundle\Entity\User */
+            $user = $this->getEntityManager()->getRepository('NetresearchTimeTrackerBundle:User')
+                ->find($arFilter['visibility_user']);
+
+            $arTeamId = ['-1'];
+            foreach ($user->getTeams() as $team) {
+                $arTeamId[] = $team->getId();
+            }
+            $user_id = $user? $user->getId() : -1;
+
+            $queryBuilder
+                ->join('e.customer', 'c')
+                ->leftJoin('c.teams', 'ct')
+                ->andWhere('
+                    (
+                        e.user = :vis_user OR
+                        ct.id IN (:teams) OR
+                        (e.user = :vis_user and c.global = true)
+                    )
+                ')
+                ->setParameter('vis_user', $user_id)
+                ->setParameter('teams', $arTeamId);
+        }
+
+        return $queryBuilder->getQuery()->getResult();
+    }
 }

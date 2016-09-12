@@ -23,16 +23,13 @@ class InterpretationController extends BaseController
         }
 
         try {
-            $query = $this->getQuery($request);
+            $entries = $this->getEntries($request, 50);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $query->add('orderBy', 'e.id DESC')
-            ->setMaxResults(50);
-        $entries = $query->getQuery()->getResult();
         $sum = $this->calculateSum($entries);
         $entrylist = array();
         foreach($entries AS &$entry) {
@@ -44,13 +41,12 @@ class InterpretationController extends BaseController
         return new Response(json_encode($entrylist));
     }
 
-    private function getCachedResult(Request $request)
+    private function getCachedEntries(Request $request)
     {
         if (null != $this->cache)
             return $this->cache;
 
-        $query = $this->getQuery($request);
-        $this->cache = $query->getQuery()->getResult();
+        $this->cache = $this->getEntries($request);
         return $this->cache;
     }
 
@@ -83,7 +79,7 @@ class InterpretationController extends BaseController
         }
 
         try {
-            $entries = $this->getCachedResult($request);
+            $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -123,7 +119,7 @@ class InterpretationController extends BaseController
         }
 
         try {
-            $entries = $this->getCachedResult($request);
+            $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -164,7 +160,7 @@ class InterpretationController extends BaseController
         }
 
         try {
-            $entries = $this->getCachedResult($request);
+            $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -213,7 +209,7 @@ class InterpretationController extends BaseController
         }
 
         try {
-            $entries = $this->getCachedResult($request);
+            $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -252,7 +248,7 @@ class InterpretationController extends BaseController
         }
 
         try {
-            $entries = $this->getCachedResult($request);
+            $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -292,7 +288,7 @@ class InterpretationController extends BaseController
         }
 
         try {
-            $entries = $this->getCachedResult($request);
+            $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(406);
@@ -324,96 +320,54 @@ class InterpretationController extends BaseController
     }
 
 
-
     /**
+     * Get entries by request parameter
+     *
      * @param Request $request
-     * @return \Doctrine\ORM\QueryBuilder
+     * @param integer $maxResults
+     * @return array
      * @throws \Exception
      */
-    private function getQuery(Request $request)
+    private function getEntries(Request $request, $maxResults = null)
     {
-        /* @var $repository EntryRepository */
-        $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry');
-        $query = $repository->createQueryBuilder('e');
+        $arParams = [
+            'customer'          => $this->evalParam($request, 'customer'),
+            'project'           => $this->evalParam($request, 'project'),
+            'user'              => $this->evalParam($request, 'user'),
+            'activity'          => $this->evalParam($request, 'activity'),
+            'team'              => $this->evalParam($request, 'team'),
+            'ticket'            => $this->evalParam($request, 'ticket'),
+            'month'             => $this->evalParam($request, 'month'),
+            'year'              => $this->evalParam($request, 'year'),
+            'description'       => $this->evalParam($request, 'description'),
+            'visibility_user'   => ($this->_isDEV($request)? $this->_getUserId($request) : null),
+            'maxResults'        => $maxResults,
+        ];
 
-        if (!strlen($request->query->get('customer'))
-            && !strlen($request->query->get('project'))
-            && !strlen($request->query->get('user'))
-            && !strlen($request->query->get('ticket'))
-            && (!strlen($request->query->get('month'))|| !strlen($request->query->get('year')))
-            && (!strlen($request->query->get('team'))|| !strlen($request->query->get('year')))
+        if (!$arParams['customer']
+            && !$arParams['project']
+            && !$arParams['user']
+            && !$arParams['ticket']
+            && (!$arParams['month'] || !$arParams['year'])
+            && (!$arParams['team'] || !$arParams['year'])
         ) {
             throw new \Exception(
-                $this->translate(
-                    'You need to specify at least customer, project, ticket, user or month and year.'));
-            return false;
+                $this->translate('You need to specify at least customer, project, ticket, user or month and year.')
+            );
         }
 
-        /**
-         * ??????
-         *
-         * Please, refactor!! May god help us all...
-         */
-        strlen($request->query->get('customer')) ?
-            $query->andWhere('e.customer = :customer')
-            ->setParameter('customer', (int) $request->query->get('customer'))
-            : false;
+        /* @var $repository EntryRepository */
+        $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry');
+        return $repository->findByFilterArray($arParams);
+    }
 
-        strlen($request->query->get('project')) ?
-            $query->andWhere('e.project = :project')
-            ->setParameter('project', (int) $request->query->get('project'))
-            : false;
-
-        if (strlen($request->query->get('user'))) {
-            $query->andWhere('e.user = :user')
-                ->setParameter('user', (int) $request->query->get('user'));
+    private function evalParam(Request $request, $param)
+    {
+        $param = $request->query->get($param);
+        if ($param && !empty($param)) {
+            return $param;
         }
-
-        // filter by team
-        if (strlen($request->query->get('team'))) {
-            $query  ->leftJoin('e.user', 'u')
-                ->leftJoin('u.teams', 't') //, 'ON', 'tu.user_id = u.id')
-                ->andWhere('t.id = :team')
-                ->setParameter('team', (int) $request->query->get('team'));
-        }
-
-        // filter interpretation by year or year and month
-        if (strlen($request->query->get('year'))) {
-            $year  = $request->query->get('year');
-            $monthStart = '01';
-            $monthEnd   = '12';
-
-            if (strlen($request->query->get('month'))) {
-                $monthStart = $request->query->get('month');
-                $monthEnd = $monthStart;
-            }
-
-            $query->andWhere('e.day BETWEEN :start AND :end')
-                ->setParameter('start', $year . '-' . $monthStart . '-01')
-                ->setParameter('end',   $year . '-' . $monthEnd . '-31');
-        }
-
-        // filter by activity
-        if (strlen($request->query->get('activity'))) {
-            $query->andWhere('e.activity = :activity')
-                ->setParameter('activity', (int) $request->query->get('activity'));
-        }
-
-        // filter by ticket
-        if (strlen($request->query->get('ticket'))) {
-            $query->andWhere('e.ticket LIKE :ticket')
-                ->setParameter('ticket', $request->query->get('ticket'));
-        }
-
-
-        // filter by description
-        if (strlen($request->query->get('description'))) {
-            $query->andWhere('e.description LIKE :description')
-                ->setParameter('description', '%' . $request->query->get('description') . '%');
-        }
-
-        // crap end
-        return $query;
+        return null;
     }
 
     private function getConditions(Request $request)
