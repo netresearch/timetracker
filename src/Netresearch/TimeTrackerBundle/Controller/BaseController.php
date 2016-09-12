@@ -126,6 +126,28 @@ class BaseController extends Controller
 
 
     /**
+     * checks the user type to be DEV
+     *
+     * @param Request $request
+     *
+     * @return bool
+     */
+    protected function _isDEV(Request $request)
+    {
+        if (false === $this->checkLogin($request)) {
+            return false;
+        }
+
+        $userId = $this->_getUserId($request);
+        $user = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:User')
+            ->find($userId);
+
+        return ('DEV' == $user->getType());
+    }
+
+
+    /**
      * Returns true if a user is logged in or can authenticate by cookie
      *
      * @param Request $request
