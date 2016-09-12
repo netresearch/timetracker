@@ -2,6 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Helper;
 
+use Symfony\Component\Yaml\Yaml;
 use \Zend\Ldap;
 
 /*
@@ -59,6 +60,10 @@ class LdapClient
      */
     protected $logger;
 
+    /**
+     * @var array
+     */
+    protected $teams = [];
 
     /**
      * Verify username by searching for it in LDAP.
@@ -94,6 +99,8 @@ class LdapClient
         if (!is_object($result) || ($result->getFirst() == NULL)) {
             throw new \Exception('Username unknown.');
         }
+
+        $this->setTeamsByLdapResponse($result->getFirst());
 
         return $result->getFirst();
     }
@@ -287,5 +294,36 @@ class LdapClient
     public function setLogger(\Symfony\Bridge\Monolog\Logger $logger)
     {
         $this->logger = $logger;
+    }
+
+    /**
+     * @return array
+     */
+    public function getTeams()
+    {
+        return $this->teams;
+    }
+
+    /**
+     * @param array $ldapRespsonse
+     */
+    protected function setTeamsByLdapResponse($ldapRespsonse)
+    {
+        $dn = $ldapRespsonse['dn'];
+        $mappingFile = __DIR__.'/../../../../app/config/ldap_ou_team_mapping.yml';
+
+        $this->teams = [];
+        if (file_exists($mappingFile)) {
+            $arMapping = Yaml::parse(file_get_contents($mappingFile));
+            if (!$arMapping) {
+                return;
+            }
+
+            foreach ($arMapping as $group => $teamName) {
+                if (strpos($dn, 'ou=' . $group)) {
+                    $this->teams[] = $teamName;
+                }
+            }
+        }
     }
 }
