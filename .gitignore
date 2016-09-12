@@ -3,6 +3,7 @@
 /.project
 /.settings
 /app/config/parameters.yml
+/app/config/ldap_ou_team_mapping.yml
 /app/logs/*.log
 /app/cache/*
 /app/build/
