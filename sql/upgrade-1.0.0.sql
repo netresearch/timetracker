@@ -17,3 +17,20 @@ CREATE TABLE IF NOT EXISTS `users_ticket_systems` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 ALTER TABLE `users` CHANGE `abbr` `abbr` CHAR(3) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;
+
+ALTER TABLE `ticket_systems` ADD `oauth_consumer_key` VARCHAR(100) NULL;
+ALTER TABLE `ticket_systems` ADD `oauth_consumer_secret` VARCHAR(4000) NULL;
+
+
+ALTER TABLE `teams_customers` DROP FOREIGN KEY `teams_customers_ifbk2`;
+ALTER TABLE `teams_customers`
+  ADD CONSTRAINT `teams_customers_ifbk2`
+FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `teams_users` DROP FOREIGN KEY `teams_users_ifbk2`;
+ALTER TABLE `teams_users`
+  ADD CONSTRAINT `teams_users_ifbk2`
+FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+
+ALTER TABLE `entries` ADD `synced_to_ticketsystem` TINYINT(1) DEFAULT 0 NULL;

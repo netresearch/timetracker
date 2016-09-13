@@ -2,8 +2,13 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
+use Netresearch\TimeTrackerBundle\Entity\Team;
+use Netresearch\TimeTrackerBundle\Entity\TeamRepository;
+use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 use Netresearch\TimeTrackerBundle\Entity\ProjectRepository;
+use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
+use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
@@ -104,6 +109,23 @@ class DefaultController extends BaseController
                     ->setSuggestTime('1')
                     ->setShowFuture('1')
                     ->setLocale('de');
+
+                if (!empty($client->getTeams())) {
+                    /** @var TeamRepository $teamRepo */
+                    $teamRepo = $this->getDoctrine()
+                        ->getRepository('NetresearchTimeTrackerBundle:Team');
+
+                    foreach ($client->getTeams() as $teamname) {
+                        /** @var Team $team */
+                        $team = $teamRepo->findOneBy([
+                            'name' => $teamname
+                        ]);
+
+                        if ($team) {
+                            $user->addTeam($team);
+                        }
+                    }
+                }
 
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($user);
@@ -344,43 +366,26 @@ class DefaultController extends BaseController
         return $response;
     }
 
-    public function avoidJiraConnectionAction()
+    public function jiraOAuthCallbackAction(Request $request)
     {
+        /** @var User $user */
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
-            ->find($this->_getUserId());
+            ->find($this->_getUserId($request));
 
-        $jiraBaseUrl = $this->container->getParameter('jira_base_url');
-        /** @var $ticketSystem TicketSystem */
-        $ticketSystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Ticketsystem')->findOneBy([
-            'url' => $jiraBaseUrl
-        ]);
+        /** @var TicketSystem $ticketSystem */
+        $ticketSystem = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:Ticketsystem')
+            ->find($request->get('tsid'));
 
-        if ($ticketSystem && $user) {
-            /** @var $userTicketsystem UserTicketsystem */
-            $userTicketsystem = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:UserTicketsystem')->findOneBy([
-                'user' => $user,
-                'ticketSystem' => $ticketSystem,
-            ]);
-
-            if($userTicketsystem){
-                $userTicketsystem->setAvoidConnection(true);
-            } else {
-                $userTicketsystem = new UserTicketsystem();
-                $userTicketsystem->setUser($user)
-                    ->setTicketSystem($ticketSystem)
-                    ->setTokenSecret(null)
-                    ->setAccessToken(null)
-                    ->setAvoidConnection(true);
-            }
-
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($userTicketsystem);
-            $em->flush();
+        try {
+            $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
+            $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
+            $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
+            return $this->redirectToRoute('_start');
+        } catch (JiraApiException $e) {
+            return new Response($e->getMessage());
         }
-
-        $url = $this->generateUrl($this->container->getParameter('jira_auth_redirect_route'));
-        return $this->redirect($url);
     }
 }
 

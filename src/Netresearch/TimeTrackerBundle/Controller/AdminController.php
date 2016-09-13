@@ -3,6 +3,8 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Team;
+use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
+use Netresearch\TimeTrackerBundle\Response\Error;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Netresearch\TimeTrackerBundle\Entity\Project;
@@ -82,8 +84,20 @@ class AdminController extends BaseController
 
         /* @var $repo \Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
+        $ticketSystems = $repo->getAllTicketSystems();
 
-        return new Response(json_encode($repo->getAllTicketSystems()));
+        if (false == $this->_isPl($request)) {
+            for ($i = 0; $i < count($ticketSystems); $i++) {
+                unset($ticketSystems[$i]['ticketSystem']['login']);
+                unset($ticketSystems[$i]['ticketSystem']['password']);
+                unset($ticketSystems[$i]['ticketSystem']['publicKey']);
+                unset($ticketSystems[$i]['ticketSystem']['privateKey']);
+                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerSecret']);
+                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerKey']);
+            }
+        }
+
+        return new Response(json_encode($ticketSystems));
     }
 
     public function saveProjectAction(Request $request)
@@ -197,6 +211,34 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    public function deleteProjectAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $project = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($project);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
+    }
+
     public function saveCustomerAction(Request $request)
     {
         if (false == $this->_isPl($request)) {
@@ -263,6 +305,34 @@ class AdminController extends BaseController
         $data = array($customer->getId(), $name, $active, $global, $teamIds);
 
         return new Response(json_encode($data));
+    }
+
+    public function deleteCustomerAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $customer = $doctrine->getRepository('NetresearchTimeTrackerBundle:Customer')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($customer);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
     }
 
     public function saveUserAction(Request $request)
@@ -352,21 +422,58 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    public function deleteUserAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($user);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
+    }
+
     public function deletePresetAction(Request $request)
     {
         if (false == $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id             = (int) $request->get('id');
-        $doctrine = $this->getDoctrine();
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
 
-        $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Preset')
-                ->find($id);
+            $preset = $doctrine->getRepository('NetresearchTimeTrackerBundle:Preset')
+                    ->find($id);
 
-        $em = $doctrine->getManager();
-        $em->remove($entry);
-        $em->flush();
+            $em = $doctrine->getManager();
+            $em->remove($preset);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
 
         return new Response(json_encode(array('success' => true)));
     }
@@ -433,16 +540,18 @@ class AdminController extends BaseController
 
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
 
-        $id             = (int) $request->get('id');
-        $name           = $request->get('name');
-        $type           = $request->get('type');
-        $bookTime       = $request->get('bookTime');
-        $url            = $request->get('url');
-        $login          = $request->get('login');
-        $password       = $request->get('password');
-        $publicKey      = $request->get('publicKey');
-        $privateKey     = $request->get('privateKey');
-        $ticketUrl      = $request->get('ticketUrl');
+        $id                     = (int) $request->get('id');
+        $name                   = $request->get('name');
+        $type                   = $request->get('type');
+        $bookTime               = $request->get('bookTime');
+        $url                    = $request->get('url');
+        $login                  = $request->get('login');
+        $password               = $request->get('password');
+        $publicKey              = $request->get('publicKey');
+        $privateKey             = $request->get('privateKey');
+        $ticketUrl              = $request->get('ticketUrl');
+        $oauthConsumerKey       = $request->get('oauthConsumerKey');
+        $oauthConsumerSecret    = $request->get('oauthConsumerSecret');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -474,7 +583,9 @@ class AdminController extends BaseController
                 ->setPassword($password)
                 ->setPublicKey($publicKey)
                 ->setPrivateKey($privateKey)
-                ->setTicketUrl($ticketUrl);
+                ->setTicketUrl($ticketUrl)
+                ->setOauthConsumerKey($oauthConsumerKey)
+                ->setOauthConsumerSecret($oauthConsumerSecret);
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($ticketSystem);
@@ -486,6 +597,36 @@ class AdminController extends BaseController
         }
 
         return new Response(json_encode($ticketSystem->toArray()));
+    }
+
+
+
+    public function deleteTicketSystemAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $ticketSystem = $doctrine->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($ticketSystem);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
     }
 
 
@@ -539,6 +680,36 @@ class AdminController extends BaseController
         $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
 
         return new Response(json_encode($data));
+    }
+
+
+
+    public function deleteActivityAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($activity);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
     }
 
 
@@ -598,6 +769,77 @@ class AdminController extends BaseController
         }
 
         $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
+
+        return new Response(json_encode($data));
+    }
+
+
+
+    public function deleteTeamAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $team = $doctrine->getRepository('NetresearchTimeTrackerBundle:Team')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($team);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
+    }
+
+
+
+    public function jiraSyncEntriesAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        $doctrine = $this->getDoctrine();
+
+        $users = $doctrine
+            ->getRepository('NetresearchTimeTrackerBundle:User')
+            ->findAll();
+
+        $ticketsystems = $doctrine
+            ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
+            ->findAll();
+
+        $data = [];
+
+        /** @var User $user */
+        foreach ($users as $user) {
+            /** @var TicketSystem $ticketsystem */
+            foreach ($ticketsystems as $ticketsystem) {
+                try {
+                    $jiraOauthApi = new JiraOAuthApi($user, $ticketsystem, $doctrine, $this->container->get('router'));
+                    $jiraOauthApi->updateAllEntriesJiraWorkLogs();
+                    $data[$ticketsystem->getName() . ' | ' . $user->getUsername()] = 'success';
+                } catch (\Exception $e) {
+                    $data[$ticketsystem->getName() . ' | ' . $user->getUsername()] = 'error (' . $e->getMessage() . ')';
+                }
+            }
+        }
 
         return new Response(json_encode($data));
     }

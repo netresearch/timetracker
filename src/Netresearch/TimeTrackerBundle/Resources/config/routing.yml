@@ -143,13 +143,25 @@ saveProject:
     path: /project/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveProject }
 
+deleteProject:
+    path: /project/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteProject }
+
 saveCustomer:
     path: /customer/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveCustomer }
 
+deleteCustomer:
+    path: /customer/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteCustomer }
+
 saveUser:
     path: /user/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveUser }
+
+deleteUser:
+    path: /user/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteUser }
 
 savePreset:
     path: /preset/save
@@ -158,6 +170,10 @@ savePreset:
 saveTicketSystem:
     path: /ticketsystem/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveTicketSystem }
+
+deleteTicketSystem:
+    path: /ticketsystem/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteTicketSystem }
 
 deletePreset:
     path: /preset/delete
@@ -171,13 +187,22 @@ saveActivity:
     path: /activity/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveActivity }
 
+deleteActivity:
+    path: /activity/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteActivity }
+
 saveTeam:
     path: /team/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveTeam }
 
-jira_login:
-    path: /connectjira/check
+deleteTeam:
+    path: /team/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteTeam }
 
-avoidJiraConnection:
-    path: /avoidjiraconnection
-    defaults: { _controller: NetresearchTimeTrackerBundle:Default:avoidJiraConnection }
+jiraOAuthCallback:
+    path: /jiraoauthcallback
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:jiraOAuthCallback }
+
+syncEntriesToJira:
+    path: /syncentries/jira
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:jiraSyncEntries }

@@ -65,20 +65,6 @@ Install vendor libs::
 Configuration
 =============
 
-Proxy
------
-
-- https://github.com/CircleOfNice/CiRestClientBundle#configuration
-- http://php.net/manual/en/function.curl-setopt.php
-
-add the following lines to your app/config/config.yml::
-
-    circle_rest_client:
-        curl:
-          defaults:
-            CURLOPT_PROXY:        "proxy.example.org:8080"
-            CURLOPT_PROXYUSERPWD: "user:password"
-
 Using oAuth to transmit worklogs to JIRA ticket system
 ------------------------------------------------------
 
@@ -86,28 +72,15 @@ Using oAuth to transmit worklogs to JIRA ticket system
 
    - https://confluence.atlassian.com/display/JIRA044/Configuring+OAuth+Authentication+for+an+Application+Link
 
-#. Enter configuration parameters in **app/config/parameters.yml**
-
-   jira_client_id
-     Name of your oAuth client defined in step 1
-
-   jira_client_secret
-     path to pem file generated in step 1
-
-   jira_base_url
-     base URL of your JIRA ticket system
-
-   jira_auth_redirect_route
-     Defines where you will be redirected after gaining your JIRA access token successfully
-
 #. Create a ticketsystem in timetracker
 
    - set the type to **JIRA**
    - check the field **timebooking**
-   - The the url field has to match the **jira_base_url** in **parameters.yml**
+   - enter the Base-URL to your JIRA ticketsystem
    - The ticket url is used for referencing ticket names to JIRA
      "%s" serves is a placeholder for the ticket name in the URL
      (your url might look as the following: https://jira.example.com/browse/%s)
+   - enter the OAuth consumer key and secret which were configured in step 1
    - The fields login, password, public and private key can be left empty
 
 #. Assign this ticket system to at least one project
