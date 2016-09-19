@@ -11,9 +11,9 @@ Ext.define('Netresearch.widget.Interpretation', {
         'Netresearch.store.Users'
     ],
 
-    customerStore: Ext.create('Netresearch.store.AdminCustomers'),
+    customerStore: Ext.create('Netresearch.store.Customers'),
     projectStore: Ext.create('Netresearch.store.AdminProjects'),
-    filterableProjectStore: Ext.create('Netresearch.store.AdminProjects'),
+    filterableProjectStore: Ext.create('Netresearch.store.Projects'),
     teamStore: Ext.create('Netresearch.store.AdminTeams'),
     userStore: Ext.create('Netresearch.store.Users'),
     activityFilterStore: Ext.create('Netresearch.store.Activities'),
