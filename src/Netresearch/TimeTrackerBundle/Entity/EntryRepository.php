@@ -551,28 +551,9 @@ class EntryRepository extends EntityRepository
         }
 
         if (isset($arFilter['visibility_user']) && !is_null($arFilter['visibility_user'])) {
-            /* @var $user \Netresearch\TimeTrackerBundle\Entity\User */
-            $user = $this->getEntityManager()->getRepository('NetresearchTimeTrackerBundle:User')
-                ->find($arFilter['visibility_user']);
-
-            $arTeamId = ['-1'];
-            foreach ($user->getTeams() as $team) {
-                $arTeamId[] = $team->getId();
-            }
-            $user_id = $user? $user->getId() : -1;
-
             $queryBuilder
-                ->join('e.customer', 'c')
-                ->leftJoin('c.teams', 'ct')
-                ->andWhere('
-                    (
-                        e.user = :vis_user OR
-                        ct.id IN (:teams) OR
-                        (e.user = :vis_user and c.global = true)
-                    )
-                ')
-                ->setParameter('vis_user', $user_id)
-                ->setParameter('teams', $arTeamId);
+                ->andWhere('e.user = :vis_user')
+                ->setParameter('vis_user', (int) $arFilter['visibility_user']);
         }
 
         return $queryBuilder->getQuery()->getResult();
