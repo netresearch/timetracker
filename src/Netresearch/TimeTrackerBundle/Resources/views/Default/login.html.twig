@@ -34,18 +34,24 @@
                                     {% if username is defined %}
                                         value: '{{ username }}',
                                     {% endif %}
-					    			listeners: {
-					    				specialkey: function(field, e) {
-					    					if(e.getKey() == e.ENTER) {
-					    						form = field.up('form').getForm();
+                                    listeners: {
+                                        specialkey: function (field, e) {
+                                            if (e.getKey() == e.ENTER) {
+                                                form = field.up('form').getForm();
 
-					    						form.submit();
-					    					}
+                                                form.submit();
+                                            }
                                         },
-                                        afterrender: function(field) {
+                                        afterrender: function (field) {
                                             field.focus(false, 500);
+                                            field.inputEl.set({
+                                                autocomplete: 'off',
+                                                autocorrect: 'off',
+                                                autocapitalize: 'off',
+                                                spellcheck: 'false'
+                                            });
                                         }
-					    			}
+                                    }
 					    		}, {
 					    			xtype: 'textfield',
 					    			fieldLabel: 'Passwort',
@@ -56,7 +62,6 @@
 					    				specialkey: function(field, e) {
 					    					if(e.getKey() == e.ENTER) {
 					    						form = field.up('form').getForm();
-
 					    						form.submit();
 					    					}
 					    				}
