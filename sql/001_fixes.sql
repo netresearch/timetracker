@@ -1,5 +1,5 @@
 ALTER TABLE `ticket_systems` ADD `ticketurl` VARCHAR(255) NOT NULL AFTER `private_key`;
-ALTER TABLE `ticket_systems` ADD `additional_information_from_external` tinyint(1) NOT NULL AFTER `invoice`;
+ALTER TABLE `projects` ADD `additional_information_from_external` tinyint(1) NOT NULL AFTER `invoice`;
 ALTER TABLE `projects` CHANGE `ticket_system` `ticket_system` INT(11) NULL DEFAULT NULL;
 
 CREATE TABLE IF NOT EXISTS `users_ticket_systems` (
