@@ -8,6 +8,7 @@ Ext.define('Netresearch.widget.Admin', {
         'Netresearch.store.AdminUsers',
         'Netresearch.store.AdminPresets',
         'Netresearch.store.TicketSystems',
+        'Netresearch.store.AdminContracts'
     ],
 
     /* Load all necessary stores */
@@ -18,6 +19,7 @@ Ext.define('Netresearch.widget.Admin', {
     ticketSystemStore: Ext.create('Netresearch.store.TicketSystems'),
     activityStore: Ext.create('Netresearch.store.Activities'),
     presetStore: Ext.create('Netresearch.store.AdminPresets'),
+    contractStore: Ext.create('Netresearch.store.AdminContracts'),
 
     /* Strings */
     _tabTitle: 'Administration',
@@ -90,9 +92,27 @@ Ext.define('Netresearch.widget.Admin', {
     _activitySavedTitle: 'The activity has been successfully saved.',
     _needsTicketTitle: 'Needs ticket',
     _factorTitle: 'Factor',
+
+    _contractManagementTitle: 'Contracts',
+    _addContractTitle: 'Add contract',
+    _editContractTitle: 'Edit contract',
+    _contractSavedTitle: 'Contact saved',
+    _startDateTitle: 'Start date',
+    _endDateTitle: 'End date',
+
     _oauthConsumerKeyTitle: 'OAuth consumer key',
     _oauthConsumerSecretTitle: 'OAuth consumer secret',
     _refreshTitle: 'Refresh',
+    _startTitle: 'Start',
+    _endTitle: 'End',
+    _userTitle: 'User',
+    _hours0Title: 'Sunday (h)',
+    _hours1Title: 'Monday (h)',
+    _hours2Title: 'Tuesday (h)',
+    _hours3Title: 'Wednesday (h)',
+    _hours4Title: 'Thursday (h)',
+    _hours5Title: 'Friday (h)',
+    _hours6Title: 'Saturday (h)',
 
     initComponent: function () {
         this.on('render', this.refreshStores, this);
@@ -1969,6 +1989,251 @@ Ext.define('Netresearch.widget.Admin', {
         });
 
 
+        var contractGrid = Ext.create('Ext.grid.Panel', {
+            userStore: this.userStore,
+            store: this.contractStore,
+            columns: [
+                {
+                    header: this._nameTitle,
+                    dataIndex: 'user_id',
+                    flex: 1,
+                    field: {
+                        xtype: 'textfield',
+                        lazyRender: true,
+                        queryMode: 'local',
+                        displayField: 'name',
+                        valueField: 'user_id',
+                        anchor: '100%'
+                    },
+                    renderer: function(id) {
+                        var record = this.userStore.getById(id);
+                        return record ? record.get('username') : id;
+                    }
+                }, {
+                    header: this._startTitle,
+                    dataIndex: 'start',
+                    flex: 1,
+                    renderer: Ext.util.Format.dateRenderer('Y-m-d')
+                }, {
+                    header: this._endTitle,
+                    dataIndex: 'end',
+                    flex: 1,
+                    renderer: Ext.util.Format.dateRenderer('Y-m-d')
+                }
+            ],
+            tbar: [
+                {
+                    text: this._addContractTitle,
+                    iconCls: 'icon-add',
+                    scope: this,
+                    handler: function() {
+                        contractGrid.editContract();
+                    }
+                }, {
+                    text: this._refreshTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        contractGrid.refresh();
+                    }
+                }
+            ],
+            listeners: {
+                /* Right-click menu */
+                itemcontextmenu: function(grid, record, item, index, event, options) {
+                    event.stopEvent();
+
+                    var contextMenu = Ext.create('Ext.menu.Menu', {
+                        items: [
+                            {
+                                text: panel._editTitle,
+                                iconCls: 'icon-edit',
+                                scope: this,
+                                handler: function() {
+                                    this.editContract(record.data);
+                                }
+                            }, {
+                                text: panel._deleteTitle,
+                                iconCls: 'icon-delete',
+                                scope: this,
+                                handler: function() {
+                                    this.deleteContract(record.data);
+                                }
+                            }
+                        ]
+                    });
+
+                    contextMenu.showAt(event.xy);
+                }
+            },
+            editContract: function(record) {
+                var editUserStore = Ext.create('Netresearch.store.AdminUsers', {
+                    autoLoad: false
+                });
+
+                editUserStore.load();
+
+                record = record || {};
+
+                var window = Ext.create('Ext.window.Window', {
+                    title: panel._editContractTitle,
+                    modal: true,
+                    width: 400,
+                    layout: 'fit',
+                    id: 'edit-contact-window',
+                    listeners: {
+                        destroy: {
+                            scope: this,
+                            fn: function() {
+                                this.refresh();
+                            }
+                        }
+                    },
+                    items: [
+                        new Ext.form.Panel({
+                            bodyPadding: 5,
+                            defaultType: 'textfield',
+                            items: [
+                                new Ext.form.field.Hidden(
+                                    {
+                                        name: 'id',
+                                        value: record.id ? record.id : 0
+                                    }
+                                ),
+                                new Ext.form.ComboBox({
+                                    fieldLabel: panel._userTitle,
+                                    name: 'user_id',
+                                    store: editUserStore,
+                                    queryMode: 'local',
+                                    displayField: 'username',
+                                    valueField: 'id',
+                                    multiSelect: false,
+                                    typeAhead: true,
+                                    triggerAction: 'all',
+                                    anchor: '100%',
+                                    value: record.user_id ? record.user_id : ''
+                                }),
+                                new Ext.form.field.Date({
+                                    id: 'start',
+                                    fieldLabel: panel._startDateTitle,
+                                    name: 'start',
+                                    format: 'Y-m-d',
+                                    value: record.start ? record.start : 0
+                                }),
+                                new Ext.form.field.Date({
+                                    id: 'end',
+                                    fieldLabel: panel._endDateTitle,
+                                    name: 'end',
+                                    format: 'Y-m-d',
+                                    value: record.end ? record.end : 0
+                                }),
+                                new Ext.form.field.Number({
+                                    id: 'hours_0',
+                                    fieldLabel: panel._hours0Title,
+                                    name: 'hours_0',
+                                    value: record.hours_0 ? record.hours_0 : 0
+                                }),
+                                new Ext.form.field.Number({
+                                    id: 'hours_1',
+                                    fieldLabel: panel._hours1Title,
+                                    name: 'hours_1',
+                                    value: record.hours_1 ? record.hours_1 : 8
+                                }),
+                                new Ext.form.field.Number({
+                                    id: 'hours_2',
+                                    fieldLabel: panel._hours2Title,
+                                    name: 'hours_2',
+                                    value: record.hours_2 ? record.hours_2 : 8
+                                }),
+                                new Ext.form.field.Number({
+                                    id: 'hours_3',
+                                    fieldLabel: panel._hours3Title,
+                                    name: 'hours_3',
+                                    value: record.hours_3 ? record.hours_3 : 8
+                                }),
+                                new Ext.form.field.Number({
+                                    id: 'hours_4',
+                                    fieldLabel: panel._hours4Title,
+                                    name: 'hours_4',
+                                    value: record.hours_4 ? record.hours_4 : 8
+                                }),
+                                new Ext.form.field.Number({
+                                    id: 'hours_5',
+                                    fieldLabel: panel._hours5Title,
+                                    name: 'hours_5',
+                                    value: record.hours_5 ? record.hours_5 : 8
+                                }),
+                                new Ext.form.field.Number({
+                                    id: 'hours_6',
+                                    fieldLabel: panel._hours6Title,
+                                    name: 'hours_6',
+                                    value: record.hours_6 ? record.hours_6 : 0
+                                })
+                            ],
+                            buttons: [
+                                {
+                                    text: panel._saveTitle,
+                                    scope: this,
+                                    handler: function(btn) {
+                                        var form = btn.up('form').getForm();
+                                        var values = form.getValues();
+                                        Ext.Ajax.request({
+                                            url: url + 'contract/save',
+                                            params: values,
+                                            scope: this,
+                                            success: function(response) {
+                                                window.close();
+                                                showNotification(panel._successTitle, panel._contractSavedTitle, true);
+                                            },
+                                            failure: function(response) {
+                                                /*
+                                                 * If responsetext is less than 200 chars long (means not an exception
+                                                 * stack trace), use responsetext. If not, show common help/error text
+                                                 */
+                                                var message = response.responseText.length < 200
+                                                    ? response.responseText
+                                                    : panel._seriousErrorTitle;
+                                                showNotification(panel._errorTitle, message, false);
+                                            }
+                                        });
+                                    }
+                                }
+                            ]
+                        })
+                    ]
+                });
+
+                window.show();
+            },
+            deleteContract: function(record) {
+                var grid = this;
+                var id = parseInt(record.id);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                    if (btn == 'yes') {
+                        Ext.Ajax.request({
+                            url: url + 'contract/delete',
+                            params: {
+                                id: id
+                            },
+                            scope: this,
+                            success: function(response) {
+                                grid.refresh();
+                            },
+                            failure: function(response) {
+                                var data = Ext.decode(response.responseText);
+                                showNotification(grid._errorTitle, data.message, false);
+                            }
+                        });
+                    }
+                });
+            },
+            refresh: function() {
+                this.userStore.load();
+                this.store.load();
+                this.getView().refresh();
+            }
+        });
+
         /* Create container panels for grids */
         var customerPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
@@ -2040,9 +2305,19 @@ Ext.define('Netresearch.widget.Admin', {
             items: [ activityGrid ]
         });
 
+        var contractPanel = Ext.create('Ext.panel.Panel', {
+            layout: 'fit',
+            frame: true,
+            title: this._contractManagementTitle,
+            collapsible: false,
+            width: '100%',
+            margin: '0 0 10 0',
+            items: [ contractGrid ]
+        });
+
         var config = {
             title: this._tabTitle,
-            items: [ customerPanel, projectPanel, userPanel, teamPanel, presetPanel, ticketSystemPanel, activityPanel ]
+            items: [ customerPanel, projectPanel, userPanel, teamPanel, presetPanel, ticketSystemPanel, activityPanel, contractPanel ]
         };
 
         /* Apply config */
@@ -2058,6 +2333,7 @@ Ext.define('Netresearch.widget.Admin', {
         this.activityStore.load();
         this.ticketSystemStore.load();
         this.presetStore.load();
+        this.contractStore.load();
     }
 });
 
@@ -2151,5 +2427,21 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _oauthConsumerKeyTitle: 'OAuth Consumer-Key',
         _oauthConsumerSecretTitle: 'OAuth Consumer-Secret',
         _refreshTitle: 'Aktualisieren',
+        _startTitle: 'Beginn',
+        _endTitle: 'Ende',
+        _addContractTitle: 'Vertrag hinzufügen',
+        _contractManagementTitle: 'Verträge',
+        _editContractTitle: 'Vertrag bearbeiten',
+        _contractSavedTitle: 'Vertrag gespeichert',
+        _startDateTitle: 'Vertragsbeginn',
+        _endDateTitle: 'Vertragsende',
+        _userTitle: 'Benutzer',
+        _hours0Title: 'Sonntag (h)',
+        _hours1Title: 'Montag (h)',
+        _hours2Title: 'Dienstag (h)',
+        _hours3Title: 'Mittwoch (h)',
+        _hours4Title: 'Donnerstag (h)',
+        _hours5Title: 'Freitag (h)',
+        _hours6Title: 'Samstag (h)',
     });
 }
