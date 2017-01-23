@@ -471,8 +471,8 @@ class EntryRepository extends EntityRepository
      *           [user]             => int user_id
      *           [activity]         => int activity_id
      *           [team]             => int team_id
-     *           [year]             => int
-     *           [month]            => int (requires year)
+     *           [datestart]        => string
+     *           [dateend]          => string
      *           [ticket]           => string
      *           [description]      => string
      *           [maxResults]       => int max number of returned datasets
@@ -510,20 +510,16 @@ class EntryRepository extends EntityRepository
                 ->setParameter('team', (int) $arFilter['teams']);
         }
 
-        if (isset($arFilter['year']) && !is_null($arFilter['year'])) {
-            $year  = $arFilter['year'];
-            $monthStart = '01';
-            $monthEnd   = '12';
+        if (isset($arFilter['datestart']) && !is_null($arFilter['datestart'])) {
+            $date = new \DateTime($arFilter['datestart']);
+            $queryBuilder->andWhere('e.day >= :start')
+                ->setParameter('start', $date->format('Y-m-d'));
+        }
 
-            if (strlen($arFilter['month'])) {
-                $monthStart = $arFilter['month'];
-                $monthEnd = $monthStart;
-            }
-
-            $queryBuilder
-                ->andWhere('e.day BETWEEN :start AND :end')
-                ->setParameter('start', $year . '-' . $monthStart . '-01')
-                ->setParameter('end',   $year . '-' . $monthEnd . '-31');
+        if (isset($arFilter['dateend']) && !is_null($arFilter['dateend'])) {
+            $date = new \DateTime($arFilter['dateend']);
+            $queryBuilder->andWhere('e.day <= :end')
+                ->setParameter('end', $date->format('Y-m-d'));
         }
 
         if (isset($arFilter['activity']) && !is_null($arFilter['activity'])) {

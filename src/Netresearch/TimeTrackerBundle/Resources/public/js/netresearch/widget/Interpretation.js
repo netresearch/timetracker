@@ -23,6 +23,8 @@ Ext.define('Netresearch.widget.Interpretation', {
     _monthTitle: 'Month',
     _yearTitle: 'Year',
     _customerTitle: 'Customer',
+    _datestartTitle: 'Date start',
+    _dateendTitle: 'Date end',
     _projectTitle: 'Project',
     _hoursTitle: 'Hours',
     _ticketTitle: 'Ticket',
@@ -46,12 +48,13 @@ Ext.define('Netresearch.widget.Interpretation', {
     _noDataFoundTitle: 'No data found',
     _lastEntriesTitle: 'Last entries',
     _attentionTitle: 'Attention',
-    _monthWithoutYearTitle: 'A month without a year does not make sense.',
-    _chooseCustomerProjectUserOrYearAndMonthTitle: 'Please choose at least customer, project, user or year and month.',
+    _chooseCustomerProjectUserOrYearAndMonthTitle: 'Please choose at least customer, project or user.',
 
     date: new Date(),
-    curMonth: new Date().getMonth() + 1,
-    curYear: new Date().getFullYear(),
+    datestartDefault: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    dateendDefault: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+
+
 
     /* Create tmp stores */
     spentProjectsStore: Ext.create('Ext.data.JsonStore', {
@@ -158,30 +161,6 @@ Ext.define('Netresearch.widget.Interpretation', {
         this.on('render', this.refreshStores, this);
 
         var chartWidth = Ext.getBody().getWidth() - 40;
-
-        var monthArray = Ext.Array.map(Ext.Date.monthNames, function (e) { return [e]; });
-        var months = [];
-        for (var c=1; c <= 12; c++) {
-            months.push({
-                value: c,
-                displayname: monthArray[(c-1)]
-            });
-        }
-
-        var monthStore = new Ext.data.Store({
-            fields: ['value', 'displayname'],
-            data: months
-        });
-
-        /* Calculate last 5 years dynamically */
-        var years = [
-            { year: this.curYear }];
-        for (var y = 1; y <= 4; y++)
-            years.push({year: this.curYear - y });
-        var yearStore = Ext.create('Ext.data.Store', {
-            fields: ['year'],
-            data: years
-        });
 
         var customerPanel = Ext.create('Ext.panel.Panel', {
             frame: true,
@@ -564,28 +543,25 @@ Ext.define('Netresearch.widget.Interpretation', {
             autoScroll: true,
             bodyPadding: 5,
             tbar: [
-                Ext.create('Ext.form.field.ComboBox', {
-                    id: 'month-interpretation',
+                Ext.create('Ext.form.DateField', {
+                    allowBlank: true,
+                    name: 'dateend-interpretation',
+                    id: 'datestart-interpretation',
+                    fieldLabel: "Date Start",
                     hideLabel: true,
-                    emptyText: this._monthTitle,
-                    width: 75,
-                    store: monthStore,
-                    displayField: 'displayname',
-                    valueField: 'value',
-                    // mode: 'local',
-                    value: this.curMonth
+                    emptyText: this._datestartTitle,
+                    value: this.datestartDefault
                 }),
-                Ext.create('Ext.form.field.ComboBox', {
-                    id: 'year-interpretation',
+                Ext.create('Ext.form.DateField', {
+                    allowBlank: true,
+                    id: 'dateend-interpretation',
+                    name: 'dateend-interpretation',
+                    fieldLabel: "Date End",
                     hideLabel: true,
-                    emptyText: this._yearTitle,
-                    width: 60,
-                    store: yearStore,
-                    displayField: 'year',
-                    valueField: 'year',
-                    mode: 'local',
-                    value: this.curYear
+                    emptyText: this._dateendTitle,
+                    value: this.dateendDefault
                 }),
+
                 Ext.create('Ext.form.field.ComboBox', {
                     id: 'customer-interpretation',
                     hideLabel: true,
@@ -698,8 +674,8 @@ Ext.define('Netresearch.widget.Interpretation', {
     },
 
     reset: function() {
-        Ext.getCmp('month-interpretation').setValue(this.curMonth);
-        Ext.getCmp('year-interpretation').setValue(this.curYear);
+        Ext.getCmp('datestart-interpretation').setValue(this.datestartDefault);
+        Ext.getCmp('dateend-interpretation').setValue(this.dateendDefault);
         Ext.getCmp('customer-interpretation').setValue(undefined);
         Ext.getCmp('project-interpretation').setValue(undefined);
         Ext.getCmp('team-interpretation').setValue(undefined);
@@ -718,8 +694,8 @@ Ext.define('Netresearch.widget.Interpretation', {
     },
 
     refresh: function() {
-        var month = Ext.getCmp('month-interpretation').getValue();
-        var year = Ext.getCmp('year-interpretation').getValue();
+        var datestart = Ext.getCmp('datestart-interpretation').getValue();
+        var dateend = Ext.getCmp('dateend-interpretation').getValue();
         var customer = Ext.getCmp('customer-interpretation').getValue();
         var project = Ext.getCmp('project-interpretation').getValue();
         var team = Ext.getCmp('team-interpretation').getValue();
@@ -729,70 +705,37 @@ Ext.define('Netresearch.widget.Interpretation', {
         var description = Ext.getCmp('description-interpretation').getValue();
 
         // Same check as server-side
-        if ((!customer) && (!project) && (!user) && (!ticket) && (!year || !month) && (!year || !team)) {
-            Ext.MessageBox.alert('Fehler', "Es muss mindestens Kunde, Projekt, Ticket, Mitarbeiter oder Jahr und Monat ausgewählt werden.");
+        if ((!customer) && (!project) && (!user) && (!ticket) && (!datestart) && (!dateend) && (!team)) {
+            Ext.MessageBox.alert('Fehler', "Es muss mindestens Kunde, Projekt, Ticket oder Mitarbeiter ausgewählt werden.");
             return;
         }
 
-        if ((month) && (!year)) {
-            Ext.MessageBox.alert('Fehler', this._monthWithoutYearTitle);
-            return;
-        }
+        var searchParams = {
+            datestart: datestart,
+            dateend: dateend,
+            customer: customer,
+            project: project,
+            team: team,
+            user: user,
+            activity: activity,
+            ticket: ticket,
+            description : description
+        };
 
         this.spentProjectsStore.load({
-            params: {
-                month: month,
-                year: year,
-                customer: customer,
-                project: project,
-                team: team,
-                user: user,
-                activity: activity,
-                ticket: ticket,
-                description : description
-            }
+            params: searchParams
         });
 
         this.spentCustomersStore.load({
-            params: {
-                month: month,
-                year: year,
-                customer: customer,
-                project: project,
-                team: team,
-                user: user,
-                activity: activity,
-                ticket: ticket,
-                description : description
-            }
+            params: searchParams
         });
 
         this.ticketStore.load({
-            params: {
-                month: month,
-                year: year,
-                customer: customer,
-                project: project,
-                team: team,
-                user: user,
-                activity: activity,
-                ticket: ticket,
-                description : description
-            }
+            params: searchParams
         });
 
         this.activityStore.load({
-            params: {
-                month: month,
-                year: year,
-                customer: customer,
-                project: project,
-                team: team,
-                user: user,
-                activity: activity,
-                ticket: ticket,
-                description : description
-            },
+            params: searchParams,
             callback: function(records) {
                 // Show alert box if no data were found
                 if (typeof records == 'undefined') {
@@ -802,45 +745,15 @@ Ext.define('Netresearch.widget.Interpretation', {
         });
 
         this.timeStore.load({
-            params: {
-                month: month,
-                year: year,
-                customer: customer,
-                project: project,
-                team: team,
-                user: user,
-                activity: activity,
-                ticket: ticket,
-                description : description
-            }
+            params: searchParams
         });
 
         this.entryStore.load({
-            params: {
-                month: month,
-                year: year,
-                customer: customer,
-                project: project,
-                team: team,
-                user: user,
-                activity: activity,
-                ticket: ticket,
-                description : description
-            }
+            params: searchParams
         });
 
         this.developerStore.load({
-            params: {
-                month: month,
-                year: year,
-                customer: customer,
-                project: project,
-                team: team,
-                user: user,
-                activity: activity,
-                ticket: ticket,
-                description : description
-            }
+            params: searchParams
         });
     },
 
@@ -872,6 +785,8 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _monthTitle: 'Monat',
         _yearTitle: 'Jahr',
         _customerTitle: 'Kunde',
+        _datestartTitle: 'Datum von',
+        _dateendTitle: 'Datum bis',
         _hoursTitle: 'Stunden',
         _projectTitle: 'Projekt',
         _userTitle: 'Mitarbeiter',
@@ -895,7 +810,6 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _noDataFoundTitle: 'Es konnten keine Daten gefunden werden.',
         _lastEntriesTitle: 'Letzte Einträge',
         _attentionTitle: 'Achtung',
-        _monthWithoutYearTitle: 'Ein Monat ohne Jahr macht keinen Sinn.',
         _chooseCustomerProjectUserOrYearAndMonthTitle: 'Es muss mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat ausgewählt werden.'
     });
 }

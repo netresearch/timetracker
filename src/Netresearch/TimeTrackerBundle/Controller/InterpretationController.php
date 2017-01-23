@@ -337,19 +337,17 @@ class InterpretationController extends BaseController
             'activity'          => $this->evalParam($request, 'activity'),
             'team'              => $this->evalParam($request, 'team'),
             'ticket'            => $this->evalParam($request, 'ticket'),
-            'month'             => $this->evalParam($request, 'month'),
-            'year'              => $this->evalParam($request, 'year'),
             'description'       => $this->evalParam($request, 'description'),
             'visibility_user'   => ($this->_isDEV($request)? $this->_getUserId($request) : null),
             'maxResults'        => $maxResults,
+            'datestart'         => $this->evalParam($request, 'datestart'),
+            'dateend'           => $this->evalParam($request, 'dateend'),
         ];
 
         if (!$arParams['customer']
             && !$arParams['project']
             && !$arParams['user']
             && !$arParams['ticket']
-            && (!$arParams['month'] || !$arParams['year'])
-            && (!$arParams['team'] || !$arParams['year'])
         ) {
             throw new \Exception(
                 $this->translate('You need to specify at least customer, project, ticket, user or month and year.')
