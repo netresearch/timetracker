@@ -112,6 +112,11 @@ _getAllPresets:
     path:  /getAllPresets
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getPresets }
 
+_getContracts:
+    path:  /getContracts
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getContracts }
+
+
 _login:
     path:  /login
     defaults: { _controller: NetresearchTimeTrackerBundle:Default:login }
@@ -198,6 +203,14 @@ saveTeam:
 deleteTeam:
     path: /team/delete
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteTeam }
+
+saveContract:
+    path: /contract/save
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveContract }
+
+deleteContract:
+    path: /contract/delete
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteContract }
 
 jiraOAuthCallback:
     path: /jiraoauthcallback
