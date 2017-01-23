@@ -40,3 +40,6 @@
 "Please provide a valid user as team leader.": "Bitte gib einen gültigen Benutzer als Teamleiter an!"
 "Dataset could not be removed. %s": "Der Datensatz konnte nicht enfernt werden! %s"
 "Other datasets refer to this one.": "Der Datensatz ist bereits mit anderen verknüpft."
+"Please enter a valid user.": "Bitte geben Sie einen gültigen Benutzer an";
+"Please enter a valid contract start.": "Bitte geben Sie einen gültigen Vertragsbeginn an";
+"End date has to be greater than the start date.": "Das Vertragsende muss nach dem Vertragsbeginn liegen.";

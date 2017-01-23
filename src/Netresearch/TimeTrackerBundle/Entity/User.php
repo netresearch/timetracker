@@ -55,11 +55,17 @@ class User
     protected $showFuture;
 
 
-
     /**
      * @ORM\OneToMany(targetEntity="Entry", mappedBy="user")
      */
     protected $entries;
+
+
+    /**
+     * @ORM\OneToMany(targetEntity="Contract", mappedBy="user")
+     */
+    protected $contracts;
+
 
     /**
      * @ORM\ManyToMany(targetEntity="Team", inversedBy="users")
@@ -240,9 +246,31 @@ class User
     }
 
     /**
-     * Reset teams
+     * Get contracts
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @return \Doctrine\Common\Collections\Collection $contracts
+     */
+    public function getContracts()
+    {
+        return $this->contracts;
+    }
+
+    /**
+     * Add contract
+     *
+     * @param \Netresearch\TimeTrackerBundle\Entity\Contract $contract
+     *
+     * @return $this
+     */
+    public function addContract(\Netresearch\TimeTrackerBundle\Entity\Contract $contract)
+    {
+        $this->contracts[] = $contract;
+        return $this;
+    }
+
+
+    /**
+     * Reset teams
      *
      * @return $this
      */
