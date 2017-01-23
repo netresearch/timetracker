@@ -4,6 +4,7 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 
 //use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
+use Netresearch\TimeTrackerBundle\Entity\Contract;
 use Netresearch\TimeTrackerBundle\Entity\Team;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Response\Error;
@@ -846,6 +847,131 @@ class AdminController extends BaseController
         }
 
         return new Response(json_encode($data));
+    }
+
+
+    public function getContractsAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\ContractRepository */
+        $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Contract');
+
+        return new Response(json_encode($repo->getContracts()));
+    }
+
+
+    public function saveContractAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        $data = null;
+        $contractId = (int) $request->get('id');
+        $start      = $request->get('start');
+        $end        = $request->get('end');
+        $hours_0    = $request->get('hours_0');
+        $hours_1    = $request->get('hours_1');
+        $hours_2    = $request->get('hours_2');
+        $hours_3    = $request->get('hours_3');
+        $hours_4    = $request->get('hours_4');
+        $hours_5    = $request->get('hours_5');
+        $hours_6    = $request->get('hours_6');
+        $user         = $request->get('user_id') ?
+            $this->getDoctrine()
+                ->getRepository('NetresearchTimeTrackerBundle:User')
+                ->find($request->get('user_id'))
+            : null;
+
+        /* @var $contractRepository \Netresearch\TimeTrackerBundle\Entity\ContractRepository */
+        $contractRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Contract');
+
+        if ($contractId) {
+            $contract = $contractRepository->find($contractId);
+        } else {
+            $contract = new Contract();
+        }
+
+        if (!$user) {
+            $response = new Response($this->translate('Please enter a valid user.'));
+            $response->setStatusCode(406);
+            return $response;
+        }
+
+        $dateStart = \DateTime::createFromFormat('Y-m-d', $start);
+        if (!$dateStart) {
+            $response = new Response($this->translate('Please enter a valid contract start.'));
+            $response->setStatusCode(406);
+            return $response;
+        }
+        $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), 1);
+        $dateStart->setTime(0, 0, 0);
+
+        $dateEnd = \DateTime::createFromFormat('Y-m-d', $end);
+        if ($dateEnd) {
+            $dateEnd->setDate($dateEnd->format('Y'), $dateEnd->format('m'), 1);
+            $dateEnd->add(new \DateInterval('P1M'));
+            $dateEnd->sub(new \DateInterval('P1D'));
+            $dateEnd->setTime(23, 59, 59);
+
+            if ($dateEnd < $dateStart) {
+                $response = new Response($this->translate('End date has to be greater than the start date.'));
+                $response->setStatusCode(406);
+                return $response;
+            }
+        } else {
+            $dateEnd = null;
+        }
+
+        $contract->setUser($user)
+            ->setStart($dateStart)
+            ->setEnd($dateEnd)
+            ->setHours0($hours_0)
+            ->setHours1($hours_1)
+            ->setHours2($hours_2)
+            ->setHours3($hours_3)
+            ->setHours4($hours_4)
+            ->setHours5($hours_5)
+            ->setHours6($hours_6);
+
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($contract);
+        $em->flush();
+
+        $data = array($contract->getId());
+        return new Response(json_encode($data));
+    }
+
+
+    public function deleteContractAction(Request $request)
+    {
+        if (false == $this->_isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        try {
+            $id = (int) $request->get('id');
+            $doctrine = $this->getDoctrine();
+
+            $contract = $doctrine->getRepository('NetresearchTimeTrackerBundle:Contract')
+                ->find($id);
+
+            $em = $doctrine->getManager();
+            $em->remove($contract);
+            $em->flush();
+        } catch (\Exception $e) {
+            $reason = '';
+            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
+        }
+
+        return new Response(json_encode(array('success' => true)));
     }
 
 }
