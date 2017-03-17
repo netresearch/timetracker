@@ -7,7 +7,9 @@
 /app/logs/*.log
 /app/cache/*
 /app/build/
-/web/.htaccess
-/vendor/*
 /bin/*
+/timalytics
+/vendor/*
+/web/.htaccess
 /web/bundles/*
+/web/stats
