@@ -1,11 +1,30 @@
 .. header::
    .. image:: doc/netresearch.jpg
-      :height: 0.8cm
+      :height: 50px
       :align: left
 
 =======================
 Netresearch TimeTracker
 =======================
+Project and customer based time tracking for company employees.
+
+Features:
+
+- Time tracking with autocompletion
+
+  - Bulk entry for sickness or vacation
+- Per-user, pre-project and company wide charts
+
+  - Additional statistics via timalytics__
+- Administration interface for customers, projects, users and teams
+- CSV export for controlling tasks
+- LDAP authentication
+- JIRA integration: Creates and updates worklog entries in issues
+
+
+__ https://github.com/netresearch/timalytics
+
+
 
 .. sectnum::
 
@@ -51,16 +70,48 @@ PL (Project leader)
   Includes the role **CTL** and is additionally able manage customers, projects, user, teams, presets,
   ticket systems and activities in **Administration** tab
 
-Install
-=======
 
-Fetch a local copy::
+Installation
+============
 
-    git clone git@github.com:netresearch/timetracker.git
+Requirements
+------------
+- PHP 5.6+
+- MySQL database
+- composer
+- libraries listed in ``composer.json``
 
-Install vendor libs::
 
-    composer install
+Setup
+-----
+
+#. Fetch a local copy::
+
+     $ git clone git@github.com:netresearch/timetracker.git
+
+#. Create a MySQL database and import ``sql/schema.sql`` into it
+#. Install dependencies::
+
+     $ composer install
+
+   It will ask you for some configuration options.
+   If you want to adjust that later, edit ``app/config/parameters.yml``
+
+#. Make cache and log directory writable::
+
+     $ chmod -R og+w app/cache/ app/logs/
+
+#. Copy ``web/.htaccess_dev`` to ``web/.htaccess``.
+
+   On nginx, symlink ``web/app_dev.php`` or ``web/app.php``
+   to ``web/index.php``.
+#. Create a virtual host web server entry
+   pointing to ``/path/to/timetracker/web/``
+#. Open the timetracker URL in your browser. If you see a white page, run::
+
+     $ php app/console assets:install
+#. Login with your LDAP credentials
+
 
 Configuration
 =============
