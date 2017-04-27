@@ -1,0 +1,2 @@
+ALTER TABLE `projects` ADD COLUMN `internal_jira_project_key` VARCHAR(50) NULL AFTER `additional_information_from_external`;
+ALTER TABLE `projects` ADD COLUMN `internal_jira_ticket_system` INTEGER(11) NULL AFTER `internal_jira_project_key`;

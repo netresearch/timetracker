@@ -145,6 +145,8 @@ class ProjectRepository extends EntityRepository
                 'project_lead'  => $project['project_lead_id'],
                 'technical_lead'=> $project['technical_lead_id'],
                 'additionalInformationFromExternal' => $project['additional_information_from_external'],
+                'internalJiraProjectKey' => $project['internal_jira_project_key'],
+                'internalJiraTicketSystem' => $project['internal_jira_ticket_system'],
             ));
         }
 

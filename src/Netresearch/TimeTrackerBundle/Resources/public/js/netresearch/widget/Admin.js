@@ -35,6 +35,7 @@ Ext.define('Netresearch.widget.Admin', {
     _customerTitle: 'Customer',
     _ticketPrefixTitle: 'Ticket prefix',
     _ticketSystemTitle: 'Ticket system',
+    _internalJiraTicketSystem: 'internal JIRA Ticket-System',
     _projectTitle: 'Project',
     _addProjectTitle: 'Add project',
     _editProjectTitle: 'Edit project',
@@ -73,6 +74,7 @@ Ext.define('Netresearch.widget.Admin', {
     _errorTitle: 'Error',
     _successTitle: 'Success',
     _estimationTitle: 'Estimated Duration',
+    _internalJiraProjectKey: 'internal JIRA Project Key',
     _offerTitle: 'Offer',
     _billingTitle: 'Billing',
     _costCenterTitle: 'Cost Center',
@@ -651,7 +653,24 @@ Ext.define('Netresearch.widget.Admin', {
                                     name: 'estimation',
                                     anchor: '100%',
                                     value: record.estimationText ? record.estimationText : ''
-                                }
+                                },
+                                {
+                                    fieldLabel: panel._internalJiraProjectKey,
+                                    name: 'internalJiraProjectKey',
+                                    anchor: '100%',
+                                    value: record.internalJiraProjectKey ? record.internalJiraProjectKey : ''
+                                },
+                                new Ext.form.ComboBox({
+                                    fieldLabel: panel._internalJiraTicketSystem,
+                                    name: 'internalJiraTicketSystem',
+                                    allowBlank: true,
+                                    store: this.ticketSystemStore,
+                                    queryMode: 'local',
+                                    displayField: 'name',
+                                    valueField: 'id',
+                                    anchor: '100%',
+                                    value: record.internalJiraTicketSystem ? record.internalJiraTicketSystem : ''
+                                })
                             ],
                             buttons: [
                                 {
@@ -1511,6 +1530,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _customerTitle: 'Kunde',
         _ticketPrefixTitle: 'Ticket-Präfix',
         _ticketSystemTitle: 'Ticket-System',
+        _internalJiraTicketSystem: 'internal JIRA Ticket-System',
         _projectTitle: 'Projekt',
         _addProjectTitle: 'Neues Projekt',
         _editProjectTitle: 'Projekt bearbeiten',
@@ -1549,6 +1569,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _errorTitle: 'Fehler',
         _successTitle: 'Success',
         _estimationTitle: 'Geschätzte Dauer',
+        _internalJiraProjectKey: 'internal JIRA Projekt Key',
         _offerTitle: 'Angebot',
         _billingTitle: 'Abrechnung',
         _costCenterTitle: 'Kostenstelle',

@@ -15,6 +15,8 @@ Ext.define('Netresearch.model.Project', {
         {name: 'billing', type: 'integer' },
         {name: 'cost_center', type: 'string' },
         {name: 'estimation', type: 'integer' },
-        {name: 'estimationText', type: 'string' }
+        {name: 'estimationText', type: 'string' },
+        {name: 'internalJiraProjectKey', type:'string'},
+        {name: 'internalJiraTicketSystem', type:'integer'}
     ]
 });
