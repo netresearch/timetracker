@@ -181,8 +181,13 @@ class AdminController extends BaseController
             ->setBilling($billing)
             ->setOffer($offer)
             ->setCostCenter($costCenter)
-            ->setAdditionalInformationFromExternal($additionalInformationFromExternal);
-        ;
+            ->setAdditionalInformationFromExternal($additionalInformationFromExternal)
+            ->setInternalJiraProjectKey(
+                $this->getRequest()->get('internalJiraProjectKey', NULL)
+            )
+            ->setInternalJiraTicketSystem(
+                $this->getRequest()->get('internalJiraTicketSystem', NULL)
+            );
 
         $em = $this->getDoctrine()->getEntityManager();
         $em->persist($project);
