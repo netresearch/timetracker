@@ -142,6 +142,8 @@ class Project extends Base
     protected $internalJiraTicketSystem;
 
     /**
+     * Sets the additional Information.
+     *
      * @param boolean $additonalInformationFromExternal
      *
      * @return $this
@@ -520,4 +522,45 @@ class Project extends Base
     
         return $this;
     }
+
+    /**
+     * Returns the current defined InternalJiraProjectKey
+     *
+     * @return mixed e.g. OPSA
+     */
+    public function getInternalJiraProjectKey()
+    {
+        return $this->internalJiraProjectKey;
+    }
+
+    /**
+     * Returns true, if a internJiraProjectKey is konfigured.
+     *
+     * @return bool
+     */
+    public function hasInternalJiraProjectKey()
+    {
+        return !empty($this->internalJiraProjectKey);
+    }
+
+    /**
+     * Returns the id of the internal JIRA ticket system.
+     *
+     * @return mixed
+     */
+    public function getInternalJiraTicketSystem()
+    {
+        return $this->internalJiraTicketSystem;
+    }
+
+    /**
+     * Returns true, if the passed projectkey matches the configured internal project key.
+     *
+     * @return bool
+     */
+    public function matchesInternalProject($strProjectKey)
+    {
+        return $strProjectKey === $this->getInternalJiraProjectKey();
+    }
+
 }
