@@ -434,6 +434,18 @@ Ext.define('Netresearch.widget.Tracking', {
                     sortable: false,
                     width: 50,
                     renderer: this.formatTime
+                }, {
+                    header: 'ext. ticket',
+                    dataIndex: 'extTicketUrl',
+                    sortable: false,
+                    width: 80,
+                    renderer: function(extTicketUrl) {
+                        var ticket = "";
+                        if (extTicketUrl) {
+                            ticket = extTicketUrl.replace(/^(.*\/)?([^\\]+)/,"$2");
+                        }
+                        return '<a href="' + extTicketUrl + '" target="_new">'+ ticket +'</a>';
+                    }
                 }
             ],
             /* Topbar */
