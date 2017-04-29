@@ -258,8 +258,9 @@ class EntryRepository extends EntityRepository
         	e.description,
             e.ticket,
             e.class,
-        	e.duration";
-        $sql['from'] = "FROM entries e";
+            e.duration,
+            CONCAT(t.url,'/browse/', e.internal_jira_ticket_original_key) as extTicketUrl";
+        $sql['from'] = "FROM entries e LEFT JOIN projects p ON e.project_id = p.id LEFT JOIN ticket_systems t ON p.ticket_system = t.id";
         $sql['where_day'] = "WHERE day >= DATE_ADD(CURDATE(), INTERVAL -" . $calendarDays . " DAY)";
 
         if (! $showFuture) {

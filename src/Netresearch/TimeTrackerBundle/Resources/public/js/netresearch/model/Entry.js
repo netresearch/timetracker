@@ -13,7 +13,8 @@ Ext.define('Netresearch.model.Entry', {
         {name: 'ticket', type: 'string'},
         {name: 'duration', type: 'date', dateFormat: 'H:i'},
         {name: 'worklog'},
-        {name: 'class', type: 'integer'}
+        {name: 'class', type: 'integer'},
+        {name: 'extTicketUrl'}
     ],
     validations: [
         {type: 'presence',  field: 'customer'},
