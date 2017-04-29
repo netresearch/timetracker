@@ -10,6 +10,7 @@ use Netresearch\TimeTrackerBundle\Entity\Ticket;
 
 use Netresearch\TimeTrackerBundle\Helper\JiraClient;
 use Netresearch\TimeTrackerBundle\Model\EscalationException;
+use Netresearch\TimeTrackerBundle\Model\Jira as Jira;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
 use Symfony\Component\HttpFoundation\Response;
@@ -61,8 +62,10 @@ class CrudController extends BaseController
      *
      * @return void
      */
-    private function deleteJiraWorklog(\Netresearch\TimeTrackerBundle\Entity\Entry $entry)
-    {
+    private function deleteJiraWorklog(
+        Entry $entry,
+        TicketSystem $ticketSystem = null
+    ) {
         $strTicket = $entry->getTicket();
         if (empty($strTicket)) {
             return;
@@ -77,7 +80,16 @@ class CrudController extends BaseController
             return;
         }
 
-        $ticketSystem = $project->getTicketSystem();
+        if (empty($ticketSystem)) {
+            $ticketSystem = $project->getTicketSystem();
+        }
+
+        if ($project->hasInternalJiraProjectKey()) {
+            $ticketSystem = $this->getDoctrine()
+                ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
+                ->find($project->getInternalJiraTicketSystem());
+        }
+
         if (! $ticketSystem instanceof \Netresearch\TimeTrackerBundle\Entity\TicketSystem
             || false == $ticketSystem->getBookTime()
         ) {
@@ -91,7 +103,9 @@ class CrudController extends BaseController
                 $strTicket,
                 $entry->getWorklogId()
             ),
-            'DELETE'
+            'DELETE',
+            array(),
+            $ticketSystem
         );
 
         $entry->setWorklogId(NULL);
@@ -228,17 +242,27 @@ class CrudController extends BaseController
             // update JIRA, if necessary
             $this->updateJiraWorklog($entry, $oldEntry);
 
+            $em = $doctrine->getEntityManager();
+            $em->persist($entry);
+            $em->flush();
+
+            try {
+                $this->handleInternalTicketSystem($entry, $oldEntry);
+            } catch (\Throwable $exception) {
+                $alert = $exception->getMessage();
+            }
+
+
             try {
                 //$this->checkEscalationTime($entry);
             } catch (EscalationException $e) {
                 $alert = $e->getMessage();
             }
 
-
             $em = $doctrine->getEntityManager();
             $em->persist($entry);
             $em->flush();
-
+           
             // we may have to update the classes of the entry's day
             if (is_object($entry->getDay())) {
                 $this->calculateClasses($user->getId(), $entry->getDay()->format("Y-m-d"));
@@ -443,10 +467,12 @@ class CrudController extends BaseController
 
         $ok = false;
         foreach($projectIds AS $pId) {
-            if (trim($pId) == $jiraId) {
+            if (trim($pId) == $jiraId || $project->matchesInternalProject($jiraId)) {
                 $ok = true;
             }
         }
+
+
 
         if (! $ok) {
             $message = $this->get('translator')->trans(
@@ -485,12 +511,16 @@ class CrudController extends BaseController
      * @todo avoid useless ws calls
      * @todo check ticket/worklog for existing before logging work
      */
-    private function updateJiraWorklog(Entry $entry, Entry $oldEntry)
-    {
-        if ($oldEntry->getTicket() != $entry->getTicket()) {
+    private function updateJiraWorklog(
+        Entry $entry,
+        Entry $oldEntry,
+        TicketSystem $ticketSystem = null
+    ){
+
+        if ($this->shouldTicketBeDeleted($entry, $oldEntry)) {
             // ticket number changed
             // delete old worklog - new one will be created later
-            $this->deleteJiraWorklog($oldEntry);
+            $this->deleteJiraWorklog($oldEntry, $ticketSystem);
             $entry->setWorklogId(NULL);
         }
 
@@ -499,7 +529,9 @@ class CrudController extends BaseController
             return;
         }
 
-        $ticketSystem = $project->getTicketSystem();
+        if (empty($ticketSystem)) {
+            $ticketSystem = $project->getTicketSystem();
+        }
         if (! $ticketSystem instanceof \Netresearch\TimeTrackerBundle\Entity\TicketSystem
             || false == $ticketSystem->getBookTime()
         ) {
@@ -508,7 +540,7 @@ class CrudController extends BaseController
 
         if (!$entry->getDuration()) {
             // delete possible old worklog
-            $this->deleteJiraWorklog($entry);
+            $this->deleteJiraWorklog($entry, $ticketSystem);
             // without duration we do not add any worklog as JIRA complains
             return;
         }
@@ -524,7 +556,8 @@ class CrudController extends BaseController
             'GET',
             array(
                 'fields' => null,
-            )
+            ),
+            $ticketSystem
         );
 
         if ($issue['key'] !== $strTicket) {
@@ -536,10 +569,14 @@ class CrudController extends BaseController
             // check worklog entry for existance
             try {
                 $worklog = $this->queryTicketSystem(
-                    $entry, sprintf(
+                    $entry,
+                    sprintf(
                         "/rest/api/2/issue/%s/worklog/%s", $strTicket,
                         $entry->getWorklogId()
-                    )
+                    ),
+                    'GET',
+                    array(),
+                    $ticketSystem
                 );
             } catch (\Exception $e) {
                 if (0 === strpos($e->getMessage(), 'JIRA says: Cannot find worklog with id')) {
@@ -579,7 +616,9 @@ class CrudController extends BaseController
                     $strTicket,
                     $entry->getWorklogId()
                 ),
-                'PUT', $arData
+                'PUT',
+                $arData,
+                $ticketSystem
             );
         } else {
             // create new worklog entry
@@ -589,7 +628,9 @@ class CrudController extends BaseController
                     "/rest/api/2/issue/%s/worklog",
                     $strTicket
                 ),
-                'POST', $arData
+                'POST',
+                $arData,
+                $ticketSystem
             );
         }
 
@@ -639,6 +680,116 @@ class CrudController extends BaseController
     }
 
 
+    /**
+     * Creates an Ticket in the given ticketSystem
+     *
+     * @return array
+     *
+     * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-create-issue
+     *
+     */
+    protected function createTicket(
+        Entry $entry,
+        TicketSystem $ticketSystem = null
+    ) {
+
+        return $this->queryTicketSystem(
+            $entry,
+            sprintf("/rest/api/2/issue/"),
+            'POST',
+            array(
+                'fields' => array (
+                    'project' =>  array(
+                        'key' => $entry->getProject()->getInternalJiraProjectKey()
+                    ),
+                    'summary' => $entry->getTicket(),
+                    'description' => $entry->getTicketSystemIssueLink(),
+                    'issuetype' => array(
+                        'name' => 'Task'
+                    ),
+                ),
+            ),
+            $ticketSystem
+        );
+    }
+
+
+    /**
+     * Handles the entry for the configured internal ticketsystem.
+     *
+     * @param Entry $entry    the current entry
+     * @param Entry $oldEntry the old entry
+     *
+     * @return void
+     *
+     * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-query-issues
+     */
+    protected  function handleInternalTicketSystem($entry, $oldEntry)
+    {
+        $project = $entry->getProject();
+
+        $internalTicketSystem = $project->getInternalJiraTicketSystem();
+        $internalProjectKey = $project->getInternalJiraProjectKey();
+
+        // if we do not have an internal ticket system we could do nothing here
+        if (empty($internalTicketSystem)) {
+            return;
+        }
+
+        // if we do not have an internal project key, we can do nothing here
+        if (empty($internalProjectKey)) {
+            return;
+        }
+
+        // query for searching for existing internal ticket
+        $query = sprintf(
+            '/rest/api/2/search?maxResults=1&jql=project=%s%%20AND%%20summary~"%s"&fields=key,summary',
+            $project->getInternalJiraProjectKey(),
+            $entry->getTicket()
+        );
+
+        // get ticket system for internal worklog
+        $internalTicketSystem = $this->getDoctrine()
+                ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
+                ->find($internalTicketSystem);
+
+        // check if issue exist
+        $issues = $this->queryTicketSystem(
+            $entry,
+            $query,
+            'GET',
+            array(
+                'fields' => null,
+            ),
+            $internalTicketSystem
+        );
+        $issueList = new Jira\Issues($issues);
+
+        //issue already exists in internal jira
+        if ($issueList->hasIssues()) {
+            $issue = $issueList->first();
+        } else {
+            //issue does not exists, create it.
+            $issue = $this->createTicket($entry, $internalTicketSystem);
+            $issue = new Jira\Issue($issue);
+        }
+
+        $entry->setInternalJiraTicketOriginalKey(
+            $entry->getTicket()
+        );
+        $entry->setTicket($issue->getKey());
+
+        $oldEntry->setTicket($issue->getKey());
+        $oldEntry->setInternalJiraTicketOriginalKey(
+            $oldEntry->getTicket()
+        );
+
+        $this->updateJiraWorklog(
+            $entry,
+            $oldEntry,
+            $internalTicketSystem
+        );
+    }
 
     /**
      * @param Entry  $entry
@@ -649,11 +800,16 @@ class CrudController extends BaseController
      * @throws \Exception
      */
     private function queryTicketSystem(
-        \Netresearch\TimeTrackerBundle\Entity\Entry $entry,
-        $strPath, $strMethod = 'GET', $arData = array()
+        Entry $entry,
+        $strPath,
+        $strMethod = 'GET',
+        $arData = array(),
+        TicketSystem $ticketSystem = null
     ) {
-        /** @var \Netresearch\TimeTrackerBundle\Entity\TicketSystem $ticketSystem */
-        $ticketSystem = $entry->getProject()->getTicketSystem();
+        if (empty($ticketSystem)) {
+            /** @var \Netresearch\TimeTrackerBundle\Entity\TicketSystem $ticketSystem */
+            $ticketSystem = $entry->getProject()->getTicketSystem();
+        }
 
         $client = new JiraClient($ticketSystem);
 
@@ -665,5 +821,21 @@ class CrudController extends BaseController
         );
 
         return $arResult;
+    }
+
+    /**
+     * Returns true, if the ticket should be deleted.
+     *
+     * @return bool
+     */
+    protected function shouldTicketBeDeleted($entry, $oldEntry)
+    {
+        $bDifferentTickets
+            = $oldEntry->getTicket() != $entry->getTicket();
+        $bIsCurrentTicketOriginalTicket
+            = $entry->getInternalJiraTicketOriginalKey() === $entry->getTicket();
+
+        return !$bIsCurrentTicketOriginalTicket && $bDifferentTickets;
+
     }
 }

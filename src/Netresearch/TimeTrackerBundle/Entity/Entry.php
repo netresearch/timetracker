@@ -110,6 +110,14 @@ class Entry extends Base
      * @var array
      */
     protected $externalLabels = array();
+    
+    /**
+     * ID of the original booked external ticket.
+     * @ORM\Column(name="internal_jira_ticket_original_key")
+     *
+     * @var string e.g. TYPO-1234
+     */
+    protected $internalJiraTicketOriginalKey = null;
 
     /**
      * @param string $externalReporter
@@ -636,4 +644,49 @@ class Entry extends Base
         return $this->class;
     }
 
+
+    /**
+     * Returns the issue link for the configured ticket system.
+     *
+     * @return string
+     */
+    public function getTicketSystemIssueLink()
+    {
+        $ticketSystem = $this->getProject()->getTicketSystem();
+        if (empty($ticketSystem)) {
+            return $this->getTicket();
+        }
+
+        return $ticketSystem->getUrl() .  '/browse/' .  $this->getTicket();
+    }
+
+    /**
+     * Returns the original ticket name.
+     *
+     * @return string
+     */
+    public function getInternalJiraTicketOriginalKey()
+    {
+        return $this->internalJiraTicketOriginalKey;
+    }
+
+     /**
+     * Returns true, if a original ticket name.
+     *
+     * @return bool
+     */
+    public function hasInternalJiraTicketOriginalKey()
+    {
+        return !empty($this->internalJiraTicketOriginalKey);
+    }
+
+     /**
+     * Sets the original ticket name.
+     *
+     * @return string
+     */
+    public function setInternalJiraTicketOriginalKey($strTicket)
+    {
+        $this->internalJiraTicketOriginalKey = (string) $strTicket;
+    }
 }
