@@ -127,14 +127,64 @@ class Project extends Base
     protected $additionalInformationFromExternal;
 
     /**
+     * the internal key of the project the current ticket should be booked to.
+     *
+     * @ORM\Column(name="internal_jira_project_key")
+     */
+    protected $internalJiraProjectKey;
+
+
+    /**
+     * the id of the internal jira ticket system
+     *
+     * @ORM\Column(name="internal_jira_ticket_system")
+     */
+    protected $internalJiraTicketSystem;
+
+    /**
+     * Sets the additional Information.
+     *
      * @param boolean $additonalInformationFromExternal
+     *
+     * @return $this
      */
     public function setAdditionalInformationFromExternal($additionalInformationFromExternal)
     {
         $this->additionalInformationFromExternal = $additionalInformationFromExternal;
+
+        return $this;
     }
 
     /**
+     * Sets the internal Jira project key.
+     *
+     * @param string $strInternalJiraProjectKey the internal jira project key
+     *
+     * @return $this
+     */
+    public function setInternalJiraProjectKey($strInternalJiraProjectKey)
+    {
+        $this->internalJiraProjectKey = $strInternalJiraProjectKey;
+
+        return $this;
+    }
+
+    /**
+     * Sets the id internal Jira ticket system.
+     *
+     * @param string $nInternalJiraTicketSystem the id of internal jira ticketsystem
+     *
+     * @return $this
+     */
+    public function setInternalJiraTicketSystem($nInternalJiraTicketSystem)
+    {
+        $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
+
+        return $this;
+    }
+
+
+/**
      * @return boolean
      */
     public function getAdditionalInformationFromExternal()
@@ -472,4 +522,45 @@ class Project extends Base
     
         return $this;
     }
+
+    /**
+     * Returns the current defined InternalJiraProjectKey
+     *
+     * @return mixed e.g. OPSA
+     */
+    public function getInternalJiraProjectKey()
+    {
+        return $this->internalJiraProjectKey;
+    }
+
+    /**
+     * Returns true, if a internJiraProjectKey is konfigured.
+     *
+     * @return bool
+     */
+    public function hasInternalJiraProjectKey()
+    {
+        return !empty($this->internalJiraProjectKey);
+    }
+
+    /**
+     * Returns the id of the internal JIRA ticket system.
+     *
+     * @return mixed
+     */
+    public function getInternalJiraTicketSystem()
+    {
+        return $this->internalJiraTicketSystem;
+    }
+
+    /**
+     * Returns true, if the passed projectkey matches the configured internal project key.
+     *
+     * @return bool
+     */
+    public function matchesInternalProject($strProjectKey)
+    {
+        return $strProjectKey === $this->getInternalJiraProjectKey();
+    }
+
 }
