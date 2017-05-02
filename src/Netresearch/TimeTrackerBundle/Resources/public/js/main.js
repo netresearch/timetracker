@@ -136,7 +136,7 @@ Ext.onDocumentReady(function() {
             region: 'north',
             height: 100,
             id: 'header',
-            html: '<iframe id="nrnavi" src="https://www.netresearch.de/corpnav-intern/zeiterfassung/"></iframe>'
+            html: '<iframe id="nrnavi" src="https://corpnav.nr/"></iframe>'
                     + '<div id="logo"></div>'
                     + '<iframe id="statusfrm" src="/status/page"></iframe>'
                     + '<div id="worktime"><span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
