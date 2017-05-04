@@ -84,6 +84,33 @@ class Issue
         return $this->key;
     }
 
+
+    /**
+     * Returns true, if there ar errors present for the issue response.
+     *
+     * @return bool
+     */
+    public function hasErrors()
+    {
+        return is_array($this->errors);
+    }
+
+
+    /**
+     * Returns the content of the error message delivered by this issue.
+     *
+     * @return string
+     */
+    public function getErrorMessage()
+    {
+        if (false === $this->hasErrors()) {
+            return;
+        }
+
+        return json_encode($this->errors);
+
+    }
+
 }
 
 ?>

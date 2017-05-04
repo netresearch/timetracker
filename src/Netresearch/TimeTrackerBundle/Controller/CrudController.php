@@ -219,6 +219,7 @@ class CrudController extends BaseController
                 ->setDay($request->get('date') ? $request->get('date') : null)
                 ->setStart($request->get('start') ? $request->get('start') : null)
                 ->setEnd($request->get('end') ? $request->get('end') : null)
+                ->setInternalJiraTicketOriginalKey($request->get('extTicket') ? $request->get('extTicket') : null)
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                 ->calcDuration();
 
@@ -250,8 +251,9 @@ class CrudController extends BaseController
                 $this->handleInternalTicketSystem($entry, $oldEntry);
             } catch (\Throwable $exception) {
                 $alert = $exception->getMessage();
+            } catch (\Exception $exception) {
+                $alert = $exception->getMessage();
             }
-
 
             try {
                 //$this->checkEscalationTime($entry);
@@ -281,6 +283,10 @@ class CrudController extends BaseController
         } catch (\Exception $e) {
             $response = new Response($this->get('translator')->trans($e->getMessage()));
             $response->setStatusCode(406);
+            return $response;
+        } catch (\Throwable $exception) {
+            $response = new Response($exception->getMessage());
+            $response->setStatusCode(503);
             return $response;
         }
     }
@@ -697,18 +703,7 @@ class CrudController extends BaseController
             $entry,
             sprintf("/rest/api/2/issue/"),
             'POST',
-            array(
-                'fields' => array (
-                    'project' =>  array(
-                        'key' => $entry->getProject()->getInternalJiraProjectKey()
-                    ),
-                    'summary' => $entry->getTicket(),
-                    'description' => $entry->getTicketSystemIssueLink(),
-                    'issuetype' => array(
-                        'name' => 'Task'
-                    ),
-                ),
-            ),
+            $entry->getPostDataForInternalJiraTicketCreation(),
             $ticketSystem
         );
     }
@@ -741,11 +736,24 @@ class CrudController extends BaseController
             return;
         }
 
+        // if we continue an existing ticket which has been already booked
+        // to an internal ticket, we need to use its original key to find
+        // the ticket in internal jira
+        $strTicket = $entry->getTicket();
+        if ($entry->hasInternalJiraTicketOriginalKey()) {
+            $strTicket = $entry->getInternalJiraTicketOriginalKey();
+        }
+
+        $strOdlEntryTicket = $oldEntry->getTicket();
+        if ($oldEntry->hasInternalJiraTicketOriginalKey()) {
+            $strOdlEntryTicket = $oldEntry->getInternalJiraTicketOriginalKey();
+        }
+
         // query for searching for existing internal ticket
         $query = sprintf(
             '/rest/api/2/search?maxResults=1&jql=project=%s%%20AND%%20summary~"%s"&fields=key,summary',
             $project->getInternalJiraProjectKey(),
-            $entry->getTicket()
+            $strTicket
         );
 
         // get ticket system for internal worklog
@@ -763,6 +771,7 @@ class CrudController extends BaseController
             ),
             $internalTicketSystem
         );
+
         $issueList = new Jira\Issues($issues);
 
         //issue already exists in internal jira
@@ -771,17 +780,30 @@ class CrudController extends BaseController
         } else {
             //issue does not exists, create it.
             $issue = $this->createTicket($entry, $internalTicketSystem);
+
             $issue = new Jira\Issue($issue);
+
+            if ($issue->hasErrors()) {
+                throw new \Exception(
+                    'Failed creating internal JIRA ticket: '
+                    . json_encode($issue->getErrorMessage())
+                    . " | POST DATA: "
+                    . json_encode(
+                        $entry->getPostDataForInternalJiraTicketCreation()
+                    )
+                );
+            }
         }
 
         $entry->setInternalJiraTicketOriginalKey(
-            $entry->getTicket()
+            $strTicket
         );
         $entry->setTicket($issue->getKey());
 
         $oldEntry->setTicket($issue->getKey());
+
         $oldEntry->setInternalJiraTicketOriginalKey(
-            $oldEntry->getTicket()
+            $strOdlEntryTicket
         );
 
         $this->updateJiraWorklog(

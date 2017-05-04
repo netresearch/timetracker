@@ -576,7 +576,8 @@ class Entry extends Base
             'ticket'        => $this->getTicket(),
             'duration'      => $this->getDuration(),
             'class'         => $this->getClass(),
-            'worklog'		=> $this->getWorklogId()
+            'worklog'       => $this->getWorklogId(),
+            'extTicket'     => $this->getInternalJiraTicketOriginalKey(),
         );
     }
 
@@ -683,10 +684,33 @@ class Entry extends Base
      /**
      * Sets the original ticket name.
      *
-     * @return string
+     * @return $this
      */
     public function setInternalJiraTicketOriginalKey($strTicket)
     {
         $this->internalJiraTicketOriginalKey = (string) $strTicket;
+
+        return $this;
+    }
+
+    /**
+     * Returns the post data for the internal JIRA ticket creation.
+     *
+     * @return array
+     */
+    public function getPostDataForInternalJiraTicketCreation()
+    {
+       return array(
+            'fields' => array (
+                'project' =>  array(
+                    'key' => $this->getProject()->getInternalJiraProjectKey()
+                ),
+                'summary' => $this->getTicket(),
+                'description' => $this->getTicketSystemIssueLink(),
+                'issuetype' => array(
+                    'name' => 'Task'
+                ),
+            ),
+        );
     }
 }
