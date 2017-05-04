@@ -1,7 +1,14 @@
+2017-05-04  Tobias Hein  <tobias.hein@netresearch.de>
+
+	* Version: 1.2.0
+
+2017-05-02  Tobias.Hein  <tobias.hein@netresearch.de>
+
+	* TTT-535: add error handling for ticket creation in JIRA, fix problems when continuing work
+
 2017-05-02  Tobias Hein  <tobias.hein@netresearch.de>
 
 	* Version: 1.1.0
-
 
 2017-05-02  Tobias.Hein  <tobias.hein@netresearch.de>
 

@@ -766,6 +766,8 @@ Ext.define('Netresearch.widget.Tracking', {
                     if (data.result) {
                         record.data.duration = new Date(0, 0, 0, 0, data.result.duration, 0, 0);
                         record.data.id = data.result.id;
+                        record.data.extTicket = data.result.extTicket;
+                        record.data.extTicketUrl = record.data.extTicket;
                         record.commit();
                     }
                     if (data.alert) {
@@ -965,6 +967,8 @@ Ext.define('Netresearch.widget.Tracking', {
         data.activity = record.data.activity;
         data.description = record.data.description;
         data.ticket = record.data.ticket;
+        data.extTicket = record.data.extTicket;
+        data.extTicketUrl = record.data.extTicketUrl;
         data.date = null;
         data.start = null;
         data.end = null;
@@ -1228,7 +1232,9 @@ Ext.define('Netresearch.widget.Tracking', {
             project:     record.project            ? record.project        : null,
             activity:    record.activity           ? record.activity       : null,
             description: record.description        ? record.description    : null,
-            ticket:      record.ticket             ? record.ticket         : null
+            ticket:      record.ticket             ? record.ticket         : null,
+            extTicket:   record.extTicket          ? record.extTicket      : null,
+            extTicketUrl: record.extTicketUrl      ? record.extTicketUrl   : null,
         }, 'Netresearch.model.Entry');
 
         record.dirty = true;
