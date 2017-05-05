@@ -16,7 +16,7 @@ class TicketSystem extends Base
 {
     const TYPE_JIRA = 'JIRA';
     const TYPE_OTRS = 'OTRS';
-    
+
     /**
      * @var integer $id
      *
@@ -49,6 +49,12 @@ class TicketSystem extends Base
      * @ORM\Column(type="string")
      */
     protected $url;
+
+    /**
+     * @var string $ticketurl
+     * @ORM\Column(type="string")
+     */
+    protected $ticketurl;
 
     /**
     /**
@@ -174,6 +180,28 @@ class TicketSystem extends Base
         return $this->url;
     }
 
+    /**
+     * Set the ticket url.
+     *
+     * @param string $ticketurl
+     *
+     * @return $this
+     */
+    public function setTicketUrl($strTicketUrl)
+    {
+        $this->ticketurl = $strTicketUrl;
+        return $this;
+    }
+
+    /**
+     * Get url pointing to a ticket
+     *
+     * @return string $ticketurl
+     */
+    public function getTicketUrl()
+    {
+        return $this->ticketurl;
+    }
 
     /**
      * Set login
