@@ -457,6 +457,7 @@ class AdminController extends BaseController
         $type           = $this->getRequest()->get('type');
         $bookTime       = $this->getRequest()->get('bookTime');
         $url            = $this->getRequest()->get('url');
+        $ticketurl      = $this->getRequest()->get('ticketurl');
         $login          = $this->getRequest()->get('login');
         $password       = $this->getRequest()->get('password');
         $publicKey      = $this->getRequest()->get('publicKey');
@@ -488,6 +489,7 @@ class AdminController extends BaseController
                 ->setType($type)
                 ->setBookTime((boolean) $bookTime)
                 ->setUrl($url)
+                ->setTicketUrl($ticketurl)
                 ->setLogin($login)
                 ->setPassword($password)
                 ->setPublicKey($publicKey)

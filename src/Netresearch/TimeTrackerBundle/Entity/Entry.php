@@ -654,11 +654,18 @@ class Entry extends Base
     public function getTicketSystemIssueLink()
     {
         $ticketSystem = $this->getProject()->getTicketSystem();
+
         if (empty($ticketSystem)) {
             return $this->getTicket();
         }
 
-        return $ticketSystem->getUrl() .  '/browse/' .  $this->getTicket();
+        $ticketUrl = $ticketSystem->getTicketUrl();
+
+        if (empty($ticketUrl)) {
+            return $this->getTicket();
+        }
+
+        return sprintf($ticketUrl, $this->getTicket());
     }
 
     /**

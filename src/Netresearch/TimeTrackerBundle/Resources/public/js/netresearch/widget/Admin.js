@@ -64,6 +64,7 @@ Ext.define('Netresearch.widget.Admin', {
     _ticketSystemManagementTitle: 'Ticket system management',
     _ticketSystemSavedTitle: 'The ticket system has been successfully saved.',
     _urlTitle: 'URL',
+    _ticketurlTitle: 'Ticket URL',
     _timebookingTitle: 'Time booking',
     _loginTitle: 'Login',
     _passwordTitle: 'Password',
@@ -1264,6 +1265,13 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'textfield'
                     }
+                }, {
+                    header: this._ticketurlTitle,
+                    dataIndex: 'ticketurl',
+                    flex: 1,
+                    field: {
+                        xtype: 'textfield'
+                    }
                 }
             ],
             tbar: [
@@ -1305,7 +1313,7 @@ Ext.define('Netresearch.widget.Admin', {
                 var ticketSystemTypeStore = new Ext.data.ArrayStore({
                     fields: ['type'],
                     data: [
-                            ['JIRA'], ['OTRS']
+                            ['JIRA'], ['OTRS'], ['FRESHDESK']
                         ]
                 });
 
@@ -1360,6 +1368,11 @@ Ext.define('Netresearch.widget.Admin', {
                                     name: 'url',
                                     anchor: '100%',
                                     value: record.url ? record.url : ''
+                                }, {
+                                    fieldLabel: panel._ticketurlTitle,
+                                    name: 'ticketurl',
+                                    anchor: '100%',
+                                    value: record.ticketurl ? record.ticketurl : ''
                                 }, {
                                     fieldLabel: panel._loginTitle,
                                     name: 'login',
@@ -1560,6 +1573,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _ticketSystemSavedTitle: 'Das Ticket-System wurde erfolgreich gespeichert.',
         _addTicketSystemTitle: 'Neues Ticket-System',
         _urlTitle: 'URL',
+        _ticketurlTitle: 'Ticket URL',
         _timebookingTitle: 'Zeitbuchung',
         _loginTitle: 'Login',
         _passwordTitle: 'Passwort',

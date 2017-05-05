@@ -436,15 +436,20 @@ Ext.define('Netresearch.widget.Tracking', {
                     renderer: this.formatTime
                 }, {
                     header: 'ext. ticket',
-                    dataIndex: 'extTicketUrl',
+                    dataIndex: 'extTicket',
                     sortable: false,
                     width: 80,
-                    renderer: function(extTicketUrl) {
-                        var ticket = "";
-                        if (extTicketUrl) {
-                            ticket = extTicketUrl.replace(/^(.*\/)?([^\\]+)/,"$2");
+                    renderer: function(extTicket) {
+                        if (!extTicket) {
+                            return;
                         }
-                        return '<a href="' + extTicketUrl + '" target="_new">'+ ticket +'</a>';
+                        text = new String('' + extTicket);
+                        return text
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig, '<a href="http:\/\/bugs.nr/$1" target="_new">$1<\/a>');
                     }
                 }
             ],
