@@ -7,21 +7,27 @@ Ext.define('Netresearch.widget.Controlling', {
     extend: 'Ext.tab.Panel',
 
 	requires: [
-   	    'Netresearch.store.AdminUsers'
+            'Netresearch.store.AdminUsers',
+            'Netresearch.store.AdminProjects',
+            'Netresearch.store.AdminCustomers',
     ],
 
 	userStore: Ext.create('Netresearch.store.AdminUsers'),
+	projectStore: Ext.create('Netresearch.store.AdminProjects'),
+	customerStore: Ext.create('Netresearch.store.AdminCustomers'),
 
     curYear: new Date().getFullYear(),
 
     /* Strings */
     _monthlyStatement: 'Monthly statement',
     _userTitle: 'User',
+    _projectTitle: 'Project',
+    _customerTitle: 'Customer',
     _yearTitle: 'Year',
     _monthTitle: 'Month',
     _exportTitle: 'Export',
     _tabTitle: 'Controlling',
-    
+
 
     initComponent: function() {
         this.on('render', this.refreshStores, this);
@@ -75,6 +81,32 @@ Ext.define('Netresearch.widget.Controlling', {
                 anchor: '100%',
                 value: ''
             }, {
+                id: 'cnt-project',
+                xtype: 'combo',
+                store: this.projectStore,
+                mode: 'local',
+                fieldLabel: this._projectTitle,
+                name: 'project',
+                labelWidth: 100,
+                width: 260,
+                valueField: 'id',
+                displayField: 'name',
+                anchor: '100%',
+                value: ''
+            }, {
+                id: 'cnt-customer',
+                xtype: 'combo',
+                store: this.customerStore,
+                mode: 'local',
+                fieldLabel: this._customerTitle,
+                name: 'customer',
+                labelWidth: 100,
+                width: 260,
+                valueField: 'id',
+                displayField: 'name',
+                anchor: '100%',
+                value: ''
+            }, {
                 id: 'cnt-year',
                 xtype: 'combo',
                 store: yearStore,
@@ -106,7 +138,9 @@ Ext.define('Netresearch.widget.Controlling', {
                     var user = Ext.getCmp("cnt-user").value;
                     var year = parseInt(Ext.getCmp("cnt-year").value);
                     var month = parseInt(Ext.getCmp("cnt-month").value);
-                    this.exportEntries(user, year, month);
+                    var project = Ext.getCmp("cnt-project").value;
+                    var customer = Ext.getCmp("cnt-customer").value;
+                    this.exportEntries(user, year, month, project, customer);
                 }
             }]
         });
@@ -131,14 +165,29 @@ Ext.define('Netresearch.widget.Controlling', {
         this.callParent();
     },
 
-    exportEntries: function(user, year, month) {
-        if ((undefined == user) || (null == user) || ('' == user) || (1 > user))
+    exportEntries: function(user, year, month, project, customer) {
+        if ((undefined == user) || (null == user) || ('' == user) || (1 > user)) {
             user = 0;
-        window.location.href = 'controlling/export/' + user + '/' + year + '/' + month;
+        }
+        if ((undefined == project) || (null == project) || ('' == project) || (1 > project)) {
+            project = 0;
+        }
+        if ((undefined == customer) || (null == customer) || ('' == customer) || (1 > customer)) {
+            customer = 0;
+        }
+
+        window.location.href = 'controlling/export/'
+            + user + '/'
+            + year + '/'
+            + month + '/'
+            + project + '/'
+            + customer
     },
 
     refreshStores: function () {
         this.userStore.load();
+        this.projectStore.load();
+        this.customerStore.load();
     }
 
 });
@@ -147,6 +196,8 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
     Ext.apply(Netresearch.widget.Controlling.prototype, {
         _monthlyStatement: 'Monats-Abrechnung',
         _userTitle: 'Mitarbeiter',
+        _projectTitle: 'Projekt',
+        _customerTitle: 'Kunde',
         _yearTitle: 'Jahr',
         _monthTitle: 'Monat',
         _exportTitle: 'Exportieren',
