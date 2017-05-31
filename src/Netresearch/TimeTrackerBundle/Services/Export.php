@@ -53,18 +53,20 @@ class Export
     /**
      * Returns entries filtered and ordered.
      *
-     * @param integer $userId Filter entries by user
-     * @param integer $year   Filter entries by year
-     * @param integer $month  Filter entries by month
-     * @param array   $arSort Sort result by given fields
+     * @param integer $userId     Filter entries by user
+     * @param integer $year       Filter entries by year
+     * @param integer $month      Filter entries by month
+     * @param integer $projectId  Filter entries by project
+     * @param integer $customerId Filter entries by customer
+     * @param array   $arSort     Sort result by given fields
      *
      * @return mixed
      */
-    public function exportEntries($userId,$year, $month, array $arSort = null)
+    public function exportEntries($userId, $year, $month, $projectId, $customerId, array $arSort = null)
     {
         /** @var \Netresearch\TimeTrackerBundle\Entity\Entry[] $arEntries */
         $arEntries = $this->getEntryRepository()
-            ->findByDate($userId, $year, $month, $arSort);
+            ->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
 
         return $arEntries;
     }
