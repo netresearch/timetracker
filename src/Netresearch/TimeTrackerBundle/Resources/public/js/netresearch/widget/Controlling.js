@@ -136,8 +136,8 @@ Ext.define('Netresearch.widget.Controlling', {
                 scope: this,
                 handler: function() {
                     var user = Ext.getCmp("cnt-user").value;
-                    var year = parseInt(Ext.getCmp("cnt-year").value);
-                    var month = parseInt(Ext.getCmp("cnt-month").value);
+                    var year = parseInt(Ext.getCmp("cnt-year").value) || 0;
+                    var month = parseInt(Ext.getCmp("cnt-month").value) || 0;
                     var project = Ext.getCmp("cnt-project").value;
                     var customer = Ext.getCmp("cnt-customer").value;
                     this.exportEntries(user, year, month, project, customer);

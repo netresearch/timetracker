@@ -132,17 +132,12 @@ class EntryRepository extends EntityRepository
 
         $qb->select('entry')
             ->from('NetresearchTimeTrackerBundle:Entry', 'entry')
-            ->leftJoin('entry.user', 'user')
-            ->andWhere(
-                $qb->expr()->like('entry.day', ':month')
-            )
-        ;
+            ->leftJoin('entry.user', 'user');
 
         foreach ($arSort as $strField => $bAsc) {
             $qb->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
         }
 
-        $qb->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
 
         if (0 < (int) $userId) {
             $qb->andWhere('entry.user = :user_id');
@@ -155,6 +150,12 @@ class EntryRepository extends EntityRepository
         if (0 < (int) $customerId) {
             $qb->andWhere('entry.customer = :customer_id');
             $qb->setParameter('customer_id', $customerId, \PDO::PARAM_INT);
+        }
+        if (0 < (int) $year) {
+            $qb->andWhere(
+                $qb->expr()->like('entry.day', ':month')
+            );
+            $qb->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
         }
 
         return $qb->getQuery()->getResult();
@@ -197,7 +198,6 @@ class EntryRepository extends EntityRepository
      */
     public function findByMonthWithExternalInformation($userId, $year, $month, $projectId, $customerId)
     {
-        $pattern = $this->getDatePattern($year, $month);
         $em  = $this->getEntityManager();
         $qb = $em->createQueryBuilder()
             ->select('distinct e.ticket, ts.id, ts.url, ts.login, ts.password')
@@ -205,10 +205,9 @@ class EntryRepository extends EntityRepository
             ->innerJoin('e.project', 'p', 'e.projectId = p.id')
             ->innerJoin('p.ticketSystem', 'ts', 'p.ticketSystem = ts.id')
             ->where('p.additionalInformationFromExternal = 1')
-            ->andWhere('e.day LIKE :month')
             ->andWhere('p.jiraId IS NOT NULL')
-            ->orderBy('ts.id')
-            ->setParameter(':month', $pattern);
+            ->orderBy('ts.id');
+
 
         if (0 < $userId) {
             $qb->andWhere('e.user = :user_id')
@@ -221,6 +220,12 @@ class EntryRepository extends EntityRepository
         if (0 < $customerId) {
             $qb->andWhere('e.customer = :customer_id')
                 ->setParameter(':customer_id', $customerId);
+        }
+
+        if (0 < $year) {
+            $pattern = $this->getDatePattern($year, $month);
+            $qb->andWhere('e.day LIKE :month')
+                ->setParameter(':month', $pattern);
         }
 
         $result = $qb->getQuery()->getResult();
