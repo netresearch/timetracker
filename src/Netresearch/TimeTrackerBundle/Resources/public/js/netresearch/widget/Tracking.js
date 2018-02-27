@@ -438,7 +438,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     header: 'ext. ticket',
                     dataIndex: 'extTicket',
                     sortable: false,
-                    width: 80,
+                    width: 110,
                     renderer: function(extTicket) {
                         if (!extTicket) {
                             return;
