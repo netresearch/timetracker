@@ -208,8 +208,18 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($tickets)));
     }
 
+
+    /**
+     * Returns the data for the analysing chart "effort per employee".
+     *
+     * @return Response
+     */
     public function groupByUserAction()
     {
+        if ($this->isHiddenCausedByGDPRViolation()) {
+            return new Response();
+        }
+
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
@@ -247,8 +257,6 @@ class InterpretationController extends BaseController
         usort($users, array($this, 'sortByName'));
         return new Response(json_encode($this->normalizeData($users)));
     }
-
-
 
     public function groupByWorktimeAction()
     {

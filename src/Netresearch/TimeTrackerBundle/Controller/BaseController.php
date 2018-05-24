@@ -239,4 +239,14 @@ class BaseController extends Controller
 
         return $translator->trans($id, $parameters, $domain, $locale);
     }
+
+    /**
+     * Returns true, if the functionality of the calling method violates the GDPR.
+     *
+     * @return bool
+     */
+    protected function isHiddenCausedByGDPRViolation()
+    {
+        return true;
+    }
 }
