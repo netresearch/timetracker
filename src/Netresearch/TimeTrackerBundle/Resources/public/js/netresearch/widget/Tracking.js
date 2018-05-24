@@ -21,7 +21,6 @@ Ext.define('Netresearch.widget.Tracking', {
     /* Strings */
     _tabTitle: 'Time Tracking',
     _dateTitle: 'Date',
-    _userTitle: 'User',
     _startTitle: 'Start',
     _endTitle: 'End',
     _ticketTitle: 'Ticket',
@@ -213,26 +212,6 @@ Ext.define('Netresearch.widget.Tracking', {
                         selectOnFocus: true
                     },
                     renderer: this.formatTime
-                }, {
-                    header: this._userTitle,
-                    dataIndex: 'user',
-                    sortable: false,
-                    hidden: true,
-                    width: 130,
-                    field: {
-                        xtype: 'textfield',
-                        store: this.userStore,
-                        queryMode: 'local',
-                        displayField: 'username',
-                        valueField: 'id',
-                        anchor: '100%',
-                        selectOnTab: true,
-                        selectOnFocus: true
-                    },
-                    renderer: function(id) {
-                        var record = this.userStore.getById(id);
-                        return record ? record.get('username') : id;
-                    }
                 }, {
                     header: this._ticketTitle,
                     dataIndex: 'ticket',
@@ -1330,7 +1309,6 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
     Ext.apply(Netresearch.widget.Tracking.prototype, {
         _tabTitle: 'Zeiterfassung',
         _dateTitle: 'Datum',
-        _userTitle: 'Mitarbeiter',
         _startTitle: 'Start',
         _endTitle: 'Ende',
         _ticketTitle: 'Fall',
