@@ -216,9 +216,8 @@ class InterpretationController extends BaseController
      */
     public function groupByUserAction()
     {
-        if ($this->isHiddenCausedByGDPRViolation()) {
-            return new Response();
-        }
+        #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
+        $this->getRequest()->query->set('user', $this->_getUserId());
 
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
