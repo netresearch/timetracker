@@ -1,3 +1,13 @@
+2018-05-25 Tobias Hein <tobias.hein@netresearch.de>
+
+     * Version 2.0.0
+
+     * Interpretation Tab:
+	* Dropdown "user" only contains the current logged in user (not all users)
+	* Section "Time by Employee" only shows the worked hours of the current logged in user (not for any user)	
+	* Section "Last entries" - it is not longer possible to make the "employee name" column visible for the last entries table
+	* We removed the "hours" line chart
+
 2017-05-05  Tobias Hein  <tobias.hein@netresearch.de>
 
 	* Version: 1.3.0
