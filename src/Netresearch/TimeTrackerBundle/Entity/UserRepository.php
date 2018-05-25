@@ -68,4 +68,24 @@ class UserRepository extends EntityRepository
 
         return $data;
     }
+
+    public function getUserById($currentUserId)
+    {
+        $user = $this->find($currentUserId);
+
+        if (empty($user)) {
+            return array();
+        }
+
+        $data = array();
+        $data[] = array('user' => array(
+            'id'    => $user->getId(),
+            'username'  => $user->getUsername(),
+            'type' => $user->getType(),
+            'abbr' => $user->getAbbr(),
+            'locale'    => $user->getLocale(),
+        ));
+
+        return $data;
+    }
 }

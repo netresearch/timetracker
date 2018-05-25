@@ -243,7 +243,12 @@ class DefaultController extends BaseController
 
     public function getUsersAction()
     {
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUsers($this->_getUserId());
+
+        if ($this->isHiddenCausedByGDPRViolation()) {
+            $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUserById($this->_getUserId());
+        } else {
+            $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUsers($this->_getUserId());
+        }
 
         return new Response(json_encode($data));
     }

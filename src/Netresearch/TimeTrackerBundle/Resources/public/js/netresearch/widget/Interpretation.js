@@ -524,7 +524,7 @@ Ext.define('Netresearch.widget.Interpretation', {
                 })
             ]
         });
-
+        // removed from items by NRTECH-3720 - not used at the moment
         var entryGrid =
             Ext.create('Netresearch.widget.Tracking', {
                 width: chartWidth,
@@ -686,7 +686,6 @@ Ext.define('Netresearch.widget.Interpretation', {
                 ticketPanel,
                 activityPanel,
                 developerPanel,
-                timePanel,
                 entryPanel
             ]
         };
