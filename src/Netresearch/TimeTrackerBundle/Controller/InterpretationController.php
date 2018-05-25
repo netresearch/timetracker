@@ -208,8 +208,17 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($tickets)));
     }
 
+
+    /**
+     * Returns the data for the analysing chart "effort per employee".
+     *
+     * @return Response
+     */
     public function groupByUserAction()
     {
+        #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
+        $this->getRequest()->query->set('user', $this->_getUserId());
+
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
@@ -247,8 +256,6 @@ class InterpretationController extends BaseController
         usort($users, array($this, 'sortByName'));
         return new Response(json_encode($this->normalizeData($users)));
     }
-
-
 
     public function groupByWorktimeAction()
     {
