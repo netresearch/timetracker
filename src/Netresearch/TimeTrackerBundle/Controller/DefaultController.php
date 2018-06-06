@@ -15,7 +15,7 @@ use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
 use Netresearch\TimeTrackerBundle\Entity\User as User;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Response;
+use Netresearch\TimeTrackerBundle\Model\Response;
 use Netresearch\TimeTrackerBundle\Helper;
 
 use \Zend_Ldap as Zend_Ldap;

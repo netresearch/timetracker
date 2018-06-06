@@ -13,7 +13,7 @@ use Netresearch\TimeTrackerBundle\Model\EscalationException;
 use Netresearch\TimeTrackerBundle\Model\Jira as Jira;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
-use Symfony\Component\HttpFoundation\Response;
+use Netresearch\TimeTrackerBundle\Model\Response;
 
 use \Zend_Ldap as Zend_Ldap;
 use \Zend_Ldap_Exception as Zend_Ldap_Exception;

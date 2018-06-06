@@ -4,7 +4,7 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\User as User;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Response;
+use Netresearch\TimeTrackerBundle\Model\Response;
 
 class StatusController extends BaseController
 {
