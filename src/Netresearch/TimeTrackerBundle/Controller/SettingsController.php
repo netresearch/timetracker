@@ -6,7 +6,7 @@ use Netresearch\TimeTrackerBundle\Entity\User as User;
 use Netresearch\TimeTrackerBundle\Helper\LocalizationHelper as LocalizationHelper;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Response;
+use Netresearch\TimeTrackerBundle\Model\Response;
 
 class SettingsController extends Controller
 {
