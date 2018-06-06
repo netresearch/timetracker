@@ -120,9 +120,11 @@ class AdminController extends BaseController
         $estimation   = TimeHelper::readable2minutes($this->getRequest()->get('estimation') ? $this->getRequest()->get('estimation') : '0m');
         $billing      = $this->getRequest()->get('billing') ? $this->getRequest()->get('billing') : 0;
         $costCenter   = $this->getRequest()->get('cost_center') ? $this->getRequest()->get('cost_center') : NULL;
-        $offer        = $this->getRequest()->get('offer') ? $this->getRequest()->get('offer') : NULL;
+        $offer        = $this->getRequest()->get('offer') ? $this->getRequest()->get('offer') : 0;
         $additionalInformationFromExternal = $this->getRequest()->get('additionalInformationFromExternal') ? $this->getRequest()->get('additionalInformationFromExternal') : 0;
         $projectRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project');
+        $internalJiraTicketSystem = (int) $this->getRequest()->get('internalJiraTicketSystem', 0);
+        $internalJiraProjectKey   = (int) $this->getRequest()->get('internalJiraProjectKey', 0);
 
         if ($projectId) {
             $project = $projectRepository->find($projectId);
@@ -182,12 +184,8 @@ class AdminController extends BaseController
             ->setOffer($offer)
             ->setCostCenter($costCenter)
             ->setAdditionalInformationFromExternal($additionalInformationFromExternal)
-            ->setInternalJiraProjectKey(
-                $this->getRequest()->get('internalJiraProjectKey', NULL)
-            )
-            ->setInternalJiraTicketSystem(
-                $this->getRequest()->get('internalJiraTicketSystem', NULL)
-            );
+            ->setInternalJiraProjectKey($internalJiraProjectKey)
+            ->setInternalJiraTicketSystem($internalJiraTicketSystem);
 
         $em = $this->getDoctrine()->getEntityManager();
         $em->persist($project);
