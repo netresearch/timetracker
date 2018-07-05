@@ -1,3 +1,13 @@
+2018-07-05 Tobias Hein <tobias.hein@netresearch.de>
+
+    * Version 2.1.0
+
+    * Features:
+    ** Timetracker now sends CORS header for API requests - make it possibel to use the API by third party applications
+    ** Bought back the Hours/Day-Diagram in the interpretation tab
+    * Fixes:
+    ** fix fatal error when creating a new project without adding a internal project key
+
 2018-05-25 Tobias Hein <tobias.hein@netresearch.de>
 
      * Version 2.0.0
