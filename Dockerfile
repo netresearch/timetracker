@@ -3,7 +3,7 @@ FROM php:7-alpine
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -x \
- && echo "http://mirror1.hs-esslingen.de/pub/Mirrors/alpine/v3.4/main" > /etc/apk/repositories \
+ && echo "http://mirror1.hs-esslingen.de/pub/Mirrors/alpine/v3.8/main" > /etc/apk/repositories \
  && apk update \
  && apk upgrade --available \
  && apk add libldap \
