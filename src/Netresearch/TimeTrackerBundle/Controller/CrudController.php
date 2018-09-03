@@ -751,7 +751,7 @@ class CrudController extends BaseController
 
         // query for searching for existing internal ticket
         $query = sprintf(
-            '/rest/api/2/search?maxResults=1&jql=project=%s%%20AND%%20summary~"%s"&fields=key,summary',
+            '/rest/api/2/search?maxResults=1&jql=project=%s%%20AND%%20summary~%s&fields=key,summary',
             $project->getInternalJiraProjectKey(),
             $strTicket
         );
