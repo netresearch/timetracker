@@ -36,7 +36,7 @@ class Collection implements Iterator, Countable
      *
      * @var array
      */
-    protected $cache = array();
+    protected $cache = [];
 
     /**
      * Constructor.
@@ -70,7 +70,7 @@ class Collection implements Iterator, Countable
      */
     public function toArray()
     {
-        $data = array();
+        $data = [];
         foreach ($this as $item) {
             $data[] = $item;
         }
@@ -125,7 +125,7 @@ class Collection implements Iterator, Countable
             if ($this->current < 0) {
                 $this->rewind();
             }
-            if (!array_key_exists($this->current, $this->cache)) {
+            if (! array_key_exists($this->current, $this->cache)) {
                 $current = $this->iterator->current();
                 if ($current === null) {
                     return;

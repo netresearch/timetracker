@@ -10,7 +10,7 @@
 namespace Zend\Ldap;
 
 use Traversable;
-use Zend\Stdlib\ErrorHandler;
+use Zend\Ldap\Exception\LdapException;
 
 class Ldap
 {
@@ -68,16 +68,38 @@ class Ldap
     protected $schema = null;
 
     /**
+     * Current connection retry attempt counter.
+     *
+     * @var int
+     */
+    protected $reconnectCount = 0;
+
+    /**
+     * Total number of times reconnections were attempted unsuccessfully.
+     *
+     * @var int
+     */
+    protected $reconnectsAttempted = 0;
+
+    /**
+     * @var array
+     */
+    protected $lastConnectBindParams = [];
+
+    /**
      * Constructor.
      *
      * @param  array|Traversable $options Options used in connecting, binding, etc.
      * @throws Exception\LdapException
      */
-    public function __construct($options = array())
+    public function __construct($options = [])
     {
-        if (!extension_loaded('ldap')) {
-            throw new Exception\LdapException(null, 'LDAP extension not loaded',
-                Exception\LdapException::LDAP_X_EXTENSION_NOT_LOADED);
+        if (! extension_loaded('ldap')) {
+            throw new Exception\LdapException(
+                null,
+                'LDAP extension not loaded',
+                Exception\LdapException::LDAP_X_EXTENSION_NOT_LOADED
+            );
         }
         $this->setOptions($options);
     }
@@ -97,7 +119,7 @@ class Ldap
      */
     public function getResource()
     {
-        if (!is_resource($this->resource) || $this->boundUser === false) {
+        if (! is_resource($this->resource) || $this->boundUser === false) {
             $this->bind();
         }
 
@@ -137,7 +159,7 @@ class Ldap
     public function getLastError(&$errorCode = null, array &$errorMessages = null)
     {
         $errorCode     = $this->getLastErrorCode();
-        $errorMessages = array();
+        $errorMessages = [];
 
         /* The various error retrieval functions can return
          * different things so we just try to collect what we
@@ -151,14 +173,14 @@ class Ldap
             $estr1 = ldap_err2str($errorCode);
             ErrorHandler::stop();
         }
-        if (!empty($estr1)) {
+        if (! empty($estr1)) {
             $errorMessages[] = $estr1;
         }
 
         ErrorHandler::start(E_WARNING);
         ldap_get_option($this->resource, LDAP_OPT_ERROR_STRING, $estr2);
         ErrorHandler::stop();
-        if (!empty($estr2) && !in_array($estr2, $errorMessages)) {
+        if (! empty($estr2) && ! in_array($estr2, $errorMessages)) {
             $errorMessages[] = $estr2;
         }
 
@@ -209,7 +231,9 @@ class Ldap
      *  useStartTls
      *  optReferrals
      *  tryUsernameSplit
+     *  reconnectAttempts
      *  networkTimeout
+     *  saslOpts
      *
      * @param  array|Traversable $options Options used in connecting, binding, etc.
      * @return Ldap Provides a fluent interface
@@ -221,7 +245,7 @@ class Ldap
             $options = iterator_to_array($options);
         }
 
-        $permittedOptions = array(
+        $permittedOptions = [
             'host'                   => null,
             'port'                   => 0,
             'useSsl'                 => false,
@@ -237,8 +261,10 @@ class Ldap
             'useStartTls'            => false,
             'optReferrals'           => false,
             'tryUsernameSplit'       => true,
+            'reconnectAttempts'      => 0,
             'networkTimeout'         => null,
-        );
+            'saslOpts'               => null,
+        ];
 
         foreach ($permittedOptions as $key => $val) {
             if (array_key_exists($key, $options)) {
@@ -250,6 +276,7 @@ class Ldap
                 switch ($key) {
                     case 'port':
                     case 'accountCanonicalForm':
+                    case 'reconnectAttempts':
                     case 'networkTimeout':
                         $permittedOptions[$key] = (int) $val;
                         break;
@@ -262,6 +289,9 @@ class Ldap
                         $permittedOptions[$key] = ($val === true
                             || $val === '1'
                             || strcasecmp($val, 'true') == 0);
+                        break;
+                    case 'saslOpts':
+                        $permittedOptions[$key] = $val;
                         break;
                     default:
                         $permittedOptions[$key] = trim($val);
@@ -284,6 +314,16 @@ class Ldap
     public function getOptions()
     {
         return $this->options;
+    }
+
+    public function getReconnectsAttempted()
+    {
+        return $this->reconnectsAttempted;
+    }
+
+    public function resetReconnectsAttempted()
+    {
+        $this->reconnectsAttempted = 0;
     }
 
     /**
@@ -347,6 +387,16 @@ class Ldap
     }
 
     /**
+     * Gets any options that have been set for sasl binds.
+     *
+     * @return string[]|null
+     */
+    public function getSaslOpts()
+    {
+        return $this->options['saslOpts'];
+    }
+
+    /**
      * @return int Either ACCTNAME_FORM_BACKSLASH, ACCTNAME_FORM_PRINCIPAL or
      * ACCTNAME_FORM_USERNAME indicating the form usernames should be canonicalized to.
      */
@@ -358,7 +408,7 @@ class Ldap
          * names have been supplied.
          */
         $accountCanonicalForm = $this->options['accountCanonicalForm'];
-        if (!$accountCanonicalForm) {
+        if (! $accountCanonicalForm) {
             $accountDomainName      = $this->getAccountDomainName();
             $accountDomainNameShort = $this->getAccountDomainNameShort();
             if ($accountDomainNameShort) {
@@ -433,6 +483,14 @@ class Ldap
     }
 
     /**
+     * @return int The number of times reconnect to server should be attempted.
+     */
+    protected function getReconnectsToAttempt()
+    {
+        return $this->options['reconnectAttempts'];
+    }
+
+    /**
      * @return int The value for network timeout when connect to the LDAP server.
      */
     protected function getNetworkTimeout()
@@ -454,7 +512,7 @@ class Ldap
         if ($accountFilterFormat) {
             return sprintf($accountFilterFormat, $aname);
         }
-        if (!$this->getBindRequiresDn()) {
+        if (! $this->getBindRequiresDn()) {
             // is there a better way to detect this?
             return sprintf("(&(objectClass=user)(sAMAccountName=%s))", $aname);
         }
@@ -473,7 +531,7 @@ class Ldap
         $dname = null;
         $aname = $name;
 
-        if (!$this->getTryUsernameSplit()) {
+        if (! $this->getTryUsernameSplit()) {
             return;
         }
 
@@ -501,7 +559,7 @@ class Ldap
             return $acctname;
         }
         $acctname = $this->getCanonicalAccountName($acctname, self::ACCTNAME_FORM_USERNAME);
-        $acct     = $this->getAccount($acctname, array('dn'));
+        $acct     = $this->getAccount($acctname, ['dn']);
 
         return $acct['dn'];
     }
@@ -543,13 +601,15 @@ class Ldap
 
         $this->splitName($acctname, $dname, $uname);
 
-        if (!$this->isPossibleAuthority($dname)) {
-            throw new Exception\LdapException(null,
+        if (! $this->isPossibleAuthority($dname)) {
+            throw new Exception\LdapException(
+                null,
                 "Binding domain is not an authority for user: $acctname",
-                Exception\LdapException::LDAP_X_DOMAIN_MISMATCH);
+                Exception\LdapException::LDAP_X_DOMAIN_MISMATCH
+            );
         }
 
-        if (!$uname) {
+        if (! $uname) {
             throw new Exception\LdapException(null, "Invalid account name syntax: $acctname");
         }
 
@@ -570,13 +630,13 @@ class Ldap
                 return $uname;
             case self::ACCTNAME_FORM_BACKSLASH:
                 $accountDomainNameShort = $this->getAccountDomainNameShort();
-                if (!$accountDomainNameShort) {
+                if (! $accountDomainNameShort) {
                     throw new Exception\LdapException(null, 'Option required: accountDomainNameShort');
                 }
                 return "$accountDomainNameShort\\$uname";
             case self::ACCTNAME_FORM_PRINCIPAL:
                 $accountDomainName = $this->getAccountDomainName();
-                if (!$accountDomainName) {
+                if (! $accountDomainName) {
                     throw new Exception\LdapException(null, 'Option required: accountDomainName');
                 }
                 return "$uname@$accountDomainName";
@@ -594,16 +654,16 @@ class Ldap
     protected function getAccount($acctname, array $attrs = null)
     {
         $baseDn = $this->getBaseDn();
-        if (!$baseDn) {
+        if (! $baseDn) {
             throw new Exception\LdapException(null, 'Base DN not set');
         }
 
         $accountFilter = $this->getAccountFilter($acctname);
-        if (!$accountFilter) {
+        if (! $accountFilter) {
             throw new Exception\LdapException(null, 'Invalid account filter');
         }
 
-        if (!is_resource($this->getResource())) {
+        if (! is_resource($this->getResource())) {
             $this->bind();
         }
 
@@ -629,9 +689,50 @@ class Ldap
     }
 
     /**
+     * Selects current parameters on new connections, last when reconnecting.
+     *
+     * @param string $method
+     *   Whether the connect or bind method is the caller.
+     * @param string $parameter
+     *   The parameter name.
+     * @param mixed $property
+     *   The value of the parameter as set in an instance property.
+     * @return mixed
+     *   If a reconnect attempt is being made, the value used for the parameter
+     *   last time it was supplied by an external invocation. Otherwise, the
+     *   value.
+     */
+    protected function selectParam($method, $parameter, $property)
+    {
+        if ($this->reconnectCount > 0) {
+            return self::coalesce(
+                isset($this->lastConnectBindParams[$method]) ? $this->lastConnectBindParams[$method][$parameter] : null,
+                $property
+            );
+        } else {
+            return $property;
+        }
+    }
+
+    protected static function coalesce($a, $b)
+    {
+        if ($a !== null) {
+            return $a;
+        }
+        return $b;
+    }
+
+    /**
      * @return Ldap Provides a fluent interface
      */
     public function disconnect()
+    {
+        $this->unbind();
+        $this->resetReconnectsAttempted();
+        return $this;
+    }
+
+    protected function unbind()
     {
         if (is_resource($this->resource)) {
             ErrorHandler::start(E_WARNING);
@@ -661,48 +762,62 @@ class Ldap
      */
     public function connect($host = null, $port = null, $useSsl = null, $useStartTls = null, $networkTimeout = null)
     {
+        if ($this->reconnectCount === 0) {
+            $this->lastConnectBindParams[__METHOD__] = [
+                'host' => $host,
+                'port' => $port,
+                'useSsl' => $useSsl,
+                'useStartTls' => $useStartTls,
+                'networkTimeout' => $networkTimeout
+            ];
+        }
+
         if ($host === null) {
-            $host = $this->getHost();
+            $host = $this->selectParam(__METHOD__, 'host', $this->getHost());
         }
         if ($port === null) {
-            $port = $this->getPort();
+            $port = $this->selectParam(__METHOD__, 'port', $this->getPort());
         } else {
             $port = (int) $port;
         }
+
         if ($useSsl === null) {
-            $useSsl = $this->getUseSsl();
+            $useSsl = $this->selectParam(__METHOD__, 'useSsl', $this->getUseSsl());
         } else {
             $useSsl = (bool) $useSsl;
         }
+
+        if ($port === 0) {
+            $port = ($useSsl) ? 636 : 389;
+        }
+
         if ($useStartTls === null) {
-            $useStartTls = $this->getUseStartTls();
+            $useStartTls = $this->selectParam(__METHOD__, 'useStartTls', $this->getUseStartTls());
         } else {
             $useStartTls = (bool) $useStartTls;
         }
         if ($networkTimeout === null) {
-            $networkTimeout = $this->getNetworkTimeout();
+            $networkTimeout = $this->selectParam(__METHOD__, 'networkTimeout', $this->getNetworkTimeout());
         } else {
             $networkTimeout = (int) $networkTimeout;
         }
 
-        if (!$host) {
+        if (! $host) {
             throw new Exception\LdapException(null, 'A host parameter is required');
         }
 
-        $useUri = false;
         /* Because ldap_connect doesn't really try to connect, any connect error
          * will actually occur during the ldap_bind call. Therefore, we save the
          * connect string here for reporting it in error handling in bind().
          */
-        $hosts = array();
-        if (preg_match_all('~ldap(?:i|s)?://~', $host, $hosts, PREG_SET_ORDER) > 0) {
+        $hosts = [];
+        if (preg_match_all('~ldap(i|s)?://~', $host, $hosts, PREG_SET_ORDER) > 0) {
             $this->connectString = $host;
-            $useUri              = true;
-            $useSsl              = false;
+            // assign $useSsl to true in case of ldaps schema
+            $useSsl = (isset($hosts[0][1]) && $hosts[0][1] === 's') ? true : false;
         } else {
             if ($useSsl) {
                 $this->connectString = 'ldaps://' . $host;
-                $useUri              = true;
             } else {
                 $this->connectString = 'ldap://' . $host;
             }
@@ -713,12 +828,10 @@ class Ldap
 
         $this->disconnect();
 
-
-        /* Only OpenLDAP 2.2 + supports URLs so if SSL is not requested, just
-         * use the old form.
-         */
+        // We supporting here only OpenLDAP 2.2 + which uses URLs for connections
+        // (drop support of old-style host/port connections).
         ErrorHandler::start();
-        $resource = ($useUri) ? ldap_connect($this->connectString) : ldap_connect($host, $port);
+        $resource = ldap_connect($this->connectString);
         ErrorHandler::stop();
 
         if (is_resource($resource) === true) {
@@ -733,7 +846,7 @@ class Ldap
                 if ($networkTimeout) {
                     ldap_set_option($resource, LDAP_OPT_NETWORK_TIMEOUT, $networkTimeout);
                 }
-                if ($useSsl || !$useStartTls || ldap_start_tls($resource)) {
+                if ($useSsl || ! $useStartTls || ldap_start_tls($resource)) {
                     ErrorHandler::stop();
                     return $this;
                 }
@@ -745,27 +858,41 @@ class Ldap
             throw $zle;
         }
 
-        throw new Exception\LdapException(null, "Failed to connect to LDAP server: $host:$port");
+        throw new Exception\LdapException(null, "Failed to connect to LDAP server: $host:$port", -1);
     }
 
     /**
      * @param  string $username The username for authenticating the bind
      * @param  string $password The password for authenticating the bind
+     * @param  string[]|null $saslOpts Options when performing SASL binds.
      * @return Ldap Provides a fluent interface
      * @throws Exception\LdapException
      */
-    public function bind($username = null, $password = null)
+    public function bind($username = null, $password = null, $saslOpts = null)
     {
         $moreCreds = true;
 
-        // Security check: remove null bytes in password
-        // @see https://net.educause.edu/ir/library/pdf/csd4875.pdf
-        $password = str_replace("\0", '', $password);
+        if (is_string($password)) {
+            // Security check: remove null bytes in password
+            // @see https://net.educause.edu/ir/library/pdf/csd4875.pdf
+            $password = str_replace("\0", '', $password);
+        }
+
+        if ($this->reconnectCount === 0) {
+            $this->lastConnectBindParams[__METHOD__] = [
+                'username' => $username,
+                'password' => $password
+            ];
+        }
 
         if ($username === null) {
-            $username  = $this->getUsername();
-            $password  = $this->getPassword();
+            $username  = $this->selectParam(__METHOD__, 'username', $this->getUsername());
+            $password  = $this->selectParam(__METHOD__, 'password', $this->getPassword());
             $moreCreds = false;
+        }
+
+        if ($saslOpts === null) {
+            $saslOpts = $this->getSaslOpts();
         }
 
         if (empty($username)) {
@@ -776,7 +903,7 @@ class Ldap
         } else {
             /* Check to make sure the username is in DN form.
              */
-            if (!Dn::checkDn($username)) {
+            if (! Dn::checkDn($username)) {
                 if ($this->getBindRequiresDn()) {
                     /* moreCreds stops an infinite loop if getUsername does not
                      * return a DN and the bind requires it
@@ -791,10 +918,12 @@ class Ldap
                                 case Exception\LdapException::LDAP_X_EXTENSION_NOT_LOADED:
                                     throw $zle;
                             }
-                            throw new Exception\LdapException(null,
+                            throw new Exception\LdapException(
+                                null,
                                 'Failed to retrieve DN for account: ' . $username .
                                     ' [' . $zle->getMessage() . ']',
-                                Exception\LdapException::LDAP_OPERATIONS_ERROR);
+                                Exception\LdapException::LDAP_OPERATIONS_ERROR
+                            );
                         }
                     } else {
                         throw new Exception\LdapException(null, 'Binding requires username in DN form');
@@ -808,19 +937,45 @@ class Ldap
             }
         }
 
-        if (!is_resource($this->resource)) {
+        if (! is_resource($this->resource)) {
             $this->connect();
         }
 
         if ($username !== null && $password === '' && $this->getAllowEmptyPassword() !== true) {
-            $zle = new Exception\LdapException(null,
-                'Empty password not allowed - see allowEmptyPassword option.');
+            $zle = new Exception\LdapException(
+                null,
+                'Empty password not allowed - see allowEmptyPassword option.'
+            );
         } else {
             ErrorHandler::start(E_WARNING);
-            $bind = ldap_bind($this->resource, $username, $password);
+            if (is_array($saslOpts)) {
+                $sasl_mech = array_key_exists('sasl_mech', $saslOpts) ? $saslOpts['sasl_mech'] : null;
+                $sasl_realm = array_key_exists('sasl_realm', $saslOpts) ? $saslOpts['sasl_realm'] : null;
+                $sasl_authc_id = array_key_exists('sasl_authc_id', $saslOpts) ? $saslOpts['sasl_authc_id'] : null;
+                $sasl_authz_id = array_key_exists('sasl_authz_id', $saslOpts) ? $saslOpts['sasl_authz_id'] : null;
+                $sasl_props = array_key_exists('props', $saslOpts) ? $saslOpts['props'] : null;
+
+                $bind = ldap_sasl_bind(
+                    $this->resource,
+                    $username,
+                    $password,
+                    $sasl_mech,
+                    $sasl_realm,
+                    $sasl_authc_id,
+                    $sasl_authz_id,
+                    $sasl_props
+                );
+            } else {
+                $bind = ldap_bind($this->resource, $username, $password);
+            }
             ErrorHandler::stop();
-            if ($bind) {
+
+            if ($bind !== false) {
                 $this->boundUser = $username;
+                return $this;
+            }
+
+            if ($this->shouldReconnect($this->resource)) {
                 return $this;
             }
 
@@ -835,9 +990,42 @@ class Ldap
 
             $zle = new Exception\LdapException($this, $message);
         }
-        $this->disconnect();
+        $this->unbind();
 
         throw $zle;
+    }
+
+    protected function shouldReconnect($resource)
+    {
+        if ($this->reconnectCount >= $this->getReconnectsToAttempt()
+            || ldap_errno($resource) !== -1
+        ) {
+            $this->reconnectsAttempted = $this->reconnectCount;
+            $this->reconnectCount = 0;
+            return false;
+        }
+
+        $this->reconnectCount++;
+        $this->reconnectSleep();
+
+        try {
+            $this->connect();
+            $this->bind();
+            $this->reconnectsAttempted = $this->reconnectCount;
+            $this->reconnectCount = 0;
+            return true;
+        } catch (LdapException $e) {
+            if ($e->getCode() !== -1) {
+                return false;
+            }
+        }
+        return $this->shouldReconnect($this->getResource());
+    }
+
+    protected function reconnectSleep()
+    {
+        $duration = min((pow(2, min($this->reconnectCount - 1, 0)) - 1) / 4, 10);
+        usleep($duration * 1000000);
     }
 
     /**
@@ -865,8 +1053,15 @@ class Ldap
      * @return Collection
      * @throws Exception\LdapException
      */
-    public function search($filter, $basedn = null, $scope = self::SEARCH_SCOPE_SUB, array $attributes = array(),
-                           $sort = null, $collectionClass = null, $sizelimit = 0, $timelimit = 0
+    public function search(
+        $filter,
+        $basedn = null,
+        $scope = self::SEARCH_SCOPE_SUB,
+        array $attributes = [],
+        $sort = null,
+        $collectionClass = null,
+        $sizelimit = 0,
+        $timelimit = 0
     ) {
         if (is_array($filter)) {
             $options = array_change_key_case($filter, CASE_LOWER);
@@ -904,35 +1099,34 @@ class Ldap
             $filter = $filter->toString();
         }
 
-        $resource = $this->getResource();
-        ErrorHandler::start(E_WARNING);
-        switch ($scope) {
-            case self::SEARCH_SCOPE_ONE:
-                $search = ldap_list($resource, $basedn, $filter, $attributes, 0, $sizelimit, $timelimit);
-                break;
-            case self::SEARCH_SCOPE_BASE:
-                $search = ldap_read($resource, $basedn, $filter, $attributes, 0, $sizelimit, $timelimit);
-                break;
-            case self::SEARCH_SCOPE_SUB:
-            default:
-                $search = ldap_search($resource, $basedn, $filter, $attributes, 0, $sizelimit, $timelimit);
-                break;
-        }
-        ErrorHandler::stop();
+        do {
+            $resource = $this->getResource();
+            ErrorHandler::start(E_WARNING);
+
+            switch ($scope) {
+                case self::SEARCH_SCOPE_ONE:
+                    $search = ldap_list($resource, $basedn, $filter, $attributes, 0, $sizelimit, $timelimit);
+                    break;
+                case self::SEARCH_SCOPE_BASE:
+                    $search = ldap_read($resource, $basedn, $filter, $attributes, 0, $sizelimit, $timelimit);
+                    break;
+                case self::SEARCH_SCOPE_SUB:
+                default:
+                    $search = ldap_search($resource, $basedn, $filter, $attributes, 0, $sizelimit, $timelimit);
+                    break;
+            }
+            ErrorHandler::stop();
+        } while ($search === false && $this->shouldReconnect($resource));
 
         if ($search === false) {
             throw new Exception\LdapException($this, 'searching: ' . $filter);
         }
-        if ($sort !== null && is_string($sort)) {
-            ErrorHandler::start(E_WARNING);
-            $isSorted = ldap_sort($resource, $search, $sort);
-            ErrorHandler::stop();
-            if ($isSorted === false) {
-                throw new Exception\LdapException($this, 'sorting: ' . $sort);
-            }
-        }
 
         $iterator = new Collection\DefaultIterator($this, $search);
+
+        if ($sort !== null && is_string($sort)) {
+            $iterator->sort($sort);
+        }
 
         return $this->createCollection($iterator, $collectionClass);
     }
@@ -951,13 +1145,17 @@ class Ldap
             return new Collection($iterator);
         } else {
             $collectionClass = (string) $collectionClass;
-            if (!class_exists($collectionClass)) {
-                throw new Exception\LdapException(null,
-                    "Class '$collectionClass' can not be found");
+            if (! class_exists($collectionClass)) {
+                throw new Exception\LdapException(
+                    null,
+                    "Class '$collectionClass' can not be found"
+                );
             }
-            if (!is_subclass_of($collectionClass, 'Zend\Ldap\Collection')) {
-                throw new Exception\LdapException(null,
-                    "Class '$collectionClass' must subclass 'Zend\\Ldap\\Collection'");
+            if (! is_subclass_of($collectionClass, 'Zend\Ldap\Collection')) {
+                throw new Exception\LdapException(
+                    null,
+                    "Class '$collectionClass' must subclass 'Zend\\Ldap\\Collection'"
+                );
             }
 
             return new $collectionClass($iterator);
@@ -976,7 +1174,7 @@ class Ldap
     public function count($filter, $basedn = null, $scope = self::SEARCH_SCOPE_SUB)
     {
         try {
-            $result = $this->search($filter, $basedn, $scope, array('dn'), null);
+            $result = $this->search($filter, $basedn, $scope, ['dn'], null);
         } catch (Exception\LdapException $e) {
             if ($e->getCode() === Exception\LdapException::LDAP_NO_SUCH_OBJECT) {
                 return 0;
@@ -1036,10 +1234,17 @@ class Ldap
      * @return array
      * @throws Exception\LdapException
      */
-    public function searchEntries($filter, $basedn = null, $scope = self::SEARCH_SCOPE_SUB,
-                                  array $attributes = array(), $sort = null, $reverseSort = false, $sizelimit = 0,
-                                  $timelimit = 0)
-    {
+    public function searchEntries(
+        $filter,
+        $basedn = null,
+        $scope = self::SEARCH_SCOPE_SUB,
+        array $attributes = [],
+        $sort = null,
+        $reverseSort = false,
+        $sizelimit = 0,
+        $timelimit = 0
+    ) {
+
         if (is_array($filter)) {
             $filter = array_change_key_case($filter, CASE_LOWER);
             if (isset($filter['collectionclass'])) {
@@ -1068,12 +1273,15 @@ class Ldap
      * @return array
      * @throws null|Exception\LdapException
      */
-    public function getEntry($dn, array $attributes = array(), $throwOnNotFound = false)
+    public function getEntry($dn, array $attributes = [], $throwOnNotFound = false)
     {
         try {
             $result = $this->search(
-                "(objectClass=*)", $dn, self::SEARCH_SCOPE_BASE,
-                $attributes, null
+                "(objectClass=*)",
+                $dn,
+                self::SEARCH_SCOPE_BASE,
+                $attributes,
+                null
             );
 
             return $result->getFirst();
@@ -1103,7 +1311,7 @@ class Ldap
                 foreach ($value as $i => $v) {
                     if ($v === null) {
                         unset($value[$i]);
-                    } elseif (!is_scalar($v)) {
+                    } elseif (! is_scalar($v)) {
                         throw new Exception\InvalidArgumentException('Only scalar values allowed in LDAP data');
                     } else {
                         $v = (string) $v;
@@ -1117,15 +1325,15 @@ class Ldap
                 $entry[$key] = array_values($value);
             } else {
                 if ($value === null) {
-                    $entry[$key] = array();
-                } elseif (!is_scalar($value)) {
+                    $entry[$key] = [];
+                } elseif (! is_scalar($value)) {
                     throw new Exception\InvalidArgumentException('Only scalar values allowed in LDAP data');
                 } else {
                     $value = (string) $value;
                     if (strlen($value) == 0) {
-                        $entry[$key] = array();
+                        $entry[$key] = [];
                     } else {
-                        $entry[$key] = array($value);
+                        $entry[$key] = [$value];
                     }
                 }
             }
@@ -1143,7 +1351,7 @@ class Ldap
      */
     public function add($dn, array $entry)
     {
-        if (!($dn instanceof Dn)) {
+        if (! ($dn instanceof Dn)) {
             $dn = Dn::factory($dn, null);
         }
         static::prepareLdapEntryArray($entry);
@@ -1156,24 +1364,27 @@ class Ldap
         $rdnParts = $dn->getRdn(Dn::ATTR_CASEFOLD_LOWER);
         foreach ($rdnParts as $key => $value) {
             $value = Dn::unescapeValue($value);
-            if (!array_key_exists($key, $entry)) {
-                $entry[$key] = array($value);
-            } elseif (!in_array($value, $entry[$key])) {
-                $entry[$key] = array_merge(array($value), $entry[$key]);
+            if (! array_key_exists($key, $entry)) {
+                $entry[$key] = [$value];
+            } elseif (! in_array($value, $entry[$key])) {
+                $entry[$key] = array_merge([$value], $entry[$key]);
             }
         }
-        $adAttributes = array('distinguishedname', 'instancetype', 'name', 'objectcategory',
-                              'objectguid', 'usnchanged', 'usncreated', 'whenchanged', 'whencreated');
+        $adAttributes = ['distinguishedname', 'instancetype', 'name', 'objectcategory',
+                              'objectguid', 'usnchanged', 'usncreated', 'whenchanged', 'whencreated'];
         foreach ($adAttributes as $attr) {
             if (array_key_exists($attr, $entry)) {
                 unset($entry[$attr]);
             }
         }
 
-        $resource = $this->getResource();
-        ErrorHandler::start(E_WARNING);
-        $isAdded = ldap_add($resource, $dn->toString(), $entry);
-        ErrorHandler::stop();
+        do {
+            $resource = $this->getResource();
+            ErrorHandler::start(E_WARNING);
+            $isAdded = ldap_add($resource, $dn->toString(), $entry);
+            ErrorHandler::stop();
+        } while ($isAdded === false && $this->shouldReconnect($resource));
+
         if ($isAdded === false) {
             throw new Exception\LdapException($this, 'adding: ' . $dn->toString());
         }
@@ -1191,7 +1402,7 @@ class Ldap
      */
     public function update($dn, array $entry)
     {
-        if (!($dn instanceof Dn)) {
+        if (! ($dn instanceof Dn)) {
             $dn = Dn::factory($dn, null);
         }
         static::prepareLdapEntryArray($entry);
@@ -1199,12 +1410,12 @@ class Ldap
         $rdnParts = $dn->getRdn(Dn::ATTR_CASEFOLD_LOWER);
         foreach ($rdnParts as $key => $value) {
             $value = Dn::unescapeValue($value);
-            if (array_key_exists($key, $entry) && !in_array($value, $entry[$key])) {
-                $entry[$key] = array_merge(array($value), $entry[$key]);
+            if (array_key_exists($key, $entry) && ! in_array($value, $entry[$key])) {
+                $entry[$key] = array_merge([$value], $entry[$key]);
             }
         }
-        $adAttributes = array('distinguishedname', 'instancetype', 'name', 'objectcategory',
-                              'objectguid', 'usnchanged', 'usncreated', 'whenchanged', 'whencreated');
+        $adAttributes = ['distinguishedname', 'instancetype', 'name', 'objectcategory',
+                              'objectguid', 'usnchanged', 'usncreated', 'whenchanged', 'whencreated'];
         foreach ($adAttributes as $attr) {
             if (array_key_exists($attr, $entry)) {
                 unset($entry[$attr]);
@@ -1212,10 +1423,13 @@ class Ldap
         }
 
         if (count($entry) > 0) {
-            $resource = $this->getResource();
-            ErrorHandler::start(E_WARNING);
-            $isModified = ldap_modify($resource, $dn->toString(), $entry);
-            ErrorHandler::stop();
+            do {
+                $resource = $this->getResource();
+                ErrorHandler::start(E_WARNING);
+                $isModified = ldap_modify($resource, $dn->toString(), $entry);
+                ErrorHandler::stop();
+            } while ($isModified === false && $this->shouldReconnect($resource));
+
             if ($isModified === false) {
                 throw new Exception\LdapException($this, 'updating: ' . $dn->toString());
             }
@@ -1271,10 +1485,147 @@ class Ldap
             }
         }
 
-        $resource = $this->getResource();
-        ErrorHandler::start(E_WARNING);
-        $isDeleted = ldap_delete($resource, $dn);
-        ErrorHandler::stop();
+        do {
+            $resource = $this->getResource();
+            ErrorHandler::start(E_WARNING);
+            $isDeleted = ldap_delete($resource, $dn);
+            ErrorHandler::stop();
+        } while ($isDeleted === false && $this->shouldReconnect($resource));
+
+        if ($isDeleted === false) {
+            throw new Exception\LdapException($this, 'deleting: ' . $dn);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add one or more attributes to the specified dn
+     *
+     * @param  string|Dn $dn
+     * @param  array     $attributes
+     * @param bool       $allowEmptyAttributes
+     * @return Ldap Provides a fluid interface
+     * @throws LdapException
+     */
+    public function addAttributes($dn, array $attributes, $allowEmptyAttributes = false)
+    {
+        // Safety-flap: Check whether there are empty arrays that would cause
+        // complete removal of entries without the emptyAll flag.
+        if ($allowEmptyAttributes !== true) {
+            foreach ($attributes as $key => $value) {
+                if (empty($value)) {
+                    unset($attributes[$key]);
+                }
+            }
+        }
+
+        if ($dn instanceof Dn) {
+            $dn = $dn->toString();
+        }
+
+        do {
+            ErrorHandler::start(E_WARNING);
+            $entryAdded = ldap_mod_add($this->resource, $dn, $attributes);
+            ErrorHandler::stop();
+        } while ($entryAdded === false && $this->shouldReconnect($this->resource));
+
+
+        if ($entryAdded === false) {
+            throw new Exception\LdapException($this, 'adding attribute: ' . $dn);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Update one or more attributes to the specified dn
+     *
+     * @param  string|Dn $dn
+     * @param  array     $attributes
+     * @param bool       $allowEmptyAttributes
+     * @return Ldap Provides a fluid interface
+     * @throws LdapException
+     */
+    public function updateAttributes($dn, array $attributes, $allowEmptyAttributes = false)
+    {
+        // Safety-flap: Check whether there are empty arrays that would cause
+        // complete removal of entries without the emptyAll flag.
+        if ($allowEmptyAttributes !== true) {
+            foreach ($attributes as $key => $value) {
+                if (empty($value)) {
+                    unset($attributes[$key]);
+                }
+            }
+        }
+
+        if ($dn instanceof Dn) {
+            $dn = $dn->toString();
+        }
+
+        do {
+            ErrorHandler::start(E_WARNING);
+            $entryUpdated = ldap_mod_replace($this->resource, $dn, $attributes);
+            ErrorHandler::stop();
+        } while ($entryUpdated === false && $this->shouldReconnect($this->resource));
+
+
+        if ($entryUpdated === false) {
+            throw new Exception\LdapException($this, 'updating attribute: ' . $dn);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Delete single attributes from a LDAP-Node
+     *
+     * This method removes single attributes from a node identified by
+     * <var>$dn</var>. The attributes have to be given as array where the
+     * array-key is the attribute-name and the array-value is the attribute-value
+     * that is to be removed.
+     *
+     * To remove multiple entries of an attribute pass an array with the values
+     * to be removed as value of the key. So if you want to remove more than
+     * one <strong>memberUid</strong>-attribute you would pass
+     * <code>array('memberUid' => ['uid1', 'uid2',...]);</code> as
+     * <var>$attributes</var>
+     *
+     * Beware that passing an empty array will remove <strong>all</strong>
+     * entries of the attribute. Therefore you will have to set the
+     * <var>$emptyAll</var>-flag!
+     *
+     * @param Dn|string $dn                   The DN for which to remove attributes
+     * @param array     $attributes           The attributes to be removed
+     * @param bool      $allowEmptyAttributes Whether empty attribute-array
+     *                                        should remove all attribute-
+     *                                        values or not.
+     *
+     * @throws LdapException is thrown when the LDAP-server reported an error
+     * @return Ldap Provides a fluent interface
+     */
+    public function deleteAttributes($dn, array $attributes, $allowEmptyAttributes = false)
+    {
+        // Safety-flap: Check whether there are empty arrays that would cause
+        // complete removal of entries without the emptyAll flag.
+        if ($allowEmptyAttributes !== true) {
+            foreach ($attributes as $key => $value) {
+                if (empty($value)) {
+                    unset($attributes[$key]);
+                }
+            }
+        }
+
+        if ($dn instanceof Dn) {
+            $dn = $dn->toString();
+        }
+
+        do {
+            ErrorHandler::start(E_WARNING);
+            $isDeleted = ldap_mod_del($this->resource, $dn, $attributes);
+            ErrorHandler::stop();
+        } while ($isDeleted === false && $this->shouldReconnect($this->resource));
+
         if ($isDeleted === false) {
             throw new Exception\LdapException($this, 'deleting: ' . $dn);
         }
@@ -1297,16 +1648,23 @@ class Ldap
         if ($parentDn instanceof Dn) {
             $parentDn = $parentDn->toString();
         }
-        $children = array();
+        $children = [];
 
-        $resource = $this->getResource();
+        do {
+            $resource = $this->getResource();
+            ErrorHandler::start(E_WARNING);
+            $search = ldap_list($resource, $parentDn, '(objectClass=*)', ['dn']);
+            ErrorHandler::stop();
+        } while ($search === false && $this->shouldReconnect($resource));
+
+        if ($search === false) {
+            throw new Exception\LdapException($this, 'listing: ' . $parentDn);
+        }
+
         ErrorHandler::start(E_WARNING);
-        $search = ldap_list($resource, $parentDn, '(objectClass=*)', array('dn'));
-        for (
-            $entry = ldap_first_entry($resource, $search);
+        for ($entry = ldap_first_entry($resource, $search);
             $entry !== false;
-            $entry = ldap_next_entry($resource, $entry)
-        ) {
+            $entry = ldap_next_entry($resource, $entry)) {
             $childDn = ldap_get_dn($resource, $entry);
             if ($childDn === false) {
                 ErrorHandler::stop();
@@ -1344,7 +1702,7 @@ class Ldap
             $newParentDnParts = Dn::explodeDn($to);
         }
 
-        $newDnParts = array_merge(array(array_shift($orgDnParts)), $newParentDnParts);
+        $newDnParts = array_merge([array_shift($orgDnParts)], $newParentDnParts);
         $newDn      = Dn::fromArray($newDnParts);
 
         return $this->rename($from, $newDn, $recursively, $alwaysEmulate);
@@ -1382,7 +1740,7 @@ class Ldap
     public function rename($from, $to, $recursively = false, $alwaysEmulate = false)
     {
         $emulate = (bool) $alwaysEmulate;
-        if (!function_exists('ldap_rename')) {
+        if (! function_exists('ldap_rename')) {
             $emulate = true;
         } elseif ($recursively) {
             $emulate = true;
@@ -1402,13 +1760,16 @@ class Ldap
             $newRdn    = Dn::implodeRdn(array_shift($newDnParts));
             $newParent = Dn::implodeDn($newDnParts);
 
-            $resource = $this->getResource();
-            ErrorHandler::start(E_WARNING);
-            $isOK = ldap_rename($resource, $from, $newRdn, $newParent, true);
-            ErrorHandler::stop();
+            do {
+                $resource = $this->getResource();
+                ErrorHandler::start(E_WARNING);
+                $isOK = ldap_rename($resource, $from, $newRdn, $newParent, true);
+                ErrorHandler::stop();
+            } while ($isOK === false && $this->shouldReconnect($resource));
+
             if ($isOK === false) {
                 throw new Exception\LdapException($this, 'renaming ' . $from . ' to ' . $to);
-            } elseif (!$this->exists($to)) {
+            } elseif (! $this->exists($to)) {
                 $emulate = true;
             }
         }
@@ -1443,7 +1804,7 @@ class Ldap
             $newParentDnParts = Dn::explodeDn($to);
         }
 
-        $newDnParts = array_merge(array(array_shift($orgDnParts)), $newParentDnParts);
+        $newDnParts = array_merge([array_shift($orgDnParts)], $newParentDnParts);
         $newDn      = Dn::fromArray($newDnParts);
 
         return $this->copy($from, $newDn, $recursively);
@@ -1460,7 +1821,7 @@ class Ldap
      */
     public function copy($from, $to, $recursively = false)
     {
-        $entry = $this->getEntry($from, array(), true);
+        $entry = $this->getEntry($from, [], true);
 
         if ($to instanceof Dn) {
             $toDnParts = $to->toArray();
@@ -1473,7 +1834,7 @@ class Ldap
             $children = $this->getChildrenDns($from);
             foreach ($children as $c) {
                 $cDnParts      = Dn::explodeDn($c);
-                $newChildParts = array_merge(array(array_shift($cDnParts)), $toDnParts);
+                $newChildParts = array_merge([array_shift($cDnParts)], $toDnParts);
                 $newChild      = Dn::implodeDn($newChildParts);
                 $this->copy($c, $newChild, true);
             }

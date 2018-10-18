@@ -129,14 +129,14 @@ class OpenLdap extends Node\Schema
      */
     protected function loadAttributeTypes()
     {
-        $this->attributeTypes = array();
+        $this->attributeTypes = [];
         foreach ($this->getAttribute('attributeTypes') as $value) {
             $val                                   = $this->parseAttributeType($value);
             $val                                   = new AttributeType\OpenLdap($val);
             $this->attributeTypes[$val->getName()] = $val;
         }
         foreach ($this->attributeTypes as $val) {
-            if (count($val->sup) > 0) {
+            if (! empty($val->sup) && count($val->sup) > 0) {
                 $this->resolveInheritance($val, $this->attributeTypes);
             }
             foreach ($val->aliases as $alias) {
@@ -154,7 +154,7 @@ class OpenLdap extends Node\Schema
      */
     protected function parseAttributeType($value)
     {
-        $attributeType = array(
+        $attributeType = [
             'oid'                  => null,
             'name'                 => null,
             'desc'                 => null,
@@ -170,7 +170,7 @@ class OpenLdap extends Node\Schema
             'no-user-modification' => false,
             'usage'                => 'userApplications',
             '_string'              => $value,
-            '_parents'             => array());
+            '_parents'             => []];
 
         $tokens               = $this->tokenizeString($value);
         $attributeType['oid'] = array_shift($tokens); // first token is the oid
@@ -196,7 +196,7 @@ class OpenLdap extends Node\Schema
      */
     protected function loadObjectClasses()
     {
-        $this->objectClasses = array();
+        $this->objectClasses = [];
         foreach ($this->getAttribute('objectClasses') as $value) {
             $val                                  = $this->parseObjectClass($value);
             $val                                  = new ObjectClass\OpenLdap($val);
@@ -221,19 +221,19 @@ class OpenLdap extends Node\Schema
      */
     protected function parseObjectClass($value)
     {
-        $objectClass = array(
+        $objectClass = [
             'oid'        => null,
             'name'       => null,
             'desc'       => null,
             'obsolete'   => false,
-            'sup'        => array(),
+            'sup'        => [],
             'abstract'   => false,
             'structural' => false,
             'auxiliary'  => false,
-            'must'       => array(),
-            'may'        => array(),
+            'must'       => [],
+            'may'        => [],
             '_string'    => $value,
-            '_parents'   => array());
+            '_parents'   => []];
 
         $tokens             = $this->tokenizeString($value);
         $objectClass['oid'] = array_shift($tokens); // first token is the oid
@@ -254,15 +254,15 @@ class OpenLdap extends Node\Schema
     {
         $data    = $node->getData();
         $parents = $data['sup'];
-        if ($parents === null || !is_array($parents) || count($parents) < 1) {
+        if ($parents === null || ! is_array($parents) || count($parents) < 1) {
             return;
         }
         foreach ($parents as $parent) {
-            if (!array_key_exists($parent, $repository)) {
+            if (! array_key_exists($parent, $repository)) {
                 continue;
             }
-            if (!array_key_exists('_parents', $data) || !is_array($data['_parents'])) {
-                $data['_parents'] = array();
+            if (! array_key_exists('_parents', $data) || ! is_array($data['_parents'])) {
+                $data['_parents'] = [];
             }
             $data['_parents'][] = $repository[$parent];
         }
@@ -276,7 +276,7 @@ class OpenLdap extends Node\Schema
      */
     protected function loadLdapSyntaxes()
     {
-        $this->ldapSyntaxes = array();
+        $this->ldapSyntaxes = [];
         foreach ($this->getAttribute('ldapSyntaxes') as $value) {
             $val                             = $this->parseLdapSyntax($value);
             $this->ldapSyntaxes[$val['oid']] = $val;
@@ -292,10 +292,10 @@ class OpenLdap extends Node\Schema
      */
     protected function parseLdapSyntax($value)
     {
-        $ldapSyntax = array(
+        $ldapSyntax = [
             'oid'      => null,
             'desc'     => null,
-            '_string'  => $value);
+            '_string'  => $value];
 
         $tokens            = $this->tokenizeString($value);
         $ldapSyntax['oid'] = array_shift($tokens); // first token is the oid
@@ -311,7 +311,7 @@ class OpenLdap extends Node\Schema
      */
     protected function loadMatchingRules()
     {
-        $this->matchingRules = array();
+        $this->matchingRules = [];
         foreach ($this->getAttribute('matchingRules') as $value) {
             $val                               = $this->parseMatchingRule($value);
             $this->matchingRules[$val['name']] = $val;
@@ -327,13 +327,13 @@ class OpenLdap extends Node\Schema
      */
     protected function parseMatchingRule($value)
     {
-        $matchingRule = array(
+        $matchingRule = [
             'oid'      => null,
             'name'     => null,
             'desc'     => null,
             'obsolete' => false,
             'syntax'   => null,
-            '_string'  => $value);
+            '_string'  => $value];
 
         $tokens              = $this->tokenizeString($value);
         $matchingRule['oid'] = array_shift($tokens); // first token is the oid
@@ -351,7 +351,7 @@ class OpenLdap extends Node\Schema
      */
     protected function loadMatchingRuleUse()
     {
-        $this->matchingRuleUse = array();
+        $this->matchingRuleUse = [];
         foreach ($this->getAttribute('matchingRuleUse') as $value) {
             $val                                 = $this->parseMatchingRuleUse($value);
             $this->matchingRuleUse[$val['name']] = $val;
@@ -367,13 +367,13 @@ class OpenLdap extends Node\Schema
      */
     protected function parseMatchingRuleUse($value)
     {
-        $matchingRuleUse = array(
+        $matchingRuleUse = [
             'oid'      => null,
             'name'     => null,
             'desc'     => null,
             'obsolete' => false,
-            'applies'  => array(),
-            '_string'  => $value);
+            'applies'  => [],
+            '_string'  => $value];
 
         $tokens                 = $this->tokenizeString($value);
         $matchingRuleUse['oid'] = array_shift($tokens); // first token is the oid
@@ -391,7 +391,7 @@ class OpenLdap extends Node\Schema
      */
     protected function ensureNameAttribute(array &$data)
     {
-        if (!array_key_exists('name', $data) || empty($data['name'])) {
+        if (! array_key_exists('name', $data) || empty($data['name'])) {
             // force a name
             $data['name'] = $data['oid'];
         }
@@ -401,7 +401,7 @@ class OpenLdap extends Node\Schema
             $data['name']    = array_shift($aliases);
             $data['aliases'] = $aliases;
         } else {
-            $data['aliases'] = array();
+            $data['aliases'] = [];
         }
     }
 
@@ -415,15 +415,15 @@ class OpenLdap extends Node\Schema
     protected function parseLdapSchemaSyntax(array &$data, array $tokens)
     {
         // tokens that have no value associated
-        $noValue = array('single-value',
+        $noValue = ['single-value',
                          'obsolete',
                          'collective',
                          'no-user-modification',
                          'abstract',
                          'structural',
-                         'auxiliary');
+                         'auxiliary'];
         // tokens that can have multiple values
-        $multiValue = array('must', 'may', 'sup');
+        $multiValue = ['must', 'may', 'sup'];
 
         while (count($tokens) > 0) {
             $token = strtolower(array_shift($tokens));
@@ -435,7 +435,7 @@ class OpenLdap extends Node\Schema
                 if ($data[$token] == '(') {
                     // this creates the list of values and cycles through the tokens
                     // until the end of the list is reached ')'
-                    $data[$token] = array();
+                    $data[$token] = [];
 
                     $tmp = array_shift($tokens);
                     while ($tmp) {
@@ -451,8 +451,8 @@ class OpenLdap extends Node\Schema
                     $data[$token] = Converter\Converter::fromLdap($data[$token]);
                 }
                 // create an array if the value should be multivalued but was not
-                if (in_array($token, $multiValue) && !is_array($data[$token])) {
-                    $data[$token] = array($data[$token]);
+                if (in_array($token, $multiValue) && ! is_array($data[$token])) {
+                    $data[$token] = [$data[$token]];
                 }
             }
         }
@@ -466,8 +466,8 @@ class OpenLdap extends Node\Schema
      */
     protected function tokenizeString($value)
     {
-        $tokens  = array();
-        $matches = array();
+        $tokens  = [];
+        $matches = [];
         // this one is taken from PEAR::Net_LDAP2
         $pattern = "/\\s* (?:([()]) | ([^'\\s()]+) | '((?:[^']+|'[^\\s)])*)') \\s*/x";
         preg_match_all($pattern, $value, $matches);
@@ -476,7 +476,7 @@ class OpenLdap extends Node\Schema
         for ($i = 0; $i < $cMatches; $i++) { // number of tokens (full pattern match)
             for ($j = 1; $j < $cPattern; $j++) { // each subpattern
                 $tok = trim($matches[$j][$i]);
-                if (!empty($tok)) { // pattern match in this subpattern
+                if (! empty($tok)) { // pattern match in this subpattern
                     $tokens[$i] = $tok; // this is the token
                 }
             }
