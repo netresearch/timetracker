@@ -21,11 +21,11 @@ class Encoder
      *
      * @var array
      */
-    protected $options = array(
+    protected $options = [
         'sort'    => true,
         'version' => 1,
         'wrap'    => 78
-    );
+    ];
 
     /**
      * @var bool
@@ -37,7 +37,7 @@ class Encoder
      *
      * @param  array $options Additional options used during encoding
      */
-    protected function __construct(array $options = array())
+    protected function __construct(array $options = [])
     {
         $this->options = array_merge($this->options, $options);
     }
@@ -50,7 +50,7 @@ class Encoder
      */
     public static function decode($string)
     {
-        $encoder = new static(array());
+        $encoder = new static([]);
         return $encoder->_decode($string);
     }
 
@@ -60,16 +60,18 @@ class Encoder
      * @param  string $string
      * @return array
      */
+    // @codingStandardsIgnoreStart
     protected function _decode($string)
     {
-        $items = array();
-        $item  = array();
+        // @codingStandardsIgnoreEnd
+        $items = [];
+        $item  = [];
         $last  = null;
         $inComment = false;
         foreach (explode("\n", $string) as $line) {
             $line    = rtrim($line, "\x09\x0A\x0D\x00\x0B");
-            $matches = array();
-            if (substr($line, 0, 1) === ' ' && $last !== null && !$inComment) {
+            $matches = [];
+            if (substr($line, 0, 1) === ' ' && $last !== null && ! $inComment) {
                 $last[2] .= substr($line, 1);
             } elseif (substr($line, 0, 1) === '#') {
                 $inComment = true;
@@ -86,9 +88,9 @@ class Encoder
                     continue;
                 } elseif (count($item) > 0 && $name === 'dn') {
                     $items[] = $item;
-                    $item    = array();
+                    $item    = [];
                 }
-                $last = array($name, $type, $value);
+                $last = [$name, $type, $value];
             } elseif (trim($line) === '') {
                 continue;
             }
@@ -120,7 +122,7 @@ class Encoder
         } elseif (isset($entry[$name]) && $value !== '') {
             $entry[$name][] = $value;
         } else {
-            $entry[$name] = ($value !== '') ? array($value) : array();
+            $entry[$name] = ($value !== '') ? [$value] : [];
         }
     }
 
@@ -131,7 +133,7 @@ class Encoder
      * @param  array $options Additional options used during encoding
      * @return string The encoded value
      */
-    public static function encode($value, array $options = array())
+    public static function encode($value, array $options = [])
     {
         $encoder = new static($options);
 
@@ -145,8 +147,10 @@ class Encoder
      * @param  mixed $value The value to be encoded
      * @return string Encoded value
      */
+    // @codingStandardsIgnoreStart
     protected function _encode($value)
     {
+        // @codingStandardsIgnoreEnd
         if (is_scalar($value)) {
             return $this->encodeString($value);
         } elseif (is_array($value)) {
@@ -170,7 +174,7 @@ class Encoder
     protected function encodeString($string, &$base64 = null)
     {
         $string = (string) $string;
-        if (!is_numeric($string) && empty($string)) {
+        if (! is_numeric($string) && empty($string)) {
             return '';
         }
 
@@ -182,13 +186,13 @@ class Encoder
          *                ; and less-than ("<" , ASCII 60 decimal)
          *
          */
-        $unsafeInitChar = array(0, 10, 13, 32, 58, 60);
+        $unsafeInitChar = [0, 10, 13, 32, 58, 60];
         /*
          * SAFE-CHAR      = %x01-09 / %x0B-0C / %x0E-7F
          *                ; any value <= 127 decimal except NUL, LF,
          *                ; and CR
          */
-        $unsafeChar = array(0, 10, 13);
+        $unsafeChar = [0, 10, 13];
 
         $base64 = false;
         for ($i = 0, $len = strlen($string); $i < $len; $i++) {
@@ -227,8 +231,8 @@ class Encoder
      */
     protected function encodeAttribute($name, $value)
     {
-        if (!is_array($value)) {
-            $value = array($value);
+        if (! is_array($value)) {
+            $value = [$value];
         }
 
         $output = '';
@@ -267,7 +271,7 @@ class Encoder
     {
         $string     = '';
         $attributes = array_change_key_case($attributes, CASE_LOWER);
-        if (!$this->versionWritten && array_key_exists('dn', $attributes) && isset($this->options['version'])
+        if (! $this->versionWritten && array_key_exists('dn', $attributes) && isset($this->options['version'])
             && array_key_exists('objectclass', $attributes)
         ) {
             $string .= sprintf('version: %d', $this->options['version']) . PHP_EOL;
@@ -279,12 +283,12 @@ class Encoder
             if (array_key_exists('objectclass', $attributes)) {
                 $oc = $attributes['objectclass'];
                 unset($attributes['objectclass']);
-                $attributes = array_merge(array('objectclass' => $oc), $attributes);
+                $attributes = array_merge(['objectclass' => $oc], $attributes);
             }
             if (array_key_exists('dn', $attributes)) {
                 $dn = $attributes['dn'];
                 unset($attributes['dn']);
-                $attributes = array_merge(array('dn' => $dn), $attributes);
+                $attributes = array_merge(['dn' => $dn], $attributes);
             }
         }
         foreach ($attributes as $key => $value) {

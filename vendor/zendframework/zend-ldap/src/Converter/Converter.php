@@ -11,7 +11,7 @@ namespace Zend\Ldap\Converter;
 
 use DateTime;
 use DateTimeZone;
-use Zend\Stdlib\ErrorHandler;
+use Zend\Ldap\ErrorHandler;
 
 /**
  * Zend\Ldap\Converter is a collection of useful LDAP related conversion functions.
@@ -125,7 +125,7 @@ class Converter
      */
     public static function toLdapDateTime($date, $asUtc = true)
     {
-        if (!($date instanceof DateTime)) {
+        if (! ($date instanceof DateTime)) {
             if (is_int($date)) {
                 $date = new DateTime('@' . $date);
                 $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
@@ -159,7 +159,7 @@ class Converter
     public static function toLdapBoolean($value)
     {
         $return = 'FALSE';
-        if (!is_scalar($value)) {
+        if (! is_scalar($value)) {
             return $return;
         }
         if (true === $value || (is_string($value) && 'true' === strtolower($value)) || 1 === $value) {
@@ -233,8 +233,8 @@ class Converter
      */
     public static function fromLdapDateTime($date, $asUtc = true)
     {
-        $datepart = array();
-        if (!preg_match('/^(\d{4})/', $date, $datepart)) {
+        $datepart = [];
+        if (! preg_match('/^(\d{4})/', $date, $datepart)) {
             throw new Exception\InvalidArgumentException('Invalid date format found');
         }
 
@@ -242,7 +242,7 @@ class Converter
             throw new Exception\InvalidArgumentException('Invalid date format found (too short)');
         }
 
-        $time = array(
+        $time = [
             // The year is mandatory!
             'year'          => $datepart[1],
             'month'         => 1,
@@ -253,7 +253,7 @@ class Converter
             'offdir'        => '+',
             'offsethours'   => 0,
             'offsetminutes' => 0
-        );
+        ];
 
         $length = strlen($date);
 
@@ -304,7 +304,7 @@ class Converter
 
         // Set Offset
         $offsetRegEx = '/([Z\-\+])(\d{2}\'?){0,1}(\d{2}\'?){0,1}$/';
-        $off         = array();
+        $off         = [];
         if (preg_match($offsetRegEx, $date, $off)) {
             $offset = $off[1];
             if ($offset == '+' || $offset == '-') {

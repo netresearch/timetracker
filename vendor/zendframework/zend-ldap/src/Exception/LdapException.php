@@ -102,7 +102,7 @@ class LdapException extends \Exception implements ExceptionInterface
      */
     public function __construct(Ldap $ldap = null, $str = null, $code = 0)
     {
-        $errorMessages = array();
+        $errorMessages = [];
         $message       = '';
         if ($ldap !== null) {
             $oldCode = $code;
@@ -118,7 +118,7 @@ class LdapException extends \Exception implements ExceptionInterface
             }
         }
 
-        if (!empty($str)) {
+        if (! empty($str)) {
             $message .= $str;
         } else {
             $message .= 'no exception message';

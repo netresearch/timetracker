@@ -19,12 +19,12 @@ use Zend\Ldap\Exception;
  */
 abstract class AbstractNode implements ArrayAccess, Countable
 {
-    protected static $systemAttributes = array('createtimestamp', 'creatorsname',
+    protected static $systemAttributes = ['createtimestamp', 'creatorsname',
                                                'entrycsn', 'entrydn', 'entryuuid', 'hassubordinates', 'modifiersname',
                                                'modifytimestamp', 'structuralobjectclass', 'subschemasubentry',
                                                'distinguishedname', 'instancetype', 'name', 'objectcategory',
                                                'objectguid',
-                                               'usnchanged', 'usncreated', 'whenchanged', 'whencreated');
+                                               'usnchanged', 'usncreated', 'whenchanged', 'whencreated'];
 
     /**
      * Holds the node's DN.
@@ -79,7 +79,7 @@ abstract class AbstractNode implements ArrayAccess, Countable
     public function reload(Ldap\Ldap $ldap = null)
     {
         if ($ldap !== null) {
-            $data = $ldap->getEntry($this->_getDn(), array('*', '+'), true);
+            $data = $ldap->getEntry($this->_getDn(), ['*', '+'], true);
             $this->loadData($data, true);
         }
 
@@ -93,8 +93,10 @@ abstract class AbstractNode implements ArrayAccess, Countable
      *
      * @return \Zend\Ldap\Dn
      */
+    // @codingStandardsIgnoreStart
     protected function _getDn()
     {
+        // @codingStandardsIgnoreEnd
         return $this->dn;
     }
 
@@ -186,7 +188,7 @@ abstract class AbstractNode implements ArrayAccess, Countable
      */
     public function getAttributes($includeSystemAttributes = true)
     {
-        $data = array();
+        $data = [];
         foreach ($this->getData($includeSystemAttributes) as $name => $value) {
             $data[$name] = $this->getAttribute($name, null);
         }
@@ -222,7 +224,7 @@ abstract class AbstractNode implements ArrayAccess, Countable
     public function toArray($includeSystemAttributes = true)
     {
         $attributes = $this->getAttributes($includeSystemAttributes);
-        return array_merge(array('dn' => $this->getDnString()), $attributes);
+        return array_merge(['dn' => $this->getDnString()], $attributes);
     }
 
     /**
@@ -249,9 +251,9 @@ abstract class AbstractNode implements ArrayAccess, Countable
     public function getData($includeSystemAttributes = true)
     {
         if ($includeSystemAttributes === false) {
-            $data = array();
+            $data = [];
             foreach ($this->currentData as $key => $value) {
-                if (!in_array($key, static::$systemAttributes)) {
+                if (! in_array($key, static::$systemAttributes)) {
                     $data[$key] = $value;
                 }
             }
