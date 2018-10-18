@@ -1,22 +1,25 @@
-FROM php:7-alpine
+FROM php:7-fpm
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN set -x \
- && echo "http://mirror1.hs-esslingen.de/pub/Mirrors/alpine/v3.8/main" > /etc/apk/repositories \
- && apk update \
- && apk upgrade --available \
- && apk add libldap \
- && apk add --virtual .build-deps openldap-dev \
+RUN set -ex \
+ && apt-get update \
+ && apt-get upgrade \
+ && apt-get install -y libldap2-dev \
  && docker-php-ext-install pdo_mysql ldap \
- && apk del .build-deps \
- && rm -rf /var/cache/apk/*
+ && apt-get remove -y libldap2-dev \
+# clean up
+ && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false ${buildDeps} \
+ && apt-get -y clean \
+ && rm -rf /usr/src/* \
+ && rm -rf /tmp/* \
+ && rm -rf /var/tmp/* \
+ && for logs in `find /var/log -type f`; do > ${logs}; done \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -f /var/cache/apt/*.bin \
+ && rm -rf /usr/share/man/* /usr/share/groff/* /usr/share/info/* /usr/share/lintian/* /usr/share/linda/* /var/cache/man/* /usr/share/doc/*
+
 
 COPY . /srv/timetracker
 RUN ln -s /srv/timetracker/web/app.php /srv/timetracker/web/index.php
 
-EXPOSE 80
-
 VOLUME /srv/timetracker/app/logs /srv/timetracker/app/cache
 
-CMD ["php", "-S=0.0.0.0:80", "-t=/srv/timetracker/web"]

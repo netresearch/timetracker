@@ -1,0 +1,14 @@
+version: '3.5'
+
+services:
+
+  httpd:
+    ports:
+      - 8765:80
+    volumes:
+      - .:/var/www/html
+
+  app:
+    volumes:
+      - .:/var/www/html
+
