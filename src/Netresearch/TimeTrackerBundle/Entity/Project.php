@@ -270,7 +270,7 @@ class Project extends Base
     /**
      * Set customer
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customer
      */
     public function setCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customer)
     {
@@ -281,7 +281,7 @@ class Project extends Base
     /**
      * Get customer
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @return \Netresearch\TimeTrackerBundle\Entity\Customer $customer
      */
     public function getCustomer()
     {
@@ -313,22 +313,22 @@ class Project extends Base
     }
 
 
-
     /**
      * Add entries
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entry
+     * @return Project
      */
-    public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entry)
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
         return $this;
     }
 
     /**
      * Get entries
      *
-     * @return Doctrine\Common\Collections\Collection $entries
+     * @return \Netresearch\TimeTrackerBundle\Entity\Entry[] $entries
      */
     public function getEntries()
     {
@@ -347,7 +347,7 @@ class Project extends Base
     }
 
     /**
-     * @return integer $ticketSystem
+     * @return TicketSystem $ticketSystem
      */
     public function getTicketSystem()
     {
@@ -356,7 +356,8 @@ class Project extends Base
 
     /**
      * Set the id of the ticket system that is associated with this project
-     * @param id $ticketSystem
+     * @param TicketSystem $ticketSystem
+     * @return Project
      */
     public function setTicketSystem($ticketSystem)
     {

@@ -156,7 +156,7 @@ class Entry extends Base
     /**
      * Sets the array of external lables.
      *
-     * @param array $externalLabels
+     * @param array $arExternalLabels
      */
     public function setExternalLabels(array $arExternalLabels)
     {
@@ -177,11 +177,15 @@ class Entry extends Base
      */
     protected $externalReporter = '';
 
+    /**
+     * @return $this
+     * @throws \Exception
+     */
     public function validateDuration()
     {
-        if (($this->start instanceof DateTime)
-            && ($this->end instanceof DateTime)
-            && ($this->end->getTimestamp() <= $this->start->getTimestamp())
+        if (($this->getStart() instanceof DateTime)
+            && ($this->getEnd() instanceof DateTime)
+            && ($this->getEnd()->getTimestamp() <= $this->getStart()->getTimestamp())
         ) {
             throw new \Exception('Duration must be greater than 0!');
         }
@@ -279,6 +283,7 @@ class Entry extends Base
      * Set ticket
      *
      * @param string $ticket
+     * @return Entry
      */
     public function setTicket($ticket)
     {
@@ -300,6 +305,7 @@ class Entry extends Base
      * Set JIRA WorklogId
      *
      * @param int $worklog_id
+     * @return Entry
      */
     public function setWorklogId($worklog_id)
     {
@@ -321,6 +327,7 @@ class Entry extends Base
      * Set description
      *
      * @param string $description
+     * @return Entry
      */
     public function setDescription($description)
     {
@@ -342,6 +349,7 @@ class Entry extends Base
      * Set day
      *
      * @param string $day
+     * @return Entry
      */
     public function setDay($day)
     {
@@ -356,7 +364,7 @@ class Entry extends Base
     /**
      * Get day
      *
-     * @return string $day
+     * @return DateTime $day
      */
     public function getDay()
     {
@@ -367,6 +375,7 @@ class Entry extends Base
      * Set start
      *
      * @param string $start
+     * @return Entry
      */
     public function setStart($start)
     {
@@ -384,7 +393,7 @@ class Entry extends Base
     /**
      * Get start
      *
-     * @return string $start
+     * @return DateTime $start
      */
     public function getStart()
     {
@@ -395,6 +404,7 @@ class Entry extends Base
      * Set end
      *
      * @param string $end
+     * @return Entry
      */
     public function setEnd($end)
     {
@@ -406,6 +416,7 @@ class Entry extends Base
 
         $this->end = $end;
         $this->alignStartAndEnd();
+
         return $this;
     }
 
@@ -415,11 +426,11 @@ class Entry extends Base
     protected function alignStartAndEnd()
     {
         if (! $this->start instanceof DateTime) {
-            return;
+            return $this;
         }
 
         if (! $this->end instanceof DateTime) {
-            return;
+            return $this;
         }
 
         if ($this->end->format('H:i') < $this->start->format('H:i')) {
@@ -432,7 +443,7 @@ class Entry extends Base
     /**
      * Get end
      *
-     * @return string $end
+     * @return DateTime $end
      */
     public function getEnd()
     {
@@ -443,6 +454,7 @@ class Entry extends Base
      * Set duration
      *
      * @param integer $duration
+     * @return Entry
      */
     public function setDuration($duration)
     {
@@ -463,9 +475,9 @@ class Entry extends Base
     /**
      * Set project
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @param \Netresearch\TimeTrackerBundle\Entity\Project $project
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Entry
+     * @return \Netresearch\TimeTrackerBundle\Entity\Entry
      */
     public function setProject(\Netresearch\TimeTrackerBundle\Entity\Project $project)
     {
@@ -486,7 +498,8 @@ class Entry extends Base
     /**
      * Set user
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\User $user
+     * @param \Netresearch\TimeTrackerBundle\Entity\User $user
+     * @return Entry
      */
     public function setUser(\Netresearch\TimeTrackerBundle\Entity\User $user)
     {
@@ -497,7 +510,7 @@ class Entry extends Base
     /**
      * Get user
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\User $user
+     * @return \Netresearch\TimeTrackerBundle\Entity\User $user
      */
     public function getUser()
     {
@@ -507,7 +520,8 @@ class Entry extends Base
     /**
      * Set account
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @param \Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @return Entry
      */
     public function setAccount(\Netresearch\TimeTrackerBundle\Entity\Account $account)
     {
@@ -518,7 +532,7 @@ class Entry extends Base
     /**
      * Get account
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @return \Netresearch\TimeTrackerBundle\Entity\Account $account
      */
     public function getAccount()
     {
@@ -528,7 +542,8 @@ class Entry extends Base
     /**
      * Set activity
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @param \Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @return Entry
      */
     public function setActivity(\Netresearch\TimeTrackerBundle\Entity\Activity $activity)
     {
@@ -539,7 +554,7 @@ class Entry extends Base
     /**
      * Get activity
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @return \Netresearch\TimeTrackerBundle\Entity\Activity $activity
      */
     public function getActivity()
     {
@@ -584,7 +599,9 @@ class Entry extends Base
     /**
      * Calculate difference between start and end
      *
+     * @param int $factor
      * @return Entry
+     * @throws \Exception
      */
     public function calcDuration($factor = 1)
     {
@@ -604,9 +621,10 @@ class Entry extends Base
     /**
      * Set customer
      *
-     * @param Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @param Customer $customer
+     * @return Entry
      */
-    public function setCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customer)
+    public function setCustomer(Customer $customer)
     {
         $this->customer = $customer;
         return $this;
@@ -615,7 +633,7 @@ class Entry extends Base
     /**
      * Get customer
      *
-     * @return Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @return Customer $customer
      */
     public function getCustomer()
     {
@@ -623,11 +641,11 @@ class Entry extends Base
     }
 
 
-
     /**
      * Set class
      *
      * @param integer class
+     * @return Entry
      */
     public function setClass($class)
     {
@@ -688,9 +706,10 @@ class Entry extends Base
         return !empty($this->internalJiraTicketOriginalKey);
     }
 
-     /**
+    /**
      * Sets the original ticket name.
      *
+     * @param string $strTicket
      * @return $this
      */
     public function setInternalJiraTicketOriginalKey($strTicket)
