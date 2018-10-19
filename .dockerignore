@@ -1,2 +1,9 @@
-app/cache/
-app/logs/
+/.idea
+/.buildpath
+/.project
+/.settings
+/app/config/parameters.yml
+/app/config/parameters.ini
+/app/config/ldap_ou_team_mapping.yml
+/app/logs/*.log
+/app/cache/*

@@ -18,8 +18,12 @@ RUN set -ex \
  && rm -rf /usr/share/man/* /usr/share/groff/* /usr/share/info/* /usr/share/lintian/* /usr/share/linda/* /var/cache/man/* /usr/share/doc/*
 
 
-COPY . /srv/timetracker
-RUN ln -s /srv/timetracker/web/app.php /srv/timetracker/web/index.php
+COPY . /var/www/html
+RUN ln -s /var/www/html/web/app.php /var/www/html/web/index.php
 
-VOLUME /srv/timetracker/app/logs /srv/timetracker/app/cache
+RUN mkdir -p /var/www/html/app/logs \
+ && mkdir -p /var/www/html/app/cache \
+ && chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache
+
+VOLUME /var/www/html/app/logs /var/www/html/app/cache
 
