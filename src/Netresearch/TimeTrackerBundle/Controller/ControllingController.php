@@ -142,7 +142,7 @@ class ControllingController extends BaseController
                 $sheet->setCellValue('E' . $lineNumber, $userStats['holidays']);
             }
 
-            if ($userStats['holidays'] > 0) {
+            if ($userStats['sickdays'] > 0) {
                 $sheet->setCellValue('F' . $lineNumber, $userStats['sickdays']);
             }
 
