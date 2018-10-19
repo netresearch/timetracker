@@ -75,7 +75,23 @@ class ControllingController extends BaseController
 
         // https://jira.netresearch.de/browse/TTT-561
         $lineNumber = 3;
+        $stats = [];
         foreach ($entries as $entry) {
+
+            if (! isset($stats[$entry->getUser()->getAbbr()])) {
+                $stats[$entry->getUser()->getAbbr()] = [
+                    'holidays' => 0,
+                    'sickdays' => 0,
+                ];
+            }
+
+            if ($entry->getActivity()->isHoliday()) {
+                $stats[$entry->getUser()->getAbbr()]['holidays']++;
+            }
+            if ($entry->getActivity()->isSick()) {
+                $stats[$entry->getUser()->getAbbr()]['sickdays']++;
+            }
+
             self::setCellDate($sheet, 'A', $lineNumber, $entry->getDay());
 
             self::setCellHours($sheet, 'B', $lineNumber, $entry->getStart());
@@ -102,9 +118,36 @@ class ControllingController extends BaseController
 
         // TODO: https://jira.netresearch.de/browse/TTT-559
         // sheet 2: list user working days without working time
+        $sheet = $spreadsheet->getSheet(1);
+        $lineNumber = 2;
 
         // TODO: https://jira.netresearch.de/browse/TTT-560
         // sheet 3: list users monthly SOLL/IST, holidays, sickdays
+        $sheet = $spreadsheet->getSheet(2);
+        $lineNumber = 2;
+        ksort($stats);
+        foreach ($stats as $user => $userStats) {
+            $sheet->setCellValue('A' . $lineNumber, $user);
+            $sheet->setCellValue('B' . $lineNumber, $month);
+            //$sheet->setCellValue('C' . $lineNumber, 0);
+
+            // =SUMIF(ZE!$J$1:$J$5000,A3,ZE!$I$1:$I$5000)
+            // [HH]:MM
+            $sheet->setCellValue('D' . $lineNumber, '=SUMIF(ZE!$J$1:$J$5000,A' . $lineNumber . ',ZE!$I$1:$I$5000)');
+            $sheet->getStyle('D' . $lineNumber)
+                ->getNumberFormat()
+                ->setFormatCode('[HH]:MM');
+
+            if ($userStats['holidays'] > 0) {
+                $sheet->setCellValue('E' . $lineNumber, $userStats['holidays']);
+            }
+
+            if ($userStats['holidays'] > 0) {
+                $sheet->setCellValue('F' . $lineNumber, $userStats['sickdays']);
+            }
+
+            $lineNumber++;
+        }
 
 
         $file = tempnam(sys_get_temp_dir(), 'ttt-export-');

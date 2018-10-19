@@ -13,6 +13,8 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class Activity
 {
+    const SICK = 'Krank';
+    const HOLIDAY = 'Urlaub';
 	
 	/**
      * @ORM\Id
@@ -189,5 +191,33 @@ class Activity
     public function removeEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
     {
         $this->entries->removeElement($entries);
+    }
+
+    /**
+     * Returns true if activity is a sick day.
+     *
+     * @return bool
+     */
+    public function isSick()
+    {
+        if ($this->getName() === self::SICK) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if activity is holiday.
+     *
+     * @return bool
+     */
+    public function isHoliday()
+    {
+        if ($this->getName() === self::HOLIDAY) {
+            return true;
+        }
+
+        return false;
     }
 }
