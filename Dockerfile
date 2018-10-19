@@ -3,9 +3,9 @@ FROM php:7-fpm
 RUN set -ex \
  && apt-get update \
  && apt-get upgrade \
- && apt-get install -y libldap2-dev \
- && docker-php-ext-install pdo_mysql ldap \
- && apt-get remove -y libldap2-dev \
+ && apt-get install -y libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
+ && docker-php-ext-install pdo_mysql ldap zip xml gd \
+ && apt-get remove -y libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
 # clean up
  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false ${buildDeps} \
  && apt-get -y clean \
