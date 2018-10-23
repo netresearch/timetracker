@@ -51,10 +51,10 @@ class TicketSystem extends Base
     protected $url;
 
     /**
-     * @var string $ticketurl
+     * @var string $ticketUrl
      * @ORM\Column(type="string")
      */
-    protected $ticketurl;
+    protected $ticketUrl;
 
     /**
     /**
@@ -80,12 +80,6 @@ class TicketSystem extends Base
      * @ORM\Column(type="string", name="private_key")
      */
     protected $privateKey;
-
-    /**
-     * @var string $ticketUrl
-     * @ORM\Column(type="string", name="ticketurl")
-     */
-    protected $ticketUrl;
 
     /**
      * @var string $oauthConsumerKey
@@ -209,24 +203,24 @@ class TicketSystem extends Base
     /**
      * Set the ticket url.
      *
-     * @param string $ticketurl
+     * @param string $ticketUrl
      *
      * @return $this
      */
-    public function setTicketUrl($strTicketUrl)
+    public function setTicketUrl($ticketUrl)
     {
-        $this->ticketurl = $strTicketUrl;
+        $this->ticketUrl = $ticketUrl;
         return $this;
     }
 
     /**
      * Get url pointing to a ticket
      *
-     * @return string $ticketurl
+     * @return string $ticketUrl
      */
     public function getTicketUrl()
     {
-        return $this->ticketurl;
+        return $this->ticketUrl;
     }
 
     /**
@@ -322,24 +316,6 @@ class TicketSystem extends Base
     public function getPrivateKey()
     {
         return $this->privateKey;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTicketUrl()
-    {
-        return $this->ticketUrl;
-    }
-
-    /**
-     * @param string $ticketUrl
-     * @return $this
-     */
-    public function setTicketUrl($ticketUrl)
-    {
-        $this->ticketUrl = $ticketUrl;
-        return $this;
     }
 
     /**
