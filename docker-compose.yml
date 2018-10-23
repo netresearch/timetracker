@@ -8,7 +8,7 @@ services:
       - app-pub:/var/www/html/web
       - app-cache:/var/www/html/app/cache
       - app-logs:/var/www/html/app/logs
-      - ./app/config/parameters.ini:/var/www/html/app/config/parameters.ini
+      - ./app/config/parameters.yml:/var/www/html/app/config/parameters.yml
     links:
       - db:db
     restart: always
