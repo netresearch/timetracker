@@ -20,7 +20,7 @@
         "doctrine/doctrine-bundle": "~1.4",
         "doctrine/doctrine-migrations-bundle": "*",
         "doctrine/orm": "^2.4.8",
-        "twig/extensions": "^1.0||^2.0",
+        "twig/extensions": "1.0.*@dev",
         "symfony/assetic-bundle": "*",
         "symfony/swiftmailer-bundle": "~2.3,>=2.3.10",
         "symfony/monolog-bundle": "^3.0.2",
