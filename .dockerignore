@@ -7,3 +7,4 @@ app/config/parameters.ini
 /app/config/ldap_ou_team_mapping.yml
 app/cache/*
 app/logs/*.log
+core
