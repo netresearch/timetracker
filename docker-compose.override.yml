@@ -5,10 +5,14 @@ services:
   httpd:
     ports:
       - 8765:80
-#    volumes:
-#      - .:/var/www/html
+    volumes:
+      - ./web:/var/www/html/web
 
-#  app:
-#    volumes:
-#      - .:/var/www/html
+  app:
+    volumes:
+      - .:/var/www/html
+      - ./web:/var/www/html/web
+      - ./app/cache:/var/www/html/app/cache
+      - ./app/logs:/var/www/html/app/logs
+      - ./app/config/parameters.yml:/var/www/html/app/config/parameters.yml
 
