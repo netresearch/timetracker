@@ -122,6 +122,8 @@ Using oAuth to transmit worklogs to JIRA ticket system
 #. Configure your JIRA ticket system
 
    - https://confluence.atlassian.com/display/JIRA044/Configuring+OAuth+Authentication+for+an+Application+Link
+   - https://developer.atlassian.com/server/jira/platform/oauth/
+   - https://bitbucket.org/atlassian_tutorial/atlassian-oauth-examples
 
 #. Create a ticketsystem in timetracker
 
