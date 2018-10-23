@@ -3,11 +3,11 @@ FROM php:7-fpm
 RUN set -ex \
  && apt-get update -y \
  && apt-get upgrade -y \
- && apt-get install -y libpcre16-3 libpcre32-3 libpcrecpp0v5 libpcre3-dev libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
+ && apt-get install -y libcurl4-openssl-dev libpcre16-3 libpcre32-3 libpcrecpp0v5 libpcre3-dev libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
  && docker-php-ext-install pdo_mysql ldap zip xml gd \
  && pecl install oauth \
  && docker-php-ext-enable oauth \
- && apt-get remove -y libpcre3-dev libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
+ && apt-get remove -y libcurl4-openssl-dev libpcre3-dev libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
 # clean up
  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false ${buildDeps} \
  && apt-get -y clean \
