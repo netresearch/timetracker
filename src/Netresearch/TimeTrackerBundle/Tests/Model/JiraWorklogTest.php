@@ -2,15 +2,16 @@
 
 namespace Netresearch\TimeTrackerBundle\Tests\Model;
 
+use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Netresearch\TimeTrackerBundle\Model\JiraWorklog;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
 
-class JiraWorklogTest extends \PHPUnit_Framework_TestCase
+class JiraWorklogTest extends TestCase
 {
     /**
-     * @dataProvider testMinutes2ReadableDataProvider
+     * @dataProvider dataProviderMinutes2Readable
      */
     public function testFormatTime($readable, $minutes, $useWeeks = true)
     {
@@ -18,7 +19,7 @@ class JiraWorklogTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($readable, TimeHelper::minutes2readable($minutes, $useWeeks));
     }
 
-    public function testMinutes2ReadableDataProvider()
+    public function dataProviderMinutes2Readable()
     {
         return array(
             array('0m', 0),

@@ -2,6 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Tests\Model;
 
+use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Netresearch\TimeTrackerBundle\Model\Base;
 
@@ -29,7 +30,7 @@ class TestModel extends Base
     }
 }
 
-class BaseTest extends \PHPUnit_Framework_TestCase
+class BaseTest extends TestCase
 {
     public function testBaseModelByTestModel()
     {

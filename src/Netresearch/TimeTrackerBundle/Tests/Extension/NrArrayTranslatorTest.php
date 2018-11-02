@@ -15,6 +15,7 @@
 namespace Netresearch\TimeTrackerBundle\Tests;
 
 use Netresearch\TimeTrackerBundle\Extension\NrArrayTranslator;
+use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_TestCase;
 use Symfony\Component\Translation\Translator;
 
@@ -28,7 +29,7 @@ use Symfony\Component\Translation\Translator;
  * @link     http://www.netresearch.de
  */
 class NrArrayTranslatorTest
-    extends PHPUnit_Framework_TestCase
+    extends TestCase
 {
 
     /**
