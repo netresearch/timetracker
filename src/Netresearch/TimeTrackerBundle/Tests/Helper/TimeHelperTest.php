@@ -5,18 +5,19 @@ namespace Netresearch\TimeTrackerBundle\Tests\Helper;
 require_once(dirname(__FILE__) . "/../../Helper/TimeHelper.php");
 
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
+use PHPUnit\Framework\TestCase;
 
-class TimeHelperTest extends \PHPUnit_Framework_TestCase
+class TimeHelperTest extends TestCase
 {
     /**
-     * @dataProvider testReadable2MinutesDataProvider
+     * @dataProvider readable2MinutesDataProvider
      */
     public function testReadable2Minutes($minutes, $readable)
     {
         $this->assertEquals($minutes, TimeHelper::readable2minutes($readable));
     }
 
-    public function testReadable2MinutesDataProvider()
+    public function readable2MinutesDataProvider()
     {
         return array(
             array(0, ''),
@@ -51,14 +52,14 @@ class TimeHelperTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider testMinutes2ReadableDataProvider
+     * @dataProvider minutes2ReadableDataProvider
      */
     public function testMinutes2Readable($readable, $minutes, $useWeeks= true)
     {
         $this->assertEquals($readable, TimeHelper::minutes2readable($minutes, $useWeeks));
     }
 
-    public function testMinutes2ReadableDataProvider()
+    public function minutes2ReadableDataProvider()
     {
         return array(
             array('0m', 0),
@@ -87,14 +88,14 @@ class TimeHelperTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider testFormatDurationDataProvider
+     * @dataProvider formatDurationDataProvider
      */
     public function testFormatDuration($duration, $inDays, $value)
     {
         $this->assertEquals($value, TimeHelper::formatDuration($duration, $inDays));
     }
 
-    public function testFormatDurationDataProvider()
+    public function formatDurationDataProvider()
     {
         return array(
             array (0, false, '00:00'),
@@ -111,14 +112,14 @@ class TimeHelperTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider testFormatQuotaDataProvider
+     * @dataProvider dataProviderTestFormatQuota
      */
     public function testFormatQuota($amount, $sum, $value)
     {
         $this->assertEquals($value, TimeHelper::formatQuota($amount, $sum));
     }
 
-    public function testFormatQuotaDataProvider()
+    public function dataProviderTestFormatQuota()
     {
         return array(
             array (0, 100, '0.00%'),

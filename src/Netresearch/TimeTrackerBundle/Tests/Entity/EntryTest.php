@@ -2,6 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Tests\Entity;
 
+use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Netresearch\TimeTrackerBundle\Entity\Entry;
 use Netresearch\TimeTrackerBundle\Entity\User;
@@ -10,7 +11,7 @@ use Netresearch\TimeTrackerBundle\Entity\Account;
 use Netresearch\TimeTrackerBundle\Entity\Customer;
 use Netresearch\TimeTrackerBundle\Entity\Activity;
 
-class EntryTest extends \PHPUnit_Framework_TestCase
+class EntryTest extends TestCase
 {
     public function testGetterSetter()
     {
@@ -155,10 +156,10 @@ class EntryTest extends \PHPUnit_Framework_TestCase
         try {
             $entry->validateDuration();
         } catch(\Exception $e) {
-            return true;
+
         }
 
-        $this->fail('An expected exception has not been raised.');
+        $this->assertNotNull($e, 'An expected exception has not been raised.');
     }
 
     public function testToArray()

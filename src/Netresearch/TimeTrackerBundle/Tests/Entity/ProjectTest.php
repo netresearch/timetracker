@@ -2,13 +2,14 @@
 
 namespace Netresearch\TimeTrackerBundle\Tests\Entity;
 
+use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Entity\Customer;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 
-class ProjectTest extends \PHPUnit_Framework_TestCase
+class ProjectTest extends TestCase
 {
     public function testFluentInterface()
     {

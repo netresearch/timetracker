@@ -5,18 +5,19 @@ namespace Netresearch\TimeTrackerBundle\Tests\Helper;
 require_once(dirname(__FILE__) . "/../../Helper/TicketHelper.php");
 
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
+use PHPUnit\Framework\TestCase;
 
-class TicketHelperTest extends \PHPUnit_Framework_TestCase
+class TicketHelperTest extends TestCase
 {
     /**
-     * @dataProvider tectCheckTicketFormatDataProvider
+     * @dataProvider checkTicketFormatDataProvider
      */
     public function testCheckTicketFormat($value, $ticket)
     {
         $this->assertEquals($value, TicketHelper::checkFormat($ticket));
     }
 
-    public function tectCheckTicketFormatDataProvider()
+    public function checkTicketFormatDataProvider()
     {
         return array(
             array(false, ''),
@@ -30,7 +31,6 @@ class TicketHelperTest extends \PHPUnit_Framework_TestCase
 
             array(true, 'ABC-1234'),
             array(true, 'ABC-1234567'),
-            array(true, 'ABCSUP::2ND-1234567'),
             array(true, 'OGN-1')
         );
     }
