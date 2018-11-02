@@ -4,9 +4,7 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
-use Netresearch\TimeTrackerBundle\Entity\User as User;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
-use Netresearch\TimeTrackerBundle\Entity\Ticket;
 use Netresearch\TimeTrackerBundle\Model\Jira as Jira;
 use Netresearch\TimeTrackerBundle\Response\Error;
 use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
@@ -14,7 +12,6 @@ use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
 use Netresearch\TimeTrackerBundle\Model\Response;
-use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 class CrudController extends BaseController
@@ -66,6 +63,7 @@ class CrudController extends BaseController
      * @param \Netresearch\TimeTrackerBundle\Entity\Entry
      * @param TicketSystem|null $ticketSystem
      * @return void
+     * @throws JiraApiException
      */
     private function deleteJiraWorklog(
         Entry $entry,
@@ -568,14 +566,15 @@ class CrudController extends BaseController
     }
 
 
-
     /**
      * Updates a JIRA work log entry.
      *
      * @param Entry $entry
      * @param Entry $oldEntry
      *
+     * @param TicketSystem|null $ticketSystem
      * @return void
+     * @throws JiraApiException
      */
     private function updateJiraWorklog(
         Entry $entry,
