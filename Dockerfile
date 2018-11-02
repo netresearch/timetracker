@@ -4,7 +4,15 @@ RUN set -ex \
  && apt-get update -y \
  && apt-get upgrade -y \
  && apt-get install -y libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
- && docker-php-ext-install opcache pdo_mysql ldap zip xml gd \
+ && curl -sS -o /tmp/icu.tar.gz -L http://download.icu-project.org/files/icu4c/62.1/icu4c-62_1-src.tgz \
+ && tar -zxf /tmp/icu.tar.gz -C /tmp \
+ && cd /tmp/icu/source \
+ && ./configure --prefix=/usr/local \
+ && make \
+ && make install \
+ && rm -rf /tmp/icu* \
+ && docker-php-ext-configure intl --with-icu-dir=/usr/local \
+ && docker-php-ext-install opcache pdo_mysql ldap zip xml gd intl \
 # clean up
  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false \
     libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
@@ -21,6 +29,7 @@ COPY . /var/www/html
 
 RUN mkdir -p /var/www/html/app/logs \
  && mkdir -p /var/www/html/app/cache \
- && chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache
+ && chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache \
+ && echo "short_open_tag = off" >> /usr/local/etc/php/conf.d/symfony.ini
 
 VOLUME /var/www/html/app/logs /var/www/html/app/cache

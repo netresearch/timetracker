@@ -63,7 +63,7 @@ services:
 
     nr.twig.nr_array_translator:
         class: Netresearch\TimeTrackerBundle\Extension\NrArrayTranslator
-        arguments: [@translator]
+        arguments: ['@translator']
         tags:
             - { name: twig.extension }
 
@@ -74,4 +74,4 @@ services:
 
     nr.timetracker.export:
         class: Netresearch\TimeTrackerBundle\Services\Export
-        arguments: [@service_container]
+        arguments: ['@service_container']
