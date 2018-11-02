@@ -386,6 +386,50 @@ class JiraOAuthApi
     }
 
     /**
+     * @param Entry $entry
+     * @return string
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException
+     */
+    public function createTicket(Entry $entry)
+    {
+        return $this->post(
+            "issue/",
+            [
+                'fields' => [
+                    'project'     => [
+                        'key' => $entry->getProject()->getInternalJiraProjectKey(),
+                    ],
+                    'summary'     => $entry->getTicket(),
+                    'description' => $entry->getTicketSystemIssueLink(),
+                    'issuetype'   => [
+                        'name' => 'Task',
+                    ],
+                ],
+            ]
+        );
+    }
+
+    /**
+     * @param string $jql
+     * @param string $fields
+     * @param int    $limit
+     * @return string
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException
+     */
+    public function searchTicket($jql, $fields, $limit = 1)
+    {
+        $query = http_build_query([
+            'jql'        => $jql,
+            'fields'     => $fields,
+            'maxResults' => $limit,
+        ]);
+
+        return $this->get("search/?" . $query);
+    }
+
+    /**
      * Checks existence of a ticket in Jira
      *
      * @param string $sTicket

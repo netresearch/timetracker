@@ -2,10 +2,12 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
+use Netresearch\TimeTrackerBundle\Entity\Activity;
+use Netresearch\TimeTrackerBundle\Entity\Customer;
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
-use Netresearch\TimeTrackerBundle\Model\Jira as Jira;
+use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Response\Error;
 use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
@@ -28,6 +30,7 @@ class CrudController extends BaseController
 
         if (0 != $request->request->get('id')) {
             $doctrine = $this->getDoctrine();
+            /** @var Entry $entry */
             $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')
                 ->find($request->request->get('id'));
 
@@ -60,7 +63,7 @@ class CrudController extends BaseController
      * Deletes a work log entry in a remote JIRA installation.
      * JIRA instance is defined by ticket system in project.
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry
+     * @param Entry             $entry
      * @param TicketSystem|null $ticketSystem
      * @return void
      * @throws JiraApiException
@@ -70,7 +73,7 @@ class CrudController extends BaseController
         TicketSystem $ticketSystem = null
     ) {
         $project = $entry->getProject();
-        if (! $project instanceof \Netresearch\TimeTrackerBundle\Entity\Project) {
+        if (! $project instanceof Project) {
             return;
         }
 
@@ -84,7 +87,7 @@ class CrudController extends BaseController
                 ->find($project->getInternalJiraTicketSystem());
         }
 
-        if (! $ticketSystem instanceof \Netresearch\TimeTrackerBundle\Entity\TicketSystem) {
+        if (! $ticketSystem instanceof TicketSystem) {
             return;
         }
 
@@ -92,7 +95,9 @@ class CrudController extends BaseController
             return;
         }
 
-        $jiraOAuthApi = new JiraOAuthApi($entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
+        $jiraOAuthApi = new JiraOAuthApi(
+            $entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router')
+        );
         $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
     }
 
@@ -113,7 +118,7 @@ class CrudController extends BaseController
 
         $doctrine = $this->getDoctrine();
         $manager = $doctrine->getManager();
-        /* @var $entries \Netresearch\TimeTrackerBundle\Entity\Entry[] */
+        /* @var $entries Entry[] */
         $entries = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')
             ->findByDay((int) $userId, $day);
 
@@ -192,6 +197,7 @@ class CrudController extends BaseController
             // We make a copy to determine if we have to update JIRA
             $oldEntry = clone $entry;
 
+            /** @var Project $project */
             if ($project = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project')->find($request->get('project'))) {
                 if (! $project->getActive()) {
                     $message = $this->get('translator')->trans("This project is inactive and cannot be used for booking.");
@@ -200,6 +206,7 @@ class CrudController extends BaseController
                 $entry->setProject($project);
             }
 
+            /** @var Customer $customer */
             if ($customer = $doctrine->getRepository('NetresearchTimeTrackerBundle:Customer')->find($request->get('customer'))) {
                 if (! $customer->getActive()) {
                     $message = $this->get('translator')->trans("This customer is inactive and cannot be used for booking.");
@@ -213,6 +220,7 @@ class CrudController extends BaseController
                 ->find($this->_getUserId($request));
             $entry->setUser($user);
 
+            /** @var Activity $activity */
             if ($activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')->find($request->get('activity'))) {
                 $entry->setActivity($activity);
             }
@@ -257,8 +265,6 @@ class CrudController extends BaseController
             try {
                 $this->handleInternalTicketSystem($entry, $oldEntry);
             } catch (\Throwable $exception) {
-                $alert = $exception->getMessage();
-            } catch (\Exception $exception) {
                 $alert = $exception->getMessage();
             }
 
@@ -329,12 +335,16 @@ class CrudController extends BaseController
                 throw new \Exception('Preset not found');
 
             // Retrieve needed objects
+            /** @var User $user */
             $user     = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
                 ->find($this->_getUserId($request));
+            /** @var Customer $customer */
             $customer = $doctrine->getRepository('NetresearchTimeTrackerBundle:Customer')
                 ->find($preset->getCustomerId());
+            /** @var Project $project */
             $project  = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project')
                 ->find($preset->getProjectId());
+            /** @var Activity $activity */
             $activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')
                 ->find($preset->getActivityId());
             $em = $doctrine->getManager();
@@ -483,7 +493,7 @@ class CrudController extends BaseController
 
 
     /**
-     * TTT-199: check if ticket prefix matches project's JIRA id.
+     * TTT-199: check if ticket prefix matches project's Jira id.
      *
      * @param Project $project
      * @param string $ticket
@@ -517,7 +527,7 @@ class CrudController extends BaseController
         }
 
         $message = $this->get('translator')->trans(
-            "The ticket's JIRA ID '%ticket_jira_id%' does not match the project's JIRA ID '%project_jira_id%'.",
+            "The ticket's Jira ID '%ticket_jira_id%' does not match the project's Jira ID '%project_jira_id%'.",
             array('%ticket_jira_id%' => $jiraId, '%project_jira_id%' => $project->getJiraId())
         );
 
@@ -575,6 +585,7 @@ class CrudController extends BaseController
      * @param TicketSystem|null $ticketSystem
      * @return void
      * @throws JiraApiException
+     * @throws \Netresearch\TimeTrackerBundle\Helper\JiraApiInvalidResourceException
      */
     private function updateJiraWorklog(
         Entry $entry,
@@ -582,14 +593,14 @@ class CrudController extends BaseController
         TicketSystem $ticketSystem = null
     ){
         $project = $entry->getProject();
-        if (! $project instanceof \Netresearch\TimeTrackerBundle\Entity\Project) {
+        if (! $project instanceof Project) {
             return;
         }
 
         if (empty($ticketSystem)) {
             $ticketSystem = $project->getTicketSystem();
         }
-        if (! $ticketSystem instanceof \Netresearch\TimeTrackerBundle\Entity\TicketSystem) {
+        if (! $ticketSystem instanceof TicketSystem) {
             return;
         }
 
@@ -604,7 +615,9 @@ class CrudController extends BaseController
             $entry->setWorklogId(NULL);
         }
 
-        $jiraOAuthApi = new JiraOAuthApi($entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
+        $jiraOAuthApi = new JiraOAuthApi(
+            $entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router')
+        );
         $jiraOAuthApi->updateEntryJiraWorkLog($entry);
     }
 
@@ -612,20 +625,22 @@ class CrudController extends BaseController
     /**
      * Creates an Ticket in the given ticketSystem
      *
-     * @return array
+     * @param Entry $entry
+     * @param TicketSystem|null $ticketSystem
+     * @return string
      *
+     * @throws JiraApiException
+     * @throws \Netresearch\TimeTrackerBundle\Helper\JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-create-issue
-     *
      */
     protected function createTicket(
         Entry $entry,
         TicketSystem $ticketSystem = null
     ) {
-        $jiraUserApi = new JiraUserApi($entry->getUser(), $ticketSystem, $this->container);
-
-        $ticket = $jiraUserApi->post(
-            sprintf("/rest/api/2/issue/"), $entry->getPostDataForInternalJiraTicketCreation()
+        $jiraOAuthApi = new JiraOAuthApi(
+            $entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->container->get('router')
         );
+        $ticket = $jiraOAuthApi->createTicket($entry);
 
         return $ticket;
     }
@@ -634,11 +649,13 @@ class CrudController extends BaseController
     /**
      * Handles the entry for the configured internal ticketsystem.
      *
-     * @param Entry $entry    the current entry
+     * @param Entry $entry the current entry
      * @param Entry $oldEntry the old entry
      *
      * @return void
      *
+     * @throws JiraApiException
+     * @throws \Netresearch\TimeTrackerBundle\Helper\JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-query-issues
      */
     protected  function handleInternalTicketSystem($entry, $oldEntry)
@@ -672,49 +689,40 @@ class CrudController extends BaseController
         }
 
 
-        // get ticket system for internal worklog
+        // get ticket system for internal work log
+        /** @var TicketSystem $internalTicketSystem */
         $internalTicketSystem = $this->getDoctrine()
                 ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
                 ->find($internalTicketSystem);
 
         // check if issue exist
-        $jiraUserApi = new JiraUserApi($entry->getUser(), $internalTicketSystem, $this->container);
-        // query for searching for existing internal ticket
-        $issues = $jiraUserApi->get(sprintf(
-            '/rest/api/2/search?maxResults=1&jql=project=%s%%20AND%%20summary~%s&fields=key,summary',
-            $project->getInternalJiraProjectKey(),
-            $strTicket
-        ));
-
-        $issueList = new Jira\Issues($issues);
+        $jiraOAuthApi = new JiraOAuthApi(
+            $entry->getUser(), $internalTicketSystem, $this->getDoctrine(), $this->container->get('router')
+        );
+        $searchResult = $jiraOAuthApi->searchTicket(
+            sprintf(
+                'project = %s AND summary ~ %s',
+                $project->getInternalJiraProjectKey(),
+                $strTicket
+            ),
+            'key,summary',
+            1
+        );
 
         //issue already exists in internal jira
-        if ($issueList->hasIssues()) {
-            $issue = $issueList->first();
+        if (count($searchResult->issues)) {
+            $issue = reset($searchResult->issues);
         } else {
             //issue does not exists, create it.
             $issue = $this->createTicket($entry, $internalTicketSystem);
-
-            $issue = new Jira\Issue($issue);
-
-            if ($issue->hasErrors()) {
-                throw new \Exception(
-                    'Failed creating internal JIRA ticket: '
-                    . json_encode($issue->getErrorMessage())
-                    . " | POST DATA: "
-                    . json_encode(
-                        $entry->getPostDataForInternalJiraTicketCreation()
-                    )
-                );
-            }
         }
 
         $entry->setInternalJiraTicketOriginalKey(
             $strTicket
         );
-        $entry->setTicket($issue->getKey());
+        $entry->setTicket($issue->key);
 
-        $oldEntry->setTicket($issue->getKey());
+        $oldEntry->setTicket($issue->key);
 
         $oldEntry->setInternalJiraTicketOriginalKey(
             $strOdlEntryTicket
@@ -730,9 +738,11 @@ class CrudController extends BaseController
     /**
      * Returns true, if the ticket should be deleted.
      *
+     * @param Entry $entry
+     * @param Entry $oldEntry
      * @return bool
      */
-    protected function shouldTicketBeDeleted($entry, $oldEntry)
+    protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry)
     {
         $bDifferentTickets
             = $oldEntry->getTicket() != $entry->getTicket();
