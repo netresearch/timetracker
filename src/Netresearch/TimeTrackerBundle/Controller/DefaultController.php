@@ -374,6 +374,14 @@ class DefaultController extends BaseController
         return $response;
     }
 
+    /**
+     * Handles returning user from OAuth service.
+     *
+     * User is redirected to app after accepting or declining granting access for this app.
+     *
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     */
     public function jiraOAuthCallbackAction(Request $request)
     {
         /** @var User $user */

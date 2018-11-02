@@ -3,15 +3,11 @@ FROM php:7-fpm
 RUN set -ex \
  && apt-get update -y \
  && apt-get upgrade -y \
- && apt-get install -y libtevent0 libtdb1 libtalloc2 libldb1 libldb-dev libldap2-dev libcurl4-openssl-dev libpcre16-3 libpcre32-3 libpcrecpp0v5 libpcre3-dev libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
- && ln -s /usr/lib/x86_64-linux-gnu/libldap.so /usr/lib/libldap.so \
- && ln -s /usr/lib/x86_64-linux-gnu/liblber.so /usr/lib/liblber.so \
- && docker-php-ext-install pdo_mysql ldap zip xml gd \
- && pecl install oauth \
- && docker-php-ext-enable oauth \
+ && apt-get install -y libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
+ && docker-php-ext-install opcache pdo_mysql ldap zip xml gd \
 # clean up
  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false \
-    libldb-dev libldap2-dev libcurl4-openssl-dev libpcre3-dev libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
+    libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
  && apt-get -y clean \
  && rm -rf /usr/src/* \
  && rm -rf /tmp/* \
