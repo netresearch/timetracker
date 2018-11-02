@@ -110,12 +110,8 @@ Ext.define('Netresearch.widget.Help', {
             margin: '0 0 10 0',
             items: [{
                 html: 
-                    "<h3>Projekt TimeTracker im JIRA</h3>"
-                    + "<p><a href=\"https://jira.netresearch.de/jira/browse/TTT\">https://jira.netresearch.de/jira/browse/TTT</a></p>"
-                    + "<br/>"
-                    + "<h3>Dokumentation im Wiki</h3>"
-                    + "<p><a href=\"http://wiki.nr/wiki/TimeTracker\">http://wiki.nr/wiki/TimeTracker</a></p>"
-                    + "<br/>"
+                    "<h3>Official project page</h3>"
+                    + "<p><a href=\"https://github.com/netresearch/timetracker\">https://github.com/netresearch/timetracker</a></p>"
                     ,
                 xtype: "panel"
             }]
