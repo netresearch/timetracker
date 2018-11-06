@@ -32,4 +32,7 @@ RUN mkdir -p /var/www/html/app/logs \
  && chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache \
  && echo "short_open_tag = off" >> /usr/local/etc/php/conf.d/symfony.ini
 
+# replace entrypoint and add updating ca-certifcates
+RUN echo "#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates\nexec \"\$@\"" > /usr/local/bin/docker-php-entrypoint
+
 VOLUME /var/www/html/app/logs /var/www/html/app/cache

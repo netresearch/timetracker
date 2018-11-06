@@ -66,6 +66,21 @@ class LdapClient
     protected $teams = [];
 
     /**
+     * @return string[] LDAP options
+     */
+    protected function getLdapOptions()
+    {
+        return [
+            'useSsl'   => $this->_useSSL,
+            'host'     => $this->_host,
+            'username' => $this->_readUser,
+            'password' => $this->_readPass,
+            'baseDn'   => $this->_baseDn,
+            'port'     => $this->_port,
+        ];
+    }
+
+    /**
      * Verify username by searching for it in LDAP.
      *
      * @throws \Exception
@@ -73,21 +88,14 @@ class LdapClient
      *
      * @return array The search result (corresponding ldap entry)
      */
-    protected function _verifyUsername()
+    protected function verifyUsername()
     {
-        $ldap = new Ldap\Ldap(array(
-            'useSsl'    => $this->_useSSL,
-            'host'      => $this->_host,
-            'username'  => $this->_readUser,
-            'password'  => $this->_readPass,
-            'baseDn'    => $this->_baseDn,
-            'port'      => $this->_port,
-        ));
+        $ldap = new Ldap\Ldap($this->getLdapOptions());
 
         try {
             $ldap->bind();
         } catch (Ldap\Exception\LdapException $e) {
-            throw new \Exception('No connection to LDAP.');
+            throw new \Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $e->getMessage() . '');
         }
 
         /* @var $result Ldap\Collection */
@@ -114,16 +122,13 @@ class LdapClient
      * @throws \Exception
      * @return boolean true
      */
-    protected function _verifyPassword(array $ldapEntry)
+    protected function verifyPassword(array $ldapEntry)
     {
-        $ldap = new Ldap\Ldap(array(
-            'host'      => $this->_host,
-            'username'  => $ldapEntry['dn'],
-            'password'  => $this->_userPass,
-            'baseDn'    => $this->_baseDn,
-            'port'      => $this->_port,
-            'useSsl'    => $this->_useSSL,
-        ));
+        $ldapOptions = $this->getLdapOptions();
+        $ldapOptions['username'] = $ldapEntry['dn'];
+        $ldapOptions['password'] = $this->_userPass;
+
+        $ldap = new Ldap\Ldap($ldapOptions);
 
         try {
             $ldap->bind();
@@ -131,7 +136,7 @@ class LdapClient
             if ($this->logger) {
                 $this->logger->addError($e->getMessage());
             }
-            throw new \Exception('Login data could not be validated.');
+            throw new \Exception('Login data could not be validated: ' . $e->getMessage());
         }
 
         return true;
@@ -154,8 +159,8 @@ class LdapClient
 
         // enforce ldap-style login names
         $this->_userName = str_replace(
-            array(' ','ä','ö','ü','ß','é'),
-            array('.','ae','oe','ue','ss','e'),
+            [' ', 'ä', 'ö', 'ü', 'ß', 'é'],
+            ['.', 'ae', 'oe', 'ue', 'ss', 'e'],
             strtolower($username)
         );
 
@@ -284,8 +289,8 @@ class LdapClient
      */
     public function login()
     {
-        return $this->_verifyPassword(
-            $this->_verifyUsername()
+        return $this->verifyPassword(
+            $this->verifyUsername()
         );
     }
 
@@ -311,7 +316,7 @@ class LdapClient
     protected function setTeamsByLdapResponse($ldapRespsonse)
     {
         $dn = $ldapRespsonse['dn'];
-        $mappingFile = __DIR__.'/../../../../app/config/ldap_ou_team_mapping.yml';
+        $mappingFile = __DIR__ . '/../../../../app/config/ldap_ou_team_mapping.yml';
 
         $this->teams = [];
         if (file_exists($mappingFile)) {
