@@ -84,11 +84,11 @@ class Team
     /**
      * Set lead user
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\User $leadUser
+     * @param User $leadUser
      *
      * @return $this
      */
-    public function setLeadUser(\Netresearch\TimeTrackerBundle\Entity\User $leadUser)
+    public function setLeadUser(User $leadUser)
     {
         $this->leadUser = $leadUser;
         return $this;
@@ -97,7 +97,7 @@ class Team
     /**
      * Get lead user
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\User $leadUser
+     * @return User $leadUser
      */
     public function getLeadUser()
     {
@@ -115,10 +115,10 @@ class Team
     /**
      * Add customers
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customers
+     * @param Customer $customers
      * @return Team
      */
-    public function addCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customers)
+    public function addCustomer(Customer $customers)
     {
         $this->customers[] = $customers;
         return $this;
@@ -127,9 +127,9 @@ class Team
     /**
      * Remove customers
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customers
+     * @param Customer $customers
      */
-    public function removeCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customers)
+    public function removeCustomer(Customer $customers)
     {
         $this->customers->removeElement($customers);
     }

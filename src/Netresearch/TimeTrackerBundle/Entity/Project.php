@@ -14,10 +14,10 @@ use Netresearch\TimeTrackerBundle\Model\Base as Base;
 class Project extends Base
 {
 
-    const BILLING_NONE      = 0;
-    const BILLING_TM        = 1;
-    const BILLING_FP        = 2;
-    const BILLING_MIXED     = 3;
+    const BILLING_NONE  = 0;
+    const BILLING_TM    = 1;
+    const BILLING_FP    = 2;
+    const BILLING_MIXED = 3;
 
     /**
      * @ORM\Id
@@ -274,11 +274,11 @@ class Project extends Base
     /**
      * Set customer
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @param Customer $customer
      *
      * @return $this
      */
-    public function setCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customer)
+    public function setCustomer(Customer $customer)
     {
         $this->customer = $customer;
         return $this;
@@ -287,7 +287,7 @@ class Project extends Base
     /**
      * Get customer
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @return Customer $customer
      */
     public function getCustomer()
     {
@@ -324,10 +324,10 @@ class Project extends Base
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entry
+     * @param Entry $entry
      * @return Project
      */
-    public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entry)
+    public function addEntries(Entry $entry)
     {
         $this->entries[] = $entry;
         return $this;
@@ -336,7 +336,7 @@ class Project extends Base
     /**
      * Get entries
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Entry[] $entries
+     * @return \Doctrine\Common\Collections\Collection $entries
      */
     public function getEntries()
     {
@@ -500,10 +500,10 @@ class Project extends Base
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      * @return Project
      */
-    public function addEntry(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntry(Entry $entries)
     {
         $this->entries[] = $entries;
         return $this;
@@ -512,9 +512,9 @@ class Project extends Base
     /**
      * Remove entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      */
-    public function removeEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function removeEntrie(Entry $entries)
     {
         $this->entries->removeElement($entries);
     }
@@ -522,10 +522,10 @@ class Project extends Base
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      * @return Project
      */
-    public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntrie(Entry $entries)
     {
         $this->entries[] = $entries;
 
@@ -563,13 +563,14 @@ class Project extends Base
     }
 
     /**
-     * Returns true, if the passed projectkey matches the configured internal project key.
+     * Returns true, if the passed project key matches the configured internal project key.
      *
+     * @param string $projectKey
      * @return bool
      */
-    public function matchesInternalProject($strProjectKey)
+    public function matchesInternalProject($projectKey)
     {
-        return $strProjectKey === $this->getInternalJiraProjectKey();
+        return $projectKey === $this->getInternalJiraProjectKey();
     }
 
 }

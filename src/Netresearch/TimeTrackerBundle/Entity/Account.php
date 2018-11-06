@@ -80,9 +80,9 @@ class Account
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      */
-    public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntries(Entry $entries)
     {
         $this->entries[] = $entries;
     }
@@ -98,34 +98,34 @@ class Account
     }
 
     /**
-     * Add entries
+     * Add entry
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entry
      * @return Account
      */
-    public function addEntry(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntry(Entry $entry)
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
         return $this;
     }
 
     /**
-     * Remove entries
+     * Remove entry
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entry
      */
-    public function removeEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function removeEntrie(Entry $entry)
     {
-        $this->entries->removeElement($entries);
+        $this->entries->removeElement($entry);
     }
 
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      * @return Account
      */
-    public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntrie(Entry $entries)
     {
         $this->entries[] = $entries;
 

@@ -20,7 +20,6 @@ use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Model\ExternalTicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use \chobie\Jira;
 
 /**
  * Class Export
@@ -121,11 +120,13 @@ class Export
      */
     public function exportEntries($userId,$year, $month, array $arSort = null)
     {
+        /*
         $entriesRequireAdditionalInformation = $this->getEntriesRequireAddInfo($userId, $year, $month);
         if (0 < count($entriesRequireAdditionalInformation)) {
             $this->extractTicketSystems($entriesRequireAdditionalInformation);
             $this->fetchAdditionalInfoFromExternalJira();
         }
+        */
 
         return $this->getEnrichedEntries($userId, $year, $month, $arSort);
     }
@@ -163,7 +164,7 @@ class Export
      * @param integer $year   Filter entries by year
      * @param integer $month  Filter entries by month
      *
-     * @return array[]
+     * @return Entry[]
      */
     protected function getEntriesRequireAddInfo($userId, $year, $month)
     {

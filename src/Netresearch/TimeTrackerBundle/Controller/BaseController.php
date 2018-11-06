@@ -19,9 +19,6 @@ use Netresearch\TimeTrackerBundle\Helper\LocalizationHelper as LocalizationHelpe
 use Netresearch\TimeTrackerBundle\Helper\LoginHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
-use Netresearch\TimeTrackerBundle\Helper;
-
-use \Doctrine AS Doctrine;
 use Symfony\Component\HttpFoundation\Request;
 
 /**

@@ -17,7 +17,6 @@ class ProjectRepository extends EntityRepository
     }
 
 
-
     /**
      * Returns an array structure with keys of customer IDs
      * The values are arrays of projects.
@@ -26,6 +25,7 @@ class ProjectRepository extends EntityRepository
      * @param int $userId
      * @param array $customers
      * @return array
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function getProjectStructure($userId, array $customers)
     {
@@ -83,6 +83,12 @@ class ProjectRepository extends EntityRepository
     }
 
 
+    /**
+     * @param $userId
+     * @param null $customerId
+     * @return array
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function getProjectsByUser($userId, $customerId = null)
     {
         $connection = $this->getEntityManager()->getConnection();
@@ -105,6 +111,11 @@ class ProjectRepository extends EntityRepository
         return $this->findByQuery($stmt);
     }
 
+    /**
+     * @param int $customerId
+     * @return array
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function findAll($customerId = 0)
     {
         $connection = $this->getEntityManager()->getConnection();
@@ -125,7 +136,11 @@ class ProjectRepository extends EntityRepository
         return $this->findByQuery($stmt);
     }
 
-    protected function findByQuery($stmt)
+    /**
+     * @param \Doctrine\DBAL\Driver\Statement $stmt
+     * @return array
+     */
+    protected function findByQuery(\Doctrine\DBAL\Driver\Statement $stmt)
     {
         $projects = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $data = array();

@@ -77,14 +77,14 @@ class EntryRepository extends EntityRepository
     }
 
 
-
     /**
      * Returns work log entries for user and recent days.
      *
      * @param integer $userId Filter by user ID
-     * @param integer $days   Filter by recent days
+     * @param integer $days Filter by recent days
      *
      * @return array
+     * @throws \Exception
      */
     public function findByRecentDaysOfUser($userId, $days = 3)
     {
@@ -232,15 +232,15 @@ class EntryRepository extends EntityRepository
     }
 
 
-
     /**
      * Get array of entries of given user.
      *
-     * @param integer $userId     Filter by user ID
-     * @param integer $days       Filter by x days in past
+     * @param integer $userId Filter by user ID
+     * @param integer $days Filter by x days in past
      * @param boolean $showFuture Include work log entries from future
      *
      * @return array
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function getEntriesByUser($userId, $days = 3, $showFuture = true)
     {
@@ -324,16 +324,16 @@ class EntryRepository extends EntityRepository
     }
 
 
-
     /**
      * Query summary information regarding the current entry for the following
      * scopes: customer, project, activity, ticket
      *
      * @param integer $entryId The current entry's identifier
-     * @param integer $userId  The current user's identifier
-     * @param array   $data    The initial (default) summary
+     * @param integer $userId The current user's identifier
+     * @param array $data The initial (default) summary
      *
      * @return array
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function getEntrySummary($entryId, $userId, $data)
     {
@@ -417,7 +417,6 @@ class EntryRepository extends EntityRepository
     }
 
 
-
     /**
      * Query the current user's work by given period
      *
@@ -425,6 +424,7 @@ class EntryRepository extends EntityRepository
      * @param int $period The requested period (day / week / month)
      *
      * @return array
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function getWorkByUser($userId, $period = self::PERIOD_DAY)
     {
@@ -432,7 +432,7 @@ class EntryRepository extends EntityRepository
 
         $sql['select'] = "SELECT COUNT(id) AS count, SUM(duration) AS duration";
         $sql['from'] = "FROM entries";
-        $sql['where_user'] = "WHERE user_id = " . $userId;
+        $sql['where_user'] = "WHERE user_id = " . intval($userId);
 
         switch($period) {
         case self::PERIOD_DAY :

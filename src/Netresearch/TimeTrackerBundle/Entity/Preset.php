@@ -154,11 +154,11 @@ class Preset extends Base
     /**
      * Set customer
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @param Customer $customer
      *
      * @return $this
      */
-    public function setCustomer(\Netresearch\TimeTrackerBundle\Entity\Customer $customer)
+    public function setCustomer(Customer $customer)
     {
         $this->customer = $customer;
         return $this;
@@ -167,7 +167,7 @@ class Preset extends Base
     /**
      * Get customer
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Customer $customer
+     * @return Customer $customer
      */
     public function getCustomer()
     {
@@ -178,11 +178,11 @@ class Preset extends Base
     /**
      * Set project
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @param Project $project
      *
      * @return $this
      */
-    public function setProject(\Netresearch\TimeTrackerBundle\Entity\Project $project)
+    public function setProject(Project $project)
     {
         $this->project = $project;
         return $this;
@@ -191,7 +191,7 @@ class Preset extends Base
     /**
      * Get project
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @return Project $project
      */
     public function getProject()
     {
@@ -202,11 +202,11 @@ class Preset extends Base
     /**
      * Set activity
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @param Activity $activity
      *
      * @return $this
      */
-    public function setActivity(\Netresearch\TimeTrackerBundle\Entity\Activity $activity)
+    public function setActivity(Activity $activity)
     {
         $this->activity = $activity;
         return $this;
@@ -215,7 +215,7 @@ class Preset extends Base
     /**
      * Get activity
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @return Activity $activity
      */
     public function getActivity()
     {
@@ -231,12 +231,12 @@ class Preset extends Base
     public function toArray()
     {
         return array(
-            'id'            => $this->getId(),
-            'name'          => $this->getName(),
-            'customer'      => $this->getCustomer() ? $this->getCustomer()->getId() : null,
-            'project'       => $this->getProject() ? $this->getProject()->getId() : null,
-            'activity'      => $this->getActivity() ? $this->getActivity()->getId() : null,
-            'description'   => $this->getDescription()
+            'id'          => $this->getId(),
+            'name'        => $this->getName(),
+            'customer'    => $this->getCustomer() ? $this->getCustomer()->getId() : null,
+            'project'     => $this->getProject() ? $this->getProject()->getId() : null,
+            'activity'    => $this->getActivity() ? $this->getActivity()->getId() : null,
+            'description' => $this->getDescription(),
         );
     }
 }

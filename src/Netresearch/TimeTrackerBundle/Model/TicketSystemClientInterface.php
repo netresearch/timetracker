@@ -15,6 +15,7 @@
 namespace Netresearch\TimeTrackerBundle\Model;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry;
+use Netresearch\TimeTrackerBundle\Entity\Ticket;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 
 /**

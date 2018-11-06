@@ -16,8 +16,6 @@ class TicketRepository extends EntityRepository
      */
     public function findByTicketNumber(TicketSystem $ticketSystem, $ticketNumber)
     {
-        $connection = $this->getEntityManager()->getConnection();
-
         $query = $this->getEntityManager()->createQuery(
             'SELECT t FROM NetresearchTimeTrackerBundle:Ticket t'
             . ' WHERE t.ticketSystemId = :ticketSystemId'
@@ -32,4 +30,3 @@ class TicketRepository extends EntityRepository
         return $result[0];
     }
 }
-

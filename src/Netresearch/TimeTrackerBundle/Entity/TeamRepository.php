@@ -6,6 +6,10 @@ use Doctrine\ORM\EntityRepository;
 
 class TeamRepository extends EntityRepository
 {
+    /**
+     * @return array
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function findAll()
     {
         $connection = $this->getEntityManager()->getConnection();

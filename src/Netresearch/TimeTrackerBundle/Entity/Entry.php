@@ -110,7 +110,7 @@ class Entry extends Base
     protected $externalSummary = '';
 
     /**
-     * Holds an array of labels assinged for the issue
+     * Holds an array of labels assigned for the issue
      *
      * @var array
      */
@@ -307,7 +307,7 @@ class Entry extends Base
     }
 
     /**
-     * Set JIRA WorklogId
+     * Set Jira WorklogId
      *
      * @param int $worklog_id
      * @return Entry
@@ -319,7 +319,7 @@ class Entry extends Base
     }
 
     /**
-     * Get JIRA WorklogId
+     * Get Jira WorklogId
      *
      * @return int $worklog_id
      */
@@ -478,7 +478,7 @@ class Entry extends Base
     }
 
     /**
-     * Returns duration as formated hours:minutes string.
+     * Returns duration as formatted hours:minutes string.
      *
      * @return string
      */
@@ -494,11 +494,11 @@ class Entry extends Base
     /**
      * Set project
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @param Project $project
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Entry
+     * @return Entry
      */
-    public function setProject(\Netresearch\TimeTrackerBundle\Entity\Project $project)
+    public function setProject(Project $project)
     {
         $this->project = $project;
         return $this;
@@ -507,7 +507,7 @@ class Entry extends Base
     /**
      * Get project
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Project $project
+     * @return Project $project
      */
     public function getProject()
     {
@@ -517,10 +517,10 @@ class Entry extends Base
     /**
      * Set user
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\User $user
+     * @param User $user
      * @return Entry
      */
-    public function setUser(\Netresearch\TimeTrackerBundle\Entity\User $user)
+    public function setUser(User $user)
     {
         $this->user = $user;
         return $this;
@@ -529,7 +529,7 @@ class Entry extends Base
     /**
      * Get user
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\User $user
+     * @return User $user
      */
     public function getUser()
     {
@@ -539,10 +539,10 @@ class Entry extends Base
     /**
      * Set account
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @param Account $account
      * @return Entry
      */
-    public function setAccount(\Netresearch\TimeTrackerBundle\Entity\Account $account)
+    public function setAccount(Account $account)
     {
         $this->account = $account;
         return $this;
@@ -551,7 +551,7 @@ class Entry extends Base
     /**
      * Get account
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Account $account
+     * @return Account $account
      */
     public function getAccount()
     {
@@ -561,10 +561,10 @@ class Entry extends Base
     /**
      * Set activity
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @param Activity $activity
      * @return Entry
      */
-    public function setActivity(\Netresearch\TimeTrackerBundle\Entity\Activity $activity)
+    public function setActivity(Activity $activity)
     {
         $this->activity = $activity;
         return $this;
@@ -573,7 +573,7 @@ class Entry extends Base
     /**
      * Get activity
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\Activity $activity
+     * @return Activity $activity
      */
     public function getActivity()
     {
@@ -587,10 +587,10 @@ class Entry extends Base
      */
     public function toArray()
     {
-        if($this->getCustomer() != null) {
+        if (null !== $this->getCustomer()) {
             $customer = $this->getCustomer()->getId();
         } else {
-            if($this->getProject() && $this->getProject()->getCustomer()) {
+            if ($this->getProject() && $this->getProject()->getCustomer()) {
                 $customer = $this->getProject()->getCustomer()->getId();
             } else {
                 $customer = null;
@@ -747,13 +747,13 @@ class Entry extends Base
     {
        return array(
             'fields' => array (
-                'project' =>  array(
-                    'key' => $this->getProject()->getInternalJiraProjectKey()
+                'project'     =>  array(
+                    'key' => $this->getProject()->getInternalJiraProjectKey(),
                 ),
-                'summary' => $this->getTicket(),
+                'summary'     => $this->getTicket(),
                 'description' => $this->getTicketSystemIssueLink(),
-                'issuetype' => array(
-                    'name' => 'Task'
+                'issuetype'   => array(
+                    'name' => 'Task',
                 ),
             ),
         );

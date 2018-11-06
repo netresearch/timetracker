@@ -2,7 +2,8 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-//use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Netresearch\TimeTrackerBundle\Entity\CustomerRepository;
+use Netresearch\TimeTrackerBundle\Entity\UserRepository;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Netresearch\TimeTrackerBundle\Entity\Contract;
 use Netresearch\TimeTrackerBundle\Entity\Team;
@@ -54,6 +55,11 @@ class AdminController extends BaseController
         return new Response(json_encode($repo->getAllUsers()));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function getTeamsAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -78,6 +84,11 @@ class AdminController extends BaseController
         return new Response(json_encode($repo->getAllPresets()));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \ReflectionException
+     */
     public function getTicketSystemsAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -112,6 +123,7 @@ class AdminController extends BaseController
         $projectId  = (int) $request->get('id');
         $name       = $request->get('name');
 
+        /** @var TicketSystem $ticketSystem */
         $ticketSystem = $request->get('ticket_system') ?
             $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
@@ -148,6 +160,7 @@ class AdminController extends BaseController
         } else {
             $project = new Project();
 
+            /** @var Customer $customer */
             $customer = $this->getDoctrine()
                 ->getRepository('NetresearchTimeTrackerBundle:Customer')
                 ->find($request->get('customer'));
@@ -257,7 +270,7 @@ class AdminController extends BaseController
         $global     = $request->get('global') ? $request->get('global') : 0;
         $teamIds    = $request->get('teams')  ? $request->get('teams')  : array();
 
-        /* @var $customerRepository \Netresearch\TimeTrackerBundle\Entity\CustomerRepository */
+        /* @var CustomerRepository $customerRepository */
         $customerRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer');
 
         if ($customerId) {
@@ -353,7 +366,7 @@ class AdminController extends BaseController
         $locale   = $request->get('locale');
         $teamIds  = $request->get('teams')  ? $request->get('teams')  : array();
 
-        /* @var $userRepository \Netresearch\TimeTrackerBundle\Entity\UserRepository */
+        /* @var UserRepository $userRepository */
         $userRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User');
 
         if ($userId) {
@@ -489,18 +502,18 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id             = (int) $request->get('id');
-        $name           = $request->get('name');
-        $customer       = $this->getDoctrine()
-                        ->getRepository('NetresearchTimeTrackerBundle:Customer')
-                        ->find($request->get('customer'));
-        $project        = $this->getDoctrine()
-                        ->getRepository('NetresearchTimeTrackerBundle:Project')
-                        ->find($request->get('project'));
-        $activity       = $this->getDoctrine()
-                        ->getRepository('NetresearchTimeTrackerBundle:Activity')
-                        ->find($request->get('activity'));
-        $description    = $request->get('description');
+        $id          = (int) $request->get('id');
+        $name        = $request->get('name');
+        $customer    = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:Customer')
+            ->find($request->get('customer'));
+        $project     = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:Project')
+            ->find($request->get('project'));
+        $activity    = $this->getDoctrine()
+            ->getRepository('NetresearchTimeTrackerBundle:Activity')
+            ->find($request->get('activity'));
+        $description = $request->get('description');
 
         if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
@@ -536,7 +549,11 @@ class AdminController extends BaseController
     }
 
 
-
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \ReflectionException
+     */
     public function saveTicketSystemAction(Request $request)
     {
         if (false == $this->_isPl($request)) {
@@ -863,6 +880,11 @@ class AdminController extends BaseController
     }
 
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Exception
+     */
     public function saveContractAction(Request $request)
     {
         if (false == $this->_isPl($request)) {
@@ -880,7 +902,8 @@ class AdminController extends BaseController
         $hours_4    = $request->get('hours_4');
         $hours_5    = $request->get('hours_5');
         $hours_6    = $request->get('hours_6');
-        $user         = $request->get('user_id') ?
+        /** @var User $user */
+        $user       = $request->get('user_id') ?
             $this->getDoctrine()
                 ->getRepository('NetresearchTimeTrackerBundle:User')
                 ->find($request->get('user_id'))

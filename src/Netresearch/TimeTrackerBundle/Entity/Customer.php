@@ -157,11 +157,11 @@ class Customer extends Base
     /**
      * Add projects
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Project $projects
+     * @param Project $projects
      *
      * @return $this
      */
-    public function addProjects(\Netresearch\TimeTrackerBundle\Entity\Project $projects)
+    public function addProjects(Project $projects)
     {
         $this->projects[] = $projects;
         return $this;
@@ -180,11 +180,11 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      *
      * @return $this
      */
-    public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntries(Entry $entries)
     {
         $this->entries[] = $entries;
         return $this;
@@ -212,15 +212,15 @@ class Customer extends Base
     }
 
     /**
-     * Add teams
+     * Add team
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @param Team $team
      *
      * @return $this
      */
-    public function addTeam(\Netresearch\TimeTrackerBundle\Entity\Team $teams)
+    public function addTeam(Team $team)
     {
-        $this->teams[] = $teams;
+        $this->teams[] = $team;
         return $this;
     }
 
@@ -237,10 +237,10 @@ class Customer extends Base
     /**
      * Add projects
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Project $projects
+     * @param Project $projects
      * @return Customer
      */
-    public function addProject(\Netresearch\TimeTrackerBundle\Entity\Project $projects)
+    public function addProject(Project $projects)
     {
         $this->projects[] = $projects;
         return $this;
@@ -249,9 +249,9 @@ class Customer extends Base
     /**
      * Remove projects
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Project $projects
+     * @param Project $projects
      */
-    public function removeProject(\Netresearch\TimeTrackerBundle\Entity\Project $projects)
+    public function removeProject(Project $projects)
     {
         $this->projects->removeElement($projects);
     }
@@ -259,31 +259,31 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entry
      * @return Customer
      */
-    public function addEntry(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntry(Entry $entry)
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
         return $this;
     }
 
     /**
-     * Remove entries
+     * Remove entry
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entry
      */
-    public function removeEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function removeEntrie(Entry $entry)
     {
-        $this->entries->removeElement($entries);
+        $this->entries->removeElement($entry);
     }
 
     /**
      * Remove teams
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @param Team $teams
      */
-    public function removeTeam(\Netresearch\TimeTrackerBundle\Entity\Team $teams)
+    public function removeTeam(Team $teams)
     {
         $this->teams->removeElement($teams);
     }
@@ -291,10 +291,10 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      * @return Customer
      */
-    public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntrie(Entry $entries)
     {
         $this->entries[] = $entries;
 

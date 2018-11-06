@@ -2,8 +2,6 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-use Netresearch\TimeTrackerBundle\Entity\User as User;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 
