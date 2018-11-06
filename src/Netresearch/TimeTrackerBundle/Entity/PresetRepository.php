@@ -14,6 +14,7 @@ class PresetRepository extends EntityRepository
      */
     public function getAllPresets()
     {
+        /** @var Preset[] $presets */
         $presets = $this->findBy(array(), array('name' => 'ASC'));
 
         $data = array();

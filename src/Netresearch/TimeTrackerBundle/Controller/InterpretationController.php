@@ -2,17 +2,21 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
+use Netresearch\TimeTrackerBundle\Entity\Entry;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 
 class InterpretationController extends BaseController
 {
+    /**
+     * @var Entry[]
+     */
     private $cache = null;
 
-    public function sortByName($a, $b) {
+    public function sortByName($a, $b)
+    {
         return strcmp($b['name'], $a['name']);
     }
 
@@ -31,44 +35,59 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->calculateSum($entries);
-        $entrylist = array();
+        $entryList = array();
         foreach($entries AS &$entry) {
             $flatEntry = $entry->toArray();
             $flatEntry['duration'] = TimeHelper::formatDuration($flatEntry['duration']);
             $flatEntry['quota'] = TimeHelper::formatQuota($flatEntry['duration'], $sum);
-            $entrylist[] = array('entry' => $flatEntry);
+            $entryList[] = array('entry' => $flatEntry);
         }
-        return new Response(json_encode($entrylist));
+        return new Response(json_encode($entryList));
     }
 
+    /**
+     * @param Request $request
+     * @return array|null
+     * @throws \Exception
+     */
     private function getCachedEntries(Request $request)
     {
-        if (null != $this->cache)
+        if (null != $this->cache) {
             return $this->cache;
+        }
 
         $this->cache = $this->getEntries($request);
         return $this->cache;
     }
 
+    /**
+     * @return int
+     */
     private function getCachedSum()
     {
-        if (null == $this->cache)
+        if (null == $this->cache) {
             return 0;
+        }
 
         $sum = 0;
-        foreach($this->cache AS &$entry)
+        foreach ($this->cache as $entry) {
             $sum += $entry->getDuration();
+        }
+
         return $sum;
     }
 
     private function calculateSum(&$entries)
     {
-        if (!is_array($entries))
+        if (!is_array($entries)) {
             return 0;
+        }
 
         $sum = 0;
-        foreach($entries AS &$entry)
+        foreach ($entries as $entry) {
             $sum += $entry->getDuration();
+        }
+
         return $sum;
     }
 
@@ -95,9 +114,9 @@ class InterpretationController extends BaseController
 
             if(!isset($customers[$customer])) {
                 $customers[$customer] = array(
-                    'name' => $entry->getCustomer()->getName(),
+                    'name'  => $entry->getCustomer()->getName(),
                     'hours' => 0,
-                    'quota' => 0
+                    'quota' => 0,
                 );
             }
 
@@ -135,9 +154,9 @@ class InterpretationController extends BaseController
 
             if(!isset($projects[$project])) {
                 $projects[$project] = array(
-                    'name' => $entry->getProject()->getName(),
+                    'name'  => $entry->getProject()->getName(),
                     'hours' => 0,
-                    'quota' => 0
+                    'quota' => 0,
                 );
             }
 
@@ -175,9 +194,9 @@ class InterpretationController extends BaseController
             if(!empty($ticket) && $ticket != '-'){
                 if(!isset($tickets[$ticket])) {
                     $tickets[$ticket] = array(
-                        'name' => $ticket,
+                        'name'  => $ticket,
                         'hours' => 0,
-                        'quota' => 0
+                        'quota' => 0,
                     );
                 }
 
@@ -197,12 +216,13 @@ class InterpretationController extends BaseController
     /**
      * Returns the data for the analysing chart "effort per employee".
      *
+     * @param Request $request
      * @return Response
      */
     public function groupByUserAction(Request $request)
     {
         #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
-        $request->query->set('user', $this->_getUserId());
+        $request->query->set('user', $this->_getUserId($request));
 
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -218,14 +238,14 @@ class InterpretationController extends BaseController
 
         $users = array();
 
-        foreach($entries as $entry) {
+        foreach ($entries as $entry) {
             $user = $entry->getUser()->getId();
 
-            if(!isset($users[$user])) {
+            if (!isset($users[$user])) {
                 $users[$user] = array(
-                    'name' => $entry->getUser()->getUsername(),
+                    'name'  => $entry->getUser()->getUsername(),
                     'hours' => 0,
-                    'quota' => 0
+                    'quota' => 0,
                 );
             }
 
@@ -233,8 +253,9 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach($users AS &$user)
+        foreach ($users as $user) {
             $user['quota'] = TimeHelper::formatQuota($user['hours'], $sum);
+        }
 
         usort($users, array($this, 'sortByName'));
         return new Response(json_encode($this->normalizeData($users)));
@@ -263,8 +284,8 @@ class InterpretationController extends BaseController
 
             if(!isset($times[$day_r])) {
                 $times[$day_r] = array(
-                    'name' => $day_r,
-                    'day' => $day_l,
+                    'name'  => $day_r,
+                    'day'   => $day_l,
                     'hours' => 0,
                     'quota' => 0
                 );
@@ -302,9 +323,9 @@ class InterpretationController extends BaseController
 
             if(!isset($activities[$activityId])) {
                 $activities[$activityId] = array(
-                    'id' => $activityId,
-                    'name' => $entry->getActivity()->getName(),
-                    'hours' => 0
+                    'id'    => $activityId,
+                    'name'  => $entry->getActivity()->getName(),
+                    'hours' => 0,
                 );
             }
 
@@ -325,7 +346,7 @@ class InterpretationController extends BaseController
      *
      * @param Request $request
      * @param integer $maxResults
-     * @return array
+     * @return Entry[]
      * @throws \Exception
      */
     private function getEntries(Request $request, $maxResults = null)
@@ -368,38 +389,8 @@ class InterpretationController extends BaseController
         return null;
     }
 
-    private function getConditions(Request $request)
+    private function normalizeData(array $data)
     {
-        $conditions = array();
-
-        strlen($request->query->get('customer')) ?
-            $conditions['customer'] = $request->query->get('customer')
-            : false;
-
-        strlen($request->query->get('project')) ?
-            $conditions['project'] = $request->query->get('project')
-            : false;
-
-        strlen($request->query->get('team')) ?
-            $conditions['team'] = $request->query->get('team')
-            : false;
-
-        strlen($request->query->get('user')) ?
-            $conditions['user'] = $request->query->get('user')
-            : false;
-
-        strlen($request->query->get('description')) ?
-            $conditions['description'] = $request->query->get('description')
-            : false;
-
-        strlen($request->query->get('activity')) ?
-            $conditions['activity'] = $request->query->get('activity')
-            : false;
-
-        return $conditions;
-    }
-
-    private function normalizeData(array $data) {
         $normalized = array();
 
         foreach($data as $d) {

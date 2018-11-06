@@ -11,16 +11,17 @@ class ActivityRepository extends EntityRepository
      */
     public function getActivities()
     {
-        $activities = $this->findBy(array(), array('name' => 'ASC'));
+        /** @var Activity[] $activities */
+        $activities = $this->findBy([], ['name' => 'ASC']);
         
-        $data = array();
+        $data = [];
         foreach ($activities as $activity) {
-            $data[] = array('activity' => array(
-                'id'            => $activity->getId(),
-                'name'          => $activity->getName(),
-                'needsTicket'   => $activity->getNeedsTicket(),
-                'factor'        => $activity->getFactor()
-            ));
+            $data[] = ['activity' => [
+                'id'          => $activity->getId(),
+                'name'        => $activity->getName(),
+                'needsTicket' => $activity->getNeedsTicket(),
+                'factor'      => $activity->getFactor(),
+            ]];
         }
         
         return $data;

@@ -18,12 +18,6 @@ use Netresearch\TimeTrackerBundle\Model\Response;
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
-use Netresearch\TimeTrackerBundle\Entity\User as User;
-use Netresearch\TimeTrackerBundle\Model\ExternalTicketSystem;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
-use Netresearch\TimeTrackerBundle\Helper;
 use Symfony\Component\HttpFoundation\Request;
 
 /**

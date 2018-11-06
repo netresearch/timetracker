@@ -5,7 +5,6 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 use Netresearch\TimeTrackerBundle\Entity\Team;
 use Netresearch\TimeTrackerBundle\Entity\TeamRepository;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
-use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 use Netresearch\TimeTrackerBundle\Entity\ProjectRepository;
 use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
@@ -14,12 +13,8 @@ use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
 use Netresearch\TimeTrackerBundle\Entity\User;
 
-use OAuth;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
-use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Request;
-use Netresearch\TimeTrackerBundle\Helper;
 
 class DefaultController extends BaseController
 {
@@ -198,41 +193,41 @@ class DefaultController extends BaseController
 
         $data = array(
             'customer' => array(
-                'scope'   => 'customer',
-                'name'    => '',
-                'entries' => 0,
-                'total'   => 0,
-                'own'           => 0,
-                'estimation'    => 0,
-                'quota'         => 0,
+                'scope'      => 'customer',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
             ),
             'project' => array(
-                'scope'   => 'project',
-                'name'    => '',
-                'entries' => 0,
-                'total'   => 0,
-                'own'           => 0,
-                'estimation'    => 0,
-                'quota'         => 0,
+                'scope'      => 'project',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
             ),
             'activity' => array(
-                'scope'   => 'activity',
-                'name'    => '',
-                'entries' => 0,
-                'total'   => 0,
-                'own'           => 0,
-                'estimation'    => 0,
-                'quota'         => 0,
+                'scope'      => 'activity',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
             ),
             'ticket' => array(
-                'scope'   => 'ticket',
-                'name'    => '',
-                'entries' => 0,
-                'total'   => 0,
-                'own'           => 0,
-                'estimation'    => 0,
-                'quota'         => 0,
-            )
+                'scope'      => 'ticket',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
+            ),
         );
 
         // early exit, if POST parameter for current entry is not given
@@ -257,6 +252,8 @@ class DefaultController extends BaseController
 
     /**
      * Retrieves all current entries of the user logged in.
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      */
     public function getDataAction(Request $request)
     {

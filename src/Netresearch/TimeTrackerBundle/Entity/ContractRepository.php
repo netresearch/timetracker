@@ -17,28 +17,28 @@ class ContractRepository extends EntityRepository
      */
     public function getContracts()
     {
-        $contracts = $this->findBy(array(), array('start' => 'ASC'));
-        $data = array();
+        $contracts = $this->findBy([], ['start' => 'ASC']);
+        $data = [];
 
         /* @var Contract $contract */
         foreach ($contracts as $contract) {
-            $data[] = array('contract' => array(
-                'id'            => $contract->getId(),
-                'user_id'       => $contract->getUser()->getId(),
-                'start'         => $contract->getStart()
+            $data[] = ['contract' => [
+                'id'      => $contract->getId(),
+                'user_id' => $contract->getUser()->getId(),
+                'start'   => $contract->getStart()
                     ? $contract->getStart()->format('Y-m-d')
                     : null,
-                'end'           => $contract->getEnd()
+                'end'     => $contract->getEnd()
                     ? $contract->getEnd()->format('Y-m-d')
                     : null,
-                'hours_0'       => $contract->getHours0(),
-                'hours_1'       => $contract->getHours1(),
-                'hours_2'       => $contract->getHours2(),
-                'hours_3'       => $contract->getHours3(),
-                'hours_4'       => $contract->getHours4(),
-                'hours_5'       => $contract->getHours5(),
-                'hours_6'       => $contract->getHours6(),
-            ));
+                'hours_0' => $contract->getHours0(),
+                'hours_1' => $contract->getHours1(),
+                'hours_2' => $contract->getHours2(),
+                'hours_3' => $contract->getHours3(),
+                'hours_4' => $contract->getHours4(),
+                'hours_5' => $contract->getHours5(),
+                'hours_6' => $contract->getHours6(),
+            ]];
         }
 
         return $data;

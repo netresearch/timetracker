@@ -225,11 +225,11 @@ class User
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      *
      * @return $this
      */
-    public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntries(Entry $entries)
     {
         $this->entries[] = $entries;
         return $this;
@@ -258,11 +258,11 @@ class User
     /**
      * Add contract
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Contract $contract
+     * @param Contract $contract
      *
      * @return $this
      */
-    public function addContract(\Netresearch\TimeTrackerBundle\Entity\Contract $contract)
+    public function addContract(Contract $contract)
     {
         $this->contracts[] = $contract;
         return $this;
@@ -283,11 +283,11 @@ class User
     /**
      * Add team
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Team $team
+     * @param Team $team
      *
      * @return $this
      */
-    public function addTeam(\Netresearch\TimeTrackerBundle\Entity\Team $team)
+    public function addTeam(Team $team)
     {
         $this->teams[] = $team;
         return $this;
@@ -337,10 +337,10 @@ class User
     /**
      * Add entry
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      * @return $this
      */
-    public function addEntry(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntry(Entry $entries)
     {
         $this->entries[] = $entries;
         return $this;
@@ -349,9 +349,9 @@ class User
     /**
      * Remove entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      */
-    public function removeEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function removeEntrie(Entry $entries)
     {
         $this->entries->removeElement($entries);
     }
@@ -359,9 +359,9 @@ class User
     /**
      * Remove teams
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Team $teams
+     * @param Team $teams
      */
-    public function removeTeam(\Netresearch\TimeTrackerBundle\Entity\Team $teams)
+    public function removeTeam(Team $teams)
     {
         $this->teams->removeElement($teams);
     }
@@ -369,10 +369,10 @@ class User
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      * @return $this
      */
-    public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntrie(Entry $entries)
     {
         $this->entries[] = $entries;
 

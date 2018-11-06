@@ -9,8 +9,11 @@ use ReflectionProperty as ReflectionProperty;
  */
 class Base
 {
-    /*
+    /**
      * Returns array representation of call class properties (e.g. for json_encode)
+     *
+     * @return array
+     * @throws \ReflectionException
      */
     public function toArray()
     {

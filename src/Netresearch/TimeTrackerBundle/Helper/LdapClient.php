@@ -275,11 +275,12 @@ class LdapClient
     }
 
 
-
     /**
      * Authenticate username and password at the LDAP server.
      *
      * @return true
+     * @throws Ldap\Exception\LdapException
+     * @throws \Exception
      */
     public function login()
     {

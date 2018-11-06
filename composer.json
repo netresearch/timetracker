@@ -20,6 +20,7 @@
         "ext-json": "*",
         "ext-ldap": "*",
         "ext-pcre": "*",
+        "ext-pdo": "*",
         "ext-reflection": "*",
         "doctrine/doctrine-bundle": "^1.6",
         "doctrine/doctrine-migrations-bundle": "*",

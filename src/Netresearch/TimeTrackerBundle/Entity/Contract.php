@@ -110,11 +110,11 @@ class Contract
     /**
      * Set user
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\User $user
+     * @param User $user
      *
      * @return $this
      */
-    public function setUser(\Netresearch\TimeTrackerBundle\Entity\User $user)
+    public function setUser(User $user)
     {
         $this->user = $user;
         return $this;
@@ -124,7 +124,7 @@ class Contract
     /**
      * Get user
      *
-     * @return \Netresearch\TimeTrackerBundle\Entity\User $user
+     * @return User $user
      */
     public function getUser()
     {
@@ -173,7 +173,7 @@ class Contract
 
 
     /**
-     * @return mixed
+     * @return float
      */
     public function getHours0()
     {
@@ -182,7 +182,7 @@ class Contract
 
 
     /**
-     * @param mixed $hours_0
+     * @param float $hours_0
      * @return $this
      */
     public function setHours0($hours_0)
@@ -193,7 +193,7 @@ class Contract
 
 
     /**
-     * @return mixed
+     * @return float
      */
     public function getHours1()
     {
@@ -202,7 +202,7 @@ class Contract
 
 
     /**
-     * @param mixed $hours_1
+     * @param float $hours_1
      * @return $this
      */
     public function setHours1($hours_1)
@@ -213,7 +213,7 @@ class Contract
 
 
     /**
-     * @return mixed
+     * @return float
      */
     public function getHours2()
     {
@@ -222,7 +222,7 @@ class Contract
 
 
     /**
-     * @param mixed $hours_2
+     * @param float $hours_2
      * @return $this
      */
     public function setHours2($hours_2)
@@ -233,7 +233,7 @@ class Contract
 
 
     /**
-     * @return mixed
+     * @return float
      */
     public function getHours3()
     {
@@ -242,7 +242,7 @@ class Contract
 
 
     /**
-     * @param mixed $hours_3
+     * @param float $hours_3
      * @return $this
      */
     public function setHours3($hours_3)
@@ -253,7 +253,7 @@ class Contract
 
 
     /**
-     * @return mixed
+     * @return float
      */
     public function getHours4()
     {
@@ -262,7 +262,7 @@ class Contract
 
 
     /**
-     * @param mixed $hours_4
+     * @param float $hours_4
      * @return $this
      */
     public function setHours4($hours_4)
@@ -273,7 +273,7 @@ class Contract
 
 
     /**
-     * @return mixed
+     * @return float
      */
     public function getHours5()
     {
@@ -282,7 +282,7 @@ class Contract
 
 
     /**
-     * @param mixed $hours_5
+     * @param float $hours_5
      * @return $this
      */
     public function setHours5($hours_5)
@@ -293,7 +293,7 @@ class Contract
 
 
     /**
-     * @return mixed
+     * @return float
      */
     public function getHours6()
     {
@@ -302,7 +302,7 @@ class Contract
 
 
     /**
-     * @param mixed $hours_6
+     * @param float $hours_6
      * @return $this
      */
     public function setHours6($hours_6)

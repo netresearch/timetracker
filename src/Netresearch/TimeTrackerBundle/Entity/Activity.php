@@ -13,7 +13,7 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class Activity
 {
-    const SICK = 'Krank';
+    const SICK    = 'Krank';
     const HOLIDAY = 'Urlaub';
 	
 	/**
@@ -145,11 +145,11 @@ class Activity
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      *
      * @return $this
      */
-    public function addEntries(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntries(Entry $entries)
     {
 		$this->entries[] = $entries;
 		return $this;
@@ -181,10 +181,10 @@ class Activity
     /**
      * Add entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      * @return Activity
      */
-    public function addEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function addEntrie(Entry $entries)
     {
         $this->entries[] = $entries;
 
@@ -194,9 +194,9 @@ class Activity
     /**
      * Remove entries
      *
-     * @param \Netresearch\TimeTrackerBundle\Entity\Entry $entries
+     * @param Entry $entries
      */
-    public function removeEntrie(\Netresearch\TimeTrackerBundle\Entity\Entry $entries)
+    public function removeEntrie(Entry $entries)
     {
         $this->entries->removeElement($entries);
     }
