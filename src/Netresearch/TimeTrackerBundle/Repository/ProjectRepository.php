@@ -14,7 +14,7 @@ class ProjectRepository extends EntityRepository
 
     public function getGlobalProjects()
     {
-        return $this->findBy(array('global' => 1));
+        return $this->findBy(['global' => 1]);
     }
 
 
@@ -34,29 +34,29 @@ class ProjectRepository extends EntityRepository
         $globalProjects = $this->getGlobalProjects();
         $userProjects   = $this->getProjectsByUser($userId, null);
 
-        $projects = array();
+        $projects = [];
         foreach ($customers as $customer) {
 
             // Restructure customer-specific projects
             foreach ($userProjects as $project) {
                 if ($customer['customer']['id'] == $project['project']['customer']) {
-                    $projects[$customer['customer']['id']][] = array(
-                        'id' => $project['project']['id'],
-                        'name' => $project['project']['name'],
+                    $projects[$customer['customer']['id']][] = [
+                        'id'     => $project['project']['id'],
+                        'name'   => $project['project']['name'],
                         'jiraId' => $project['project']['jiraId'],
-                        'active' => $project['project']['active']
-                    );
+                        'active' => $project['project']['active'],
+                    ];
                 }
             }
 
             // Add global projects to each customer
             foreach ($globalProjects as $global) {
-                $projects[$customer['customer']['id']][] = array(
-                    'id' => $global->getId(),
-                    'name' => $global->getName(),
+                $projects[$customer['customer']['id']][] = [
+                    'id'     => $global->getId(),
+                    'name'   => $global->getName(),
                     'jiraId' => $global->getJiraId(),
-                    'active' => $global->getActive()
-                );
+                    'active' => $global->getActive(),
+                ];
             }
         }
 
@@ -67,17 +67,16 @@ class ProjectRepository extends EntityRepository
 
         // Add each global project to the all-projects-list
         foreach ($globalProjects as $global) {
-            $projects['all'][] = array(
-                    'id' => $global->getId(),
-                    'name' => $global->getName(),
-//                    'customer_id' => 0,
-                    'jiraId' => $global->getJiraId()
-                );
+            $projects['all'][] = [
+                    'id'     => $global->getId(),
+                    'name'   => $global->getName(),
+                    'jiraId' => $global->getJiraId(),
+            ];
         }
 
         // Sort projects by name for each customer
         foreach($projects AS &$customerProjects) {
-            usort($customerProjects, array($this, 'sortProjectsByName'));
+            usort($customerProjects, [$this, 'sortProjectsByName']);
         }
 
         return $projects;
@@ -144,9 +143,9 @@ class ProjectRepository extends EntityRepository
     protected function findByQuery(\Doctrine\DBAL\Driver\Statement $stmt)
     {
         $projects = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $data = array();
+        $data = [];
         foreach ($projects as $project) {
-            $data[] = array('project' => array(
+            $data[] = ['project' => [
                 'id'            => $project['id'],
                 'name'          => $project['name'],
                 'jiraId'        => $project['jira_id'],
@@ -164,7 +163,7 @@ class ProjectRepository extends EntityRepository
                 'additionalInformationFromExternal' => $project['additional_information_from_external'],
                 'internalJiraProjectKey' => $project['internal_jira_project_key'],
                 'internalJiraTicketSystem' => $project['internal_jira_ticket_system'],
-            ));
+            ]];
         }
 
         return $data;

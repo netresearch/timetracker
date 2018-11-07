@@ -3,39 +3,48 @@
 namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
+use Netresearch\TimeTrackerBundle\Entity\User;
 
+/**
+ * Class UserRepository
+ * @package Netresearch\TimeTrackerBundle\Repository
+ */
 class UserRepository extends EntityRepository
 {
+    /**
+     * @param integer $currentUserId
+     * @return array
+     */
     public function getUsers($currentUserId)
     {
-        /* @var $users \Netresearch\TimeTrackerBundle\Entity\User[] */
-        $users = $this->createQueryBuilder('u')
-            ->orderBy('u.username', 'ASC')
-            ->getQuery()
-            ->getResult();
+        /** @var User[] $users */
+        $users = $this->findBy(
+            [], ['username' => 'ASC']
+        );
 
-        $data = array();
+        $data = [];
+
         foreach ($users as $user) {
             if ($currentUserId == $user->getId()) {
 
                 // Set current user on top
-                array_unshift($data, array('user' => array(
-                    'id'        => $user->getId(),
-                    'username'  => $user->getUsername(),
-                    'type'      => $user->getType(),
-                    'abbr'      => $user->getAbbr(),
-                    'locale'    => $user->getLocale(),
-                )));
+                array_unshift($data, ['user' => [
+                    'id'       => $user->getId(),
+                    'username' => $user->getUsername(),
+                    'type'     => $user->getType(),
+                    'abbr'     => $user->getAbbr(),
+                    'locale'   => $user->getLocale(),
+                ]]);
 
             } else {
 
-                $data[] = array('user' => array(
-                    'id'    => $user->getId(),
-                    'username'  => $user->getUsername(),
-                    'type' => $user->getType(),
-                    'abbr' => $user->getAbbr(),
-                    'locale'    => $user->getLocale(),
-                ));
+                $data[] = ['user' => [
+                    'id'       => $user->getId(),
+                    'username' => $user->getUsername(),
+                    'type'     => $user->getType(),
+                    'abbr'     => $user->getAbbr(),
+                    'locale'   => $user->getLocale(),
+                ]];
 
             }
         }
@@ -43,49 +52,54 @@ class UserRepository extends EntityRepository
         return $data;
     }
 
+    /**
+     * @return array[]
+     */
     public function getAllUsers()
     {
-        $connection = $this->getEntityManager()->getConnection();
-        $stmt = $connection->query("
-            SELECT DISTINCT u.id, u.username, u.type, u.abbr, u.locale, GROUP_CONCAT(tu.team_id) AS teams
-            FROM users u LEFT JOIN teams_users tu ON u.id = tu.user_id
-            GROUP BY u.id ORDER BY username ASC;");
+        /** @var User[] $users */
+        $users = $this->findBy(
+            [], ['username' => 'ASC']
+        );
 
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $data = array();
-        if (count($result)) {
-            foreach ($result as $line) {
-                $data[] = array('user' => array(
-                    'id'       => $line['id'],
-                    'username' => $line['username'],
-                    'type'     => $line['type'],
-                    'abbr'     => $line['abbr'],
-                    'locale'   => $line['locale'],
-                    'teams'    => explode(',', $line['teams']),
-                ));
+        $data = [];
+        foreach ($users as $user) {
+            $teams = [];
+            foreach ($user->getTeams() as $team) {
+                $teams[] = $team->getId();
             }
+            $data[] = ['user' => [
+                'id'       => $user->getId(),
+                'username' => $user->getUsername(),
+                'type'     => $user->getType(),
+                'abbr'     => $user->getAbbr(),
+                'locale'   => $user->getLocale(),
+                'teams'    => $teams,
+            ]];
         }
 
         return $data;
     }
 
+    /**
+     * @param $currentUserId
+     * @return array
+     */
     public function getUserById($currentUserId)
     {
         $user = $this->find($currentUserId);
 
-        if (empty($user)) {
-            return array();
-        }
+        $data = [];
 
-        $data = array();
-        $data[] = array('user' => array(
-            'id'    => $user->getId(),
-            'username'  => $user->getUsername(),
-            'type' => $user->getType(),
-            'abbr' => $user->getAbbr(),
-            'locale'    => $user->getLocale(),
-        ));
+        if (! empty($user)) {
+            $data[] = ['user' => [
+                'id'       => $user->getId(),
+                'username' => $user->getUsername(),
+                'type'     => $user->getType(),
+                'abbr'     => $user->getAbbr(),
+                'locale'   => $user->getLocale(),
+            ]];
+        }
 
         return $data;
     }

@@ -16,11 +16,11 @@ class PresetRepository extends EntityRepository
     public function getAllPresets()
     {
         /** @var Preset[] $presets */
-        $presets = $this->findBy(array(), array('name' => 'ASC'));
+        $presets = $this->findBy([], ['name' => 'ASC']);
 
-        $data = array();
+        $data = [];
         foreach ($presets as $preset) {
-            $data[] = array('preset' => $preset->toArray());
+            $data[] = ['preset' => $preset->toArray()];
         }
 
         return $data;

@@ -17,11 +17,11 @@ class TicketSystemRepository extends EntityRepository
     public function getAllTicketSystems()
     {
         /** @var TicketSystem[] $systems */
-        $systems = $this->findBy(array(), array('name' => 'ASC'));
+        $systems = $this->findBy([], ['name' => 'ASC']);
 
-        $data = array();
+        $data = [];
         foreach ($systems as $system) {
-            $data[] = array('ticketSystem' => $system->toArray());
+            $data[] = ['ticketSystem' => $system->toArray()];
         }
 
         return $data;
