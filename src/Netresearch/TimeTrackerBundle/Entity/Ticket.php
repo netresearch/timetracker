@@ -26,9 +26,8 @@ use Netresearch\TimeTrackerBundle\Model\Base as Base;
  * @license  No license
  * @link     http://www.netresearch.de
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\TicketRepository")
  * @ORM\Table(name="tickets")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\TicketRepository")
  */
 class Ticket extends Base
 {

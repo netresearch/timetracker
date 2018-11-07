@@ -6,9 +6,8 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * A user contract (working hours)
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\ContractRepository")
  * @ORM\Table(name="contracts")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\ContractRepository")
  */
 class Contract
 {

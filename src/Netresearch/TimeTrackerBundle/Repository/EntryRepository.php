@@ -12,7 +12,7 @@
  * @link       http://www.netresearch.de
  */
 
-namespace Netresearch\TimeTrackerBundle\Entity;
+namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\Query\Expr\Join;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;

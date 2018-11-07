@@ -1,8 +1,10 @@
 <?php
 
-namespace Netresearch\TimeTrackerBundle\Entity;
+namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
+use Netresearch\TimeTrackerBundle\Entity\Ticket;
+use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 
 class TicketRepository extends EntityRepository
 {

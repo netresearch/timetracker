@@ -14,7 +14,7 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Netresearch\TimeTrackerBundle\Entity\Entry;
-use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
+use Netresearch\TimeTrackerBundle\Repository\EntryRepository;
 
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\User;
@@ -287,7 +287,7 @@ class JiraOAuthApi
         }
 
         $em = $this->doctrine->getManager();
-        /** @var EntryRepository $repo */
+        /** @var \Netresearch\TimeTrackerBundle\Repository\EntryRepository $repo */
         $repo = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:Entry');
         $entries = $repo->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
 

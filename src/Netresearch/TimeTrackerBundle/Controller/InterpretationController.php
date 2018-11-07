@@ -3,7 +3,7 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry;
-use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
+use Netresearch\TimeTrackerBundle\Repository\EntryRepository;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -375,7 +375,7 @@ class InterpretationController extends BaseController
             );
         }
 
-        /* @var $repository EntryRepository */
+        /* @var $repository \Netresearch\TimeTrackerBundle\Repository\EntryRepository */
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry');
         return $repository->findByFilterArray($arParams);
     }

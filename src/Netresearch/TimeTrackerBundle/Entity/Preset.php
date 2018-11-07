@@ -7,9 +7,8 @@ use Netresearch\TimeTrackerBundle\Model\Base as Base;
 
 /**
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\PresetRepository")
  * @ORM\Table(name="presets")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\PresetRepository")
  */
 class Preset extends Base
 {

@@ -9,9 +9,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\UserRepository")
  * @ORM\Table(name="users")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\UserRepository")
  */
 class User
 {

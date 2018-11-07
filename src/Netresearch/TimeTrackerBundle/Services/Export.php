@@ -18,7 +18,7 @@ namespace Netresearch\TimeTrackerBundle\Services;
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
 use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Model\ExternalTicketSystem;
-use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
+use Netresearch\TimeTrackerBundle\Repository\EntryRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -352,7 +352,7 @@ class Export
     /**
      * returns the entry repository
      *
-     * @return EntryRepository
+     * @return \Netresearch\TimeTrackerBundle\Repository\EntryRepository
      */
     protected function getEntryRepository()
     {

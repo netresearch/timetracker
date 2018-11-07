@@ -6,9 +6,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\TeamRepository")
  * @ORM\Table(name="teams")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\TeamRepository")
  */
 class Team
 {

@@ -8,9 +8,8 @@ use Netresearch\TimeTrackerBundle\Model\Base as Base;
 /**
  * Netresearch\TimeTrackerBundle\Entity\TicketSystem
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\TicketSystemRepository")
  * @ORM\Table(name="ticket_systems")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository")
  */
 class TicketSystem extends Base
 {

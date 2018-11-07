@@ -3,14 +3,14 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Team;
-use Netresearch\TimeTrackerBundle\Entity\TeamRepository;
+use Netresearch\TimeTrackerBundle\Repository\TeamRepository;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
-use Netresearch\TimeTrackerBundle\Entity\ProjectRepository;
+use Netresearch\TimeTrackerBundle\Repository\ProjectRepository;
 use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
-use Netresearch\TimeTrackerBundle\Entity\EntryRepository;
+use Netresearch\TimeTrackerBundle\Repository\EntryRepository;
 use Netresearch\TimeTrackerBundle\Entity\User;
 
 use Netresearch\TimeTrackerBundle\Model\Response;
@@ -36,7 +36,7 @@ class DefaultController extends BaseController
             ->getCustomersByUser($userId);
 
         // Send the customer-projects-structure to the frontend for caching
-        /* @var $projectRepo ProjectRepository */
+        /* @var $projectRepo \Netresearch\TimeTrackerBundle\Repository\ProjectRepository */
         $projectRepo = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project');
         $projects = $projectRepo->getProjectStructure($userId, $customers);
 

@@ -7,9 +7,8 @@ use DateTime as DateTime;
 
 /**
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\EntryRepository")
  * @ORM\Table(name="entries")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\EntryRepository")
  */
 class Entry extends Base
 {
