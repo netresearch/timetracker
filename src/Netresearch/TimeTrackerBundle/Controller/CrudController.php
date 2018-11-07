@@ -53,7 +53,7 @@ class CrudController extends BaseController
             $manager->flush();
 
             // We have to update classes after deletion as well
-            $this->calculateClasses($this->_getUserId($request), $day);
+            $this->calculateClasses($this->getUserId($request), $day);
         }
 
         return new Response(json_encode(array('success' => true, 'alert' => $alert)));
@@ -217,7 +217,7 @@ class CrudController extends BaseController
 
             /* @var $user \Netresearch\TimeTrackerBundle\Entity\User */
             $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
-                ->find($this->_getUserId($request));
+                ->find($this->getUserId($request));
             $entry->setUser($user);
 
             /** @var Activity $activity */
@@ -337,7 +337,7 @@ class CrudController extends BaseController
             // Retrieve needed objects
             /** @var User $user */
             $user     = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
-                ->find($this->_getUserId($request));
+                ->find($this->getUserId($request));
             /** @var Customer $customer */
             $customer = $doctrine->getRepository('NetresearchTimeTrackerBundle:Customer')
                 ->find($preset->getCustomerId());

@@ -5,7 +5,6 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 use Netresearch\TimeTrackerBundle\Entity\Team;
 use Netresearch\TimeTrackerBundle\Repository\TeamRepository;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
-use Netresearch\TimeTrackerBundle\Repository\ProjectRepository;
 use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Helper\LdapClient;
@@ -16,15 +15,24 @@ use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class DefaultController
+ * @package Netresearch\TimeTrackerBundle\Controller
+ */
 class DefaultController extends BaseController
 {
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function indexAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
-            return $this->_login($request);
+            return $this->login($request);
         }
 
-        $userId = (int) $this->_getUserId($request);
+        $userId = (int) $this->getUserId($request);
         $doctrine = $this->getDoctrine();
 
         $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')->find($userId);
@@ -40,11 +48,6 @@ class DefaultController extends BaseController
         $projectRepo = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project');
         $projects = $projectRepo->getProjectStructure($userId, $customers);
 
-        // Send activities to the frontend for caching
-        $activities = $doctrine
-            ->getRepository('NetresearchTimeTrackerBundle:Activity')
-            ->getActivities();
-
         return $this->render('NetresearchTimeTrackerBundle:Default:index.html.twig', array(
             'globalConfig'  => [
                 'logo_url'              => $this->container->getParameter('app_logo_url'),
@@ -55,12 +58,15 @@ class DefaultController extends BaseController
             'environment'   => $this->get('kernel')->getEnvironment(),
             'customers'     => $customers,
             'projects'      => $projects,
-            'activities'    => $activities,
             'settings'      => $settings,
             'locale'        => $settings['locale']
         ));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     */
     public function loginAction(Request $request)
     {
         if ($request->getMethod() != 'POST') {
@@ -149,23 +155,32 @@ class DefaultController extends BaseController
         return $this->setLoggedIn($request, $user, $request->request->has('loginCookie'));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     */
     public function logoutAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
-            return $this->_login($request);
+            return $this->login($request);
         }
 
         $this->setLoggedOut($request);
         return $this->redirect($this->generateUrl('_start'));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function getTimeSummaryAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
-            return $this->_login($request);
+            return $this->login($request);
         }
 
-        $userId = (int) $this->_getUserId($request);
+        $userId = (int) $this->getUserId($request);
         $today = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
         $week = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
         $month = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
@@ -182,14 +197,17 @@ class DefaultController extends BaseController
     /**
      * Retrieves a summary of an entry (project total/own, ticket total/own)
      *
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function getSummaryAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
-            return $this->_login($request);
+            return $this->login($request);
         }
 
-        $userId = (int) $this->_getUserId($request);
+        $userId = (int) $this->getUserId($request);
 
         $data = array(
             'customer' => array(
@@ -252,16 +270,18 @@ class DefaultController extends BaseController
 
     /**
      * Retrieves all current entries of the user logged in.
+     *
      * @param Request $request
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
      */
     public function getDataAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
-            return $this->_login($request);
+            return $this->login($request);
         }
 
-        $userId = (int) $this->_getUserId($request);
+        $userId = (int) $this->getUserId($request);
 
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
@@ -273,29 +293,42 @@ class DefaultController extends BaseController
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function getCustomersAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
-            return $this->_login($request);
+            return $this->login($request);
         }
 
-        $userId = (int) $this->_getUserId($request);
+        $userId = (int) $this->getUserId($request);
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer')->getCustomersByUser($userId);
 
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function getUsersAction(Request $request)
     {
         if ($this->isHiddenCausedByGDPRViolation()) {
-            $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUserById($this->_getUserId($request));
+            $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUserById($this->getUserId($request));
         } else {
-            $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUsers($this->_getUserId($request));
+            $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUsers($this->getUserId($request));
         }
 
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function getCustomerAction(Request $request)
     {
         if ($request->get('project')) {
@@ -309,16 +342,26 @@ class DefaultController extends BaseController
         return new Response(json_encode(array('customer' => 0)));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function getProjectsAction(Request $request)
     {
         $customerId = (int) $request->query->get('customer');
-        $userId = (int) $this->_getUserId($request);
+        $userId = (int) $this->getUserId($request);
 
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->getProjectsByUser($userId, $customerId);
 
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function getAllProjectsAction(Request $request)
     {
         $customerId = (int) $request->query->get('customer');
@@ -327,12 +370,18 @@ class DefaultController extends BaseController
         return new Response(json_encode($data));
     }
 
+    /**
+     * @return Response
+     */
     public function getActivitiesAction()
     {
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Activity')->getActivities();
         return new Response(json_encode($data));
     }
 
+    /**
+     * @return Response
+     */
     public function getHolidaysAction()
     {
         $holidays = $this->getDoctrine()
@@ -341,13 +390,19 @@ class DefaultController extends BaseController
         return new Response(json_encode($holidays));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Twig\Error\Error
+     * @throws \Exception
+     */
     public function exportAction(Request $request)
     {
         $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 10000;
 
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
-            ->find($this->_getUserId($request));
+            ->find($this->getUserId($request));
 
         $entries = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:Entry')
@@ -384,7 +439,7 @@ class DefaultController extends BaseController
         /** @var User $user */
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
-            ->find($this->_getUserId($request));
+            ->find($this->getUserId($request));
 
         /** @var TicketSystem $ticketSystem */
         $ticketSystem = $this->getDoctrine()

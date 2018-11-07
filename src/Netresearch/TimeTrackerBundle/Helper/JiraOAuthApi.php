@@ -8,21 +8,20 @@
 
 namespace Netresearch\TimeTrackerBundle\Helper;
 
+use Doctrine\Common\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
-use Netresearch\TimeTrackerBundle\Entity\Entry;
-use Netresearch\TimeTrackerBundle\Repository\EntryRepository;
 
+use Netresearch\TimeTrackerBundle\Entity\Entry;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Entity\UserTicketsystem;
 
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Doctrine\Bundle\DoctrineBundle\Registry;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
 class JiraOAuthApi
@@ -31,7 +30,7 @@ class JiraOAuthApi
     protected $user;
     /** @var TicketSystem */
     protected $ticketSystem;
-    /** @var Registry */
+    /** @var ManagerRegistry */
     protected $doctrine;
     /** @var string */
     protected $oAuthCallbackUrl;
@@ -53,10 +52,10 @@ class JiraOAuthApi
      *
      * @param User $user
      * @param TicketSystem $ticketSystem
-     * @param Registry $doctrine
+     * @param ManagerRegistry $doctrine
      * @param Router $router
      */
-    public function __construct(User $user, TicketSystem $ticketSystem, Registry $doctrine, Router $router)
+    public function __construct(User $user, TicketSystem $ticketSystem, ManagerRegistry $doctrine, Router $router)
     {
         $this->user = $user;
         $this->ticketSystem = $ticketSystem;
@@ -414,7 +413,7 @@ class JiraOAuthApi
      * @param string $jql
      * @param string $fields
      * @param int    $limit
-     * @return string
+     * @return \stdClass
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
@@ -475,7 +474,7 @@ class JiraOAuthApi
      * Execute GET request and return response as simple object.
      *
      * @param string $url
-     * @return string
+     * @return mixed
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
@@ -529,7 +528,7 @@ class JiraOAuthApi
      * @param string $method
      * @param string $url
      * @param array $data
-     * @return string
+     * @return mixed
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */

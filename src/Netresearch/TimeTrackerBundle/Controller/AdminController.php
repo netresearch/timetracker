@@ -2,7 +2,6 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-use Netresearch\TimeTrackerBundle\Repository\CustomerRepository;
 use Netresearch\TimeTrackerBundle\Repository\UserRepository;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Netresearch\TimeTrackerBundle\Entity\Contract;
@@ -18,6 +17,10 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\Activity;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
+/**
+ * Class AdminController
+ * @package Netresearch\TimeTrackerBundle\Controller
+ */
 class AdminController extends BaseController
 {
     /**
@@ -36,6 +39,10 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function getCustomersAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -48,6 +55,10 @@ class AdminController extends BaseController
         return new Response(json_encode($repo->getAllCustomers()));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function getUsersAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -77,6 +88,10 @@ class AdminController extends BaseController
         return new Response(json_encode($repo->findAll()));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function getPresetsAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -104,8 +119,9 @@ class AdminController extends BaseController
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
         $ticketSystems = $repo->getAllTicketSystems();
 
-        if (false == $this->_isPl($request)) {
-            for ($i = 0; $i < count($ticketSystems); $i++) {
+        if (false === $this->isPl($request)) {
+            $c = count($ticketSystems);
+            for ($i = 0; $i < $c; $i++) {
                 unset($ticketSystems[$i]['ticketSystem']['login']);
                 unset($ticketSystems[$i]['ticketSystem']['password']);
                 unset($ticketSystems[$i]['ticketSystem']['publicKey']);
@@ -118,9 +134,13 @@ class AdminController extends BaseController
         return new Response(json_encode($ticketSystems));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function saveProjectAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -234,9 +254,13 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deleteProjectAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -268,7 +292,7 @@ class AdminController extends BaseController
      */
     public function saveCustomerAction(Request $request)
     {
-        if (false === $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -333,9 +357,13 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deleteCustomerAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -361,9 +389,13 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function saveUserAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -448,9 +480,13 @@ class AdminController extends BaseController
         return new Response(json_encode($data));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deleteUserAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -476,9 +512,13 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deletePresetAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -504,9 +544,13 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function savePresetAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -564,24 +608,24 @@ class AdminController extends BaseController
      */
     public function saveTicketSystemAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
 
-        $id                     = (int) $request->get('id');
-        $name                   = $request->get('name');
-        $type                   = $request->get('type');
-        $bookTime               = $request->get('bookTime');
-        $url                    = $request->get('url');
-        $login                  = $request->get('login');
-        $password               = $request->get('password');
-        $publicKey              = $request->get('publicKey');
-        $privateKey             = $request->get('privateKey');
-        $ticketUrl              = $request->get('ticketUrl');
-        $oauthConsumerKey       = $request->get('oauthConsumerKey');
-        $oauthConsumerSecret    = $request->get('oauthConsumerSecret');
+        $id                  = (int) $request->get('id');
+        $name                = $request->get('name');
+        $type                = $request->get('type');
+        $bookTime            = $request->get('bookTime');
+        $url                 = $request->get('url');
+        $login               = $request->get('login');
+        $password            = $request->get('password');
+        $publicKey           = $request->get('publicKey');
+        $privateKey          = $request->get('privateKey');
+        $ticketUrl           = $request->get('ticketUrl');
+        $oauthConsumerKey    = $request->get('oauthConsumerKey');
+        $oauthConsumerSecret = $request->get('oauthConsumerSecret');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -630,10 +674,13 @@ class AdminController extends BaseController
     }
 
 
-
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deleteTicketSystemAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -660,14 +707,17 @@ class AdminController extends BaseController
     }
 
 
-
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function saveActivityAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -713,10 +763,13 @@ class AdminController extends BaseController
     }
 
 
-
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deleteActivityAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -743,14 +796,17 @@ class AdminController extends BaseController
     }
 
 
-
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function saveTeamAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -804,10 +860,13 @@ class AdminController extends BaseController
     }
 
 
-
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deleteTeamAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -834,14 +893,17 @@ class AdminController extends BaseController
     }
 
 
-
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function jiraSyncEntriesAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -851,7 +913,7 @@ class AdminController extends BaseController
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->findAll();
 
-        $ticketsystems = $doctrine
+        $ticketSystems = $doctrine
             ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
             ->findAll();
 
@@ -859,14 +921,14 @@ class AdminController extends BaseController
 
         /** @var User $user */
         foreach ($users as $user) {
-            /** @var TicketSystem $ticketsystem */
-            foreach ($ticketsystems as $ticketsystem) {
+            /** @var TicketSystem $ticketSystem */
+            foreach ($ticketSystems as $ticketSystem) {
                 try {
-                    $jiraOauthApi = new JiraOAuthApi($user, $ticketsystem, $doctrine, $this->container->get('router'));
+                    $jiraOauthApi = new JiraOAuthApi($user, $ticketSystem, $doctrine, $this->container->get('router'));
                     $jiraOauthApi->updateAllEntriesJiraWorkLogs();
-                    $data[$ticketsystem->getName() . ' | ' . $user->getUsername()] = 'success';
+                    $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'success';
                 } catch (\Exception $e) {
-                    $data[$ticketsystem->getName() . ' | ' . $user->getUsername()] = 'error (' . $e->getMessage() . ')';
+                    $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'error (' . $e->getMessage() . ')';
                 }
             }
         }
@@ -875,6 +937,10 @@ class AdminController extends BaseController
     }
 
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function getContractsAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -895,7 +961,7 @@ class AdminController extends BaseController
      */
     public function saveContractAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -977,9 +1043,13 @@ class AdminController extends BaseController
     }
 
 
+    /**
+     * @param Request $request
+     * @return Response|Error
+     */
     public function deleteContractAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 

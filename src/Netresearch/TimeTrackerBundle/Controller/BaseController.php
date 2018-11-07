@@ -47,7 +47,7 @@ class BaseController extends Controller
 
         $doctrine = $this->getDoctrine();
         $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
-            ->find($this->_getUserId($request));
+            ->find($this->getUserId($request));
 
         if (!is_object($user)) {
             return;
@@ -66,7 +66,7 @@ class BaseController extends Controller
      *
      * @return mixed
      */
-    protected function _isLoggedIn(Request $request)
+    protected function isLoggedIn(Request $request)
     {
         return $request->getSession()->get('loggedIn');
     }
@@ -79,7 +79,7 @@ class BaseController extends Controller
      *
      * @return mixed
      */
-    protected function _getUserId(Request $request)
+    protected function getUserId(Request $request)
     {
         return $request->getSession()->get('loginId');
     }
@@ -91,7 +91,7 @@ class BaseController extends Controller
      *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse|Response
      */
-    protected function _login(Request $request)
+    protected function login(Request $request)
     {
         if (!$request->isXmlHttpRequest()) {
             return $this->redirect($this->generateUrl('_login'));
@@ -107,13 +107,13 @@ class BaseController extends Controller
      *
      * @return bool
      */
-    protected function _isPl(Request $request)
+    protected function isPl(Request $request)
     {
         if (false === $this->checkLogin($request)) {
             return false;
         }
 
-        $userId = $this->_getUserId($request);
+        $userId = $this->getUserId($request);
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->find($userId);
@@ -129,13 +129,13 @@ class BaseController extends Controller
      *
      * @return bool
      */
-    protected function _isDEV(Request $request)
+    protected function isDEV(Request $request)
     {
         if (false === $this->checkLogin($request)) {
             return false;
         }
 
-        $userId = $this->_getUserId($request);
+        $userId = $this->getUserId($request);
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->find($userId);
@@ -153,7 +153,7 @@ class BaseController extends Controller
      */
     protected function checkLogin(Request $request)
     {
-        if ($this->_isLoggedIn($request)) {
+        if ($this->isLoggedIn($request)) {
             return true;
         }
 
@@ -224,10 +224,10 @@ class BaseController extends Controller
 
             return $this->render(
                 'NetresearchTimeTrackerBundle:Default:login.html.twig',
-                array(
-                    'locale' => 'en',
+                [
+                    'locale'   => 'en',
                     'apptitle' => $this->container->getParameter('app_title'),
-                )
+                ]
             );
         }
 
