@@ -56,11 +56,11 @@ class ControllingController extends BaseController
         $service = $this->get('nr.timetracker.export');
         /** @var \Netresearch\TimeTrackerBundle\Entity\Entry[] $entries */
         $entries = $service->exportEntries(
-            $userId, $year, $month, array(
+            $userId, $year, $month, [
                 'user.username' => true,
                 'entry.day'     => true,
                 'entry.start'   => true,
-            )
+            ]
         );
         $username = $service->getUsername($userId);
 

@@ -582,7 +582,7 @@ class Entry extends Base
     /**
      * Get array representation of entry object
      *
-     * @return array
+     * @return mixed[]
      */
     public function toArray()
     {

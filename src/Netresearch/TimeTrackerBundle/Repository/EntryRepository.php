@@ -15,6 +15,7 @@
 namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\Query\Expr\Join;
+use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
 use Doctrine\ORM\EntityRepository;
@@ -80,13 +81,13 @@ class EntryRepository extends EntityRepository
     /**
      * Returns work log entries for user and recent days.
      *
-     * @param integer $userId Filter by user ID
+     * @param User $user Filter by user ID
      * @param integer $days Filter by recent days
      *
      * @return array
      * @throws \Exception
      */
-    public function findByRecentDaysOfUser($userId, $days = 3)
+    public function findByRecentDaysOfUser($user, $days = 3)
     {
         $fromDate = new \DateTime();
         $fromDate->setTime(0, 0);
@@ -98,7 +99,7 @@ class EntryRepository extends EntityRepository
             'SELECT e FROM NetresearchTimeTrackerBundle:Entry e'
             . ' WHERE e.user = :user_id AND e.day >= :fromDate'
             . ' ORDER BY e.day, e.start ASC'
-        )->setParameter('user_id', $userId)->setParameter('fromDate', $fromDate);
+        )->setParameter('user_id', $user->getId())->setParameter('fromDate', $fromDate);
 
         return $query->getResult();
     }

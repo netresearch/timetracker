@@ -3,7 +3,6 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry;
-use Netresearch\TimeTrackerBundle\Repository\EntryRepository;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,7 +35,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->calculateSum($entries);
         $entryList = array();
-        foreach($entries AS &$entry) {
+        foreach ($entries as $entry) {
             $flatEntry = $entry->toArray();
             $flatEntry['duration'] = TimeHelper::formatDuration($flatEntry['duration']);
             $flatEntry['quota'] = TimeHelper::formatQuota($flatEntry['duration'], $sum);
@@ -222,7 +221,7 @@ class InterpretationController extends BaseController
     public function groupByUserAction(Request $request)
     {
         #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
-        $request->query->set('user', $this->_getUserId($request));
+        $request->query->set('user', $this->getUserId($request));
 
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -359,7 +358,7 @@ class InterpretationController extends BaseController
             'team'              => $this->evalParam($request, 'team'),
             'ticket'            => $this->evalParam($request, 'ticket'),
             'description'       => $this->evalParam($request, 'description'),
-            'visibility_user'   => ($this->_isDEV($request)? $this->_getUserId($request) : null),
+            'visibility_user'   => ($this->isDEV($request)? $this->getUserId($request) : null),
             'maxResults'        => $maxResults,
             'datestart'         => $this->evalParam($request, 'datestart'),
             'dateend'           => $this->evalParam($request, 'dateend'),
