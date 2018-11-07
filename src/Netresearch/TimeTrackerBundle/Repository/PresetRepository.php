@@ -1,8 +1,9 @@
 <?php
 
-namespace Netresearch\TimeTrackerBundle\Entity;
+namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
+use Netresearch\TimeTrackerBundle\Entity\Preset;
 
 class PresetRepository extends EntityRepository
 {

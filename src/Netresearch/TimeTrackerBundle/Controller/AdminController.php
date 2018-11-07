@@ -2,8 +2,8 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-use Netresearch\TimeTrackerBundle\Entity\CustomerRepository;
-use Netresearch\TimeTrackerBundle\Entity\UserRepository;
+use Netresearch\TimeTrackerBundle\Repository\CustomerRepository;
+use Netresearch\TimeTrackerBundle\Repository\UserRepository;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Netresearch\TimeTrackerBundle\Entity\Contract;
 use Netresearch\TimeTrackerBundle\Entity\Team;
@@ -20,6 +20,11 @@ use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
 class AdminController extends BaseController
 {
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\DBAL\DBALException
+     */
     public function getAllProjectsAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -37,7 +42,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\CustomerRepository */
+        /* @var $repo \Netresearch\TimeTrackerBundle\Repository\CustomerRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer');
 
         return new Response(json_encode($repo->getAllCustomers()));
@@ -49,7 +54,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\UserRepository */
+        /* @var $repo \Netresearch\TimeTrackerBundle\Repository\UserRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User');
 
         return new Response(json_encode($repo->getAllUsers()));
@@ -66,7 +71,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\TeamRepository */
+        /* @var $repo \Netresearch\TimeTrackerBundle\Repository\TeamRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Team');
 
         return new Response(json_encode($repo->findAll()));
@@ -78,7 +83,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\PresetRepository */
+        /* @var $repo \Netresearch\TimeTrackerBundle\Repository\PresetRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Preset');
 
         return new Response(json_encode($repo->getAllPresets()));
@@ -95,7 +100,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\TicketSystemRepository */
+        /* @var $repo \Netresearch\TimeTrackerBundle\Repository\TicketSystemRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:TicketSystem');
         $ticketSystems = $repo->getAllTicketSystems();
 
@@ -150,7 +155,7 @@ class AdminController extends BaseController
         $costCenter   = $request->get('cost_center') ? $request->get('cost_center') : NULL;
         $offer        = $request->get('offer') ? $request->get('offer') : 0;
         $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ? $request->get('additionalInformationFromExternal') : 0;
-        /* @var $projectRepository \Netresearch\TimeTrackerBundle\Entity\ProjectRepository */
+        /* @var $projectRepository \Netresearch\TimeTrackerBundle\Repository\ProjectRepository */
         $projectRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project');
         $internalJiraTicketSystem = (int) $request->get('internalJiraTicketSystem', 0);
         $internalJiraProjectKey   = (int) $request->get('internalJiraProjectKey', 0);
@@ -257,9 +262,13 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function saveCustomerAction(Request $request)
     {
-        if (false == $this->_isPl($request)) {
+        if (false === $this->_isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
@@ -270,7 +279,6 @@ class AdminController extends BaseController
         $global     = $request->get('global') ? $request->get('global') : 0;
         $teamIds    = $request->get('teams')  ? $request->get('teams')  : array();
 
-        /* @var CustomerRepository $customerRepository */
         $customerRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer');
 
         if ($customerId) {
@@ -873,7 +881,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \Netresearch\TimeTrackerBundle\Entity\ContractRepository */
+        /* @var $repo \Netresearch\TimeTrackerBundle\Repository\ContractRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Contract');
 
         return new Response(json_encode($repo->getContracts()));
@@ -909,7 +917,7 @@ class AdminController extends BaseController
                 ->find($request->get('user_id'))
             : null;
 
-        /* @var $contractRepository \Netresearch\TimeTrackerBundle\Entity\ContractRepository */
+        /* @var $contractRepository \Netresearch\TimeTrackerBundle\Repository\ContractRepository */
         $contractRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Contract');
 
         if ($contractId) {

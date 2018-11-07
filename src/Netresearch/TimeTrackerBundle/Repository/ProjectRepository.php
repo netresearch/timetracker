@@ -1,7 +1,8 @@
 <?php
 
-namespace Netresearch\TimeTrackerBundle\Entity;
+namespace Netresearch\TimeTrackerBundle\Repository;
 
+use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Doctrine\ORM\EntityRepository;
 

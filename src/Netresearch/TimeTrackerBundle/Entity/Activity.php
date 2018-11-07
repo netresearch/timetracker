@@ -7,9 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\ActivityRepository")
  * @ORM\Table(name="activities")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\ActivityRepository")
  */
 class Activity
 {

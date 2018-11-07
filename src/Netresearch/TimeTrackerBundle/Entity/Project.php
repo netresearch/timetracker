@@ -7,9 +7,8 @@ use Netresearch\TimeTrackerBundle\Model\Base as Base;
 
 /**
  *
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Repository\ProjectRepository")
  * @ORM\Table(name="projects")
- * @ORM\Entity(repositoryClass="Netresearch\TimeTrackerBundle\Entity\ProjectRepository")
  */
 class Project extends Base
 {

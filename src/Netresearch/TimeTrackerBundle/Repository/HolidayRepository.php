@@ -1,6 +1,6 @@
 <?php
 
-namespace Netresearch\TimeTrackerBundle\Entity;
+namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
 

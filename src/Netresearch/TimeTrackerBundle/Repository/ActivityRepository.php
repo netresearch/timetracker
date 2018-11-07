@@ -1,17 +1,17 @@
 <?php
 
-namespace Netresearch\TimeTrackerBundle\Entity;
+namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
+use Netresearch\TimeTrackerBundle\Entity\Activity;
 
 class ActivityRepository extends EntityRepository
 {
-    /*
-     * Find all activities, sorted ascending
+    /**
+     * @return array[] Activities sorted by name
      */
     public function getActivities()
     {
-        /** @var Activity[] $activities */
         $activities = $this->findBy([], ['name' => 'ASC']);
         
         $data = [];
@@ -23,7 +23,7 @@ class ActivityRepository extends EntityRepository
                 'factor'      => $activity->getFactor(),
             ]];
         }
-        
+
         return $data;
     }
 }
