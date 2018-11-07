@@ -3,6 +3,7 @@
 namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
+use Netresearch\TimeTrackerBundle\Entity\Customer;
 
 class CustomerRepository extends EntityRepository
 {
@@ -18,24 +19,25 @@ class CustomerRepository extends EntityRepository
         $connection = $this->getEntityManager()->getConnection();
 
         /* Creepy */
-        $stmt = $connection->query("SELECT DISTINCT c.id, c.name, c.active"
-            ." FROM customers c"
-            ." LEFT JOIN teams_customers tc"
-            ." ON tc.customer_id = c.id"
-            ." LEFT JOIN teams_users tu"
-            ." ON tc.team_id = tu.team_id"
-            ." WHERE (c.global=1 OR tu.user_id = " . $userId . ")"
-            ." ORDER BY name ASC;");
+        $stmt = $connection->query("
+            SELECT DISTINCT c.id, c.name, c.active
+            FROM customers c
+            LEFT JOIN teams_customers tc
+            ON tc.customer_id = c.id
+            LEFT JOIN teams_users tu
+            ON tc.team_id = tu.team_id
+            WHERE (c.global=1 OR tu.user_id = " . $userId . ")
+            ORDER BY name ASC;");
 
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $data = array();
+        $data = [];
         if (count($result)) foreach ($result as $line) {
-            $data[] = array('customer' => array(
-                'id'        => $line['id'],
-                'name'      => $line['name'],
-                'active'    => $line['active'],
-            ));
+            $data[] = ['customer' => [
+                'id'     => $line['id'],
+                'name'   => $line['name'],
+                'active' => $line['active'],
+            ]];
         }
 
         return $data;
@@ -46,27 +48,24 @@ class CustomerRepository extends EntityRepository
      */
     public function getAllCustomers()
     {
-        $connection = $this->getEntityManager()->getConnection();
+        /** @var Customer[] $customers */
+        $customers = $this->findBy(
+            [], ['name' => 'ASC']
+        );
 
-        /* Creepy */
-        $stmt = $connection->query("
-            SELECT DISTINCT c.id, c.name, c.active, c.global, GROUP_CONCAT(tc.team_id) AS teams
-            FROM customers c LEFT JOIN teams_customers tc ON c.id = tc.customer_id
-            GROUP BY c.id ORDER BY name ASC;");
-
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $data = array();
-        if (count($result)) {
-            foreach ($result as $line) {
-                $data[] = array('customer' => array(
-                    'id'     => $line['id'],
-                    'name'   => $line['name'],
-                    'active' => $line['active'],
-                    'global' => $line['global'],
-                    'teams'  => explode(',', $line['teams']),
-                ));
+        $data = [];
+        foreach ($customers as $customer) {
+            $teams = [];
+            foreach ($customer->getTeams() as $team) {
+                $teams[] = $team->getId();
             }
+            $data[] = ['customer' => [
+                'id'     => $customer->getId(),
+                'name'   => $customer->getName(),
+                'active' => $customer->getActive(),
+                'global' => $customer->getGlobal(),
+                'teams'  => $teams,
+            ]];
         }
 
         return $data;

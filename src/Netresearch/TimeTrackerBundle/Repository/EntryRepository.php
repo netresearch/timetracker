@@ -119,10 +119,10 @@ class EntryRepository extends EntityRepository
     public function findByDate($userId, $year, $month = null, array $arSort = null)
     {
         if (null === $arSort) {
-            $arSort = array(
-                'entry.day' => true,
+            $arSort = [
+                'entry.day'   => true,
                 'entry.start' => true,
-            );
+            ];
         }
 
         $qb = $this->getEntityManager()->createQueryBuilder();
@@ -248,7 +248,7 @@ class EntryRepository extends EntityRepository
         $calendarDays = self::getCalendarDaysByWorkDays($days);
         $connection = $this->getEntityManager()->getConnection();
 
-        $sql = array();
+        $sql = [];
         $sql['select'] = "SELECT e.id,
         	DATE_FORMAT(e.day, '%d/%m/%Y') AS `date`,
         	DATE_FORMAT(e.start,'%H:%i') AS `start`,
@@ -277,7 +277,7 @@ class EntryRepository extends EntityRepository
 
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $data = array();
+        $data = [];
         if (count($result)) foreach ($result as &$line) {
             $line['user'] = (int) $line['user'];
             $line['customer'] = (int) $line['customer'];
@@ -285,7 +285,7 @@ class EntryRepository extends EntityRepository
             $line['activity'] = (int) $line['activity'];
             $line['duration'] = TimeHelper::formatDuration($line['duration']);
             $line['class'] = (int) $line['class'];
-            $data[] = array('entry' => $line);
+            $data[] = ['entry' => $line];
         }
 
         return $data;
@@ -342,7 +342,7 @@ class EntryRepository extends EntityRepository
 
         $connection = $this->getEntityManager()->getConnection();
 
-        $sql = array('customer' => array(), 'project' => array(), 'ticket' => array());
+        $sql = ['customer' => [], 'project' => [], 'ticket' => []];
 
         // customer total / customer total by current user
         $sql['customer']['select'] = "SELECT 'customer' AS scope,
@@ -452,10 +452,10 @@ class EntryRepository extends EntityRepository
         $stmt   = $connection->query(implode(" ", $sql));
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $data = array(
+        $data = [
             'duration' => $result[0]['duration'],
             'count'    => false,
-        );
+        ];
 
         return $data;
     }
