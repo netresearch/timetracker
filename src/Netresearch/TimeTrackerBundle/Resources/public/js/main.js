@@ -1,5 +1,3 @@
-var url = '';
-
 Ext.Loader.setConfig({
     enabled: true,
     paths: {
@@ -31,11 +29,11 @@ Ext.require([
 ]);
 
 /* Define how many clicks are needed to active inline editing of tracking grid entries */
-var cellEditing = Ext.create('Ext.grid.plugin.CellEditing', {
+const cellEditing = Ext.create('Ext.grid.plugin.CellEditing', {
     clicksToEdit: 1
 });
 
-var strings = {
+let strings = {
     'Today': 'Today',
     'Week' : 'Week',
     'Month': 'Month',
@@ -43,7 +41,7 @@ var strings = {
     'Logout': 'Logout'
 };
 
-if ((undefined != settingsData) && (settingsData.locale == 'de')) {
+if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
     strings = {
         'Today': 'Heute',
         'Week' : 'Woche',
@@ -53,9 +51,9 @@ if ((undefined != settingsData) && (settingsData.locale == 'de')) {
     };
 }
 
-var ttt_container = undefined;
-var ttt_tabpanel = undefined;
-var ttt_items = [];
+let ttt_container = undefined;
+let ttt_tabpanel = undefined;
+let ttt_items = [];
 
 function switchTab(number) {
     number = parseInt(number);
@@ -63,15 +61,15 @@ function switchTab(number) {
         return;
     }
 
-    var itemId = ttt_items[(number-1)].getItemId();
+    const itemId = ttt_items[(number-1)].getItemId();
     if (! ttt_tabpanel.isActiveTab(itemId))
         ttt_tabpanel.setActiveTab(ttt_tabpanel.child('#' + itemId));
-    if (number == 1)
+    if (number === 1)
         ttt_items[0].getFocus();
 }
 
 function addTab(component) {
-    var index = ttt_items.length + 1;
+    const index = ttt_items.length + 1;
     component.title = index + ': ' + component.title;
     ttt_items.push(component);
 }
@@ -80,13 +78,13 @@ Ext.onDocumentReady(function() {
     // Setup state manager
     Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 
-    var trackingWidget = Ext.create('Netresearch.widget.Tracking',
+    const trackingWidget = Ext.create('Netresearch.widget.Tracking',
         { itemId: 'tracking', plugins: [cellEditing] }
     );
 
-    var interpretationWidget = Ext.create('Netresearch.widget.Interpretation', { itemId: 'interpretation' });
-    var extrasWidget = Ext.create('Netresearch.widget.Extras', { itemId: 'extras'});
-    var settingsWidget = Ext.create('Netresearch.widget.Settings', { itemId: 'settings' });
+    const interpretationWidget = Ext.create('Netresearch.widget.Interpretation', { itemId: 'interpretation' });
+    const extrasWidget = Ext.create('Netresearch.widget.Extras', { itemId: 'extras'});
+    const settingsWidget = Ext.create('Netresearch.widget.Settings', { itemId: 'settings' });
 
     addTab(trackingWidget);
     addTab(interpretationWidget);
@@ -94,17 +92,17 @@ Ext.onDocumentReady(function() {
     addTab(settingsWidget);
 
     /* Show admin tab, if user is admin */
-    if ((undefined != settingsData) && (settingsData['type'] == 'PL')) {
-        var adminWidget = Ext.create('Netresearch.widget.Admin', { itemId: 'admin' });
+    if ((undefined !== settingsData) && (settingsData['type'] === 'PL')) {
+        const adminWidget = Ext.create('Netresearch.widget.Admin', { itemId: 'admin' });
         addTab(adminWidget);
     }
 
-    if ((undefined != settingsData) && (settingsData['type'] != 'DEV')) {
-        var controllingWidget = Ext.create('Netresearch.widget.Controlling', { itemId: 'controlling' });
+    if ((undefined !== settingsData) && (settingsData['type'] !== 'DEV')) {
+        const controllingWidget = Ext.create('Netresearch.widget.Controlling', { itemId: 'controlling' });
         addTab(controllingWidget);
     }
 
-    var helpWidget = Ext.create('Netresearch.widget.Help', { itemId: 'help' });
+    const helpWidget = Ext.create('Netresearch.widget.Help', { itemId: 'help' });
     addTab(helpWidget);
 
     Ext.tip.QuickTipManager.init();
@@ -136,14 +134,14 @@ Ext.onDocumentReady(function() {
             id: 'header',
             html: (globalConfig.header_url != '' ? '<iframe id="nrnavi" src="' + globalConfig.header_url + '"></iframe>' : '')
                     + '<div><img id="logo" src="' + globalConfig.logo_url + '" title="logo" alt="logo"></div>'
-                    + (typeof statusUrlHtml != 'undefined'
+                    + (typeof statusUrlHtml !== 'undefined'
                         ? '<iframe id="statusfrm" src="' + statusUrlHtml + '"></iframe>' : '')
                     + '<div id="worktime">'
                     + '<span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
-                    + (typeof globalConfig.monthly_overview_url != 'undefined' && globalConfig.monthly_overview_url != null && globalConfig.monthly_overview_url != ''
+                    + (typeof globalConfig.monthly_overview_url !== 'undefined' && globalConfig.monthly_overview_url != null && globalConfig.monthly_overview_url != ''
                         ? '<br><span id="sumlink"><a href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_new">' + strings['Monthly overview'] + '</a></span>' : '')
                     + '</div>'
-                    + (typeof logoutUrlHtml != 'undefined'
+                    + (typeof logoutUrlHtml !== 'undefined'
                         ? '<div id="logout"><a href="' + logoutUrlHtml + '">' + strings['Logout'] + '</a></div>' : '')
         },
             ttt_tabpanel
@@ -151,7 +149,7 @@ Ext.onDocumentReady(function() {
     });
 
     /* Key bindings */
-    var keyMap = new Ext.util.KeyMap(Ext.get(document), [
+    const keyMap = new Ext.util.KeyMap(Ext.get(document), [
         {
             key: Ext.EventObject.A,
             alt: true,
@@ -261,14 +259,14 @@ Ext.onDocumentReady(function() {
  */
 function formatDuration(duration, inDays)
 {
-    var days = Math.floor(duration / (60*8) * 100) / 100;
-    var hours = Math.floor(duration / 60);
-    var minutes = duration % 60;
+    const days = Math.floor(duration / (60*8) * 100) / 100;
+    const hours = Math.floor(duration / 60);
+    let minutes = duration % 60;
     if (minutes < 10) {
         minutes = '0' + minutes;
     }
 
-    var text = hours + ':' + minutes;
+    let text = hours + ':' + minutes;
     if ((inDays)&&(days > 1.0)) {
         text += ' (' + days + ' PT)';
     }
@@ -284,7 +282,7 @@ function countTime() {
         url: url + 'getTimeSummary',
         scope: this,
         success: function(response) {
-            data = Ext.decode(response.responseText);
+            const data = Ext.decode(response.responseText);
             Ext.get('worktime-day').update(strings['Today'] + ': ' + formatDuration(data.today.duration, false));
             Ext.get('worktime-week').update(strings['Week'] + ': ' + formatDuration(data.week.duration, false));
             Ext.get('worktime-month').update(strings['Month'] + ': ' + formatDuration(data.month.duration, true));
@@ -313,12 +311,12 @@ var notification = undefined;
  */
 function showNotification(title, message, success)
 {
-    var cls = 'ux-notification-light';
-    if (false == success) {
+    let cls = 'ux-notification-light';
+    if (false === success) {
         cls = 'ux-notification-light-error';
     }
 
-    if ((undefined != notification)
+    if ((undefined !== notification)
         && (null != notification))
     {
         notification.hide();
@@ -363,9 +361,9 @@ function showNotification(title, message, success)
  */
 function extractTicketPrefix(ticket)
 {
-    var regexp = /([A-Za-z]+[A-Za-z0-9]*)-[0-9]+/;
-    var ticket = ticket.toUpperCase() + '';
-    var result = ticket.match(regexp);
+    const regexp = /([A-Za-z]+[A-Za-z0-9]*)-[0-9]+/;
+    ticket = ticket.toUpperCase() + '';
+    const result = ticket.match(regexp);
     if (!result) {
         return false;
     }
@@ -389,8 +387,8 @@ function findProjects(customer, ticket)
     }
 
     // Support 2nd-trial mode: find projects without defined prefix
-    var prefix = "";
-    var regexp = /([ ,]+)?([A-Za-z]+)([ ,]+)?/;
+    let prefix = "";
+    const regexp = /([ ,]+)?([A-Za-z]+)([ ,]+)?/;
 
     if (ticket == "") {
         prefix = "";
@@ -400,9 +398,9 @@ function findProjects(customer, ticket)
             return projects;
     }
 
-    var validProjects = [];
-    var value;
-    for (var key in projects) {
+    let validProjects = [];
+    let value;
+    for (let key in projects) {
         value = projects[key];
 
         if (prefix == "") {
@@ -420,7 +418,7 @@ function findProjects(customer, ticket)
             continue;
         }
 
-        var result = value['jiraId'].match(regexp);
+        const result = value['jiraId'].match(regexp);
         if (!result) {
             continue;
         }
