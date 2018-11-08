@@ -1,11 +1,14 @@
 <?php
+/**
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ */
 
 namespace Netresearch\TimeTrackerBundle\Helper;
 
 use Symfony\Component\Yaml\Yaml;
 use \Zend\Ldap;
 
-/*
+/**
  * Client for LDAP login
  */
 class LdapClient

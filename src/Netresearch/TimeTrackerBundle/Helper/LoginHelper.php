@@ -2,7 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Helper;
 
-/*
+/**
  * Helper for permanent timetracker login
  */
 class LoginHelper

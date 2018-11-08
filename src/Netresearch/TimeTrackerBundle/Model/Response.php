@@ -1,5 +1,9 @@
 <?php
 /**
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ */
+
+/**
  * Netresearch Timetracker
  *
  * PHP version 5
@@ -27,7 +31,7 @@ class Response extends \Symfony\Component\HttpFoundation\Response
 {
 
     /**
-     * Add addtional headers before sending an ajax reply to the client
+     * Add additional headers before sending an ajax reply to the client
      *
      * @return void
      */

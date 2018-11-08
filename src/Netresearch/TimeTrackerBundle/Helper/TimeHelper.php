@@ -1,15 +1,28 @@
 <?php
+/**
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ */
 
 namespace Netresearch\TimeTrackerBundle\Helper;
 
-/*
+/**
  * TimeHelper provides conversions between time formats
  */
 class TimeHelper
 {
+    /**
+     *
+     */
     const DAYS_PER_WEEK = 5;
+    /**
+     *
+     */
     const HOURS_PER_DAY = 8;
 
+    /**
+     * @param $letter
+     * @return float|int
+     */
     public static function getMinutesByLetter($letter) {
         switch ($letter) {
         case 'w': return self::DAYS_PER_WEEK * self::HOURS_PER_DAY * 60;
@@ -21,6 +34,10 @@ class TimeHelper
         }
     }
 
+    /**
+     * @param $readable
+     * @return float|int
+     */
     public static function readable2minutes($readable)
     {
         if (!preg_match_all('/([0-9.,]+)([wdhm]|$)/iU', $readable, $matches)) {
@@ -28,8 +45,9 @@ class TimeHelper
         }
 
         $sum = 0;
-        for ($c = 0; $c < count($matches[0]); $c++) {
-            $sum += (float) str_replace(',','.',$matches[1][$c]) * self::getMinutesByLetter($matches[2][$c]);
+        $c = count($matches[0]);
+        for ($i = 0; $i < $c; $i++) {
+            $sum += (float) str_replace(',','.',$matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]);
         }
         return $sum;
     }
@@ -49,9 +67,9 @@ class TimeHelper
             return '0m';
 
         if ((bool) $useWeeks) {
-            $sizes = array('w', 'd', 'h');
+            $sizes = ['w', 'd', 'h'];
         } else {
-            $sizes = array('d', 'h');
+            $sizes = ['d', 'h'];
         }
 
         $out = '';
