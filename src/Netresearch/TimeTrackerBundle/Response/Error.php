@@ -1,15 +1,16 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: tkreissl
- * Date: 02.08.16
- * Time: 13:38
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
  */
 
 namespace Netresearch\TimeTrackerBundle\Response;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+/**
+ * Class Error
+ * @package Netresearch\TimeTrackerBundle\Response
+ */
 class Error extends JsonResponse
 {
     /**

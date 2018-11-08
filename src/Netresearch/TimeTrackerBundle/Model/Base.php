@@ -1,4 +1,8 @@
 <?php
+/**
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ */
+
 namespace Netresearch\TimeTrackerBundle\Model;
 
 use ReflectionClass as ReflectionClass;
@@ -6,6 +10,11 @@ use ReflectionProperty as ReflectionProperty;
 
 /*
  * Base model
+ */
+
+/**
+ * Class Base
+ * @package Netresearch\TimeTrackerBundle\Model
  */
 class Base
 {
@@ -28,4 +37,3 @@ class Base
         return $data;
     }
 }
-

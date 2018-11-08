@@ -15,6 +15,7 @@
 namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Doctrine\ORM\Query\Expr\Join;
+use Netresearch\TimeTrackerBundle\Entity\Entry;
 use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 
@@ -300,7 +301,7 @@ class EntryRepository extends EntityRepository
      * @param integer $ticketSystemId
      * @param integer $maxResults       (optional) max number of results to be returned
      *                                  if null: no result limitation
-     * @return array
+     * @return Entry[]
      */
     public function findByUserAndTicketSystemToSync($userId, $ticketSystemId, $maxResults = null)
     {

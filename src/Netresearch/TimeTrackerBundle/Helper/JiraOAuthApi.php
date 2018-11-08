@@ -1,4 +1,7 @@
 <?php
+/**
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ */
 
 /**
  *
@@ -286,17 +289,18 @@ class JiraOAuthApi
         }
 
         $em = $this->doctrine->getManager();
-        /** @var \Netresearch\TimeTrackerBundle\Repository\EntryRepository $repo */
         $repo = $this->doctrine->getRepository('NetresearchTimeTrackerBundle:Entry');
         $entries = $repo->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
 
-        /** @var Entry $entry */
         foreach ($entries as $entry) {
             try {
                 $this->updateEntryJiraWorkLog($entry);
                 $em->persist($entry);
+            } catch (\Exception $e) {
+
+            } finally {
                 $em->flush();
-            } catch (\Exception $e) {}
+            }
         }
     }
 
@@ -334,8 +338,8 @@ class JiraOAuthApi
         }
 
         $arData = [
-            'comment' => $this->getTicketSystemWorkLogComment($entry),
-            'started' => $this->getTicketSystemWorkLogStartDate($entry),
+            'comment'          => $this->getTicketSystemWorkLogComment($entry),
+            'started'          => $this->getTicketSystemWorkLogStartDate($entry),
             'timeSpentSeconds' => $entry->getDuration() * 60,
         ];
 
