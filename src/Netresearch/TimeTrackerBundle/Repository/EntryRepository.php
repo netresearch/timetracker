@@ -33,8 +33,8 @@ use Doctrine\ORM\EntityRepository;
  */
 class EntryRepository extends EntityRepository
 {
-    const PERIOD_DAY = 1;
-    const PERIOD_WEEK = 2;
+    const PERIOD_DAY   = 1;
+    const PERIOD_WEEK  = 2;
     const PERIOD_MONTH = 3;
 
     /**

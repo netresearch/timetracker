@@ -5,6 +5,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Model;
 
+use Doctrine\ORM\Mapping\Entity;
 use ReflectionClass as ReflectionClass;
 use ReflectionProperty as ReflectionProperty;
 
@@ -31,7 +32,18 @@ class Base
         $data = array();
         foreach ($r->getProperties(ReflectionProperty::IS_PROTECTED) as $property) {
             $method = 'get' . ucwords($property->getName());
-            $data[$property->getName()] = $this->$method();
+            $value = $this->$method();
+            if (is_object($value) && method_exists($value, 'getId')) {
+                $value = $value->getId();
+            }
+
+            $name = $property->getName();
+            $data[$name] = $value;
+
+            // provide properties also in snake_case for BC
+            // https://stackoverflow.com/questions/1993721/how-to-convert-camelcase-to-camel-case
+            $name = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
+            $data[$name] = $value;
         }
 
         return $data;
