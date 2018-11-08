@@ -65,7 +65,6 @@ class User
      */
     protected $contracts;
 
-
     /**
      * @ORM\ManyToMany(targetEntity="Team", inversedBy="users")
      * @ORM\JoinTable(name="teams_users",

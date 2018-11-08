@@ -3,15 +3,27 @@
 namespace Netresearch\TimeTrackerBundle\Repository;
 
 use Netresearch\TimeTrackerBundle\Entity\Project;
-use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Doctrine\ORM\EntityRepository;
 
+/**
+ * Class ProjectRepository
+ * @package Netresearch\TimeTrackerBundle\Repository
+ */
 class ProjectRepository extends EntityRepository
 {
-    public function sortProjectsByName($a, $b) {
+    /**
+     * @param string $a
+     * @param string $b
+     * @return int
+     */
+    public function sortProjectsByName($a, $b)
+    {
         return strcasecmp($a['name'], $b['name']);
     }
 
+    /**
+     * @return Project[]
+     */
     public function getGlobalProjects()
     {
         return $this->findBy(['global' => 1]);
@@ -25,21 +37,21 @@ class ProjectRepository extends EntityRepository
      * There is a special key "all", where all projects are in.
      * @param int $userId
      * @param array $customers
-     * @return array
-     * @throws \Doctrine\DBAL\DBALException
+     * @return array[][]
+     * @throws \ReflectionException
      */
-    public function getProjectStructure($userId, array $customers)
+    public function getProjectStructure(int $userId, array $customers)
     {
         /* @var $globalProjects Project[] */
         $globalProjects = $this->getGlobalProjects();
-        $userProjects   = $this->getProjectsByUser($userId, null);
+        $userProjects   = $this->getProjectsByUser($userId);
 
         $projects = [];
         foreach ($customers as $customer) {
 
             // Restructure customer-specific projects
             foreach ($userProjects as $project) {
-                if ($customer['customer']['id'] == $project['project']['customer']) {
+                if ($customer['customer']['id'] === $project['project']['customer']) {
                     $projects[$customer['customer']['id']][] = [
                         'id'     => $project['project']['id'],
                         'name'   => $project['project']['name'],
@@ -75,7 +87,7 @@ class ProjectRepository extends EntityRepository
         }
 
         // Sort projects by name for each customer
-        foreach($projects AS &$customerProjects) {
+        foreach ($projects as &$customerProjects) {
             usort($customerProjects, [$this, 'sortProjectsByName']);
         }
 
@@ -84,91 +96,62 @@ class ProjectRepository extends EntityRepository
 
 
     /**
-     * @param $userId
-     * @param null $customerId
-     * @return array
-     * @throws \Doctrine\DBAL\DBALException
-     */
-    public function getProjectsByUser($userId, $customerId = null)
-    {
-        $connection = $this->getEntityManager()->getConnection();
-
-        /* May god help us... */
-        $sql = array();
-        $sql['select'] = "SELECT DISTINCT p.*";
-        $sql['from'] = "FROM projects p";
-        $sql['join_c'] = "LEFT JOIN customers c ON p.customer_id = c.id";
-        $sql['join_tc'] = "LEFT JOIN teams_customers tc ON tc.customer_id = c.id";
-        $sql['join_tu'] = "LEFT JOIN teams_users tu ON tc.team_id = tu.team_id";
-        $sql['where_user'] = "WHERE (c.global=1 OR tu.user_id = %d)";
-        if ((int) $customerId > 0) {
-            $sql['where_customer'] = "AND (p.customer_id = %d OR p.global = 1)";
-        }
-        $sql['order'] = "ORDER BY p.name ASC";
-
-        $stmt = $connection->query(sprintf(implode(" ", $sql), $userId, $customerId));
-
-        return $this->findByQuery($stmt);
-    }
-
-    /**
+     * Returns projects for given user, and optionally for given customer.
+     *
+     * @param int $userId
      * @param int $customerId
-     * @return array
-     * @throws \Doctrine\DBAL\DBALException
+     * @return array[]
+     * @throws \ReflectionException
      */
-    public function findAll($customerId = 0)
+    public function getProjectsByUser(int $userId, int $customerId = 0)
     {
-        $connection = $this->getEntityManager()->getConnection();
+        $qb = $this->createQueryBuilder('project')
+            ->where('customer.global = 1 OR user.id = :userId')
+            ->setParameter('userId', $userId);
 
-        $sql = array();
-        $sql['select'] = "SELECT DISTINCT *";
-        $sql['from'] = "FROM projects p";
-
-        if ((int) $customerId > 0) {
-            $sql['where'] = 'WHERE p.customer_id = ' . (int) $customerId
-                            . ' OR p.global=1';
+        if ($customerId > 0) {
+            $qb->andWhere('project.global = 1 OR customer.id = :customerId')
+                ->setParameter('customerId', $customerId);
         }
 
-        $sql['order'] = "ORDER BY p.name ASC";
+        /** @var Project[] $result */
+        $result = $qb->leftJoin('project.customer', 'customer')
+            ->leftJoin('customer.teams', 'team')
+            ->leftJoin('team.users', 'user')
+            ->getQuery()
+            ->execute();
 
-        $stmt = $connection->query(implode(" ", $sql));
-
-        return $this->findByQuery($stmt);
-    }
-
-    /**
-     * @param \Doctrine\DBAL\Driver\Statement $stmt
-     * @return array
-     */
-    protected function findByQuery(\Doctrine\DBAL\Driver\Statement $stmt)
-    {
-        $projects = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $data = [];
-        foreach ($projects as $project) {
-            $data[] = ['project' => [
-                'id'            => $project['id'],
-                'name'          => $project['name'],
-                'jiraId'        => $project['jira_id'],
-                'ticket_system' => $project['ticket_system'],
-                'customer'      => $project['customer_id'],
-                'active'        => $project['active'],
-                'global'        => $project['global'],
-                'estimation'    => $project['estimation'],
-                'estimationText'=> TimeHelper::minutes2readable($project['estimation'], false),
-                'billing'       => $project['billing'],
-                'cost_center'   => $project['cost_center'],
-                'offer'         => $project['offer'],
-                'project_lead'  => $project['project_lead_id'],
-                'technical_lead'=> $project['technical_lead_id'],
-                'additionalInformationFromExternal' => $project['additional_information_from_external'],
-                'internalJiraProjectKey' => $project['internal_jira_project_key'],
-                'internalJiraTicketSystem' => $project['internal_jira_ticket_system'],
-            ]];
+        foreach ($result as $project) {
+            $data[] = ['project' => $project->toArray()];
         }
 
         return $data;
     }
 
+    /**
+     * @param int $customerId
+     * @return Project[]
+     */
+    public function findByCustomer(int $customerId = 0)
+    {
+        /** @var Project[] $result */
+        $result = $this->createQueryBuilder('project')
+            ->where('project.global = 1 OR customer.id = :customerId')
+            ->setParameter('customerId', $customerId)
+            ->leftJoin('project.customer', 'customer')
+            ->leftJoin('customer.teams', 'team')
+            ->leftJoin('team.users', 'user')
+            ->getQuery()
+            ->execute();
+
+        return $result;
+    }
+
+    /**
+     * @param $jiraId
+     * @return false|int
+     */
     public function isValidJiraPrefix($jiraId)
     {
         return preg_match('/^([A-Z]+[A-Z0-9]*[, ]*)*$/', $jiraId);

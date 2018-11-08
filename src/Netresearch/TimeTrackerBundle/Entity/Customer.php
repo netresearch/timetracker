@@ -48,7 +48,10 @@ class Customer extends Base
 
     /**
      * @ORM\ManyToMany(targetEntity="Team", inversedBy="customers")
-     * @ORM\JoinTable(name="teams_customers")
+     * @ORM\JoinTable(name="teams_customers",
+     *     joinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")}
+     * )
      */
     protected $teams;
 

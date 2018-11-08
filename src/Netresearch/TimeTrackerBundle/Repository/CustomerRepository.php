@@ -12,31 +12,25 @@ class CustomerRepository extends EntityRepository
      *
      * @param $userId
      * @return array
-     * @throws \Doctrine\DBAL\DBALException
      */
     public function getCustomersByUser($userId)
     {
-        $connection = $this->getEntityManager()->getConnection();
-
-        /* Creepy */
-        $stmt = $connection->query("
-            SELECT DISTINCT c.id, c.name, c.active
-            FROM customers c
-            LEFT JOIN teams_customers tc
-            ON tc.customer_id = c.id
-            LEFT JOIN teams_users tu
-            ON tc.team_id = tu.team_id
-            WHERE (c.global=1 OR tu.user_id = " . $userId . ")
-            ORDER BY name ASC;");
-
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        /** @var Customer[] $result */
+        $result = $this->createQueryBuilder('customer')
+            ->andWhere('customer.global = 1')
+            ->orWhere('user.id = :userId')
+            ->setParameter('userId', $userId)
+            ->leftJoin('customer.teams', 'team')
+            ->leftJoin('team.users', 'user')
+            ->getQuery()
+            ->execute();
 
         $data = [];
-        if (count($result)) foreach ($result as $line) {
+        foreach ($result as $customer) {
             $data[] = ['customer' => [
-                'id'     => $line['id'],
-                'name'   => $line['name'],
-                'active' => $line['active'],
+                'id'     => $customer->getId(),
+                'name'   => $customer->getName(),
+                'active' => $customer->getActive(),
             ]];
         }
 

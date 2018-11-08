@@ -26,7 +26,7 @@ class AdminController extends BaseController
     /**
      * @param Request $request
      * @return Response
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \ReflectionException
      */
     public function getAllProjectsAction(Request $request)
     {
@@ -34,7 +34,12 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findAll();
+        $result = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findAll();
+
+        $data = [];
+        foreach ($result as $project) {
+            $data[] = ['project' => $project->toArray()];
+        }
 
         return new Response(json_encode($data));
     }
@@ -74,7 +79,6 @@ class AdminController extends BaseController
     /**
      * @param Request $request
      * @return Response
-     * @throws \Doctrine\DBAL\DBALException
      */
     public function getTeamsAction(Request $request)
     {

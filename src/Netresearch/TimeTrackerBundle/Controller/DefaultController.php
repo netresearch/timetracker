@@ -24,7 +24,7 @@ class DefaultController extends BaseController
     /**
      * @param Request $request
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \ReflectionException
      */
     public function indexAction(Request $request)
     {
@@ -345,7 +345,7 @@ class DefaultController extends BaseController
     /**
      * @param Request $request
      * @return Response
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \ReflectionException
      */
     public function getProjectsAction(Request $request)
     {
@@ -361,11 +361,21 @@ class DefaultController extends BaseController
      * @param Request $request
      * @return Response
      * @throws \Doctrine\DBAL\DBALException
+     * @throws \ReflectionException
      */
     public function getAllProjectsAction(Request $request)
     {
         $customerId = (int) $request->query->get('customer');
-        $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findAll($customerId);
+        if ($customerId > 0) {
+            $result = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findByCustomer($customerId);
+        } else {
+            $result = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findAll();
+        }
+
+        $data = [];
+        foreach ($result as $project) {
+            $data[] = ['project' => $project->toArray()];
+        }
 
         return new Response(json_encode($data));
     }
