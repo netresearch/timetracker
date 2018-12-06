@@ -124,7 +124,7 @@ class AdminController extends BaseController
         $additionalInformationFromExternal = $this->getRequest()->get('additionalInformationFromExternal') ? $this->getRequest()->get('additionalInformationFromExternal') : 0;
         $projectRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project');
         $internalJiraTicketSystem = (int) $this->getRequest()->get('internalJiraTicketSystem', 0);
-        $internalJiraProjectKey   = (int) $this->getRequest()->get('internalJiraProjectKey', 0);
+        $internalJiraProjectKey   = $this->getRequest()->get('internalJiraProjectKey', 0);
 
         if ($projectId) {
             $project = $projectRepository->find($projectId);
