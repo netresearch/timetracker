@@ -2,7 +2,7 @@ FROM php:7-fpm
 
 RUN set -ex \
  && apt-get update \
- && apt-get upgrade \
+ && apt-get upgrade -y \
  && apt-get install -y libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
  && docker-php-ext-install pdo_mysql ldap zip xml gd \
  && apt-get remove -y libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
