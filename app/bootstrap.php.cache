@@ -1005,7 +1005,7 @@ public function getFormat($mimeType)
 {
 $canonicalMimeType = null;
 if (false !== $pos = strpos($mimeType,';')) {
-$canonicalMimeType = substr($mimeType, 0, $pos);
+$canonicalMimeType = trim(substr($mimeType, 0, $pos));
 }
 if (null === static::$formats) {
 static::initializeFormats();
@@ -1211,9 +1211,12 @@ $this->server->remove('UNENCODED_URL');
 $this->server->remove('IIS_WasUrlRewritten');
 } elseif ($this->server->has('REQUEST_URI')) {
 $requestUri = $this->server->get('REQUEST_URI');
-$schemeAndHttpHost = $this->getSchemeAndHttpHost();
-if (0 === strpos($requestUri, $schemeAndHttpHost)) {
-$requestUri = substr($requestUri, \strlen($schemeAndHttpHost));
+$uriComponents = parse_url($requestUri);
+if (isset($uriComponents['path'])) {
+$requestUri = $uriComponents['path'];
+}
+if (isset($uriComponents['query'])) {
+$requestUri .='?'.$uriComponents['query'];
 }
 } elseif ($this->server->has('ORIG_PATH_INFO')) {
 $requestUri = $this->server->get('ORIG_PATH_INFO');
