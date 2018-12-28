@@ -211,3 +211,78 @@ Per default every TimeTracker user has to be created manually.
 While setting **ldap_create_user** in **app/config/parameters.yml** to **true** new users of type **DEV** are going
 to be created automatically on a valid LDAP authentication. The type can be changed afterwards via the
 users panel in the administration tab or directly in the database.
+
+
+Track time for external ticket systems to internal ticket system
+----------------------------------------------------------------
+
+Sometimes you not only want to track the times for the tickets from your ticket system.
+Assuming that you have a client providing an own ticket system, but you want to track the times
+for work on this tickets into your ticket system.
+
+Example:
+
+* Your client provides tickets to your team via an own ticker system
+* The ticket numbers may be ``EXTERNAL-1``, ``EXTERNAL-200`` etc.
+* You share the information regarding the progress of the ticket in the clients ticket system
+* But you want to track the working time in your internal ticket system instance
+* Normally you would need to create a ticket in your ticket system e.g. name ``INTERNAL-1``
+* You then would be able to book you efforts to ``INTERNAL-1`` via Timetracker
+* That's quite ineffective because you always need to create an internal ticket
+
+This feature tries to solve that problem.
+
+#. Create a project in Jira where the external times should be applied to
+
+   #. Create a Jira project the Timetracker user has access to
+   #. Ensure that the project provides the issue type ``task``
+   #. Let's assume it is named ``Customer Project`` with the key ``INTERNAL``
+
+#. Create the clients ticket system in TimeTracker
+
+   #. Go to ``Administration > Ticket-Sytem`` and create a new one:
+
+      Name:
+        e.g. ``Customer ticket system``
+      Type:
+        ``Jira`` or ``Other`` or what you like
+
+        The type does not effect this feature in any way
+      URL:
+        e.g. ``https://ticketing.customer.org/%s``
+
+        This is used to generate links in the work log description
+      Timebooking:
+        No
+
+        This disables any contact to external ticket system
+
+   #. Save the entry
+
+#. Create the external project in TimeTracker
+
+   #. Go to ``Administration > Projects`` and create a new one:
+
+      Name:
+        set to e.g. ``Customer Project``
+      Ticket-System:
+        Select the above created ``Customer ticket system``
+      Ticket-Prefix:
+        Enter the prefix of your customers project tickets e.g. ``EXTERNAL`` if the tickets are in the form
+        ``EXTERNAL-123``
+      Active:
+        Yes
+      "Internal Jira project key":
+        select ``INTERNAL``
+      "Internal Jira ticket system":
+        select your internal ticket system
+
+If everything is correct, the following will happen:
+
+* If you are booking some working time to e.g. ``EXTERNAL-1`` in TimeTracker for project ``Customer Project``
+* TimeTracker will reach out for the configured internal Jira instance
+* It will search for an issue which name starts with ``EXTERNAL-1`` in the configured internal Jira project
+* If it finds an entry, the work log is applied to this entry
+* If it does not find an entry, TimeTracker will create a new internal ticket with name ``EXTERNAL-1``
+* The link to the ticket in customer Jira will be applied as ticket description
+* The work log is applied to the newly created ticket
