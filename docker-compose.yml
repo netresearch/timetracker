@@ -12,6 +12,10 @@ services:
     links:
       - db:db
     restart: always
+    environment:
+      - TRUSTED_PROXY_ALL
+      - TRUSTED_PROXY_LIST
+
 
   httpd:
     image: nginx:alpine
