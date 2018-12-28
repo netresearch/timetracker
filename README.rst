@@ -125,22 +125,28 @@ Using OAuth to transmit work logs to Jira ticket system
    - https://developer.atlassian.com/server/jira/platform/oauth/
    - https://bitbucket.org/atlassian_tutorial/atlassian-oauth-examples
 
-#.#. Example for Jira 7
+   #. Example for Jira 7
 
    - Create a SSH key pair with private and public pem file
    - Open "Application links" page in your Jira: https://jira.example.com/plugins/servlet/applinks/listApplicationLinks
    - "Create new link" with URL pointing to your TimeTracker installation
    - Just click "Continue" if Jira is blaming "no response"
    - Fill out the following form:
-     - Application Name: timetracker (or chose any other name you like)
-     - Application Type: Generic Application
-     - Ignore the rest and hit "Continue"
+      - Application Name: 
+           timetracker (or chose any other name you like)
+      - Application Type:
+           Generic Application
+      - Ignore the rest and hit "Continue"
+
    - After new Application is created click on action "edit" (the little pencil at the right to your new application)
-     - Select "Incoming Authentication"
-     - Consumer Key: timetracker (or chose any other name you like)
-     - Consumer Name: TimeTracker (or chose any other name you like)
-     - Public Key: insert here the public key you created above
-     - Click on "Save"
+      - Select "Incoming Authentication"
+      - Consumer Key:
+           timetracker (or chose any other name you like)
+      - Consumer Name:
+           TimeTracker (or chose any other name you like)
+      - Public Key:
+           Insert here the public key you created above
+      - Click on "Save"
 
 #. Create a ticket system in TimeTracker
 
