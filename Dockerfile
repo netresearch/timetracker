@@ -1,4 +1,4 @@
-FROM php:7-fpm
+FROM php:7-fpm AS runtime
 
 RUN set -ex \
  && apt-get update -y \
@@ -25,14 +25,31 @@ RUN set -ex \
  && rm -f /var/cache/apt/*.bin \
  && rm -rf /usr/share/man/* /usr/share/groff/* /usr/share/info/* /usr/share/lintian/* /usr/share/linda/* /var/cache/man/* /usr/share/doc/*
 
+
+FROM runtime AS builder
+
+RUN apt-get update -y
+RUN apt-get install -y git unzip curl
+# install composer
+RUN curl -sS https://getcomposer.org/installer | php
+RUN mv composer.phar /usr/local/bin/composer
+
 COPY . /var/www/html
 
-RUN mkdir -p /var/www/html/app/logs \
- && mkdir -p /var/www/html/app/cache \
- && chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache \
- && echo "short_open_tag = off" >> /usr/local/etc/php/conf.d/symfony.ini
+# install the composer packages
+RUN cd /var/www/html && composer install --no-dev --no-ansi
+
+RUN mkdir -p /var/www/html/app/logs
+RUN mkdir -p /var/www/html/app/cache
+RUN chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache
+
+
+FROM runtime
+
+COPY --from=builder /var/www/html /var/www/html/
 
 # replace entrypoint and add updating ca-certifcates
-RUN echo "#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates\nexec \"\$@\"" > /usr/local/bin/docker-php-entrypoint
+RUN echo "#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates\nexec \"\$@\"" > /usr/local/bin/docker-php-entrypoint \
+ && echo "short_open_tag = off" >> /usr/local/etc/php/conf.d/symfony.ini
 
 VOLUME /var/www/html/app/logs /var/www/html/app/cache
