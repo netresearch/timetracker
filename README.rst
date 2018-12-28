@@ -82,8 +82,8 @@ Requirements
 - libraries listed in ``composer.json``
 
 
-Setup
------
+Setup - manual from from sources
+--------------------------------
 
 #. Fetch a local copy::
 
@@ -111,6 +111,17 @@ Setup
 
      $ php app/console assets:install
 #. Login with your LDAP credentials
+
+
+Setup - with prebuilt docker images
+-----------------------------------
+
+#. Create an empty folder
+#. Put the provided docker-composer.yml from this git repo in it
+#. Put the provided nginx configuration file from this repo into the above created folder
+#. Put the provided app/config/parameters.yml.dist from this repo as paramters.yml into the above created folder
+#. Check and adapt the copied confoguration files to your needs
+#. Run docker-compose up -d
 
 
 Configuration
