@@ -125,7 +125,7 @@ Using OAuth to transmit work logs to Jira ticket system
    - https://developer.atlassian.com/server/jira/platform/oauth/
    - https://bitbucket.org/atlassian_tutorial/atlassian-oauth-examples
 
-   #. Example for Jira 7
+#. Example for Jira 7
 
    - Create a SSH key pair with private and public pem file
    - Open "Application links" page in your Jira: https://jira.example.com/plugins/servlet/applinks/listApplicationLinks
