@@ -3,7 +3,7 @@ services:
 
   app:
     build: .
-    image: registry.netresearch.de/timetracker/timetracker
+    image: netresearch/timetracker
     volumes:
       - app-pub:/var/www/html/web
       - app-cache:/var/www/html/app/cache
