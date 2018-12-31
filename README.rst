@@ -71,8 +71,8 @@ PL (Project leader)
   ticket systems and activities in **Administration** tab
 
 
-Installation
-============
+Installation and set up
+=======================
 
 Requirements
 ------------
@@ -122,6 +122,26 @@ Setup - with prebuilt docker images
 #. Put the provided app/config/parameters.yml.dist from this repo as paramters.yml into the above created folder
 #. Check and adapt the copied confoguration files to your needs
 #. Run docker-compose up -d
+
+
+Trusted proxies
+---------------
+
+To work behind a proxy Symfony needs to know which proxies are allowed to trust.
+
+There are two ENV variables which can be set to modify the proxy behavior of the
+app:
+
+TRUSTED_PROXY_LIST
+  The variable expects a valid JSON encoded list of IPs or IP ranges::
+
+    TRUSTED_PROXY_LIST=["192.0.0.1","10.0.0.0\/8"]
+
+TRUSTED_PROXY_ALL
+  The variable expects a boolean 1/0 to indicate if the application
+  should handle each address in ``$_SERVER[REMOTE_ADDR]`` as a trusted proxy::
+
+    TRUSTED_PROXY_ALL=1
 
 
 Configuration
