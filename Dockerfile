@@ -53,3 +53,8 @@ RUN echo "#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates\nexec \"\$@\"" > /
  && echo "short_open_tag = off" >> /usr/local/etc/php/conf.d/symfony.ini
 
 VOLUME /var/www/html/app/logs /var/www/html/app/cache
+
+EXPOSE 9000
+WORKDIR /var/www/html
+ENTRYPOINT ["docker-php-entrypoint"]
+CMD ["php-fpm"]
