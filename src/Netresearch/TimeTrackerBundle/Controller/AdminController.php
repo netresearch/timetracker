@@ -182,7 +182,7 @@ class AdminController extends BaseController
         /* @var $projectRepository \Netresearch\TimeTrackerBundle\Repository\ProjectRepository */
         $projectRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project');
         $internalJiraTicketSystem = (int) $request->get('internalJiraTicketSystem', 0);
-        $internalJiraProjectKey   = (int) $request->get('internalJiraProjectKey', 0);
+        $internalJiraProjectKey   = $request->get('internalJiraProjectKey', 0);
 
         if ($projectId) {
             $project = $projectRepository->find($projectId);
