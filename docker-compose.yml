@@ -5,7 +5,6 @@ services:
     build: .
     image: netresearch/timetracker
     volumes:
-      - app-pub:/var/www/html/web
       - app-cache:/var/www/html/app/cache
       - app-logs:/var/www/html/app/logs
       - ./app/config/parameters.yml:/var/www/html/app/config/parameters.yml
@@ -43,9 +42,6 @@ networks:
     driver: "bridge"
 
 volumes:
-
-  app-pub:
-    driver: local
 
   app-cache:
     driver: local
