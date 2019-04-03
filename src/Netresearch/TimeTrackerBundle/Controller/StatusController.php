@@ -25,9 +25,9 @@ class StatusController extends BaseController
         return array('loginStatus' => $loginStatus);
     }
 
-    public function checkAction()
+    public function checkAction(Request $request)
     {
-        $userId = $this->get('request')->getSession()->get('loginId');
+        $userId = $request->getSession()->get('loginId');
 
         $status = $this->getStatus($userId);
         return new Response(json_encode($status));
