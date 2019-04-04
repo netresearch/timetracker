@@ -384,7 +384,7 @@ class InterpretationController extends BaseController
             }
 
             $arParams['datestart'] = $datestart;
-            $arParams['$dateend'] = $dateend->format('Y-m-d\TH:i:s');
+            $arParams['dateend'] = $dateend->format('Y-m-d\TH:i:s');
         }
 
         if (!$arParams['customer']
