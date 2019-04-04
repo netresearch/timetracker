@@ -261,6 +261,12 @@ class InterpretationController extends BaseController
     }
 
 
+    /**
+     * Returns booked times grouped by day.
+     *
+     * @param Request $request
+     * @return Response
+     */
     public function groupByWorktimeAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
@@ -277,16 +283,15 @@ class InterpretationController extends BaseController
 
         $times = array();
 
-        foreach($entries as $entry) {
+        foreach ($entries as $entry) {
             $day_r = $entry->getDay()->format('y-m-d');
-            $day_l = $entry->getDay()->format('d.m.');
 
-            if(!isset($times[$day_r])) {
+            if (!isset($times[$day_r])) {
                 $times[$day_r] = array(
                     'name'  => $day_r,
-                    'day'   => $day_l,
+                    'day'   => $entry->getDay()->format('d.m.'),
                     'hours' => 0,
-                    'quota' => 0
+                    'quota' => 0,
                 );
             }
 
@@ -294,8 +299,9 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach($times AS &$time)
+        foreach ($times as &$time) {
             $time['quota'] = TimeHelper::formatQuota($time['hours'], $sum);
+        }
 
         usort($times, array($this, 'sortByName'));
         return new Response(json_encode($this->normalizeData(array_reverse($times))));
