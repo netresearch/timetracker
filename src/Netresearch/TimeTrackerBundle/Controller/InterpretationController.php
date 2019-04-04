@@ -370,6 +370,23 @@ class InterpretationController extends BaseController
             'dateend'           => $this->evalParam($request, 'dateend'),
         ];
 
+        $year = $this->evalParam($request, 'year');
+        if (null !== $year) {
+            $month = $this->evalParam($request, 'month');
+            if (null !== $month) {
+                $datestart = $year . '-' . $month . '-01T00:00:00';
+                $dateend = \DateTime::createFromFormat('Y-m-d\TH:i:s', $datestart);
+                $dateend->add(new \DateInterval('P1M'));
+            } else {
+                $datestart = $year . '-01-01T00:00:00';
+                $dateend = \DateTime::createFromFormat('Y-m-d\TH:i:s', $datestart);
+                $dateend->add(new \DateInterval('P1Y'));
+            }
+
+            $arParams['datestart'] = $datestart;
+            $arParams['$dateend'] = $dateend->format('Y-m-d\TH:i:s');
+        }
+
         if (!$arParams['customer']
             && !$arParams['project']
             && !$arParams['user']
