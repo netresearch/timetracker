@@ -374,17 +374,29 @@ class InterpretationController extends BaseController
         if (null !== $year) {
             $month = $this->evalParam($request, 'month');
             if (null !== $month) {
-                $datestart = $year . '-' . $month . '-01T00:00:00';
-                $dateend = \DateTime::createFromFormat('Y-m-d\TH:i:s', $datestart);
+                // first day of month
+                $datestart = $year . '-' . $month . '-01';
+
+                // last day of month
+                $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
                 $dateend->add(new \DateInterval('P1M'));
+                // go back 1 day, to set date from first day of next month back to last day of last month
+                // e.g. 2019-05-01 -> 2019-04-30
+                $dateend->sub(new \DateInterval('P1D'));
             } else {
-                $datestart = $year . '-01-01T00:00:00';
-                $dateend = \DateTime::createFromFormat('Y-m-d\TH:i:s', $datestart);
+                // first day of year
+                $datestart = $year . '-01-01';
+
+                // last day of year
+                $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
                 $dateend->add(new \DateInterval('P1Y'));
+                // go back 1 day, to set date from first day of next year back to last day of last year
+                // e.g. 2019-01-01 -> 2018-12-31
+                $dateend->sub(new \DateInterval('P1D'));
             }
 
             $arParams['datestart'] = $datestart;
-            $arParams['dateend'] = $dateend->format('Y-m-d\TH:i:s');
+            $arParams['dateend'] = $dateend->format('Y-m-d');
         }
 
         if (!$arParams['customer']
