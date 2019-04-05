@@ -462,7 +462,6 @@ class EntryRepository extends EntityRepository
     }
 
 
-
     /**
      * Get array of entries for given filter params
      *
@@ -481,6 +480,7 @@ class EntryRepository extends EntityRepository
      *           [visibility_user]  => user_id restricts entry visibility by users teams
      *
      * @return array
+     * @throws \Exception
      */
     public function findByFilterArray($arFilter = [])
     {
