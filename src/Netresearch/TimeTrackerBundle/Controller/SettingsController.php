@@ -13,7 +13,7 @@ class SettingsController extends Controller
     public function saveAction(Request $request)
     {
         if ('POST' == $request->getMethod()) {
-            $userId = $this->get('request')->getSession()->get('loginId');
+            $userId = $request->getSession()->get('loginId');
 
             $doctrine = $this->getDoctrine();
             $user = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')->find($userId);
