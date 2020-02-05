@@ -1,4 +1,4 @@
-FROM php:7-fpm AS runtime
+FROM php:7.3-fpm AS runtime
 
 RUN set -ex \
  && apt-get update -y \
