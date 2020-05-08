@@ -116,6 +116,13 @@ _getContracts:
     path:  /getContracts
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:getContracts }
 
+_getTicketTimeSummary:
+    path: /getTicketTimeSummary/{ticket}
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getTicketTimeSummary, ticket: null }
+
+_getTicketTimeSummaryJs:
+    path: /scripts/timeSummaryForJira
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getTicketTimeSummaryJs }
 
 _login:
     path:  /login

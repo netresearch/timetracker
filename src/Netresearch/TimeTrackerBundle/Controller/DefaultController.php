@@ -14,6 +14,7 @@ use Netresearch\TimeTrackerBundle\Entity\User;
 
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Class DefaultController
@@ -467,5 +468,92 @@ class DefaultController extends BaseController
             return new Response($e->getMessage());
         }
     }
-}
 
+    /**
+     * Get a list of information (activities, times, users) about a ticket for time evaluation
+     *
+     * @param Request $request Incoming HTTP request
+     *
+     * @return object JSON data with time information about activities, total time and users
+     */
+    public function getTicketTimeSummaryAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $attributes = $request->attributes;
+        $name = $attributes->has('ticket') ? $attributes->get('ticket') : null;
+
+        $activities = $this->getDoctrine()->getRepository(
+            'NetresearchTimeTrackerBundle:Entry'
+        )->getActivitiesWithTime($name);
+
+        $users = $this->getDoctrine()->getRepository(
+            'NetresearchTimeTrackerBundle:Entry'
+        )->getUsersWithTime($name);
+
+        if (is_null($name) || empty($users)) {
+            return new Response(
+                'There is no information available about this ticket.', 404
+            );
+        }
+
+        $time['total_time']['time'] = 0;
+
+        foreach ($activities as $activity) {
+
+            $total = $activity['total_time'];
+            $key = $activity['name'] ?? 'No activity';
+
+            $time['activities'][$key]['seconds'] = (int) $total * 60;
+            $time['activities'][$key]['time'] = TimeHelper::minutes2readable(
+                $total
+            );
+        }
+
+        foreach ($users as $user) {
+            $time['total_time']['time'] += (int) $user['total_time'];
+            $key = $user['username'];
+            $time['users'][$key]['seconds'] = (int) $user['total_time'] * 60;
+            $time['users'][$key]['time'] = TimeHelper::minutes2readable(
+                $user['total_time']
+            );
+        }
+
+        $time['total_time']['seconds'] = (int) $time['total_time']['time'] * 60;
+        $time['total_time']['time'] = TimeHelper::minutes2readable(
+            $time['total_time']['time']
+        );
+
+        return new Response(
+            json_encode($time),
+            200,
+            ['Content-type' => 'application/json']
+        );
+    }
+
+    /**
+     * Return the jira cloud ticket summary javascript with a correct TT URL.
+     *
+     * @return Response
+     */
+    public function getTicketTimeSummaryJsAction()
+    {
+        $ttUrl = $this->generateUrl(
+            '_start', [], UrlGeneratorInterface::ABSOLUTE_URL
+        );
+
+        $content = file_get_contents(
+            $this->container->getParameter('kernel.root_dir')
+            . '/../web/scripts/timeSummaryForJira.js'
+        );
+        $content = str_replace('https://timetracker/', $ttUrl, $content);
+
+        return new Response(
+            $content,
+            200,
+            ['Content-type' => 'application/javascript']
+        );
+    }
+}
