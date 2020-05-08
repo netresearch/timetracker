@@ -631,6 +631,51 @@ paths:
                   month:
                     $ref: '#/components/schemas/TimeInfo'
 
+  /getTicketTimeSummary/{ticket}:
+   get:
+      summary: Get time summary for a ticket
+      tags:
+        - Data
+      parameters:
+      - in: path
+        name: ticket
+        required: true
+        schema:
+          type: string
+          example: "TIM-1"
+      responses:
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketInformationNotFound'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_time:
+                    type: object
+                    properties:
+                    $ref: '#/components/schemas/Time'
+                  activities:
+                    type: object
+                    properties:
+                      additionalProperties:
+                        type: object
+                        properties:
+                        $ref: '#/components/schemas/Time'
+                  users:
+                    type: object
+                    properties:
+                      additionalProperties:
+                        type: object
+                        properties:
+                        $ref: '#/components/schemas/Time'
+
   /getUsers:
     get:
       summary: Returns a list of users without teams
@@ -2096,6 +2141,20 @@ components:
           example: SecretKey
       required:
         - name
+
+    TicketInformationNotFound:
+      type: string
+      example: "There is no information available about this ticket."
+
+    Time:
+      type: object
+      properties:
+        time:
+          type: string
+          example: "09:10"
+        seconds:
+          type: integer
+          example: 33000
 
     TimeInfo:
       type: object

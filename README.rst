@@ -313,3 +313,36 @@ If everything is correct, the following will happen:
 * If it does not find an entry, TimeTracker will create a new internal ticket with name ``EXTERNAL-1``
 * The link to the ticket in customer Jira will be applied as ticket description
 * The work log is applied to the newly created ticket
+
+
+Extras
+======
+
+JIRA cloud integration
+----------------------
+
+.. image:: doc/images/jira-cloud-1.png
+   :alt: Jira cloud: Button "Zeiten aus Timetracker laden"
+
+
+.. image:: doc/images/jira-cloud-2.png
+   :alt: Jira cloud displaying times
+
+
+It is possible to show the timetracker times in Jira cloud,
+even when not syncing the times into such an instance.
+
+To get it working, install the `Greasemonkey browser extension`__ and import
+the ``scripts/timeSummaryForJira`` script.
+
+Then visit a ticket detail page of a cloud-hosted Jira instance.
+The right sidebar will show a "Zeiten aus Timetracker laden" button.
+When it has been clicked, the statistics are fetched from the Timetracker API
+and displayed there.
+
+__ https://addons.mozilla.org/de/firefox/addon/greasemonkey/
+
+
+API documentation
+=================
+The timetracker API is documented in ``web/api.yml`` (OpenAPI v3).

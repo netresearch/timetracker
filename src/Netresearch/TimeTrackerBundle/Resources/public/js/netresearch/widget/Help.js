@@ -109,9 +109,15 @@ Ext.define('Netresearch.widget.Help', {
             width: '100%',
             margin: '0 0 10 0',
             items: [{
-                html: 
+                html:
                     "<h3>Official project page</h3>"
                     + "<p><a href=\"https://github.com/netresearch/timetracker\">https://github.com/netresearch/timetracker</a></p>"
+                    + "<br/>"
+                    + "<h3>API documentation</h3>"
+                    + "<p><a href=\"api.yml\">api.yml</a></p>"
+                    + "<br/>"
+                    + "<h3>JIRA cloud integration</h3>"
+                    + "<p>To be used with the Greasemonkey browser extension: <a href=\"scripts/timeSummaryForJira\">scripts/timeSummaryForJira</a></p>"
                     ,
                 xtype: "panel"
             }]
