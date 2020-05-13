@@ -1,1 +1,0 @@
-ALTER TABLE `ticket_systems` ADD COLUMN `ticketurl` VARCHAR(255) NULL;
