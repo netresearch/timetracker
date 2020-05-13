@@ -110,14 +110,16 @@ class EntryRepository extends EntityRepository
     /**
      * get all entries of a user in a given year and month
      *
-     * @param integer $userId Filter entries by user
-     * @param integer $year   Filter entries by year
-     * @param integer $month  Filter entries by month
-     * @param array   $arSort Sort result by given fields
+     * @param integer $userId     Filter entries by user
+     * @param integer $year       Filter entries by year
+     * @param integer $month      Filter entries by month
+     * @param integer $projectId  Filter entries by project
+     * @param integer $customerId Filter entries by customer
+     * @param array   $arSort     Sort result by given fields
      *
      * @return \Netresearch\TimeTrackerBundle\Entity\Entry[]
      */
-    public function findByDate($userId, $year, $month = null, array $arSort = null)
+    public function findByDate($userId, $year, $month = null, $projectId = null, $customerId = null, $arSort = null)
     {
         if (null === $arSort) {
             $arSort = [
@@ -130,21 +132,30 @@ class EntryRepository extends EntityRepository
 
         $qb->select('entry')
             ->from('NetresearchTimeTrackerBundle:Entry', 'entry')
-            ->leftJoin('entry.user', 'user')
-            ->andWhere(
-                $qb->expr()->like('entry.day', ':month')
-            )
-        ;
+            ->leftJoin('entry.user', 'user');
 
         foreach ($arSort as $strField => $bAsc) {
             $qb->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
         }
 
-        $qb->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
 
         if (0 < (int) $userId) {
             $qb->andWhere('entry.user = :user_id');
             $qb->setParameter('user_id', $userId, \PDO::PARAM_INT);
+        }
+        if (0 < (int) $projectId) {
+            $qb->andWhere('entry.project = :project_id');
+            $qb->setParameter('project_id', $projectId, \PDO::PARAM_INT);
+        }
+        if (0 < (int) $customerId) {
+            $qb->andWhere('entry.customer = :customer_id');
+            $qb->setParameter('customer_id', $customerId, \PDO::PARAM_INT);
+        }
+        if (0 < (int) $year) {
+            $qb->andWhere(
+                $qb->expr()->like('entry.day', ':month')
+            );
+            $qb->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
         }
 
         return $qb->getQuery()->getResult();
@@ -177,15 +188,16 @@ class EntryRepository extends EntityRepository
     /**
      * Fetch information needed for the additional query calls.
      *
-     * @param integer $userId Filter entries by user
-     * @param integer $year   Filter entries by year
-     * @param integer $month  Filter entries by month
+     * @param integer $userId     Filter entries by user
+     * @param integer $year       Filter entries by year
+     * @param integer $month      Filter entries by month
+     * @param integer $projectId  Filter entries by project
+     * @param integer $customerId Filter entries by customer
      *
      * @return array
      */
-    public function findByMonthWithExternalInformation($userId, $year, $month)
+    public function findByMonthWithExternalInformation($userId, $year, $month, $projectId, $customerId)
     {
-        $pattern = $this->getDatePattern($year, $month);
         $em  = $this->getEntityManager();
         $qb = $em->createQueryBuilder()
             ->select('distinct e.ticket, ts.id, ts.url, ts.login, ts.password')
@@ -193,14 +205,27 @@ class EntryRepository extends EntityRepository
             ->innerJoin('e.project', 'p', 'e.projectId = p.id')
             ->innerJoin('p.ticketSystem', 'ts', 'p.ticketSystem = ts.id')
             ->where('p.additionalInformationFromExternal = 1')
-            ->andWhere('e.day LIKE :month')
             ->andWhere('p.jiraId IS NOT NULL')
-            ->orderBy('ts.id')
-            ->setParameter(':month', $pattern);
+            ->orderBy('ts.id');
+
 
         if (0 < $userId) {
             $qb->andWhere('e.user = :user_id')
                 ->setParameter(':user_id', $userId);
+        }
+        if (0 < $projectId) {
+            $qb->andWhere('e.project = :project_id')
+                ->setParameter(':project_id', $projectId);
+        }
+        if (0 < $customerId) {
+            $qb->andWhere('e.customer = :customer_id')
+                ->setParameter(':customer_id', $customerId);
+        }
+
+        if (0 < $year) {
+            $pattern = $this->getDatePattern($year, $month);
+            $qb->andWhere('e.day LIKE :month')
+                ->setParameter(':month', $pattern);
         }
 
         $result = $qb->getQuery()->getResult();
