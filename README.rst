@@ -89,7 +89,7 @@ Setup - manual from from sources
 
      $ git clone git@github.com:netresearch/timetracker.git
 
-#. Create a MySQL database and import ``sql/schema.sql`` into it
+#. Create a MySQL database and import ``sql/full.sql`` into it
 #. Install dependencies::
 
      $ composer install
@@ -163,7 +163,7 @@ Using OAuth to transmit work logs to Jira ticket system
    - "Create new link" with URL pointing to your TimeTracker installation
    - Just click "Continue" if Jira is blaming "no response"
    - Fill out the following form:
-      - Application Name: 
+      - Application Name:
            timetracker (or chose any other name you like)
       - Application Type:
            Generic Application
