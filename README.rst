@@ -110,6 +110,11 @@ Setup - manual from from sources
 #. Open the timetracker URL in your browser. If you see a white page, run::
 
      $ php app/console assets:install
+#. Import test data so that you have a set of data to work and play with::
+
+     $ mysql timetracker < sql/testdata.sql
+
+   Change the username of user `1` to your LDAP username.
 #. Login with your LDAP credentials
 
 
