@@ -72,7 +72,10 @@ class ControllingController extends BaseController
         );
 
         //$spreadsheet = new Spreadsheet();
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load('/var/www/html/web/template.xlsx');
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(
+            $this->container->getParameter('kernel.root_dir')
+            . '/../web/template.xlsx'
+        );
 
         $sheet = $spreadsheet->getSheet(0);
 
