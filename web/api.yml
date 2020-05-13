@@ -1,0 +1,2241 @@
+openapi: 3.0.0
+info:
+  title: Time Tracker API
+  description: Track your time
+  version: 0.1.9
+tags:
+- name: "Activity"
+- name: "Contract"
+- name: "Customer"
+- name: "Data"
+- name: "Preset"
+- name: "Project"
+- name: "Summary"
+- name: "Team"
+- name: "User"
+- name: "Ticketsystem"
+- name: "Entries"
+- name: "Setting"
+
+paths:
+  /activity/delete:
+    post:
+      summary: Delete an activity
+      tags:
+        - Activity
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                refer:
+                  value:
+                    message: Dataset could not be removed. Other datasets refer to this one.
+                notExist:
+                  value:
+                    message: Dataset could not be removed.
+                    description: The ID does not exist
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /activity/save:
+    post:
+      summary: Create an activity
+      tags:
+        - Activity
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Design
+                needsTicket:
+                  type: integer
+                  enum: [1]
+                  example: 1
+                factor:
+                  type: integer
+                  example: 1
+              required:
+              - name
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: string
+                example: The activity name provided already exists.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: boolean
+                    - type: string
+                description: id, name, needsTicket, factor
+              example: [1,"Design",true,"1"]
+
+  /contract/delete:
+    post:
+      summary: Delete a contract
+      tags:
+        - Contract
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: Dataset could not be removed.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /contract/save:
+    post:
+      summary: Create a contract
+      tags:
+        - Contract
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Contract'
+      responses:
+        '406':
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Please enter a valid user.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  example: 1
+                  description: contract-id
+
+  /controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}:
+   get:
+      summary: Export monthly bill
+      tags:
+        - Data
+      parameters:
+      - in: path
+        name: userid
+        required: true
+        schema:
+          type: integer
+          example: 1
+      - in: path
+        name: year
+        required: true
+        schema:
+          type: integer
+          example: 2019
+      - in: path
+        name: month
+        required: true
+        schema:
+          type: integer
+          default: 0
+          example: 10
+      - in: path
+        name: project
+        required: true
+        schema:
+          type: integer
+          default: 0
+          example: 1
+      - in: path
+        name: customer
+        required: true
+        schema:
+          type: integer
+          default: 0
+          example: 1
+      - in: path
+        name: billable
+        required: true
+        schema:
+          type: integer
+          enum: [0,1]
+          example: 1
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: Download file
+
+  /customer/delete:
+    post:
+      summary: Delete a customer
+      tags:
+        - Customer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+             $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                refer:
+                  value:
+                    message: Dataset could not be removed. Other datasets refer to this one.
+                notExist:
+                  value:
+                    message: Dataset could not be removed.
+                    description: The ID does not exist
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /customer/save:
+    post:
+      summary: Create a customer
+      tags:
+        - Customer
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '500':
+          description: Error Internal Server Error
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: integer
+                    - type: string
+                    - type: integer
+                    - type: integer
+                    - type: array
+                      items:
+                        type: string
+                  description: id, name of the customer, active, global ,team-id
+                example: [1,"Kunde1","1","1",["1"]]
+
+  /export/{days}:
+    get:
+      summary: Export data
+      tags:
+        - Data
+      parameters:
+      - in: path
+        name: days
+        schema:
+          type: integer
+          default: 10000
+        required: true
+      responses:
+        '500':
+          description: Error
+        '200':
+          description: Download file
+
+  /getActivities:
+    get:
+      summary: Returns a list of all activities
+      tags:
+        - Activity
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    activity:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: Design
+                        needsTicket:
+                          type: boolean
+                          example: true
+                        factor:
+                          type: integer
+                          example: 1
+
+  /getAllCustomers:
+    get:
+      summary: Returns a list of all customers
+      tags:
+        - Customer
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    customer:
+                      type: object
+                      $ref: '#/components/schemas/Customer'
+
+  /getAllPresets:
+    get:
+      summary: Returns a list of all presets
+      tags:
+        - Preset
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    preset:
+                      $ref: '#/components/schemas/Preset'
+
+  /getAllProjects:
+    get:
+      summary: Returns a list of all projects
+      tags:
+        - Project
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    project:
+                      $ref: '#/components/schemas/ProjectInfo'
+
+  /getAllTeams:
+    get:
+      summary: Returns a list of all teams
+      tags:
+        - Team
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    team:
+                      $ref: '#/components/schemas/Team'
+
+  /getAllUsers:
+    get:
+      summary: Returns a list of all users
+      tags:
+        - User
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+
+  /getContracts:
+    get:
+      summary: Returns a list of all contracts
+      tags:
+        - Contract
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contract:
+                      type: object
+                      $ref: '#/components/schemas/Contract'
+
+  /getCustomers:
+    get:
+      summary: Returns a list of all 'global' contracts
+      tags:
+        - Customer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    customer:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: "2"
+                        name:
+                          type: string
+                          example: Kunde2
+                        active:
+                          type: string
+                          example: "2"
+
+  /getData:
+    get:
+      summary: Returns a list of all entries
+      tags:
+        - Data
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DaysSuccessResponse'
+
+  /getData/days/{days}:
+    get:
+      summary: Returns all entries for the number of days you choose
+      tags:
+        - Data
+      parameters:
+      - in: path
+        name: days
+        schema:
+          type: integer
+        required: true
+        example: "3"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DaysSuccessResponse'
+
+  /getProjects:
+    get:
+      summary: Returns a list of all projects with a "global" customer
+      tags:
+        - Project
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    project:
+                      $ref: '#/components/schemas/ProjectInfo'
+
+  /getSummary:
+    get:
+      summary: Returns a summary about the customer, project,activity and ticket
+      tags:
+        - Summary
+      responses:
+        '200':
+          description: OK
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    customer:
+                      $ref: '#/components/schemas/SummaryInfo'
+                    project:
+                      $ref: '#/components/schemas/SummaryInfo'
+                    activity:
+                      $ref: '#/components/schemas/SummaryInfo'
+                    ticket:
+                      $ref: '#/components/schemas/SummaryInfo'
+
+  /getTicketSystems:
+    get:
+      summary: Returns information about the ticket system
+      tags:
+        - Ticketsystem
+      responses:
+        '500':
+          description: Error
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ticketSystem:
+                      type: object
+                      $ref: '#/components/schemas/TicketSystem'
+
+  /getTimeSummary:
+    get:
+      summary: Return a time summary for an entry
+      tags:
+        - Summary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  today:
+                    $ref: '#/components/schemas/TimeInfo'
+                  week:
+                    $ref: '#/components/schemas/TimeInfo'
+                  month:
+                    $ref: '#/components/schemas/TimeInfo'
+
+  /getUsers:
+    get:
+      summary: Returns a list of users without teams
+      tags:
+        - User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+
+  /interpretation/activity:
+    get:
+      summary: Data for the 'effort by activity' diagram
+      tags:
+        - Activity
+      parameters:
+        - $ref: '#/components/parameters/datestart'
+        - $ref: '#/components/parameters/dateend'
+        - $ref: '#/components/parameters/customer'
+        - $ref: '#/components/parameters/project'
+        - $ref: '#/components/parameters/team'
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/activity'
+        - $ref: '#/components/parameters/ticket'
+        - $ref: '#/components/parameters/description'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You need to specify at least customer, project, ticket, user or month and year.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                  $ref: '#/components/schemas/ChartDataSuccessResponse'
+
+  /interpretation/customer:
+    get:
+      summary: Data for the 'effort by customer' diagram
+      tags:
+        - Customer
+      parameters:
+        - $ref: '#/components/parameters/datestart'
+        - $ref: '#/components/parameters/dateend'
+        - $ref: '#/components/parameters/customer'
+        - $ref: '#/components/parameters/project'
+        - $ref: '#/components/parameters/team'
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/activity'
+        - $ref: '#/components/parameters/ticket'
+        - $ref: '#/components/parameters/description'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You need to specify at least customer, project, ticket, user or month and year.
+
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                  $ref: '#/components/schemas/ChartDataSuccessResponse'
+
+  /interpretation/entries:
+    get:
+      summary: Data for the 'last entries' diagram
+      tags:
+        - Entries
+      parameters:
+        - $ref: '#/components/parameters/datestart'
+        - $ref: '#/components/parameters/dateend'
+        - $ref: '#/components/parameters/customer'
+        - $ref: '#/components/parameters/project'
+        - $ref: '#/components/parameters/team'
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/activity'
+        - $ref: '#/components/parameters/re_ticket'
+        - $ref: '#/components/parameters/description'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You need to specify at least customer, project, ticket, user or month and year.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    entry:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        date:
+                          type: string
+                        start:
+                          type: string
+                        end:
+                          type: string
+                        user:
+                          type: integer
+                        customer:
+                          type: integer
+                        project:
+                          type: integer
+                          nullable: true
+                        activity:
+                          type: integer
+                          nullable: true
+                        description:
+                          type: string
+                        ticket:
+                          type: integer
+                        duration:
+                          type: string
+                        durationString:
+                          type: string
+                        class:
+                          type: string
+                        worklog:
+                          type: string
+                          nullable: true
+                        quota:
+                          type: string
+
+  /interpretation/project:
+    get:
+      summary: Data for the 'effort by project' diagram
+      tags:
+        - Project
+      parameters:
+        - $ref: '#/components/parameters/datestart'
+        - $ref: '#/components/parameters/dateend'
+        - $ref: '#/components/parameters/customer'
+        - $ref: '#/components/parameters/project'
+        - $ref: '#/components/parameters/team'
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/activity'
+        - $ref: '#/components/parameters/ticket'
+        - $ref: '#/components/parameters/description'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You need to specify at least customer, project, ticket, user or month and year.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                  $ref: '#/components/schemas/ChartDataSuccessResponse'
+
+  /interpretation/ticket:
+    get:
+      summary: Data for the 'effort by ticket' diagram
+      tags:
+        - Ticketsystem
+      parameters:
+        - $ref: '#/components/parameters/datestart'
+        - $ref: '#/components/parameters/dateend'
+        - $ref: '#/components/parameters/customer'
+        - $ref: '#/components/parameters/project'
+        - $ref: '#/components/parameters/team'
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/activity'
+        - $ref: '#/components/parameters/ticket'
+        - $ref: '#/components/parameters/description'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You need to specify at least customer, project, ticket, user or month and year.
+
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                  $ref: '#/components/schemas/ChartDataSuccessResponse'
+
+  /interpretation/time:
+    get:
+      summary: Data for the 'Hours - Day' diagram
+      tags:
+        - Entries
+      parameters:
+        - $ref: '#/components/parameters/datestart'
+        - $ref: '#/components/parameters/dateend'
+        - $ref: '#/components/parameters/customer'
+        - $ref: '#/components/parameters/project'
+        - $ref: '#/components/parameters/team'
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/activity'
+        - $ref: '#/components/parameters/ticket'
+        - $ref: '#/components/parameters/description'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You need to specify at least customer, project, ticket, user or month and year.
+
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      format: date
+                      example: "19-11-18"
+                    day:
+                      type: string
+                      example: "18.11"
+                    hours:
+                      type: number
+                      example: 11.9
+                    quota:
+                      type: string
+                      example: "100.00%"
+
+  /interpretation/user:
+    get:
+      summary: Time evaluation of users
+      tags:
+        - User
+      parameters:
+        - $ref: '#/components/parameters/datestart'
+        - $ref: '#/components/parameters/dateend'
+        - $ref: '#/components/parameters/customer'
+        - $ref: '#/components/parameters/project'
+        - $ref: '#/components/parameters/team'
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/activity'
+        - $ref: '#/components/parameters/ticket'
+        - $ref: '#/components/parameters/description'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: You need to specify at least customer, project, ticket, user or month and year.
+
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                  $ref: '#/components/schemas/ChartDataSuccessResponse'
+
+  /login:
+     post:
+      summary: login
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: tinatest
+                password:
+                  type: string
+                  format: password
+                  example: abc1234
+                loginCookie:
+                  type: boolean
+                  example: true
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: OK
+
+  /logout:
+    get:
+      summary: Logout
+      tags:
+        - User
+      responses:
+         '200':
+          description: OK
+
+  /team/delete:
+    post:
+      summary: Delete a team
+      tags:
+        - Team
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+             $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                  refer:
+                    value:
+                      message: Dataset could not be removed. Other datasets refer to this one.
+                  notExist:
+                    value:
+                      message: Dataset could not be removed.
+                      description: The ID does not exist
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /ticketsystem/delete:
+    post:
+      summary: Delete the ticketsystem by its ID
+      tags:
+        - Ticketsystem
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                refer:
+                  value:
+                    message: Dataset could not be removed. Other datasets refer to this one.
+                notExist:
+                  value:
+                    message: Dataset could not be removed.
+                    description: The ID does not exist
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /tracking/bulkentry:
+    post:
+      summary: Create a bulk entry
+      tags:
+        - Entries
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                startdate:
+                  type: string
+                  format: date-time
+                  example: "2019-11-23T00:00:00"
+                enddate:
+                  type: string
+                  format: date-time
+                  example: "2019-11-24T00:00:00"
+                starttime:
+                  type: string
+                  format: date-time
+                  example: "2008-01-01T08:00:00"
+                endtime:
+                  type: string
+                  format: date-time
+                  example: "2008-01-01T16:00:00"
+                skipweekend:
+                  type: integer
+                  example: 1
+                skipholidays:
+                  type: integer
+                  example: 1
+                preset:
+                  type: integer
+                  example: 11
+              required:
+                - starttime
+                - preset
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error
+          content:
+           application/json:
+              schema:
+                type: string
+              examples:
+                duration:
+                  value: Duration must be greater than 0!
+                preset:
+                  value: Preset not found
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: All entries have been saved.
+
+  /tracking/delete:
+    post:
+      summary: Delete an entry
+      tags:
+        - Entries
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '500':
+          description: Internal Server Error
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /preset/delete:
+    post:
+      summary: Delete a preset
+      tags:
+        - Preset
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: Dataset could not be removed.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /preset/save:
+    post:
+      summary: Create a preset
+      tags:
+        - Preset
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              $ref: '#/components/schemas/Preset'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 5
+                  name:
+                    type: string
+                    example: Urlaub
+                  customer:
+                    type: integer
+                    example: 2
+                  project:
+                    type: integer
+                    example: 1
+                  activity:
+                    type: integer
+                    example: 3
+                  description:
+                    type: string
+                    example: Urlaubsvorlage
+
+  /project/delete:
+    post:
+      summary: Delete a project
+      tags:
+        - Project
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+             $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                refer:
+                  value:
+                    message: Dataset could not be removed. Other datasets refer to this one.
+                notExist:
+                  value:
+                    message: Dataset could not be removed.
+                    description: The ID does not exist
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /project/save:
+    post:
+      summary: Create a project
+      tags:
+        - Project
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProjectInfo'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                customer:
+                  value: "Please choose a customer"
+                valid:
+                  value: "Please provide a valid ticket prefix with only capital letters."
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: integer
+                    - type: string
+                    - type: integer
+                    - type: string
+                description: id, name, customer, jiraId
+                example: [1,"TestProject",1,"TIM"]
+
+  /settings/save:
+    post:
+      summary: Update settings
+      tags:
+        - Setting
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                locale:
+                  type: string
+                  enum: [de, en, es, fr, ru]
+                  example: de
+                show_empty_line:
+                  type: string
+                  default: "0"
+                  enum: ["1"]
+                  description: Ja (1) Nein (-)
+                  example: "1"
+                suggest_time:
+                  type: string
+                  default: "0"
+                  enum: ["1"]
+                  description: Ja (1) Nein (-)
+                  example: "1"
+                show_future:
+                  type: string
+                  default: "0"
+                  enum: ["1"]
+                  description: Ja (1) Nein (-)
+                  example: "1"
+              required:
+                - locale
+                - show_empty_line
+                - suggest_time
+                - show_future
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  settings:
+                    type: object
+                    properties:
+                      show_empty_line:
+                        type: string
+                        default: "0"
+                        enum: ["1"]
+                        description: Ja (1) Nein (-)
+                        example: "1"
+                      suggest_time:
+                        type: string
+                        default: "0"
+                        enum: ["1"]
+                        description: Ja (1) Nein (-)
+                        example: "1"
+                      show_future:
+                        type: string
+                        default: "0"
+                        enum: ["1"]
+                        description: Ja (1) Nein (-)
+                        example: "1"
+                      user_id:
+                        type: string
+                        example: "1"
+                      user_name:
+                        type: string
+                        example: "1"
+                      locale:
+                        type: string
+                        enum: [de, en, es, fr, ru]
+                        example: de
+                  locale:
+                    type: string
+                    enum: [de, en, es, fr, ru]
+                    example: de
+                  message:
+                    type: string
+                    example: The configuration has been successfully saved.
+
+  /status/check:
+    get:
+      summary: Check the login status
+      tags:
+      - Setting
+      responses:
+         '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loginStatus:
+                    type: boolean
+                    example: true
+
+  /status/page:
+    get:
+      summary: Display login status
+      tags:
+        - Setting
+      responses:
+         '200':
+          description: OK
+
+  /syncentries/jira:
+    get:
+      summary: Sync entries (Jira)
+      tags:
+        - Ticketsystem
+      responses:
+         '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+         '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: string
+                example: "Name of the Ticketsystem | Username: error (JiraApi: Could not parse RSA certificate)"
+
+  /team/save:
+    post:
+      summary: Create a team
+      tags:
+        - Team
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Team'
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Please provide a valid user as team leader.
+
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: integer
+                    - type: string
+                    - type: integer
+                  description: id, name, lead_user_id
+                example: [1,"Backend",1]
+
+  /ticketsystem/save:
+    post:
+      summary: Create a ticketsystem
+      tags:
+        - Ticketsystem
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketSystem'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/TicketSystem'
+
+  /tracking/save:
+    post:
+      summary: Create an entry
+      tags:
+        - Entries
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date-time
+                  example: "2019-11-22T00:00:00"
+                start:
+                  type: string
+                  format: date-time
+                  example: "2019-11-22T09:55:00"
+                end:
+                  type: string
+                  format: date-time
+                  example: "2019-11-22T13:25:00"
+                user:
+                  type: integer
+                  example: 1
+                customer:
+                  type: integer
+                  example: 1
+                project:
+                  type: integer
+                  example: 7
+                activity:
+                  type: integer
+                  example: 3
+                description:
+                  type: string
+                  example: Button hinzugefügt
+                ticket:
+                  type: string
+                  example: TIM-1
+                duration:
+                  type: string
+                  format: date-time
+                  example: "1899-12-31T03:30:00"
+                class:
+                  type: integer
+                  example: 0
+              required:
+                - start
+                - project
+      responses:
+        '500':
+          description: Error
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '406':
+          description: Error
+          content:
+           application/json:
+              schema:
+                type: string
+              example:
+                  value: Duration must be greater than 0!
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      date:
+                        type: string
+                        example: 22\/11\/2019
+                      start:
+                        type: string
+                        example: "09:55"
+                      end:
+                        type: string
+                        example: "13:25"
+                      user:
+                        type: integer
+                        example: 1
+                      customer:
+                        type: integer
+                        example: 1
+                      project:
+                        type: integer
+                        example: 7
+                      activity:
+                        type: integer
+                        nullable: true
+                        example: 3
+                      description:
+                        type: string
+                        example: Button hinzugef\u00fcgt
+                      ticket:
+                        type: string
+                        example: TIM-1
+                      duration:
+                        type: integer
+                        example: 210
+                      durationString:
+                        type: string
+                        example: "03:30"
+                      class:
+                        type: integer
+                        example: 2
+                      worklog:
+                        type: string
+                        nullable: true
+                        example: null
+                  alert:
+                    type: string
+                    nullable: true
+                    example: null
+
+  /user/delete:
+    post:
+      summary: Delete an user
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+             $ref: '#/components/schemas/DeleteParameter'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                refer:
+                  value:
+                    message: Dataset could not be removed. Other datasets refer to this one.
+                notExist:
+                  value:
+                    message: Dataset could not be removed.
+                    description: The ID does not exist
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /user/save:
+    post:
+      summary: Create an user
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '403':
+          description: Error Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '406':
+          description: Error Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Please provide a valid user name with at least 3 letters.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: integer
+                    - type: string
+                    - type: string
+                    - type: string
+                description: id, username, abbr, type
+                example: [16,"tinatest","TINA","DEV"]
+
+
+components:
+  schemas:
+
+    ChartDataSuccessResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Kunde1"
+          description: display the name of the user/customer/projekt/activity
+        hours:
+          type: number
+          example: 11.9
+        quota:
+          type: string
+          example: "100.00%"
+
+    Contract:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        start:
+          type: string
+          format: date
+          example: "2019-11-01"
+        end:
+          type: string
+          format: date
+          example: "2019-11-30"
+        hours_0:
+          type: integer
+          description: Sunday
+          example: 1
+        hours_1:
+          type: integer
+          description: Monday
+          example: 8
+        hours_2:
+          type: integer
+          description: Tuesday
+          example: 8
+        hours_3:
+          type: integer
+          description: Wednesday
+          example: 8
+        hours_4:
+          type: integer
+          description: Thursday
+          example: 7
+        hours_5:
+          type: integer
+          description: Friday
+          example: 8
+        hours_6:
+          type: integer
+          description: Saturday
+          example: 1
+      required:
+        - user_id
+        - start
+
+    Customer:
+      type: object
+      properties:
+        name:
+          type: string
+          description: name with at least 3 letters
+          example: Kunde1
+        active:
+          type: integer
+          enum:
+            - 0
+            - 1
+          example: 1
+        global:
+          type: integer
+          enum:
+            - 0
+            - 1
+          example: 1
+        teams[]:
+          description: team id
+          type: string
+          example: 1
+      required:
+        - name
+
+    DaysSuccessResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          entry:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: 18/11/2019
+              start:
+                type: string
+                example: "12:00"
+              end:
+                type: string
+                example: "12:55"
+              user:
+                type: integer
+                description: user id
+                example: 1
+              customer:
+                type: integer
+                description: customer id
+                example: 1
+              project:
+                type: integer
+                description: project id
+                example: 2
+              activity:
+                type: integer
+                example: 1
+              description:
+                type: string
+                example: Button hinzugefügt
+              ticket:
+                type: string
+                example: TIM-1
+              class:
+                type: integer
+                example: 4
+              duration:
+                type: string
+                example: "00:55"
+
+    DeleteParameter:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+      required:
+        - id
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ForbiddenResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: You are not allowed to perform this action.
+
+    Preset:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Urlaub
+        customer:
+          type: integer
+          description: customer ID
+          example: 2
+        project:
+          type: integer
+          description: project ID
+          example: 1
+        activity:
+          type: integer
+          description: activity ID
+          example: 3
+        description:
+          type: string
+          example: Urlaubsvorlage
+      required:
+        - name
+        - customer
+        - project
+        - activity
+
+    ProjectInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: TestProject
+        jiraId:
+          type: string
+          example: "TIM"
+          description: Ticket prefix with only capital letters
+        ticket_system:
+          type: string
+          example: TestTicketSystem
+        customer:
+          type: string
+          example: "1"
+        active:
+          type: string
+          enum:
+          - "0"
+          - "1"
+          example: "1"
+        global:
+          type: string
+          enum:
+          - "0"
+          - "1"
+          example: "1"
+        estimation:
+          type: string
+          example: "0"
+        estimationText:
+          type: string
+          description: Estimated duration in minutes
+          example: 16m
+        billing:
+          type: string
+          enum:
+          - "0"
+          - "1"
+          - "2"
+          description: None (0), Time And Material(1), Fixed Price(2)
+          example: "1"
+        cost_center:
+          type: string
+          example: "Kostenstelle"
+        offer:
+          type: string
+          example: akzeptiert
+        project_lead:
+          type: string
+          example: "2"
+        technical_lead:
+          type: string
+          example: "1"
+        additionalInformationFromExternal:
+          type: string
+          enum:
+          - "0"
+          - "1"
+          example: "1"
+      required:
+        - name
+        - customer
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    SummaryInfo:
+      type: object
+      properties:
+        scope:
+          type: string
+          example: customer/project/ticket/activitys
+          description: name of the object
+        name:
+          type: string
+          example: Test
+        entries:
+          type: integer
+          example: 1
+        total:
+          type: integer
+          example: 1
+        own:
+          type: integer
+          example: 2
+        estimation:
+          type: integer
+          example: 1
+        quota:
+          type: integer
+          example: 1
+
+    Team:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Backend
+        lead_user_id:
+          type: integer
+          example: 2
+      required:
+        - lead_user_id
+
+    TicketSystem:
+      type: object
+      properties:
+        name:
+          type: string
+          example: TestTicketSystem
+        bookTime:
+          type: integer
+          enum: [0, 1]
+          example: 1
+        type:
+          type: string
+          enum:
+          - JIRA
+          - OTRS
+          example: JIRA
+        url:
+          type: string
+          example: https://test.TicketSystem.com
+        login:
+          type: string
+          example: tinatest
+        password:
+          type: string
+          example: test12345
+        publicKey:
+          type: string
+          example: publicKey
+        privateKey:
+          type: string
+          example: privateKey
+        ticketUrl:
+          type: string
+          nullable: true
+          example: https://test.TicketSystem.com/browse/%s
+        oauthConsumerKey:
+          type: string
+          nullable: true
+          example: key
+        oauthConsumerSecret:
+          type: string
+          nullable: true
+          example: SecretKey
+      required:
+        - name
+
+    TimeInfo:
+      type: object
+      properties:
+        duration:
+          type: string
+          nullable: true
+          example: "40"
+        count:
+          type: boolean
+          example: true
+
+    UnauthorizedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: You need to login.
+
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+          description: username with at least 3 letters
+          example: "tinatest"
+        type:
+          type: string
+          enum:
+            - DEV
+            - PL
+            - CTL
+          example: DEV
+        abbr:
+          type: string
+          nullable: true
+          description: abbreviation with at least 3 letters
+          example: TINA
+        locale:
+          type: string
+          enum:
+            - de
+            - en
+            - es
+            - fr
+            - ru
+          example: en
+        teams:
+          type: array
+          items:
+            type: string
+            description: team id
+          example: ["1"]
+      required:
+        - username
+        - abbr
+        - locale
+        - teams
+
+    Users:
+      type: array
+      items:
+        type: object
+        properties:
+          user:
+            type: object
+            $ref: '#/components/schemas/User'
+
+  parameters:
+
+    activity:
+      in: query
+      name: activity
+      schema:
+        type: integer
+        example: 1
+
+    customer:
+      in: query
+      name: customer
+      schema:
+        type: integer
+        example: 1
+
+    dateend:
+      in: query
+      name: dateend
+      schema:
+        type: string
+        format: date-time
+        example: "2019-11-30T00:00:00"
+
+    datestart:
+      in: query
+      name: datestart
+      schema:
+        type: string
+        format: date-time
+        example: "2019-11-01T00:00:00"
+
+    description:
+      in: query
+      name: description
+      schema:
+        type: string
+        example: "Button hinzugefügt"
+
+    project:
+      in: query
+      name: project
+      schema:
+        type: integer
+        example: 1
+
+    re_ticket:
+      in: query
+      name: ticket
+      schema:
+        type: string
+        example: "TIM-1"
+      required: true
+
+    team:
+      in: query
+      name: team
+      schema:
+        type: integer
+        example: 1
+
+    ticket:
+      in: query
+      name: ticket
+      schema:
+        type: string
+        example: "TIM-1"
+
+    user:
+      in: query
+      name: user
+      schema:
+        type: integer
+        example: 1
+      required: true
