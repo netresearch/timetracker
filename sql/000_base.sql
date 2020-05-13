@@ -126,7 +126,6 @@ CREATE TABLE IF NOT EXISTS `ticket_systems` (
   `password` varchar(63) NOT NULL,
   `public_key` text NOT NULL,
   `private_key` text NOT NULL,
-  `ticketurl` VARCHAR(255),
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
@@ -173,7 +172,6 @@ CREATE TABLE IF NOT EXISTS `projects` (
   `project_lead_id` int(11) DEFAULT NULL,
   `technical_lead_id` int(11) DEFAULT NULL,
   `invoice` varchar(31) DEFAULT NULL,
-  `additional_information_from_external` tinyint NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `customer_id` (`customer_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

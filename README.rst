@@ -89,7 +89,7 @@ Setup - manual from from sources
 
      $ git clone git@github.com:netresearch/timetracker.git
 
-#. Create a MySQL database and import ``sql/schema.sql`` into it
+#. Create a MySQL database and import ``sql/full.sql`` into it
 #. Install dependencies::
 
      $ composer install
@@ -110,6 +110,11 @@ Setup - manual from from sources
 #. Open the timetracker URL in your browser. If you see a white page, run::
 
      $ php app/console assets:install
+#. Import test data so that you have a set of data to work and play with::
+
+     $ mysql timetracker < sql/testdata.sql
+
+   Change the username of user `1` to your LDAP username.
 #. Login with your LDAP credentials
 
 
@@ -163,7 +168,7 @@ Using OAuth to transmit work logs to Jira ticket system
    - "Create new link" with URL pointing to your TimeTracker installation
    - Just click "Continue" if Jira is blaming "no response"
    - Fill out the following form:
-      - Application Name: 
+      - Application Name:
            timetracker (or chose any other name you like)
       - Application Type:
            Generic Application
