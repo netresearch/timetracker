@@ -19,7 +19,11 @@
 
 namespace Netresearch\TimeTrackerBundle\Services;
 
+use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
+use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\User;
+use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
+use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -100,5 +104,94 @@ class Export
     protected function getEntryRepository()
     {
         return $this->container->get('doctrine')->getRepository('NetresearchTimeTrackerBundle:Entry');
+    }
+
+    /**
+     * Adds billable (boolean) property to entries depending on the existence
+     * of a "billable" label in associated JIRA issues
+     *
+     * @param int   $currentUserId     logged in users id
+     * @param array $entries           entries to export
+     * @param bool  $removeNotBillable remove not billable entries
+     *
+     * @return array
+     */
+    public function enrichEntriesWithBillableInformation(
+        $currentUserId, array $entries, $removeNotBillable = false
+    ) {
+        /* @var $currentUser \Netresearch\TimeTrackerBundle\Entity\User */
+        $doctrine = $this->container->get('doctrine');
+        $currentUser = $doctrine->getRepository('NetresearchTimeTrackerBundle:User')
+            ->find($currentUserId);
+
+        /** @var Router $router */
+        $router = $this->container->get('router');
+
+        $arTickets = [];
+        $arApi = [];
+        /** @var Entry $entry */
+        foreach ($entries as $entry) {
+            if (strlen($entry->getTicket()) > 0
+                && $entry->getProject()
+                && $entry->getProject()->getTicketSystem()
+                && $entry->getProject()->getTicketSystem()->getBookTime()
+                && $entry->getProject()->getTicketSystem()->getType() == 'JIRA'
+            ) {
+                /** @var TicketSystem $ticketSystem */
+                $ticketSystem = $entry->getProject()->getTicketSystem();
+
+                if (!isset($arApi[$ticketSystem->getId()])) {
+                    $arApi[$ticketSystem->getId()] = new JiraOAuthApi(
+                        $currentUser,
+                        $ticketSystem,
+                        $doctrine,
+                        $router
+                    );
+                }
+
+                $arTickets[$ticketSystem->getId()][] = $entry->getTicket();
+            }
+        }
+
+        $maxRequestsElements = 500;
+        $arBillable = [];
+        /** @var JiraOAuthApi $jiraApi */
+        foreach ($arApi as $idx => $jiraApi) {
+            $ticketSystemIssuesTotal = array_unique($arTickets[$idx]);
+            $ticketSystemIssuesTotalChunks = array_chunk(
+                $ticketSystemIssuesTotal, $maxRequestsElements
+            );
+
+            if (is_array($ticketSystemIssuesTotalChunks)
+                && !empty($ticketSystemIssuesTotalChunks)
+            ) {
+                foreach ($ticketSystemIssuesTotalChunks as $arIssues) {
+                    $ret = $jiraApi->searchTicket(
+                        'IssueKey in (' . join(',', $arIssues) . ')',
+                        ['labels'],
+                        '500'
+                    );
+
+                    foreach ($ret->issues as $issue) {
+                        if (isset($issue->fields->labels)
+                            && in_array('billable', $issue->fields->labels)
+                        ) {
+                            $arBillable[] = $issue->key;
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach ($entries as $key => $entry) {
+            $billable = in_array($entry->getTicket(), $arBillable);
+            if (!$billable && $removeNotBillable) {
+                unset($entries[$key]);
+            } else {
+                $entry->billable = $billable;
+            }
+        }
+
+        return $entries;
     }
 }
