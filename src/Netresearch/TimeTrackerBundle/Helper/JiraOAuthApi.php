@@ -128,6 +128,7 @@ class JiraOAuthApi
             'request_method'   => Oauth1::REQUEST_METHOD_QUERY,
             'signature_method' => Oauth1::SIGNATURE_METHOD_RSA,
             'private_key_file' => $this->getPrivateKeyFile(),
+            'private_key_passphrase' => '',
         ]);
         $stack->push($middleware);
 
