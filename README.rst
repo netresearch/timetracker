@@ -1,25 +1,24 @@
 .. header::
    .. image:: doc/netresearch.jpg
-      :height: 50px
+      :height: 25px
       :align: left
 
 =======================
 Netresearch TimeTracker
 =======================
+
 Project and customer based time tracking for company employees.
 
 Features:
 
 - Time tracking with autocompletion
-
-  - Bulk entry for sickness or vacation
+   - Bulk entry for sickness or vacation
 - Per-user, pre-project and company wide charts
-
-  - Additional statistics via timalytics__
+   - Additional statistics via timalytics__
 - Administration interface for customers, projects, users and teams
-- CSV export for controlling tasks
-- LDAP authentication
-- JIRA integration: Creates and updates worklog entries in issues
+- XLSX export for controlling tasks
+- AD/LDAP authentication
+- Jira integration: Creates and updates worklog entries in issues
 
 
 __ https://github.com/netresearch/timalytics
@@ -37,7 +36,7 @@ Add worklog entry
 -----------------
 
 Click the button **Add Entry**.
-Use the keyboard shortcut **a**.
+Or use the keyboard shortcut **a**.
 
 Edit worklog entry
 ------------------
@@ -48,7 +47,7 @@ Delete worklog entry
 --------------------
 
 Rightclick on an worklog entry and select **Delete** from context menu.
-Use keyboard shortcut **d** to delete focused worklog entry.
+Or use keyboard shortcut **d** to delete focused worklog entry.
 
 Focus
 -----
@@ -76,10 +75,11 @@ Installation and set up
 
 Requirements
 ------------
-- PHP 5.6+
-- MySQL database
-- composer
-- libraries listed in ``composer.json``
+
+- PHP >= 7.2
+- MySQL compatible database
+- Composer
+- For more details see ``composer.json``
 
 
 Setup - manual from from sources
@@ -87,34 +87,40 @@ Setup - manual from from sources
 
 #. Fetch a local copy::
 
-     $ git clone git@github.com:netresearch/timetracker.git
+   $ git clone git@github.com:netresearch/timetracker.git
 
 #. Create a MySQL database and import ``sql/full.sql`` into it
+
 #. Install dependencies::
 
-     $ composer install
+   $ composer install
 
    It will ask you for some configuration options.
+   
    If you want to adjust that later, edit ``app/config/parameters.yml``
 
 #. Make cache and log directory writable::
 
-     $ chmod -R og+w app/cache/ app/logs/
+   $ chmod -R og+w app/cache/ app/logs/
 
-#. Copy ``web/.htaccess_dev`` to ``web/.htaccess``.
+#. For Apache, copy ``web/.htaccess_dev`` to ``web/.htaccess``.
 
-   On nginx, symlink ``web/app_dev.php`` or ``web/app.php``
-   to ``web/index.php``.
+   For nginx, symlink ``web/app_dev.php`` or ``web/app.php`` to ``web/index.php``.
+
 #. Create a virtual host web server entry
+
    pointing to ``/path/to/timetracker/web/``
+
 #. Open the timetracker URL in your browser. If you see a white page, run::
 
-     $ php app/console assets:install
+   $ php app/console assets:install
+
 #. Import test data so that you have a set of data to work and play with::
 
-     $ mysql timetracker < sql/testdata.sql
+   $ mysql timetracker < sql/testdata.sql
 
    Change the username of user `1` to your LDAP username.
+
 #. Login with your LDAP credentials
 
 
@@ -243,20 +249,23 @@ This feature tries to solve that problem.
    #. Ensure that the project provides the issue type ``task``
    #. Let's assume it is named ``Customer Project`` with the key ``INTERNAL``
 
-#. Create the clients ticket system in TimeTracker
+#. Create the client's ticket system in TimeTracker
 
    #. Go to ``Administration > Ticket-Sytem`` and create a new one:
 
       Name:
         e.g. ``Customer ticket system``
+
       Type:
         ``Jira`` or ``Other`` or what you like
 
         The type does not effect this feature in any way
+
       URL:
         e.g. ``https://ticketing.customer.org/%s``
 
         This is used to generate links in the work log description
+
       Timebooking:
         No
 
@@ -270,15 +279,20 @@ This feature tries to solve that problem.
 
       Name:
         set to e.g. ``Customer Project``
+
       Ticket-System:
         Select the above created ``Customer ticket system``
+
       Ticket-Prefix:
         Enter the prefix of your customers project tickets e.g. ``EXTERNAL`` if the tickets are in the form
         ``EXTERNAL-123``
+
       Active:
         Yes
+
       "Internal Jira project key":
         select ``INTERNAL``
+
       "Internal Jira ticket system":
         select your internal ticket system
 
@@ -286,7 +300,7 @@ If everything is correct, the following will happen:
 
 * If you are booking some working time to e.g. ``EXTERNAL-1`` in TimeTracker for project ``Customer Project``
 * TimeTracker will reach out for the configured internal Jira instance
-* It will search for an issue which name starts with ``EXTERNAL-1`` in the configured internal Jira project
+* It will search for an issue which name/summary starts with ``EXTERNAL-1`` in the configured internal Jira project
 * If it finds an entry, the work log is applied to this entry
 * If it does not find an entry, TimeTracker will create a new internal ticket with name ``EXTERNAL-1``
 * The link to the ticket in customer Jira will be applied as ticket description
