@@ -27,7 +27,7 @@ Ext.define('Netresearch.widget.Controlling', {
     _monthTitle: 'Month',
     _exportTitle: 'Export',
     _tabTitle: 'Controlling',
-
+    _billableTitle: 'limit export to billable entries',
 
     initComponent: function() {
         this.on('render', this.refreshStores, this);
@@ -130,6 +130,13 @@ Ext.define('Netresearch.widget.Controlling', {
                 displayField: 'displayname',
                 valueField: 'value',
                 value: curMonth
+            }, {
+                id:'cnt-billable',
+                xtype: 'checkbox',
+                fieldLabel: this._billableTitle,
+                name: 'billable',
+                trueText: '1',
+                falseText: '0'
             }],
             buttons: [{
                 text: this._exportTitle,
@@ -140,7 +147,8 @@ Ext.define('Netresearch.widget.Controlling', {
                     var month = parseInt(Ext.getCmp("cnt-month").value) || 0;
                     var project = Ext.getCmp("cnt-project").value;
                     var customer = Ext.getCmp("cnt-customer").value;
-                    this.exportEntries(user, year, month, project, customer);
+                    var billable = +Ext.getCmp("cnt-billable").value;
+                    this.exportEntries(user, year, month, project, customer, billable);
                 }
             }]
         });
@@ -165,7 +173,7 @@ Ext.define('Netresearch.widget.Controlling', {
         this.callParent();
     },
 
-    exportEntries: function(user, year, month, project, customer) {
+    exportEntries: function(user, year, month, project, customer, billable) {
         if ((undefined == user) || (null == user) || ('' == user) || (1 > user)) {
             user = 0;
         }
@@ -181,7 +189,8 @@ Ext.define('Netresearch.widget.Controlling', {
             + year + '/'
             + month + '/'
             + project + '/'
-            + customer
+            + customer + '/'
+            + billable;
     },
 
     refreshStores: function () {
@@ -201,6 +210,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _yearTitle: 'Jahr',
         _monthTitle: 'Monat',
         _exportTitle: 'Exportieren',
-        _tabTitle: 'Abrechnung'
+        _tabTitle: 'Abrechnung',
+        _billableTitle: 'nur abrechenbare Einträge exportieren'
     });
 }

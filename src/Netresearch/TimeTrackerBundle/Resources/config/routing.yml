@@ -132,7 +132,7 @@ _export:
         days: \d+
 
 _controllingExport:
-    path: /controlling/export/{userid}/{year}/{month}/{project}/{customer}
+    path: /controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}
     defaults:
       _controller: NetresearchTimeTrackerBundle:Controlling:export
       userid: 0
@@ -140,6 +140,7 @@ _controllingExport:
       month: 0
       project: 0
       customer: 0
+      billable: 0
     requirements: { year: \d+, userid: \d+}
 
 check_status:
