@@ -49,11 +49,12 @@ class ControllingController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        $projectId  = (int)  $request->get('project');
-        $userId     = (int)  $request->get('userid');
-        $year       = (int)  $request->get('year');
-        $month      = (int)  $request->get('month');
-        $customerId = (int)  $request->get('customer');
+        $projectId    = (int)  $request->get('project');
+        $userId       = (int)  $request->get('userid');
+        $year         = (int)  $request->get('year');
+        $month        = (int)  $request->get('month');
+        $customerId   = (int)  $request->get('customer');
+        $onlyBillable = (bool) $request->get('billable');
 
         $service = $this->get('nr.timetracker.export');
         /** @var \Netresearch\TimeTrackerBundle\Entity\Entry[] $entries */
@@ -64,6 +65,15 @@ class ControllingController extends BaseController
                 'entry.start'   => true,
             ]
         );
+
+        $showBillableField = $this->container->hasParameter('app_show_billable_field_in_export')
+            && $this->container->getParameter('app_show_billable_field_in_export');
+        if ($showBillableField) {
+            $entries = $service->enrichEntriesWithBillableInformation(
+                $this->getUserId($request), $entries, $onlyBillable
+            );
+        }
+
         $username = $service->getUsername($userId);
 
         $filename = strtolower(
@@ -80,6 +90,10 @@ class ControllingController extends BaseController
         );
 
         $sheet = $spreadsheet->getSheet(0);
+        if ($showBillableField) {
+            //add header
+            $sheet->setCellValue('N2', 'billable');
+        }
 
         // https://jira.netresearch.de/browse/TTT-561
         $lineNumber = 3;
@@ -120,6 +134,9 @@ class ControllingController extends BaseController
             $sheet->setCellValue('K' . $lineNumber, $entry->getExternalReporter());
             $sheet->setCellValue('L' . $lineNumber, $entry->getExternalSummary());
             $sheet->setCellValue('M' . $lineNumber, implode(', ', $entry->getExternalLabels()));
+            if ($showBillableField) {
+                $sheet->setCellValue('N' . $lineNumber, (int) $entry->billable);
+            }
 
             $lineNumber++;
         }

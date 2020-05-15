@@ -424,13 +424,15 @@ class JiraOAuthApi
      */
     public function searchTicket($jql, $fields, $limit = 1)
     {
-        $query = http_build_query([
-            'jql'        => $jql,
-            'fields'     => $fields,
-            'maxResults' => $limit,
-        ]);
-
-        return $this->get("search/?" . $query);
+        //we use POST to support very large queries
+        return $this->post(
+            "search/",
+            [
+                'jql'        => $jql,
+                'fields'     => $fields,
+                'maxResults' => $limit,
+            ]
+        );
     }
 
     /**
