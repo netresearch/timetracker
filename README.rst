@@ -96,7 +96,7 @@ Setup - manual from from sources
    $ composer install
 
    It will ask you for some configuration options.
-   
+
    If you want to adjust that later, edit ``app/config/parameters.yml``
 
 #. Make cache and log directory writable::
@@ -169,7 +169,13 @@ Using OAuth to transmit work logs to Jira ticket system
 
 #. Example for Jira 7
 
-   - Create a SSH key pair with private and public pem file
+   - Create a OpenSSL key pair with private and public pem file::
+
+       $ openssl genrsa -out jira_privatekey.pem 1024
+       $ openssl req -newkey rsa:1024 -x509 -key jira_privatekey.pem -out jira_publickey.cer -days 365
+       $ openssl pkcs8 -topk8 -nocrypt -in jira_privatekey.pem -out jira_privatekey.pcks8
+       $ openssl x509 -pubkey -noout -in jira_publickey.cer  > jira_publickey.pem
+
    - Open "Application links" page in your Jira: https://jira.example.com/plugins/servlet/applinks/listApplicationLinks
    - "Create new link" with URL pointing to your TimeTracker installation
    - Just click "Continue" if Jira is blaming "no response"
@@ -187,7 +193,7 @@ Using OAuth to transmit work logs to Jira ticket system
       - Consumer Name:
            TimeTracker (or chose any other name you like)
       - Public Key:
-           Insert here the public key you created above
+           Insert here the public key you created above (``jira_publickey.pem``)
       - Click on "Save"
 
 #. Create a ticket system in TimeTracker
@@ -199,8 +205,10 @@ Using OAuth to transmit work logs to Jira ticket system
      "%s" serves is a placeholder for the ticket name in the URL
      (your URL might look as the following: https://jira.example.com/browse/%s)
    - The fields login, password, public and private key can be left empty
-   - Enter the OAuth consumer key you already entered in Jira
+   - Enter the OAuth consumer key you already entered in Jira (``timetracker``)
    - Enter your private key you created above into OAuth consumer secret field
+     (``jira_privatekey.pcks8``).
+     Must begin with ``-----BEGIN PRIVATE KEY-----`` (not ``BEGIN RSA``!).
 
 #. Assign this ticket system to at least one project
 
