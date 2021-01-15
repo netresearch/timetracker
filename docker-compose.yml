@@ -7,7 +7,9 @@ services:
     volumes:
       - app-cache:/var/www/html/app/cache
       - app-logs:/var/www/html/app/logs
-      - ./app/config/parameters.yml:/var/www/html/app/config/parameters.yml
+      - type: bind
+        source: ./app/config/parameters.yml
+        target: /var/www/html/app/config/parameters.yml
     links:
       - db:db
     restart: always
@@ -19,7 +21,7 @@ services:
   httpd:
     image: nginx:alpine
     volumes:
-      - app-pub:/var/www/html/web
+      - ./web:/var/www/html/web
       - ./nginx-conf.d-default.conf:/etc/nginx/conf.d/default.conf
     links:
       - app:phpfpm
