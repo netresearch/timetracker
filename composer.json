@@ -15,7 +15,7 @@
         "classmap": [ "app/AppKernel.php", "app/AppCache.php" ]
     },
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.4",
         "ext-date": "*",
         "ext-json": "*",
         "ext-ldap": "*",

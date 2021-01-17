@@ -23,7 +23,7 @@ FROM runtime AS builder
 RUN apt-get update -y
 RUN apt-get install -y git unzip curl
 # install composer
-RUN curl -sS https://getcomposer.org/installer | php
+RUN curl -sS https://getcomposer.org/installer | php -- --1
 RUN mv composer.phar /usr/local/bin/composer
 
 COPY . /var/www/html
