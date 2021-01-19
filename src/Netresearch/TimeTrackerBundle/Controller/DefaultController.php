@@ -311,12 +311,14 @@ class DefaultController extends BaseController
     }
 
     /**
+     * Developers may see their own data only, CTL and PL may see everyone.
+     *
      * @param Request $request
      * @return Response
      */
     public function getUsersAction(Request $request)
     {
-        if ($this->isHiddenCausedByGDPRViolation()) {
+        if ($this->isDEV($request)) {
             $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUserById($this->getUserId($request));
         } else {
             $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUsers($this->getUserId($request));
