@@ -581,4 +581,49 @@ class EntryRepository extends EntityRepository
 
         return $queryBuilder->getQuery()->getResult();
     }
+
+    /**
+     * Get a list of activities with the total time booked on the ticket
+     *
+     * @param string $ticketname Name of the ticket
+     *
+     * @return array Names of the activities with their total time in seconds
+     */
+    public function getActivitiesWithTime(string $ticketname)
+    {
+        $connection = $this->getEntityManager()->getConnection();
+        $sql = "SELECT name, SUM(duration) AS total_time
+                FROM entries
+                LEFT JOIN  activities
+                ON entries.activity_id = activities.id
+                WHERE entries.ticket = :ticketname
+                GROUP BY activity_id";
+
+        $stmt = $connection->prepare($sql);
+        $stmt->execute([':ticketname' => $ticketname]);
+        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $result;
+    }
+
+    /**
+     * Get a list of usernames that worked on the ticket and the total time they spent on it.
+     *
+     * @param string $ticketname Name of the ticket
+     *
+     * @return array usernames with their total time in seconds
+     */
+    public function getUsersWithTime(string $ticketname)
+    {
+        $connection = $this->getEntityManager()->getConnection();
+        $sql = "SELECT username, SUM(duration) AS total_time
+                FROM users, entries
+                WHERE entries.ticket = :ticketname
+                AND users.id = entries.user_id
+                GROUP BY username";
+
+        $stmt = $connection->prepare($sql);
+        $stmt->execute([':ticketname' => $ticketname]);
+        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $result;
+    }
 }
