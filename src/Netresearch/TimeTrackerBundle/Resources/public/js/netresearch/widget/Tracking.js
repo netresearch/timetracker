@@ -102,7 +102,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     // skip unsaved entries
                     if (('undefined' === typeof(record.index))
                             || (undefined === record.data.id)
-                            || (null == record.data.id) 
+                            || (null == record.data.id)
                             || (record.data.id < 1)) {
                         return 'unsaved';
                     }
@@ -263,7 +263,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
                                 if (0 < parseInt(result['id'])) {
                                     if ((editStartColumn === 7) && (result['sure'] !== false))
-                                        editStartColumn = 8;
+                                        editStartColumn = 7;
                                     if (selection[0].data.project !== parseInt(result['id'])) {
                                         selection[0].data.project = parseInt(result['id']);
                                         edited = true;
@@ -587,7 +587,7 @@ Ext.define('Netresearch.widget.Tracking', {
         };
 
         Ext.applyIf(this,config);
-        this.callParent();    
+        this.callParent();
     },
 
     mapTicketToProject: function(ticket) {
@@ -754,7 +754,7 @@ Ext.define('Netresearch.widget.Tracking', {
             // Check if customer and project are related
             var projectCheck = this.checkCustomerProjectRelation(record.data.customer, record.data.project);
             if (false == projectCheck) {
-                showNotification(this._errorTitle, 
+                showNotification(this._errorTitle,
                         this._customerProjectMismatchTitle
                         + '<br /><br />'
                         + this._chooseOtherCustomerOrProjectTitle
@@ -856,7 +856,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return false;
         }
 
-        // Resolve the name of the searched project 
+        // Resolve the name of the searched project
         let name = '';
         const allProjects = projectsData["all"];
         for (let key in allProjects) {
@@ -935,7 +935,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 const grid = this;
                 const infowindow = new Ext.Window({
                     title: this._overviewTitle,
-                    html: dlgMessage,	
+                    html: dlgMessage,
                     width: 525,
                     listeners: {
                         close: function() {
@@ -946,7 +946,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 infowindow.show();
             },
             failure: function(response) {
-                handleRedirect(response, 
+                handleRedirect(response,
                         this._informationRetrievalErrorTitle,
                         this._sessionExpiredTitle);
             }
@@ -1226,7 +1226,7 @@ Ext.define('Netresearch.widget.Tracking', {
         // suggest start time if possible
         if (settingsData.suggest_time) {
             // either by last entry
-            if ((lastRecord != undefined) 
+            if ((lastRecord != undefined)
                 && (lastRecord.data)
                 && (this.isSameDay(lastRecord.data.date, date))) {
                     start = new Date(lastRecord.data.end);
@@ -1243,7 +1243,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
         /* Go to activity column if customer and project are already set */
         if (record.customer && record.project) {
-            editStartColumn = 8;
+            editStartColumn = 7;
             if (record.activity)
                 editStartColumn++;
         }
