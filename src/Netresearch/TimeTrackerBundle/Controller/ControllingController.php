@@ -107,11 +107,19 @@ class ControllingController extends BaseController
                 ];
             }
 
-            if ($entry->getActivity()->isHoliday()) {
-                $stats[$entry->getUser()->getAbbr()]['holidays']++;
-            }
-            if ($entry->getActivity()->isSick()) {
-                $stats[$entry->getUser()->getAbbr()]['sickdays']++;
+            $activity = $entry->getActivity();
+
+            if (!is_null($activity)) {
+
+                if ($activity->isHoliday()) {
+                    $stats[$entry->getUser()->getAbbr()]['holidays']++;
+                }
+                if ($activity->isSick()) {
+                    $stats[$entry->getUser()->getAbbr()]['sickdays']++;
+                }
+                $activity = $activity->getName();
+            } else {
+                $activity = ' ';
             }
 
             self::setCellDate($sheet, 'A', $lineNumber, $entry->getDay());
@@ -123,7 +131,7 @@ class ControllingController extends BaseController
                 $entry->getCustomer()->getName() ?: $entry->getProject()->getCustomer()->getName()
             );
             $sheet->setCellValue('E' . $lineNumber, $entry->getProject()->getName());
-            $sheet->setCellValue('F' . $lineNumber, $entry->getActivity()->getName());
+            $sheet->setCellValue('F' . $lineNumber, $activity);
             $sheet->setCellValue('G' . $lineNumber, $entry->getDescription());
             $sheet->setCellValue('H' . $lineNumber, $entry->getTicket());
 
