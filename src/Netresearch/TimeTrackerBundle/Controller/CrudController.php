@@ -220,6 +220,23 @@ class CrudController extends BaseController
                 ->find($this->getUserId($request));
             $entry->setUser($user);
 
+            $ticketSystem = $project->getTicketSystem();
+            if ($ticketSystem != null) {
+                if (!$ticketSystem instanceof TicketSystem) {
+                    $message = 'Einstellungen für das Ticket System überprüfen';
+                    return $this->getFailedResponse($message ,400);
+                }
+
+                $jiraOAuthApi = new JiraOAuthApi(
+                    $entry->getUser(), $ticketSystem, $doctrine, $this->container->get('router')
+                );
+
+                if (!$jiraOAuthApi->doesTicketExist($request->get('ticket'))) {
+                    $message = $request->get('ticket') . ' existiert nicht';
+                    throw new \Exception($message);
+                }
+            }
+
             /** @var Activity $activity */
             if ($activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')->find($request->get('activity'))) {
                 $entry->setActivity($activity);
@@ -261,7 +278,7 @@ class CrudController extends BaseController
             $em = $doctrine->getManager();
             $em->persist($entry);
             $em->flush();
-           
+
             try {
                 $this->handleInternalTicketSystem($entry, $oldEntry);
             } catch (\Throwable $exception) {

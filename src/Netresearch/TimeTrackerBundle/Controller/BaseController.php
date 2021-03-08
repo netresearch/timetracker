@@ -204,6 +204,21 @@ class BaseController extends Controller
     }
 
     /**
+     * Returns a custom error message
+     *
+     * @param string $message Error message
+     * @param int    $status  HTTP status code
+     *
+     * @return Response
+     */
+    protected function getFailedResponse($message, $status)
+    {
+        $response = new Response($message);
+        $response->setStatusCode($status);
+        return $response;
+    }
+
+    /**
      * Handles all after-login stuff
      *
      * @param Request $request

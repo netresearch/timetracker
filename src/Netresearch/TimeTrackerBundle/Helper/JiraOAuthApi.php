@@ -442,7 +442,7 @@ class JiraOAuthApi
      * @return bool
      * @throws JiraApiException
      */
-    protected function doesTicketExist($sTicket)
+    public function doesTicketExist($sTicket)
     {
         return $this->doesResourceExist(sprintf("issue/%s", $sTicket));
     }
