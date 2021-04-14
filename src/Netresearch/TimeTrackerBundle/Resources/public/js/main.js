@@ -320,19 +320,7 @@ function showNotification(title, message, success)
         && (null != notification))
     {
         notification.hide();
-        notification.removeCls('ux-notification-light');
-        notification.removeCls('ux-notification-light-error');
-        notification.addCls(cls);
-        notification.setTitle(title);
-        notification.autoHideDelay = 5000;
-        notification.autoHide = true;
-        notification.spacing = 20;
-        notification.width = 400;
-        notification.autoHeight = true;
-        notification.update(message);
-        notification.doLayout();
-        notification.show();
-        return;
+        notification = undefined;
     }
 
     notification = Ext.create('widget.uxNotification', {
