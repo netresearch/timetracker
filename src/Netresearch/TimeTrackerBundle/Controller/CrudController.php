@@ -231,7 +231,9 @@ class CrudController extends BaseController
                     $entry->getUser(), $ticketSystem, $doctrine, $this->container->get('router')
                 );
 
-                if (!$jiraOAuthApi->doesTicketExist($request->get('ticket'))) {
+                if ($request->get('ticket') != ''
+                    && !$jiraOAuthApi->doesTicketExist($request->get('ticket'))
+                ) {
                     $message = $request->get('ticket') . ' existiert nicht';
                     throw new \Exception($message);
                 }
