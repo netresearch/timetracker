@@ -1,0 +1,7 @@
+sensio_framework_extra:
+   psr_message:
+      enabled: false
+sentry:
+  dsn: ""
+  tracing:
+    enabled: false
