@@ -52,7 +52,7 @@ return preg_replace('/[^[:alnum:]]/','', $this->get($key, $default));
 }
 public function getDigits($key, $default ='')
 {
-return str_replace(['-','+'],'', $this->filter($key, $default, FILTER_SANITIZE_NUMBER_INT));
+return str_replace(['-','+'],'', $this->filter($key, $default, \FILTER_SANITIZE_NUMBER_INT));
 }
 public function getInt($key, $default = 0)
 {
@@ -60,16 +60,16 @@ return (int) $this->get($key, $default);
 }
 public function getBoolean($key, $default = false)
 {
-return $this->filter($key, $default, FILTER_VALIDATE_BOOLEAN);
+return $this->filter($key, $default, \FILTER_VALIDATE_BOOLEAN);
 }
-public function filter($key, $default = null, $filter = FILTER_DEFAULT, $options = [])
+public function filter($key, $default = null, $filter = \FILTER_DEFAULT, $options = [])
 {
 $value = $this->get($key, $default);
 if (!\is_array($options) && $options) {
 $options = ['flags'=> $options];
 }
 if (\is_array($value) && !isset($options['flags'])) {
-$options['flags'] = FILTER_REQUIRE_ARRAY;
+$options['flags'] = \FILTER_REQUIRE_ARRAY;
 }
 return filter_var($value, $filter, $options);
 }
@@ -193,8 +193,8 @@ public function getDate($key, \DateTime $default = null)
 if (null === $value = $this->get($key)) {
 return $default;
 }
-if (false === $date = \DateTime::createFromFormat(DATE_RFC2822, $value)) {
-throw new \RuntimeException(sprintf('The %s HTTP header is not parseable (%s).', $key, $value));
+if (false === $date = \DateTime::createFromFormat(\DATE_RFC2822, $value)) {
+throw new \RuntimeException(sprintf('The "%s" HTTP header is not parseable (%s).', $key, $value));
 }
 return $date;
 }
@@ -243,7 +243,7 @@ return implode(', ', $parts);
 protected function parseCacheControl($header)
 {
 $cacheControl = [];
-preg_match_all('#([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?#', $header, $matches, PREG_SET_ORDER);
+preg_match_all('#([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?#', $header, $matches, \PREG_SET_ORDER);
 foreach ($matches as $match) {
 $cacheControl[strtolower($match[1])] = isset($match[3]) ? $match[3] : (isset($match[2]) ? $match[2] : true);
 }
@@ -289,7 +289,7 @@ $file = $this->fixPhpFilesArray($file);
 $keys = array_keys($file);
 sort($keys);
 if ($keys == self::$fileKeys) {
-if (UPLOAD_ERR_NO_FILE == $file['error']) {
+if (\UPLOAD_ERR_NO_FILE == $file['error']) {
 $file = null;
 } else {
 $file = new UploadedFile($file['tmp_name'], $file['name'], $file['type'], $file['size'], $file['error']);
@@ -381,11 +381,13 @@ use Symfony\Component\HttpFoundation\Exception\SuspiciousOperationException;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 class Request
 {
-const HEADER_FORWARDED = 0b00001; const HEADER_X_FORWARDED_FOR = 0b00010;
+const HEADER_FORWARDED = 0b00001;
+const HEADER_X_FORWARDED_FOR = 0b00010;
 const HEADER_X_FORWARDED_HOST = 0b00100;
 const HEADER_X_FORWARDED_PROTO = 0b01000;
 const HEADER_X_FORWARDED_PORT = 0b10000;
-const HEADER_X_FORWARDED_ALL = 0b11110; const HEADER_X_FORWARDED_AWS_ELB = 0b11010;
+const HEADER_X_FORWARDED_ALL = 0b11110;
+const HEADER_X_FORWARDED_AWS_ELB = 0b11010;
 const HEADER_CLIENT_IP = self::HEADER_X_FORWARDED_FOR;
 const HEADER_CLIENT_HOST = self::HEADER_X_FORWARDED_HOST;
 const HEADER_CLIENT_PROTO = self::HEADER_X_FORWARDED_PROTO;
@@ -623,7 +625,7 @@ $content = $this->getContent();
 if (\PHP_VERSION_ID >= 70400) {
 throw $e;
 }
-return trigger_error($e, E_USER_ERROR);
+return trigger_error($e, \E_USER_ERROR);
 }
 $cookieHeader ='';
 $cookies = [];
@@ -666,7 +668,7 @@ public static function setTrustedProxies(array $proxies)
 {
 self::$trustedProxies = $proxies;
 if (2 > \func_num_args()) {
-@trigger_error(sprintf('The %s() method expects a bit field of Request::HEADER_* as second argument since Symfony 3.3. Defining it will be required in 4.0. ', __METHOD__), E_USER_DEPRECATED);
+@trigger_error(sprintf('The %s() method expects a bit field of Request::HEADER_* as second argument since Symfony 3.3. Defining it will be required in 4.0. ', __METHOD__), \E_USER_DEPRECATED);
 return;
 }
 $trustedHeaderSet = (int) func_get_arg(1);
@@ -696,7 +698,7 @@ return self::$trustedHostPatterns;
 }
 public static function setTrustedHeaderName($key, $value)
 {
-@trigger_error(sprintf('The "%s()" method is deprecated since Symfony 3.3 and will be removed in 4.0. Use the $trustedHeaderSet argument of the Request::setTrustedProxies() method instead.', __METHOD__), E_USER_DEPRECATED);
+@trigger_error(sprintf('The "%s()" method is deprecated since Symfony 3.3 and will be removed in 4.0. Use the $trustedHeaderSet argument of the Request::setTrustedProxies() method instead.', __METHOD__), \E_USER_DEPRECATED);
 if ('forwarded'=== $key) {
 $key = self::HEADER_FORWARDED;
 } elseif ('client_ip'=== $key) {
@@ -721,7 +723,7 @@ self::$trustedHeaderSet &= ~$key;
 public static function getTrustedHeaderName($key)
 {
 if (2 > \func_num_args() || func_get_arg(1)) {
-@trigger_error(sprintf('The "%s()" method is deprecated since Symfony 3.3 and will be removed in 4.0. Use the Request::getTrustedHeaderSet() method instead.', __METHOD__), E_USER_DEPRECATED);
+@trigger_error(sprintf('The "%s()" method is deprecated since Symfony 3.3 and will be removed in 4.0. Use the Request::getTrustedHeaderSet() method instead.', __METHOD__), \E_USER_DEPRECATED);
 }
 if (!\array_key_exists($key, self::$trustedHeaders)) {
 throw new \InvalidArgumentException(sprintf('Unable to get the trusted header name for key "%s".', $key));
@@ -745,7 +747,7 @@ rawurlencode(urldecode($keyValuePair[0])).'='.rawurlencode(urldecode($keyValuePa
 rawurlencode(urldecode($keyValuePair[0]));
 $order[] = urldecode($keyValuePair[0]);
 }
-array_multisort($order, SORT_ASC, $parts);
+array_multisort($order, \SORT_ASC, $parts);
 return implode('&', $parts);
 }
 public static function enableHttpMethodParameterOverride()
@@ -1082,7 +1084,7 @@ return $this->getMethod() === strtoupper($method);
 public function isMethodSafe()
 {
 if (!\func_num_args() || func_get_arg(0)) {
-@trigger_error('Checking only for cacheable HTTP methods with Symfony\Component\HttpFoundation\Request::isMethodSafe() is deprecated since Symfony 3.2 and will throw an exception in 4.0. Disable checking only for cacheable methods by calling the method with `false` as first argument or use the Request::isMethodCacheable() instead.', E_USER_DEPRECATED);
+@trigger_error('Checking only for cacheable HTTP methods with Symfony\Component\HttpFoundation\Request::isMethodSafe() is deprecated since Symfony 3.2 and will throw an exception in 4.0. Disable checking only for cacheable methods by calling the method with `false` as first argument or use the Request::isMethodCacheable() instead.', \E_USER_DEPRECATED);
 return \in_array($this->getMethod(), ['GET','HEAD']);
 }
 return \in_array($this->getMethod(), ['GET','HEAD','OPTIONS','TRACE']);
@@ -1136,7 +1138,7 @@ return $this->content;
 }
 public function getETags()
 {
-return preg_split('/\s*,\s*/', $this->headers->get('if_none_match'), null, PREG_SPLIT_NO_EMPTY);
+return preg_split('/\s*,\s*/', $this->headers->get('if_none_match'), null, \PREG_SPLIT_NO_EMPTY);
 }
 public function isNoCache()
 {
@@ -1257,7 +1259,8 @@ $baseUrl = $this->server->get('SCRIPT_NAME');
 } elseif (basename($this->server->get('PHP_SELF')) === $filename) {
 $baseUrl = $this->server->get('PHP_SELF');
 } elseif (basename($this->server->get('ORIG_SCRIPT_NAME')) === $filename) {
-$baseUrl = $this->server->get('ORIG_SCRIPT_NAME'); } else {
+$baseUrl = $this->server->get('ORIG_SCRIPT_NAME');
+} else {
 $path = $this->server->get('PHP_SELF','');
 $file = $this->server->get('SCRIPT_FILENAME','');
 $segs = explode('/', trim($file,'/'));
@@ -1413,7 +1416,8 @@ private function normalizeAndFilterClientIps(array $clientIps, $ip)
 if (!$clientIps) {
 return [];
 }
-$clientIps[] = $ip; $firstTrustedIp = null;
+$clientIps[] = $ip;
+$firstTrustedIp = null;
 foreach ($clientIps as $key => $clientIp) {
 if (strpos($clientIp,'.')) {
 $i = strpos($clientIp,':');
@@ -1424,7 +1428,7 @@ $clientIps[$key] = $clientIp = substr($clientIp, 0, $i);
 $i = strpos($clientIp,']', 1);
 $clientIps[$key] = $clientIp = substr($clientIp, 1, $i - 1);
 }
-if (!filter_var($clientIp, FILTER_VALIDATE_IP)) {
+if (!filter_var($clientIp, \FILTER_VALIDATE_IP)) {
 unset($clientIps[$key]);
 continue;
 }
