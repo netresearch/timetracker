@@ -1,8 +1,8 @@
 {
-    "name": "symfony/framework-standard-edition",
-    "license": "MIT",
+    "name": "netresearch/timetracker",
+    "license": "AGPL-3.0-only",
     "type": "project",
-    "description": "The \"Symfony Standard Edition\" distribution",
+    "description": "",
     "config": {
         "bin-dir": "bin",
         "platform": {
@@ -33,7 +33,6 @@
         "phpoffice/phpspreadsheet": "^1.4",
         "sensio/distribution-bundle": "^5.0.19",
         "sensio/framework-extra-bundle": "^5.0.0",
-        "sensio/generator-bundle": "*",
         "symfony/assetic-bundle": "*",
         "symfony/monolog-bundle": "^3.1.0",
         "symfony/swiftmailer-bundle": "^2.6.4",
