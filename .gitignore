@@ -5,6 +5,7 @@
 /app/config/parameters.yml
 /app/config/parameters.ini
 /app/config/ldap_ou_team_mapping.yml
+/app/config/sentry.yml
 /app/logs/*.log
 /app/cache/*
 /app/build/
