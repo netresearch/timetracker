@@ -25,8 +25,8 @@
         "doctrine/doctrine-bundle": "^1.6",
         "doctrine/doctrine-migrations-bundle": "*",
         "doctrine/orm": "^2.5",
-        "guzzlehttp/guzzle": "^6.3",
-        "guzzlehttp/oauth-subscriber": "^0.3.0",
+        "guzzlehttp/guzzle": "^7.3",
+        "guzzlehttp/oauth-subscriber": "^0.6",
         "incenteev/composer-parameter-handler": "^2.0",
         "jms/di-extra-bundle": "*",
         "jms/security-extra-bundle": "*",
@@ -37,8 +37,8 @@
         "symfony/monolog-bundle": "^3.1.0",
         "symfony/swiftmailer-bundle": "^2.6.4",
         "symfony/symfony": "3.4.*",
-        "twig/twig": "^1.0||^2.0",
         "twig/extensions": "1.0.*@dev",
+        "twig/twig": "^1.0||^2.0",
         "zendframework/zend-ldap": "*"
     },
     "require-dev": {
