@@ -99,6 +99,9 @@ Setup - manual from from sources
 
    If you want to adjust that later, edit ``app/config/parameters.yml``
 
+   Also copy ``app/config/sentry.yml.dist`` to ``app/config/sentry.yml``,
+   and fill the ``dsn`` key if necessary.
+
 #. Make cache and log directory writable::
 
    $ chmod -R og+w app/cache/ app/logs/
@@ -130,9 +133,9 @@ Setup - with prebuilt docker images
 #. Create an empty folder
 #. Put the provided docker-composer.yml from this git repo in it
 #. Put the provided nginx configuration file from this repo into the above created folder
-#. Put the provided app/config/parameters.yml.dist from this repo as paramters.yml into the above created folder
+#. Put the provided ``app/config/parameters.yml.dist`` from this repo as ``parameters.yml`` into the above created folder, and ``sentry.yml.dist`` as ``sentry.yml``.
 #. Check and adapt the copied confoguration files to your needs
-#. Run docker-compose up -d
+#. Run ``docker-compose up -d``
 
 
 Trusted proxies
