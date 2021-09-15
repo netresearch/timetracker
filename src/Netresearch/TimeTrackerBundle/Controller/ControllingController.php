@@ -14,6 +14,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
+use Netresearch\TimeTrackerBundle\Helper\LOReadFilter;
 use Netresearch\TimeTrackerBundle\Model\Response;
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -84,7 +85,9 @@ class ControllingController extends BaseController
         );
 
         //$spreadsheet = new Spreadsheet();
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(
+        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader->setReadFilter(new LOReadFilter());
+        $spreadsheet = $reader->load(
             $this->container->getParameter('kernel.root_dir')
             . '/../web/template.xlsx'
         );
