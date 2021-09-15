@@ -741,7 +741,12 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
         }
 
-        if ((0 === parseInt(record.data.project+0)) || (0 === parseInt(record.data.customer+0))) {
+        if ((record.data.description.length > 1) && (record.data.activity == null || record.data.activity == 0)) {
+            showNotification(this._errorTitle, this._noActivityGivenTitle, false);
+            return;
+        }
+
+        if ((0 === parseInt(record.data.project+0)) || (0 === parseInt(record.data.customer+0)) || (0 === parseInt(record.data.activity+0))) {
             return;
         }
 
