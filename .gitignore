@@ -9,6 +9,7 @@
 /app/logs/*.log
 /app/cache/*
 /app/build/
+/app/bootstrap.php.cache
 /bin/*
 /web/bundles/*
 /web/.htaccess
