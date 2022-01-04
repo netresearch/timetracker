@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\TicketSystemRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
@@ -9,7 +10,7 @@ use App\Model\Base as Base;
 /**
  * App\Entity\TicketSystem
  */
-#[ORM\Entity(repositoryClass: 'App\Repository\TicketSystemRepository')]
+#[ORM\Entity(repositoryClass: TicketSystemRepository::class)]
 #[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {

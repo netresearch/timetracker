@@ -1,13 +1,14 @@
 <?php
 namespace App\Entity;
 
+use App\Repository\ContractRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A user contract (working hours)
  */
-#[ORM\Entity(repositoryClass: 'App\Repository\ContractRepository')]
+#[ORM\Entity(repositoryClass: ContractRepository::class)]
 #[ORM\Table(name: 'contracts')]
 class Contract
 {

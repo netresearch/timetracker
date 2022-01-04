@@ -2,13 +2,14 @@
 
 namespace App\Entity;
 
+use App\Repository\CustomerRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base as Base;
 
-#[ORM\Entity(repositoryClass: 'App\Repository\CustomerRepository')]
+#[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[ORM\Table(name: 'customers')]
 class Customer extends Base
 {

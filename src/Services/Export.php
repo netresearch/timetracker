@@ -47,7 +47,7 @@ class Export
      *
      * @param ContainerInterface $container
      */
-    public function __construct(protected ?ContainerInterface $container = null, private ConnectionRegistry $connectionRegistry, private RouterInterface $router)
+    public function __construct(protected ?ContainerInterface $container = null, private readonly ConnectionRegistry $connectionRegistry, private readonly RouterInterface $router)
     {
     }
 

@@ -127,7 +127,7 @@ class DefaultController extends BaseController
 
                     foreach ($client->getTeams() as $teamname) {
                         /** @var Team $team */
-                        $team = $teamRepo->findOneBy([
+                        $team = $this->repository->findOneBy([
                             'name' => $teamname
                         ]);
 

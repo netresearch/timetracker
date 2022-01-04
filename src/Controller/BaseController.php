@@ -14,6 +14,7 @@
 
 namespace App\Controller;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use App\Entity\User;
 use App\Helper\LocalizationHelper as LocalizationHelper;
 use App\Helper\LoginHelper;
@@ -86,7 +87,7 @@ class BaseController extends AbstractController
      *
      *
      */
-    protected function login(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    protected function login(Request $request): Response|RedirectResponse
     {
         if (!$request->isXmlHttpRequest()) {
             return $this->redirect($this->generateUrl('_login'));
@@ -217,7 +218,7 @@ class BaseController extends AbstractController
      * @param bool    $setCookie set a cookie or not
      *
      */
-    protected function setLoggedIn(Request $request, $user, $setCookie = true): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    protected function setLoggedIn(Request $request, $user, $setCookie = true): Response|RedirectResponse
     {
         $session = $request->getSession();
 

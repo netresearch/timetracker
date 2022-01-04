@@ -29,7 +29,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // run them, one by one
 
     // PHP
-    //$containerConfigurator->import(LevelSetList::UP_TO_PHP_81);
+    $containerConfigurator->import(LevelSetList::UP_TO_PHP_81);
 
     // Symfony
     //$containerConfigurator->import(SymfonySetList::SYMFONY_50_TYPES);
@@ -38,7 +38,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     //$containerConfigurator->import(SymfonySetList::SYMFONY_STRICT);
 
-    $containerConfigurator->import(SymfonyLevelSetList::UP_TO_SYMFONY_54);
+    //$containerConfigurator->import(SymfonyLevelSetList::UP_TO_SYMFONY_54);
 
     //$containerConfigurator->import(SymfonySetList::SYMFONY_CODE_QUALITY);
     //$containerConfigurator->import(SymfonySetList::SYMFONY_CONSTRUCTOR_INJECTION);
@@ -53,7 +53,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_211);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_30);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_GEDMO_TO_KNPLABS);
-    //FAILS: $containerConfigurator->import(DoctrineSetList::DOCTRINE_REPOSITORY_AS_SERVICE);
+    //$containerConfigurator->import(DoctrineSetList::DOCTRINE_REPOSITORY_AS_SERVICE);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ORM_29);
     //$containerConfigurator->import(DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ODM_23);

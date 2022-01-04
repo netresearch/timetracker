@@ -2,12 +2,13 @@
 
 namespace App\Entity;
 
+use App\Repository\ActivityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
-#[ORM\Entity(repositoryClass: 'App\Repository\ActivityRepository')]
+#[ORM\Entity(repositoryClass: ActivityRepository::class)]
 #[ORM\Table(name: 'activities')]
 class Activity
 {

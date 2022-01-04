@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\HolidayRepository;
 use Doctrine\DBAL\Types\Types;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
@@ -10,7 +11,7 @@ use App\Model\Base as Base;
 /**
  * App\Entity\Holiday
  */
-#[ORM\Entity(repositoryClass: 'App\Repository\HolidayRepository')]
+#[ORM\Entity(repositoryClass: HolidayRepository::class)]
 #[ORM\Table(name: 'holidays')]
 class Holiday extends Base
 {

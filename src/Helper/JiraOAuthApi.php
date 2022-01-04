@@ -50,8 +50,6 @@ class JiraOAuthApi
 
     /**
      * JiraOAuthApi constructor.
-     *
-     * @param \Doctrine\Persistence\ManagerRegistry $doctrine
      */
     public function __construct(protected User $user, protected TicketSystem $ticketSystem, protected \Doctrine\Persistence\ManagerRegistry $doctrine, Router $router)
     {

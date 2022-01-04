@@ -2,11 +2,12 @@
 
 namespace App\Entity;
 
+use App\Repository\PresetRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 
-#[ORM\Entity(repositoryClass: 'App\Repository\PresetRepository')]
+#[ORM\Entity(repositoryClass: PresetRepository::class)]
 #[ORM\Table(name: 'presets')]
 class Preset extends Base
 {

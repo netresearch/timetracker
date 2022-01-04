@@ -1,13 +1,14 @@
 <?php
 namespace App\Entity;
 
+use App\Repository\EntryRepository;
 use Doctrine\DBAL\Types\Types;
 use Exception;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 use DateTime as DateTime;
 
-#[ORM\Entity(repositoryClass: 'App\Repository\EntryRepository')]
+#[ORM\Entity(repositoryClass: EntryRepository::class)]
 #[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
