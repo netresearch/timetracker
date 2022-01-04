@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CrudController extends BaseController
 {
-    const LOG_FILE = 'trackingsave.log';
+    public const LOG_FILE = 'trackingsave.log';
 
     public function deleteAction(Request $request)
     {
@@ -122,7 +122,7 @@ class CrudController extends BaseController
         $entries = $doctrine->getRepository('App:Entry')
             ->findByDay((int) $userId, $day);
 
-        if (!count($entries)) {
+        if (!(is_countable($entries) ? count($entries) : 0)) {
             return;
         }
 
@@ -137,7 +137,7 @@ class CrudController extends BaseController
             $manager->flush();
         }
 
-        for ($c = 1; $c < count($entries); $c++) {
+        for ($c = 1; $c < (is_countable($entries) ? count($entries) : 0); $c++) {
             $entry = $entries[$c];
             $previous = $entries[$c-1];
 
@@ -729,7 +729,7 @@ class CrudController extends BaseController
         );
 
         //issue already exists in internal jira
-        if (count($searchResult->issues)) {
+        if (is_countable($searchResult->issues) ? count($searchResult->issues) : 0) {
             $issue = reset($searchResult->issues);
         } else {
             //issue does not exists, create it.

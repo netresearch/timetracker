@@ -13,11 +13,11 @@ class TimeHelper
     /**
      *
      */
-    const DAYS_PER_WEEK = 5;
+    public const DAYS_PER_WEEK = 5;
     /**
      *
      */
-    const HOURS_PER_DAY = 8;
+    public const HOURS_PER_DAY = 8;
 
     /**
      * @param $letter
@@ -45,7 +45,7 @@ class TimeHelper
         }
 
         $sum = 0;
-        $c = count($matches[0]);
+        $c = is_countable($matches[0]) ? count($matches[0]) : 0;
         for ($i = 0; $i < $c; $i++) {
             $sum += (float) str_replace(',','.',$matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]);
         }

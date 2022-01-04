@@ -124,7 +124,7 @@ class AdminController extends BaseController
         $ticketSystems = $repo->getAllTicketSystems();
 
         if (false === $this->isPl($request)) {
-            $c = count($ticketSystems);
+            $c = is_countable($ticketSystems) ? count($ticketSystems) : 0;
             for ($i = 0; $i < $c; $i++) {
                 unset($ticketSystems[$i]['ticketSystem']['login']);
                 unset($ticketSystems[$i]['ticketSystem']['password']);

@@ -12,10 +12,10 @@ use DateTime as DateTime;
  */
 class Entry extends Base
 {
-    const CLASS_PLAIN       = 1;
-    const CLASS_DAYBREAK    = 2;
-    const CLASS_PAUSE       = 4;
-    const CLASS_OVERLAP     = 8;
+    public const CLASS_PLAIN       = 1;
+    public const CLASS_DAYBREAK    = 2;
+    public const CLASS_PAUSE       = 4;
+    public const CLASS_OVERLAP     = 8;
 
 
     /**
@@ -385,7 +385,7 @@ class Entry extends Base
     {
         if (!$start instanceof DateTime) {
             $start = new DateTime($start);
-            list($year, $month, $day) = explode('-', $this->getDay()->format('Y-m-d'));
+            [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $start->setDate($year, $month, $day);
         }
 
@@ -414,7 +414,7 @@ class Entry extends Base
     {
         if (!$end instanceof DateTime) {
             $end = new DateTime($end);
-            list($year, $month, $day) = explode('-', $this->getDay()->format('Y-m-d'));
+            [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $end->setDate($year, $month, $day);
         }
 

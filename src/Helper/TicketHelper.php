@@ -13,7 +13,7 @@ class TicketHelper
     /**
      *
      */
-    const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
+    public const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
 
     /**
      * @param $ticket

@@ -13,8 +13,8 @@ use App\Model\Base as Base;
  */
 class TicketSystem extends Base
 {
-    const TYPE_JIRA = 'JIRA';
-    const TYPE_OTRS = 'OTRS';
+    public const TYPE_JIRA = 'JIRA';
+    public const TYPE_OTRS = 'OTRS';
 
     /**
      * @var integer $id

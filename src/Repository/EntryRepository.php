@@ -33,9 +33,9 @@ use Doctrine\ORM\EntityRepository;
  */
 class EntryRepository extends EntityRepository
 {
-    const PERIOD_DAY   = 1;
-    const PERIOD_WEEK  = 2;
-    const PERIOD_MONTH = 3;
+    public const PERIOD_DAY   = 1;
+    public const PERIOD_WEEK  = 2;
+    public const PERIOD_MONTH = 3;
 
     /**
      * Returns count of calendar days which include given amount of working days.

@@ -7,7 +7,7 @@ namespace App\Helper;
  */
 class LoginHelper
 {
-    const COOKIE_NAME   = 'nr_timetracker';
+    public const COOKIE_NAME   = 'nr_timetracker';
 
 
     public static function setCookie($userId, $userName)

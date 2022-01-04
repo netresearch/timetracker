@@ -13,10 +13,10 @@ use App\Model\Base as Base;
 class Project extends Base
 {
 
-    const BILLING_NONE  = 0;
-    const BILLING_TM    = 1;
-    const BILLING_FP    = 2;
-    const BILLING_MIXED = 3;
+    public const BILLING_NONE  = 0;
+    public const BILLING_TM    = 1;
+    public const BILLING_FP    = 2;
+    public const BILLING_MIXED = 3;
 
     /**
      * @ORM\Id
