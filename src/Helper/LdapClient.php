@@ -307,11 +307,11 @@ class LdapClient
     }
 
     /**
-     * @param array $ldapRespsonse
+     * @param array $ldapResponse
      */
-    protected function setTeamsByLdapResponse($ldapRespsonse)
+    protected function setTeamsByLdapResponse($ldapResponse)
     {
-        $dn = $ldapRespsonse['dn'];
+        $dn = $ldapResponse['dn'];
         $mappingFile = __DIR__ . '/../../../../app/config/ldap_ou_team_mapping.yml';
 
         $this->teams = [];
