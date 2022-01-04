@@ -14,12 +14,12 @@ class LoginHelper
     {
         setcookie(self::COOKIE_NAME,
             $userId . ':' . md5($userName),
-            time() + (14*24*60*60));
+            ['expires' => time() + (14*24*60*60)]);
     }
 
     public static function deleteCookie()
     {
-        setcookie(self::COOKIE_NAME, '', time() - 7200);
+        setcookie(self::COOKIE_NAME, '', ['expires' => time() - 7200]);
     }
 
     private static function getCookieData()

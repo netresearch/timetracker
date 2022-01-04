@@ -30,7 +30,7 @@ class StatusController extends BaseController
         $userId = $request->getSession()->get('loginId');
 
         $status = $this->getStatus($userId);
-        return new Response(json_encode($status));
+        return new Response(json_encode($status, JSON_THROW_ON_ERROR));
     }
 
     public function pageAction(Request $request)

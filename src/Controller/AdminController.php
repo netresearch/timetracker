@@ -41,7 +41,7 @@ class AdminController extends BaseController
             $data[] = ['project' => $project->toArray()];
         }
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -57,7 +57,7 @@ class AdminController extends BaseController
         /* @var $repo \App\Repository\CustomerRepository */
         $repo = $this->getDoctrine()->getRepository('App:Customer');
 
-        return new Response(json_encode($repo->getAllCustomers()));
+        return new Response(json_encode($repo->getAllCustomers(), JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -73,7 +73,7 @@ class AdminController extends BaseController
         /* @var $repo \App\Repository\UserRepository */
         $repo = $this->getDoctrine()->getRepository('App:User');
 
-        return new Response(json_encode($repo->getAllUsers()));
+        return new Response(json_encode($repo->getAllUsers(), JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -89,7 +89,7 @@ class AdminController extends BaseController
         /* @var $repo \App\Repository\TeamRepository */
         $repo = $this->getDoctrine()->getRepository('App:Team');
 
-        return new Response(json_encode($repo->findAll()));
+        return new Response(json_encode($repo->findAll(), JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -105,7 +105,7 @@ class AdminController extends BaseController
         /* @var $repo \App\Repository\PresetRepository */
         $repo = $this->getDoctrine()->getRepository('App:Preset');
 
-        return new Response(json_encode($repo->getAllPresets()));
+        return new Response(json_encode($repo->getAllPresets(), JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -135,7 +135,7 @@ class AdminController extends BaseController
             }
         }
 
-        return new Response(json_encode($ticketSystems));
+        return new Response(json_encode($ticketSystems, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -255,7 +255,7 @@ class AdminController extends BaseController
 
         $data = array($project->getId(), $name, $project->getCustomer()->getId(), $jiraId);
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -358,7 +358,7 @@ class AdminController extends BaseController
 
         $data = array($customer->getId(), $name, $active, $global, $teamIds);
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -481,7 +481,7 @@ class AdminController extends BaseController
         $em->flush();
 
         $data = array($user->getId(), $name, $abbr, $type);
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -601,7 +601,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($preset->toArray()));
+        return new Response(json_encode($preset->toArray(), JSON_THROW_ON_ERROR));
     }
 
 
@@ -674,7 +674,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($ticketSystem->toArray()));
+        return new Response(json_encode($ticketSystem->toArray(), JSON_THROW_ON_ERROR));
     }
 
 
@@ -763,7 +763,7 @@ class AdminController extends BaseController
 
         $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
 
@@ -860,7 +860,7 @@ class AdminController extends BaseController
 
         $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
 
@@ -937,7 +937,7 @@ class AdminController extends BaseController
             }
         }
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
 
@@ -954,7 +954,7 @@ class AdminController extends BaseController
         /* @var $repo \App\Repository\ContractRepository */
         $repo = $this->getDoctrine()->getRepository('App:Contract');
 
-        return new Response(json_encode($repo->getContracts()));
+        return new Response(json_encode($repo->getContracts(), JSON_THROW_ON_ERROR));
     }
 
 
@@ -1043,7 +1043,7 @@ class AdminController extends BaseController
         $em->flush();
 
         $data = array($contract->getId());
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
 

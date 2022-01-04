@@ -547,7 +547,7 @@ class JiraOAuthApi
                 'headers' => [
                     'Content-Type' => 'application/json',
                 ],
-                'body'    => json_encode($data),
+                'body'    => json_encode($data, JSON_THROW_ON_ERROR),
             ];
         }
 
@@ -568,7 +568,7 @@ class JiraOAuthApi
             }
         }
 
-        return json_decode($response->getBody());
+        return json_decode($response->getBody(), null, 512, JSON_THROW_ON_ERROR);
     }
 
     /**

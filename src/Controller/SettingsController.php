@@ -34,12 +34,12 @@ class SettingsController extends AbstractController
                     'settings' => $user->getSettings(),
                     'locale' => $user->getLocale(),
                     'message' => $this->get('translator')->trans('The configuration has been successfully saved.')
-                )));
+                ), JSON_THROW_ON_ERROR));
         }
 
         $response = new Response(json_encode(array('success' => false,
                 'message' => $this->get('translator')->trans('The configuration could not be saved.')
-            )));
+            ), JSON_THROW_ON_ERROR));
 
         $response->setStatusCode(503);
         return $response;

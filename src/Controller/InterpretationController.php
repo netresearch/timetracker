@@ -41,7 +41,7 @@ class InterpretationController extends BaseController
             $flatEntry['quota'] = TimeHelper::formatQuota($flatEntry['duration'], $sum);
             $entryList[] = array('entry' => $flatEntry);
         }
-        return new Response(json_encode($entryList));
+        return new Response(json_encode($entryList, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -127,7 +127,7 @@ class InterpretationController extends BaseController
             $customer['quota'] = TimeHelper::formatQuota($customer['hours'], $sum);
 
         usort($customers, array($this, 'sortByName'));
-        return new Response(json_encode($this->normalizeData($customers)));
+        return new Response(json_encode($this->normalizeData($customers), JSON_THROW_ON_ERROR));
     }
 
     public function groupByProjectAction(Request $request)
@@ -167,7 +167,7 @@ class InterpretationController extends BaseController
             $project['quota'] = TimeHelper::formatQuota($project['hours'], $sum);
 
         usort($projects, array($this, 'sortByName'));
-        return new Response(json_encode($this->normalizeData($projects)));
+        return new Response(json_encode($this->normalizeData($projects), JSON_THROW_ON_ERROR));
     }
 
 
@@ -208,7 +208,7 @@ class InterpretationController extends BaseController
             $ticket['quota'] = TimeHelper::formatQuota($ticket['hours'], $sum);
 
         usort($tickets, array($this, 'sortByName'));
-        return new Response(json_encode($this->normalizeData($tickets)));
+        return new Response(json_encode($this->normalizeData($tickets), JSON_THROW_ON_ERROR));
     }
 
 
@@ -257,7 +257,7 @@ class InterpretationController extends BaseController
         }
 
         usort($users, array($this, 'sortByName'));
-        return new Response(json_encode($this->normalizeData($users)));
+        return new Response(json_encode($this->normalizeData($users), JSON_THROW_ON_ERROR));
     }
 
 
@@ -304,7 +304,7 @@ class InterpretationController extends BaseController
         }
 
         usort($times, array($this, 'sortByName'));
-        return new Response(json_encode($this->normalizeData(array_reverse($times))));
+        return new Response(json_encode($this->normalizeData(array_reverse($times)), JSON_THROW_ON_ERROR));
     }
 
     public function groupByActivityAction(Request $request)
@@ -342,7 +342,7 @@ class InterpretationController extends BaseController
             $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $sum);
 
         usort($activities, array($this, 'sortByName'));
-        return new Response(json_encode($this->normalizeData($activities)));
+        return new Response(json_encode($this->normalizeData($activities), JSON_THROW_ON_ERROR));
     }
 
 

@@ -86,7 +86,7 @@ class NrArrayTranslator
     public function filterArray($string, $arrayKey, $languageFile = 'messages',
         array $keys = array('name')
     ) {
-        $data = json_decode($string, true);
+        $data = json_decode($string, true, 512, JSON_THROW_ON_ERROR);
         unset($string);
 
         foreach ($data as $rowKey => $row) {
@@ -106,6 +106,6 @@ class NrArrayTranslator
             }
         }
 
-        return json_encode($data);
+        return json_encode($data, JSON_THROW_ON_ERROR);
     }
 }

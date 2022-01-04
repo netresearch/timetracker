@@ -194,7 +194,7 @@ class DefaultController extends BaseController
             'month' => $month,
         );
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -268,7 +268,7 @@ class DefaultController extends BaseController
                     $data['project']['estimation']);
         }
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
 
@@ -297,7 +297,7 @@ class DefaultController extends BaseController
         //$days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 3;
         $data = $this->getDoctrine()->getRepository('App:Entry')->getEntriesByUser($userId, $days, $user->getShowFuture());
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -315,7 +315,7 @@ class DefaultController extends BaseController
         $userId = (int) $this->getUserId($request);
         $data = $this->getDoctrine()->getRepository('App:Customer')->getCustomersByUser($userId);
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -333,7 +333,7 @@ class DefaultController extends BaseController
             $data = $this->getDoctrine()->getRepository('App:User')->getUsers($this->getUserId($request));
         }
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -348,7 +348,7 @@ class DefaultController extends BaseController
                 ->getRepository('App:Project')
                 ->find($request->get('project'));
 
-            return new Response(json_encode(array('customer' => $project->getCustomer()->getId())));
+            return new Response(json_encode(array('customer' => $project->getCustomer()->getId()), JSON_THROW_ON_ERROR));
         }
 
         return new Response(json_encode(array('customer' => 0)));
@@ -367,7 +367,7 @@ class DefaultController extends BaseController
 
         $data = $this->getDoctrine()->getRepository('App:Project')->getProjectsByUser($userId, $customerId);
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -391,7 +391,7 @@ class DefaultController extends BaseController
             $data[] = ['project' => $project->toArray()];
         }
 
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -401,7 +401,7 @@ class DefaultController extends BaseController
     public function getActivitiesAction()
     {
         $data = $this->getDoctrine()->getRepository('App:Activity')->getActivities();
-        return new Response(json_encode($data));
+        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -413,7 +413,7 @@ class DefaultController extends BaseController
         $holidays = $this->getDoctrine()
             ->getRepository('App:Holiday')
             ->findByMonth(date("Y"), date("m"));
-        return new Response(json_encode($holidays));
+        return new Response(json_encode($holidays, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -545,7 +545,7 @@ class DefaultController extends BaseController
         );
 
         return new Response(
-            json_encode($time),
+            json_encode($time, JSON_THROW_ON_ERROR),
             200,
             ['Content-type' => 'application/json']
         );

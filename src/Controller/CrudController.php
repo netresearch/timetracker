@@ -56,7 +56,7 @@ class CrudController extends BaseController
             $this->calculateClasses($this->getUserId($request), $day);
         }
 
-        return new Response(json_encode(array('success' => true, 'alert' => $alert)));
+        return new Response(json_encode(array('success' => true, 'alert' => $alert), JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -321,7 +321,7 @@ class CrudController extends BaseController
                 'alert'  => $alert
             );
 
-            return new Response(json_encode($response));
+            return new Response(json_encode($response, JSON_THROW_ON_ERROR));
         } catch (\Exception $e) {
             return new Error($this->get('translator')->trans($e->getMessage()), 406);
         } catch (\Throwable $exception) {
@@ -587,7 +587,7 @@ class CrudController extends BaseController
             '[%s][%s]: %s %s',
             date('d.m.Y H:i:s'),
             ($raw ? 'raw' : 'obj'),
-            json_encode($data),
+            json_encode($data, JSON_THROW_ON_ERROR),
             PHP_EOL
         );
 
