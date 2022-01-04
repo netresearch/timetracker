@@ -22,11 +22,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // );
     // endregion
 
-    $containerConfigurator->import(SetList::PHP_80);
+    //$containerConfigurator->import(SetList::PHP_81);
 
-    //$containerConfigurator->import(SymfonySetList::SYMFONY_28);
-    // take it 1 set at a time to so next set works with output of the previous set; I do 1 set per pull-request
-    // $containerConfigurator->import(SymfonySetList::SYMFONY_30);
+    $containerConfigurator->import(SymfonySetList::SYMFONY_30);
     // $containerConfigurator->import(SymfonySetList::SYMFONY_31);
     // $containerConfigurator->import(SymfonySetList::SYMFONY_32);
     // $containerConfigurator->import(SymfonySetList::SYMFONY_33);

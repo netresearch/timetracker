@@ -42,7 +42,7 @@ class NrArrayTranslator
     /**
      * constructor
      *
-     * @param Translator $translator symfony translator
+     * @param \Symfony\Component\Translation\TranslatorBagInterface $translator symfony translator
      */
     public function __construct($translator)
     {
