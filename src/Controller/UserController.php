@@ -9,29 +9,29 @@ use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends AbstractController
 {
-	public function addAction(Request $request)
+    public function addAction(Request $request)
     {
-		$username = $request->request->get('username');
+        $username = $request->request->get('username');
 
-		if (empty($username)) {
-			return new Response(json_encode(array('success' => false)));
-		}
+        if (empty($username)) {
+            return new Response(json_encode(array('success' => false)));
+        }
 
-		// enforce ldap-style login names
-		$username = str_replace(
+        // enforce ldap-style login names
+        $username = str_replace(
             [' ','ä','ö','ü','ß','é'],
             ['.','ae','oe','ue','ss','e'],
             strtolower($username)
         );
 
-		$user = new User();
-		$user->setUsername($username);
-		$user->setType('DEV');
+        $user = new User();
+        $user->setUsername($username);
+        $user->setType('DEV');
 
-		$em = $this->getDoctrine()->getManager();
-		$em->persist($user);
-		$em->flush();
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($user);
+        $em->flush();
 
-		return new Response(json_encode(array('success' => true)));
-	}
+        return new Response(json_encode(array('success' => true)));
+    }
 }

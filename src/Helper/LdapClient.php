@@ -17,7 +17,7 @@ class LdapClient
     /**
      * @var string LDAP host name or IP.
      */
-	protected $_host = '192.168.1.4';
+    protected $_host = '192.168.1.4';
 
     /**
      * @var integer LDAP host port.
@@ -37,12 +37,12 @@ class LdapClient
     /**
      * @var string LDAP base DN.
      */
-	protected $_baseDn = 'dc=netresearch,dc=nr';
+    protected $_baseDn = 'dc=netresearch,dc=nr';
 
     /**
      * @var string Accountname-Field in LDAP.
      */
-	protected $_userNameField = 'sAMAccountName';
+    protected $_userNameField = 'sAMAccountName';
 
     /**
      * @var string LDAP user auth name.
@@ -65,8 +65,8 @@ class LdapClient
     protected $teams = [];
 
     public function __construct(protected LoggerInterface $logger)
-				{
-				}
+    {
+    }
 
     /**
      * @return string[] LDAP options
@@ -119,12 +119,12 @@ class LdapClient
 
 
     /**
-				 * Verify password by logging in to ldap using the user's name and password.
-				 *
-				 * @throws \Exception
-				 * @return boolean true
-				 */
-				protected function verifyPassword(array $ldapEntry)
+     * Verify password by logging in to ldap using the user's name and password.
+     *
+     * @throws \Exception
+     * @return boolean true
+     */
+    protected function verifyPassword(array $ldapEntry)
     {
         $ldapOptions = $this->getLdapOptions();
         $ldapOptions['username'] = $ldapEntry['dn'];

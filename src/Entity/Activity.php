@@ -14,8 +14,8 @@ class Activity
 {
     public final const SICK    = 'Krank';
     public final const HOLIDAY = 'Urlaub';
-	
-	/**
+    
+    /**
      * @ORM\Id
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
@@ -44,7 +44,7 @@ class Activity
 
     public function __construct()
     {
-    	$this->entries = new ArrayCollection();
+        $this->entries = new ArrayCollection();
     }
 
 
@@ -80,8 +80,8 @@ class Activity
     public function setName($name)
     {
         $this->name = $name;
-		return $this;
-	}
+        return $this;
+    }
 
     /**
      * Get name
@@ -103,7 +103,7 @@ class Activity
     public function setNeedsTickets($needsTicket)
     {
         $this->needsTicket = $needsTicket;
-		return $this;
+        return $this;
     }
 
     /**
@@ -114,7 +114,7 @@ class Activity
     public function getNeedsTicket()
     {
         return $this->needsTicket;
-	}
+    }
 
 
     /**
@@ -125,7 +125,7 @@ class Activity
     public function getFactor()
     {
         return $this->factor;
-	}
+    }
 
 
     /**
@@ -138,19 +138,19 @@ class Activity
     public function setFactor($factor)
     {
         $this->factor = $factor;
-		return $this;
+        return $this;
     }
 
     /**
-				 * Add entries
-				 *
-				 *
-				 * @return $this
-				 */
-				public function addEntries(Entry $entries)
+     * Add entries
+     *
+     *
+     * @return $this
+     */
+    public function addEntries(Entry $entries)
     {
-		$this->entries[] = $entries;
-		return $this;
+        $this->entries[] = $entries;
+        return $this;
     }
 
     /**
@@ -177,11 +177,11 @@ class Activity
     }
 
     /**
-				 * Add entries
-				 *
-				 * @return Activity
-				 */
-				public function addEntrie(Entry $entries)
+     * Add entries
+     *
+     * @return Activity
+     */
+    public function addEntrie(Entry $entries)
     {
         $this->entries[] = $entries;
 
@@ -189,9 +189,9 @@ class Activity
     }
 
     /**
-				 * Remove entries
-				 */
-				public function removeEntrie(Entry $entries)
+     * Remove entries
+     */
+    public function removeEntrie(Entry $entries)
     {
         $this->entries->removeElement($entries);
     }
