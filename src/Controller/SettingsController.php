@@ -41,7 +41,7 @@ class SettingsController extends AbstractController
                 'message' => $this->get('translator')->trans('The configuration could not be saved.')
             ), JSON_THROW_ON_ERROR));
 
-        $response->setStatusCode(503);
+        $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_SERVICE_UNAVAILABLE);
         return $response;
 
     }

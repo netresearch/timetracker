@@ -29,7 +29,7 @@ class InterpretationController extends BaseController
             $entries = $this->getEntries($request, 50);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -99,7 +99,7 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -139,7 +139,7 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -180,7 +180,7 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -229,7 +229,7 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -274,7 +274,7 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -314,7 +314,7 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 

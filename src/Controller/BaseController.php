@@ -177,7 +177,7 @@ class BaseController extends AbstractController
     {
         $message = $this->translate('You need to login.');
         $response = new Response($message);
-        $response->setStatusCode(401);
+        $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
         return $response;
     }
 
@@ -190,7 +190,7 @@ class BaseController extends AbstractController
     {
         $message = $this->translate('You are not allowed to perform this action.');
         $response = new Response($message);
-        $response->setStatusCode(403);
+        $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
         return $response;
 
     }

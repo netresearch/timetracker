@@ -25,15 +25,15 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     //$containerConfigurator->import(LevelSetList::UP_TO_PHP_81);
 
-    $containerConfigurator->import(SymfonySetList::SYMFONY_50_TYPES);
-    $containerConfigurator->import(SymfonySetList::SYMFONY_52);
+    //$containerConfigurator->import(SymfonySetList::SYMFONY_50_TYPES);
+    //$containerConfigurator->import(SymfonySetList::SYMFONY_52_VALIDATOR_ATTRIBUTES);
+    //$containerConfigurator->import(SymfonySetList::SYMFONY_54);
 
     //$containerConfigurator->import(SymfonySetList::SYMFONY_STRICT);
-    //$containerConfigurator->import(SymfonySetList::SYMFONY_52_VALIDATOR_ATTRIBUTES);
 
-    //$containerConfigurator->import(SymfonyLevelSetList::UP_TO_SYMFONY_54);
+    //$containerConfigurator->import(SymfonyLevelSetList::UP_TO_SYMFONY_60);
 
-    // $containerConfigurator->import(SymfonySetList::SYMFONY_CODE_QUALITY);
+    $containerConfigurator->import(SymfonySetList::SYMFONY_CODE_QUALITY);
     // $containerConfigurator->import(SymfonySetList::SYMFONY_CONSTRUCTOR_INJECTION);
     // $containerConfigurator->import(SymfonySetList::ANNOTATIONS_TO_ATTRIBUTES);
 };

@@ -189,7 +189,7 @@ class AdminController extends BaseController
 
             if (!$customer) {
                 $response = new Response($this->translate('Please choose a customer.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
 
@@ -198,7 +198,7 @@ class AdminController extends BaseController
 
         if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid project name with at least 3 letters.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -208,7 +208,7 @@ class AdminController extends BaseController
         if ($sameNamedProject) {
             if ($project->getId() != $sameNamedProject->getId()) {
                 $response = new Response($this->translate('The project name provided already exists.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
@@ -222,7 +222,7 @@ class AdminController extends BaseController
 
         if (strlen($jiraId) && false == $projectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -305,14 +305,14 @@ class AdminController extends BaseController
 
         if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid customer name with at least 3 letters.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if ($sameNamedCustomer = $customerRepository->findOneByName($name)) {
             if ($customer->getId() != $sameNamedCustomer->getId()) {
                 $response = new Response($this->translate('The customer name provided already exists.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
@@ -329,14 +329,14 @@ class AdminController extends BaseController
                 $customer->addTeam($team);
             } else {
                 $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
 
         if (0 == $customer->getTeams()->count() && false == $global) {
             $response = new Response($this->translate('Every customer must belong to at least one team if it is not global.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -404,20 +404,20 @@ class AdminController extends BaseController
 
         if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid user name with at least 3 letters.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if (strlen($abbr) < 3) {
             $response = new Response($this->translate('Please provide a valid user name abbreviation with at least 3 letters.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if ($sameNamedUser = $userRepository->findOneByUsername($name)) {
             if ($user->getId() != $sameNamedUser->getId()) {
                 $response = new Response($this->translate('The user name provided already exists.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
@@ -425,7 +425,7 @@ class AdminController extends BaseController
         if ($sameAbbrUser = $userRepository->findOneByAbbr($abbr)) {
             if ($user->getId() != $sameAbbrUser->getId()) {
                 $response = new Response($this->translate('The user name abreviation provided already exists.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
@@ -448,14 +448,14 @@ class AdminController extends BaseController
                 $user->addTeam($team);
             } else {
                 $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
 
         if (0 == $user->getTeams()->count()) {
             $response = new Response($this->translate('Every user must belong to at least one team'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -547,7 +547,7 @@ class AdminController extends BaseController
 
         if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -571,7 +571,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception) {
             $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
-            $response->setStatusCode(403);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
 
@@ -612,14 +612,14 @@ class AdminController extends BaseController
 
         if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid ticket system name with at least 3 letters.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if ($sameNamedSystem = $repository->findOneByName($name)) {
             if ($ticketSystem->getId() != $sameNamedSystem->getId()) {
                 $response = new Response($this->translate('The ticket system name provided already exists.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
@@ -643,7 +643,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
-            $response->setStatusCode(403);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
 
@@ -709,7 +709,7 @@ class AdminController extends BaseController
         if ($sameNamedActivity = $repository->findOneByName($name)) {
             if ($activity->getId() != $sameNamedActivity->getId()) {
                 $response = new Response($this->translate('The activity name provided already exists.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
@@ -725,7 +725,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
-            $response->setStatusCode(403);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
 
@@ -796,14 +796,14 @@ class AdminController extends BaseController
         if ($sameNamedTeam = $repository->findOneByName($name)) {
             if ($team->getId() != $sameNamedTeam->getId()) {
                 $response = new Response($this->translate('The team name provided already exists.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
 
         if (is_null($teamLead)) {
             $response = new Response($this->translate('Please provide a valid user as team leader.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
@@ -817,7 +817,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
-            $response->setStatusCode(403);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
 
@@ -954,14 +954,14 @@ class AdminController extends BaseController
 
         if (!$user) {
             $response = new Response($this->translate('Please enter a valid user.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         $dateStart = \DateTime::createFromFormat('Y-m-d', $start);
         if (!$dateStart) {
             $response = new Response($this->translate('Please enter a valid contract start.'));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
         $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), 1);
@@ -976,7 +976,7 @@ class AdminController extends BaseController
 
             if ($dateEnd < $dateStart) {
                 $response = new Response($this->translate('End date has to be greater than the start date.'));
-                $response->setStatusCode(406);
+                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         } else {

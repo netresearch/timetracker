@@ -470,12 +470,12 @@ class CrudController extends BaseController
             } while ($date <= $endDate);
 
             $response = new Response($this->get('translator')->trans('All entries have been saved.'));
-            $response->setStatusCode(200);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_OK);
             return $response;
 
         } catch (\Exception $e) {
             $response = new Response($this->get('translator')->trans($e->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
     }
