@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 
@@ -13,7 +15,7 @@ use App\Model\Base as Base;
 class Holiday extends Base
 {
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATE_MUTABLE)]
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
     private $day;
     public function __construct($day, private $name)
     {
@@ -28,8 +30,8 @@ class Holiday extends Base
      */
     public function setDay($day)
     {
-        if (!$day instanceof \DateTime) {
-            $day = new \DateTime($day);
+        if (!$day instanceof DateTime) {
+            $day = new DateTime($day);
         }
 
         $this->day = $day;
@@ -38,7 +40,7 @@ class Holiday extends Base
     /**
      * Get day
      *
-     * @return \DateTime
+     * @return DateTime
      */
     public function getDay()
     {

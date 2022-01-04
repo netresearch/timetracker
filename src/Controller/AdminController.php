@@ -2,6 +2,10 @@
 
 namespace App\Controller;
 
+use ReflectionException;
+use Exception;
+use DateTime;
+use DateInterval;
 use App\Repository\UserRepository;
 use App\Model\Response;
 use App\Entity\Contract;
@@ -25,7 +29,7 @@ class AdminController extends BaseController
 {
     /**
      * @return Response
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function getAllProjectsAction(Request $request)
     {
@@ -105,7 +109,7 @@ class AdminController extends BaseController
 
     /**
      * @return Response
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function getTicketSystemsAction(Request $request)
     {
@@ -251,7 +255,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function deleteProjectAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deleteProjectAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -267,7 +271,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($project);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -349,7 +353,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function deleteCustomerAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deleteCustomerAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -365,7 +369,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($customer);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -467,7 +471,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function deleteUserAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deleteUserAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -483,7 +487,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($user);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -495,7 +499,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
-    public function deletePresetAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deletePresetAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -511,7 +515,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($preset);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -569,7 +573,7 @@ class AdminController extends BaseController
             $em = $this->getDoctrine()->getManager();
             $em->persist($preset);
             $em->flush();
-        } catch (\Exception) {
+        } catch (Exception) {
             $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
@@ -581,7 +585,7 @@ class AdminController extends BaseController
 
     /**
      * @return Response
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function saveTicketSystemAction(Request $request)
     {
@@ -641,7 +645,7 @@ class AdminController extends BaseController
             $em = $this->getDoctrine()->getManager();
             $em->persist($ticketSystem);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
@@ -651,7 +655,7 @@ class AdminController extends BaseController
     }
 
 
-    public function deleteTicketSystemAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deleteTicketSystemAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -667,7 +671,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($ticketSystem);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -723,7 +727,7 @@ class AdminController extends BaseController
             $em = $this->getDoctrine()->getManager();
             $em->persist($activity);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
@@ -735,7 +739,7 @@ class AdminController extends BaseController
     }
 
 
-    public function deleteActivityAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deleteActivityAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -751,7 +755,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($activity);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -815,7 +819,7 @@ class AdminController extends BaseController
             $em = $this->getDoctrine()->getManager();
             $em->persist($team);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
@@ -827,7 +831,7 @@ class AdminController extends BaseController
     }
 
 
-    public function deleteTeamAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deleteTeamAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -843,7 +847,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($team);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -889,7 +893,7 @@ class AdminController extends BaseController
                     $jiraOauthApi = new JiraOAuthApi($user, $ticketSystem, $doctrine, $this->container->get('router'));
                     $jiraOauthApi->updateAllEntriesJiraWorkLogs();
                     $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'success';
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'error (' . $e->getMessage() . ')';
                 }
             }
@@ -917,7 +921,7 @@ class AdminController extends BaseController
 
     /**
      * @return Response
-     * @throws \Exception
+     * @throws Exception
      */
     public function saveContractAction(Request $request)
     {
@@ -958,7 +962,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $dateStart = \DateTime::createFromFormat('Y-m-d', $start);
+        $dateStart = DateTime::createFromFormat('Y-m-d', $start);
         if (!$dateStart) {
             $response = new Response($this->translate('Please enter a valid contract start.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -967,11 +971,11 @@ class AdminController extends BaseController
         $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), 1);
         $dateStart->setTime(0, 0, 0);
 
-        $dateEnd = \DateTime::createFromFormat('Y-m-d', $end);
+        $dateEnd = DateTime::createFromFormat('Y-m-d', $end);
         if ($dateEnd) {
             $dateEnd->setDate($dateEnd->format('Y'), $dateEnd->format('m'), 1);
-            $dateEnd->add(new \DateInterval('P1M'));
-            $dateEnd->sub(new \DateInterval('P1D'));
+            $dateEnd->add(new DateInterval('P1M'));
+            $dateEnd->sub(new DateInterval('P1D'));
             $dateEnd->setTime(23, 59, 59);
 
             if ($dateEnd < $dateStart) {
@@ -1003,7 +1007,7 @@ class AdminController extends BaseController
     }
 
 
-    public function deleteContractAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function deleteContractAction(Request $request): Error|Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -1019,7 +1023,7 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($contract);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');

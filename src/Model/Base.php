@@ -5,6 +5,7 @@
 
 namespace App\Model;
 
+use ReflectionException;
 use Doctrine\ORM\Mapping\Entity;
 use ReflectionClass as ReflectionClass;
 use ReflectionProperty as ReflectionProperty;
@@ -23,7 +24,7 @@ class Base
      * Returns array representation of call class properties (e.g. for json_encode)
      *
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function toArray()
     {

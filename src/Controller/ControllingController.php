@@ -14,6 +14,11 @@
 
 namespace App\Controller;
 
+use PhpOffice\PhpSpreadsheet\Exception;
+use App\Entity\Entry;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Helper\LOReadFilter;
 use App\Model\Response;
 
@@ -39,7 +44,7 @@ class ControllingController extends BaseController
      *
      *
      * @return Response
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
@@ -57,7 +62,7 @@ class ControllingController extends BaseController
         $onlyBillable = (bool) $request->get('billable');
 
         $service = $this->get('nr.timetracker.export');
-        /** @var \App\Entity\Entry[] $entries */
+        /** @var Entry[] $entries */
         $entries = $service->exportEntries(
             $userId, $year, $month, $projectId, $customerId, [
                 'user.username' => true,
@@ -84,7 +89,7 @@ class ControllingController extends BaseController
         );
 
         //$spreadsheet = new Spreadsheet();
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->setReadFilter(new LOReadFilter());
         $spreadsheet = $reader->load(
             $this->container->getParameter('kernel.root_dir')
@@ -207,15 +212,15 @@ class ControllingController extends BaseController
      * @param  number    $row    Spreadsheet row
      * @param  string    $date   Date should be inserted
      * @param  string    $format Display date format
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      * @return void
      */
-    protected static function setCellDate(Worksheet $sheet, $column, $row, $date, $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD2)
+    protected static function setCellDate(Worksheet $sheet, $column, $row, $date, $format = NumberFormat::FORMAT_DATE_YYYYMMDD2)
     {
         // Set date value
         $sheet->setCellValue(
             $column . $row,
-            \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date)
+            Date::PHPToExcel($date)
         );
 
         // Set the number format mask so that the excel timestamp will be displayed as a human-readable date/time
@@ -231,12 +236,12 @@ class ControllingController extends BaseController
      * @param  string    $column Spreadsheet column
      * @param  number    $row    Spreadsheet row
      * @param  string    $date   Date with time which time value should be inserted
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      * @return void
      */
     protected static function setCellHours(Worksheet $sheet, $column, $row, $date)
     {
-        $dateValue = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
+        $dateValue = Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
 
         // Set date value

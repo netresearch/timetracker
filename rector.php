@@ -8,6 +8,7 @@ use Rector\Symfony\Set\SymfonyLevelSetList;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Doctrine\Set\DoctrineSetList;
+use Rector\PHPOffice\Set\PHPOfficeSetList;
 
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -15,13 +16,15 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $parameters = $containerConfigurator->parameters();
     $parameters->set(Option::PATHS, [
         __DIR__ . '/src',
-        __DIR__ . '/tests',
+        //__DIR__ . '/tests',
     ]);
-    // $parameters->set(
-    //     Option::SYMFONY_CONTAINER_XML_PATH_PARAMETER,
-    //     __DIR__ . '/var/cache/dev/App_KernelDevDebugContainer.xml'
-    // );
+    $parameters->set(
+        Option::SYMFONY_CONTAINER_XML_PATH_PARAMETER,
+        __DIR__ . '/var/cache/dev/App_KernelDevDebugContainer.xml'
+    );
     // endregion
+    $parameters->set(Option::AUTO_IMPORT_NAMES, true);
+
 
     // run them, one by one
 
@@ -35,7 +38,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     //$containerConfigurator->import(SymfonySetList::SYMFONY_STRICT);
 
-    //$containerConfigurator->import(SymfonyLevelSetList::UP_TO_SYMFONY_60);
+    $containerConfigurator->import(SymfonyLevelSetList::UP_TO_SYMFONY_54);
 
     //$containerConfigurator->import(SymfonySetList::SYMFONY_CODE_QUALITY);
     //$containerConfigurator->import(SymfonySetList::SYMFONY_CONSTRUCTOR_INJECTION);
@@ -44,7 +47,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // Doctrine
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_25);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_BEHAVIORS_20);
-    $containerConfigurator->import(DoctrineSetList::DOCTRINE_CODE_QUALITY);
+    //$containerConfigurator->import(DoctrineSetList::DOCTRINE_CODE_QUALITY);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_COMMON_20);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_210);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_211);
@@ -54,4 +57,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ORM_29);
     //$containerConfigurator->import(DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ODM_23);
+
+    //$containerConfigurator->import(PHPOfficeSetList::PHPEXCEL_TO_PHPSPREADSHEET);
+
 };

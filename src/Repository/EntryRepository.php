@@ -14,6 +14,11 @@
 
 namespace App\Repository;
 
+use Exception;
+use DateTime;
+use DateInterval;
+use PDO;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Query\Expr\Join;
 use App\Entity\Entry;
 use App\Entity\User;
@@ -86,14 +91,14 @@ class EntryRepository extends EntityRepository
      * @param integer $days Filter by recent days
      *
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function findByRecentDaysOfUser($user, $days = 3)
     {
-        $fromDate = new \DateTime();
+        $fromDate = new DateTime();
         $fromDate->setTime(0, 0);
         $calendarDays = self::getCalendarDaysByWorkDays($days);
-        $fromDate->sub(new \DateInterval('P' . $calendarDays . 'D'));
+        $fromDate->sub(new DateInterval('P' . $calendarDays . 'D'));
 
         $em = $this->getEntityManager();
         $query = $em->createQuery(
@@ -117,7 +122,7 @@ class EntryRepository extends EntityRepository
      * @param integer $customerId Filter entries by customer
      * @param array   $arSort     Sort result by given fields
      *
-     * @return \App\Entity\Entry[]
+     * @return Entry[]
      */
     public function findByDate($userId, $year, $month = null, $projectId = null, $customerId = null, $arSort = null)
     {
@@ -141,21 +146,21 @@ class EntryRepository extends EntityRepository
 
         if (0 < (int) $userId) {
             $qb->andWhere('entry.user = :user_id');
-            $qb->setParameter('user_id', $userId, \PDO::PARAM_INT);
+            $qb->setParameter('user_id', $userId, PDO::PARAM_INT);
         }
         if (0 < (int) $projectId) {
             $qb->andWhere('entry.project = :project_id');
-            $qb->setParameter('project_id', $projectId, \PDO::PARAM_INT);
+            $qb->setParameter('project_id', $projectId, PDO::PARAM_INT);
         }
         if (0 < (int) $customerId) {
             $qb->andWhere('entry.customer = :customer_id');
-            $qb->setParameter('customer_id', $customerId, \PDO::PARAM_INT);
+            $qb->setParameter('customer_id', $customerId, PDO::PARAM_INT);
         }
         if (0 < (int) $year) {
             $qb->andWhere(
                 $qb->expr()->like('entry.day', ':month')
             );
-            $qb->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
+            $qb->setParameter('month', $this->getDatePattern($year, $month), PDO::PARAM_STR);
         }
 
         return $qb->getQuery()->getResult();
@@ -301,7 +306,7 @@ class EntryRepository extends EntityRepository
 
         $stmt = $connection->executeQuery(implode(" ", $sql));
 
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $data = [];
         if (count($result)) foreach ($result as &$line) {
@@ -340,8 +345,8 @@ class EntryRepository extends EntityRepository
             ->andWhere('p.ticketSystem = :ticket_system_id')
             ->setParameter('user_id', $userId)
             ->setParameter('ticket_system_id', $ticketSystemId)
-            ->orderBy('e.day', \Doctrine\Common\Collections\Criteria::DESC)
-            ->addOrderBy('e.start', \Doctrine\Common\Collections\Criteria::DESC);
+            ->orderBy('e.day', Criteria::DESC)
+            ->addOrderBy('e.start', Criteria::DESC);
 
         if ((int) $maxResults > 0) {
             $qb->setMaxResults((int) $maxResults);
@@ -433,7 +438,7 @@ class EntryRepository extends EntityRepository
             . ' UNION ' . implode(" ", $sql['activity'])
             . ' UNION ' . implode(" ", $sql['ticket'])
         );
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $data['customer']   = $result[0];
         $data['project']    = $result[1];
@@ -477,7 +482,7 @@ class EntryRepository extends EntityRepository
         }
 
         $stmt   = $connection->executeQuery(implode(" ", $sql));
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $data = [
             'duration' => $result[0]['duration'],
@@ -506,7 +511,7 @@ class EntryRepository extends EntityRepository
      *           [visibility_user]  => user_id restricts entry visibility by users teams
      *
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function findByFilterArray($arFilter = [])
     {
@@ -539,13 +544,13 @@ class EntryRepository extends EntityRepository
         }
 
         if (isset($arFilter['datestart']) && !is_null($arFilter['datestart'])) {
-            $date = new \DateTime($arFilter['datestart']);
+            $date = new DateTime($arFilter['datestart']);
             $queryBuilder->andWhere('e.day >= :start')
                 ->setParameter('start', $date->format('Y-m-d'));
         }
 
         if (isset($arFilter['dateend']) && !is_null($arFilter['dateend'])) {
-            $date = new \DateTime($arFilter['dateend']);
+            $date = new DateTime($arFilter['dateend']);
             $queryBuilder->andWhere('e.day <= :end')
                 ->setParameter('end', $date->format('Y-m-d'));
         }
@@ -570,7 +575,7 @@ class EntryRepository extends EntityRepository
 
         if (isset($arFilter['maxResults']) && (int) $arFilter['maxResults'] > 0) {
             $queryBuilder
-                ->orderBy('e.id', \Doctrine\Common\Collections\Criteria::DESC)
+                ->orderBy('e.id', Criteria::DESC)
                 ->setMaxResults((int) $arFilter['maxResults']);
         }
 
@@ -602,7 +607,7 @@ class EntryRepository extends EntityRepository
 
         $stmt = $connection->prepare($sql);
         $stmt->execute([':ticketname' => $ticketname]);
-        $result = $stmt->fetchAllAssociative(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAllAssociative(PDO::FETCH_ASSOC);
         return $result;
     }
 
@@ -624,7 +629,7 @@ class EntryRepository extends EntityRepository
 
         $stmt = $connection->prepare($sql);
         $stmt->execute([':ticketname' => $ticketname]);
-        $result = $stmt->fetchAllAssociative(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAllAssociative(PDO::FETCH_ASSOC);
         return $result;
     }
 }

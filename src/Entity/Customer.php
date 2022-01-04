@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base as Base;
@@ -11,14 +13,14 @@ use App\Model\Base as Base;
 class Customer extends Base
 {
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
+    #[ORM\Column(type: Types::STRING)]
     protected $name;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
+    #[ORM\Column(type: Types::BOOLEAN)]
     protected $active;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
+    #[ORM\Column(type: Types::BOOLEAN)]
     protected $global;
     #[ORM\OneToMany(targetEntity: 'Project', mappedBy: 'customer')]
     protected $projects;
@@ -130,7 +132,7 @@ class Customer extends Base
     /**
      * Get projects
      *
-     * @return \Doctrine\Common\Collections\Collection $projects
+     * @return Collection $projects
      */
     public function getProjects()
     {
@@ -150,7 +152,7 @@ class Customer extends Base
     /**
      * Get entries
      *
-     * @return \Doctrine\Common\Collections\Collection $entries
+     * @return Collection $entries
      */
     public function getEntries()
     {
@@ -180,7 +182,7 @@ class Customer extends Base
     /**
      * Get teams
      *
-     * @return \Doctrine\Common\Collections\Collection $teams
+     * @return Collection $teams
      */
     public function getTeams()
     {

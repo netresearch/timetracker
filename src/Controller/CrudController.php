@@ -2,6 +2,11 @@
 
 namespace App\Controller;
 
+use Exception;
+use Throwable;
+use DateTime;
+use DateInterval;
+use App\Helper\JiraApiInvalidResourceException;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Project;
@@ -171,7 +176,7 @@ class CrudController extends BaseController
     /**
      * Save action handler.
      */
-    public function saveAction(Request $request): \App\Response\Error|\App\Model\Response
+    public function saveAction(Request $request): Error|Response
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -197,7 +202,7 @@ class CrudController extends BaseController
             if ($project = $doctrine->getRepository('App:Project')->find($request->get('project'))) {
                 if (! $project->getActive()) {
                     $message = $this->get('translator')->trans("This project is inactive and cannot be used for booking.");
-                    throw new \Exception($message);
+                    throw new Exception($message);
                 }
                 $entry->setProject($project);
             }
@@ -206,7 +211,7 @@ class CrudController extends BaseController
             if ($customer = $doctrine->getRepository('App:Customer')->find($request->get('customer'))) {
                 if (! $customer->getActive()) {
                     $message = $this->get('translator')->trans("This customer is inactive and cannot be used for booking.");
-                    throw new \Exception($message);
+                    throw new Exception($message);
                 }
                 $entry->setCustomer($customer);
             }
@@ -231,7 +236,7 @@ class CrudController extends BaseController
                     && !$jiraOAuthApi->doesTicketExist($request->get('ticket'))
                 ) {
                     $message = $request->get('ticket') . ' existiert nicht';
-                    throw new \Exception($message);
+                    throw new Exception($message);
                 }
             }
 
@@ -263,7 +268,7 @@ class CrudController extends BaseController
                                 '%activity%' => $activity->getName(),
                             )
                         );
-                    throw new \Exception($message);
+                    throw new Exception($message);
                 }
             }
 
@@ -279,7 +284,7 @@ class CrudController extends BaseController
 
             try {
                 $this->handleInternalTicketSystem($entry, $oldEntry);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 $alert = $exception->getMessage();
             }
 
@@ -318,9 +323,9 @@ class CrudController extends BaseController
             );
 
             return new Response(json_encode($response, JSON_THROW_ON_ERROR));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new Error($this->get('translator')->trans($e->getMessage()), 406);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             return new Error($exception->getMessage(), 503);
         }
     }
@@ -346,7 +351,7 @@ class CrudController extends BaseController
 
             $preset = $doctrine->getRepository('App:Preset')->find((int) $request->get('preset'));
             if (! is_object($preset))
-                throw new \Exception('Preset not found');
+                throw new Exception('Preset not found');
 
             // Retrieve needed objects
             /** @var User $user */
@@ -363,8 +368,8 @@ class CrudController extends BaseController
                 ->find($preset->getActivityId());
             $em = $doctrine->getManager();
 
-            $date = new \DateTime($request->get('startdate'));
-            $endDate = new \DateTime($request->get('enddate'));
+            $date = new DateTime($request->get('startdate'));
+            $endDate = new DateTime($request->get('enddate'));
 
             $c = 0;
 
@@ -417,7 +422,7 @@ class CrudController extends BaseController
                 if (($request->get('skipweekend'))
                     && (in_array($date->format('w'), $weekend))
                 ) {
-                    $date->add(new \DateInterval('P1D'));
+                    $date->add(new DateInterval('P1D'));
                     continue;
                 }
 
@@ -425,13 +430,13 @@ class CrudController extends BaseController
                 if (($request->get('skipholidays'))) {
                     // skip regular holidays
                     if (in_array($date->format("m-d"), $regular_holidays)) {
-                        $date->add(new \DateInterval('P1D'));
+                        $date->add(new DateInterval('P1D'));
                         continue;
                     }
 
                     // skip irregular holidays
                     if (in_array($date->format("Y-m-d"), $irregular_holidays)) {
-                        $date->add(new \DateInterval('P1D'));
+                        $date->add(new DateInterval('P1D'));
                         continue;
                     }
                 }
@@ -466,14 +471,14 @@ class CrudController extends BaseController
                 $this->calculateClasses($user->getId(), $entry->getDay()->format("Y-m-d"));
 
                 // print $date->format('d.m.Y') . " was saved.<br/>";
-                $date->add(new \DateInterval('P1D'));
+                $date->add(new DateInterval('P1D'));
             } while ($date <= $endDate);
 
             $response = new Response($this->get('translator')->trans('All entries have been saved.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_OK);
             return $response;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->get('translator')->trans($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -487,7 +492,7 @@ class CrudController extends BaseController
      *
      * @param $ticket
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     private function requireValidTicketFormat($ticket)
     {
@@ -498,7 +503,7 @@ class CrudController extends BaseController
 
         if (! TicketHelper::checkFormat($ticket)) {
             $message = $this->get('translator')->trans("The ticket's format is not recognized.");
-            throw new \Exception($message);
+            throw new Exception($message);
         }
 
         return;
@@ -510,7 +515,7 @@ class CrudController extends BaseController
      * TTT-199: check if ticket prefix matches project's Jira id.
      *
      * @param string $ticket
-     * @throws \Exception
+     * @throws Exception
      * @return void
      */
     private function requireValidTicketPrefix(Project $project, $ticket)
@@ -527,7 +532,7 @@ class CrudController extends BaseController
 
         if (! TicketHelper::checkFormat($ticket)) {
             $message = $this->get('translator')->trans("The ticket's format is not recognized.");
-            throw new \Exception($message);
+            throw new Exception($message);
         }
 
         $jiraId = TicketHelper::getPrefix($ticket);
@@ -544,7 +549,7 @@ class CrudController extends BaseController
             array('%ticket_jira_id%' => $jiraId, '%project_jira_id%' => $project->getJiraId())
         );
 
-        throw new \Exception($message);
+        throw new Exception($message);
     }
 
 
@@ -553,13 +558,13 @@ class CrudController extends BaseController
      * Write log entry to log file.
      *
      * @param bool  $raw
-     * @throws \Exception
+     * @throws Exception
      */
     private function logDataToFile(array $data, $raw = FALSE)
     {
         $file = $this->get('kernel')->getRootDir() . '/logs/' . self::LOG_FILE;
         if (!file_exists($file) && !touch($file)) {
-            throw new \Exception(
+            throw new Exception(
                 $this->get('translator')->trans(
                     'Could not create log file: %log_file%',
                     array('%log_file%' => $file)
@@ -568,7 +573,7 @@ class CrudController extends BaseController
         }
 
         if (!is_writable($file)) {
-            throw new \Exception(
+            throw new Exception(
                 $this->get('translator')->trans(
                     'Cannot write to log file: %log_file%',
                     array('%log_file%' => $file)
@@ -595,7 +600,7 @@ class CrudController extends BaseController
      * @param TicketSystem|null $ticketSystem
      * @return void
      * @throws JiraApiException
-     * @throws \App\Helper\JiraApiInvalidResourceException
+     * @throws JiraApiInvalidResourceException
      */
     private function updateJiraWorklog(
         Entry $entry,
@@ -639,7 +644,7 @@ class CrudController extends BaseController
      * @return string
      *
      * @throws JiraApiException
-     * @throws \App\Helper\JiraApiInvalidResourceException
+     * @throws JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-create-issue
      */
     protected function createTicket(
@@ -664,7 +669,7 @@ class CrudController extends BaseController
      * @return void
      *
      * @throws JiraApiException
-     * @throws \App\Helper\JiraApiInvalidResourceException
+     * @throws JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-query-issues
      */
     protected  function handleInternalTicketSystem($entry, $oldEntry)

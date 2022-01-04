@@ -1,6 +1,8 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base as Base;
@@ -14,19 +16,19 @@ class Project extends Base
     public final const BILLING_FP    = 2;
     public final const BILLING_MIXED = 3;
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
+    #[ORM\Column(type: Types::STRING)]
     protected $name;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
+    #[ORM\Column(type: Types::BOOLEAN)]
     protected $active;
     #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
+    #[ORM\Column(type: Types::BOOLEAN)]
     protected $global;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'jira_id')]
+    #[ORM\Column(type: Types::STRING, name: 'jira_id')]
     protected $jiraId;
     #[ORM\ManyToOne(targetEntity: 'TicketSystem', inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'ticket_system', referencedColumnName: 'id')]
@@ -36,7 +38,7 @@ class Project extends Base
     /**
      * Estimated project duration in minutes
      */
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, name: 'estimation')]
+    #[ORM\Column(type: Types::INTEGER, name: 'estimation')]
     protected $estimation;
     /**
      * Offer number
@@ -46,7 +48,7 @@ class Project extends Base
     /**
      * Used billing method
      */
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, name: 'billing')]
+    #[ORM\Column(type: Types::INTEGER, name: 'billing')]
     protected $billing;
     /**
      * cost center (number or name)
@@ -80,7 +82,7 @@ class Project extends Base
      * * @ORM\Column(name="invoice", length=31, nullable=true)
      */
     protected $invoice;
-    #[ORM\Column(name: 'additional_information_from_external', type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
+    #[ORM\Column(name: 'additional_information_from_external', type: Types::BOOLEAN)]
     protected $additionalInformationFromExternal;
     /**
      * the internal key of the project the current ticket should be booked to.
@@ -258,7 +260,7 @@ class Project extends Base
     /**
      * Get entries
      *
-     * @return \Doctrine\Common\Collections\Collection $entries
+     * @return Collection $entries
      */
     public function getEntries()
     {

@@ -1,6 +1,8 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Exception;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 use DateTime as DateTime;
@@ -14,24 +16,24 @@ class Entry extends Base
     public final const CLASS_PAUSE       = 4;
     public final const CLASS_OVERLAP     = 8;
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 31, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: 31, nullable: true)]
     protected $ticket;
-    #[ORM\Column(name: 'worklog_id', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: true)]
+    #[ORM\Column(name: 'worklog_id', type: Types::INTEGER, nullable: true)]
     protected $worklog_id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
+    #[ORM\Column(type: Types::STRING)]
     protected $description;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATE_MUTABLE)]
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
     protected $day;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TIME_MUTABLE)]
+    #[ORM\Column(type: Types::TIME_MUTABLE)]
     protected $start;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TIME_MUTABLE)]
+    #[ORM\Column(type: Types::TIME_MUTABLE)]
     protected $end;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     protected $duration;
-    #[ORM\Column(name: 'synced_to_ticketsystem', type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
+    #[ORM\Column(name: 'synced_to_ticketsystem', type: Types::BOOLEAN)]
     protected $syncedToTicketsystem;
     #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
@@ -48,7 +50,7 @@ class Entry extends Base
     #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
-    #[ORM\Column(name: 'class', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: false)]
+    #[ORM\Column(name: 'class', type: Types::INTEGER, nullable: false)]
     protected $class = self::CLASS_PLAIN;
     /**
      * holds summary from external ticket system; no mapping for ORM required (yet)
@@ -121,7 +123,7 @@ class Entry extends Base
     protected $externalReporter = '';
     /**
      * @return $this
-     * @throws \Exception
+     * @throws Exception
      */
     public function validateDuration()
     {
@@ -129,7 +131,7 @@ class Entry extends Base
             && ($this->getEnd() instanceof DateTime)
             && ($this->getEnd()->getTimestamp() <= $this->getStart()->getTimestamp())
         ) {
-            throw new \Exception('Duration must be greater than 0!');
+            throw new Exception('Duration must be greater than 0!');
         }
 
         return $this;
@@ -365,7 +367,7 @@ class Entry extends Base
     /**
      * Get end
      *
-     * @return \DateTime $end
+     * @return DateTime $end
      */
     public function getEnd()
     {
@@ -521,7 +523,7 @@ class Entry extends Base
      *
      * @param int $factor
      * @return Entry
-     * @throws \Exception
+     * @throws Exception
      */
     public function calcDuration($factor = 1)
     {

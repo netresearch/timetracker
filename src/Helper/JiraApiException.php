@@ -5,12 +5,12 @@
 
 namespace App\Helper;
 
-
+use Exception;
 /**
  * Class JiraApiException
  * @package App\Helper
  */
-class JiraApiException extends \Exception
+class JiraApiException extends Exception
 {
     /**
      * JiraApiException constructor.

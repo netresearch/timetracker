@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 use App\Model\Base as Base;
@@ -11,7 +12,7 @@ use App\Model\Base as Base;
 class UserTicketsystem extends Base
 {
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
     #[ORM\ManyToOne(targetEntity: 'TicketSystem')]
@@ -20,9 +21,9 @@ class UserTicketsystem extends Base
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'userTicketsystem')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     protected $accessToken;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     protected $tokenSecret;
     #[ORM\Column(columnDefinition: 'TINYINT(1) unsigned DEFAULT 0 NOT NULL')]
     protected $avoidConnection;

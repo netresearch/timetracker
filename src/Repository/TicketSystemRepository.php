@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use ReflectionException;
 use Doctrine\ORM\EntityRepository;
 use App\Entity\TicketSystem;
 
@@ -12,7 +13,7 @@ class TicketSystemRepository extends EntityRepository
      * get all ticket systems
      *
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function getAllTicketSystems()
     {

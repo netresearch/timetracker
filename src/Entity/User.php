@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\Collection;
 use App\Helper\LocalizationHelper;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -12,20 +14,20 @@ use Doctrine\Common\Collections\ArrayCollection;
 class User
 {
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     protected $username;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
+    #[ORM\Column(type: Types::STRING)]
     protected $abbr;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
+    #[ORM\Column(type: Types::STRING)]
     protected $type;
-    #[ORM\Column(name: 'show_empty_line', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: false)]
+    #[ORM\Column(name: 'show_empty_line', type: Types::INTEGER, nullable: false)]
     protected $showEmptyLine;
-    #[ORM\Column(name: 'suggest_time', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: false)]
+    #[ORM\Column(name: 'suggest_time', type: Types::INTEGER, nullable: false)]
     protected $suggestTime;
-    #[ORM\Column(name: 'show_future', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: false)]
+    #[ORM\Column(name: 'show_future', type: Types::INTEGER, nullable: false)]
     protected $showFuture;
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'user')]
     protected $entries;
@@ -34,7 +36,7 @@ class User
     #[ORM\ManyToMany(targetEntity: 'Team', inversedBy: 'users')]
     #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
     protected $teams;
-    #[ORM\Column(name: 'locale', type: \Doctrine\DBAL\Types\Types::STRING, nullable: false)]
+    #[ORM\Column(name: 'locale', type: Types::STRING, nullable: false)]
     protected $locale;
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'user')]
     protected $userTicketsystems;
@@ -166,7 +168,7 @@ class User
     /**
      * Get entries
      *
-     * @return \Doctrine\Common\Collections\Collection $entries
+     * @return Collection $entries
      */
     public function getEntries()
     {
@@ -175,7 +177,7 @@ class User
     /**
      * Get contracts
      *
-     * @return \Doctrine\Common\Collections\Collection $contracts
+     * @return Collection $contracts
      */
     public function getContracts()
     {
@@ -216,7 +218,7 @@ class User
     /**
      * Get teams
      *
-     * @return \Doctrine\Common\Collections\Collection $teams
+     * @return Collection $teams
      */
     public function getTeams()
     {
@@ -282,7 +284,7 @@ class User
         return $this;
     }
     /**
-     * @return \Doctrine\Common\Collections\Collection $userTicketSystems
+     * @return Collection $userTicketSystems
      */
     public function getUserTicketsystems()
     {

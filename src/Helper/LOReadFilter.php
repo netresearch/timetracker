@@ -14,6 +14,7 @@
 
 namespace App\Helper;
 
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 /**
@@ -25,7 +26,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
  *
  * @author Christian Weiske <weiske@mogic.com>
  */
-class LOReadFilter implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
+class LOReadFilter implements IReadFilter
 {
     public function readCell($column, $row, $worksheetName = '') {
         if (Coordinate::columnIndexFromString($column) > 1024) {

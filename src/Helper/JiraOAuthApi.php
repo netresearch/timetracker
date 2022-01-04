@@ -11,6 +11,10 @@
 
 namespace App\Helper;
 
+use Throwable;
+use Exception;
+use stdClass;
+use DateTime;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -199,7 +203,7 @@ class JiraOAuthApi
                 );
                 $this->extractTokens($response);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new JiraApiException($e->getMessage(), $e->getCode());
         }
     }
@@ -230,7 +234,7 @@ class JiraOAuthApi
             $token = $this->extractTokens($response);
 
             return $this->getOAuthAuthUrl($token['oauth_token']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new JiraApiException($e->getMessage(), $e->getCode(), null);
         }
     }
@@ -284,7 +288,7 @@ class JiraOAuthApi
             try {
                 $this->updateEntryJiraWorkLog($entry);
                 $em->persist($entry);
-            } catch (\Exception) {
+            } catch (Exception) {
 
             } finally {
                 $em->flush();
@@ -402,7 +406,7 @@ class JiraOAuthApi
      * @param string $jql
      * @param string $fields
      * @param int    $limit
-     * @return \stdClass
+     * @return stdClass
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
@@ -709,7 +713,7 @@ class JiraOAuthApi
      */
     protected function getTicketSystemWorkLogStartDate(Entry $entry)
     {
-        $startDate = $entry->getDay() ?: new \DateTime();
+        $startDate = $entry->getDay() ?: new DateTime();
         if ($entry->getStart()) {
             $startDate->setTime(
                 $entry->getStart()->format('H'), $entry->getStart()->format('i')

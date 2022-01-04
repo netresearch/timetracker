@@ -2,6 +2,11 @@
 
 namespace App\Controller;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use ReflectionException;
+use Psr\Log\LoggerInterface;
+use Exception;
+use Twig\Error\Error;
 use App\Entity\Team;
 use App\Repository\TeamRepository;
 use App\Entity\TicketSystem;
@@ -25,11 +30,15 @@ use Symfony\Component\Routing\Annotation\Route;
 class DefaultController extends BaseController
 {
     /**
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
-     * @throws \ReflectionException
+     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     * @throws ReflectionException
+     */
+    /**
+     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     * @throws ReflectionException
      */
     #[Route(path: '/', name: '_start')]
-    public function indexAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
+    public function indexAction(Request $request) : Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -61,10 +70,13 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     */
+    /**
+     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
     #[Route(path: '/login', name: '_login')]
-    public function loginAction(Request $request, \Psr\Log\LoggerInterface $logger) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
+    public function loginAction(Request $request, LoggerInterface $logger) : Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         if ($request->getMethod() != 'POST') {
             return $this->render('login.html.twig',
@@ -96,7 +108,7 @@ class DefaultController extends BaseController
 
             if (!$user) {
                 if (!(boolean) $this->container->getParameter('ldap_create_user')) {
-                    throw new \Exception('No equivalent timetracker user could be found.');
+                    throw new Exception('No equivalent timetracker user could be found.');
                 }
 
                 // create new user if users.username doesn't exist for valid ldap-authentication
@@ -130,7 +142,7 @@ class DefaultController extends BaseController
                 $em->flush();
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
             $this->get('session')->getFlashBag()->add(
                 'error', $this->get('translator')->trans($e->getMessage())
@@ -147,20 +159,20 @@ class DefaultController extends BaseController
     }
 
     #[Route(path: '/logout', name: '_logout')]
-    public function logoutAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function logoutAction(Request $request) : Response|RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
         $this->setLoggedOut($request);
-        return $this->redirect($this->generateUrl('_start'));
+        return $this->redirectToRoute('_start');
     }
 
     /**
      * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getTimeSummary', name: 'time_summary')]
-    public function getTimeSummaryAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function getTimeSummaryAction(Request $request) : Response|RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -183,7 +195,7 @@ class DefaultController extends BaseController
      * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getSummary', name: '_getSummary')]
-    public function getSummaryAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function getSummaryAction(Request $request) : Response|RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -252,7 +264,7 @@ class DefaultController extends BaseController
      */
     #[Route(path: '/getData', name: '_getData')]
     #[Route(path: '/getData/days/{days}', name: '_getDataDays')]
-    public function getDataAction(int $days = 3) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function getDataAction(int $days = 3) : Response|RedirectResponse
     {
         $request = null;
         if (!$this->checkLogin($request)) {
@@ -271,7 +283,7 @@ class DefaultController extends BaseController
      * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getCustomers', name: '_getCustomers')]
-    public function getCustomersAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function getCustomersAction(Request $request) : Response|RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -315,7 +327,11 @@ class DefaultController extends BaseController
 
     /**
      * @return Response
-     * @throws \ReflectionException
+     * @throws ReflectionException
+     */
+    /**
+     * @return Response
+     * @throws ReflectionException
      */
     #[Route(path: '/getProjects', name: '_getProjects')]
     public function getProjectsAction(Request $request)
@@ -329,7 +345,12 @@ class DefaultController extends BaseController
     /**
      * @return Response
      * @throws \Doctrine\DBAL\Exception
-     * @throws \ReflectionException
+     * @throws ReflectionException
+     */
+    /**
+     * @return Response
+     * @throws \Doctrine\DBAL\Exception
+     * @throws ReflectionException
      */
     #[Route(path: '/getAllProjects', name: '_getAllProjects')]
     public function getAllProjectsAction(Request $request)
@@ -371,8 +392,13 @@ class DefaultController extends BaseController
 
     /**
      * @param Request $request
-     * @throws \Twig\Error\Error
-     * @throws \Exception
+     * @throws Error
+     * @throws Exception
+     */
+    /**
+     * @param Request $request
+     * @throws Error
+     * @throws Exception
      */
     #[Route(path: '/export/{days}', name: '_export')]
     public function exportAction(int $days = 10000) : Response
@@ -407,7 +433,7 @@ class DefaultController extends BaseController
      *
      * @param Request $request
      */
-    public function jiraOAuthCallbackAction(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function jiraOAuthCallbackAction(Request $request): Response|RedirectResponse
     {
         /** @var User $user */
         $user = $this->getDoctrine()

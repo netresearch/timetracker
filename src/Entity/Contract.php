@@ -1,6 +1,7 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -11,29 +12,29 @@ use Doctrine\ORM\Mapping as ORM;
 class Contract
 {
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'contracts')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATE_MUTABLE)]
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
     protected $start;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATE_MUTABLE)]
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
     protected $end;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(type: Types::FLOAT)]
     protected $hours_0;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(type: Types::FLOAT)]
     protected $hours_1;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(type: Types::FLOAT)]
     protected $hours_2;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(type: Types::FLOAT)]
     protected $hours_3;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(type: Types::FLOAT)]
     protected $hours_4;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(type: Types::FLOAT)]
     protected $hours_5;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(type: Types::FLOAT)]
     protected $hours_6;
     /**
      * Set id

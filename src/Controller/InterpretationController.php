@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use Exception;
+use DateTime;
+use DateInterval;
 use App\Entity\Entry;
 use App\Helper\TimeHelper;
 use App\Model\Response;
@@ -27,7 +30,7 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getEntries($request, 50);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -46,7 +49,7 @@ class InterpretationController extends BaseController
 
     /**
      * @return array|null
-     * @throws \Exception
+     * @throws Exception
      */
     private function getCachedEntries(Request $request)
     {
@@ -97,7 +100,7 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -137,7 +140,7 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -178,7 +181,7 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -227,7 +230,7 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -272,7 +275,7 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -312,7 +315,7 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $response = new Response($this->translate($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
@@ -348,7 +351,7 @@ class InterpretationController extends BaseController
      *
      * @param integer $maxResults
      * @return Entry[]
-     * @throws \Exception
+     * @throws Exception
      */
     private function getEntries(Request $request, $maxResults = null)
     {
@@ -374,21 +377,21 @@ class InterpretationController extends BaseController
                 $datestart = $year . '-' . $month . '-01';
 
                 // last day of month
-                $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
-                $dateend->add(new \DateInterval('P1M'));
+                $dateend = DateTime::createFromFormat('Y-m-d', $datestart);
+                $dateend->add(new DateInterval('P1M'));
                 // go back 1 day, to set date from first day of next month back to last day of last month
                 // e.g. 2019-05-01 -> 2019-04-30
-                $dateend->sub(new \DateInterval('P1D'));
+                $dateend->sub(new DateInterval('P1D'));
             } else {
                 // first day of year
                 $datestart = $year . '-01-01';
 
                 // last day of year
-                $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
-                $dateend->add(new \DateInterval('P1Y'));
+                $dateend = DateTime::createFromFormat('Y-m-d', $datestart);
+                $dateend->add(new DateInterval('P1Y'));
                 // go back 1 day, to set date from first day of next year back to last day of last year
                 // e.g. 2019-01-01 -> 2018-12-31
-                $dateend->sub(new \DateInterval('P1D'));
+                $dateend->sub(new DateInterval('P1D'));
             }
 
             $arParams['datestart'] = $datestart;
@@ -400,7 +403,7 @@ class InterpretationController extends BaseController
             && !$arParams['user']
             && !$arParams['ticket']
         ) {
-            throw new \Exception(
+            throw new Exception(
                 $this->translate('You need to specify at least customer, project, ticket, user or month and year.')
             );
         }

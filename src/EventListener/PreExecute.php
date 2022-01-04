@@ -5,6 +5,7 @@
 
 namespace App\EventListener;
 
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use \Symfony\Component\HttpKernel\Event\FilterControllerEvent as FilterControllerEvent;
 use \Symfony\Component\HttpKernel\HttpKernelInterface as HttpKernelInterface;
 
@@ -14,7 +15,7 @@ use \Symfony\Component\HttpKernel\HttpKernelInterface as HttpKernelInterface;
  */
 class PreExecute
 {
-    public function onKernelController(\Symfony\Component\HttpKernel\Event\ControllerEvent $event)
+    public function onKernelController(ControllerEvent $event)
     {
         if (HttpKernelInterface::MASTER_REQUEST === $event->getRequestType()) {
             $controllers = $event->getController();

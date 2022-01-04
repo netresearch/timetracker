@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\TeamRepository')]
@@ -9,10 +12,10 @@ use Doctrine\ORM\Mapping as ORM;
 class Team
 {
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 31)]
+    #[ORM\Column(type: Types::STRING, length: 31)]
     protected $name;
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'teams')]
     #[ORM\JoinColumn(name: 'lead_user_id', referencedColumnName: 'id')]
@@ -90,7 +93,7 @@ class Team
      */
     public function __construct()
     {
-        $this->customers = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->customers = new ArrayCollection();
     }
     /**
      * Add customers
@@ -112,7 +115,7 @@ class Team
     /**
      * Get customers
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getCustomers()
     {

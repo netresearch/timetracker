@@ -19,6 +19,9 @@
 
 namespace App\Services;
 
+use Doctrine\Persistence\ConnectionRegistry;
+use Symfony\Component\Routing\RouterInterface;
+use App\Repository\EntryRepository;
 use App\Entity\Entry as Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
@@ -44,7 +47,7 @@ class Export
      *
      * @param ContainerInterface $container
      */
-    public function __construct(protected ?\Symfony\Component\DependencyInjection\ContainerInterface $container = null)
+    public function __construct(protected ?ContainerInterface $container = null, private ConnectionRegistry $connectionRegistry, private RouterInterface $router)
     {
     }
 
@@ -81,7 +84,7 @@ class Export
         $username = 'all';
         if (0 < (int) $userId) {
             /* @var $user User */
-            $user = $this->container->get('doctrine')
+            $user = $this->connectionRegistry
                 ->getRepository('App:User')
                 ->find($userId);
             $username = $user->getUsername();
@@ -93,11 +96,11 @@ class Export
     /**
      * returns the entry repository
      *
-     * @return \App\Repository\EntryRepository
+     * @return EntryRepository
      */
     protected function getEntryRepository()
     {
-        return $this->container->get('doctrine')->getRepository('App:Entry');
+        return $this->connectionRegistry->getRepository('App:Entry');
     }
 
     /**
@@ -114,12 +117,12 @@ class Export
         $currentUserId, array $entries, $removeNotBillable = false
     ) {
         /* @var $currentUser \App\Entity\User */
-        $doctrine = $this->container->get('doctrine');
+        $doctrine = $this->connectionRegistry;
         $currentUser = $doctrine->getRepository('App:User')
             ->find($currentUserId);
 
         /** @var Router $router */
-        $router = $this->container->get('router');
+        $router = $this->router;
 
         $arTickets = [];
         $arApi = [];

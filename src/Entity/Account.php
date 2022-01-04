@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -10,10 +12,10 @@ use Doctrine\Common\Collections\ArrayCollection;
 class Account
 {
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     protected $name;
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'Account')]
     protected $entries;
@@ -69,7 +71,7 @@ class Account
     /**
      * Get entries
      *
-     * @return \Doctrine\Common\Collections\Collection $entries
+     * @return Collection $entries
      */
     public function getEntries()
     {

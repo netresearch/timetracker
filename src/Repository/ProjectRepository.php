@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use ReflectionException;
 use App\Entity\Project;
 use Doctrine\ORM\EntityRepository;
 
@@ -38,7 +39,7 @@ class ProjectRepository extends EntityRepository
      * @param int $userId
      * @param array $customers
      * @return array[][]
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function getProjectStructure(int $userId, array $customers)
     {
@@ -99,7 +100,7 @@ class ProjectRepository extends EntityRepository
      * Returns projects for given user, and optionally for given customer.
      *
      * @return array[]
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function getProjectsByUser(int $userId, int $customerId = 0)
     {

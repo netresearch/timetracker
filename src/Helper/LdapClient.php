@@ -5,6 +5,8 @@
 
 namespace App\Helper;
 
+use Exception;
+use Zend\Ldap\Exception\LdapException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 use \Zend\Ldap;
@@ -86,7 +88,7 @@ class LdapClient
     /**
      * Verify username by searching for it in LDAP.
      *
-     * @throws \Exception
+     * @throws Exception
      * @throws Ldap\Exception\LdapException
      *
      * @return array The search result (corresponding ldap entry)
@@ -97,8 +99,8 @@ class LdapClient
 
         try {
             $ldap->bind();
-        } catch (Ldap\Exception\LdapException $e) {
-            throw new \Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $e->getMessage() . '');
+        } catch (LdapException $e) {
+            throw new Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $e->getMessage() . '');
         }
 
         /* @var $result Ldap\Collection */
@@ -108,7 +110,7 @@ class LdapClient
         );
 
         if (!is_object($result) || ($result->getFirst() == NULL)) {
-            throw new \Exception('Username unknown.');
+            throw new Exception('Username unknown.');
         }
 
         $this->setTeamsByLdapResponse($result->getFirst());
@@ -121,7 +123,7 @@ class LdapClient
     /**
      * Verify password by logging in to ldap using the user's name and password.
      *
-     * @throws \Exception
+     * @throws Exception
      * @return boolean true
      */
     protected function verifyPassword(array $ldapEntry)
@@ -134,11 +136,11 @@ class LdapClient
 
         try {
             $ldap->bind();
-        } catch (Ldap\Exception\LdapException $e) {
+        } catch (LdapException $e) {
             if ($this->logger) {
                 $this->logger->addError($e->getMessage());
             }
-            throw new \Exception('Login data could not be validated: ' . $e->getMessage());
+            throw new Exception('Login data could not be validated: ' . $e->getMessage());
         }
 
         return true;
@@ -150,13 +152,13 @@ class LdapClient
      * Sets user auth name.
      *
      * @param string $username
-     * @throws \Exception
+     * @throws Exception
      * @return $this
      */
     public function setUserName($username)
     {
         if (!$username) {
-            throw new \Exception("Invalid user name: '$username'");
+            throw new Exception("Invalid user name: '$username'");
         }
 
         // enforce ldap-style login names
@@ -287,7 +289,7 @@ class LdapClient
      *
      * @return true
      * @throws Ldap\Exception\LdapException
-     * @throws \Exception
+     * @throws Exception
      */
     public function login()
     {

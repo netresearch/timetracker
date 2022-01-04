@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -12,14 +14,14 @@ class Activity
     public final const SICK    = 'Krank';
     public final const HOLIDAY = 'Urlaub';
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
+    #[ORM\Column(type: Types::STRING, length: 50)]
     protected $name;
-    #[ORM\Column(name: 'needs_ticket', type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
+    #[ORM\Column(name: 'needs_ticket', type: Types::BOOLEAN)]
     protected $needsTicket;
-    #[ORM\Column(name: 'factor', type: \Doctrine\DBAL\Types\Types::FLOAT)]
+    #[ORM\Column(name: 'factor', type: Types::FLOAT)]
     protected $factor;
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'activity')]
     protected $entries;
@@ -124,7 +126,7 @@ class Activity
     /**
      * Get entries
      *
-     * @return \Doctrine\Common\Collections\Collection $entries
+     * @return Collection $entries
      */
     public function getEntries()
     {

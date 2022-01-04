@@ -14,6 +14,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 
@@ -34,18 +35,18 @@ class Ticket extends Base
      * @var int
      */
     #[ORM\Id]
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(name: 'ticket_system_id', type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    #[ORM\Column(name: 'ticket_system_id', type: Types::INTEGER)]
     private int $ticketSystemId;
-    #[ORM\Column(name: 'ticket_number', type: \Doctrine\DBAL\Types\Types::STRING, length: 31)]
+    #[ORM\Column(name: 'ticket_number', type: Types::STRING, length: 31)]
     private string $ticketNumber;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 127)]
+    #[ORM\Column(type: Types::STRING, length: 127)]
     private string $name;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, name: 'estimation')]
+    #[ORM\Column(type: Types::INTEGER, name: 'estimation')]
     private int $estimatedDuration;
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'parent', length: 31)]
+    #[ORM\Column(type: Types::STRING, name: 'parent', length: 31)]
     private string $parentTicketNumber;
     /**
      * Sets the estimated duration
