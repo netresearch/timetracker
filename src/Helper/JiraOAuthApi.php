@@ -47,9 +47,9 @@ class JiraOAuthApi
     /**
      * JiraOAuthApi constructor.
      *
-     * @param ManagerRegistry $doctrine
+     * @param \Doctrine\Persistence\ManagerRegistry $doctrine
      */
-    public function __construct(protected User $user, protected TicketSystem $ticketSystem, protected ManagerRegistry $doctrine, Router $router)
+    public function __construct(protected User $user, protected TicketSystem $ticketSystem, protected \Doctrine\Persistence\ManagerRegistry $doctrine, Router $router)
     {
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
