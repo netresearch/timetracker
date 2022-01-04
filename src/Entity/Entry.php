@@ -12,10 +12,10 @@ use DateTime as DateTime;
  */
 class Entry extends Base
 {
-    public const CLASS_PLAIN       = 1;
-    public const CLASS_DAYBREAK    = 2;
-    public const CLASS_PAUSE       = 4;
-    public const CLASS_OVERLAP     = 8;
+    public final const CLASS_PLAIN       = 1;
+    public final const CLASS_DAYBREAK    = 2;
+    public final const CLASS_PAUSE       = 4;
+    public final const CLASS_OVERLAP     = 8;
 
 
     /**

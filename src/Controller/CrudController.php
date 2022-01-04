@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CrudController extends BaseController
 {
-    public const LOG_FILE = 'trackingsave.log';
+    public final const LOG_FILE = 'trackingsave.log';
 
     public function deleteAction(Request $request)
     {

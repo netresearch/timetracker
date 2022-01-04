@@ -13,11 +13,11 @@ class TimeHelper
     /**
      *
      */
-    public const DAYS_PER_WEEK = 5;
+    public final const DAYS_PER_WEEK = 5;
     /**
      *
      */
-    public const HOURS_PER_DAY = 8;
+    public final const HOURS_PER_DAY = 8;
 
     /**
      * @param $letter

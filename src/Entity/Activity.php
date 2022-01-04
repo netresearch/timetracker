@@ -12,8 +12,8 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class Activity
 {
-    public const SICK    = 'Krank';
-    public const HOLIDAY = 'Urlaub';
+    public final const SICK    = 'Krank';
+    public final const HOLIDAY = 'Urlaub';
 	
 	/**
      * @ORM\Id
