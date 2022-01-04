@@ -5,7 +5,7 @@
 
 namespace App\Twig;
 
-use Twig_SimpleFilter;
+use Twig\SimpleFilter;
 use Twig\Extension\AbstractExtension;
 
 /**
@@ -23,12 +23,12 @@ class TwigCsvEscapingExtension extends AbstractExtension
     }
 
     /**
-     * @return \Twig_SimpleFilter[]
+     * @return \Twig\SimpleFilter[]
      */
     public function getFilters()
     {
         return array(
-            new Twig_SimpleFilter('csv_escape', array($this, 'csvEscape')),
+            new SimpleFilter('csv_escape', array($this, 'csvEscape')),
         );
     }
 

@@ -5,17 +5,19 @@ declare(strict_types=1);
 use Rector\Core\Configuration\Option;
 use Rector\Symfony\Set\SymfonySetList;
 use Rector\Symfony\Set\SymfonyLevelSetList;
+use Rector\Symfony\Set\TwigSetList;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\PHPOffice\Set\PHPOfficeSetList;
-
+use PhpCsFixer\Fixer\Import\NoUnusedImportsFixer;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
     // region Symfony Container
     $parameters = $containerConfigurator->parameters();
     $parameters->set(Option::PATHS, [
         __DIR__ . '/src',
+        __DIR__ . '/templates',
         //__DIR__ . '/tests',
     ]);
     $parameters->set(
@@ -25,16 +27,18 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // endregion
     $parameters->set(Option::AUTO_IMPORT_NAMES, true);
 
+    $services = $containerConfigurator->services();
+    $services->set(NoUnusedImportsFixer::class);
 
     // run them, one by one
 
     // PHP
-    $containerConfigurator->import(LevelSetList::UP_TO_PHP_81);
+    //$containerConfigurator->import(LevelSetList::UP_TO_PHP_81);
 
     // Symfony
     //$containerConfigurator->import(SymfonySetList::SYMFONY_50_TYPES);
     //$containerConfigurator->import(SymfonySetList::SYMFONY_52_VALIDATOR_ATTRIBUTES);
-    //$containerConfigurator->import(SymfonySetList::SYMFONY_54);
+    //$containerConfigurator->import(SymfonySetList::SYMFONY_60);
 
     //$containerConfigurator->import(SymfonySetList::SYMFONY_STRICT);
 
@@ -57,6 +61,15 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ORM_29);
     //$containerConfigurator->import(DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ODM_23);
+
+    // Twig
+    //$containerConfigurator->import(TwigSetList::TWIG_112);
+    //$containerConfigurator->import(TwigSetList::TWIG_127 );
+    //$containerConfigurator->import(TwigSetList::TWIG_134 );
+    $containerConfigurator->import(TwigSetList::TWIG_140 );
+    // $containerConfigurator->import(TwigSetList::TWIG_20 );
+    // $containerConfigurator->import(TwigSetList::TWIG_240 );
+    // $containerConfigurator->import(TWIG_UNDERSCORE_TO_NAMESPACE ::TWIG_112);
 
     //$containerConfigurator->import(PHPOfficeSetList::PHPEXCEL_TO_PHPSPREADSHEET);
 

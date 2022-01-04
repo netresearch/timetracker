@@ -15,7 +15,7 @@
 namespace App\Twig;
 
 use Symfony\Component\Translation\TranslatorBagInterface;
-use Twig_SimpleFilter;
+use Twig\SimpleFilter;
 use Twig\Extension\AbstractExtension;
 
 /**
@@ -68,7 +68,7 @@ class NrArrayTranslator
     public function getFilters()
     {
         return [
-            'nr_array_translator' => new Twig_SimpleFilter('nr_array_translator', array($this, 'filterArray')),
+            'nr_array_translator' => new SimpleFilter('nr_array_translator', array($this, 'filterArray')),
         ];
     }
 
