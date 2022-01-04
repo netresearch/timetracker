@@ -163,7 +163,7 @@ class JiraOAuthApi
 
         throw new JiraApiException(
             'Invalid certificate, fix your certificate information in ticket system settings.',
-            1541160391
+            1_541_160_391
         );
     }
 
@@ -262,7 +262,7 @@ class JiraOAuthApi
         if (empty($token)) {
             throw new JiraApiException(
                 "An unknown error occurred while requesting OAuth token.",
-                1541147716
+                1_541_147_716
             );
         }
 

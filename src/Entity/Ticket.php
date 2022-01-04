@@ -43,43 +43,33 @@ class Ticket extends Base
 
 
     /**
-     * @var int
-     *
      * @ORM\Column(name="ticket_system_id", type="integer")
      */
-    private $ticketSystemId;
+    private int $ticketSystemId;
 
 
     /**
-     * @var string
-     *
      * @ORM\Column(name="ticket_number", type="string", length=31)
      */
-    private $ticketNumber;
+    private string $ticketNumber;
 
 
     /**
-     * @var string
-     *
      * @ORM\Column(type="string", length=127)
      */
-    private $name;
+    private string $name;
 
 
     /**
-     * @var int
-     *
      * @ORM\Column(type="integer", name="estimation")
      */
-    private $estimatedDuration;
+    private int $estimatedDuration;
 
 
     /**
-     * @var string
-     *
      * @ORM\Column(type="string", name="parent", length=31)
      */
-    private $parentTicketNumber;
+    private string $parentTicketNumber;
 
 
     /**

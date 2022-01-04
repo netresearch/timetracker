@@ -12,7 +12,7 @@ class InterpretationController extends BaseController
     /**
      * @var Entry[]
      */
-    private $cache = null;
+    private ?array $cache = null;
 
     public function sortByName($a, $b)
     {

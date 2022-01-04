@@ -19,10 +19,7 @@ class Holiday extends Base
      */
     private $day;
 
-    /**
-     * @var string $name
-     */
-    private $name;
+    private string $name;
 
 
     public function __construct($day, $name)
