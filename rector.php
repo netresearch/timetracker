@@ -45,9 +45,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_25);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_BEHAVIORS_20);
     //FAILED: $containerConfigurator->import(DoctrineSetList::DOCTRINE_CODE_QUALITY);
-    $containerConfigurator->import(DoctrineSetList::DOCTRINE_COMMON_20);
-    // $containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_210);
-    // $containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_211);
+    //$containerConfigurator->import(DoctrineSetList::DOCTRINE_COMMON_20);
+    //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_210);
+    $containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_211);
     // $containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_30);
     // $containerConfigurator->import(DoctrineSetList::DOCTRINE_GEDMO_TO_KNPLABS);
     // $containerConfigurator->import(DoctrineSetList::DOCTRINE_REPOSITORY_AS_SERVICE);

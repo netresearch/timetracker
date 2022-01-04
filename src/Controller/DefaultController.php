@@ -157,7 +157,7 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getTimeSummary', name: 'time_summary')]
     public function getTimeSummaryAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
@@ -180,7 +180,7 @@ class DefaultController extends BaseController
     /**
      * Retrieves a summary of an entry (project total/own, ticket total/own)
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getSummary', name: '_getSummary')]
     public function getSummaryAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
@@ -248,7 +248,7 @@ class DefaultController extends BaseController
      * Retrieves all current entries of the user logged in.
      *
      * @param Request $request
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getData', name: '_getData')]
     #[Route(path: '/getData/days/{days}', name: '_getDataDays')]
@@ -268,7 +268,7 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getCustomers', name: '_getCustomers')]
     public function getCustomersAction(Request $request) : \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
@@ -328,7 +328,7 @@ class DefaultController extends BaseController
 
     /**
      * @return Response
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      * @throws \ReflectionException
      */
     #[Route(path: '/getAllProjects', name: '_getAllProjects')]

@@ -267,7 +267,7 @@ class EntryRepository extends EntityRepository
      * @param boolean $showFuture Include work log entries from future
      *
      * @return array
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function getEntriesByUser($userId, $days = 3, $showFuture = true)
     {
@@ -299,7 +299,7 @@ class EntryRepository extends EntityRepository
         $sql['where_user'] = "AND user_id = $userId";
         $sql['order'] = "ORDER BY day DESC, start DESC";
 
-        $stmt = $connection->query(implode(" ", $sql));
+        $stmt = $connection->executeQuery(implode(" ", $sql));
 
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -360,7 +360,7 @@ class EntryRepository extends EntityRepository
      * @param array $data The initial (default) summary
      *
      * @return array
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function getEntrySummary($entryId, $userId, $data)
     {
@@ -427,7 +427,7 @@ class EntryRepository extends EntityRepository
             $sql['ticket']['select'] = "SELECT 'ticket' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own, 0 AS estimation";
         }
 
-        $stmt = $connection->query(
+        $stmt = $connection->executeQuery(
             implode(" ", $sql['customer'])
             . ' UNION ' . implode(" ", $sql['project'])
             . ' UNION ' . implode(" ", $sql['activity'])
@@ -451,7 +451,7 @@ class EntryRepository extends EntityRepository
      * @param int $period The requested period (day / week / month)
      *
      * @return array
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function getWorkByUser($userId, $period = self::PERIOD_DAY)
     {
@@ -476,7 +476,7 @@ class EntryRepository extends EntityRepository
             break;
         }
 
-        $stmt   = $connection->query(implode(" ", $sql));
+        $stmt   = $connection->executeQuery(implode(" ", $sql));
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $data = [
@@ -602,7 +602,7 @@ class EntryRepository extends EntityRepository
 
         $stmt = $connection->prepare($sql);
         $stmt->execute([':ticketname' => $ticketname]);
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAllAssociative(\PDO::FETCH_ASSOC);
         return $result;
     }
 
@@ -624,7 +624,7 @@ class EntryRepository extends EntityRepository
 
         $stmt = $connection->prepare($sql);
         $stmt->execute([':ticketname' => $ticketname]);
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAllAssociative(\PDO::FETCH_ASSOC);
         return $result;
     }
 }
