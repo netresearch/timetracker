@@ -10,10 +10,10 @@ use App\Model\Base as Base;
 class Preset extends Base
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $name;
     #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'presets')]
     #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
@@ -24,7 +24,7 @@ class Preset extends Base
     #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'presets')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $description;
     public function setId($id)
     {

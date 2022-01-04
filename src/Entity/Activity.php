@@ -12,14 +12,14 @@ class Activity
     public final const SICK    = 'Krank';
     public final const HOLIDAY = 'Urlaub';
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: 'string', length: 50)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
     protected $name;
-    #[ORM\Column(name: 'needs_ticket', type: 'boolean')]
+    #[ORM\Column(name: 'needs_ticket', type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
     protected $needsTicket;
-    #[ORM\Column(name: 'factor', type: 'float')]
+    #[ORM\Column(name: 'factor', type: \Doctrine\DBAL\Types\Types::FLOAT)]
     protected $factor;
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'activity')]
     protected $entries;

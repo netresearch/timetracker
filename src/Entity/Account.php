@@ -10,10 +10,10 @@ use Doctrine\Common\Collections\ArrayCollection;
 class Account
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: 'string', length: 50)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 50)]
     protected $name;
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'Account')]
     protected $entries;

@@ -14,19 +14,19 @@ class Project extends Base
     public final const BILLING_FP    = 2;
     public final const BILLING_MIXED = 3;
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $name;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
     protected $active;
     #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
     protected $global;
-    #[ORM\Column(type: 'string', name: 'jira_id')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'jira_id')]
     protected $jiraId;
     #[ORM\ManyToOne(targetEntity: 'TicketSystem', inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'ticket_system', referencedColumnName: 'id')]
@@ -36,7 +36,7 @@ class Project extends Base
     /**
      * Estimated project duration in minutes
      */
-    #[ORM\Column(type: 'integer', name: 'estimation')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, name: 'estimation')]
     protected $estimation;
     /**
      * Offer number
@@ -46,7 +46,7 @@ class Project extends Base
     /**
      * Used billing method
      */
-    #[ORM\Column(type: 'integer', name: 'billing')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, name: 'billing')]
     protected $billing;
     /**
      * cost center (number or name)
@@ -80,7 +80,7 @@ class Project extends Base
      * * @ORM\Column(name="invoice", length=31, nullable=true)
      */
     protected $invoice;
-    #[ORM\Column(name: 'additional_information_from_external', type: 'boolean')]
+    #[ORM\Column(name: 'additional_information_from_external', type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
     protected $additionalInformationFromExternal;
     /**
      * the internal key of the project the current ticket should be booked to.

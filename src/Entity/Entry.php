@@ -14,24 +14,24 @@ class Entry extends Base
     public final const CLASS_PAUSE       = 4;
     public final const CLASS_OVERLAP     = 8;
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: 'string', length: 31, nullable: true)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 31, nullable: true)]
     protected $ticket;
-    #[ORM\Column(name: 'worklog_id', type: 'integer', nullable: true)]
+    #[ORM\Column(name: 'worklog_id', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: true)]
     protected $worklog_id;
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $description;
-    #[ORM\Column(type: 'date')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATE_MUTABLE)]
     protected $day;
-    #[ORM\Column(type: 'time')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TIME_MUTABLE)]
     protected $start;
-    #[ORM\Column(type: 'time')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TIME_MUTABLE)]
     protected $end;
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     protected $duration;
-    #[ORM\Column(name: 'synced_to_ticketsystem', type: 'boolean')]
+    #[ORM\Column(name: 'synced_to_ticketsystem', type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
     protected $syncedToTicketsystem;
     #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
@@ -48,7 +48,7 @@ class Entry extends Base
     #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
-    #[ORM\Column(name: 'class', type: 'integer', nullable: false)]
+    #[ORM\Column(name: 'class', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: false)]
     protected $class = self::CLASS_PLAIN;
     /**
      * holds summary from external ticket system; no mapping for ORM required (yet)

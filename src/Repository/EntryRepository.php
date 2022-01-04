@@ -340,8 +340,8 @@ class EntryRepository extends EntityRepository
             ->andWhere('p.ticketSystem = :ticket_system_id')
             ->setParameter('user_id', $userId)
             ->setParameter('ticket_system_id', $ticketSystemId)
-            ->orderBy('e.day', 'DESC')
-            ->addOrderBy('e.start', 'DESC');
+            ->orderBy('e.day', \Doctrine\Common\Collections\Criteria::DESC)
+            ->addOrderBy('e.start', \Doctrine\Common\Collections\Criteria::DESC);
 
         if ((int) $maxResults > 0) {
             $qb->setMaxResults((int) $maxResults);
@@ -570,7 +570,7 @@ class EntryRepository extends EntityRepository
 
         if (isset($arFilter['maxResults']) && (int) $arFilter['maxResults'] > 0) {
             $queryBuilder
-                ->orderBy('e.id', 'DESC')
+                ->orderBy('e.id', \Doctrine\Common\Collections\Criteria::DESC)
                 ->setMaxResults((int) $arFilter['maxResults']);
         }
 

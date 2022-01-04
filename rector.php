@@ -44,14 +44,14 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // Doctrine
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_25);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_BEHAVIORS_20);
-    //FAILED: $containerConfigurator->import(DoctrineSetList::DOCTRINE_CODE_QUALITY);
+    $containerConfigurator->import(DoctrineSetList::DOCTRINE_CODE_QUALITY);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_COMMON_20);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_210);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_211);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_DBAL_30);
     //$containerConfigurator->import(DoctrineSetList::DOCTRINE_GEDMO_TO_KNPLABS);
-    //FAILED: $containerConfigurator->import(DoctrineSetList::DOCTRINE_REPOSITORY_AS_SERVICE);
-    $containerConfigurator->import(DoctrineSetList::DOCTRINE_ORM_29);
-    // $containerConfigurator->import(DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES);
-    // $containerConfigurator->import(DoctrineSetList::DOCTRINE_ODM_23);
+    //FAILS: $containerConfigurator->import(DoctrineSetList::DOCTRINE_REPOSITORY_AS_SERVICE);
+    //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ORM_29);
+    //$containerConfigurator->import(DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES);
+    //$containerConfigurator->import(DoctrineSetList::DOCTRINE_ODM_23);
 };

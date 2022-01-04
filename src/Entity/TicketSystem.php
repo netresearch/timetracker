@@ -17,65 +17,65 @@ class TicketSystem extends Base
     /**
      * @var integer $id
      */
-    #[ORM\Column(name: 'id', type: 'integer')]
+    #[ORM\Column(name: 'id', type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
     /**
      * @var string $name
      */
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $name;
     /**
      * @var boolean $bookTime;
      */
-    #[ORM\Column(name: 'book_time', type: 'integer', nullable: false)]
+    #[ORM\Column(name: 'book_time', type: \Doctrine\DBAL\Types\Types::INTEGER, nullable: false)]
     protected $bookTime;
     /**
      * @var string $type;
      */
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $type;
     /**
      * @var string $url
      */
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $url;
     /**
      * @var string $ticketUrl
      */
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $ticketUrl;
     /**
         /**
     * @var string $login
     */
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $login;
     /**
      * @var string $password
      */
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
     protected $password;
     /**
      * @var string $publicKey
      */
-    #[ORM\Column(type: 'string', name: 'public_key')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'public_key')]
     protected $publicKey;
     /**
      * @var string $privateKey
      */
-    #[ORM\Column(type: 'string', name: 'private_key')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'private_key')]
     protected $privateKey;
     /**
      * @var string $oauthConsumerKey
      */
-    #[ORM\Column(type: 'string', name: 'oauth_consumer_key')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'oauth_consumer_key')]
     protected $oauthConsumerKey;
     /**
      * @var string $oauthConsumerSecret
      */
-    #[ORM\Column(type: 'string', name: 'oauth_consumer_secret')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'oauth_consumer_secret')]
     protected $oauthConsumerSecret;
     /**
      * Get id

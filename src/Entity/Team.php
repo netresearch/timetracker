@@ -9,10 +9,10 @@ use Doctrine\ORM\Mapping as ORM;
 class Team
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(type: 'string', length: 31)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 31)]
     protected $name;
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'teams')]
     #[ORM\JoinColumn(name: 'lead_user_id', referencedColumnName: 'id')]

@@ -34,18 +34,18 @@ class Ticket extends Base
      * @var int
      */
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\Column(name: 'ticket_system_id', type: 'integer')]
+    #[ORM\Column(name: 'ticket_system_id', type: \Doctrine\DBAL\Types\Types::INTEGER)]
     private int $ticketSystemId;
-    #[ORM\Column(name: 'ticket_number', type: 'string', length: 31)]
+    #[ORM\Column(name: 'ticket_number', type: \Doctrine\DBAL\Types\Types::STRING, length: 31)]
     private string $ticketNumber;
-    #[ORM\Column(type: 'string', length: 127)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 127)]
     private string $name;
-    #[ORM\Column(type: 'integer', name: 'estimation')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER, name: 'estimation')]
     private int $estimatedDuration;
-    #[ORM\Column(type: 'string', name: 'parent', length: 31)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, name: 'parent', length: 31)]
     private string $parentTicketNumber;
     /**
      * Sets the estimated duration

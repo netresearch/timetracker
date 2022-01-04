@@ -13,7 +13,7 @@ use App\Model\Base as Base;
 class Holiday extends Base
 {
     #[ORM\Id]
-    #[ORM\Column(type: 'date')]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DATE_MUTABLE)]
     private $day;
     public function __construct($day, private $name)
     {
