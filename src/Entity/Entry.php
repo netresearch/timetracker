@@ -159,8 +159,6 @@ class Entry extends Base
 
     /**
      * Sets the array of external labels.
-     *
-     * @param array $arExternalLabels
      */
     public function setExternalLabels(array $arExternalLabels)
     {
@@ -493,7 +491,6 @@ class Entry extends Base
     /**
      * Set project
      *
-     * @param Project $project
      *
      * @return Entry
      */
@@ -516,7 +513,6 @@ class Entry extends Base
     /**
      * Set user
      *
-     * @param User $user
      * @return Entry
      */
     public function setUser(User $user)
@@ -538,7 +534,6 @@ class Entry extends Base
     /**
      * Set account
      *
-     * @param Account $account
      * @return Entry
      */
     public function setAccount(Account $account)
@@ -560,7 +555,6 @@ class Entry extends Base
     /**
      * Set activity
      *
-     * @param Activity $activity
      * @return Entry
      */
     public function setActivity(Activity $activity)
@@ -640,7 +634,6 @@ class Entry extends Base
     /**
      * Set customer
      *
-     * @param Customer $customer
      * @return Entry
      */
     public function setCustomer(Customer $customer)

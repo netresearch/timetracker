@@ -60,19 +60,13 @@ class LdapClient
     protected $_useSSL = false;
 
     /**
-     * @var \LoggerInterface
-     */
-    protected $logger;
-
-    /**
      * @var array
      */
     protected $teams = [];
 
-    public function __construct(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
+    public function __construct(protected LoggerInterface $logger)
+				{
+				}
 
     /**
      * @return string[] LDAP options
@@ -125,13 +119,12 @@ class LdapClient
 
 
     /**
-     * Verify password by logging in to ldap using the user's name and password.
-     *
-     * @param array $ldapEntry
-     * @throws \Exception
-     * @return boolean true
-     */
-    protected function verifyPassword(array $ldapEntry)
+				 * Verify password by logging in to ldap using the user's name and password.
+				 *
+				 * @throws \Exception
+				 * @return boolean true
+				 */
+				protected function verifyPassword(array $ldapEntry)
     {
         $ldapOptions = $this->getLdapOptions();
         $ldapOptions['username'] = $ldapEntry['dn'];

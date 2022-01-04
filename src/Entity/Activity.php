@@ -142,13 +142,12 @@ class Activity
     }
 
     /**
-     * Add entries
-     *
-     * @param Entry $entries
-     *
-     * @return $this
-     */
-    public function addEntries(Entry $entries)
+				 * Add entries
+				 *
+				 *
+				 * @return $this
+				 */
+				public function addEntries(Entry $entries)
     {
 		$this->entries[] = $entries;
 		return $this;
@@ -178,12 +177,11 @@ class Activity
     }
 
     /**
-     * Add entries
-     *
-     * @param Entry $entries
-     * @return Activity
-     */
-    public function addEntrie(Entry $entries)
+				 * Add entries
+				 *
+				 * @return Activity
+				 */
+				public function addEntrie(Entry $entries)
     {
         $this->entries[] = $entries;
 
@@ -191,11 +189,9 @@ class Activity
     }
 
     /**
-     * Remove entries
-     *
-     * @param Entry $entries
-     */
-    public function removeEntrie(Entry $entries)
+				 * Remove entries
+				 */
+				public function removeEntrie(Entry $entries)
     {
         $this->entries->removeElement($entries);
     }

@@ -80,7 +80,6 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param TicketSystem $ticketSystem
      * @return $this
      */
     public function setTicketSystem(TicketSystem $ticketSystem)
@@ -98,7 +97,6 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param User $user
      * @return $this
      */
     public function setUser(User $user)

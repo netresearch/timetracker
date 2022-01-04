@@ -223,7 +223,6 @@ class User
     /**
      * Add entries
      *
-     * @param Entry $entries
      *
      * @return $this
      */
@@ -256,7 +255,6 @@ class User
     /**
      * Add contract
      *
-     * @param Contract $contract
      *
      * @return $this
      */
@@ -281,7 +279,6 @@ class User
     /**
      * Add team
      *
-     * @param Team $team
      *
      * @return $this
      */
@@ -335,7 +332,6 @@ class User
     /**
      * Add entry
      *
-     * @param Entry $entries
      * @return $this
      */
     public function addEntry(Entry $entries)
@@ -346,8 +342,6 @@ class User
 
     /**
      * Remove entries
-     *
-     * @param Entry $entries
      */
     public function removeEntrie(Entry $entries)
     {
@@ -356,8 +350,6 @@ class User
 
     /**
      * Remove teams
-     *
-     * @param Team $teams
      */
     public function removeTeam(Team $teams)
     {
@@ -367,7 +359,6 @@ class User
     /**
      * Add entries
      *
-     * @param Entry $entries
      * @return $this
      */
     public function addEntrie(Entry $entries)
@@ -389,7 +380,6 @@ class User
     /**
      * Get Users accesstoken for a Ticketsystem
      *
-     * @param TicketSystem $ticketsystem
      * @return null|string
      */
     public function getTicketSystemAccessToken(TicketSystem $ticketsystem)
@@ -408,7 +398,6 @@ class User
     /**
      * Get Users tokensecret for a Ticketsystem
      *
-     * @param TicketSystem $ticketsystem
      * @return null|string
      */
     public function getTicketSystemAccessTokenSecret(TicketSystem $ticketsystem)

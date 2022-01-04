@@ -25,12 +25,11 @@ use Symfony\Component\Routing\Annotation\Route;
 class DefaultController extends BaseController
 {
     /**
-     * @param Request $request
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
      * @throws \ReflectionException
      * @Route("/", name="_start")
      */
-    public function indexAction(Request $request)
+    public function indexAction(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -67,11 +66,10 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
      * @Route("/login", name="_login")
      */
-    public function loginAction(Request $request, \Psr\Log\LoggerInterface $logger)
+    public function loginAction(Request $request, \Psr\Log\LoggerInterface $logger): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         if ($request->getMethod() != 'POST') {
             return $this->render('login.html.twig',
@@ -157,11 +155,9 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @Route("/logout", name="_logout")
      */
-    public function logoutAction(Request $request)
+    public function logoutAction(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -172,12 +168,10 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      * @Route("/getTimeSummary", name="time_summary")
      */
-    public function getTimeSummaryAction(Request $request)
+    public function getTimeSummaryAction(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -200,12 +194,10 @@ class DefaultController extends BaseController
     /**
      * Retrieves a summary of an entry (project total/own, ticket total/own)
      *
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      * @Route("/getSummary", name="_getSummary")
      */
-    public function getSummaryAction(Request $request)
+    public function getSummaryAction(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -276,12 +268,11 @@ class DefaultController extends BaseController
      * Retrieves all current entries of the user logged in.
      *
      * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      * @Route("/getData", name="_getData")
      * @Route("/getData/days/{days}", name="_getDataDays")
      */
-    public function getDataAction(int $days = 3)
+    public function getDataAction(int $days = 3): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         $request = null;
         if (!$this->checkLogin($request)) {
@@ -301,12 +292,10 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      * @Route("/getCustomers", name="_getCustomers")
      */
-    public function getCustomersAction(Request $request)
+    public function getCustomersAction(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -321,7 +310,6 @@ class DefaultController extends BaseController
     /**
      * Developers may see their own data only, CTL and PL may see everyone.
      *
-     * @param Request $request
      * @return Response
      * @Route("/getUsers", name="_getUsers")
      */
@@ -337,7 +325,6 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      * @Route("/getCustomer", name="_getCustomer")
      */
@@ -355,7 +342,6 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \ReflectionException
      * @Route("/getProjects", name="_getProjects")
@@ -371,7 +357,6 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \Doctrine\DBAL\DBALException
      * @throws \ReflectionException
@@ -418,7 +403,6 @@ class DefaultController extends BaseController
 
     /**
      * @param Request $request
-     * @return Response
      * @throws \Twig\Error\Error
      * @throws \Exception
      * @Route("/export/{days}", name="_export")
@@ -460,9 +444,8 @@ class DefaultController extends BaseController
      * User is redirected to app after accepting or declining granting access for this app.
      *
      * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function jiraOAuthCallbackAction(Request $request)
+    public function jiraOAuthCallbackAction(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         /** @var User $user */
         $user = $this->getDoctrine()

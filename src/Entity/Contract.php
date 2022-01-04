@@ -109,7 +109,6 @@ class Contract
     /**
      * Set user
      *
-     * @param User $user
      *
      * @return $this
      */

@@ -98,8 +98,6 @@ class ProjectRepository extends EntityRepository
     /**
      * Returns projects for given user, and optionally for given customer.
      *
-     * @param int $userId
-     * @param int $customerId
      * @return array[]
      * @throws \ReflectionException
      */
@@ -130,7 +128,6 @@ class ProjectRepository extends EntityRepository
     }
 
     /**
-     * @param int $customerId
      * @return Project[]
      */
     public function findByCustomer(int $customerId = 0)
@@ -150,9 +147,8 @@ class ProjectRepository extends EntityRepository
 
     /**
      * @param $jiraId
-     * @return false|int
      */
-    public function isValidJiraPrefix($jiraId)
+    public function isValidJiraPrefix($jiraId): int|false
     {
         return preg_match('/^([A-Z]+[A-Z0-9]*[, ]*)*$/', $jiraId);
     }

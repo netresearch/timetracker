@@ -45,7 +45,6 @@ class InterpretationController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return array|null
      * @throws \Exception
      */
@@ -215,7 +214,6 @@ class InterpretationController extends BaseController
     /**
      * Returns the data for the analysing chart "effort per employee".
      *
-     * @param Request $request
      * @return Response
      */
     public function groupByUserAction(Request $request)
@@ -264,7 +262,6 @@ class InterpretationController extends BaseController
     /**
      * Returns booked times grouped by day.
      *
-     * @param Request $request
      * @return Response
      */
     public function groupByWorktimeAction(Request $request)
@@ -349,7 +346,6 @@ class InterpretationController extends BaseController
     /**
      * Get entries by request parameter
      *
-     * @param Request $request
      * @param integer $maxResults
      * @return Entry[]
      * @throws \Exception

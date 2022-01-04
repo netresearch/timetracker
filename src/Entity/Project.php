@@ -273,7 +273,6 @@ class Project extends Base
     /**
      * Set customer
      *
-     * @param Customer $customer
      *
      * @return $this
      */
@@ -323,7 +322,6 @@ class Project extends Base
     /**
      * Add entries
      *
-     * @param Entry $entry
      * @return Project
      */
     public function addEntries(Entry $entry)
@@ -499,7 +497,6 @@ class Project extends Base
     /**
      * Add entries
      *
-     * @param Entry $entries
      * @return Project
      */
     public function addEntry(Entry $entries)
@@ -510,8 +507,6 @@ class Project extends Base
 
     /**
      * Remove entries
-     *
-     * @param Entry $entries
      */
     public function removeEntrie(Entry $entries)
     {
@@ -521,7 +516,6 @@ class Project extends Base
     /**
      * Add entries
      *
-     * @param Entry $entries
      * @return Project
      */
     public function addEntrie(Entry $entries)

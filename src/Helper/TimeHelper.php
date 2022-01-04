@@ -21,24 +21,22 @@ class TimeHelper
 
     /**
      * @param $letter
-     * @return float|int
      */
-    public static function getMinutesByLetter($letter) {
-        switch ($letter) {
-        case 'w': return self::DAYS_PER_WEEK * self::HOURS_PER_DAY * 60;
-        case 'd': return self::HOURS_PER_DAY * 60;
-        case 'h': return 60;
-        case 'm': return 1;
-        case '': return 1;
-        default: return 0;
-        }
+    public static function getMinutesByLetter($letter): float|int {
+        return match ($letter) {
+            'w' => self::DAYS_PER_WEEK * self::HOURS_PER_DAY * 60,
+            'd' => self::HOURS_PER_DAY * 60,
+            'h' => 60,
+            'm' => 1,
+            '' => 1,
+            default => 0,
+        };
     }
 
     /**
      * @param $readable
-     * @return float|int
      */
-    public static function readable2minutes($readable)
+    public static function readable2minutes($readable): float|int
     {
         if (!preg_match_all('/([0-9.,]+)([wdhm]|$)/iU', $readable, $matches)) {
             return 0;

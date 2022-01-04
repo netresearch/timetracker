@@ -40,18 +40,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class Export
 {
     /**
-     * @var null|ContainerInterface
-     */
-    protected $container = null;
-
-    /**
      * mandatory dependency the service container
      *
      * @param ContainerInterface $container
      */
-    public function __construct(ContainerInterface $container = null)
+    public function __construct(protected ?\Symfony\Component\DependencyInjection\ContainerInterface $container = null)
     {
-        $this->container = $container;
     }
 
     /**

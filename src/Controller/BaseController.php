@@ -36,7 +36,6 @@ class BaseController extends AbstractController
     /**
      * set up function before actions are dispatched
      *
-     * @param Request $request
      *
      * @return void
      */
@@ -62,7 +61,6 @@ class BaseController extends AbstractController
     /**
      * check the login status
      *
-     * @param Request $request
      *
      * @return mixed
      */
@@ -75,7 +73,6 @@ class BaseController extends AbstractController
     /**
      * returns the user id
      *
-     * @param Request $request
      *
      * @return mixed
      */
@@ -87,11 +84,9 @@ class BaseController extends AbstractController
     /**
      * Redirects to the login page
      *
-     * @param Request $request
      *
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse|Response
      */
-    protected function login(Request $request)
+    protected function login(Request $request): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (!$request->isXmlHttpRequest()) {
             return $this->redirect($this->generateUrl('_login'));
@@ -103,7 +98,6 @@ class BaseController extends AbstractController
     /**
      * checks the user type to be PL
      *
-     * @param Request $request
      *
      * @return bool
      */
@@ -125,7 +119,6 @@ class BaseController extends AbstractController
     /**
      * checks the user type to be DEV
      *
-     * @param Request $request
      *
      * @return bool
      */
@@ -147,7 +140,6 @@ class BaseController extends AbstractController
     /**
      * Returns true if a user is logged in or can authenticate by cookie
      *
-     * @param Request $request
      *
      * @return bool
      */
@@ -221,13 +213,11 @@ class BaseController extends AbstractController
     /**
      * Handles all after-login stuff
      *
-     * @param Request $request
      * @param User    $user      user object
      * @param bool    $setCookie set a cookie or not
      *
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse|Response
      */
-    protected function setLoggedIn(Request $request, $user, $setCookie = true)
+    protected function setLoggedIn(Request $request, $user, $setCookie = true): \App\Model\Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         $session = $request->getSession();
 
@@ -261,7 +251,6 @@ class BaseController extends AbstractController
     /**
      * logout of an user
      *
-     * @param Request $request
      *
      * @return void
      */

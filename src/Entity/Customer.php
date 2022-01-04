@@ -159,7 +159,6 @@ class Customer extends Base
     /**
      * Add projects
      *
-     * @param Project $projects
      *
      * @return $this
      */
@@ -182,7 +181,6 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param Entry $entries
      *
      * @return $this
      */
@@ -216,7 +214,6 @@ class Customer extends Base
     /**
      * Add team
      *
-     * @param Team $team
      *
      * @return $this
      */
@@ -239,7 +236,6 @@ class Customer extends Base
     /**
      * Add projects
      *
-     * @param Project $projects
      * @return Customer
      */
     public function addProject(Project $projects)
@@ -250,8 +246,6 @@ class Customer extends Base
 
     /**
      * Remove projects
-     *
-     * @param Project $projects
      */
     public function removeProject(Project $projects)
     {
@@ -261,7 +255,6 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param Entry $entry
      * @return Customer
      */
     public function addEntry(Entry $entry)
@@ -272,8 +265,6 @@ class Customer extends Base
 
     /**
      * Remove entry
-     *
-     * @param Entry $entry
      */
     public function removeEntrie(Entry $entry)
     {
@@ -282,8 +273,6 @@ class Customer extends Base
 
     /**
      * Remove teams
-     *
-     * @param Team $teams
      */
     public function removeTeam(Team $teams)
     {
@@ -293,7 +282,6 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param Entry $entries
      * @return Customer
      */
     public function addEntrie(Entry $entries)

@@ -153,7 +153,6 @@ class Preset extends Base
     /**
      * Set customer
      *
-     * @param Customer $customer
      *
      * @return $this
      */
@@ -177,7 +176,6 @@ class Preset extends Base
     /**
      * Set project
      *
-     * @param Project $project
      *
      * @return $this
      */
@@ -201,7 +199,6 @@ class Preset extends Base
     /**
      * Set activity
      *
-     * @param Activity $activity
      *
      * @return $this
      */

@@ -24,7 +24,6 @@ use App\Helper\TimeHelper;
 class AdminController extends BaseController
 {
     /**
-     * @param Request $request
      * @return Response
      * @throws \ReflectionException
      */
@@ -45,7 +44,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function getCustomersAction(Request $request)
@@ -61,7 +59,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function getUsersAction(Request $request)
@@ -77,7 +74,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function getTeamsAction(Request $request)
@@ -93,7 +89,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function getPresetsAction(Request $request)
@@ -109,7 +104,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \ReflectionException
      */
@@ -139,7 +133,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function saveProjectAction(Request $request)
@@ -258,11 +251,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteProjectAction(Request $request)
+    public function deleteProjectAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -280,7 +269,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
@@ -291,7 +280,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function saveCustomerAction(Request $request)
@@ -361,11 +349,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteCustomerAction(Request $request)
+    public function deleteCustomerAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -383,7 +367,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
@@ -394,7 +378,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function saveUserAction(Request $request)
@@ -484,11 +467,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteUserAction(Request $request)
+    public function deleteUserAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -506,7 +485,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
@@ -516,11 +495,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deletePresetAction(Request $request)
+    public function deletePresetAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -538,7 +513,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
@@ -549,7 +524,6 @@ class AdminController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function savePresetAction(Request $request)
@@ -595,7 +569,7 @@ class AdminController extends BaseController
             $em = $this->getDoctrine()->getManager();
             $em->persist($preset);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
             $response->setStatusCode(403);
             return $response;
@@ -606,7 +580,6 @@ class AdminController extends BaseController
 
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \ReflectionException
      */
@@ -678,11 +651,7 @@ class AdminController extends BaseController
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteTicketSystemAction(Request $request)
+    public function deleteTicketSystemAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -700,7 +669,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
@@ -712,7 +681,6 @@ class AdminController extends BaseController
 
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function saveActivityAction(Request $request)
@@ -767,11 +735,7 @@ class AdminController extends BaseController
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteActivityAction(Request $request)
+    public function deleteActivityAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -789,7 +753,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
@@ -801,7 +765,6 @@ class AdminController extends BaseController
 
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function saveTeamAction(Request $request)
@@ -864,11 +827,7 @@ class AdminController extends BaseController
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteTeamAction(Request $request)
+    public function deleteTeamAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -886,7 +845,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
@@ -898,7 +857,6 @@ class AdminController extends BaseController
 
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function jiraSyncEntriesAction(Request $request)
@@ -942,7 +900,6 @@ class AdminController extends BaseController
 
 
     /**
-     * @param Request $request
      * @return Response
      */
     public function getContractsAction(Request $request)
@@ -959,7 +916,6 @@ class AdminController extends BaseController
 
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \Exception
      */
@@ -1047,11 +1003,7 @@ class AdminController extends BaseController
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteContractAction(Request $request)
+    public function deleteContractAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -1069,7 +1021,7 @@ class AdminController extends BaseController
             $em->flush();
         } catch (\Exception $e) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);

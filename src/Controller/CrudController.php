@@ -63,7 +63,6 @@ class CrudController extends BaseController
      * Deletes a work log entry in a remote JIRA installation.
      * JIRA instance is defined by ticket system in project.
      *
-     * @param Entry             $entry
      * @param TicketSystem|null $ticketSystem
      * @return void
      * @throws JiraApiException
@@ -171,11 +170,8 @@ class CrudController extends BaseController
 
     /**
      * Save action handler.
-     *
-     * @param Request $request
-     * @return Error|Response
      */
-    public function saveAction(Request $request)
+    public function saveAction(Request $request): \App\Response\Error|\App\Model\Response
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -333,7 +329,6 @@ class CrudController extends BaseController
     /**
      * Inserts a series of same entries by preset
      *
-     * @param Request $request
      *
      * @return Response
      */
@@ -514,7 +509,6 @@ class CrudController extends BaseController
     /**
      * TTT-199: check if ticket prefix matches project's Jira id.
      *
-     * @param Project $project
      * @param string $ticket
      * @throws \Exception
      * @return void
@@ -558,7 +552,6 @@ class CrudController extends BaseController
     /**
      * Write log entry to log file.
      *
-     * @param array $data
      * @param bool  $raw
      * @throws \Exception
      */
@@ -598,8 +591,6 @@ class CrudController extends BaseController
     /**
      * Updates a JIRA work log entry.
      *
-     * @param Entry $entry
-     * @param Entry $oldEntry
      *
      * @param TicketSystem|null $ticketSystem
      * @return void
@@ -644,7 +635,6 @@ class CrudController extends BaseController
     /**
      * Creates an Ticket in the given ticketSystem
      *
-     * @param Entry $entry
      * @param TicketSystem|null $ticketSystem
      * @return string
      *
@@ -757,8 +747,6 @@ class CrudController extends BaseController
     /**
      * Returns true, if the ticket should be deleted.
      *
-     * @param Entry $entry
-     * @param Entry $oldEntry
      * @return bool
      */
     protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry)

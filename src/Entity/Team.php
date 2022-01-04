@@ -96,7 +96,6 @@ class Team
     /**
      * Set lead user
      *
-     * @param User $leadUser
      *
      * @return $this
      */
@@ -127,7 +126,6 @@ class Team
     /**
      * Add customers
      *
-     * @param Customer $customers
      * @return Team
      */
     public function addCustomer(Customer $customers)
@@ -138,8 +136,6 @@ class Team
 
     /**
      * Remove customers
-     *
-     * @param Customer $customers
      */
     public function removeCustomer(Customer $customers)
     {

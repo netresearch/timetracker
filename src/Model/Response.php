@@ -32,8 +32,6 @@ class Response extends \Symfony\Component\HttpFoundation\Response
 
     /**
      * Add additional headers before sending an ajax reply to the client
-     *
-     * @return $this
      */
     public function send(): static
     {

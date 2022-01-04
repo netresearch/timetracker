@@ -79,8 +79,6 @@ class Account
 
     /**
      * Add entries
-     *
-     * @param Entry $entries
      */
     public function addEntries(Entry $entries)
     {
@@ -100,7 +98,6 @@ class Account
     /**
      * Add entry
      *
-     * @param Entry $entry
      * @return Account
      */
     public function addEntry(Entry $entry)
@@ -111,8 +108,6 @@ class Account
 
     /**
      * Remove entry
-     *
-     * @param Entry $entry
      */
     public function removeEntrie(Entry $entry)
     {
@@ -122,7 +117,6 @@ class Account
     /**
      * Add entries
      *
-     * @param Entry $entries
      * @return Account
      */
     public function addEntrie(Entry $entries)

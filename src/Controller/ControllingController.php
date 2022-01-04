@@ -37,7 +37,6 @@ class ControllingController extends BaseController
     /**
      * Exports a users timetable from one specific year and month
      *
-     * @param Request $request
      *
      * @return Response
      * @throws \PhpOffice\PhpSpreadsheet\Exception

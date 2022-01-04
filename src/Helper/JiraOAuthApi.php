@@ -29,12 +29,6 @@ use Symfony\Bundle\FrameworkBundle\Routing\Router;
 
 class JiraOAuthApi
 {
-    /** @var User */
-    protected $user;
-    /** @var TicketSystem */
-    protected $ticketSystem;
-    /** @var ManagerRegistry */
-    protected $doctrine;
     /** @var string */
     protected $oAuthCallbackUrl;
 
@@ -53,16 +47,10 @@ class JiraOAuthApi
     /**
      * JiraOAuthApi constructor.
      *
-     * @param User $user
-     * @param TicketSystem $ticketSystem
      * @param ManagerRegistry $doctrine
-     * @param Router $router
      */
-    public function __construct(User $user, TicketSystem $ticketSystem, ManagerRegistry $doctrine, Router $router)
+    public function __construct(protected User $user, protected TicketSystem $ticketSystem, protected ManagerRegistry $doctrine, Router $router)
     {
-        $this->user = $user;
-        $this->ticketSystem = $ticketSystem;
-        $this->doctrine = $doctrine;
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
@@ -157,7 +145,7 @@ class JiraOAuthApi
 
         $keyFileHeader = '-----BEGIN PRIVATE KEY-----';
 
-        if (0 === strpos($certificate, $keyFileHeader)) {
+        if (str_starts_with($certificate, $keyFileHeader)) {
             return $this->getTempKeyFile($certificate);
         }
 
@@ -248,7 +236,6 @@ class JiraOAuthApi
     }
 
     /**
-     * @param ResponseInterface $response
      * @return string[]
      * @throws JiraApiException
      */
@@ -297,7 +284,7 @@ class JiraOAuthApi
             try {
                 $this->updateEntryJiraWorkLog($entry);
                 $em->persist($entry);
-            } catch (\Exception $e) {
+            } catch (\Exception) {
 
             } finally {
                 $em->flush();
@@ -308,7 +295,6 @@ class JiraOAuthApi
     /**
      * Create or update Jira work log entry.
      *
-     * @param Entry $entry
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
@@ -360,7 +346,6 @@ class JiraOAuthApi
     /**
      * Removes Jira workLog entry.
      *
-     * @param Entry $entry
      * @throws JiraApiException
      */
     public function deleteEntryJiraWorkLog(Entry $entry)
@@ -386,11 +371,10 @@ class JiraOAuthApi
             ));
 
             $entry->setWorklogId(NULL);
-        } catch (JiraApiInvalidResourceException $e) {}
+        } catch (JiraApiInvalidResourceException) {}
     }
 
     /**
-     * @param Entry $entry
      * @return string
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
@@ -471,7 +455,7 @@ class JiraOAuthApi
     {
         try {
             $this->get($url);
-        } catch (JiraApiInvalidResourceException $e) {
+        } catch (JiraApiInvalidResourceException) {
             return false;
         }
         return true;
@@ -701,7 +685,6 @@ class JiraOAuthApi
     /**
      * Returns work log entry description for ticket system.
      *
-     * @param  Entry $entry
      * @return string
      */
     protected function getTicketSystemWorkLogComment(Entry $entry)
@@ -722,7 +705,6 @@ class JiraOAuthApi
      * Returns work log entry start date formatted for Jira API.
      * //"2016-02-17T14:35:51.000+0100"
      *
-     * @param  Entry $entry
      * @return string "2016-02-17T14:35:51.000+0100"
      */
     protected function getTicketSystemWorkLogStartDate(Entry $entry)
