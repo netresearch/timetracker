@@ -172,13 +172,13 @@ class AdminController extends BaseController
             : null;
 
         $jiraId       = strtoupper($request->get('jiraId'));
-        $active       = $request->get('active') ? $request->get('active') : 0;
-        $global       = $request->get('global') ? $request->get('global') : 0;
-        $estimation   = TimeHelper::readable2minutes($request->get('estimation') ? $request->get('estimation') : '0m');
-        $billing      = $request->get('billing') ? $request->get('billing') : 0;
-        $costCenter   = $request->get('cost_center') ? $request->get('cost_center') : NULL;
-        $offer        = $request->get('offer') ? $request->get('offer') : 0;
-        $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ? $request->get('additionalInformationFromExternal') : 0;
+        $active       = $request->get('active') ?: 0;
+        $global       = $request->get('global') ?: 0;
+        $estimation   = TimeHelper::readable2minutes($request->get('estimation') ?: '0m');
+        $billing      = $request->get('billing') ?: 0;
+        $costCenter   = $request->get('cost_center') ?: NULL;
+        $offer        = $request->get('offer') ?: 0;
+        $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ?: 0;
         /* @var $projectRepository \App\Repository\ProjectRepository */
         $projectRepository = $this->getDoctrine()->getRepository('App:Project');
         $internalJiraTicketSystem = (int) $request->get('internalJiraTicketSystem', 0);
@@ -303,9 +303,9 @@ class AdminController extends BaseController
         $data = null;
         $customerId  = (int) $request->get('id');
         $name       = $request->get('name');
-        $active     = $request->get('active') ? $request->get('active') : 0;
-        $global     = $request->get('global') ? $request->get('global') : 0;
-        $teamIds    = $request->get('teams')  ? $request->get('teams')  : array();
+        $active     = $request->get('active') ?: 0;
+        $global     = $request->get('global') ?: 0;
+        $teamIds    = $request->get('teams') ?: array();
 
         $customerRepository = $this->getDoctrine()->getRepository('App:Customer');
 
@@ -408,7 +408,7 @@ class AdminController extends BaseController
         $abbr     = $request->get('abbr');
         $type     = $request->get('type');
         $locale   = $request->get('locale');
-        $teamIds  = $request->get('teams')  ? $request->get('teams')  : array();
+        $teamIds  = $request->get('teams') ?: array();
 
         /* @var UserRepository $userRepository */
         $userRepository = $this->getDoctrine()->getRepository('App:User');

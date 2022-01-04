@@ -244,12 +244,12 @@ class CrudController extends BaseController
                 $entry->setActivity($activity);
             }
 
-            $entry->setTicket(strtoupper(trim($request->get('ticket') ? $request->get('ticket') : '')))
-                ->setDescription($request->get('description') ? $request->get('description') : '')
-                ->setDay($request->get('date') ? $request->get('date') : null)
-                ->setStart($request->get('start') ? $request->get('start') : null)
-                ->setEnd($request->get('end') ? $request->get('end') : null)
-                ->setInternalJiraTicketOriginalKey($request->get('extTicket') ? $request->get('extTicket') : null)
+            $entry->setTicket(strtoupper(trim($request->get('ticket') ?: '')))
+                ->setDescription($request->get('description') ?: '')
+                ->setDay($request->get('date') ?: null)
+                ->setStart($request->get('start') ?: null)
+                ->setEnd($request->get('end') ?: null)
+                ->setInternalJiraTicketOriginalKey($request->get('extTicket') ?: null)
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                 ->calcDuration()
                 ->setSyncedToTicketsystem(FALSE);
@@ -446,8 +446,8 @@ class CrudController extends BaseController
                     ->setTicket('')
                     ->setDescription($preset->getDescription())
                     ->setDay($date)
-                    ->setStart($request->get('starttime') ? $request->get('starttime') : null)
-                    ->setEnd($request->get('endtime') ? $request->get('endtime') : null)
+                    ->setStart($request->get('starttime') ?: null)
+                    ->setEnd($request->get('endtime') ?: null)
                     //->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                     ->calcDuration();
 
