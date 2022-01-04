@@ -14,7 +14,7 @@ use \Symfony\Component\HttpKernel\HttpKernelInterface as HttpKernelInterface;
  */
 class PreExecute
 {
-    public function onKernelController(FilterControllerEvent $event)
+    public function onKernelController(\Symfony\Component\HttpKernel\Event\ControllerEvent $event)
     {
         if (HttpKernelInterface::MASTER_REQUEST === $event->getRequestType()) {
             $controllers = $event->getController();

@@ -24,11 +24,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     //$containerConfigurator->import(SetList::PHP_81);
 
-    $containerConfigurator->import(SymfonySetList::SYMFONY_30);
-    // $containerConfigurator->import(SymfonySetList::SYMFONY_31);
-    // $containerConfigurator->import(SymfonySetList::SYMFONY_32);
-    // $containerConfigurator->import(SymfonySetList::SYMFONY_33);
-    // $containerConfigurator->import(SymfonySetList::SYMFONY_34);
+    $containerConfigurator->import(SymfonySetList::SYMFONY_43);
 
     // $containerConfigurator->import(SymfonySetList::SYMFONY_60);
     // $containerConfigurator->import(SymfonySetList::SYMFONY_CODE_QUALITY);
