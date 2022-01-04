@@ -283,6 +283,7 @@ class DefaultController extends BaseController
      */
     public function getDataAction(int $days = 3)
     {
+        $request = null;
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
@@ -424,6 +425,7 @@ class DefaultController extends BaseController
      */
     public function exportAction(int $days = 10000): Response
     {
+        $request = null;
         //$days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 10000;
 
         $user = $this->getDoctrine()
@@ -492,6 +494,8 @@ class DefaultController extends BaseController
      */
     public function getTicketTimeSummaryAction(string $ticket = null)
     {
+        $request = null;
+        $time = [];
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }

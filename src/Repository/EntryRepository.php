@@ -455,6 +455,7 @@ class EntryRepository extends EntityRepository
      */
     public function getWorkByUser($userId, $period = self::PERIOD_DAY)
     {
+        $sql = [];
         $connection = $this->getEntityManager()->getConnection();
 
         $sql['select'] = "SELECT COUNT(id) AS count, SUM(duration) AS duration";
