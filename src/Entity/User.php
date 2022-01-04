@@ -7,91 +7,41 @@ use App\Helper\LocalizationHelper;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @ORM\Table(name="users")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\UserRepository')]
+#[ORM\Table(name: 'users')]
 class User
 {
-
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
+    #[ORM\Column(type: 'string', length: 50)]
     protected $username;
-
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     protected $abbr;
-
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     protected $type;
-
-    /**
-     * @ORM\Column(name="show_empty_line", type="integer", nullable=false)
-     */
+    #[ORM\Column(name: 'show_empty_line', type: 'integer', nullable: false)]
     protected $showEmptyLine;
-
-    /**
-     * @ORM\Column(name="suggest_time", type="integer", nullable=false)
-     */
+    #[ORM\Column(name: 'suggest_time', type: 'integer', nullable: false)]
     protected $suggestTime;
-
-
-    /**
-     * @ORM\Column(name="show_future", type="integer", nullable=false)
-     */
+    #[ORM\Column(name: 'show_future', type: 'integer', nullable: false)]
     protected $showFuture;
-
-
-    /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="user")
-     */
+    #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'user')]
     protected $entries;
-
-
-    /**
-     * @ORM\OneToMany(targetEntity="Contract", mappedBy="user")
-     */
+    #[ORM\OneToMany(targetEntity: 'Contract', mappedBy: 'user')]
     protected $contracts;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Team", inversedBy="users")
-     * @ORM\JoinTable(name="teams_users",
-     *     joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")}
-     * )
-     */
+    #[ORM\ManyToMany(targetEntity: 'Team', inversedBy: 'users')]
+    #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
     protected $teams;
-
-    /**
-     * @ORM\Column(name="locale", type="string", nullable=false)
-     */
+    #[ORM\Column(name: 'locale', type: 'string', nullable: false)]
     protected $locale;
-
-
-    /**
-     * @ORM\OneToMany(targetEntity="UserTicketsystem", mappedBy="user")
-     */
+    #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'user')]
     protected $userTicketsystems;
-
-
-
     public function __construct()
     {
         $this->entries = new ArrayCollection();
     }
-
     /**
      * Set id
      * @param integer $id
@@ -103,7 +53,6 @@ class User
         $this->id = $id;
         return $this;
     }
-
     /**
      * Get id
      *
@@ -113,7 +62,6 @@ class User
     {
         return $this->id;
     }
-
     /**
      * Set username
      *
@@ -126,7 +74,6 @@ class User
         $this->username = $username;
         return $this;
     }
-
     /**
      * Get username
      *
@@ -136,7 +83,6 @@ class User
     {
         return $this->username;
     }
-
     /**
      * Set abbr
      *
@@ -149,7 +95,6 @@ class User
         $this->abbr = $abbr;
         return $this;
     }
-
     /**
      * Get abbr
      *
@@ -159,7 +104,6 @@ class User
     {
         return $this->abbr;
     }
-
     /**
      * Set type
      *
@@ -172,7 +116,6 @@ class User
         $this->type = $type;
         return $this;
     }
-
     /**
      * Get type
      *
@@ -182,44 +125,33 @@ class User
     {
         return $this->type;
     }
-
     public function getShowEmptyLine()
     {
         return $this->showEmptyLine;
     }
-
-
     public function setShowEmptyLine($value)
     {
         $this->showEmptyLine = $value;
         return $this;
     }
-
     public function getSuggestTime()
     {
         return $this->suggestTime;
     }
-
-
     public function setSuggestTime($value)
     {
         $this->suggestTime = $value;
         return $this;
     }
-
     public function getShowFuture()
     {
         return $this->showFuture;
     }
-
-
     public function setShowFuture($value)
     {
         $this->showFuture = $value;
         return $this;
     }
-
-
     /**
      * Add entries
      *
@@ -231,7 +163,6 @@ class User
         $this->entries[] = $entries;
         return $this;
     }
-
     /**
      * Get entries
      *
@@ -241,7 +172,6 @@ class User
     {
         return $this->entries;
     }
-
     /**
      * Get contracts
      *
@@ -251,7 +181,6 @@ class User
     {
         return $this->contracts;
     }
-
     /**
      * Add contract
      *
@@ -263,8 +192,6 @@ class User
         $this->contracts[] = $contract;
         return $this;
     }
-
-
     /**
      * Reset teams
      *
@@ -275,7 +202,6 @@ class User
         $this->teams = new ArrayCollection();
         return $this;
     }
-
     /**
      * Add team
      *
@@ -287,7 +213,6 @@ class User
         $this->teams[] = $team;
         return $this;
     }
-
     /**
      * Get teams
      *
@@ -297,19 +222,15 @@ class User
     {
         return $this->teams;
     }
-
     public function getLocale()
     {
         return $this->locale;
     }
-
-
     public function setLocale($locale)
     {
         $this->locale = LocalizationHelper::normalizeLocale($locale);
         return $this;
     }
-
     /**
      * return all relevant settings in an array
      */
@@ -325,10 +246,6 @@ class User
             'locale'            => LocalizationHelper::normalizeLocale($this->getLocale())
         );
     }
-
-
-
-
     /**
      * Add entry
      *
@@ -339,7 +256,6 @@ class User
         $this->entries[] = $entries;
         return $this;
     }
-
     /**
      * Remove entries
      */
@@ -347,7 +263,6 @@ class User
     {
         $this->entries->removeElement($entries);
     }
-
     /**
      * Remove teams
      */
@@ -355,7 +270,6 @@ class User
     {
         $this->teams->removeElement($teams);
     }
-
     /**
      * Add entries
      *
@@ -367,7 +281,6 @@ class User
 
         return $this;
     }
-
     /**
      * @return \Doctrine\Common\Collections\Collection $userTicketSystems
      */
@@ -375,8 +288,6 @@ class User
     {
         return $this->userTicketsystems;
     }
-
-
     /**
      * Get Users accesstoken for a Ticketsystem
      *
@@ -393,8 +304,6 @@ class User
         }
         return $return;
     }
-
-
     /**
      * Get Users tokensecret for a Ticketsystem
      *

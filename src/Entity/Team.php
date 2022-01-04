@@ -4,49 +4,25 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\TeamRepository")
- * @ORM\Table(name="teams")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\TeamRepository')]
+#[ORM\Table(name: 'teams')]
 class Team
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-    /**
-     * @ORM\Column(type="string", length=31)
-     */
+    #[ORM\Column(type: 'string', length: 31)]
     protected $name;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="teams")
-     * @ORM\JoinColumn(name="lead_user_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'teams')]
+    #[ORM\JoinColumn(name: 'lead_user_id', referencedColumnName: 'id')]
     protected $leadUser;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Customer", inversedBy="teams")
-     * @ORM\JoinTable(name="teams_customers",
-     *     joinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")}
-     * )
-     */
+    #[ORM\ManyToMany(targetEntity: 'Customer', inversedBy: 'teams')]
+    #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')])]
     protected $customers;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="User", inversedBy="teams")
-     * @ORM\JoinTable(name="teams_users",
-     *     joinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")}
-     * )
-     */
+    #[ORM\ManyToMany(targetEntity: 'User', inversedBy: 'teams')]
+    #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')])]
     protected $users;
-
     /**
      * Set id
      *
@@ -59,7 +35,6 @@ class Team
         $this->id = $id;
         return $this;
     }
-
     /**
      * Get id
      *
@@ -69,7 +44,6 @@ class Team
     {
         return $this->id;
     }
-
     /**
      * Set name
      *
@@ -82,7 +56,6 @@ class Team
         $this->name = $name;
         return $this;
     }
-
     /**
      * Get name
      *
@@ -92,7 +65,6 @@ class Team
     {
         return $this->name;
     }
-
     /**
      * Set lead user
      *
@@ -104,7 +76,6 @@ class Team
         $this->leadUser = $leadUser;
         return $this;
     }
-
     /**
      * Get lead user
      *
@@ -114,7 +85,6 @@ class Team
     {
         return $this->leadUser;
     }
-
     /**
      * Constructor
      */
@@ -122,7 +92,6 @@ class Team
     {
         $this->customers = new \Doctrine\Common\Collections\ArrayCollection();
     }
-
     /**
      * Add customers
      *
@@ -133,7 +102,6 @@ class Team
         $this->customers[] = $customers;
         return $this;
     }
-
     /**
      * Remove customers
      */
@@ -141,7 +109,6 @@ class Team
     {
         $this->customers->removeElement($customers);
     }
-
     /**
      * Get customers
      *

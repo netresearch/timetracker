@@ -5,36 +5,22 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- *
- * @ORM\Entity
- * @ORM\Table(name="accounts")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'accounts')]
 class Account
 {
-
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
+    #[ORM\Column(type: 'string', length: 50)]
     protected $name;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="Account")
-     */
+    #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'Account')]
     protected $entries;
-
     public function __construct()
     {
         $this->entries = new ArrayCollection();
     }
-
     /**
      * Get id
      *
@@ -44,7 +30,6 @@ class Account
     {
         return $this->id;
     }
-
     /**
      * Set id
      * @param int $id
@@ -56,7 +41,6 @@ class Account
         $this->id = $id;
         return $this;
     }
-
     /**
      * Set name
      *
@@ -66,7 +50,6 @@ class Account
     {
         $this->name = $name;
     }
-
     /**
      * Get name
      *
@@ -76,7 +59,6 @@ class Account
     {
         return $this->name;
     }
-
     /**
      * Add entries
      */
@@ -84,7 +66,6 @@ class Account
     {
         $this->entries[] = $entries;
     }
-
     /**
      * Get entries
      *
@@ -94,7 +75,6 @@ class Account
     {
         return $this->entries;
     }
-
     /**
      * Add entry
      *
@@ -105,7 +85,6 @@ class Account
         $this->entries[] = $entry;
         return $this;
     }
-
     /**
      * Remove entry
      */
@@ -113,7 +92,6 @@ class Account
     {
         $this->entries->removeElement($entry);
     }
-
     /**
      * Add entries
      *

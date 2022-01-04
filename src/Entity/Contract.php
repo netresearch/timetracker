@@ -5,82 +5,36 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A user contract (working hours)
- *
- * @ORM\Entity(repositoryClass="App\Repository\ContractRepository")
- * @ORM\Table(name="contracts")
  */
+#[ORM\Entity(repositoryClass: 'App\Repository\ContractRepository')]
+#[ORM\Table(name: 'contracts')]
 class Contract
 {
-
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-
-    /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="contracts")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'contracts')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
-
-
-    /**
-     * @ORM\Column(type="date")
-     */
+    #[ORM\Column(type: 'date')]
     protected $start;
-
-
-    /**
-     * @ORM\Column(type="date")
-     */
+    #[ORM\Column(type: 'date')]
     protected $end;
-
-
-    /**
-     * @ORM\Column(type="float")
-     */
+    #[ORM\Column(type: 'float')]
     protected $hours_0;
-
-
-    /**
-     * @ORM\Column(type="float")
-     */
+    #[ORM\Column(type: 'float')]
     protected $hours_1;
-
-
-    /**
-     * @ORM\Column(type="float")
-     */
+    #[ORM\Column(type: 'float')]
     protected $hours_2;
-
-
-    /**
-     * @ORM\Column(type="float")
-     */
+    #[ORM\Column(type: 'float')]
     protected $hours_3;
-
-
-    /**
-     * @ORM\Column(type="float")
-     */
+    #[ORM\Column(type: 'float')]
     protected $hours_4;
-
-
-    /**
-     * @ORM\Column(type="float")
-     */
+    #[ORM\Column(type: 'float')]
     protected $hours_5;
-
-
-    /**
-     * @ORM\Column(type="float")
-     */
+    #[ORM\Column(type: 'float')]
     protected $hours_6;
-
-
     /**
      * Set id
      *
@@ -93,8 +47,6 @@ class Contract
         $this->id = $id;
         return $this;
     }
-
-
     /**
      * Get id
      *
@@ -104,8 +56,6 @@ class Contract
     {
         return $this->id;
     }
-
-
     /**
      * Set user
      *
@@ -117,8 +67,6 @@ class Contract
         $this->user = $user;
         return $this;
     }
-
-
     /**
      * Get user
      *
@@ -128,8 +76,6 @@ class Contract
     {
         return $this->user;
     }
-
-
     /**
      * @return mixed
      */
@@ -137,8 +83,6 @@ class Contract
     {
         return $this->start;
     }
-
-
     /**
      * @param mixed $start
      * @return $this
@@ -148,8 +92,6 @@ class Contract
         $this->start = $start;
         return $this;
     }
-
-
     /**
      * @return mixed
      */
@@ -157,8 +99,6 @@ class Contract
     {
         return $this->end;
     }
-
-
     /**
      * @param mixed $end
      * @return $this
@@ -168,8 +108,6 @@ class Contract
         $this->end = $end;
         return $this;
     }
-
-
     /**
      * @return float
      */
@@ -177,8 +115,6 @@ class Contract
     {
         return $this->hours_0;
     }
-
-
     /**
      * @param float $hours_0
      * @return $this
@@ -188,8 +124,6 @@ class Contract
         $this->hours_0 = $hours_0;
         return $this;
     }
-
-
     /**
      * @return float
      */
@@ -197,8 +131,6 @@ class Contract
     {
         return $this->hours_1;
     }
-
-
     /**
      * @param float $hours_1
      * @return $this
@@ -208,8 +140,6 @@ class Contract
         $this->hours_1 = $hours_1;
         return $this;
     }
-
-
     /**
      * @return float
      */
@@ -217,8 +147,6 @@ class Contract
     {
         return $this->hours_2;
     }
-
-
     /**
      * @param float $hours_2
      * @return $this
@@ -228,8 +156,6 @@ class Contract
         $this->hours_2 = $hours_2;
         return $this;
     }
-
-
     /**
      * @return float
      */
@@ -237,8 +163,6 @@ class Contract
     {
         return $this->hours_3;
     }
-
-
     /**
      * @param float $hours_3
      * @return $this
@@ -248,8 +172,6 @@ class Contract
         $this->hours_3 = $hours_3;
         return $this;
     }
-
-
     /**
      * @return float
      */
@@ -257,8 +179,6 @@ class Contract
     {
         return $this->hours_4;
     }
-
-
     /**
      * @param float $hours_4
      * @return $this
@@ -268,8 +188,6 @@ class Contract
         $this->hours_4 = $hours_4;
         return $this;
     }
-
-
     /**
      * @return float
      */
@@ -277,8 +195,6 @@ class Contract
     {
         return $this->hours_5;
     }
-
-
     /**
      * @param float $hours_5
      * @return $this
@@ -288,8 +204,6 @@ class Contract
         $this->hours_5 = $hours_5;
         return $this;
     }
-
-
     /**
      * @return float
      */
@@ -297,8 +211,6 @@ class Contract
     {
         return $this->hours_6;
     }
-
-
     /**
      * @param float $hours_6
      * @return $this

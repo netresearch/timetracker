@@ -6,63 +6,33 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base as Base;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\CustomerRepository")
- * @ORM\Table(name="customers")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\CustomerRepository')]
+#[ORM\Table(name: 'customers')]
 class Customer extends Base
 {
-
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     protected $name;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     protected $active;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     protected $global;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Project", mappedBy="customer")
-     */
+    #[ORM\OneToMany(targetEntity: 'Project', mappedBy: 'customer')]
     protected $projects;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="customer")
-     */
+    #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'customer')]
     protected $entries;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Team", inversedBy="customers")
-     * @ORM\JoinTable(name="teams_customers",
-     *     joinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")}
-     * )
-     */
+    #[ORM\ManyToMany(targetEntity: 'Team', inversedBy: 'customers')]
+    #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
     protected $teams;
-
     public function __construct()
     {
         $this->projects = new ArrayCollection();
         $this->entries  = new ArrayCollection();
         $this->teams    = new ArrayCollection();
     }
-
-
     /**
      * Set id
      * @param integer $id
@@ -74,7 +44,6 @@ class Customer extends Base
         $this->id = $id;
         return $this;
     }
-
     /**
      * Get id
      *
@@ -84,7 +53,6 @@ class Customer extends Base
     {
         return $this->id;
     }
-
     /**
      * Set name
      *
@@ -97,7 +65,6 @@ class Customer extends Base
         $this->name = $name;
         return $this;
     }
-
     /**
      * Get name
      *
@@ -107,7 +74,6 @@ class Customer extends Base
     {
         return $this->name;
     }
-
     /**
      * Set active
      *
@@ -120,7 +86,6 @@ class Customer extends Base
         $this->active = $active;
         return $this;
     }
-
     /**
      * Get active
      *
@@ -130,8 +95,6 @@ class Customer extends Base
     {
         return $this->active;
     }
-
-
     /**
      * Set global
      *
@@ -144,7 +107,6 @@ class Customer extends Base
         $this->global = $global;
         return $this;
     }
-
     /**
      * Get global
      *
@@ -154,8 +116,6 @@ class Customer extends Base
     {
         return $this->global;
     }
-
-
     /**
      * Add projects
      *
@@ -167,7 +127,6 @@ class Customer extends Base
         $this->projects[] = $projects;
         return $this;
     }
-
     /**
      * Get projects
      *
@@ -177,7 +136,6 @@ class Customer extends Base
     {
         return $this->projects;
     }
-
     /**
      * Add entries
      *
@@ -189,7 +147,6 @@ class Customer extends Base
         $this->entries[] = $entries;
         return $this;
     }
-
     /**
      * Get entries
      *
@@ -199,7 +156,6 @@ class Customer extends Base
     {
         return $this->entries;
     }
-
     /**
      * Reset teams
      *
@@ -210,7 +166,6 @@ class Customer extends Base
         $this->teams = new ArrayCollection();
         return $this;
     }
-
     /**
      * Add team
      *
@@ -222,7 +177,6 @@ class Customer extends Base
         $this->teams[] = $team;
         return $this;
     }
-
     /**
      * Get teams
      *
@@ -232,7 +186,6 @@ class Customer extends Base
     {
         return $this->teams;
     }
-
     /**
      * Add projects
      *
@@ -243,7 +196,6 @@ class Customer extends Base
         $this->projects[] = $projects;
         return $this;
     }
-
     /**
      * Remove projects
      */
@@ -251,7 +203,6 @@ class Customer extends Base
     {
         $this->projects->removeElement($projects);
     }
-
     /**
      * Add entries
      *
@@ -262,7 +213,6 @@ class Customer extends Base
         $this->entries[] = $entry;
         return $this;
     }
-
     /**
      * Remove entry
      */
@@ -270,7 +220,6 @@ class Customer extends Base
     {
         $this->entries->removeElement($entry);
     }
-
     /**
      * Remove teams
      */
@@ -278,7 +227,6 @@ class Customer extends Base
     {
         $this->teams->removeElement($teams);
     }
-
     /**
      * Add entries
      *

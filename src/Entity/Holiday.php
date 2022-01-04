@@ -7,24 +7,18 @@ use App\Model\Base as Base;
 
 /**
  * App\Entity\Holiday
- *
- * @ORM\Entity(repositoryClass="App\Repository\HolidayRepository")
- * @ORM\Table(name="holidays")
  */
+#[ORM\Entity(repositoryClass: 'App\Repository\HolidayRepository')]
+#[ORM\Table(name: 'holidays')]
 class Holiday extends Base
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="date")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'date')]
     private $day;
-
-
     public function __construct($day, private $name)
     {
         $this->setDay($day);
     }
-
     /**
      * Set day
      *
@@ -41,7 +35,6 @@ class Holiday extends Base
         $this->day = $day;
         return $this;
     }
-
     /**
      * Get day
      *
@@ -51,7 +44,6 @@ class Holiday extends Base
     {
         return $this->day;
     }
-
     /**
      * Set name
      *
@@ -61,7 +53,6 @@ class Holiday extends Base
     {
         $this->name = $name;
     }
-
     /**
      * Get name
      *
@@ -71,7 +62,6 @@ class Holiday extends Base
     {
         return $this->name;
     }
-
     /**
      * Get array representation of holiday object
      *
@@ -84,5 +74,4 @@ class Holiday extends Base
             'description' => $this->getName()
         );
     }
-
 }

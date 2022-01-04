@@ -6,53 +6,26 @@ use Doctrine\ORM\Mapping as ORM;
 
 use App\Model\Base as Base;
 
-/**
- *
- * @ORM\Entity
- * @ORM\Table(name="users_ticket_systems")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'users_ticket_systems')]
 class UserTicketsystem extends Base
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-
-    /**
-     * @ORM\ManyToOne(targetEntity="TicketSystem")
-     * @ORM\JoinColumn(name="ticket_system_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'TicketSystem')]
+    #[ORM\JoinColumn(name: 'ticket_system_id', referencedColumnName: 'id')]
     protected $ticketSystem;
-
-
-    /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="userTicketsystem")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'userTicketsystem')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
-
-
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
+    #[ORM\Column(type: 'string', length: 50)]
     protected $accessToken;
-
-
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
+    #[ORM\Column(type: 'string', length: 50)]
     protected $tokenSecret;
-
-
-    /**
-     * @ORM\Column(columnDefinition="TINYINT(1) unsigned DEFAULT 0 NOT NULL")
-     */
+    #[ORM\Column(columnDefinition: 'TINYINT(1) unsigned DEFAULT 0 NOT NULL')]
     protected $avoidConnection;
-
-
     /**
      * @return mixed
      */
@@ -60,7 +33,6 @@ class UserTicketsystem extends Base
     {
         return $this->id;
     }
-
     /**
      * @param mixed $id
      * @return $this
@@ -70,7 +42,6 @@ class UserTicketsystem extends Base
         $this->id = $id;
         return $this;
     }
-
     /**
      * @return TicketSystem
      */
@@ -78,7 +49,6 @@ class UserTicketsystem extends Base
     {
         return $this->ticketSystem;
     }
-
     /**
      * @return $this
      */
@@ -87,7 +57,6 @@ class UserTicketsystem extends Base
         $this->ticketSystem = $ticketSystem;
         return $this;
     }
-
     /**
      * @return User
      */
@@ -95,7 +64,6 @@ class UserTicketsystem extends Base
     {
         return $this->user;
     }
-
     /**
      * @return $this
      */
@@ -104,7 +72,6 @@ class UserTicketsystem extends Base
         $this->user = $user;
         return $this;
     }
-
     /**
      * @return string
      */
@@ -112,7 +79,6 @@ class UserTicketsystem extends Base
     {
         return $this->accessToken;
     }
-
     /**
      * @param string $accessToken
      * @return $this
@@ -122,7 +88,6 @@ class UserTicketsystem extends Base
         $this->accessToken = $accessToken;
         return $this;
     }
-
     /**
      * @return string
      */
@@ -130,7 +95,6 @@ class UserTicketsystem extends Base
     {
         return $this->tokenSecret;
     }
-
     /**
      * @param string $tokenSecret
      * @return $this
@@ -140,7 +104,6 @@ class UserTicketsystem extends Base
         $this->tokenSecret = $tokenSecret;
         return $this;
     }
-
     /**
      * @return boolean
      */
@@ -148,7 +111,6 @@ class UserTicketsystem extends Base
     {
         return ($this->avoidConnection == 1);
     }
-
     /**
      * @param boolean $avoidConnection
      * @return $this

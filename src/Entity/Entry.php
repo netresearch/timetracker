@@ -5,124 +5,70 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 use DateTime as DateTime;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\EntryRepository")
- * @ORM\Table(name="entries")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\EntryRepository')]
+#[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
     public final const CLASS_PLAIN       = 1;
     public final const CLASS_DAYBREAK    = 2;
     public final const CLASS_PAUSE       = 4;
     public final const CLASS_OVERLAP     = 8;
-
-
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-    /**
-     * @ORM\Column(type="string", length=31, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 31, nullable: true)]
     protected $ticket;
-
-    /**
-     * @ORM\Column(name="worklog_id", type="integer", nullable=true)
-     */
+    #[ORM\Column(name: 'worklog_id', type: 'integer', nullable: true)]
     protected $worklog_id;
-
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     protected $description;
-
-    /**
-     * @ORM\Column(type="date")
-     */
+    #[ORM\Column(type: 'date')]
     protected $day;
-
-    /**
-     * @ORM\Column(type="time")
-     */
+    #[ORM\Column(type: 'time')]
     protected $start;
-
-    /**
-     * @ORM\Column(type="time")
-     */
+    #[ORM\Column(type: 'time')]
     protected $end;
-
-    /**
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Column(type: 'integer')]
     protected $duration;
-
-    /**
-     * @ORM\Column(name="synced_to_ticketsystem", type="boolean")
-     */
+    #[ORM\Column(name: 'synced_to_ticketsystem', type: 'boolean')]
     protected $syncedToTicketsystem;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Project", inversedBy="entries")
-     * @ORM\JoinColumn(name="project_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected $project;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="entries")
-     * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="entries")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Account", inversedBy="entries")
-     * @ORM\JoinColumn(name="account_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Account', inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id')]
     protected $account;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Activity", inversedBy="entries")
-     * @ORM\JoinColumn(name="activity_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
-
-
-    /**
-     * @ORM\Column(name="class", type="integer", nullable=false)
-     */
+    #[ORM\Column(name: 'class', type: 'integer', nullable: false)]
     protected $class = self::CLASS_PLAIN;
-
     /**
      * holds summary from external ticket system; no mapping for ORM required (yet)
      *
      * @var string
      */
     protected $externalSummary = '';
-
     /**
      * Holds an array of labels assigned for the issue
      *
      * @var array
      */
     protected $externalLabels = array();
-    
     /**
      * ID of the original booked external ticket.
-     * @ORM\Column(name="internal_jira_ticket_original_key")
      *
      * @var string e.g. TYPO-1234
      */
+    #[ORM\Column(name: 'internal_jira_ticket_original_key')]
     protected $internalJiraTicketOriginalKey = null;
-
     /**
      * @param string $externalReporter
      */
@@ -130,7 +76,6 @@ class Entry extends Base
     {
         $this->externalReporter = $externalReporter;
     }
-
     /**
      * @return string
      */
@@ -138,7 +83,6 @@ class Entry extends Base
     {
         return $this->externalReporter;
     }
-
     /**
      * @param string $externalSummary
      */
@@ -146,7 +90,6 @@ class Entry extends Base
     {
         $this->externalSummary = $externalSummary;
     }
-
     /**
      * Returns the array of external labels.
      *
@@ -156,7 +99,6 @@ class Entry extends Base
     {
         return $this->externalLabels;
     }
-
     /**
      * Sets the array of external labels.
      */
@@ -171,14 +113,12 @@ class Entry extends Base
     {
         return $this->externalSummary;
     }
-
     /**
      * holds external reporter; no mapping for ORM required (yet)
      *
      * @var string
      */
     protected $externalReporter = '';
-
     /**
      * @return $this
      * @throws \Exception
@@ -194,13 +134,11 @@ class Entry extends Base
 
         return $this;
     }
-
     public function setId($id)
     {
         $this->id = $id;
         return $this;
     }
-
     /**
      * Get id
      *
@@ -210,7 +148,6 @@ class Entry extends Base
     {
         return $this->id;
     }
-
     /**
      * Get userId
      *
@@ -224,7 +161,6 @@ class Entry extends Base
 
         return $this->getUser()->getId();
     }
-
     /**
      * Get projectId
      *
@@ -238,7 +174,6 @@ class Entry extends Base
 
         return $this->getProject()->getId();
     }
-
     /**
      * Get accountId
      *
@@ -252,7 +187,6 @@ class Entry extends Base
 
         return $this->getAccount()->getId();
     }
-
     /**
      * Get customerId
      *
@@ -266,7 +200,6 @@ class Entry extends Base
 
         return $this->getCustomer()->getId();
     }
-
     /**
      * Get ActivityId
      *
@@ -280,7 +213,6 @@ class Entry extends Base
 
         return $this->getActivity()->getId();
     }
-
     /**
      * Set ticket
      *
@@ -292,7 +224,6 @@ class Entry extends Base
         $this->ticket = str_replace(' ', '', $ticket);
         return $this;
     }
-
     /**
      * Get ticket
      *
@@ -302,7 +233,6 @@ class Entry extends Base
     {
         return $this->ticket;
     }
-
     /**
      * Set Jira WorklogId
      *
@@ -314,7 +244,6 @@ class Entry extends Base
         $this->worklog_id = $worklog_id;
         return $this;
     }
-
     /**
      * Get Jira WorklogId
      *
@@ -324,7 +253,6 @@ class Entry extends Base
     {
         return $this->worklog_id;
     }
-
     /**
      * Set description
      *
@@ -336,7 +264,6 @@ class Entry extends Base
         $this->description = $description;
         return $this;
     }
-
     /**
      * Get description
      *
@@ -346,7 +273,6 @@ class Entry extends Base
     {
         return $this->description;
     }
-
     /**
      * Set day
      *
@@ -362,7 +288,6 @@ class Entry extends Base
         $this->day = $day;
         return $this;
     }
-
     /**
      * Get day
      *
@@ -372,7 +297,6 @@ class Entry extends Base
     {
         return $this->day;
     }
-
     /**
      * Set start
      *
@@ -391,7 +315,6 @@ class Entry extends Base
         $this->alignStartAndEnd();
         return $this;
     }
-
     /**
      * Get start
      *
@@ -401,7 +324,6 @@ class Entry extends Base
     {
         return $this->start;
     }
-
     /**
      * Set end
      *
@@ -421,7 +343,6 @@ class Entry extends Base
 
         return $this;
     }
-
     /**
      *  Make sure end is greater or equal start
      */
@@ -441,7 +362,6 @@ class Entry extends Base
 
         return $this;
     }
-
     /**
      * Get end
      *
@@ -451,7 +371,6 @@ class Entry extends Base
     {
         return $this->end;
     }
-
     /**
      * Set duration
      *
@@ -463,7 +382,6 @@ class Entry extends Base
         $this->duration = $duration;
         return $this;
     }
-
     /**
      * Get duration
      *
@@ -473,7 +391,6 @@ class Entry extends Base
     {
         return $this->duration;
     }
-
     /**
      * Returns duration as formatted hours:minutes string.
      *
@@ -487,7 +404,6 @@ class Entry extends Base
 
         return sprintf('%02d:%02d', $nHours, $nMinutes);
     }
-
     /**
      * Set project
      *
@@ -499,7 +415,6 @@ class Entry extends Base
         $this->project = $project;
         return $this;
     }
-
     /**
      * Get project
      *
@@ -509,7 +424,6 @@ class Entry extends Base
     {
         return $this->project;
     }
-
     /**
      * Set user
      *
@@ -520,7 +434,6 @@ class Entry extends Base
         $this->user = $user;
         return $this;
     }
-
     /**
      * Get user
      *
@@ -530,7 +443,6 @@ class Entry extends Base
     {
         return $this->user;
     }
-
     /**
      * Set account
      *
@@ -541,7 +453,6 @@ class Entry extends Base
         $this->account = $account;
         return $this;
     }
-
     /**
      * Get account
      *
@@ -551,7 +462,6 @@ class Entry extends Base
     {
         return $this->account;
     }
-
     /**
      * Set activity
      *
@@ -562,7 +472,6 @@ class Entry extends Base
         $this->activity = $activity;
         return $this;
     }
-
     /**
      * Get activity
      *
@@ -572,7 +481,6 @@ class Entry extends Base
     {
         return $this->activity;
     }
-
     /**
      * Get array representation of entry object
      *
@@ -608,7 +516,6 @@ class Entry extends Base
             'extTicket'      => $this->getInternalJiraTicketOriginalKey(),
         );
     }
-
     /**
      * Calculate difference between start and end
      *
@@ -630,7 +537,6 @@ class Entry extends Base
         $this->validateDuration();
         return $this;
     }
-
     /**
      * Set customer
      *
@@ -641,7 +547,6 @@ class Entry extends Base
         $this->customer = $customer;
         return $this;
     }
-
     /**
      * Get customer
      *
@@ -651,8 +556,6 @@ class Entry extends Base
     {
         return $this->customer;
     }
-
-
     /**
      * Set class
      *
@@ -664,7 +567,6 @@ class Entry extends Base
         $this->class = (int) $class;
         return $this;
     }
-
     /**
      * Get class
      *
@@ -674,7 +576,6 @@ class Entry extends Base
     {
         return $this->class;
     }
-
     /**
      * Returns the issue link for the configured ticket system.
      *
@@ -696,7 +597,6 @@ class Entry extends Base
 
         return sprintf($ticketUrl, $this->getTicket());
     }
-
     /**
      * Returns the original ticket name.
      *
@@ -706,8 +606,7 @@ class Entry extends Base
     {
         return $this->internalJiraTicketOriginalKey;
     }
-
-     /**
+    /**
      * Returns true, if a original ticket name.
      *
      * @return bool
@@ -716,7 +615,6 @@ class Entry extends Base
     {
         return !empty($this->internalJiraTicketOriginalKey);
     }
-
     /**
      * Sets the original ticket name.
      *
@@ -729,7 +627,6 @@ class Entry extends Base
 
         return $this;
     }
-
     /**
      * Returns the post data for the internal JIRA ticket creation.
      *
@@ -750,7 +647,6 @@ class Entry extends Base
             ),
         );
     }
-
     /**
      * @return boolean
      */
@@ -758,7 +654,6 @@ class Entry extends Base
     {
         return $this->syncedToTicketsystem;
     }
-
     /**
      * @param boolean $syncedToTicketsystem
      *

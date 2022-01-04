@@ -25,53 +25,28 @@ use App\Model\Base as Base;
  * @author   Norman Kante <norman.kante@netresearch.de>
  * @license  No license
  * @link     http://www.netresearch.de
- *
- * @ORM\Entity(repositoryClass="App\Repository\TicketRepository")
- * @ORM\Table(name="tickets")
  */
+#[ORM\Entity(repositoryClass: 'App\Repository\TicketRepository')]
+#[ORM\Table(name: 'tickets')]
 class Ticket extends Base
 {
-
     /**
      * @var int
-     *
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-
-    /**
-     * @ORM\Column(name="ticket_system_id", type="integer")
-     */
+    #[ORM\Column(name: 'ticket_system_id', type: 'integer')]
     private int $ticketSystemId;
-
-
-    /**
-     * @ORM\Column(name="ticket_number", type="string", length=31)
-     */
+    #[ORM\Column(name: 'ticket_number', type: 'string', length: 31)]
     private string $ticketNumber;
-
-
-    /**
-     * @ORM\Column(type="string", length=127)
-     */
+    #[ORM\Column(type: 'string', length: 127)]
     private string $name;
-
-
-    /**
-     * @ORM\Column(type="integer", name="estimation")
-     */
+    #[ORM\Column(type: 'integer', name: 'estimation')]
     private int $estimatedDuration;
-
-
-    /**
-     * @ORM\Column(type="string", name="parent", length=31)
-     */
+    #[ORM\Column(type: 'string', name: 'parent', length: 31)]
     private string $parentTicketNumber;
-
-
     /**
      * Sets the estimated duration
      *
@@ -85,7 +60,6 @@ class Ticket extends Base
 
         return $this;
     }
-
     /**
      * Get the estimated duration
      *
@@ -95,7 +69,6 @@ class Ticket extends Base
     {
         return $this->estimatedDuration;
     }
-
     /**
      * @param string $name
      *
@@ -107,7 +80,6 @@ class Ticket extends Base
 
         return $this;
     }
-
     /**
      * @return string
      */
@@ -115,7 +87,6 @@ class Ticket extends Base
     {
         return $this->name;
     }
-
     /**
      * @param string $parentTicketNumber
      *
@@ -127,7 +98,6 @@ class Ticket extends Base
 
         return $this;
     }
-
     /**
      * @return string
      */
@@ -135,7 +105,6 @@ class Ticket extends Base
     {
         return $this->parentTicketNumber;
     }
-
     /**
      * @param int $ticketId
      *
@@ -147,7 +116,6 @@ class Ticket extends Base
 
         return $this;
     }
-
     /**
      * @return int
      */
@@ -155,7 +123,6 @@ class Ticket extends Base
     {
         return $this->ticketId;
     }
-
     /**
      * @param string $ticketNumber
      *
@@ -167,7 +134,6 @@ class Ticket extends Base
 
         return $this;
     }
-
     /**
      * @return string
      */
@@ -175,7 +141,6 @@ class Ticket extends Base
     {
         return $this->ticketNumber;
     }
-
     /**
      * @param int $ticketSystemId
      *
@@ -187,7 +152,6 @@ class Ticket extends Base
 
         return $this;
     }
-
     /**
      * @return int
      */
@@ -195,9 +159,6 @@ class Ticket extends Base
     {
         return $this->ticketSystemId;
     }
-
-
-
     /**
      * Get id
      *

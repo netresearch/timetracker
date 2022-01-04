@@ -5,58 +5,32 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\PresetRepository")
- * @ORM\Table(name="presets")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\PresetRepository')]
+#[ORM\Table(name: 'presets')]
 class Preset extends Base
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     protected $name;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Project", inversedBy="presets")
-     * @ORM\JoinColumn(name="project_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'presets')]
+    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected $project;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="presets")
-     * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'presets')]
+    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
-
-     /**
-     * @ORM\ManyToOne(targetEntity="Activity", inversedBy="presets")
-     * @ORM\JoinColumn(name="activity_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'presets')]
+    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
-
-
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     protected $description;
-
-
-
     public function setId($id)
     {
         $this->id = $id;
         return $this;
     }
-
     /**
      * Get id
      *
@@ -66,8 +40,6 @@ class Preset extends Base
     {
         return $this->id;
     }
-
-
     /**
      * Set name
      * *
@@ -80,7 +52,6 @@ class Preset extends Base
         $this->name = $name;
         return $this;
     }
-
     /**
      * Get name
      *
@@ -90,8 +61,6 @@ class Preset extends Base
     {
         return $this->name;
     }
-
-
     /**
      * Get customerId
      *
@@ -101,8 +70,6 @@ class Preset extends Base
     {
         return $this->getCustomer() ? $this->getCustomer()->getId() : 0;
     }
-
-
     /**
      * Get projectId
      *
@@ -112,8 +79,6 @@ class Preset extends Base
     {
         return $this->getProject() ? $this->getProject()->getId() : 0;
     }
-
-
     /**
      * Get activityId
      *
@@ -123,9 +88,6 @@ class Preset extends Base
     {
         return $this->getActivity() ? $this->getActivity()->getId() : 0;
     }
-
-
-
     /**
      * Set description
      *
@@ -138,7 +100,6 @@ class Preset extends Base
         $this->description = $description;
         return $this;
     }
-
     /**
      * Get description
      *
@@ -148,8 +109,6 @@ class Preset extends Base
     {
         return $this->description;
     }
-
-
     /**
      * Set customer
      *
@@ -161,7 +120,6 @@ class Preset extends Base
         $this->customer = $customer;
         return $this;
     }
-
     /**
      * Get customer
      *
@@ -171,8 +129,6 @@ class Preset extends Base
     {
         return $this->customer;
     }
-
-
     /**
      * Set project
      *
@@ -184,7 +140,6 @@ class Preset extends Base
         $this->project = $project;
         return $this;
     }
-
     /**
      * Get project
      *
@@ -194,8 +149,6 @@ class Preset extends Base
     {
         return $this->project;
     }
-
-
     /**
      * Set activity
      *
@@ -207,7 +160,6 @@ class Preset extends Base
         $this->activity = $activity;
         return $this;
     }
-
     /**
      * Get activity
      *
@@ -217,8 +169,6 @@ class Preset extends Base
     {
         return $this->activity;
     }
-
-
     /**
      * Get array representation of a preset object
      *

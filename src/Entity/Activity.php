@@ -5,49 +5,28 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\ActivityRepository")
- * @ORM\Table(name="activities")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\ActivityRepository')]
+#[ORM\Table(name: 'activities')]
 class Activity
 {
     public final const SICK    = 'Krank';
     public final const HOLIDAY = 'Urlaub';
-    
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
+    #[ORM\Column(type: 'string', length: 50)]
     protected $name;
-
-    /**
-     * @ORM\Column(name="needs_ticket", type="boolean")
-     */
+    #[ORM\Column(name: 'needs_ticket', type: 'boolean')]
     protected $needsTicket;
-
-    /**
-     * @ORM\Column(name="factor", type="float")
-     */
+    #[ORM\Column(name: 'factor', type: 'float')]
     protected $factor;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="activity")
-     */
+    #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'activity')]
     protected $entries;
-
     public function __construct()
     {
         $this->entries = new ArrayCollection();
     }
-
-
     /**
      * Set id
      * @param integer $id
@@ -59,7 +38,6 @@ class Activity
         $this->id = $id;
         return $this;
     }
-
     /**
      * Get id
      *
@@ -69,7 +47,6 @@ class Activity
     {
         return $this->id;
     }
-
     /**
      * Set name
      *
@@ -82,7 +59,6 @@ class Activity
         $this->name = $name;
         return $this;
     }
-
     /**
      * Get name
      *
@@ -92,7 +68,6 @@ class Activity
     {
         return $this->name;
     }
-
     /**
      * Set needsTicket
      *
@@ -105,7 +80,6 @@ class Activity
         $this->needsTicket = $needsTicket;
         return $this;
     }
-
     /**
      * Get needsTicket
      *
@@ -115,8 +89,6 @@ class Activity
     {
         return $this->needsTicket;
     }
-
-
     /**
      * Get factor
      *
@@ -126,8 +98,6 @@ class Activity
     {
         return $this->factor;
     }
-
-
     /**
      * Set factor
      *
@@ -140,7 +110,6 @@ class Activity
         $this->factor = $factor;
         return $this;
     }
-
     /**
      * Add entries
      *
@@ -152,7 +121,6 @@ class Activity
         $this->entries[] = $entries;
         return $this;
     }
-
     /**
      * Get entries
      *
@@ -162,7 +130,6 @@ class Activity
     {
         return $this->entries;
     }
-
     /**
      * Set needsTicket
      *
@@ -175,7 +142,6 @@ class Activity
 
         return $this;
     }
-
     /**
      * Add entries
      *
@@ -187,7 +153,6 @@ class Activity
 
         return $this;
     }
-
     /**
      * Remove entries
      */
@@ -195,7 +160,6 @@ class Activity
     {
         $this->entries->removeElement($entries);
     }
-
     /**
      * Returns true if activity is a sick day.
      *
@@ -209,7 +173,6 @@ class Activity
 
         return false;
     }
-
     /**
      * Returns true if activity is holiday.
      *

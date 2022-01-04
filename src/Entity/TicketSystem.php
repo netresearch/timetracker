@@ -7,93 +7,76 @@ use App\Model\Base as Base;
 
 /**
  * App\Entity\TicketSystem
- *
- * @ORM\Entity(repositoryClass="App\Repository\TicketSystemRepository")
- * @ORM\Table(name="ticket_systems")
  */
+#[ORM\Entity(repositoryClass: 'App\Repository\TicketSystemRepository')]
+#[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {
     public final const TYPE_JIRA = 'JIRA';
     public final const TYPE_OTRS = 'OTRS';
-
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
      */
+    #[ORM\Column(name: 'id', type: 'integer')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
     /**
      * @var string $name
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected $name;
-
     /**
      * @var boolean $bookTime;
-     * @ORM\Column(name="book_time", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'book_time', type: 'integer', nullable: false)]
     protected $bookTime;
-
     /**
      * @var string $type;
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected $type;
-
     /**
      * @var string $url
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected $url;
-
     /**
      * @var string $ticketUrl
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected $ticketUrl;
-
     /**
-    /**
-     * @var string $login
-     * @ORM\Column(type="string")
-     */
+        /**
+    * @var string $login
+    */
+    #[ORM\Column(type: 'string')]
     protected $login;
-
     /**
      * @var string $password
-     * @ORM\Column(type="string")
      */
+    #[ORM\Column(type: 'string')]
     protected $password;
-
     /**
      * @var string $publicKey
-     * @ORM\Column(type="string", name="public_key")
      */
+    #[ORM\Column(type: 'string', name: 'public_key')]
     protected $publicKey;
-
     /**
      * @var string $privateKey
-     * @ORM\Column(type="string", name="private_key")
      */
+    #[ORM\Column(type: 'string', name: 'private_key')]
     protected $privateKey;
-
     /**
      * @var string $oauthConsumerKey
-     * @ORM\Column(type="string", name="oauth_consumer_key")
      */
+    #[ORM\Column(type: 'string', name: 'oauth_consumer_key')]
     protected $oauthConsumerKey;
-
     /**
      * @var string $oauthConsumerSecret
-     * @ORM\Column(type="string", name="oauth_consumer_secret")
      */
+    #[ORM\Column(type: 'string', name: 'oauth_consumer_secret')]
     protected $oauthConsumerSecret;
-
-
-
     /**
      * Get id
      *
@@ -103,7 +86,6 @@ class TicketSystem extends Base
     {
         return $this->id;
     }
-
     /**
      * Set name
      *
@@ -116,7 +98,6 @@ class TicketSystem extends Base
         $this->name = $name;
         return $this;
     }
-
     /**
      * Get name
      *
@@ -126,8 +107,6 @@ class TicketSystem extends Base
     {
         return $this->name;
     }
-
-
     /**
      * Set bookTime
      *
@@ -140,7 +119,6 @@ class TicketSystem extends Base
         $this->bookTime = $bookTime;
         return $this;
     }
-
     /**
      * Get bookTime
      *
@@ -150,8 +128,6 @@ class TicketSystem extends Base
     {
         return $this->bookTime;
     }
-
-
     /**
      * Set type
      *
@@ -164,7 +140,6 @@ class TicketSystem extends Base
         $this->type = $type;
         return $this;
     }
-
     /**
      * Get type
      *
@@ -174,8 +149,6 @@ class TicketSystem extends Base
     {
         return $this->type;
     }
-
-
     /**
      * Set url
      *
@@ -188,7 +161,6 @@ class TicketSystem extends Base
         $this->url = $url;
         return $this;
     }
-
     /**
      * Get url
      *
@@ -198,7 +170,6 @@ class TicketSystem extends Base
     {
         return $this->url;
     }
-
     /**
      * Set the ticket url.
      *
@@ -211,7 +182,6 @@ class TicketSystem extends Base
         $this->ticketUrl = $ticketUrl;
         return $this;
     }
-
     /**
      * Get url pointing to a ticket
      *
@@ -221,7 +191,6 @@ class TicketSystem extends Base
     {
         return $this->ticketUrl;
     }
-
     /**
      * Set login
      *
@@ -234,7 +203,6 @@ class TicketSystem extends Base
         $this->login = $login;
         return $this;
     }
-
     /**
      * Get login
      *
@@ -244,8 +212,6 @@ class TicketSystem extends Base
     {
         return $this->login;
     }
-
-
     /**
      * Set password
      *
@@ -258,7 +224,6 @@ class TicketSystem extends Base
         $this->password = $password;
         return $this;
     }
-
     /**
      * Get password
      *
@@ -268,8 +233,6 @@ class TicketSystem extends Base
     {
         return $this->password;
     }
-
-
     /**
      * Set public key
      *
@@ -282,7 +245,6 @@ class TicketSystem extends Base
         $this->publicKey = $publicKey;
         return $this;
     }
-
     /**
      * Get public key
      *
@@ -292,8 +254,6 @@ class TicketSystem extends Base
     {
         return $this->publicKey;
     }
-
-
     /**
      * Set private key
      *
@@ -306,7 +266,6 @@ class TicketSystem extends Base
         $this->privateKey = $privateKey;
         return $this;
     }
-
     /**
      * Get private key
      *
@@ -316,7 +275,6 @@ class TicketSystem extends Base
     {
         return $this->privateKey;
     }
-
     /**
      * @return string
      */
@@ -324,7 +282,6 @@ class TicketSystem extends Base
     {
         return $this->oauthConsumerKey;
     }
-
     /**
      * @param string $oauthConsumerKey
      * @return $this
@@ -334,7 +291,6 @@ class TicketSystem extends Base
         $this->oauthConsumerKey = $oauthConsumerKey;
         return $this;
     }
-
     /**
      * @return string
      */
@@ -342,7 +298,6 @@ class TicketSystem extends Base
     {
         return $this->oauthConsumerSecret;
     }
-
     /**
      * @param string $oauthConsumerSecret
      * @return $this
