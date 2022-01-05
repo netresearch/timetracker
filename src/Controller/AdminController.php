@@ -27,17 +27,13 @@ use App\Helper\TimeHelper;
  */
 class AdminController extends BaseController
 {
-    /**
-     * @return Response
-     * @throws ReflectionException
-     */
-    public function getAllProjectsAction(Request $request)
+    public function getAllProjectsAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
-        $result = $this->getDoctrine()->getRepository('App:Project')->findAll();
+        $result = $this->doctrine->getRepository('App:Project')->findAll();
 
         $data = [];
         foreach ($result as $project) {
@@ -47,81 +43,68 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
-    public function getCustomersAction(Request $request)
+    public function getCustomersAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         /* @var $repo \App\Repository\CustomerRepository */
-        $repo = $this->getDoctrine()->getRepository('App:Customer');
+        $repo = $this->doctrine->getRepository('App:Customer');
 
         return new Response(json_encode($repo->getAllCustomers(), JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
-    public function getUsersAction(Request $request)
+    public function getUsersAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         /* @var $repo \App\Repository\UserRepository */
-        $repo = $this->getDoctrine()->getRepository('App:User');
+        $repo = $this->doctrine->getRepository('App:User');
 
         return new Response(json_encode($repo->getAllUsers(), JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
-    public function getTeamsAction(Request $request)
+    public function getTeamsAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         /* @var $repo \App\Repository\TeamRepository */
-        $repo = $this->getDoctrine()->getRepository('App:Team');
+        $repo = $this->doctrine->getRepository('App:Team');
 
         return new Response(json_encode($repo->findAll(), JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
-    public function getPresetsAction(Request $request)
+    public function getPresetsAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         /* @var $repo \App\Repository\PresetRepository */
-        $repo = $this->getDoctrine()->getRepository('App:Preset');
+        $repo = $this->doctrine->getRepository('App:Preset');
 
         return new Response(json_encode($repo->getAllPresets(), JSON_THROW_ON_ERROR));
     }
 
     /**
-     * @return Response
      * @throws ReflectionException
      */
-    public function getTicketSystemsAction(Request $request)
+    public function getTicketSystemsAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         /* @var $repo \App\Repository\TicketSystemRepository */
-        $repo = $this->getDoctrine()->getRepository('App:TicketSystem');
+        $repo = $this->doctrine->getRepository('App:TicketSystem');
         $ticketSystems = $repo->getAllTicketSystems();
 
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             $c = is_countable($ticketSystems) ? count($ticketSystems) : 0;
             for ($i = 0; $i < $c; $i++) {
                 unset($ticketSystems[$i]['ticketSystem']['login']);
@@ -136,50 +119,47 @@ class AdminController extends BaseController
         return new Response(json_encode($ticketSystems, JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
-    public function saveProjectAction(Request $request)
+    public function saveProjectAction(): Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $data = null;
-        $projectId  = (int) $request->get('id');
-        $name       = $request->get('name');
+        $projectId  = (int) $this->request->get('id');
+        $name       = $this->request->get('name');
 
         /** @var TicketSystem $ticketSystem */
-        $ticketSystem = $request->get('ticket_system') ?
-            $this->getDoctrine()
+        $ticketSystem = $this->request->get('ticket_system') ?
+            $this->doctrine
             ->getRepository('App:TicketSystem')
-            ->find($request->get('ticket_system'))
+            ->find($this->request->get('ticket_system'))
             : null;
 
-        $projectLead = $request->get('project_lead') ?
-            $this->getDoctrine()
+        $projectLead = $this->request->get('project_lead') ?
+            $this->doctrine
             ->getRepository('App:User')
-            ->find($request->get('project_lead'))
+            ->find($this->request->get('project_lead'))
             : null;
 
-        $technicalLead = $request->get('technical_lead') ?
-            $this->getDoctrine()
+        $technicalLead = $this->request->get('technical_lead') ?
+            $this->doctrine
             ->getRepository('App:User')
-            ->find($request->get('technical_lead'))
+            ->find($this->request->get('technical_lead'))
             : null;
 
-        $jiraId       = strtoupper($request->get('jiraId'));
-        $active       = $request->get('active') ?: 0;
-        $global       = $request->get('global') ?: 0;
-        $estimation   = TimeHelper::readable2minutes($request->get('estimation') ?: '0m');
-        $billing      = $request->get('billing') ?: 0;
-        $costCenter   = $request->get('cost_center') ?: NULL;
-        $offer        = $request->get('offer') ?: 0;
-        $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ?: 0;
+        $jiraId       = strtoupper($this->request->get('jiraId'));
+        $active       = $this->request->get('active') ?: 0;
+        $global       = $this->request->get('global') ?: 0;
+        $estimation   = TimeHelper::readable2minutes($this->request->get('estimation') ?: '0m');
+        $billing      = $this->request->get('billing') ?: 0;
+        $costCenter   = $this->request->get('cost_center') ?: NULL;
+        $offer        = $this->request->get('offer') ?: 0;
+        $additionalInformationFromExternal = $this->request->get('additionalInformationFromExternal') ?: 0;
         /* @var $projectRepository \App\Repository\ProjectRepository */
-        $projectRepository = $this->getDoctrine()->getRepository('App:Project');
-        $internalJiraTicketSystem = (int) $request->get('internalJiraTicketSystem', 0);
-        $internalJiraProjectKey   = $request->get('internalJiraProjectKey', 0);
+        $projectRepository = $this->doctrine->getRepository('App:Project');
+        $internalJiraTicketSystem = (int) $this->request->get('internalJiraTicketSystem', 0);
+        $internalJiraProjectKey   = $this->request->get('internalJiraProjectKey', 0);
 
         if ($projectId) {
             $project = $projectRepository->find($projectId);
@@ -187,12 +167,12 @@ class AdminController extends BaseController
             $project = new Project();
 
             /** @var Customer $customer */
-            $customer = $this->getDoctrine()
+            $customer = $this->doctrine
                 ->getRepository('App:Customer')
-                ->find($request->get('customer'));
+                ->find($this->request->get('customer'));
 
             if (!$customer) {
-                $response = new Response($this->translate('Please choose a customer.'));
+                $response = new Response($this->t('Please choose a customer.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -201,7 +181,7 @@ class AdminController extends BaseController
         }
 
         if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid project name with at least 3 letters.'));
+            $response = new Response($this->t('Please provide a valid project name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -211,7 +191,7 @@ class AdminController extends BaseController
         );
         if ($sameNamedProject) {
             if ($project->getId() != $sameNamedProject->getId()) {
-                $response = new Response($this->translate('The project name provided already exists.'));
+                $response = new Response($this->t('The project name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -225,7 +205,7 @@ class AdminController extends BaseController
         }
 
         if (strlen($jiraId) && false == $projectRepository->isValidJiraPrefix($jiraId)) {
-            $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
+            $response = new Response($this->t('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -246,7 +226,7 @@ class AdminController extends BaseController
             ->setInternalJiraProjectKey($internalJiraProjectKey)
             ->setInternalJiraTicketSystem($internalJiraTicketSystem);
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $em->persist($project);
         $em->flush();
 
@@ -255,15 +235,15 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function deleteProjectAction(Request $request): Error|Response
+    public function deleteProjectAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $project = $doctrine->getRepository('App:Project')
                 ->find($id);
@@ -274,32 +254,29 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
         return new Response(json_encode(array('success' => true)));
     }
 
-    /**
-     * @return Response
-     */
-    public function saveCustomerAction(Request $request)
+    public function saveCustomerAction(): Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $data = null;
-        $customerId  = (int) $request->get('id');
-        $name       = $request->get('name');
-        $active     = $request->get('active') ?: 0;
-        $global     = $request->get('global') ?: 0;
-        $teamIds    = $request->get('teams') ?: array();
+        $customerId  = (int) $this->request->get('id');
+        $name       = $this->request->get('name');
+        $active     = $this->request->get('active') ?: 0;
+        $global     = $this->request->get('global') ?: 0;
+        $teamIds    = $this->request->get('teams') ?: array();
 
-        $customerRepository = $this->getDoctrine()->getRepository('App:Customer');
+        $customerRepository = $this->doctrine->getRepository('App:Customer');
 
         if ($customerId) {
             $customer = $customerRepository->find($customerId);
@@ -308,14 +285,14 @@ class AdminController extends BaseController
         }
 
         if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid customer name with at least 3 letters.'));
+            $response = new Response($this->t('Please provide a valid customer name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if ($sameNamedCustomer = $customerRepository->findOneByName($name)) {
             if ($customer->getId() != $sameNamedCustomer->getId()) {
-                $response = new Response($this->translate('The customer name provided already exists.'));
+                $response = new Response($this->t('The customer name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -329,22 +306,22 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
-            if ($team = $this->getDoctrine()->getRepository('App:Team')->find( (int) $teamId)) {
+            if ($team = $this->doctrine->getRepository('App:Team')->find( (int) $teamId)) {
                 $customer->addTeam($team);
             } else {
-                $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
+                $response = new Response(sprintf($this->t('Could not find team with ID %s.'), (int) $teamId));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
 
         if (0 == $customer->getTeams()->count() && false == $global) {
-            $response = new Response($this->translate('Every customer must belong to at least one team if it is not global.'));
+            $response = new Response($this->t('Every customer must belong to at least one team if it is not global.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $em->persist($customer);
         $em->flush();
 
@@ -353,15 +330,15 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function deleteCustomerAction(Request $request): Error|Response
+    public function deleteCustomerAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $customer = $doctrine->getRepository('App:Customer')
                 ->find($id);
@@ -372,33 +349,30 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
         return new Response(json_encode(array('success' => true)));
     }
 
-    /**
-     * @return Response
-     */
-    public function saveUserAction(Request $request)
+    public function saveUserAction(): Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $userId   = (int) $request->get('id');
-        $name     = $request->get('username');
-        $abbr     = $request->get('abbr');
-        $type     = $request->get('type');
-        $locale   = $request->get('locale');
-        $teamIds  = $request->get('teams') ?: array();
+        $userId   = (int) $this->request->get('id');
+        $name     = $this->request->get('username');
+        $abbr     = $this->request->get('abbr');
+        $type     = $this->request->get('type');
+        $locale   = $this->request->get('locale');
+        $teamIds  = $this->request->get('teams') ?: array();
 
         /* @var UserRepository $userRepository */
-        $userRepository = $this->getDoctrine()->getRepository('App:User');
+        $userRepository = $this->doctrine->getRepository('App:User');
 
         if ($userId) {
             $user = $userRepository->find($userId);
@@ -407,20 +381,20 @@ class AdminController extends BaseController
         }
 
         if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid user name with at least 3 letters.'));
+            $response = new Response($this->t('Please provide a valid user name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if (strlen($abbr) < 3) {
-            $response = new Response($this->translate('Please provide a valid user name abbreviation with at least 3 letters.'));
+            $response = new Response($this->t('Please provide a valid user name abbreviation with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if ($sameNamedUser = $userRepository->findOneByUsername($name)) {
             if ($user->getId() != $sameNamedUser->getId()) {
-                $response = new Response($this->translate('The user name provided already exists.'));
+                $response = new Response($this->t('The user name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -428,7 +402,7 @@ class AdminController extends BaseController
 
         if ($sameAbbrUser = $userRepository->findOneByAbbr($abbr)) {
             if ($user->getId() != $sameAbbrUser->getId()) {
-                $response = new Response($this->translate('The user name abreviation provided already exists.'));
+                $response = new Response($this->t('The user name abreviation provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -448,22 +422,22 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
-            if ($team = $this->getDoctrine()->getRepository('App:Team')->find((int)$teamId)) {
+            if ($team = $this->doctrine->getRepository('App:Team')->find((int)$teamId)) {
                 $user->addTeam($team);
             } else {
-                $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
+                $response = new Response(sprintf($this->t('Could not find team with ID %s.'), (int) $teamId));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
 
         if (0 == $user->getTeams()->count()) {
-            $response = new Response($this->translate('Every user must belong to at least one team'));
+            $response = new Response($this->t('Every user must belong to at least one team'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $em->persist($user);
         $em->flush();
 
@@ -471,15 +445,15 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function deleteUserAction(Request $request): Error|Response
+    public function deleteUserAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $user = $doctrine->getRepository('App:User')
                 ->find($id);
@@ -490,24 +464,24 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
         return new Response(json_encode(array('success' => true)));
     }
 
-    public function deletePresetAction(Request $request): Error|Response
+    public function deletePresetAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $preset = $doctrine->getRepository('App:Preset')
                     ->find($id);
@@ -518,44 +492,41 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
         return new Response(json_encode(array('success' => true)));
     }
 
-    /**
-     * @return Response
-     */
-    public function savePresetAction(Request $request)
+    public function savePresetAction(): Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id          = (int) $request->get('id');
-        $name        = $request->get('name');
-        $customer    = $this->getDoctrine()
+        $id          = (int) $this->request->get('id');
+        $name        = $this->request->get('name');
+        $customer    = $this->doctrine
             ->getRepository('App:Customer')
-            ->find($request->get('customer'));
-        $project     = $this->getDoctrine()
+            ->find($this->request->get('customer'));
+        $project     = $this->doctrine
             ->getRepository('App:Project')
-            ->find($request->get('project'));
-        $activity    = $this->getDoctrine()
+            ->find($this->request->get('project'));
+        $activity    = $this->doctrine
             ->getRepository('App:Activity')
-            ->find($request->get('activity'));
-        $description = $request->get('description');
+            ->find($this->request->get('activity'));
+        $description = $this->request->get('description');
 
         if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
+            $response = new Response($this->t('Please provide a valid preset name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
-        $repository = $this->getDoctrine()->getRepository('App:Preset');
+        $repository = $this->doctrine->getRepository('App:Preset');
 
         if ($id) {
             $preset = $repository->find($id);
@@ -570,11 +541,11 @@ class AdminController extends BaseController
                 ->setActivity($activity)
                 ->setDescription($description);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             $em->persist($preset);
             $em->flush();
         } catch (Exception) {
-            $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
+            $response = new Response($this->t('Please choose a customer, a project and an activity.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
@@ -584,29 +555,28 @@ class AdminController extends BaseController
 
 
     /**
-     * @return Response
      * @throws ReflectionException
      */
-    public function saveTicketSystemAction(Request $request)
+    public function saveTicketSystemAction(): Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $repository = $this->getDoctrine()->getRepository('App:TicketSystem');
+        $repository = $this->doctrine->getRepository('App:TicketSystem');
 
-        $id                  = (int) $request->get('id');
-        $name                = $request->get('name');
-        $type                = $request->get('type');
-        $bookTime            = $request->get('bookTime');
-        $url                 = $request->get('url');
-        $login               = $request->get('login');
-        $password            = $request->get('password');
-        $publicKey           = $request->get('publicKey');
-        $privateKey          = $request->get('privateKey');
-        $ticketUrl           = $request->get('ticketUrl');
-        $oauthConsumerKey    = $request->get('oauthConsumerKey');
-        $oauthConsumerSecret = $request->get('oauthConsumerSecret');
+        $id                  = (int) $this->request->get('id');
+        $name                = $this->request->get('name');
+        $type                = $this->request->get('type');
+        $bookTime            = $this->request->get('bookTime');
+        $url                 = $this->request->get('url');
+        $login               = $this->request->get('login');
+        $password            = $this->request->get('password');
+        $publicKey           = $this->request->get('publicKey');
+        $privateKey          = $this->request->get('privateKey');
+        $ticketUrl           = $this->request->get('ticketUrl');
+        $oauthConsumerKey    = $this->request->get('oauthConsumerKey');
+        $oauthConsumerSecret = $this->request->get('oauthConsumerSecret');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -615,14 +585,14 @@ class AdminController extends BaseController
         }
 
         if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid ticket system name with at least 3 letters.'));
+            $response = new Response($this->t('Please provide a valid ticket system name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         if ($sameNamedSystem = $repository->findOneByName($name)) {
             if ($ticketSystem->getId() != $sameNamedSystem->getId()) {
-                $response = new Response($this->translate('The ticket system name provided already exists.'));
+                $response = new Response($this->t('The ticket system name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -642,11 +612,11 @@ class AdminController extends BaseController
                 ->setOauthConsumerKey($oauthConsumerKey)
                 ->setOauthConsumerSecret($oauthConsumerSecret);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             $em->persist($ticketSystem);
             $em->flush();
         } catch (Exception $e) {
-            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+            $response = new Response($this->t('Error on save') . ': ' . $e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
@@ -654,16 +624,15 @@ class AdminController extends BaseController
         return new Response(json_encode($ticketSystem->toArray(), JSON_THROW_ON_ERROR));
     }
 
-
-    public function deleteTicketSystemAction(Request $request): Error|Response
+    public function deleteTicketSystemAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $ticketSystem = $doctrine->getRepository('App:TicketSystem')
                 ->find($id);
@@ -674,35 +643,31 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
         return new Response(json_encode(array('success' => true)));
     }
 
-
-    /**
-     * @return Response
-     */
-    public function saveActivityAction(Request $request)
+    public function saveActivityAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $repository = $this->getDoctrine()->getRepository('App:Activity');
+        $repository = $this->doctrine->getRepository('App:Activity');
 
-        $id             = (int) $request->get('id');
-        $name           = $request->get('name');
-        $needsTicket    = (boolean) $request->get('needsTicket');
-        $factor         = str_replace(',', '.', $request->get('factor'));
+        $id             = (int) $this->request->get('id');
+        $name           = $this->request->get('name');
+        $needsTicket    = (boolean) $this->request->get('needsTicket');
+        $factor         = str_replace(',', '.', $this->request->get('factor'));
 
         if ($id) {
             $activity = $repository->find($id);
@@ -712,7 +677,7 @@ class AdminController extends BaseController
 
         if ($sameNamedActivity = $repository->findOneByName($name)) {
             if ($activity->getId() != $sameNamedActivity->getId()) {
-                $response = new Response($this->translate('The activity name provided already exists.'));
+                $response = new Response($this->t('The activity name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -724,11 +689,11 @@ class AdminController extends BaseController
                 ->setNeedsTicket($needsTicket)
                 ->setFactor($factor);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             $em->persist($activity);
             $em->flush();
         } catch (Exception $e) {
-            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+            $response = new Response($this->t('Error on save') . ': ' . $e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
@@ -739,15 +704,15 @@ class AdminController extends BaseController
     }
 
 
-    public function deleteActivityAction(Request $request): Error|Response
+    public function deleteActivityAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $activity = $doctrine->getRepository('App:Activity')
                 ->find($id);
@@ -758,37 +723,33 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
         return new Response(json_encode(array('success' => true)));
     }
 
-
-    /**
-     * @return Response
-     */
-    public function saveTeamAction(Request $request)
+    public function saveTeamAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $repository = $this->getDoctrine()->getRepository('App:Team');
+        $repository = $this->doctrine->getRepository('App:Team');
 
-        $id         = (int) $request->get('id');
-        $name       = $request->get('name');
-        $teamLead   = $request->get('lead_user_id') ?
-            $this->getDoctrine()
+        $id         = (int) $this->request->get('id');
+        $name       = $this->request->get('name');
+        $teamLead   = $this->request->get('lead_user_id') ?
+            $this->doctrine
                 ->getRepository('App:User')
-                ->find($request->get('lead_user_id'))
+                ->find($this->request->get('lead_user_id'))
             : null;
 
         if ($id) {
@@ -799,14 +760,14 @@ class AdminController extends BaseController
 
         if ($sameNamedTeam = $repository->findOneByName($name)) {
             if ($team->getId() != $sameNamedTeam->getId()) {
-                $response = new Response($this->translate('The team name provided already exists.'));
+                $response = new Response($this->t('The team name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
         }
 
         if (is_null($teamLead)) {
-            $response = new Response($this->translate('Please provide a valid user as team leader.'));
+            $response = new Response($this->t('Please provide a valid user as team leader.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -816,11 +777,11 @@ class AdminController extends BaseController
                 ->setName($name)
                 ->setLeadUser($teamLead);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             $em->persist($team);
             $em->flush();
         } catch (Exception $e) {
-            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+            $response = new Response($this->t('Error on save') . ': ' . $e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
         }
@@ -831,15 +792,15 @@ class AdminController extends BaseController
     }
 
 
-    public function deleteTeamAction(Request $request): Error|Response
+    public function deleteTeamAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $team = $doctrine->getRepository('App:Team')
                 ->find($id);
@@ -850,30 +811,26 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
         return new Response(json_encode(array('success' => true)));
     }
 
-
-    /**
-     * @return Response
-     */
-    public function jiraSyncEntriesAction(Request $request)
+    public function jiraSyncEntriesAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $doctrine = $this->getDoctrine();
+        $doctrine = $this->doctrine;
 
         $users = $doctrine
             ->getRepository('App:User')
@@ -902,53 +859,48 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-
-    /**
-     * @return Response
-     */
-    public function getContractsAction(Request $request)
+    public function getContractsAction(): Response
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         /* @var $repo \App\Repository\ContractRepository */
-        $repo = $this->getDoctrine()->getRepository('App:Contract');
+        $repo = $this->doctrine->getRepository('App:Contract');
 
         return new Response(json_encode($repo->getContracts(), JSON_THROW_ON_ERROR));
     }
 
 
     /**
-     * @return Response
      * @throws Exception
      */
-    public function saveContractAction(Request $request)
+    public function saveContractAction(): Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         $data = null;
-        $contractId = (int) $request->get('id');
-        $start      = $request->get('start');
-        $end        = $request->get('end');
-        $hours_0    = $request->get('hours_0');
-        $hours_1    = $request->get('hours_1');
-        $hours_2    = $request->get('hours_2');
-        $hours_3    = $request->get('hours_3');
-        $hours_4    = $request->get('hours_4');
-        $hours_5    = $request->get('hours_5');
-        $hours_6    = $request->get('hours_6');
+        $contractId = (int) $this->request->get('id');
+        $start      = $this->request->get('start');
+        $end        = $this->request->get('end');
+        $hours_0    = $this->request->get('hours_0');
+        $hours_1    = $this->request->get('hours_1');
+        $hours_2    = $this->request->get('hours_2');
+        $hours_3    = $this->request->get('hours_3');
+        $hours_4    = $this->request->get('hours_4');
+        $hours_5    = $this->request->get('hours_5');
+        $hours_6    = $this->request->get('hours_6');
         /** @var User $user */
-        $user       = $request->get('user_id') ?
-            $this->getDoctrine()
+        $user       = $this->request->get('user_id') ?
+            $this->doctrine
                 ->getRepository('App:User')
-                ->find($request->get('user_id'))
+                ->find($this->request->get('user_id'))
             : null;
 
         /* @var $contractRepository \App\Repository\ContractRepository */
-        $contractRepository = $this->getDoctrine()->getRepository('App:Contract');
+        $contractRepository = $this->doctrine->getRepository('App:Contract');
 
         if ($contractId) {
             $contract = $contractRepository->find($contractId);
@@ -957,14 +909,14 @@ class AdminController extends BaseController
         }
 
         if (!$user) {
-            $response = new Response($this->translate('Please enter a valid user.'));
+            $response = new Response($this->t('Please enter a valid user.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
         $dateStart = DateTime::createFromFormat('Y-m-d', $start);
         if (!$dateStart) {
-            $response = new Response($this->translate('Please enter a valid contract start.'));
+            $response = new Response($this->t('Please enter a valid contract start.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -979,7 +931,7 @@ class AdminController extends BaseController
             $dateEnd->setTime(23, 59, 59);
 
             if ($dateEnd < $dateStart) {
-                $response = new Response($this->translate('End date has to be greater than the start date.'));
+                $response = new Response($this->t('End date has to be greater than the start date.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
                 return $response;
             }
@@ -998,7 +950,7 @@ class AdminController extends BaseController
             ->setHours5($hours_5)
             ->setHours6($hours_6);
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $em->persist($contract);
         $em->flush();
 
@@ -1006,16 +958,15 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-
-    public function deleteContractAction(Request $request): Error|Response
+    public function deleteContractAction(): Error|Response
     {
-        if (false === $this->isPl($request)) {
+        if (false === $this->isPl()) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $id = (int) $this->request->get('id');
+            $doctrine = $this->doctrine;
 
             $contract = $doctrine->getRepository('App:Contract')
                 ->find($id);
@@ -1026,9 +977,9 @@ class AdminController extends BaseController
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
+                $reason = $this->t('Other datasets refer to this one.');
             }
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = sprintf($this->t('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 

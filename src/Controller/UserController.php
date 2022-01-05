@@ -3,15 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\User as User;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 
-class UserController extends AbstractController
+class UserController extends BaseController
 {
-    public function addAction(Request $request)
+    public function addAction()
     {
-        $username = $request->request->get('username');
+        $username = $this->request->get('username');
 
         if (empty($username)) {
             return new Response(json_encode(array('success' => false)));
@@ -28,7 +27,7 @@ class UserController extends AbstractController
         $user->setUsername($username);
         $user->setType('DEV');
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $em->persist($user);
         $em->flush();
 

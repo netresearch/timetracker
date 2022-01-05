@@ -48,18 +48,18 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-    public function exportAction(Request $request)
+    public function exportAction()
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
-        $projectId    = (int)  $request->get('project');
-        $userId       = (int)  $request->get('userid');
-        $year         = (int)  $request->get('year');
-        $month        = (int)  $request->get('month');
-        $customerId   = (int)  $request->get('customer');
-        $onlyBillable = (bool) $request->get('billable');
+        $projectId    = (int)  $this->request->get('project');
+        $userId       = (int)  $this->request->get('userid');
+        $year         = (int)  $this->request->get('year');
+        $month        = (int)  $this->request->get('month');
+        $customerId   = (int)  $this->request->get('customer');
+        $onlyBillable = (bool) $this->request->get('billable');
 
         $service = $this->get('nr.timetracker.export');
         /** @var Entry[] $entries */
@@ -75,7 +75,7 @@ class ControllingController extends BaseController
             && $this->container->getParameter('app.show_billable_field_in_export');
         if ($showBillableField) {
             $entries = $service->enrichEntriesWithBillableInformation(
-                $this->getUserId($request), $entries, $onlyBillable
+                $this->getUserId(), $entries, $onlyBillable
             );
         }
 

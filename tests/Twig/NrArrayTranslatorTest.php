@@ -18,6 +18,7 @@ use App\Extension\NrArrayTranslator;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_TestCase;
 use Symfony\Component\Translation\Translator;
+use Twig\TwigFilter;
 
 /**
  * Class NrArrayTranslatorTest
@@ -75,7 +76,7 @@ class NrArrayTranslatorTest
         $this->assertTrue(is_array($filters));
         $this->assertTrue(array_key_exists('nr_array_translator', $filters));
         $this->assertTrue(
-            $filters['nr_array_translator'] instanceof \Twig_SimpleFilter
+            $filters['nr_array_translator'] instanceof TwigFilter
         );
 
     }

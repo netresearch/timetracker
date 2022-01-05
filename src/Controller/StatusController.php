@@ -25,20 +25,20 @@ class StatusController extends BaseController
         return array('loginStatus' => $loginStatus);
     }
 
-    public function checkAction(Request $request)
+    public function checkAction()
     {
-        $userId = $request->getSession()->get('loginId');
+        $userId = $this->session->get('loginId');
 
         $status = $this->getStatus($userId);
         return new Response(json_encode($status, JSON_THROW_ON_ERROR));
     }
 
-    public function pageAction(Request $request)
+    public function pageAction()
     {
         // use Auto-Cookie-Login from BaseClass
-        $this->checkLogin($request);
+        $this->checkLogin();
 
-        $userId = $request->getSession()->get('loginId');
+        $userId = $this->session->get('loginId');
         $status = $this->getStatus($userId);
         return $this->render('App:Default:status.html.twig', array(
             'loginClass'    => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),

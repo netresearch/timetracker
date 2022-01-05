@@ -32,10 +32,10 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     // run them, one by one
 
-    // PHP
+    // PHP Upgrade
     //$containerConfigurator->import(LevelSetList::UP_TO_PHP_81);
 
-    // Symfony
+    // Symfony Upgrade
     //$containerConfigurator->import(SymfonySetList::SYMFONY_50_TYPES);
     //$containerConfigurator->import(SymfonySetList::SYMFONY_52_VALIDATOR_ATTRIBUTES);
     //$containerConfigurator->import(SymfonySetList::SYMFONY_60);
@@ -66,11 +66,14 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     //$containerConfigurator->import(TwigSetList::TWIG_112);
     //$containerConfigurator->import(TwigSetList::TWIG_127 );
     //$containerConfigurator->import(TwigSetList::TWIG_134 );
-    $containerConfigurator->import(TwigSetList::TWIG_140 );
-    // $containerConfigurator->import(TwigSetList::TWIG_20 );
-    // $containerConfigurator->import(TwigSetList::TWIG_240 );
-    // $containerConfigurator->import(TWIG_UNDERSCORE_TO_NAMESPACE ::TWIG_112);
+    //$containerConfigurator->import(TwigSetList::TWIG_140 );
+    //$containerConfigurator->import(TwigSetList::TWIG_20 );
+    //$containerConfigurator->import(TwigSetList::TWIG_240 );
+    $containerConfigurator->import(TwigSetList::TWIG_UNDERSCORE_TO_NAMESPACE);
 
     //$containerConfigurator->import(PHPOfficeSetList::PHPEXCEL_TO_PHPSPREADSHEET);
+
+    //Rector\Autodiscovery\Rector\Class_\MoveEntitiesToEntityDirectoryRector
+    $containerConfigurator->import(\Rector\Autodiscovery\Rector\Class_\MoveEntitiesToEntityDirectoryRector);
 
 };

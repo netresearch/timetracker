@@ -22,16 +22,16 @@ class InterpretationController extends BaseController
         return strcmp($b['name'], $a['name']);
     }
 
-    public function getLastEntriesAction(Request $request)
+    public function getLastEntriesAction()
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getEntries($request, 50);
+            $entries = $this->getEntries(50);
         } catch (Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+            $response = new Response($this->t($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -51,13 +51,13 @@ class InterpretationController extends BaseController
      * @return array|null
      * @throws Exception
      */
-    private function getCachedEntries(Request $request)
+    private function getCachedEntries()
     {
         if (null != $this->cache) {
             return $this->cache;
         }
 
-        $this->cache = $this->getEntries($request);
+        $this->cache = $this->getEntries();
         return $this->cache;
     }
 
@@ -92,16 +92,16 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    public function groupByCustomerAction(Request $request)
+    public function groupByCustomerAction()
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedEntries($request);
+            $entries = $this->getCachedEntries();
         } catch (Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+            $response = new Response($this->t($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -132,16 +132,16 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($customers), JSON_THROW_ON_ERROR));
     }
 
-    public function groupByProjectAction(Request $request)
+    public function groupByProjectAction()
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedEntries($request);
+            $entries = $this->getCachedEntries();
         } catch (Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+            $response = new Response($this->t($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -173,16 +173,16 @@ class InterpretationController extends BaseController
     }
 
 
-    public function groupByTicketAction(Request $request)
+    public function groupByTicketAction()
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedEntries($request);
+            $entries = $this->getCachedEntries();
         } catch (Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+            $response = new Response($this->t($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -219,19 +219,19 @@ class InterpretationController extends BaseController
      *
      * @return Response
      */
-    public function groupByUserAction(Request $request)
+    public function groupByUserAction()
     {
         #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
-        $request->query->set('user', $this->getUserId($request));
+        $this->request->query->set('user', $this->getUserId());
 
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedEntries($request);
+            $entries = $this->getCachedEntries();
         } catch (Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+            $response = new Response($this->t($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -267,16 +267,16 @@ class InterpretationController extends BaseController
      *
      * @return Response
      */
-    public function groupByWorktimeAction(Request $request)
+    public function groupByWorktimeAction()
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedEntries($request);
+            $entries = $this->getCachedEntries();
         } catch (Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+            $response = new Response($this->t($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -307,16 +307,16 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData(array_reverse($times)), JSON_THROW_ON_ERROR));
     }
 
-    public function groupByActivityAction(Request $request)
+    public function groupByActivityAction()
     {
-        if (!$this->checkLogin($request)) {
+        if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
         }
 
         try {
-            $entries = $this->getCachedEntries($request);
+            $entries = $this->getCachedEntries();
         } catch (Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+            $response = new Response($this->t($e->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
@@ -353,25 +353,25 @@ class InterpretationController extends BaseController
      * @return Entry[]
      * @throws Exception
      */
-    private function getEntries(Request $request, $maxResults = null)
+    private function getEntries($maxResults = null)
     {
         $arParams = [
-            'customer'          => $this->evalParam($request, 'customer'),
-            'project'           => $this->evalParam($request, 'project'),
-            'user'              => $this->evalParam($request, 'user'),
-            'activity'          => $this->evalParam($request, 'activity'),
-            'team'              => $this->evalParam($request, 'team'),
-            'ticket'            => $this->evalParam($request, 'ticket'),
-            'description'       => $this->evalParam($request, 'description'),
-            'visibility_user'   => ($this->isDEV($request)? $this->getUserId($request) : null),
+            'customer'          => $this->evalParam('customer'),
+            'project'           => $this->evalParam('project'),
+            'user'              => $this->evalParam('user'),
+            'activity'          => $this->evalParam('activity'),
+            'team'              => $this->evalParam('team'),
+            'ticket'            => $this->evalParam('ticket'),
+            'description'       => $this->evalParam('description'),
+            'visibility_user'   => ($this->isDEV()? $this->getUserId() : null),
             'maxResults'        => $maxResults,
-            'datestart'         => $this->evalParam($request, 'datestart'),
-            'dateend'           => $this->evalParam($request, 'dateend'),
+            'datestart'         => $this->evalParam('datestart'),
+            'dateend'           => $this->evalParam('dateend'),
         ];
 
-        $year = $this->evalParam($request, 'year');
+        $year = $this->evalParam('year');
         if (null !== $year) {
-            $month = $this->evalParam($request, 'month');
+            $month = $this->evalParam('month');
             if (null !== $month) {
                 // first day of month
                 $datestart = $year . '-' . $month . '-01';
@@ -404,18 +404,18 @@ class InterpretationController extends BaseController
             && !$arParams['ticket']
         ) {
             throw new Exception(
-                $this->translate('You need to specify at least customer, project, ticket, user or month and year.')
+                $this->t('You need to specify at least customer, project, ticket, user or month and year.')
             );
         }
 
         /* @var $repository \App\Repository\EntryRepository */
-        $repository = $this->getDoctrine()->getRepository('App:Entry');
+        $repository = $this->doctrine->getRepository('App:Entry');
         return $repository->findByFilterArray($arParams);
     }
 
-    private function evalParam(Request $request, $param)
+    private function evalParam($param)
     {
-        $param = $request->query->get($param);
+        $param = $this->request->query->get($param);
         if ($param && !empty($param)) {
             return $param;
         }

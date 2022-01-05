@@ -4,41 +4,40 @@ namespace App\Controller;
 
 use App\Helper\LocalizationHelper as LocalizationHelper;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 
-class SettingsController extends AbstractController
+class SettingsController extends BaseController
 {
-    public function saveAction(Request $request)
+    public function saveAction()
     {
-        if ('POST' == $request->getMethod()) {
-            $userId = $request->getSession()->get('loginId');
+        if ('POST' == $this->request->getMethod()) {
+            $userId = $this->session->get('loginId');
 
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrine;
             $user = $doctrine->getRepository('App:User')->find($userId);
 
-            $user->setShowEmptyLine($request->request->get('show_empty_line'));
-            $user->setSuggestTime($request->request->get('suggest_time'));
-            $user->setShowFuture($request->request->get('show_future'));
-            $user->setLocale(LocalizationHelper::normalizeLocale($request->request->get('locale')));
+            $user->setShowEmptyLine($this->request->get('show_empty_line'));
+            $user->setSuggestTime($this->request->get('suggest_time'));
+            $user->setShowFuture($this->request->get('show_future'));
+            $user->setLocale(LocalizationHelper::normalizeLocale($this->request->get('locale')));
 
             $em = $doctrine->getManager();
             $em->persist($user);
             $em->flush();
 
             // Adapt to new locale immediately
-            $request->setLocale($user->getLocale());
+            $this->request->setLocale($user->getLocale());
 
             return new Response(json_encode(array('success' => true,
                     'settings' => $user->getSettings(),
                     'locale' => $user->getLocale(),
-                    'message' => $this->get('translator')->trans('The configuration has been successfully saved.')
+                    'message' => $this->t('The configuration has been successfully saved.')
                 ), JSON_THROW_ON_ERROR));
         }
 
         $response = new Response(json_encode(array('success' => false,
-                'message' => $this->get('translator')->trans('The configuration could not be saved.')
+                'message' => $this->t('The configuration could not be saved.')
             ), JSON_THROW_ON_ERROR));
 
         $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_SERVICE_UNAVAILABLE);

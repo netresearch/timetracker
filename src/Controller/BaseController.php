@@ -16,11 +16,15 @@ namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use App\Entity\User;
-use App\Helper\LocalizationHelper as LocalizationHelper;
+use App\Helper\LocalizationHelper;
 use App\Helper\LoginHelper;
 use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class BaseController
@@ -33,21 +37,29 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
  */
 class BaseController extends AbstractController
 {
+    protected Request $request;
+    protected Session $session;
+
+    public function __construct(
+        protected ManagerRegistry $doctrine, 
+        protected RequestStack $requestStack,
+        protected TranslatorInterface $translator
+    ) {
+        $this->request = $requestStack->getCurrentRequest();
+        $this->session = $requestStack->getCurrentRequest()->getSession();
+    }
 
     /**
      * set up function before actions are dispatched
-     *
-     *
-     * @return void
      */
-    public function preExecute(Request $request)
+    public function preExecute(): void
     {
-        if (!$this->checkLogin($request))
+        if (!$this->checkLogin())
             return;
 
-        $doctrine = $this->getDoctrine();
+        $doctrine = $this->doctrine;
         $user = $doctrine->getRepository('App:User')
-            ->find($this->getUserId($request));
+            ->find($this->getUserId());
 
         if (!is_object($user)) {
             return;
@@ -55,41 +67,31 @@ class BaseController extends AbstractController
 
         $locale = LocalizationHelper::normalizeLocale($user->getLocale());
 
-        $request->setLocale($locale);
+        $this->request->setLocale($locale);
     }
-
 
     /**
      * check the login status
-     *
-     *
-     * @return mixed
      */
-    protected function isLoggedIn(Request $request)
+    protected function isLoggedIn(): mixed
     {
-        return $request->getSession()->get('loggedIn');
+        return $this->session->get('loggedIn');
     }
-
 
     /**
      * returns the user id
-     *
-     *
-     * @return mixed
      */
-    protected function getUserId(Request $request)
+    protected function getUserId(): mixed
     {
-        return $request->getSession()->get('loginId');
+        return $this->session->get('loginId');
     }
 
     /**
      * Redirects to the login page
-     *
-     *
      */
-    protected function login(Request $request): Response|RedirectResponse
+    protected function login(): Response|RedirectResponse
     {
-        if (!$request->isXmlHttpRequest()) {
+        if (!$this->request->isXmlHttpRequest()) {
             return $this->redirect($this->generateUrl('_login'));
         } else {
             return new Response($this->generateUrl('_login'), 403);
@@ -98,55 +100,44 @@ class BaseController extends AbstractController
 
     /**
      * checks the user type to be PL
-     *
-     *
-     * @return bool
      */
-    protected function isPl(Request $request)
+    protected function isPl(): bool
     {
-        if (false === $this->checkLogin($request)) {
+        if (false === $this->checkLogin()) {
             return false;
         }
 
-        $userId = $this->getUserId($request);
-        $user = $this->getDoctrine()
+        $userId = $this->getUserId();
+        $user = $this->doctrine
             ->getRepository('App:User')
             ->find($userId);
 
         return ('PL' == $user->getType());
     }
 
-
     /**
      * checks the user type to be DEV
-     *
-     *
-     * @return bool
      */
-    protected function isDEV(Request $request)
+    protected function isDEV(): bool
     {
-        if (false === $this->checkLogin($request)) {
+        if (false === $this->checkLogin()) {
             return false;
         }
 
-        $userId = $this->getUserId($request);
-        $user = $this->getDoctrine()
+        $userId = $this->getUserId();
+        $user = $this->doctrine
             ->getRepository('App:User')
             ->find($userId);
 
         return ('DEV' == $user->getType());
     }
 
-
     /**
      * Returns true if a user is logged in or can authenticate by cookie
-     *
-     *
-     * @return bool
      */
-    protected function checkLogin(Request $request)
+    protected function checkLogin(): bool
     {
-        if ($this->isLoggedIn($request)) {
+        if ($this->isLoggedIn()) {
             return true;
         }
 
@@ -157,13 +148,13 @@ class BaseController extends AbstractController
         }
 
         /* @var $user User */
-        $user = $this->getDoctrine()
+        $user = $this->doctrine
             ->getRepository('App:User')
             ->findOneById($userId);
 
         // Re-Login by cookie
         if (LoginHelper::checkCookieUserName($user->getUsername())) {
-            $this->setLoggedIn($request, $user, true);
+            $this->setLoggedIn($user, true);
         }
 
         return true;
@@ -171,12 +162,10 @@ class BaseController extends AbstractController
 
     /**
      * Provide a standard response for cases where the login failed.
-     *
-     * @return Response
      */
-    protected function getFailedLoginResponse()
+    protected function getFailedLoginResponse(): Response
     {
-        $message = $this->translate('You need to login.');
+        $message = $this->t('You need to login.');
         $response = new Response($message);
         $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
         return $response;
@@ -184,12 +173,10 @@ class BaseController extends AbstractController
 
     /**
      * returns an error message for not allowed actions
-     *
-     * @return Response
      */
-    protected function getFailedAuthorizationResponse()
+    protected function getFailedAuthorizationResponse(): Response
     {
-        $message = $this->translate('You are not allowed to perform this action.');
+        $message = $this->t('You are not allowed to perform this action.');
         $response = new Response($message);
         $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
         return $response;
@@ -198,13 +185,8 @@ class BaseController extends AbstractController
 
     /**
      * Returns a custom error message
-     *
-     * @param string $message Error message
-     * @param int    $status  HTTP status code
-     *
-     * @return Response
      */
-    protected function getFailedResponse($message, $status)
+    protected function getFailedResponse(string $message, int $status): Response
     {
         $response = new Response($message);
         $response->setStatusCode($status);
@@ -213,32 +195,26 @@ class BaseController extends AbstractController
 
     /**
      * Handles all after-login stuff
-     *
-     * @param User    $user      user object
-     * @param bool    $setCookie set a cookie or not
-     *
      */
-    protected function setLoggedIn(Request $request, $user, $setCookie = true): Response|RedirectResponse
+    protected function setLoggedIn(User $user, bool $setCookie = true): Response|RedirectResponse
     {
-        $session = $request->getSession();
-
         if (! is_object($user)) {
-            $session->getFlashBag()->add(
+            $this->session->getFlashBag()->add(
                 'error',
-                $this->translate('Could not find user.')
+                $this->t('Could not find user.')
             );
 
             return $this->render(
-                'App:Default:login.html.twig',
+                'login.html.twig',
                 [
                     'locale'   => 'en',
                 ]
             );
         }
 
-        $session->set('loggedIn', true);
-        $session->set('loginUsername', $user->getUsername());
-        $session->set('loginId', $user->getId());
+        $this->session->set('loggedIn', true);
+        $this->session->set('loginUsername', $user->getUsername());
+        $this->session->set('loginId', $user->getId());
 
         // Set login cookies, if wanted
         if ($setCookie) {
@@ -248,39 +224,22 @@ class BaseController extends AbstractController
         return $this->redirect($this->generateUrl('_start'));
     }
 
-
     /**
      * logout of an user
-     *
-     *
-     * @return void
      */
-    protected function setLoggedOut(Request $request)
+    protected function setLoggedOut(): void
     {
         // delete login cookies
         LoginHelper::deleteCookie();
 
-        $request->getSession()->clear();
+        $this->session->clear();
     }
+    
+    protected function t(
+        string $id, array $parameters = array(), string$domain = 'messages', string $locale = null
+    ): mixed {
+        $locale = (is_null($locale)) ? $this->translator->getLocale() : $locale;
 
-
-    /**
-     * helper method to shorten the usage of the translator in the controllers
-     *
-     * @param string $id         translation identifier
-     * @param array  $parameters translation parameters
-     * @param string $domain     translation file domain
-     * @param null   $locale     translation locale
-     *
-     * @return mixed
-     */
-    protected function translate(
-        $id, array $parameters = array(), $domain = 'messages', $locale = null
-    ) {
-        $translator = $this->get('translator');
-
-        $locale = (is_null($locale)) ? $translator->getLocale() : $locale;
-
-        return $translator->trans($id, $parameters, $domain, $locale);
+        return $this->translator->trans($id, $parameters, $domain, $locale);
     }
 }
