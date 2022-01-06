@@ -20,7 +20,7 @@
 					items: [
                     {% for flashMessage in app.session.flashbag.get('error') %}
 						Ext.create('Ext.panel.Panel', {
-							html: "{{ flashMessage }}"
+							html: "{{ flashMessage|escape('js') }}"
 						}),
         			{% endfor %}
 					    Ext.create('Ext.form.Panel', {
