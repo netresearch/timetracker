@@ -50,3 +50,23 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # twig.extension.csvExport:
+    #     class: App\Twig\TwigCsvEscapingExtension
+    #     tags:
+    #         - { name: twig.extension }
+
+    # nr.twig.nr_array_translator:
+    #     class: App\Twig\NrArrayTranslator
+    #     arguments: ['@translator']
+    #     tags:
+    #         - { name: twig.extension }
+
+    preexecute:
+        class: App\EventListener\PreExecute
+        tags:
+            - { name: kernel.event_listener, event: kernel.controller }
+
+    nr.timetracker.export:
+        class: App\Services\Export
+        arguments: ['@service_container']
