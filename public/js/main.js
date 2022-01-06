@@ -1,14 +1,14 @@
 Ext.Loader.setConfig({
     enabled: true,
     paths: {
-        'Ext': '../bundles/netresearchtimetracker/js/ext-js/src',
+        'Ext': '../js/ext-js/src',
         'yourAppName': 'netresearch'
     }
 });
 
 // Link NR bundle to Namespace
-Ext.Loader.setPath('Netresearch', '../bundles/netresearchtimetracker/js/netresearch');
-Ext.Loader.setPath('Ext.ux.window', '../bundles/netresearchtimetracker/js');
+Ext.Loader.setPath('Netresearch', '../js/netresearch');
+Ext.Loader.setPath('Ext.ux.window', '../js');
 
 /* Load necessary requirements */
 Ext.require([
