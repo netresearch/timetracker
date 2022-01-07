@@ -20,6 +20,7 @@ use App\Entity\Preset;
 use App\Entity\TicketSystem;
 use App\Entity\Activity;
 use App\Helper\TimeHelper;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class AdminController
@@ -43,6 +44,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/getAllCustomers', name: '_getAllCustomers')]
     public function getCustomersAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -55,6 +57,7 @@ class AdminController extends BaseController
         return new Response(json_encode($repo->getAllCustomers(), JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/getAllUsers', name: '_getAllUsers')]
     public function getUsersAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -67,6 +70,7 @@ class AdminController extends BaseController
         return new Response(json_encode($repo->getAllUsers(), JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/getAllTeams', name: '_getAllTeams')]
     public function getTeamsAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -79,6 +83,7 @@ class AdminController extends BaseController
         return new Response(json_encode($repo->findAll(), JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/getAllPresets', name: '_getAllPresets')]
     public function getPresetsAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -94,6 +99,7 @@ class AdminController extends BaseController
     /**
      * @throws ReflectionException
      */
+    #[Route(path: '/getTicketSystems', name: '_getTicketSystems')]
     public function getTicketSystemsAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -119,6 +125,7 @@ class AdminController extends BaseController
         return new Response(json_encode($ticketSystems, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/project/save')]
     public function saveProjectAction(): Response
     {
         if (false === $this->isPl()) {
@@ -235,6 +242,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/project/delete')]
     public function deleteProjectAction(): Error|Response
     {
         if (false === $this->isPl()) {
@@ -263,6 +271,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    #[Route(path: '/customer/save')]
     public function saveCustomerAction(): Response
     {
         if (false === $this->isPl()) {
@@ -330,6 +339,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/customer/delete')]
     public function deleteCustomerAction(): Error|Response
     {
         if (false === $this->isPl()) {
@@ -358,6 +368,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    #[Route(path: '/user/save')]
     public function saveUserAction(): Response
     {
         if (false === $this->isPl()) {
@@ -445,6 +456,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/user/delete')]
     public function deleteUserAction(): Error|Response
     {
         if (false === $this->isPl()) {
@@ -473,6 +485,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    #[Route(path: '/preset/delete')]
     public function deletePresetAction(): Error|Response
     {
         if (false === $this->isPl()) {
@@ -501,6 +514,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    #[Route(path: '/preset/save')]
     public function savePresetAction(): Response
     {
         if (false === $this->isPl()) {
@@ -557,6 +571,7 @@ class AdminController extends BaseController
     /**
      * @throws ReflectionException
      */
+    #[Route(path: '/ticketsystem/save')]
     public function saveTicketSystemAction(): Response
     {
         if (false === $this->isPl()) {
@@ -624,6 +639,7 @@ class AdminController extends BaseController
         return new Response(json_encode($ticketSystem->toArray(), JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/ticketsystem/delete')]
     public function deleteTicketSystemAction(): Error|Response
     {
         if (false === $this->isPl()) {
@@ -652,6 +668,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    #[Route(path: '/activity/save')]
     public function saveActivityAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -703,7 +720,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-
+    #[Route(path: '/activity/delete')]
     public function deleteActivityAction(): Error|Response
     {
         if (false === $this->isPl()) {
@@ -732,6 +749,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    #[Route(path: '/team/save')]
     public function saveTeamAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -791,7 +809,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-
+    #[Route(path: '/team/delete')]
     public function deleteTeamAction(): Error|Response
     {
         if (false === $this->isPl()) {
@@ -820,6 +838,7 @@ class AdminController extends BaseController
         return new Response(json_encode(array('success' => true)));
     }
 
+    #[Route(path: '/syncentries/jira')]
     public function jiraSyncEntriesAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -859,6 +878,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/getContracts', name: '_getContracts')]
     public function getContractsAction(): Response
     {
         if (!$this->checkLogin()) {
@@ -875,6 +895,7 @@ class AdminController extends BaseController
     /**
      * @throws Exception
      */
+    #[Route(path: '/contract/save')]
     public function saveContractAction(): Response
     {
         if (false === $this->isPl()) {
@@ -958,6 +979,7 @@ class AdminController extends BaseController
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/contract/delete')]
     public function deleteContractAction(): Error|Response
     {
         if (false === $this->isPl()) {

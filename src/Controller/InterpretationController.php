@@ -8,7 +8,10 @@ use DateInterval;
 use App\Entity\Entry;
 use App\Helper\TimeHelper;
 use App\Model\Response;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\LazyResponseException;
 
 class InterpretationController extends BaseController
 {
@@ -22,7 +25,8 @@ class InterpretationController extends BaseController
         return strcmp($b['name'], $a['name']);
     }
 
-    public function getLastEntriesAction()
+    #[Route(path: '/interpretation/entries', name: 'interpretation_entries')]
+    public function getLastEntriesAction(): Response
     {
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
@@ -92,7 +96,8 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    public function groupByCustomerAction()
+    #[Route(path: '/interpretation/customer', name: 'interpretation_customer')]
+    public function groupByCustomerAction(): Response
     {
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
@@ -132,7 +137,8 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($customers), JSON_THROW_ON_ERROR));
     }
 
-    public function groupByProjectAction()
+    #[Route(path: '/interpretation/project', name: 'interpretation_project')]
+    public function groupByProjectAction(): Response
     {
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
@@ -172,8 +178,8 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData($projects), JSON_THROW_ON_ERROR));
     }
 
-
-    public function groupByTicketAction()
+    #[Route(path: '/interpretation/ticket', name: 'interpretation_ticket')]
+    public function groupByTicketAction(): Response
     {
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
@@ -216,10 +222,9 @@ class InterpretationController extends BaseController
 
     /**
      * Returns the data for the analysing chart "effort per employee".
-     *
-     * @return Response
      */
-    public function groupByUserAction()
+    #[Route(path: '/interpretation/user', name: 'interpretation_user')]
+    public function groupByUserAction(): Response
     {
         #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
         $this->request->query->set('user', $this->getUserId());
@@ -264,10 +269,9 @@ class InterpretationController extends BaseController
 
     /**
      * Returns booked times grouped by day.
-     *
-     * @return Response
      */
-    public function groupByWorktimeAction()
+    #[Route(path: '/interpretation/time', name: 'interpretation_time')]
+    public function groupByWorktimeAction(): Response
     {
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
@@ -307,6 +311,7 @@ class InterpretationController extends BaseController
         return new Response(json_encode($this->normalizeData(array_reverse($times)), JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/interpretation/activity', name: 'interpretation_activity')]
     public function groupByActivityAction()
     {
         if (!$this->checkLogin()) {

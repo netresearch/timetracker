@@ -267,8 +267,8 @@ class DefaultController extends BaseController
      *
      * @throws \Doctrine\DBAL\Exception
      */
-    #[Route(path: '/getData', name: '_getData')]
     #[Route(path: '/getData/days/{days}', name: '_getDataDays')]
+    #[Route(path: '/getData', name: '_getData')]
     public function getDataAction(int $days = 3) : Response|RedirectResponse
     {
         if (!$this->checkLogin()) {
@@ -417,6 +417,7 @@ class DefaultController extends BaseController
      *
      * User is redirected to app after accepting or declining granting access for this app.
      */
+    #[Route(path: '/jiraoauthcallback')]
     public function jiraOAuthCallbackAction(): Response|RedirectResponse
     {
         /** @var User $user */

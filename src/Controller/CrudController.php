@@ -19,13 +19,14 @@ use App\Helper\JiraOAuthApi;
 use App\Helper\TicketHelper;
 
 use App\Model\Response;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 class CrudController extends BaseController
 {
     public final const LOG_FILE = 'trackingsave.log';
 
-    public function deleteAction()
+    #[Route(path: '/tracking/delete', name: 'timetracking_delete')]
+    public function deleteAction(): Response
     {
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();
@@ -176,6 +177,7 @@ class CrudController extends BaseController
     /**
      * Save action handler.
      */
+    #[Route(path: '/tracking/save', name: 'timetracking_save')]
     public function saveAction(): Error|Response
     {
         if (!$this->checkLogin()) {
@@ -333,6 +335,7 @@ class CrudController extends BaseController
     /**
      * Inserts a series of same entries by preset
      */
+    #[Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry')]
     public function bulkentryAction(): Response
     {
         if (!$this->checkLogin()) {

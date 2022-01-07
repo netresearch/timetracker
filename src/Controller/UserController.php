@@ -2,12 +2,13 @@
 
 namespace App\Controller;
 
-use App\Entity\User as User;
+use App\Entity\User;
 use App\Model\Response;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 class UserController extends BaseController
 {
+    #[Route(path: '/user/add', name: 'user_add')]
     public function addAction()
     {
         $username = $this->request->get('username');

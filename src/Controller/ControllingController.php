@@ -25,6 +25,7 @@ use App\Model\Response;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class ControllingController
@@ -48,7 +49,8 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-    public function exportAction()
+    #[Route(path: '//controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}')]
+    public function exportAction(Export $export, Kernel $kernel)
     {
         if (!$this->checkLogin()) {
             return $this->getFailedLoginResponse();

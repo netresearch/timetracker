@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 class StatusController extends BaseController
 {
@@ -25,6 +26,7 @@ class StatusController extends BaseController
         return array('loginStatus' => $loginStatus);
     }
 
+    #[Route(path: '/status/check', name: 'check_status')]
     public function checkAction()
     {
         $userId = $this->session->get('loginId');
@@ -33,6 +35,7 @@ class StatusController extends BaseController
         return new Response(json_encode($status, JSON_THROW_ON_ERROR));
     }
 
+    #[Route(path: '/status/page', name: 'check_page')]
     public function pageAction()
     {
         // use Auto-Cookie-Login from BaseClass
