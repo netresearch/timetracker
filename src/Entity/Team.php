@@ -19,15 +19,14 @@ class Team
 
     #[ORM\Column(type: Types::STRING, length: 31)]
     protected $name;
-    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'teams')]
-    #[ORM\JoinColumn(name: 'lead_user_id', referencedColumnName: 'id')]
+
+    #[ORM\ManyToOne(targetEntity: 'User')]
     protected $leadUser;
 
     #[ORM\ManyToMany(targetEntity: 'Customer', inversedBy: 'teams')]
-    #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')])]
     protected $customers;
-    #[ORM\ManyToMany(targetEntity: 'User', inversedBy: 'teams')]
-    #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')])]
+
+    #[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'teams')]
     protected $users;
 
     /**

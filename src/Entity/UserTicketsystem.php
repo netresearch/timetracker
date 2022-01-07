@@ -15,11 +15,11 @@ class UserTicketsystem extends Base
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    #[ORM\ManyToOne(targetEntity: 'TicketSystem')]
-    #[ORM\JoinColumn(name: 'ticket_system_id', referencedColumnName: 'id')]
+
+    #[ORM\ManyToOne(targetEntity: 'TicketSystem', inversedBy: 'userTicketsystems')]
     protected $ticketSystem;
-    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'userTicketsystem')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
+
+    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'userTicketsystems')]
     protected $user;
 
     #[ORM\Column(type: Types::STRING, length: 50)]
@@ -27,7 +27,8 @@ class UserTicketsystem extends Base
 
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $tokenSecret;
-    #[ORM\Column(columnDefinition: 'TINYINT(1) unsigned DEFAULT 0 NOT NULL')]
+
+    #[ORM\Column(type: Types::BOOLEAN)]
     protected $avoidConnection;
 
     /**

@@ -23,14 +23,18 @@ class User
     protected $username;
 
     #[ORM\Column(type: Types::STRING)]
-    protected $abbr;
+    protected $abbr = '';
+
     #[ORM\Column(type: Types::STRING)]
     protected $type;
-    #[ORM\Column(name: 'show_empty_line', type: Types::INTEGER, nullable: false)]
+
+    #[ORM\Column(name: 'show_empty_line', type: Types::INTEGER)]
     protected $showEmptyLine;
-    #[ORM\Column(name: 'suggest_time', type: Types::INTEGER, nullable: false)]
+
+    #[ORM\Column(name: 'suggest_time', type: Types::INTEGER)]
     protected $suggestTime;
-    #[ORM\Column(name: 'show_future', type: Types::INTEGER, nullable: false)]
+
+    #[ORM\Column(name: 'show_future', type: Types::INTEGER)]
     protected $showFuture;
 
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'user')]
@@ -40,9 +44,10 @@ class User
     protected $contracts;
 
     #[ORM\ManyToMany(targetEntity: 'Team', inversedBy: 'users')]
-    #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
+    #[ORM\JoinTable(name: 'teams_users')]
     protected $teams;
-    #[ORM\Column(name: 'locale', type: Types::STRING, nullable: false)]
+
+    #[ORM\Column(name: 'locale', type: Types::STRING)]
     protected $locale;
 
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'user')]

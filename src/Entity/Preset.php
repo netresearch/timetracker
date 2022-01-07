@@ -18,14 +18,14 @@ class Preset extends Base
 
     #[ORM\Column(type: Types::STRING)]
     protected $name;
-    #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'presets')]
-    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
+
+    #[ORM\ManyToOne(targetEntity: 'Project')]
     protected $project;
-    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'presets')]
-    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
+
+    #[ORM\ManyToOne(targetEntity: 'Customer')]
     protected $customer;
-    #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'presets')]
-    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
+
+    #[ORM\ManyToOne(targetEntity: 'Activity')]
     protected $activity;
 
     #[ORM\Column(type: Types::STRING)]

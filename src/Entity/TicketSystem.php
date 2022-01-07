@@ -88,6 +88,10 @@ class TicketSystem extends Base
      */
     #[ORM\Column(type: Types::STRING, name: 'oauth_consumer_secret')]
     protected $oauthConsumerSecret;
+
+    #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'ticketSystem')]
+    protected $userTicketsystems;
+
     /**
      * Get id
      *

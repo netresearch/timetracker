@@ -27,9 +27,10 @@ class Customer extends Base
     protected $projects;
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'customer')]
     protected $entries;
-    #[ORM\ManyToMany(targetEntity: 'Team', inversedBy: 'customers')]
-    #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
+
+    #[ORM\ManyToMany(targetEntity: 'Team', mappedBy: 'customers')]
     protected $teams;
+
     public function __construct()
     {
         $this->projects = new ArrayCollection();

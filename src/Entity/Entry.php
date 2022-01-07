@@ -36,7 +36,8 @@ class Entry extends Base
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     protected $start;
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
+
+    #[ORM\Column(name: "`end`", type: Types::TIME_MUTABLE)]
     protected $end;
 
     #[ORM\Column(type: Types::INTEGER)]
@@ -46,23 +47,18 @@ class Entry extends Base
     protected $syncedToTicketsystem;
 
     #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries')]
-    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected $project;
 
     #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'entries')]
-    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
 
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'entries')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
 
     #[ORM\ManyToOne(targetEntity: 'Account', inversedBy: 'entries')]
-    #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id')]
     protected $account;
 
     #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'entries')]
-    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
 
     #[ORM\Column(name: 'class', type: Types::INTEGER, nullable: false)]

@@ -37,8 +37,8 @@ class Project extends Base
 
     #[ORM\Column(type: Types::STRING, name: 'jira_id')]
     protected $jiraId;
-    #[ORM\ManyToOne(targetEntity: 'TicketSystem', inversedBy: 'projects')]
-    #[ORM\JoinColumn(name: 'ticket_system', referencedColumnName: 'id')]
+
+    #[ORM\ManyToOne(targetEntity: 'TicketSystem')]
     protected $ticketSystem;
 
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'project')]
