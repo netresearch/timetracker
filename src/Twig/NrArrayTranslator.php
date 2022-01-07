@@ -14,7 +14,6 @@
 
 namespace App\Twig;
 
-use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use \Twig\TwigFilter;
 use Twig\Extension\AbstractExtension;

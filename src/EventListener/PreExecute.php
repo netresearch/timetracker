@@ -6,8 +6,7 @@
 namespace App\EventListener;
 
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
-use \Symfony\Component\HttpKernel\Event\FilterControllerEvent as FilterControllerEvent;
-use \Symfony\Component\HttpKernel\HttpKernelInterface as HttpKernelInterface;
+use \Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
  * Class PreExecute
