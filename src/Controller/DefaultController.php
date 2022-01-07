@@ -16,10 +16,9 @@ use App\Helper\LdapClient;
 use App\Helper\TimeHelper;
 use App\Repository\EntryRepository;
 use App\Entity\User;
-
+use App\Kernel;
 use App\Model\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -37,7 +36,7 @@ class DefaultController extends BaseController
      * @throws ReflectionException
      */
     #[Route(path: '/', name: '_start')]
-    public function indexAction() : Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
+    public function indexAction(Kernel $kernel) : Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         if (!$this->checkLogin()) {
             return $this->login();
@@ -60,7 +59,7 @@ class DefaultController extends BaseController
                 'monthly_overview_url'  => $this->params->get('app.monthly_overview_url'),
                 'header_url'            => $this->params->get('app.header_url'),
             ],
-            'environment'   => $this->get('kernel')->getEnvironment(),
+            'environment'   => $kernel->getEnvironment(),
             'customers'     => $customers,
             'projects'      => $projects,
             'settings'      => $settings,
