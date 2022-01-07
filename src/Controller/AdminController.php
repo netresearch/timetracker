@@ -6,7 +6,6 @@ use ReflectionException;
 use Exception;
 use DateTime;
 use DateInterval;
-use App\Repository\UserRepository;
 use App\Model\Response;
 use App\Entity\Contract;
 use App\Entity\Team;
