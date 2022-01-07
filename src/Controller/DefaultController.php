@@ -125,7 +125,7 @@ class DefaultController extends BaseController
                     ->setShowFuture('1')
                     ->setLocale('de');
 
-                if (!empty($client->getTeams())) {
+                if ($ldap && !empty($client->getTeams())) {
                     /** @var TeamRepository $teamRepo */
                     $teamRepo = $this->doctrine
                         ->getRepository('App:Team');
