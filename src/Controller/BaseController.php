@@ -94,7 +94,7 @@ class BaseController extends AbstractController
     protected function login(): Response|RedirectResponse
     {
         if (!$this->request->isXmlHttpRequest()) {
-            return $this->redirect($this->generateUrl('_login'));
+            return $this->redirectToRoute('_login');
         } else {
             return new Response($this->generateUrl('_login'), 403);
         }
@@ -206,12 +206,7 @@ class BaseController extends AbstractController
                 $this->t('Could not find user.')
             );
 
-            return $this->render(
-                'login.html.twig',
-                [
-                    'locale'   => 'en',
-                ]
-            );
+            return $this->render('login.html.twig', ['locale' => 'en']);
         }
 
         $this->session->set('loggedIn', true);
@@ -223,7 +218,7 @@ class BaseController extends AbstractController
             LoginHelper::setCookie($user->getId(), $user->getUsername());
         }
 
-        return $this->redirect($this->generateUrl('_start'));
+        return $this->redirectToRoute('_start');
     }
 
     /**

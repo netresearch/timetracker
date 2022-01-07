@@ -351,12 +351,11 @@ class InterpretationController extends BaseController
 
     /**
      * Get entries by request parameter
-     *
-     * @param integer $maxResults
+     * 
      * @return Entry[]
      * @throws Exception
      */
-    private function getEntries($maxResults = null)
+    private function getEntries(int $maxResults = null): array
     {
         $arParams = [
             'customer'          => $this->evalParam('customer'),

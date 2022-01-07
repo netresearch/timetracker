@@ -16,26 +16,34 @@ class Project extends Base
     public final const BILLING_TM    = 1;
     public final const BILLING_FP    = 2;
     public final const BILLING_MIXED = 3;
+    
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+
     #[ORM\Column(type: Types::STRING)]
     protected $name;
+
     #[ORM\Column(type: Types::BOOLEAN)]
     protected $active;
+
     #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
+
     #[ORM\Column(type: Types::BOOLEAN)]
     protected $global;
+
     #[ORM\Column(type: Types::STRING, name: 'jira_id')]
     protected $jiraId;
     #[ORM\ManyToOne(targetEntity: 'TicketSystem', inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'ticket_system', referencedColumnName: 'id')]
     protected $ticketSystem;
+
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'project')]
     protected $entries;
+
     /**
      * Estimated project duration in minutes
      */

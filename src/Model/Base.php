@@ -6,9 +6,8 @@
 namespace App\Model;
 
 use ReflectionException;
-use Doctrine\ORM\Mapping\Entity;
-use ReflectionClass as ReflectionClass;
-use ReflectionProperty as ReflectionProperty;
+use ReflectionClass;
+use ReflectionProperty;
 
 /*
  * Base model

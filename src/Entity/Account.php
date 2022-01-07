@@ -15,10 +15,13 @@ class Account
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+    
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $name;
-    #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'Account')]
+
+    #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'account')]
     protected $entries;
+
     public function __construct()
     {
         $this->entries = new ArrayCollection();

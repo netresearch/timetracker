@@ -44,12 +44,8 @@ class EntryRepository extends EntityRepository
 
     /**
      * Returns count of calendar days which include given amount of working days.
-     *
-     * @param int $workingDays Amount of working days.
-     *
-     * @return integer
      */
-    public static function getCalendarDaysByWorkDays($workingDays)
+    public static function getCalendarDaysByWorkDays(int $workingDays): int
     {
         $workingDays = (int) $workingDays;
         if ($workingDays < 1)
@@ -86,14 +82,10 @@ class EntryRepository extends EntityRepository
 
     /**
      * Returns work log entries for user and recent days.
-     *
-     * @param User $user Filter by user ID
-     * @param integer $days Filter by recent days
-     *
-     * @return array
+     * 
      * @throws Exception
      */
-    public function findByRecentDaysOfUser($user, $days = 3)
+    public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
         $fromDate = new DateTime();
         $fromDate->setTime(0, 0);
@@ -115,17 +107,11 @@ class EntryRepository extends EntityRepository
     /**
      * get all entries of a user in a given year and month
      *
-     * @param integer $userId     Filter entries by user
-     * @param integer $year       Filter entries by year
-     * @param integer $month      Filter entries by month
-     * @param integer $projectId  Filter entries by project
-     * @param integer $customerId Filter entries by customer
-     * @param array   $arSort     Sort result by given fields
-     *
      * @return Entry[]
      */
-    public function findByDate($userId, $year, $month = null, $projectId = null, $customerId = null, $arSort = null)
-    {
+    public function findByDate(
+        int $userId, int $year, int $month = null, int $projectId = null, int $customerId = null, array $arSort = null
+    ): array {
         if (null === $arSort) {
             $arSort = [
                 'entry.day'   => true,
@@ -171,13 +157,8 @@ class EntryRepository extends EntityRepository
     /**
      * Returns the date pattern for the repository queries according to year
      * an month
-     *
-     * @param int $year  the year, e.g. 2015
-     * @param int $month the month, e.g. 1 or null
-     *
-     * @return string e.g. 2015-01-%, 2015-%, if no month is set
      */
-    protected function getDatePattern($year, $month = null)
+    protected function getDatePattern(int $year, int $month = null): string
     {
         $pattern = $year . '-';
         if (0 < intval($month)) {
@@ -192,16 +173,8 @@ class EntryRepository extends EntityRepository
 
     /**
      * Fetch information needed for the additional query calls.
-     *
-     * @param integer $userId     Filter entries by user
-     * @param integer $year       Filter entries by year
-     * @param integer $month      Filter entries by month
-     * @param integer $projectId  Filter entries by project
-     * @param integer $customerId Filter entries by customer
-     *
-     * @return array
      */
-    public function findByMonthWithExternalInformation($userId, $year, $month, $projectId, $customerId)
+    public function findByMonthWithExternalInformation(int $userId, int $year, int $month, int $projectId, int $customerId): array
     {
         $em  = $this->getEntityManager();
         $qb = $em->createQueryBuilder()

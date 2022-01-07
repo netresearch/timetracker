@@ -5,8 +5,8 @@ use App\Repository\EntryRepository;
 use Doctrine\DBAL\Types\Types;
 use Exception;
 use Doctrine\ORM\Mapping as ORM;
-use App\Model\Base as Base;
-use DateTime as DateTime;
+use App\Model\Base;
+use DateTime;
 
 #[ORM\Entity(repositoryClass: EntryRepository::class)]
 #[ORM\Table(name: 'entries')]
@@ -16,41 +16,55 @@ class Entry extends Base
     public final const CLASS_DAYBREAK    = 2;
     public final const CLASS_PAUSE       = 4;
     public final const CLASS_OVERLAP     = 8;
+
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+
     #[ORM\Column(type: Types::STRING, length: 31, nullable: true)]
     protected $ticket;
+
     #[ORM\Column(name: 'worklog_id', type: Types::INTEGER, nullable: true)]
     protected $worklog_id;
+
     #[ORM\Column(type: Types::STRING)]
     protected $description;
+
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     protected $day;
+
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     protected $start;
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     protected $end;
+
     #[ORM\Column(type: Types::INTEGER)]
     protected $duration;
+
     #[ORM\Column(name: 'synced_to_ticketsystem', type: Types::BOOLEAN)]
     protected $syncedToTicketsystem;
+
     #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected $project;
+
     #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
+
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
+
     #[ORM\ManyToOne(targetEntity: 'Account', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id')]
     protected $account;
+
     #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
+
     #[ORM\Column(name: 'class', type: Types::INTEGER, nullable: false)]
     protected $class = self::CLASS_PLAIN;
     /**
@@ -72,6 +86,7 @@ class Entry extends Base
      */
     #[ORM\Column(name: 'internal_jira_ticket_original_key')]
     protected $internalJiraTicketOriginalKey = null;
+
     /**
      * @param string $externalReporter
      */
@@ -79,6 +94,7 @@ class Entry extends Base
     {
         $this->externalReporter = $externalReporter;
     }
+
     /**
      * @return string
      */
@@ -484,6 +500,7 @@ class Entry extends Base
     {
         return $this->activity;
     }
+
     /**
      * Get array representation of entry object
      *
@@ -501,7 +518,7 @@ class Entry extends Base
             }
         }
 
-        return array(
+        return [
             'id'             => $this->getId(),
             'date'           => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
             'start'          => $this->getStart() ? $this->getStart()->format('H:i') : null,
@@ -517,8 +534,10 @@ class Entry extends Base
             'class'          => $this->getClass(),
             'worklog'        => $this->getWorklogId(),
             'extTicket'      => $this->getInternalJiraTicketOriginalKey(),
-        );
+            'extTicketUrl'   => sprintf($this->getProject()?->getTicketSystem()?->getUrl() ?? '', $this->getInternalJiraTicketOriginalKey()),
+        ];
     }
+
     /**
      * Calculate difference between start and end
      *
@@ -579,6 +598,7 @@ class Entry extends Base
     {
         return $this->class;
     }
+
     /**
      * Returns the issue link for the configured ticket system.
      *
@@ -600,6 +620,7 @@ class Entry extends Base
 
         return sprintf($ticketUrl, $this->getTicket());
     }
+
     /**
      * Returns the original ticket name.
      *
@@ -609,6 +630,7 @@ class Entry extends Base
     {
         return $this->internalJiraTicketOriginalKey;
     }
+
     /**
      * Returns true, if a original ticket name.
      *
@@ -618,6 +640,7 @@ class Entry extends Base
     {
         return !empty($this->internalJiraTicketOriginalKey);
     }
+
     /**
      * Sets the original ticket name.
      *

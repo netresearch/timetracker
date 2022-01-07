@@ -16,27 +16,38 @@ class Contract
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+    
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'contracts')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
+
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     protected $start;
+
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     protected $end;
+
     #[ORM\Column(type: Types::FLOAT)]
     protected $hours_0;
+
     #[ORM\Column(type: Types::FLOAT)]
     protected $hours_1;
+
     #[ORM\Column(type: Types::FLOAT)]
     protected $hours_2;
+
     #[ORM\Column(type: Types::FLOAT)]
     protected $hours_3;
+
     #[ORM\Column(type: Types::FLOAT)]
     protected $hours_4;
+
     #[ORM\Column(type: Types::FLOAT)]
     protected $hours_5;
+
     #[ORM\Column(type: Types::FLOAT)]
     protected $hours_6;
+
     /**
      * Set id
      *

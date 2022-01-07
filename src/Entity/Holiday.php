@@ -6,7 +6,7 @@ use App\Repository\HolidayRepository;
 use Doctrine\DBAL\Types\Types;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  * App\Entity\Holiday

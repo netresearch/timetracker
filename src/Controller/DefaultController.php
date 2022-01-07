@@ -77,6 +77,7 @@ class DefaultController extends BaseController
     #[Route(path: '/login', name: '_login')]
     public function loginAction(LoggerInterface $logger) : Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
+        $client = null;
         if ($this->request->getMethod() != 'POST') {
             return $this->render('login.html.twig',
                 array(
@@ -130,10 +131,10 @@ class DefaultController extends BaseController
                     $teamRepo = $this->doctrine
                         ->getRepository('App:Team');
 
-                    foreach ($client->getTeams() as $teamname) {
+                    foreach ($client->getTeams() as $team_name) {
                         /** @var Team $team */
                         $team = $this->repository->findOneBy([
-                            'name' => $teamname
+                            'name' => $team_name
                         ]);
 
                         if ($team) {

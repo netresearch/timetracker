@@ -21,12 +21,15 @@ class UserTicketsystem extends Base
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'userTicketsystem')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
+
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $accessToken;
+
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $tokenSecret;
     #[ORM\Column(columnDefinition: 'TINYINT(1) unsigned DEFAULT 0 NOT NULL')]
     protected $avoidConnection;
+
     /**
      * @return mixed
      */

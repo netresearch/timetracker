@@ -28,52 +28,61 @@ class TicketSystem extends Base
      */
     #[ORM\Column(type: Types::STRING)]
     protected $name;
+
     /**
      * @var boolean $bookTime;
      */
     #[ORM\Column(name: 'book_time', type: Types::INTEGER, nullable: false)]
     protected $bookTime;
+
     /**
      * @var string $type;
      */
     #[ORM\Column(type: Types::STRING)]
     protected $type;
+
     /**
      * @var string $url
      */
     #[ORM\Column(type: Types::STRING)]
     protected $url;
+
     /**
      * @var string $ticketUrl
      */
     #[ORM\Column(type: Types::STRING)]
     protected $ticketUrl;
+
     /**
-        /**
     * @var string $login
     */
     #[ORM\Column(type: Types::STRING)]
     protected $login;
+
     /**
      * @var string $password
      */
     #[ORM\Column(type: Types::STRING)]
     protected $password;
+
     /**
      * @var string $publicKey
      */
     #[ORM\Column(type: Types::STRING, name: 'public_key')]
     protected $publicKey;
+
     /**
      * @var string $privateKey
      */
     #[ORM\Column(type: Types::STRING, name: 'private_key')]
     protected $privateKey;
+
     /**
      * @var string $oauthConsumerKey
      */
     #[ORM\Column(type: Types::STRING, name: 'oauth_consumer_key')]
     protected $oauthConsumerKey;
+
     /**
      * @var string $oauthConsumerSecret
      */

@@ -14,50 +14,41 @@ class Activity
 {
     public final const SICK    = 'Krank';
     public final const HOLIDAY = 'Urlaub';
+    
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $name;
+
     #[ORM\Column(name: 'needs_ticket', type: Types::BOOLEAN)]
     protected $needsTicket;
+
     #[ORM\Column(name: 'factor', type: Types::FLOAT)]
     protected $factor;
+
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'activity')]
     protected $entries;
+
     public function __construct()
     {
         $this->entries = new ArrayCollection();
     }
-    /**
-     * Set id
-     * @param integer $id
-     *
-     * @return $this
-     */
-    public function setId($id)
+    
+    public function setId(int $id): static
     {
         $this->id = $id;
         return $this;
     }
-    /**
-     * Get id
-     *
-     * @return integer $id
-     */
-    public function getId()
+    
+    public function getId(): int
     {
         return $this->id;
     }
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName($name)
+    
+    public function setName(string $name): static
     {
         $this->name = $name;
         return $this;

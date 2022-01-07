@@ -10,14 +10,13 @@ use App\Helper\JiraApiInvalidResourceException;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Project;
-use App\Entity\Entry as Entry;
+use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Response\Error;
 use App\Helper\JiraApiException;
 use App\Helper\JiraOAuthApi;
 use App\Helper\TicketHelper;
-
 use App\Model\Response;
 use Symfony\Component\Routing\Annotation\Route;
 

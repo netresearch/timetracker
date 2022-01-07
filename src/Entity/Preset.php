@@ -15,6 +15,7 @@ class Preset extends Base
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+
     #[ORM\Column(type: Types::STRING)]
     protected $name;
     #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'presets')]
@@ -26,8 +27,10 @@ class Preset extends Base
     #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'presets')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected $activity;
+
     #[ORM\Column(type: Types::STRING)]
     protected $description;
+
     public function setId($id)
     {
         $this->id = $id;

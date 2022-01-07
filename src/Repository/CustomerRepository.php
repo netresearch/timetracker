@@ -9,11 +9,8 @@ class CustomerRepository extends EntityRepository
 {
     /**
      * Returns an array of customers available for current user
-     *
-     * @param $userId
-     * @return array
      */
-    public function getCustomersByUser($userId)
+    public function getCustomersByUser(int $userId): array
     {
         /** @var Customer[] $result */
         $result = $this->createQueryBuilder('customer')

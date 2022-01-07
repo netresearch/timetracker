@@ -18,8 +18,10 @@ class User
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $username;
+
     #[ORM\Column(type: Types::STRING)]
     protected $abbr;
     #[ORM\Column(type: Types::STRING)]
@@ -30,17 +32,22 @@ class User
     protected $suggestTime;
     #[ORM\Column(name: 'show_future', type: Types::INTEGER, nullable: false)]
     protected $showFuture;
+
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'user')]
     protected $entries;
+
     #[ORM\OneToMany(targetEntity: 'Contract', mappedBy: 'user')]
     protected $contracts;
+
     #[ORM\ManyToMany(targetEntity: 'Team', inversedBy: 'users')]
     #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
     protected $teams;
     #[ORM\Column(name: 'locale', type: Types::STRING, nullable: false)]
     protected $locale;
+
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'user')]
     protected $userTicketsystems;
+
     public function __construct()
     {
         $this->entries = new ArrayCollection();
@@ -56,6 +63,7 @@ class User
         $this->id = $id;
         return $this;
     }
+
     /**
      * Get id
      *
@@ -86,24 +94,14 @@ class User
     {
         return $this->username;
     }
-    /**
-     * Set abbr
-     *
-     * @param string $abbr
-     *
-     * @return $this
-     */
-    public function setAbbr($abbr)
+    
+    public function setAbbr(string $abbr): static
     {
         $this->abbr = $abbr;
         return $this;
     }
-    /**
-     * Get abbr
-     *
-     * @return string $abbr
-     */
-    public function getAbbr()
+    
+    public function getAbbr(): string
     {
         return $this->abbr;
     }
