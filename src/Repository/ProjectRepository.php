@@ -105,11 +105,13 @@ class ProjectRepository extends EntityRepository
     public function getProjectsByUser(int $userId, int $customerId = 0)
     {
         $qb = $this->createQueryBuilder('project')
-            ->where('customer.global = 1 OR user.id = :userId')
+            ->where('customer.global = :global OR user.id = :userId')
+            ->setParameter('global', true)
             ->setParameter('userId', $userId);
 
         if ($customerId > 0) {
-            $qb->andWhere('project.global = 1 OR customer.id = :customerId')
+            $qb->andWhere('project.global = :global OR customer.id = :customerId')
+                ->setParameter('global', true)
                 ->setParameter('customerId', $customerId);
         }
 
@@ -135,7 +137,8 @@ class ProjectRepository extends EntityRepository
     {
         /** @var Project[] $result */
         $result = $this->createQueryBuilder('project')
-            ->where('project.global = 1 OR customer.id = :customerId')
+            ->where('project.global = :global OR customer.id = :customerId')
+            ->setParameter('global', true)
             ->setParameter('customerId', $customerId)
             ->leftJoin('project.customer', 'customer')
             ->leftJoin('customer.teams', 'team')

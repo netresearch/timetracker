@@ -22,8 +22,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Query\Expr\Join;
 use App\Entity\Entry;
 use App\Entity\User;
-use App\Helper\TimeHelper;
-
+use DateTimeZone;
 use Doctrine\ORM\EntityRepository;
 
 /**
@@ -119,34 +118,40 @@ class EntryRepository extends EntityRepository
             ];
         }
 
-        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb = $this->createQueryBuilder('entry');
 
         $qb->select('entry')
-            ->from('App:Entry', 'entry')
             ->leftJoin('entry.user', 'user');
 
         foreach ($arSort as $strField => $bAsc) {
             $qb->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
         }
 
-
         if (0 < (int) $userId) {
             $qb->andWhere('entry.user = :user_id');
-            $qb->setParameter('user_id', $userId, PDO::PARAM_INT);
+            $qb->setParameter('user_id', $userId);
         }
         if (0 < (int) $projectId) {
             $qb->andWhere('entry.project = :project_id');
-            $qb->setParameter('project_id', $projectId, PDO::PARAM_INT);
+            $qb->setParameter('project_id', $projectId);
         }
         if (0 < (int) $customerId) {
             $qb->andWhere('entry.customer = :customer_id');
-            $qb->setParameter('customer_id', $customerId, PDO::PARAM_INT);
+            $qb->setParameter('customer_id', $customerId);
         }
         if (0 < (int) $year) {
-            $qb->andWhere(
-                $qb->expr()->like('entry.day', ':month')
-            );
-            $qb->setParameter('month', $this->getDatePattern($year, $month), PDO::PARAM_STR);
+            if (0 < $month) {
+                $date_min = new DateTime($year . '-01-01 00:00');
+                $date_max = DateTime::createFromInterface($date_min);
+                $date_max->modify('first day of next year');
+            } else {
+                $date_min = new DateTime($year . '-'. $month . '-01 00:00');
+                $date_max = DateTime::createFromInterface($date_min);
+                $date_max->modify('first day of next month');
+            }
+
+            $qb->andWhere("entry.day >= '" . $date_min->format('c') . "'");
+            $qb->andWhere("entry.day <= '" . $date_max->format('c') . "'");
         }
 
         return $qb->getQuery()->getResult();
@@ -215,25 +220,20 @@ class EntryRepository extends EntityRepository
 
     /**
      * get all entries of a user on a specific day
-     *
-     * @param integer $userId Filter by user ID
-     * @param string  $day    Filter by date
-     *
-     * @return array
      */
-    public function findByDay($userId, $day)
+    public function findByDay(int $userId, string $day): array
     {
-        $em = $this->getEntityManager();
+        $qb = $this->createQueryBuilder('e')
+            ->select('e')
+            ->where('e.user = :user_id')
+            ->setParameter('user_id', $userId)
+            ->andWhere('e.day = :day')
+            ->setParameter('day', $day)
+            ->orderBy('e.start', 'ASC')
+            ->addOrderBy('e.end', 'ASC')
+            ->addOrderBy('e.id', 'ASC');
 
-        $query = $em->createQuery(
-            'SELECT e FROM App:Entry e'
-            . ' WHERE e.user = :user_id'
-            . ' AND e.day = :day'
-            . ' ORDER BY e.start ASC, e.end ASC, e.id ASC'
-        )->setParameter('user_id', $userId)
-            ->setParameter('day', $day);
-
-        return $query->getResult();
+        return $qb->getQuery()->getArrayResult();
     }
 
 
@@ -396,41 +396,45 @@ class EntryRepository extends EntityRepository
 
     /**
      * Query the current user's work by given period
-     *
-     * @param int $userId The current user's identifier
-     * @param int $period The requested period (day / week / month)
-     *
-     * @return array
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getWorkByUser($userId, $period = self::PERIOD_DAY)
+    public function getWorkByUser(int $userId, int $period = self::PERIOD_DAY): array
     {
-        $sql = [];
-        $connection = $this->getEntityManager()->getConnection();
+        $qb = $this->createQueryBuilder('e')
+            ->select('COUNT(e.id) AS count')
+            ->addSelect('SUM(e.duration) AS duration')
+            ->where('e.user = :user_id');
 
-        $sql['select'] = "SELECT COUNT(id) AS count, SUM(duration) AS duration";
-        $sql['from'] = "FROM entries";
-        $sql['where_user'] = "WHERE user_id = " . intval($userId);
-
+        $date_min = new DateTime('now', new DateTimeZone('UTC'));
+        $date_max = new DateTime('now', new DateTimeZone('UTC'));
         switch($period) {
         case self::PERIOD_DAY :
-            $sql['where_day'] = "AND day = CURDATE()";
+            $date_min->modify('today 00:00');
+            $date_max->modify('tomorrow 00:00');
             break;
         case self::PERIOD_WEEK :
-            $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
-            $sql['where_week'] = "AND WEEK(day, 1) = WEEK(CURDATE(), 1)";
+            $date_min->modify('first day of this week 00:00');
+            $date_max->modify('first day of next week midnight 00:00');
             break;
         case self::PERIOD_MONTH :
-            $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
-            $sql['where_month']= "AND MONTH(day) = MONTH(CURDATE())";
+            $date_min->modify('first day of this month');
+            $date_max->modify('first day of next month 00:00');
             break;
         }
 
-        $stmt   = $connection->executeQuery(implode(" ", $sql));
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $qb->andWhere('e.day BETWEEN :dateMin AND :dateMax')
+            ->setParameters(
+                [
+                    'user_id' => $userId,
+                    'dateMin' => $date_min->format('c'),
+                    'dateMax' => $date_max->format('c'),
+                ]
+            );
+
+        $result = $qb->getQuery()->getSingleResult();
 
         $data = [
-            'duration' => $result[0]['duration'],
+            'duration' => $result['duration'],
             'count'    => false,
         ];
 

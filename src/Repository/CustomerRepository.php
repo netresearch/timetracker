@@ -14,7 +14,8 @@ class CustomerRepository extends EntityRepository
     {
         /** @var Customer[] $result */
         $result = $this->createQueryBuilder('customer')
-            ->andWhere('customer.global = 1')
+            ->andWhere('customer.global = :global')
+            ->setParameter('global', true)
             ->orWhere('user.id = :userId')
             ->setParameter('userId', $userId)
             ->leftJoin('customer.teams', 'team')
