@@ -161,7 +161,8 @@ class DefaultController extends BaseController
             ));
 
         }
-        return $this->setLoggedIn($user, $this->request->has('loginCookie'));
+
+        return $this->setLoggedIn($user);
     }
 
     #[Route(path: '/logout', name: '_logout')]

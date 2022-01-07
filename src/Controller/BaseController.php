@@ -196,7 +196,7 @@ class BaseController extends AbstractController
     /**
      * Handles all after-login stuff
      */
-    protected function setLoggedIn(User $user, bool $setCookie = true): Response|RedirectResponse
+    protected function setLoggedIn(User $user, bool $setCookie = false): Response|RedirectResponse
     {
         if (! is_object($user)) {
             $this->session->getFlashBag()->add(
@@ -217,7 +217,7 @@ class BaseController extends AbstractController
         $this->session->set('loginId', $user->getId());
 
         // Set login cookies, if wanted
-        if ($setCookie) {
+        if ($setCookie || $this->request->request->has('loginCookie')) {
             LoginHelper::setCookie($user->getId(), $user->getUsername());
         }
 
