@@ -11,11 +11,11 @@
 
 namespace App\Helper;
 
+use Doctrine\Persistence\ManagerRegistry;
 use Throwable;
 use Exception;
 use stdClass;
 use DateTime;
-use Doctrine\Common\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
@@ -51,7 +51,7 @@ class JiraOAuthApi
     /**
      * JiraOAuthApi constructor.
      */
-    public function __construct(protected User $user, protected TicketSystem $ticketSystem, protected \Doctrine\Persistence\ManagerRegistry $doctrine, Router $router)
+    public function __construct(protected User $user, protected TicketSystem $ticketSystem, protected ManagerRegistry $doctrine, Router $router)
     {
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
