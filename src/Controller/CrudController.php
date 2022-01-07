@@ -554,12 +554,14 @@ class CrudController extends BaseController
 
     /**
      * Write log entry to log file.
-     *
-     * @param bool  $raw
+     * 
      * @throws Exception
+     * @deprecated
      */
-    private function logDataToFile(array $data, $raw = FALSE)
+    private function logDataToFile(array $data, bool $raw = FALSE)
     {
+        return;
+
         $file = $this->get('kernel')->getRootDir() . '/logs/' . self::LOG_FILE;
         if (!file_exists($file) && !touch($file)) {
             throw new Exception(
