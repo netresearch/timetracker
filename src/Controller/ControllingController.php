@@ -20,8 +20,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Helper\LOReadFilter;
+use App\Kernel;
 use App\Model\Response;
-
+use App\Services\Export;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\Routing\Annotation\Route;
@@ -62,9 +63,8 @@ class ControllingController extends BaseController
         $customerId   = (int)  $this->request->get('customer');
         $onlyBillable = (bool) $this->request->get('billable');
 
-        $service = $this->get('nr.timetracker.export');
         /** @var Entry[] $entries */
-        $entries = $service->exportEntries(
+        $entries = $export->exportEntries(
             $userId, $year, $month, $projectId, $customerId, [
                 'user.username' => true,
                 'entry.day'     => true,
@@ -75,12 +75,12 @@ class ControllingController extends BaseController
         $showBillableField = $this->params->has('app.show_billable_field_in_export')
             && $this->params->get('app.show_billable_field_in_export');
         if ($showBillableField) {
-            $entries = $service->enrichEntriesWithBillableInformation(
+            $entries = $export->enrichEntriesWithBillableInformation(
                 $this->getUserId(), $entries, $onlyBillable
             );
         }
 
-        $username = $service->getUsername($userId);
+        $username = $export->getUsername($userId);
 
         $filename = strtolower(
             $year . '_'
@@ -93,8 +93,7 @@ class ControllingController extends BaseController
         $reader = IOFactory::createReader('Xlsx');
         $reader->setReadFilter(new LOReadFilter());
         $spreadsheet = $reader->load(
-            $this->container->getParameter('kernel.root_dir')
-            . '/../web/template.xlsx'
+            $kernel->getProjectDir() . '/assets/template.xlsx'
         );
 
         $sheet = $spreadsheet->getSheet(0);
