@@ -19,13 +19,12 @@
 
 namespace App\Services;
 
-use Doctrine\Persistence\ConnectionRegistry;
 use Symfony\Component\Routing\RouterInterface;
 use App\Repository\EntryRepository;
 use App\Entity\Entry as Entry;
 use App\Entity\TicketSystem;
-use App\Entity\User;
 use App\Helper\JiraOAuthApi;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -44,11 +43,12 @@ class Export
 {
     /**
      * mandatory dependency the service container
-     *
-     * @param ContainerInterface $container
      */
-    public function __construct(protected ?ContainerInterface $container = null, private readonly ConnectionRegistry $connectionRegistry, private readonly RouterInterface $router)
-    {
+    public function __construct(
+        protected ?ContainerInterface $container = null, 
+        protected ManagerRegistry $doctrine,
+        private readonly RouterInterface $router
+    ) {
     }
 
     /**
@@ -84,7 +84,7 @@ class Export
         $username = 'all';
         if (0 < (int) $userId) {
             /* @var $user User */
-            $user = $this->connectionRegistry
+            $user = $this->doctrine
                 ->getRepository('App:User')
                 ->find($userId);
             $username = $user->getUsername();
@@ -100,7 +100,7 @@ class Export
      */
     protected function getEntryRepository()
     {
-        return $this->connectionRegistry->getRepository('App:Entry');
+        return $this->doctrine->getRepository('App:Entry');
     }
 
     /**
@@ -117,8 +117,7 @@ class Export
         $currentUserId, array $entries, $removeNotBillable = false
     ) {
         /* @var $currentUser \App\Entity\User */
-        $doctrine = $this->connectionRegistry;
-        $currentUser = $doctrine->getRepository('App:User')
+        $currentUser = $this->doctrine->getRepository('App:User')
             ->find($currentUserId);
 
         /** @var Router $router */
