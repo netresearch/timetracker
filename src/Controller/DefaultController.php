@@ -53,7 +53,7 @@ class DefaultController extends BaseController
         /* @var $projectRepo \App\Repository\ProjectRepository */
         $projectRepo = $doctrine->getRepository('App:Project');
         $projects = $projectRepo->getProjectStructure($userId, $customers);
-        return $this->render('App:Default:index.html.twig', array(
+        return $this->render('index.html.twig', array(
             'globalConfig'  => [
                 'logo_url'              => $this->params->get('app.logo_url'),
                 'monthly_overview_url'  => $this->params->get('app.monthly_overview_url'),
