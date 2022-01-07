@@ -280,7 +280,13 @@ class DefaultController extends BaseController
             ->find($userId);
         //$days = $this->request->attributes->has('days') ? (int) $this->request->attributes->get('days') : 3;
         $data = $this->doctrine->getRepository('App:Entry')->getEntriesByUser($userId, $days, $user->getShowFuture());
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+
+        // BC - convert object into array
+        foreach ($data as $entry) {
+            $result[] = ['entry' => $entry->toArray()];
+        }
+
+        return new Response(json_encode($result, JSON_THROW_ON_ERROR));
     }
 
     /**

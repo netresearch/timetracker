@@ -239,60 +239,32 @@ class EntryRepository extends EntityRepository
 
     /**
      * Get array of entries of given user.
-     *
-     * @param integer $userId Filter by user ID
-     * @param integer $days Filter by x days in past
-     * @param boolean $showFuture Include work log entries from future
-     *
-     * @return array
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getEntriesByUser($userId, $days = 3, $showFuture = true)
+    public function getEntriesByUser(int $userId, int $days = 3, bool $showFuture = true): array
     {
         $calendarDays = self::getCalendarDaysByWorkDays($days);
-        $connection = $this->getEntityManager()->getConnection();
 
-        $sql = [];
-        $sql['select'] = "SELECT e.id,
-            DATE_FORMAT(e.day, '%d/%m/%Y') AS `date`,
-            DATE_FORMAT(e.start,'%H:%i') AS `start`,
-            DATE_FORMAT(e.end,'%H:%i') AS `end`,
-            e.user_id AS user,
-            e.customer_id AS customer,
-            e.project_id AS project,
-            e.activity_id AS activity,
-            e.description,
-            e.ticket,
-            e.class,
-            e.duration,
-            e.internal_jira_ticket_original_key as extTicket,
-            REPLACE(t.ticketurl,'%s',e.internal_jira_ticket_original_key) as extTicketUrl";
-        $sql['from'] = "FROM entries e LEFT JOIN projects p ON e.project_id = p.id LEFT JOIN ticket_systems t ON p.ticket_system = t.id";
-        $sql['where_day'] = "WHERE day >= DATE_ADD(CURDATE(), INTERVAL -" . $calendarDays . " DAY)";
+        $date_min = new DateTime;
+        $date_min->modify('-' . $calendarDays . ' days 00:00');
 
+        $date_max = new DateTime;
+        $date_max->modify('tomorrow 00:00');
+
+        $qb = $this->createQueryBuilder('e')
+            ->select('e')
+            ->leftJoin('App:Project', 'p', Join::WITH, 'e.project = p.id')
+            ->leftJoin('App:TicketSystem', 't', Join::WITH, 'p.ticketSystem = t.id')
+            ->where("e.day >= '" . $date_min->format('c') . "'");
         if (! $showFuture) {
-            $sql['where_future'] = "AND day <= CURDATE()";
+            $qb->andWhere("day <= '" . $date_max->format('c') . "'");
         }
+        $qb->andWhere('e.user = :user_id')
+            ->setParameter('user_id', $userId)
+            ->orderBy('e.day', 'DESC')
+            ->addOrderBy('e.start', 'DESC');
 
-        $sql['where_user'] = "AND user_id = $userId";
-        $sql['order'] = "ORDER BY day DESC, start DESC";
-
-        $stmt = $connection->executeQuery(implode(" ", $sql));
-
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $data = [];
-        if (count($result)) foreach ($result as &$line) {
-            $line['user'] = (int) $line['user'];
-            $line['customer'] = (int) $line['customer'];
-            $line['project'] = (int) $line['project'];
-            $line['activity'] = (int) $line['activity'];
-            $line['duration'] = TimeHelper::formatDuration($line['duration']);
-            $line['class'] = (int) $line['class'];
-            $data[] = ['entry' => $line];
-        }
-
-        return $data;
+        return $qb->getQuery()->getResult();
     }
 
 
