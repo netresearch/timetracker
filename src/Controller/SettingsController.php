@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Helper\LocalizationHelper as LocalizationHelper;
 
 use App\Model\Response;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class SettingsController extends BaseController

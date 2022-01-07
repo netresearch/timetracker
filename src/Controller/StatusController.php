@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Model\Response;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class StatusController extends BaseController

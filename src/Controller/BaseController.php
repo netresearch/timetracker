@@ -22,6 +22,7 @@ use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -43,7 +44,8 @@ class BaseController extends AbstractController
     public function __construct(
         protected ManagerRegistry $doctrine, 
         protected RequestStack $requestStack,
-        protected TranslatorInterface $translator
+        protected TranslatorInterface $translator,
+        protected ParameterBagInterface $params
     ) {
         $this->request = $requestStack->getCurrentRequest();
         $this->session = $requestStack->getCurrentRequest()->getSession();

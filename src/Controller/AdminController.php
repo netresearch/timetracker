@@ -12,7 +12,6 @@ use App\Entity\Contract;
 use App\Entity\Team;
 use App\Helper\JiraOAuthApi;
 use App\Response\Error;
-use Symfony\Component\HttpFoundation\Request;
 use App\Entity\Project;
 use App\Entity\Customer;
 use App\Entity\User;

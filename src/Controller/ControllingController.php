@@ -24,7 +24,6 @@ use App\Model\Response;
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -73,8 +72,8 @@ class ControllingController extends BaseController
             ]
         );
 
-        $showBillableField = $this->container->hasParameter('app.show_billable_field_in_export')
-            && $this->container->getParameter('app.show_billable_field_in_export');
+        $showBillableField = $this->params->has('app.show_billable_field_in_export')
+            && $this->params->get('app.show_billable_field_in_export');
         if ($showBillableField) {
             $entries = $service->enrichEntriesWithBillableInformation(
                 $this->getUserId(), $entries, $onlyBillable

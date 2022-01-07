@@ -18,7 +18,6 @@ use App\Repository\EntryRepository;
 use App\Entity\User;
 
 use App\Model\Response;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 use Symfony\Component\Routing\Annotation\Route;
@@ -57,9 +56,9 @@ class DefaultController extends BaseController
         $projects = $projectRepo->getProjectStructure($userId, $customers);
         return $this->render('App:Default:index.html.twig', array(
             'globalConfig'  => [
-                'logo_url'              => $this->container->getParameter('app.logo_url'),
-                'monthly_overview_url'  => $this->container->getParameter('app.monthly_overview_url'),
-                'header_url'            => $this->container->getParameter('app.header_url'),
+                'logo_url'              => $this->params->get('app.logo_url'),
+                'monthly_overview_url'  => $this->params->get('app.monthly_overview_url'),
+                'header_url'            => $this->params->get('app.header_url'),
             ],
             'environment'   => $this->get('kernel')->getEnvironment(),
             'customers'     => $customers,
@@ -96,15 +95,15 @@ class DefaultController extends BaseController
 
                 $client = new LdapClient($logger);
 
-                $client->setHost($this->container->getParameter('ldap_host'))
-                    ->setPort($this->container->getParameter('ldap_port'))
-                    ->setReadUser($this->container->getParameter('ldap_readuser'))
-                    ->setReadPass($this->container->getParameter('ldap_readpass'))
-                    ->setBaseDn($this->container->getParameter('ldap_basedn'))
+                $client->setHost($this->params->get('ldap_host'))
+                    ->setPort($this->params->get('ldap_port'))
+                    ->setReadUser($this->params->get('ldap_readuser'))
+                    ->setReadPass($this->params->get('ldap_readpass'))
+                    ->setBaseDn($this->params->get('ldap_basedn'))
                     ->setUserName($username)
                     ->setUserPass($password)
-                    ->setUseSSL($this->container->getParameter('ldap_usessl'))
-                    ->setUserNameField($this->container->getParameter('ldap_usernamefield'))
+                    ->setUseSSL($this->params->get('ldap_usessl'))
+                    ->setUserNameField($this->params->get('ldap_usernamefield'))
                     ->login();
             }
 
@@ -113,7 +112,7 @@ class DefaultController extends BaseController
                 ->findOneByUsername($username);
 
             if (!$user) {
-                if ($ldap && !(boolean) $this->container->getParameter('ldap_create_user')) {
+                if ($ldap && !(boolean) $this->params->get('ldap_create_user')) {
                     throw new Exception('No equivalent timetracker user could be found.');
                 }
 
@@ -508,7 +507,7 @@ class DefaultController extends BaseController
             '_start', [], UrlGeneratorInterface::ABSOLUTE_URL
         );
         $content = file_get_contents(
-            $this->container->getParameter('kernel.root_dir')
+            $this->params->get('kernel.root_dir')
             . '/../web/scripts/timeSummaryForJira.js'
         );
         $content = str_replace('https://timetracker/', $ttUrl, $content);
