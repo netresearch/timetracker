@@ -158,8 +158,14 @@ class BaseController extends AbstractController
         /** @var $user User */
         $user = $this->doctrine
             ->getRepository('App:User')
-            ->findOneById($userId)
+            ->findOneById($userId);
         ;
+
+        if (null === $user) {
+            // user stored in cookie does not exists in database
+            $this->setLoggedOut();
+            return false;
+        }
 
         // Re-Login by cookie
         if (LoginHelper::checkCookieUserName($user->getUsername())) {
