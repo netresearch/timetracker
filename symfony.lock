@@ -143,7 +143,7 @@
         "version": "1.5.1"
     },
     "phpoffice/phpspreadsheet": {
-        "version": "1.20.0"
+        "version": "1.21.0"
     },
     "phpspec/prophecy": {
         "version": "v1.15.0"
