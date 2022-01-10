@@ -33,7 +33,7 @@ class UserTicketsystem extends Base
     /**
      * @return mixed
      */
-    public function getId()
+    public function getId(): mixed
     {
         return $this->id;
     }
@@ -53,7 +53,7 @@ class UserTicketsystem extends Base
     /**
      * @return TicketSystem
      */
-    public function getTicketSystem()
+    public function getTicketSystem(): TicketSystem
     {
         return $this->ticketSystem;
     }
@@ -71,7 +71,7 @@ class UserTicketsystem extends Base
     /**
      * @return User
      */
-    public function getUser()
+    public function getUser(): User
     {
         return $this->user;
     }
@@ -89,7 +89,7 @@ class UserTicketsystem extends Base
     /**
      * @return string
      */
-    public function getAccessToken()
+    public function getAccessToken(): string
     {
         return $this->accessToken;
     }
@@ -99,7 +99,7 @@ class UserTicketsystem extends Base
      *
      * @return $this
      */
-    public function setAccessToken($accessToken)
+    public function setAccessToken(string $accessToken)
     {
         $this->accessToken = $accessToken;
 
@@ -109,7 +109,7 @@ class UserTicketsystem extends Base
     /**
      * @return string
      */
-    public function getTokenSecret()
+    public function getTokenSecret(): string
     {
         return $this->tokenSecret;
     }
@@ -119,7 +119,7 @@ class UserTicketsystem extends Base
      *
      * @return $this
      */
-    public function setTokenSecret($tokenSecret)
+    public function setTokenSecret(string $tokenSecret)
     {
         $this->tokenSecret = $tokenSecret;
 
@@ -129,7 +129,7 @@ class UserTicketsystem extends Base
     /**
      * @return bool
      */
-    public function getAvoidConnection()
+    public function getAvoidConnection(): bool
     {
         return 1 === $this->avoidConnection;
     }
@@ -139,7 +139,7 @@ class UserTicketsystem extends Base
      *
      * @return $this
      */
-    public function setAvoidConnection($avoidConnection)
+    public function setAvoidConnection(bool $avoidConnection)
     {
         $this->avoidConnection = ($avoidConnection ? 1 : 0);
 

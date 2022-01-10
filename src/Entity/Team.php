@@ -36,7 +36,7 @@ class Team
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId(string $id)
     {
         $this->id = $id;
 
@@ -48,7 +48,7 @@ class Team
      *
      * @return int $id
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -60,7 +60,7 @@ class Team
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName(string $name)
     {
         $this->name = $name;
 
@@ -72,7 +72,7 @@ class Team
      *
      * @return string $name
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -94,7 +94,7 @@ class Team
      *
      * @return User $leadUser
      */
-    public function getLeadUser()
+    public function getLeadUser(): User
     {
         return $this->leadUser;
     }
@@ -112,7 +112,7 @@ class Team
      *
      * @return Team
      */
-    public function addCustomer(Customer $customers)
+    public function addCustomer(Customer $customers): self
     {
         $this->customers[] = $customers;
 
@@ -132,7 +132,7 @@ class Team
      *
      * @return Collection
      */
-    public function getCustomers()
+    public function getCustomers(): Collection
     {
         return $this->customers;
     }

@@ -55,7 +55,7 @@ class InterpretationController extends BaseController
      *
      * @return array|null
      */
-    private function getCachedEntries()
+    private function getCachedEntries(): ?array
     {
         if (null !== $this->cache) {
             return $this->cache;
@@ -69,7 +69,7 @@ class InterpretationController extends BaseController
     /**
      * @return int
      */
-    private function getCachedSum()
+    private function getCachedSum(): int
     {
         if (null === $this->cache) {
             return 0;
@@ -440,7 +440,7 @@ class InterpretationController extends BaseController
             return $param;
         }
 
-        return null;
+        return;
     }
 
     private function normalizeData(array $data)

@@ -32,7 +32,7 @@ class Account
      *
      * @return int $id
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -44,7 +44,7 @@ class Account
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId(int $id)
     {
         $this->id = $id;
 
@@ -56,7 +56,7 @@ class Account
      *
      * @param string $name
      */
-    public function setName($name): void
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
@@ -66,7 +66,7 @@ class Account
      *
      * @return string $name
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -84,7 +84,7 @@ class Account
      *
      * @return Collection $entries
      */
-    public function getEntries()
+    public function getEntries(): Collection
     {
         return $this->entries;
     }
@@ -94,7 +94,7 @@ class Account
      *
      * @return Account
      */
-    public function addEntry(Entry $entry)
+    public function addEntry(Entry $entry): self
     {
         $this->entries[] = $entry;
 
@@ -114,7 +114,7 @@ class Account
      *
      * @return Account
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entries): self
     {
         $this->entries[] = $entries;
 

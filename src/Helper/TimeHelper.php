@@ -47,7 +47,7 @@ class TimeHelper
      *
      * @return string
      */
-    public static function minutes2readable($minutes, $useWeeks = true)
+    public static function minutes2readable(int $minutes, bool $useWeeks = true): string
     {
         $minutes = (int) $minutes;
 
@@ -80,13 +80,8 @@ class TimeHelper
 
     /**
      * Formats minutes in H:i format or days, if necessary.
-     *
-     * @param number $duration
-     * @param bool   $inDays
-     *
-     * @return string
      */
-    public static function formatDuration($duration, $inDays = false)
+    public static function formatDuration(int|float $duration, bool $inDays = false): string
     {
         $days    = number_format($duration / (60 * 8), 2);
         $hours   = floor($duration / 60);
@@ -108,13 +103,8 @@ class TimeHelper
 
     /**
      * Returns percent value of $amount from $sum.
-     *
-     * @param number $amount
-     * @param number $sum
-     *
-     * @return string
      */
-    public static function formatQuota($amount, $sum)
+    public static function formatQuota(int|float $amount, int|float $sum): string
     {
         return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2).'%';
     }

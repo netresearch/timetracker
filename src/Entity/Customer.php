@@ -45,7 +45,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId(int $id)
     {
         $this->id = $id;
 
@@ -57,7 +57,7 @@ class Customer extends Base
      *
      * @return int $id
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -69,7 +69,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName(string $name)
     {
         $this->name = $name;
 
@@ -81,7 +81,7 @@ class Customer extends Base
      *
      * @return string $name
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -93,7 +93,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setActive($active)
+    public function setActive(bool $active)
     {
         $this->active = $active;
 
@@ -105,7 +105,7 @@ class Customer extends Base
      *
      * @return bool $active
      */
-    public function getActive()
+    public function getActive(): bool
     {
         return $this->active;
     }
@@ -117,7 +117,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setGlobal($global)
+    public function setGlobal(bool $global)
     {
         $this->global = $global;
 
@@ -129,7 +129,7 @@ class Customer extends Base
      *
      * @return bool $global
      */
-    public function getGlobal()
+    public function getGlobal(): bool
     {
         return $this->global;
     }
@@ -151,7 +151,7 @@ class Customer extends Base
      *
      * @return Collection $projects
      */
-    public function getProjects()
+    public function getProjects(): Collection
     {
         return $this->projects;
     }
@@ -173,7 +173,7 @@ class Customer extends Base
      *
      * @return Collection $entries
      */
-    public function getEntries()
+    public function getEntries(): Collection
     {
         return $this->entries;
     }
@@ -207,7 +207,7 @@ class Customer extends Base
      *
      * @return Collection $teams
      */
-    public function getTeams()
+    public function getTeams(): Collection
     {
         return $this->teams;
     }
@@ -217,7 +217,7 @@ class Customer extends Base
      *
      * @return Customer
      */
-    public function addProject(Project $projects)
+    public function addProject(Project $projects): self
     {
         $this->projects[] = $projects;
 
@@ -237,7 +237,7 @@ class Customer extends Base
      *
      * @return Customer
      */
-    public function addEntry(Entry $entry)
+    public function addEntry(Entry $entry): self
     {
         $this->entries[] = $entry;
 
@@ -265,7 +265,7 @@ class Customer extends Base
      *
      * @return Customer
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entries): self
     {
         $this->entries[] = $entries;
 

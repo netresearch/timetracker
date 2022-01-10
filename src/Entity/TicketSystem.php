@@ -97,7 +97,7 @@ class TicketSystem extends Base
      *
      * @return int
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -109,7 +109,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName(string $name)
     {
         $this->name = $name;
 
@@ -121,7 +121,7 @@ class TicketSystem extends Base
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -133,7 +133,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setBookTime($bookTime)
+    public function setBookTime(bool $bookTime)
     {
         $this->bookTime = $bookTime;
 
@@ -145,7 +145,7 @@ class TicketSystem extends Base
      *
      * @return bool $bookTime
      */
-    public function getBookTime()
+    public function getBookTime(): bool
     {
         return $this->bookTime;
     }
@@ -157,7 +157,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setType($type)
+    public function setType(string $type)
     {
         $this->type = $type;
 
@@ -169,7 +169,7 @@ class TicketSystem extends Base
      *
      * @return string $type
      */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }
@@ -181,7 +181,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setUrl($url)
+    public function setUrl(string $url)
     {
         $this->url = $url;
 
@@ -193,7 +193,7 @@ class TicketSystem extends Base
      *
      * @return string $url
      */
-    public function getUrl()
+    public function getUrl(): string
     {
         return $this->url;
     }
@@ -205,7 +205,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setTicketUrl($ticketUrl)
+    public function setTicketUrl(string $ticketUrl)
     {
         $this->ticketUrl = $ticketUrl;
 
@@ -217,7 +217,7 @@ class TicketSystem extends Base
      *
      * @return string $ticketUrl
      */
-    public function getTicketUrl()
+    public function getTicketUrl(): string
     {
         return $this->ticketUrl;
     }
@@ -229,7 +229,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setLogin($login)
+    public function setLogin(string $login)
     {
         $this->login = $login;
 
@@ -241,7 +241,7 @@ class TicketSystem extends Base
      *
      * @return string $login
      */
-    public function getLogin()
+    public function getLogin(): string
     {
         return $this->login;
     }
@@ -253,7 +253,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setPassword($password)
+    public function setPassword(string $password)
     {
         $this->password = $password;
 
@@ -265,7 +265,7 @@ class TicketSystem extends Base
      *
      * @return string $password
      */
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->password;
     }
@@ -277,7 +277,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setPublicKey($publicKey)
+    public function setPublicKey(string $publicKey)
     {
         $this->publicKey = $publicKey;
 
@@ -289,7 +289,7 @@ class TicketSystem extends Base
      *
      * @return string $publicKey
      */
-    public function getPublicKey()
+    public function getPublicKey(): string
     {
         return $this->publicKey;
     }
@@ -301,7 +301,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setPrivateKey($privateKey)
+    public function setPrivateKey(string $privateKey)
     {
         $this->privateKey = $privateKey;
 
@@ -313,7 +313,7 @@ class TicketSystem extends Base
      *
      * @return string $privateKey
      */
-    public function getPrivateKey()
+    public function getPrivateKey(): string
     {
         return $this->privateKey;
     }
@@ -321,7 +321,7 @@ class TicketSystem extends Base
     /**
      * @return string
      */
-    public function getOauthConsumerKey()
+    public function getOauthConsumerKey(): string
     {
         return $this->oauthConsumerKey;
     }
@@ -331,7 +331,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setOauthConsumerKey($oauthConsumerKey)
+    public function setOauthConsumerKey(string $oauthConsumerKey)
     {
         $this->oauthConsumerKey = $oauthConsumerKey;
 
@@ -341,7 +341,7 @@ class TicketSystem extends Base
     /**
      * @return string
      */
-    public function getOauthConsumerSecret()
+    public function getOauthConsumerSecret(): string
     {
         return $this->oauthConsumerSecret;
     }
@@ -351,7 +351,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setOauthConsumerSecret($oauthConsumerSecret)
+    public function setOauthConsumerSecret(string $oauthConsumerSecret)
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
 

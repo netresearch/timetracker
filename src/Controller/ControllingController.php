@@ -219,7 +219,7 @@ class ControllingController extends BaseController
      *
      * @throws Exception
      */
-    protected static function setCellDate(Worksheet $sheet, $column, $row, $date, $format = NumberFormat::FORMAT_DATE_YYYYMMDD2): void
+    protected static function setCellDate(Worksheet $sheet, string $column, number $row, string $date, string $format = NumberFormat::FORMAT_DATE_YYYYMMDD2): void
     {
         // Set date value
         $sheet->setCellValue(
@@ -244,7 +244,7 @@ class ControllingController extends BaseController
      *
      * @throws Exception
      */
-    protected static function setCellHours(Worksheet $sheet, $column, $row, $date): void
+    protected static function setCellHours(Worksheet $sheet, string $column, number $row, string $date): void
     {
         $dateValue = Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);

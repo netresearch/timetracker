@@ -28,7 +28,7 @@ class JiraApiException extends Exception
     /**
      * @return string
      */
-    public function getRedirectUrl()
+    public function getRedirectUrl(): string
     {
         return $this->redirectUrl;
     }

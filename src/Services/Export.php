@@ -63,7 +63,7 @@ class Export
      *
      * @return mixed
      */
-    public function exportEntries($userId, $year, $month, $projectId, $customerId, array $arSort = null)
+    public function exportEntries(int $userId, int $year, int $month, int $projectId, int $customerId, array $arSort = null): mixed
     {
         /* @var \App\Entity\Entry[] $arEntries */
         return $this->getEntryRepository()
@@ -78,7 +78,7 @@ class Export
      *
      * @return string $username - the name of the user or all if no valid user id is provided
      */
-    public function getUsername($userId = null)
+    public function getUsername(int $userId = null): string
     {
         $username = 'all';
         if (0 < (int) $userId) {
@@ -98,7 +98,7 @@ class Export
      *
      * @return EntryRepository
      */
-    protected function getEntryRepository()
+    protected function getEntryRepository(): EntryRepository
     {
         return $this->doctrine->getRepository('App:Entry');
     }
@@ -114,10 +114,10 @@ class Export
      * @return array
      */
     public function enrichEntriesWithBillableInformation(
-        $currentUserId,
+        int $currentUserId,
         array $entries,
-        $removeNotBillable = false
-    ) {
+        bool $removeNotBillable = false
+    ): array {
         /** @var $currentUser \App\Entity\User */
         $currentUser = $this->doctrine->getRepository('App:User')
             ->find($currentUserId)

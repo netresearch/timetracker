@@ -64,43 +64,26 @@ class User
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId(int $id)
     {
         $this->id = $id;
 
         return $this;
     }
 
-    /**
-     * Get id.
-     *
-     * @return int $id
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set username.
-     *
-     * @param string $username
-     *
-     * @return $this
-     */
-    public function setUsername($username)
+    public function setUsername(string $username): static
     {
         $this->username = $username;
 
         return $this;
     }
 
-    /**
-     * Get username.
-     *
-     * @return string $username
-     */
-    public function getUsername()
+    public function getUsername(): string
     {
         return $this->username;
     }
@@ -117,26 +100,14 @@ class User
         return $this->abbr;
     }
 
-    /**
-     * Set type.
-     *
-     * @param string $type
-     *
-     * @return $this
-     */
-    public function setType($type)
+    public function setType(string $type): static
     {
         $this->type = $type;
 
         return $this;
     }
 
-    /**
-     * Get type.
-     *
-     * @return string $type
-     */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }
@@ -194,7 +165,7 @@ class User
      *
      * @return Collection $entries
      */
-    public function getEntries()
+    public function getEntries(): Collection
     {
         return $this->entries;
     }
@@ -204,7 +175,7 @@ class User
      *
      * @return Collection $contracts
      */
-    public function getContracts()
+    public function getContracts(): Collection
     {
         return $this->contracts;
     }
@@ -250,7 +221,7 @@ class User
      *
      * @return Collection $teams
      */
-    public function getTeams()
+    public function getTeams(): Collection
     {
         return $this->teams;
     }
@@ -326,7 +297,7 @@ class User
     /**
      * @return Collection $userTicketSystems
      */
-    public function getUserTicketsystems()
+    public function getUserTicketsystems(): Collection
     {
         return $this->userTicketsystems;
     }
@@ -336,7 +307,7 @@ class User
      *
      * @return string|null
      */
-    public function getTicketSystemAccessToken(TicketSystem $ticketsystem)
+    public function getTicketSystemAccessToken(TicketSystem $ticketsystem): ?string
     {
         $return = null;
         /** @var UserTicketsystem $userTicketsystem */
@@ -354,7 +325,7 @@ class User
      *
      * @return string|null
      */
-    public function getTicketSystemAccessTokenSecret(TicketSystem $ticketsystem)
+    public function getTicketSystemAccessTokenSecret(TicketSystem $ticketsystem): ?string
     {
         $return = null;
         /** @var UserTicketsystem $userTicketsystem */

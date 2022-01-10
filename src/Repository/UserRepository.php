@@ -15,7 +15,7 @@ class UserRepository extends EntityRepository
      *
      * @return array
      */
-    public function getUsers($currentUserId)
+    public function getUsers(int $currentUserId): array
     {
         /** @var User[] $users */
         $users = $this->findBy(
@@ -52,7 +52,7 @@ class UserRepository extends EntityRepository
     /**
      * @return array[]
      */
-    public function getAllUsers()
+    public function getAllUsers(): array
     {
         /** @var User[] $users */
         $users = $this->findBy(
@@ -84,7 +84,7 @@ class UserRepository extends EntityRepository
      *
      * @return array
      */
-    public function getUserById($currentUserId)
+    public function getUserById($currentUserId): array
     {
         $user = $this->find($currentUserId);
 

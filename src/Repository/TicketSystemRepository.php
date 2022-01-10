@@ -15,7 +15,7 @@ class TicketSystemRepository extends EntityRepository
      *
      * @return array
      */
-    public function getAllTicketSystems()
+    public function getAllTicketSystems(): array
     {
         /** @var TicketSystem[] $systems */
         $systems = $this->findBy([], ['name' => 'ASC']);

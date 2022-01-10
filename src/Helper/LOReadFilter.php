@@ -30,10 +30,6 @@ class LOReadFilter implements IReadFilter
 {
     public function readCell($column, $row, $worksheetName = '')
     {
-        if (Coordinate::columnIndexFromString($column) > 1024) {
-            return false;
-        }
-
-        return true;
+        return (1024 >= Coordinate::columnIndexFromString($column));
     }
 }

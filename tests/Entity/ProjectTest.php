@@ -18,13 +18,13 @@ class ProjectTest extends TestCase
         static::assertSame(
             $project,
             $project
-                ->setId(null)
-                ->setName(null)
+                ->setId(1)
+                ->setName('project')
                 ->setJiraId(null)
-                ->setGlobal(null)
+                ->setGlobal(true)
                 ->setEstimation(null)
                 ->setOffer(null)
-                ->setGlobal(null)
+                ->setGlobal(false)
                 ->setCostCenter(null)
                 ->setBilling(null)
         );

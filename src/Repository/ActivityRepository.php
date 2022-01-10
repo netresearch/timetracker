@@ -10,7 +10,7 @@ class ActivityRepository extends EntityRepository
     /**
      * @return array[] Activities sorted by name
      */
-    public function getActivities()
+    public function getActivities(): array
     {
         /** @var Activity[] $activities */
         $activities = $this->findBy([], ['name' => 'ASC']);

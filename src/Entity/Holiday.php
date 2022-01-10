@@ -31,7 +31,7 @@ class Holiday extends Base
      *
      * @return $this
      */
-    public function setDay($day)
+    public function setDay(string $day)
     {
         if (!$day instanceof DateTime) {
             $day = new DateTime($day);
@@ -47,7 +47,7 @@ class Holiday extends Base
      *
      * @return DateTime
      */
-    public function getDay()
+    public function getDay(): DateTime
     {
         return $this->day;
     }
@@ -57,7 +57,7 @@ class Holiday extends Base
      *
      * @param string $name
      */
-    public function setName($name): void
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
@@ -67,7 +67,7 @@ class Holiday extends Base
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -77,7 +77,7 @@ class Holiday extends Base
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'day'         => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,

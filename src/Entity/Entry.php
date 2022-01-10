@@ -65,18 +65,17 @@ class Entry extends Base
 
     #[ORM\Column(name: 'class', type: Types::INTEGER, nullable: false)]
     protected $class = self::CLASS_PLAIN;
+
     /**
      * holds summary from external ticket system; no mapping for ORM required (yet).
-     *
-     * @var string
      */
-    protected $externalSummary = '';
+    protected string $externalSummary = '';
+
     /**
      * Holds an array of labels assigned for the issue.
-     *
-     * @var array
      */
-    protected $externalLabels = [];
+    protected array $externalLabels = [];
+
     /**
      * ID of the original booked external ticket.
      *
@@ -85,36 +84,25 @@ class Entry extends Base
     #[ORM\Column(name: 'internal_jira_ticket_original_key')]
     protected $internalJiraTicketOriginalKey;
 
-    /**
-     * @param string $externalReporter
-     */
-    public function setExternalReporter($externalReporter): void
+    public function setExternalReporter(string $externalReporter): void
     {
         $this->externalReporter = $externalReporter;
     }
 
-    /**
-     * @return string
-     */
-    public function getExternalReporter()
+    public function getExternalReporter(): string
     {
         return $this->externalReporter;
     }
 
-    /**
-     * @param string $externalSummary
-     */
-    public function setExternalSummary($externalSummary): void
+    public function setExternalSummary(string $externalSummary): void
     {
         $this->externalSummary = $externalSummary;
     }
 
     /**
      * Returns the array of external labels.
-     *
-     * @return array
      */
-    public function getExternalLabels()
+    public function getExternalLabels(): array
     {
         return $this->externalLabels;
     }
@@ -127,26 +115,20 @@ class Entry extends Base
         $this->externalLabels = $arExternalLabels;
     }
 
-    /**
-     * @return string
-     */
-    public function getExternalSummary()
+    public function getExternalSummary(): string
     {
         return $this->externalSummary;
     }
+
     /**
      * holds external reporter; no mapping for ORM required (yet).
-     *
-     * @var string
      */
-    protected $externalReporter = '';
+    protected string $externalReporter = '';
 
     /**
      * @throws Exception
-     *
-     * @return $this
      */
-    public function validateDuration()
+    public function validateDuration(): static
     {
         if (($this->getStart() instanceof DateTime)
             && ($this->getEnd() instanceof DateTime)
@@ -158,173 +140,80 @@ class Entry extends Base
         return $this;
     }
 
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    /**
-     * Get id.
-     *
-     * @return int $id
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Get userId.
-     *
-     * @return int $userId
-     */
-    public function getUserId()
+    public function getUserId(): ?int
     {
-        if (!\is_object($this->getUser())) {
-            return null;
-        }
-
-        return $this->getUser()->getId();
+        return $this->getUser()?->getId();
     }
 
-    /**
-     * Get projectId.
-     *
-     * @return int $projectId
-     */
-    public function getProjectId()
+    public function getProjectId(): ?int
     {
-        if (!\is_object($this->getProject())) {
-            return null;
-        }
-
-        return $this->getProject()->getId();
+        return $this->getProject()?->getId();
     }
 
-    /**
-     * Get accountId.
-     *
-     * @return int $accountId
-     */
-    public function getAccountId()
+    public function getAccountId(): ?int
     {
-        if (!\is_object($this->getAccount())) {
-            return null;
-        }
-
-        return $this->getAccount()->getId();
+        return $this->getAccount()?->getId();
     }
 
-    /**
-     * Get customerId.
-     *
-     * @return int $customerId
-     */
-    public function getCustomerId()
+    public function getCustomerId(): ?int
     {
-        if (!\is_object($this->getCustomer())) {
-            return null;
-        }
-
-        return $this->getCustomer()->getId();
+        return $this->getCustomer()?->getId();
     }
 
-    /**
-     * Get ActivityId.
-     *
-     * @return int $ActivityId
-     */
-    public function getActivityId()
+    public function getActivityId(): ?int
     {
-        if (!\is_object($this->getActivity())) {
-            return null;
-        }
-
-        return $this->getActivity()->getId();
+        return $this->getActivity()?->getId();
     }
 
-    /**
-     * Set ticket.
-     *
-     * @param string $ticket
-     *
-     * @return Entry
-     */
-    public function setTicket($ticket)
+    public function setTicket(string $ticket): static
     {
         $this->ticket = str_replace(' ', '', $ticket);
 
         return $this;
     }
 
-    /**
-     * Get ticket.
-     *
-     * @return string $ticket
-     */
-    public function getTicket()
+    public function getTicket(): ?string
     {
         return $this->ticket;
     }
 
-    /**
-     * Set Jira WorklogId.
-     *
-     * @param int $worklog_id
-     *
-     * @return Entry
-     */
-    public function setWorklogId($worklog_id)
+    public function setWorklogId(int $worklog_id): static
     {
         $this->worklog_id = $worklog_id;
 
         return $this;
     }
 
-    /**
-     * Get Jira WorklogId.
-     *
-     * @return int $worklog_id
-     */
-    public function getWorklogId()
+    public function getWorklogId(): ?int
     {
         return $this->worklog_id;
     }
 
-    /**
-     * Set description.
-     *
-     * @param string $description
-     *
-     * @return Entry
-     */
-    public function setDescription($description)
+    public function setDescription(string $description): static
     {
         $this->description = $description;
 
         return $this;
     }
 
-    /**
-     * Get description.
-     *
-     * @return string $description
-     */
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    /**
-     * Set day.
-     *
-     * @param string $day
-     *
-     * @return Entry
-     */
-    public function setDay($day)
+    public function setDay(string $day): static
     {
         if (!$day instanceof DateTime) {
             $day = new DateTime($day);
@@ -335,24 +224,12 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get day.
-     *
-     * @return DateTime $day
-     */
-    public function getDay()
+    public function getDay(): ?DateTimeInterface
     {
         return $this->day;
     }
 
-    /**
-     * Set start time.
-     *
-     * @param string $start
-     *
-     * @return Entry
-     */
-    public function setStart($start)
+    public function setStart(string $start): static
     {
         if (!$start instanceof DateTime) {
             $start_time = $start;
@@ -366,24 +243,12 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get start.
-     *
-     * @return DateTime $start
-     */
-    public function getStart()
+    public function getStart(): ?DateTimeInterface
     {
         return $this->start;
     }
 
-    /**
-     * Set end.
-     *
-     * @param string $end
-     *
-     * @return Entry
-     */
-    public function setEnd($end)
+    public function setEnd(string $end): static
     {
         if (!$end instanceof DateTime) {
             $end_time = $end;
@@ -417,17 +282,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get end.
-     */
     public function getEnd(): ?DateTimeInterface
     {
         return $this->end;
     }
 
-    /**
-     * Set duration.
-     */
     public function setDuration(int $duration): static
     {
         $this->duration = $duration;
@@ -435,9 +294,6 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get duration.
-     */
     public function getDuration(): ?int
     {
         return $this->duration;
@@ -455,90 +311,50 @@ class Entry extends Base
         return sprintf('%02d:%02d', $nHours, $nMinutes);
     }
 
-    /**
-     * Set project.
-     *
-     * @return Entry
-     */
-    public function setProject(Project $project)
+    public function setProject(Project $project): static
     {
         $this->project = $project;
 
         return $this;
     }
 
-    /**
-     * Get project.
-     *
-     * @return Project $project
-     */
-    public function getProject()
+    public function getProject(): ?Project
     {
         return $this->project;
     }
 
-    /**
-     * Set user.
-     *
-     * @return Entry
-     */
-    public function setUser(User $user)
+    public function setUser(User $user): self
     {
         $this->user = $user;
 
         return $this;
     }
 
-    /**
-     * Get user.
-     *
-     * @return User $user
-     */
-    public function getUser()
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
-    /**
-     * Set account.
-     *
-     * @return Entry
-     */
-    public function setAccount(Account $account)
+    public function setAccount(Account $account): static
     {
         $this->account = $account;
 
         return $this;
     }
 
-    /**
-     * Get account.
-     *
-     * @return Account $account
-     */
-    public function getAccount()
+    public function getAccount(): ?Account
     {
         return $this->account;
     }
 
-    /**
-     * Set activity.
-     *
-     * @return Entry
-     */
-    public function setActivity(Activity $activity)
+    public function setActivity(Activity $activity): static
     {
         $this->activity = $activity;
 
         return $this;
     }
 
-    /**
-     * Get activity.
-     *
-     * @return Activity $activity
-     */
-    public function getActivity()
+    public function getActivity(): ?Activity
     {
         return $this->activity;
     }
@@ -548,7 +364,7 @@ class Entry extends Base
      *
      * @return mixed[]
      */
-    public function toArray()
+    public function toArray(): array
     {
         if (null !== $this->getCustomer()) {
             $customer = $this->getCustomer()->getId();
@@ -601,9 +417,6 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Set customer.
-     */
     public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
@@ -611,32 +424,18 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get customer.
-     *
-     * @return Customer
-     */
-    public function getCustomer()
+    public function getCustomer(): ?Customer
     {
         return $this->customer;
     }
 
-    /**
-     * Set class.
-     *
-     * @param int class
-     * @param mixed $class
-     */
-    public function setClass($class): static
+    public function setClass(int $class): static
     {
-        $this->class = (int) $class;
+        $this->class = $class;
 
         return $this;
     }
 
-    /**
-     * Get class.
-     */
     public function getClass(): int
     {
         return $this->class;
@@ -664,32 +463,24 @@ class Entry extends Base
 
     /**
      * Returns the original ticket name.
-     *
-     * @return string
      */
-    public function getInternalJiraTicketOriginalKey()
+    public function getInternalJiraTicketOriginalKey(): ?string
     {
         return $this->internalJiraTicketOriginalKey;
     }
 
     /**
      * Returns true, if a original ticket name.
-     *
-     * @return bool
      */
-    public function hasInternalJiraTicketOriginalKey()
+    public function hasInternalJiraTicketOriginalKey(): bool
     {
         return !empty($this->internalJiraTicketOriginalKey);
     }
 
     /**
      * Sets the original ticket name.
-     *
-     * @param string $strTicket
-     *
-     * @return $this
      */
-    public function setInternalJiraTicketOriginalKey($strTicket)
+    public function setInternalJiraTicketOriginalKey(string $strTicket): static
     {
         $this->internalJiraTicketOriginalKey = (string) $strTicket;
 
@@ -698,10 +489,8 @@ class Entry extends Base
 
     /**
      * Returns the post data for the internal JIRA ticket creation.
-     *
-     * @return array
      */
-    public function getPostDataForInternalJiraTicketCreation()
+    public function getPostDataForInternalJiraTicketCreation(): array
     {
         return [
             'fields' => [
@@ -717,20 +506,12 @@ class Entry extends Base
         ];
     }
 
-    /**
-     * @return bool
-     */
-    public function getSyncedToTicketsystem()
+    public function getSyncedToTicketsystem(): bool
     {
         return $this->syncedToTicketsystem;
     }
 
-    /**
-     * @param bool $syncedToTicketsystem
-     *
-     * @return $this
-     */
-    public function setSyncedToTicketsystem($syncedToTicketsystem)
+    public function setSyncedToTicketsystem(bool $syncedToTicketsystem): static
     {
         $this->syncedToTicketsystem = $syncedToTicketsystem;
 

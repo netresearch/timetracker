@@ -7,17 +7,13 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class StatusController extends BaseController
 {
-    private function getLoginStatus($userId)
+    private function getLoginStatus(int $userId)
     {
         // Check user session
-        if (1 > (int) $userId) {
-            return false;
-        }
-
-        return true;
+        return ($userId > 0);
     }
 
-    private function getStatus($userId)
+    private function getStatus(int $userId)
     {
         // initialize status
         $loginStatus = $this->getLoginStatus($userId);

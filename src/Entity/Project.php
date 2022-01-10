@@ -50,56 +50,66 @@ class Project extends Base
      */
     #[ORM\Column(type: Types::INTEGER, name: 'estimation')]
     protected $estimation;
+
     /**
      * Offer number.
      */
     #[ORM\Column(name: 'offer', length: 31)]
     protected $offer;
+
     /**
      * Used billing method.
      */
     #[ORM\Column(type: Types::INTEGER, name: 'billing')]
     protected $billing;
+
     /**
      * cost center (number or name).
      */
     #[ORM\Column(name: 'cost_center', length: 31, nullable: true)]
     protected $costCenter;
+
     /**
      * internal reference number.
      */
     #[ORM\Column(name: 'internal_ref', length: 31, nullable: true)]
     protected $internalReference;
+
     /**
      * external (clients) reference number.
      */
     #[ORM\Column(name: 'external_ref', length: 31, nullable: true)]
     protected $externalReference;
+
     /**
      * project manager user.
      */
     #[ORM\ManyToOne(targetEntity: 'User')]
     #[ORM\JoinColumn(name: 'project_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $projectLead;
+
     /**
      * lead developer.
      */
     #[ORM\ManyToOne(targetEntity: 'User')]
     #[ORM\JoinColumn(name: 'technical_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $technicalLead;
+
     /**
      * invoice number, reserved for future use.
-     *
-     * * @ORM\Column(name="invoice", length=31, nullable=true)
      */
+    #[ORM\Column(name: 'invoice', length: 31, nullable: true)]
     protected $invoice;
+
     #[ORM\Column(name: 'additional_information_from_external', type: Types::BOOLEAN)]
     protected $additionalInformationFromExternal;
+
     /**
      * the internal key of the project the current ticket should be booked to.
      */
     #[ORM\Column(name: 'internal_jira_project_key')]
     protected $internalJiraProjectKey;
+
     /**
      * the id of the internal jira ticket system.
      */
@@ -110,10 +120,8 @@ class Project extends Base
      * Sets the additional Information.
      *
      * @param bool $additionalInformationFromExternal
-     *
-     * @return $this
      */
-    public function setAdditionalInformationFromExternal($additionalInformationFromExternal)
+    public function setAdditionalInformationFromExternal(bool $additionalInformationFromExternal): static
     {
         $this->additionalInformationFromExternal = $additionalInformationFromExternal;
 
@@ -124,10 +132,8 @@ class Project extends Base
      * Sets the internal Jira project key.
      *
      * @param string $strInternalJiraProjectKey the internal jira project key
-     *
-     * @return $this
      */
-    public function setInternalJiraProjectKey($strInternalJiraProjectKey)
+    public function setInternalJiraProjectKey(string $strInternalJiraProjectKey): static
     {
         $this->internalJiraProjectKey = $strInternalJiraProjectKey;
 
@@ -138,20 +144,15 @@ class Project extends Base
      * Sets the id internal Jira ticket system.
      *
      * @param string $nInternalJiraTicketSystem the id of internal jira ticketsystem
-     *
-     * @return $this
      */
-    public function setInternalJiraTicketSystem($nInternalJiraTicketSystem)
+    public function setInternalJiraTicketSystem(string $nInternalJiraTicketSystem): static
     {
         $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
 
         return $this;
     }
 
-    /**
-     * @return bool
-     */
-    public function getAdditionalInformationFromExternal()
+    public function getAdditionalInformationFromExternal(): bool
     {
         return $this->additionalInformationFromExternal;
     }
@@ -161,142 +162,74 @@ class Project extends Base
         $this->entries = new ArrayCollection();
     }
 
-    /**
-     * Get id.
-     *
-     * @return int $id
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Set id.
-     *
-     * @param int $id
-     *
-     * @return $this
-     */
-    public function setId($id)
+    public function setId(int $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string $name
-     */
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * Set active.
-     *
-     * @param bool $active
-     *
-     * @return $this
-     */
-    public function setActive($active)
+    public function setActive(bool $active): static
     {
         $this->active = $active;
 
         return $this;
     }
 
-    /**
-     * Get active.
-     *
-     * @return bool $active
-     */
-    public function getActive()
+    public function getActive(): ?bool
     {
         return $this->active;
     }
 
-    /**
-     * Set customer.
-     *
-     * @return $this
-     */
-    public function setCustomer(Customer $customer)
+    public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
 
         return $this;
     }
 
-    /**
-     * Get customer.
-     *
-     * @return Customer $customer
-     */
-    public function getCustomer()
+    public function getCustomer(): ?Customer
     {
         return $this->customer;
     }
 
-    /**
-     * Set global.
-     *
-     * @param bool $global
-     *
-     * @return $this
-     */
-    public function setGlobal($global)
+    public function setGlobal(bool $global): static
     {
         $this->global = $global;
 
         return $this;
     }
 
-    /**
-     * Get global.
-     *
-     * @return bool $global
-     */
-    public function getGlobal()
+    public function getGlobal(): ?bool
     {
         return $this->global;
     }
 
-    /**
-     * Add entries.
-     *
-     * @return Project
-     */
-    public function addEntries(Entry $entry)
+    public function addEntries(Entry $entry): static
     {
         $this->entries[] = $entry;
 
         return $this;
     }
 
-    /**
-     * Get entries.
-     *
-     * @return Collection $entries
-     */
-    public function getEntries()
+    public function getEntries(): Collection
     {
         return $this->entries;
     }
@@ -313,22 +246,15 @@ class Project extends Base
         return $this;
     }
 
-    /**
-     * @return TicketSystem $ticketSystem
-     */
-    public function getTicketSystem()
+    public function getTicketSystem(): ?TicketSystem
     {
         return $this->ticketSystem;
     }
 
     /**
      * Set the id of the ticket system that is associated with this project.
-     *
-     * @param TicketSystem $ticketSystem
-     *
-     * @return Project
      */
-    public function setTicketSystem($ticketSystem)
+    public function setTicketSystem(?TicketSystem $ticketSystem): static
     {
         $this->ticketSystem = $ticketSystem;
 
@@ -426,7 +352,7 @@ class Project extends Base
      *
      * @return Project
      */
-    public function setInternalReference($internalReference)
+    public function setInternalReference(string $internalReference): self
     {
         $this->internalReference = $internalReference;
 
@@ -438,7 +364,7 @@ class Project extends Base
      *
      * @return string
      */
-    public function getInternalReference()
+    public function getInternalReference(): string
     {
         return $this->internalReference;
     }
@@ -450,7 +376,7 @@ class Project extends Base
      *
      * @return Project
      */
-    public function setExternalReference($externalReference)
+    public function setExternalReference(string $externalReference): self
     {
         $this->externalReference = $externalReference;
 
@@ -462,7 +388,7 @@ class Project extends Base
      *
      * @return string
      */
-    public function getExternalReference()
+    public function getExternalReference(): string
     {
         return $this->externalReference;
     }
@@ -472,7 +398,7 @@ class Project extends Base
      *
      * @return Project
      */
-    public function addEntry(Entry $entries)
+    public function addEntry(Entry $entries): self
     {
         $this->entries[] = $entries;
 
@@ -492,7 +418,7 @@ class Project extends Base
      *
      * @return Project
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entries): self
     {
         $this->entries[] = $entries;
 
@@ -504,7 +430,7 @@ class Project extends Base
      *
      * @return mixed e.g. OPSA
      */
-    public function getInternalJiraProjectKey()
+    public function getInternalJiraProjectKey(): mixed
     {
         return $this->internalJiraProjectKey;
     }
@@ -514,7 +440,7 @@ class Project extends Base
      *
      * @return bool
      */
-    public function hasInternalJiraProjectKey()
+    public function hasInternalJiraProjectKey(): bool
     {
         return !empty($this->internalJiraProjectKey);
     }
@@ -524,7 +450,7 @@ class Project extends Base
      *
      * @return mixed
      */
-    public function getInternalJiraTicketSystem()
+    public function getInternalJiraTicketSystem(): mixed
     {
         return $this->internalJiraTicketSystem;
     }
@@ -536,7 +462,7 @@ class Project extends Base
      *
      * @return bool
      */
-    public function matchesInternalProject($projectKey)
+    public function matchesInternalProject(string $projectKey): bool
     {
         return $projectKey === $this->getInternalJiraProjectKey();
     }

@@ -14,7 +14,7 @@ class HolidayRepository extends EntityRepository
      *
      * @return array
      */
-    public function findByMonth($year, $month)
+    public function findByMonth(int $year, int $month): array
     {
         $em = $this->getEntityManager();
 

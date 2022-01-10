@@ -10,7 +10,7 @@ class TeamRepository extends EntityRepository
     /**
      * @return array[]
      */
-    public function findAll()
+    public function findAll(): array
     {
         /** @var Team[] $teams */
         $teams = $this->findBy([], ['name' => 'ASC']);

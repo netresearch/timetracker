@@ -31,18 +31,18 @@ use Symfony\Bundle\FrameworkBundle\Routing\Router;
 class JiraOAuthApi
 {
     /** @var string */
-    protected $oAuthCallbackUrl;
+    protected string $oAuthCallbackUrl;
 
     /** @var string */
-    protected $jiraApiUrl = '/rest/api/latest/';
+    protected string $jiraApiUrl = '/rest/api/latest/';
     /** @var string */
-    protected $oAuthRequestUrl = '/plugins/servlet/oauth/request-token';
+    protected string $oAuthRequestUrl = '/plugins/servlet/oauth/request-token';
     /** @var string */
-    protected $oAuthAccessUrl = '/plugins/servlet/oauth/access-token';
+    protected string $oAuthAccessUrl = '/plugins/servlet/oauth/access-token';
     /** @var string */
-    protected $oAuthAuthUrl = '/plugins/servlet/oauth/authorize';
+    protected string $oAuthAuthUrl = '/plugins/servlet/oauth/authorize';
     /** @var Client[] */
-    protected $clients;
+    protected array $clients;
 
     /**
      * JiraOAuthApi constructor.
@@ -76,7 +76,7 @@ class JiraOAuthApi
      *
      * @return Client
      */
-    protected function getFetchAccessTokenClient($oAuthRequestToken)
+    protected function getFetchAccessTokenClient(string $oAuthRequestToken): Client
     {
         return $this->getClient($oAuthRequestToken);
     }
@@ -91,7 +91,7 @@ class JiraOAuthApi
      *
      * @return Client
      */
-    protected function getClient($oAuthToken = null, $oAuthTokenSecret = null)
+    protected function getClient(string $oAuthToken = null, string $oAuthTokenSecret = null): Client
     {
         if (null === $oAuthTokenSecret) {
             $oAuthTokenSecret = $this->getTokenSecret();
@@ -138,7 +138,7 @@ class JiraOAuthApi
      *
      * @return string Path to certificate file
      */
-    protected function getPrivateKeyFile()
+    protected function getPrivateKeyFile(): string
     {
         $certificate = $this->getOAuthConsumerSecret();
 
@@ -162,7 +162,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    protected function getTempKeyFile($certificate)
+    protected function getTempKeyFile(string $certificate): string
     {
         $keyFile = $this->getTempFile();
         file_put_contents($keyFile, $certificate);
@@ -175,7 +175,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    protected function getTempFile()
+    protected function getTempFile(): string
     {
         return tempnam(sys_get_temp_dir(), 'TTT');
     }
@@ -188,7 +188,7 @@ class JiraOAuthApi
      *
      * @throws JiraApiException
      */
-    public function fetchOAuthAccessToken($oAuthRequestToken, $oAuthVerifier): void
+    public function fetchOAuthAccessToken(string $oAuthRequestToken, string $oAuthVerifier): void
     {
         try {
             if ('denied' === $oAuthVerifier) {
@@ -221,7 +221,7 @@ class JiraOAuthApi
      *
      * @return string URL to Jira where User can allow / deny access
      */
-    protected function fetchOAuthRequestToken()
+    protected function fetchOAuthRequestToken(): string
     {
         try {
             $response = $this->getFetchRequestTokenClient()->post(
@@ -241,7 +241,7 @@ class JiraOAuthApi
      *
      * @return string[]
      */
-    protected function extractTokens(ResponseInterface $response)
+    protected function extractTokens(ResponseInterface $response): array
     {
         $body = (string) $response->getBody();
 
@@ -269,7 +269,7 @@ class JiraOAuthApi
      *
      * @param int $entryLimit (optional) max number of entries which should be updated (null: no limit)
      */
-    public function updateEntriesJiraWorkLogsLimited($entryLimit = null): void
+    public function updateEntriesJiraWorkLogsLimited(int $entryLimit = null): void
     {
         if (!$this->checkUserTicketSystem()) {
             return;
@@ -379,7 +379,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    public function createTicket(Entry $entry)
+    public function createTicket(Entry $entry): string
     {
         return $this->post(
             'issue/',
@@ -408,7 +408,7 @@ class JiraOAuthApi
      *
      * @return stdClass
      */
-    public function searchTicket($jql, $fields, $limit = 1)
+    public function searchTicket(string $jql, string $fields, int $limit = 1): stdClass
     {
         //we use POST to support very large queries
         return $this->post(
@@ -430,7 +430,7 @@ class JiraOAuthApi
      *
      * @return bool
      */
-    public function doesTicketExist($sTicket)
+    public function doesTicketExist(string $sTicket): bool
     {
         return $this->doesResourceExist(sprintf('issue/%s', $sTicket));
     }
@@ -445,7 +445,7 @@ class JiraOAuthApi
      *
      * @return bool
      */
-    protected function doesWorkLogExist($sTicket, $workLogId)
+    protected function doesWorkLogExist(string $sTicket, int $workLogId): bool
     {
         return $this->doesResourceExist(sprintf('issue/%s/worklog/%d', $sTicket, $workLogId));
     }
@@ -459,7 +459,7 @@ class JiraOAuthApi
      *
      * @return bool
      */
-    protected function doesResourceExist($url)
+    protected function doesResourceExist(string $url): bool
     {
         try {
             $this->get($url);
@@ -480,7 +480,7 @@ class JiraOAuthApi
      *
      * @return mixed
      */
-    protected function get($url)
+    protected function get(string $url): mixed
     {
         return $this->getResponse('GET', $url);
     }
@@ -496,7 +496,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    protected function post($url, $data = [])
+    protected function post(string $url, array $data = []): string
     {
         return $this->getResponse('POST', $url, $data);
     }
@@ -512,7 +512,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    protected function put($url, $data = [])
+    protected function put(string $url, array $data = []): string
     {
         return $this->getResponse('PUT', $url, $data);
     }
@@ -525,7 +525,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    protected function delete($url)
+    protected function delete(string $url): string
     {
         return $this->getResponse('DELETE', $url);
     }
@@ -542,7 +542,7 @@ class JiraOAuthApi
      *
      * @return mixed
      */
-    protected function getResponse($method, $url, $data = [])
+    protected function getResponse(string $method, string $url, array $data = []): mixed
     {
         $additionalParameter = [];
         if (!empty($data)) {
@@ -581,7 +581,7 @@ class JiraOAuthApi
      *
      * @return string[]
      */
-    protected function storeToken($tokenSecret, $accessToken = 'token_request_unfinished', $avoidConnection = false)
+    protected function storeToken(string $tokenSecret, string $accessToken = 'token_request_unfinished', bool $avoidConnection = false): array
     {
         /** @var UserTicketSystem $userTicketSystem */
         $userTicketSystem = $this->doctrine->getRepository('App:UserTicketsystem')
@@ -616,7 +616,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getJiraBaseUrl()
+    protected function getJiraBaseUrl(): string
     {
         return rtrim($this->ticketSystem->getUrl(), '/');
     }
@@ -624,7 +624,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getTokenSecret()
+    protected function getTokenSecret(): string
     {
         return $this->user->getTicketSystemAccessTokenSecret($this->ticketSystem);
     }
@@ -632,7 +632,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getToken()
+    protected function getToken(): string
     {
         return $this->user->getTicketSystemAccessToken($this->ticketSystem);
     }
@@ -640,7 +640,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getJiraApiUrl()
+    protected function getJiraApiUrl(): string
     {
         return $this->getJiraBaseUrl().$this->jiraApiUrl;
     }
@@ -648,7 +648,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getOAuthRequestUrl()
+    protected function getOAuthRequestUrl(): string
     {
         return $this->getJiraBaseUrl().$this->oAuthRequestUrl;
     }
@@ -656,7 +656,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getOAuthCallbackUrl()
+    protected function getOAuthCallbackUrl(): string
     {
         return $this->oAuthCallbackUrl.'?tsid='.$this->ticketSystem->getId();
     }
@@ -664,7 +664,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getOAuthAccessUrl()
+    protected function getOAuthAccessUrl(): string
     {
         return $this->getJiraBaseUrl().$this->oAuthAccessUrl;
     }
@@ -674,7 +674,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    protected function getOAuthAuthUrl($oAuthToken)
+    protected function getOAuthAuthUrl(string $oAuthToken): string
     {
         return $this->getJiraBaseUrl().$this->oAuthAuthUrl.'?oauth_token='.$oAuthToken;
     }
@@ -682,7 +682,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function generateNonce()
+    protected function generateNonce(): string
     {
         return md5(microtime(true).uniqid('', true));
     }
@@ -690,7 +690,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getOAuthConsumerSecret()
+    protected function getOAuthConsumerSecret(): string
     {
         return $this->ticketSystem->getOauthConsumerSecret();
     }
@@ -698,7 +698,7 @@ class JiraOAuthApi
     /**
      * @return string
      */
-    protected function getOAuthConsumerKey()
+    protected function getOAuthConsumerKey(): string
     {
         return $this->ticketSystem->getOauthConsumerKey();
     }
@@ -708,7 +708,7 @@ class JiraOAuthApi
      *
      * @return string
      */
-    protected function getTicketSystemWorkLogComment(Entry $entry)
+    protected function getTicketSystemWorkLogComment(Entry $entry): string
     {
         $activity = $entry->getActivity()
             ? $entry->getActivity()->getName()
@@ -728,7 +728,7 @@ class JiraOAuthApi
      *
      * @return string "2016-02-17T14:35:51.000+0100"
      */
-    protected function getTicketSystemWorkLogStartDate(Entry $entry)
+    protected function getTicketSystemWorkLogStartDate(Entry $entry): string
     {
         $startDate = $entry->getDay() ?: new DateTime();
         if ($entry->getStart()) {
@@ -746,7 +746,7 @@ class JiraOAuthApi
      *
      * @return bool
      */
-    protected function checkUserTicketSystem()
+    protected function checkUserTicketSystem(): bool
     {
         /** @var UserTicketsystem $userTicketSystem */
         $userTicketSystem = $this->doctrine

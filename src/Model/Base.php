@@ -25,7 +25,7 @@ class Base
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $r = new ReflectionClass($this);
 

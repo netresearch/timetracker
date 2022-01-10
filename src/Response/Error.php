@@ -19,7 +19,7 @@ class Error extends JsonResponse
      * @param int         $statusCode
      * @param string|null $forwardUrl
      */
-    public function __construct($errorMessage, $statusCode, $forwardUrl = null)
+    public function __construct(string $errorMessage, int $statusCode, ?string $forwardUrl = null)
     {
         $message = ['message' => $errorMessage];
 

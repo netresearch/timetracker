@@ -56,7 +56,7 @@ class Contract
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId(int $id)
     {
         $this->id = $id;
 
@@ -68,7 +68,7 @@ class Contract
      *
      * @return int $id
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -90,7 +90,7 @@ class Contract
      *
      * @return User $user
      */
-    public function getUser()
+    public function getUser(): User
     {
         return $this->user;
     }
@@ -98,7 +98,7 @@ class Contract
     /**
      * @return mixed
      */
-    public function getStart()
+    public function getStart(): mixed
     {
         return $this->start;
     }
@@ -118,7 +118,7 @@ class Contract
     /**
      * @return mixed
      */
-    public function getEnd()
+    public function getEnd(): mixed
     {
         return $this->end;
     }
@@ -138,7 +138,7 @@ class Contract
     /**
      * @return float
      */
-    public function getHours0()
+    public function getHours0(): float
     {
         return $this->hours_0;
     }
@@ -148,7 +148,7 @@ class Contract
      *
      * @return $this
      */
-    public function setHours0($hours_0)
+    public function setHours0(float $hours_0)
     {
         $this->hours_0 = $hours_0;
 
@@ -158,7 +158,7 @@ class Contract
     /**
      * @return float
      */
-    public function getHours1()
+    public function getHours1(): float
     {
         return $this->hours_1;
     }
@@ -168,7 +168,7 @@ class Contract
      *
      * @return $this
      */
-    public function setHours1($hours_1)
+    public function setHours1(float $hours_1)
     {
         $this->hours_1 = $hours_1;
 
@@ -178,7 +178,7 @@ class Contract
     /**
      * @return float
      */
-    public function getHours2()
+    public function getHours2(): float
     {
         return $this->hours_2;
     }
@@ -188,7 +188,7 @@ class Contract
      *
      * @return $this
      */
-    public function setHours2($hours_2)
+    public function setHours2(float $hours_2)
     {
         $this->hours_2 = $hours_2;
 
@@ -198,7 +198,7 @@ class Contract
     /**
      * @return float
      */
-    public function getHours3()
+    public function getHours3(): float
     {
         return $this->hours_3;
     }
@@ -208,7 +208,7 @@ class Contract
      *
      * @return $this
      */
-    public function setHours3($hours_3)
+    public function setHours3(float $hours_3)
     {
         $this->hours_3 = $hours_3;
 
@@ -218,7 +218,7 @@ class Contract
     /**
      * @return float
      */
-    public function getHours4()
+    public function getHours4(): float
     {
         return $this->hours_4;
     }
@@ -228,7 +228,7 @@ class Contract
      *
      * @return $this
      */
-    public function setHours4($hours_4)
+    public function setHours4(float $hours_4)
     {
         $this->hours_4 = $hours_4;
 
@@ -238,7 +238,7 @@ class Contract
     /**
      * @return float
      */
-    public function getHours5()
+    public function getHours5(): float
     {
         return $this->hours_5;
     }
@@ -248,7 +248,7 @@ class Contract
      *
      * @return $this
      */
-    public function setHours5($hours_5)
+    public function setHours5(float $hours_5)
     {
         $this->hours_5 = $hours_5;
 
@@ -258,7 +258,7 @@ class Contract
     /**
      * @return float
      */
-    public function getHours6()
+    public function getHours6(): float
     {
         return $this->hours_6;
     }
@@ -268,7 +268,7 @@ class Contract
      *
      * @return $this
      */
-    public function setHours6($hours_6)
+    public function setHours6(float $hours_6)
     {
         $this->hours_6 = $hours_6;
 

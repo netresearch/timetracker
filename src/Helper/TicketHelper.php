@@ -12,20 +12,12 @@ class TicketHelper
 {
     final public const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
 
-    /**
-     * @param $ticket
-     *
-     * @return bool
-     */
-    public static function checkFormat($ticket)
+    public static function checkFormat(string $ticket): bool
     {
         return (bool) preg_match(self::TICKET_REGEXP, $ticket);
     }
 
-    /**
-     * @param $ticket
-     */
-    public static function getPrefix($ticket)
+    public static function getPrefix(string $ticket): ?string
     {
         if (!preg_match(self::TICKET_REGEXP, $ticket, $matches)) {
             return null;

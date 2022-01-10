@@ -17,7 +17,7 @@ class ProjectRepository extends EntityRepository
      *
      * @return int
      */
-    public function sortProjectsByName($a, $b)
+    public function sortProjectsByName(string $a, string $b): int
     {
         return strcasecmp($a['name'], $b['name']);
     }
@@ -25,7 +25,7 @@ class ProjectRepository extends EntityRepository
     /**
      * @return Project[]
      */
-    public function getGlobalProjects()
+    public function getGlobalProjects(): array
     {
         return $this->findBy(['global' => 1]);
     }
@@ -40,7 +40,7 @@ class ProjectRepository extends EntityRepository
      *
      * @return array[][]
      */
-    public function getProjectStructure(int $userId, array $customers)
+    public function getProjectStructure(int $userId, array $customers): array
     {
         /** @var $globalProjects Project[] */
         $globalProjects = $this->getGlobalProjects();
@@ -100,7 +100,7 @@ class ProjectRepository extends EntityRepository
      *
      * @return array[]
      */
-    public function getProjectsByUser(int $userId, int $customerId = 0)
+    public function getProjectsByUser(int $userId, int $customerId = 0): array
     {
         $qb = $this->createQueryBuilder('project')
             ->where('customer.global = :global OR user.id = :userId')
@@ -134,7 +134,7 @@ class ProjectRepository extends EntityRepository
     /**
      * @return Project[]
      */
-    public function findByCustomer(int $customerId = 0)
+    public function findByCustomer(int $customerId = 0): array
     {
         /* @var Project[] $result */
         return $this->createQueryBuilder('project')

@@ -84,10 +84,7 @@ class BaseController extends AbstractController
         return $this->session->get('loggedIn');
     }
 
-    /**
-     * returns the user id.
-     */
-    protected function getUserId(): mixed
+    protected function getUserId(): int
     {
         return $this->session->get('loginId');
     }

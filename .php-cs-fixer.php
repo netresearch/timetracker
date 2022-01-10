@@ -34,6 +34,14 @@ return $config->setRules([
                 '=' => 'align'
             ]
         ],
+
+        'simplified_null_return' => true,
+        'simplified_if_return' => true,
+        'regular_callable_call' => true,
+        'phpdoc_to_return_type' => true,
+        'phpdoc_to_property_type' => true,
+        'phpdoc_to_param_type' => true,
+        'phpdoc_tag_casing' => true,
     ])
     //->setFinder($finder)
     ->setIndent("    ")

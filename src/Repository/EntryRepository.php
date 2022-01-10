@@ -280,7 +280,7 @@ class EntryRepository extends EntityRepository
      *
      * @return Entry[]
      */
-    public function findByUserAndTicketSystemToSync($userId, $ticketSystemId, $maxResults = null)
+    public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, int $maxResults = null): array
     {
         $qb = $this->getEntityManager()->createQueryBuilder();
         $qb
@@ -315,7 +315,7 @@ class EntryRepository extends EntityRepository
      *
      * @return array
      */
-    public function getEntrySummary($entryId, $userId, $data)
+    public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
         $entry = $this->find($entryId);
 
@@ -465,7 +465,7 @@ class EntryRepository extends EntityRepository
      *
      * @return array
      */
-    public function findByFilterArray($arFilter = [])
+    public function findByFilterArray(array $arFilter = []): array
     {
         $queryBuilder = $this->createQueryBuilder('e');
 
@@ -558,7 +558,7 @@ class EntryRepository extends EntityRepository
      *
      * @return array Names of the activities with their total time in seconds
      */
-    public function getActivitiesWithTime(string $ticket_name)
+    public function getActivitiesWithTime(string $ticket_name): array
     {
         $connection = $this->getEntityManager()->getConnection();
         $sql        = 'SELECT name, SUM(duration) AS total_time
@@ -581,7 +581,7 @@ class EntryRepository extends EntityRepository
      *
      * @return array usernames with their total time in seconds
      */
-    public function getUsersWithTime(string $ticket_name)
+    public function getUsersWithTime(string $ticket_name): array
     {
         $connection = $this->getEntityManager()->getConnection();
         $sql        = 'SELECT username, SUM(duration) AS total_time

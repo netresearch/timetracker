@@ -147,7 +147,7 @@ class EntryTest extends TestCase
      */
     public function testNullDurationException(): void
     {
-        $e = null;
+        $e     = null;
         $day   = '2011-11-11';
         $start = '22:22';
         $end   = '11:11';

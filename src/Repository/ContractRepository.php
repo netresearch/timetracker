@@ -17,7 +17,7 @@ class ContractRepository extends EntityRepository
      *
      * @return array Array with contract data
      */
-    public function getContracts()
+    public function getContracts(): array
     {
         $contracts = $this->findBy([], ['start' => 'ASC']);
         $data      = [];

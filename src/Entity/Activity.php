@@ -61,7 +61,7 @@ class Activity
      *
      * @return string $name
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -73,7 +73,7 @@ class Activity
      *
      * @return $this
      */
-    public function setNeedsTickets($needsTicket)
+    public function setNeedsTickets(bool $needsTicket)
     {
         $this->needsTicket = $needsTicket;
 
@@ -85,7 +85,7 @@ class Activity
      *
      * @return bool $needsTicket
      */
-    public function getNeedsTicket()
+    public function getNeedsTicket(): bool
     {
         return $this->needsTicket;
     }
@@ -95,7 +95,7 @@ class Activity
      *
      * @return float $factor
      */
-    public function getFactor()
+    public function getFactor(): float
     {
         return $this->factor;
     }
@@ -107,7 +107,7 @@ class Activity
      *
      * @return $this
      */
-    public function setFactor($factor)
+    public function setFactor(float $factor)
     {
         $this->factor = $factor;
 
@@ -131,7 +131,7 @@ class Activity
      *
      * @return Collection $entries
      */
-    public function getEntries()
+    public function getEntries(): Collection
     {
         return $this->entries;
     }
@@ -143,7 +143,7 @@ class Activity
      *
      * @return Activity
      */
-    public function setNeedsTicket($needsTicket)
+    public function setNeedsTicket(bool $needsTicket): self
     {
         $this->needsTicket = $needsTicket;
 
@@ -155,7 +155,7 @@ class Activity
      *
      * @return Activity
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entries): self
     {
         $this->entries[] = $entries;
 
@@ -175,13 +175,9 @@ class Activity
      *
      * @return bool
      */
-    public function isSick()
+    public function isSick(): bool
     {
-        if (self::SICK === $this->getName()) {
-            return true;
-        }
-
-        return false;
+        return (bool) (self::SICK === $this->getName());
     }
 
     /**
@@ -189,12 +185,8 @@ class Activity
      *
      * @return bool
      */
-    public function isHoliday()
+    public function isHoliday(): bool
     {
-        if (self::HOLIDAY === $this->getName()) {
-            return true;
-        }
-
-        return false;
+        return (bool) (self::HOLIDAY === $this->getName());
     }
 }

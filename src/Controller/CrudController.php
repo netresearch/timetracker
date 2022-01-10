@@ -114,7 +114,7 @@ class CrudController extends BaseController
      * @param int    $userId
      * @param string $day
      */
-    private function calculateClasses($userId, $day): void
+    private function calculateClasses(int $userId, string $day): void
     {
         if (!(int) $userId) {
             return;
@@ -527,7 +527,7 @@ class CrudController extends BaseController
      *
      * @throws Exception
      */
-    private function requireValidTicketPrefix(Project $project, $ticket): void
+    private function requireValidTicketPrefix(Project $project, string $ticket): void
     {
         // do not check empty tickets
         if ($ticket === '') {
@@ -648,7 +648,7 @@ class CrudController extends BaseController
     protected function createTicket(
         Entry $entry,
         TicketSystem $ticketSystem = null
-    ) {
+    ): string {
         $jiraOAuthApi = new JiraOAuthApi(
             $entry->getUser(),
             $ticketSystem,
@@ -670,7 +670,7 @@ class CrudController extends BaseController
      *
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-query-issues
      */
-    protected function handleInternalTicketSystem($entry, $oldEntry): void
+    protected function handleInternalTicketSystem(Entry $entry, Entry $oldEntry): void
     {
         $project = $entry->getProject();
 
@@ -755,7 +755,7 @@ class CrudController extends BaseController
      *
      * @return bool
      */
-    protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry)
+    protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry): bool
     {
         $bDifferentTickets
             = $oldEntry->getTicket() !== $entry->getTicket();

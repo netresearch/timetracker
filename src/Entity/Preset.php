@@ -43,7 +43,7 @@ class Preset extends Base
      *
      * @return int $id
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -55,7 +55,7 @@ class Preset extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName(string $name)
     {
         $this->name = $name;
 
@@ -67,7 +67,7 @@ class Preset extends Base
      *
      * @return string $name
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -77,7 +77,7 @@ class Preset extends Base
      *
      * @return int $customerId
      */
-    public function getCustomerId()
+    public function getCustomerId(): int
     {
         return $this->getCustomer() ? $this->getCustomer()->getId() : 0;
     }
@@ -87,7 +87,7 @@ class Preset extends Base
      *
      * @return int $projectId
      */
-    public function getProjectId()
+    public function getProjectId(): int
     {
         return $this->getProject() ? $this->getProject()->getId() : 0;
     }
@@ -97,7 +97,7 @@ class Preset extends Base
      *
      * @return int $activityId
      */
-    public function getActivityId()
+    public function getActivityId(): int
     {
         return $this->getActivity() ? $this->getActivity()->getId() : 0;
     }
@@ -109,7 +109,7 @@ class Preset extends Base
      *
      * @return $this
      */
-    public function setDescription($description)
+    public function setDescription(string $description)
     {
         $this->description = $description;
 
@@ -121,7 +121,7 @@ class Preset extends Base
      *
      * @return string $description
      */
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -143,7 +143,7 @@ class Preset extends Base
      *
      * @return Customer $customer
      */
-    public function getCustomer()
+    public function getCustomer(): Customer
     {
         return $this->customer;
     }
@@ -165,7 +165,7 @@ class Preset extends Base
      *
      * @return Project $project
      */
-    public function getProject()
+    public function getProject(): Project
     {
         return $this->project;
     }
@@ -187,7 +187,7 @@ class Preset extends Base
      *
      * @return Activity $activity
      */
-    public function getActivity()
+    public function getActivity(): Activity
     {
         return $this->activity;
     }
@@ -197,7 +197,7 @@ class Preset extends Base
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'id'          => $this->getId(),

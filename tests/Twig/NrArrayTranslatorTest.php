@@ -33,15 +33,8 @@ class NrArrayTranslatorTest
     extends TestCase
 {
 
-    /**
-     * @var TranslatorBagInterface symfony translator
-     */
-    protected $translator = null;
-
-    /**
-     * @var NrArrayTranslator
-     */
-    protected $nrArrayTranslator = null;
+    protected ?TranslatorBagInterface $translator = null;
+    protected ?NrArrayTranslator $nrArrayTranslator = null;
 
     /**
      * setup the symfony translator and the NrArrayTranslator for this test

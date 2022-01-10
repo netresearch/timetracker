@@ -40,7 +40,7 @@ class NrArrayTranslator extends AbstractExtension
      *
      * @return string the extension name
      */
-    public function getName()
+    public function getName(): string
     {
         return 'nr_array_translator';
     }
@@ -50,7 +50,7 @@ class NrArrayTranslator extends AbstractExtension
      *
      * @return array
      */
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
             'nr_array_translator' => new TwigFilter('nr_array_translator', [$this, 'filterArray']),
@@ -69,11 +69,11 @@ class NrArrayTranslator extends AbstractExtension
      * @return string
      */
     public function filterArray(
-        $string,
-        $arrayKey,
-        $languageFile = 'messages',
+        string $string,
+        string $arrayKey,
+        string $languageFile = 'messages',
         array $keys = ['name']
-    ) {
+    ): string {
         $data = json_decode($string, true, 512, \JSON_THROW_ON_ERROR);
         unset($string);
 

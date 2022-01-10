@@ -63,7 +63,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setEstimatedDuration($estimatedDuration)
+    public function setEstimatedDuration(int $estimatedDuration)
     {
         $this->estimatedDuration = $estimatedDuration;
 
@@ -75,7 +75,7 @@ class Ticket extends Base
      *
      * @return int
      */
-    public function getEstimatedDuration()
+    public function getEstimatedDuration(): int
     {
         return $this->estimatedDuration;
     }
@@ -85,7 +85,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName(string $name)
     {
         $this->name = $name;
 
@@ -95,7 +95,7 @@ class Ticket extends Base
     /**
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -105,7 +105,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setParentTicketNumber($parentTicketNumber)
+    public function setParentTicketNumber(string $parentTicketNumber)
     {
         $this->parentTicketNumber = $parentTicketNumber;
 
@@ -115,7 +115,7 @@ class Ticket extends Base
     /**
      * @return string
      */
-    public function getParentTicketNumber()
+    public function getParentTicketNumber(): string
     {
         return $this->parentTicketNumber;
     }
@@ -125,7 +125,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setTicketId($ticketId)
+    public function setTicketId(int $ticketId)
     {
         $this->ticketId = $ticketId;
 
@@ -135,7 +135,7 @@ class Ticket extends Base
     /**
      * @return int
      */
-    public function getTicketId()
+    public function getTicketId(): int
     {
         return $this->ticketId;
     }
@@ -145,7 +145,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setTicketNumber($ticketNumber)
+    public function setTicketNumber(string $ticketNumber)
     {
         $this->ticketNumber = $ticketNumber;
 
@@ -155,7 +155,7 @@ class Ticket extends Base
     /**
      * @return string
      */
-    public function getTicketNumber()
+    public function getTicketNumber(): string
     {
         return $this->ticketNumber;
     }
@@ -165,7 +165,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setTicketSystemId($ticketSystemId)
+    public function setTicketSystemId(int $ticketSystemId)
     {
         $this->ticketSystemId = $ticketSystemId;
 
@@ -175,7 +175,7 @@ class Ticket extends Base
     /**
      * @return int
      */
-    public function getTicketSystemId()
+    public function getTicketSystemId(): int
     {
         return $this->ticketSystemId;
     }
@@ -185,7 +185,7 @@ class Ticket extends Base
      *
      * @return int
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }

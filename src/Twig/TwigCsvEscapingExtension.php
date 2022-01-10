@@ -16,7 +16,7 @@ class TwigCsvEscapingExtension extends AbstractExtension
     /**
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return 'csv_escaper';
     }
@@ -24,7 +24,7 @@ class TwigCsvEscapingExtension extends AbstractExtension
     /**
      * @return TwigFilter[]
      */
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
             new TwigFilter('csv_escape', [$this, 'csvEscape']),
@@ -36,7 +36,7 @@ class TwigCsvEscapingExtension extends AbstractExtension
      *
      * @return string
      */
-    public function csvEscape($string)
+    public function csvEscape($string): string
     {
         return str_replace('"', '""', $string);
     }
