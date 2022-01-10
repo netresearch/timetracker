@@ -2,8 +2,6 @@
 
 namespace App\Tests\Helper;
 
-require_once(__DIR__ . "/../../Helper/TicketHelper.php");
-
 use App\Helper\TicketHelper;
 use PHPUnit\Framework\TestCase;
 

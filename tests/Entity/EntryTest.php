@@ -2,6 +2,7 @@
 
 namespace App\Tests\Entity;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Entity\Entry;
@@ -146,6 +147,7 @@ class EntryTest extends TestCase
      */
     public function testNullDurationException(): void
     {
+        $e = null;
         $day   = '2011-11-11';
         $start = '22:22';
         $end   = '11:11';
@@ -155,7 +157,7 @@ class EntryTest extends TestCase
         $entry->setEnd($end);
         try {
             $entry->validateDuration();
-        } catch(\Exception $e) {
+        } catch(Exception $e) {
 
         }
 

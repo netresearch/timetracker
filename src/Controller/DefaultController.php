@@ -279,6 +279,7 @@ class DefaultController extends BaseController
     #[Route(path: '/getData', name: '_getData')]
     public function getDataAction(int $days = 3): Response|RedirectResponse
     {
+        $result = [];
         if (!$this->checkLogin()) {
             return $this->login();
         }

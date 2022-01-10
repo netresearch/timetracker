@@ -253,7 +253,7 @@ class BaseController extends AbstractController
         string $domain = 'messages',
         string $locale = null
     ): mixed {
-        $locale = (null === $locale) ? $this->translator->getLocale() : $locale;
+        $locale ??= $this->translator->getLocale();
 
         return $this->translator->trans($id, $parameters, $domain, $locale);
     }

@@ -14,10 +14,7 @@ class TimeHelper
 
     final public const HOURS_PER_DAY = 8;
 
-    /**
-     * @param $letter
-     */
-    public static function getMinutesByLetter($letter): float|int
+    public static function getMinutesByLetter(string $letter): int
     {
         return match ($letter) {
             'w'     => self::DAYS_PER_WEEK * self::HOURS_PER_DAY * 60,
@@ -29,10 +26,7 @@ class TimeHelper
         };
     }
 
-    /**
-     * @param $readable
-     */
-    public static function readable2minutes($readable): float|int
+    public static function readable2minutes(string $readable): int
     {
         if (!preg_match_all('/([0-9.,]+)([wdhm]|$)/iU', $readable, $matches)) {
             return 0;
@@ -41,7 +35,7 @@ class TimeHelper
         $sum = 0;
         $c   = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($i = 0; $i < $c; ++$i) {
-            $sum += (float) str_replace(',', '.', $matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]);
+            $sum += (int) (str_replace(',', '.', $matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]));
         }
 
         return $sum;

@@ -14,8 +14,8 @@
 
 namespace App\Tests;
 
-use App\Extension\NrArrayTranslator;
-use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\TranslatorBagInterface;
+use App\Twig\NrArrayTranslator;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 use Twig\TwigFilter;
@@ -34,7 +34,7 @@ class NrArrayTranslatorTest
 {
 
     /**
-     * @var Translator symfony translator
+     * @var TranslatorBagInterface symfony translator
      */
     protected $translator = null;
 
@@ -45,8 +45,6 @@ class NrArrayTranslatorTest
 
     /**
      * setup the symfony translator and the NrArrayTranslator for this test
-     *
-     * @return void
      */
     protected function setUp(): void
     {
@@ -56,8 +54,6 @@ class NrArrayTranslatorTest
 
     /**
      * check the name value of the extension
-     *
-     * @return void
      */
     public function testGetName(): void
     {
@@ -83,8 +79,6 @@ class NrArrayTranslatorTest
 
     /**
      * check te filterArray() functionality
-     *
-     * @return void
      */
     public function testFilterArray(): void
     {

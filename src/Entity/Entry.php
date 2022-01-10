@@ -8,6 +8,7 @@ use Exception;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
 use DateTime;
+use DateTimeInterface;
 
 #[ORM\Entity(repositoryClass: EntryRepository::class)]
 #[ORM\Table(name: 'entries')]
@@ -345,7 +346,7 @@ class Entry extends Base
     }
 
     /**
-     * Set start.
+     * Set start time.
      *
      * @param string $start
      *
@@ -354,9 +355,9 @@ class Entry extends Base
     public function setStart($start)
     {
         if (!$start instanceof DateTime) {
-            $start                = new DateTime($start);
-            [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
-            $start->setDate($year, $month, $day);
+            $start_time = $start;
+            $start      = DateTime::createFromInterface($this->getDay());
+            $start->modify($start_time);
         }
 
         $this->start = $start;
@@ -385,9 +386,9 @@ class Entry extends Base
     public function setEnd($end)
     {
         if (!$end instanceof DateTime) {
-            $end                  = new DateTime($end);
-            [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
-            $end->setDate($year, $month, $day);
+            $end_time = $end;
+            $end      = DateTime::createFromInterface($this->getDay());
+            $end->modify($end_time);
         }
 
         $this->end = $end;
@@ -418,22 +419,16 @@ class Entry extends Base
 
     /**
      * Get end.
-     *
-     * @return DateTime $end
      */
-    public function getEnd()
+    public function getEnd(): ?DateTimeInterface
     {
         return $this->end;
     }
 
     /**
      * Set duration.
-     *
-     * @param int $duration
-     *
-     * @return Entry
      */
-    public function setDuration($duration)
+    public function setDuration(int $duration): static
     {
         $this->duration = $duration;
 
@@ -442,20 +437,16 @@ class Entry extends Base
 
     /**
      * Get duration.
-     *
-     * @return int $duration
      */
-    public function getDuration()
+    public function getDuration(): ?int
     {
         return $this->duration;
     }
 
     /**
      * Returns duration as formatted hours:minutes string.
-     *
-     * @return string
      */
-    public function getDurationString()
+    public function getDurationString(): string
     {
         $nMinutes = $this->getDuration();
         $nHours   = floor($nMinutes / 60);
@@ -592,20 +583,16 @@ class Entry extends Base
     /**
      * Calculate difference between start and end.
      *
-     * @param int $factor
-     *
      * @throws Exception
-     *
-     * @return Entry
      */
-    public function calcDuration($factor = 1)
+    public function calcDuration(float $factor = 1): static
     {
         if ($this->getStart() && $this->getEnd()) {
             $start = new DateTime($this->getStart()->format('H:i'));
             $end   = new DateTime($this->getEnd()->format('H:i'));
 
             $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
-            $this->setDuration(round($difference));
+            $this->setDuration((int) round($difference));
         } else {
             $this->setDuration(0);
         }
@@ -616,10 +603,8 @@ class Entry extends Base
 
     /**
      * Set customer.
-     *
-     * @return Entry
      */
-    public function setCustomer(Customer $customer)
+    public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
 
@@ -641,10 +626,8 @@ class Entry extends Base
      *
      * @param int class
      * @param mixed $class
-     *
-     * @return Entry
      */
-    public function setClass($class)
+    public function setClass($class): static
     {
         $this->class = (int) $class;
 
@@ -653,20 +636,16 @@ class Entry extends Base
 
     /**
      * Get class.
-     *
-     * @return int $class
      */
-    public function getClass()
+    public function getClass(): int
     {
         return $this->class;
     }
 
     /**
      * Returns the issue link for the configured ticket system.
-     *
-     * @return string
      */
-    public function getTicketSystemIssueLink()
+    public function getTicketSystemIssueLink(): string
     {
         $ticketSystem = $this->getProject()->getTicketSystem();
 
