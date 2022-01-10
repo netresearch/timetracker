@@ -37,7 +37,7 @@ class Response extends \Symfony\Component\HttpFoundation\Response
     {
         $this->headers->set('Access-Control-Allow-Origin', '*');
         $this->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        $this->headers->set('Access-Control-Max-Age', 3600);
+        $this->headers->set('Access-Control-Max-Age', '3600');
 
         return parent::send();
     }

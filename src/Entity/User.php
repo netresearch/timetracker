@@ -33,7 +33,7 @@ class User
     #[ORM\Column(name: 'suggest_time', type: Types::INTEGER)]
     protected $suggestTime;
 
-    #[ORM\Column(name: 'show_future', type: Types::INTEGER)]
+    #[ORM\Column(name: 'show_future', type: Types::BOOLEAN)]
     protected $showFuture;
 
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'user')]
@@ -117,7 +117,7 @@ class User
         return $this->showEmptyLine;
     }
 
-    public function setShowEmptyLine($value)
+    public function setShowEmptyLine($value): static
     {
         $this->showEmptyLine = $value;
 
@@ -129,98 +129,63 @@ class User
         return $this->suggestTime;
     }
 
-    public function setSuggestTime($value)
+    public function setSuggestTime($value): static
     {
         $this->suggestTime = $value;
 
         return $this;
     }
 
-    public function getShowFuture()
+    public function getShowFuture(): bool
     {
         return $this->showFuture;
     }
 
-    public function setShowFuture($value)
+    public function setShowFuture(bool $value): static
     {
         $this->showFuture = $value;
 
         return $this;
     }
 
-    /**
-     * Add entries.
-     *
-     * @return $this
-     */
-    public function addEntries(Entry $entries)
+    public function addEntries(Entry $entries): static
     {
         $this->entries[] = $entries;
 
         return $this;
     }
 
-    /**
-     * Get entries.
-     *
-     * @return Collection $entries
-     */
     public function getEntries(): Collection
     {
         return $this->entries;
     }
 
-    /**
-     * Get contracts.
-     *
-     * @return Collection $contracts
-     */
     public function getContracts(): Collection
     {
         return $this->contracts;
     }
 
-    /**
-     * Add contract.
-     *
-     * @return $this
-     */
-    public function addContract(Contract $contract)
+    public function addContract(Contract $contract): static
     {
         $this->contracts[] = $contract;
 
         return $this;
     }
 
-    /**
-     * Reset teams.
-     *
-     * @return $this
-     */
-    public function resetTeams()
+    public function resetTeams(): static
     {
         $this->teams = new ArrayCollection();
 
         return $this;
     }
 
-    /**
-     * Add team.
-     *
-     * @return $this
-     */
-    public function addTeam(Team $team)
+    public function addTeam(Team $team): static
     {
         $this->teams[] = $team;
 
         return $this;
     }
 
-    /**
-     * Get teams.
-     *
-     * @return Collection $teams
-     */
     public function getTeams(): Collection
     {
         return $this->teams;
@@ -231,7 +196,7 @@ class User
         return $this->locale;
     }
 
-    public function setLocale($locale)
+    public function setLocale($locale): static
     {
         $this->locale = LocalizationHelper::normalizeLocale($locale);
 
@@ -241,7 +206,7 @@ class User
     /**
      * return all relevant settings in an array.
      */
-    public function getSettings()
+    public function getSettings(): array
     {
         return [
             'show_empty_line' => $this->getShowEmptyLine(),
@@ -254,59 +219,35 @@ class User
         ];
     }
 
-    /**
-     * Add entry.
-     *
-     * @return $this
-     */
-    public function addEntry(Entry $entries)
+    public function addEntry(Entry $entries): static
     {
         $this->entries[] = $entries;
 
         return $this;
     }
 
-    /**
-     * Remove entries.
-     */
     public function removeEntrie(Entry $entries): void
     {
         $this->entries->removeElement($entries);
     }
 
-    /**
-     * Remove teams.
-     */
     public function removeTeam(Team $teams): void
     {
         $this->teams->removeElement($teams);
     }
 
-    /**
-     * Add entries.
-     *
-     * @return $this
-     */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entries): static
     {
         $this->entries[] = $entries;
 
         return $this;
     }
 
-    /**
-     * @return Collection $userTicketSystems
-     */
     public function getUserTicketsystems(): Collection
     {
         return $this->userTicketsystems;
     }
 
-    /**
-     * Get Users accesstoken for a Ticketsystem.
-     *
-     * @return string|null
-     */
     public function getTicketSystemAccessToken(TicketSystem $ticketsystem): ?string
     {
         $return = null;

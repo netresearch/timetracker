@@ -399,16 +399,12 @@ class JiraOAuthApi
     }
 
     /**
-     * @param string $jql
-     * @param string $fields
-     * @param int    $limit
-     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      *
      * @return stdClass
      */
-    public function searchTicket(string $jql, string $fields, int $limit = 1): stdClass
+    public function searchTicket(string $jql, string|array $fields, int $limit = 1)
     {
         //we use POST to support very large queries
         return $this->post(
@@ -424,11 +420,7 @@ class JiraOAuthApi
     /**
      * Checks existence of a ticket in Jira.
      *
-     * @param string $sTicket
-     *
      * @throws JiraApiException
-     *
-     * @return bool
      */
     public function doesTicketExist(string $sTicket): bool
     {
@@ -438,12 +430,7 @@ class JiraOAuthApi
     /**
      * Checks existence of a work log entry in Jira.
      *
-     * @param string $sTicket
-     * @param int    $workLogId
-     *
      * @throws JiraApiException
-     *
-     * @return bool
      */
     protected function doesWorkLogExist(string $sTicket, int $workLogId): bool
     {

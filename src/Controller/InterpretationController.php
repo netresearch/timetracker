@@ -427,7 +427,7 @@ class InterpretationController extends BaseController
             throw new Exception($this->t('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
-        /** @var $repository \App\Repository\EntryRepository */
+        /** @var \App\Repository\EntryRepository $repository */
         $repository = $this->doctrine->getRepository('App:Entry');
 
         return $repository->findByFilterArray($arParams);

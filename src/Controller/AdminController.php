@@ -48,7 +48,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /** @var $repo \App\Repository\CustomerRepository */
+        /** @var \App\Repository\CustomerRepository $repo */
         $repo = $this->doctrine->getRepository('App:Customer');
 
         return new Response(json_encode($repo->getAllCustomers(), \JSON_THROW_ON_ERROR));
@@ -61,7 +61,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /** @var $repo \App\Repository\UserRepository */
+        /** @var \App\Repository\UserRepository $repo */
         $repo = $this->doctrine->getRepository('App:User');
 
         return new Response(json_encode($repo->getAllUsers(), \JSON_THROW_ON_ERROR));
@@ -74,7 +74,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /** @var $repo \App\Repository\TeamRepository */
+        /** @var \App\Repository\TeamRepository $repo */
         $repo = $this->doctrine->getRepository('App:Team');
 
         return new Response(json_encode($repo->findAll(), \JSON_THROW_ON_ERROR));
@@ -87,7 +87,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /** @var $repo \App\Repository\PresetRepository */
+        /** @var \App\Repository\PresetRepository $repo */
         $repo = $this->doctrine->getRepository('App:Preset');
 
         return new Response(json_encode($repo->getAllPresets(), \JSON_THROW_ON_ERROR));
@@ -103,7 +103,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /** @var $repo \App\Repository\TicketSystemRepository */
+        /** @var \App\Repository\TicketSystemRepository $repo */
         $repo          = $this->doctrine->getRepository('App:TicketSystem');
         $ticketSystems = $repo->getAllTicketSystems();
 
@@ -155,7 +155,7 @@ class AdminController extends BaseController
         $costCenter                        = $this->request->get('cost_center') ?: null;
         $offer                             = $this->request->get('offer') ?: 0;
         $additionalInformationFromExternal = $this->request->get('additionalInformationFromExternal') ?: 0;
-        /** @var $projectRepository \App\Repository\ProjectRepository */
+        /** @var \App\Repository\ProjectRepository $projectRepository */
         $projectRepository        = $this->doctrine->getRepository('App:Project');
         $internalJiraTicketSystem = (int) $this->request->get('internalJiraTicketSystem', 0);
         $internalJiraProjectKey   = $this->request->get('internalJiraProjectKey', 0);
@@ -927,7 +927,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /** @var $repo \App\Repository\ContractRepository */
+        /** @var \App\Repository\ContractRepository $repo */
         $repo = $this->doctrine->getRepository('App:Contract');
 
         return new Response(json_encode($repo->getContracts(), \JSON_THROW_ON_ERROR));
@@ -961,7 +961,7 @@ class AdminController extends BaseController
                 ->find($this->request->get('user_id'))
             : null;
 
-        /** @var $contractRepository \App\Repository\ContractRepository */
+        /** @var \App\Repository\ContractRepository $contractRepository */
         $contractRepository = $this->doctrine->getRepository('App:Contract');
 
         if ($contractId) {

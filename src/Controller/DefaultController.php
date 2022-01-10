@@ -52,7 +52,7 @@ class DefaultController extends BaseController
             ->getCustomersByUser($userId)
         ;
         // Send the customer-projects-structure to the frontend for caching
-        /** @var $projectRepo \App\Repository\ProjectRepository */
+        /** @var \App\Repository\ProjectRepository $projectRepo */
         $projectRepo = $doctrine->getRepository('App:Project');
         $projects    = $projectRepo->getProjectStructure($userId, $customers);
 
@@ -284,6 +284,7 @@ class DefaultController extends BaseController
             return $this->login();
         }
         $userId = (int) $this->getUserId();
+        /** @var User $user */
         $user   = $this->doctrine
             ->getRepository('App:User')
             ->find($userId)

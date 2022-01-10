@@ -42,7 +42,7 @@ class ProjectRepository extends EntityRepository
      */
     public function getProjectStructure(int $userId, array $customers): array
     {
-        /** @var $globalProjects Project[] */
+        /** @var Project[] $globalProjects */
         $globalProjects = $this->getGlobalProjects();
         $userProjects   = $this->getProjectsByUser($userId);
 

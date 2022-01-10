@@ -52,7 +52,7 @@ class EntryRepository extends EntityRepository
         }
 
         // Calculate calendar days from given work days
-        $weeks    = floor((int) $workingDays / 5);
+        $weeks    = (int) floor((int) $workingDays / 5);
         $restDays = ((int) $workingDays) % 5;
 
         if (0 === $restDays) {
@@ -167,8 +167,8 @@ class EntryRepository extends EntityRepository
     protected function getDatePattern(int $year, int $month = null): string
     {
         $pattern = $year.'-';
-        if (0 < (int) $month) {
-            $pattern .= str_pad($month, 2, '0', \STR_PAD_LEFT).'-';
+        if (0 < $month) {
+            $pattern .= str_pad((string) $month, 2, '0', \STR_PAD_LEFT).'-';
         }
         $pattern .= '%';
 

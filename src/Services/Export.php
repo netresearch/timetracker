@@ -60,10 +60,8 @@ class Export
      * @param int   $projectId  Filter entries by project
      * @param int   $customerId Filter entries by customer
      * @param array $arSort     Sort result by given fields
-     *
-     * @return mixed
      */
-    public function exportEntries(int $userId, int $year, int $month, int $projectId, int $customerId, array $arSort = null): mixed
+    public function exportEntries(int $userId, int $year, int $month, int $projectId, int $customerId, array $arSort = null): array
     {
         /* @var \App\Entity\Entry[] $arEntries */
         return $this->getEntryRepository()
@@ -82,7 +80,7 @@ class Export
     {
         $username = 'all';
         if (0 < (int) $userId) {
-            /** @var $user User */
+            /** @var User $user */
             $user = $this->doctrine
                 ->getRepository('App:User')
                 ->find($userId)
@@ -93,11 +91,6 @@ class Export
         return $username;
     }
 
-    /**
-     * returns the entry repository.
-     *
-     * @return EntryRepository
-     */
     protected function getEntryRepository(): EntryRepository
     {
         return $this->doctrine->getRepository('App:Entry');
@@ -118,7 +111,7 @@ class Export
         array $entries,
         bool $removeNotBillable = false
     ): array {
-        /** @var $currentUser \App\Entity\User */
+        /** @var \App\Entity\User $currentUser */
         $currentUser = $this->doctrine->getRepository('App:User')
             ->find($currentUserId)
         ;
@@ -169,7 +162,7 @@ class Export
                     $ret = $jiraApi->searchTicket(
                         'IssueKey in ('.implode(',', $arIssues).')',
                         ['labels'],
-                        '500'
+                        500
                     );
 
                     foreach ($ret->issues as $issue) {

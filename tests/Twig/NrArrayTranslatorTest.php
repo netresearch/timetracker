@@ -18,6 +18,7 @@ use Symfony\Component\Translation\TranslatorBagInterface;
 use App\Twig\NrArrayTranslator;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\TwigFilter;
 
 /**
@@ -33,7 +34,7 @@ class NrArrayTranslatorTest
     extends TestCase
 {
 
-    protected ?TranslatorBagInterface $translator = null;
+    protected ?TranslatorInterface $translator = null;
     protected ?NrArrayTranslator $nrArrayTranslator = null;
 
     /**

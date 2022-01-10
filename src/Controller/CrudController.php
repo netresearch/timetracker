@@ -34,9 +34,8 @@ class CrudController extends BaseController
         $alert = null;
 
         if (0 !== $this->request->get('id')) {
-            $doctrine = $this->doctrine;
             /** @var Entry $entry */
-            $entry = $doctrine->getRepository('App:Entry')
+            $entry = $this->doctrine->getRepository('App:Entry')
                 ->find($this->request->get('id'))
             ;
 
@@ -54,7 +53,7 @@ class CrudController extends BaseController
             // remember the day to calculate classes afterwards
             $day = $entry->getDay()->format('Y-m-d');
 
-            $manager = $doctrine->getManager();
+            $manager = $this->doctrine->getManager();
             $manager->remove($entry);
             $manager->flush();
 
@@ -120,10 +119,9 @@ class CrudController extends BaseController
             return;
         }
 
-        $doctrine = $this->doctrine;
-        $manager  = $doctrine->getManager();
-        /** @var $entries Entry[] */
-        $entries = $doctrine->getRepository('App:Entry')
+        $manager  = $this->doctrine->getManager();
+        /** @var Entry[] $entries */
+        $entries = $this->doctrine->getRepository('App:Entry')
             ->findByDay((int) $userId, $day)
         ;
 
@@ -186,10 +184,8 @@ class CrudController extends BaseController
             $alert = null;
             $this->logDataToFile($_POST, true);
 
-            $doctrine = $this->doctrine;
-
             if (0 !== $this->request->get('id')) {
-                $entry = $doctrine->getRepository('App:Entry')
+                $entry = $this->doctrine->getRepository('App:Entry')
                     ->find($this->request->get('id'))
                 ;
             } else {
@@ -200,7 +196,7 @@ class CrudController extends BaseController
             $oldEntry = clone $entry;
 
             /** @var Project $project */
-            if ($project = $doctrine->getRepository('App:Project')->find($this->request->get('project'))) {
+            if ($project = $this->doctrine->getRepository('App:Project')->find($this->request->get('project'))) {
                 if (!$project->getActive()) {
                     $message = $this->t('This project is inactive and cannot be used for booking.');
                     throw new Exception($message);
@@ -209,7 +205,7 @@ class CrudController extends BaseController
             }
 
             /** @var Customer $customer */
-            if ($customer = $doctrine->getRepository('App:Customer')->find($this->request->get('customer'))) {
+            if ($customer = $this->doctrine->getRepository('App:Customer')->find($this->request->get('customer'))) {
                 if (!$customer->getActive()) {
                     $message = $this->t('This customer is inactive and cannot be used for booking.');
                     throw new Exception($message);
@@ -217,8 +213,8 @@ class CrudController extends BaseController
                 $entry->setCustomer($customer);
             }
 
-            /** @var $user \App\Entity\User */
-            $user = $doctrine->getRepository('App:User')
+            /** @var \App\Entity\User $user */
+            $user = $this->doctrine->getRepository('App:User')
                 ->find($this->getUserId())
             ;
             $entry->setUser($user);
@@ -234,7 +230,7 @@ class CrudController extends BaseController
                 $jiraOAuthApi = new JiraOAuthApi(
                     $entry->getUser(),
                     $ticketSystem,
-                    $doctrine,
+                    $this->doctrine,
                     $this->container->get('router')
                 );
 
@@ -247,7 +243,7 @@ class CrudController extends BaseController
             }
 
             /** @var Activity $activity */
-            if ($activity = $doctrine->getRepository('App:Activity')->find($this->request->get('activity'))) {
+            if ($activity = $this->doctrine->getRepository('App:Activity')->find($this->request->get('activity'))) {
                 $entry->setActivity($activity);
             }
 
@@ -284,7 +280,7 @@ class CrudController extends BaseController
             // check if ticket matches the project's ticket pattern
             $this->requireValidTicketPrefix($entry->getProject(), $entry->getTicket());
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrine->getManager();
             $em->persist($entry);
             $em->flush();
 
@@ -353,31 +349,29 @@ class CrudController extends BaseController
             $alert = null;
             $this->logDataToFile($_POST, true);
 
-            $doctrine = $this->doctrine;
-
-            $preset = $doctrine->getRepository('App:Preset')->find((int) $this->request->get('preset'));
+            $preset = $this->doctrine->getRepository('App:Preset')->find((int) $this->request->get('preset'));
             if (!\is_object($preset)) {
                 throw new Exception('Preset not found');
             }
 
             // Retrieve needed objects
             /** @var User $user */
-            $user = $doctrine->getRepository('App:User')
+            $user = $this->doctrine->getRepository('App:User')
                 ->find($this->getUserId())
             ;
             /** @var Customer $customer */
-            $customer = $doctrine->getRepository('App:Customer')
+            $customer = $this->doctrine->getRepository('App:Customer')
                 ->find($preset->getCustomerId())
             ;
             /** @var Project $project */
-            $project = $doctrine->getRepository('App:Project')
+            $project = $this->doctrine->getRepository('App:Project')
                 ->find($preset->getProjectId())
             ;
             /** @var Activity $activity */
-            $activity = $doctrine->getRepository('App:Activity')
+            $activity = $this->doctrine->getRepository('App:Activity')
                 ->find($preset->getActivityId())
             ;
-            $em = $doctrine->getManager();
+            $em = $this->doctrine->getManager();
 
             $date    = new DateTime($this->request->get('startdate'));
             $endDate = new DateTime($this->request->get('enddate'));

@@ -152,7 +152,7 @@ class BaseController extends AbstractController
             return false;
         }
 
-        /** @var $user User */
+        /** @var User $user */
         $user = $this->doctrine
             ->getRepository('App:User')
             ->findOneById($userId);
