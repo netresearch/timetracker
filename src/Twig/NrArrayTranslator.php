@@ -1,38 +1,38 @@
 <?php
 /**
- * Json array translator for twig-templates
+ * Json array translator for twig-templates.
  *
  * PHP version 5
  *
  * @category  Twig_Extension
- * @package   App\Extension
+ *
  * @author    Norman Kante <norman.kante@netresearch.de>
  * @copyright 2013 Netresearch App Factory AG
  * @license   No license
- * @link      http://www.netresearch.de
+ *
+ * @see      http://www.netresearch.de
  */
 
 namespace App\Twig;
 
 use Symfony\Contracts\Translation\TranslatorInterface;
-use \Twig\TwigFilter;
+use Twig\TwigFilter;
 use Twig\Extension\AbstractExtension;
 
 /**
- * Class NrArrayTranslator
+ * Class NrArrayTranslator.
  *
  * @category Twig_Extension
- * @package  App\Extension
+ *
  * @author   Norman Kante <norman.kante@netresearch.de>
  * @license  No license
- * @link     http://www.netresearch.de
+ *
+ * @see     http://www.netresearch.de
  */
-class NrArrayTranslator
-    extends AbstractExtension
+class NrArrayTranslator extends AbstractExtension
 {
     public function __construct(protected TranslatorInterface $translator)
     {
-
     }
 
     /**
@@ -53,7 +53,7 @@ class NrArrayTranslator
     public function getFilters()
     {
         return [
-            'nr_array_translator' => new TwigFilter('nr_array_translator', array($this, 'filterArray')),
+            'nr_array_translator' => new TwigFilter('nr_array_translator', [$this, 'filterArray']),
         ];
     }
 
@@ -68,8 +68,11 @@ class NrArrayTranslator
      *
      * @return string
      */
-    public function filterArray($string, $arrayKey, $languageFile = 'messages',
-        array $keys = array('name')
+    public function filterArray(
+        $string,
+        $arrayKey,
+        $languageFile = 'messages',
+        array $keys = ['name']
     ) {
         $data = json_decode($string, true, 512, JSON_THROW_ON_ERROR);
         unset($string);
@@ -80,14 +83,13 @@ class NrArrayTranslator
             }
 
             foreach ($row[$arrayKey] as $key => $value) {
-                if (in_array($key, $keys)) {
+                if (in_array($key, $keys, true)) {
                     $data[$rowKey][$arrayKey][$key] = $this->translator->trans(
                         $value,
-                        array(),
+                        [],
                         $languageFile
                     );
                 }
-
             }
         }
 

@@ -12,9 +12,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 #[ORM\Table(name: 'activities')]
 class Activity
 {
-    public final const SICK    = 'Krank';
-    public final const HOLIDAY = 'Urlaub';
-    
+    final public const SICK    = 'Krank';
+    final public const HOLIDAY = 'Urlaub';
+
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
@@ -36,25 +36,28 @@ class Activity
     {
         $this->entries = new ArrayCollection();
     }
-    
+
     public function setId(int $id): static
     {
         $this->id = $id;
+
         return $this;
     }
-    
+
     public function getId(): int
     {
         return $this->id;
     }
-    
+
     public function setName(string $name): static
     {
         $this->name = $name;
+
         return $this;
     }
+
     /**
-     * Get name
+     * Get name.
      *
      * @return string $name
      */
@@ -62,29 +65,33 @@ class Activity
     {
         return $this->name;
     }
+
     /**
-     * Set needsTicket
+     * Set needsTicket.
      *
-     * @param boolean $needsTicket
+     * @param bool $needsTicket
      *
      * @return $this
      */
     public function setNeedsTickets($needsTicket)
     {
         $this->needsTicket = $needsTicket;
+
         return $this;
     }
+
     /**
-     * Get needsTicket
+     * Get needsTicket.
      *
-     * @return boolean $needsTicket
+     * @return bool $needsTicket
      */
     public function getNeedsTicket()
     {
         return $this->needsTicket;
     }
+
     /**
-     * Get factor
+     * Get factor.
      *
      * @return float $factor
      */
@@ -92,8 +99,9 @@ class Activity
     {
         return $this->factor;
     }
+
     /**
-     * Set factor
+     * Set factor.
      *
      * @param float $factor
      *
@@ -102,21 +110,24 @@ class Activity
     public function setFactor($factor)
     {
         $this->factor = $factor;
+
         return $this;
     }
+
     /**
-     * Add entries
-     *
+     * Add entries.
      *
      * @return $this
      */
     public function addEntries(Entry $entries)
     {
         $this->entries[] = $entries;
+
         return $this;
     }
+
     /**
-     * Get entries
+     * Get entries.
      *
      * @return Collection $entries
      */
@@ -124,10 +135,12 @@ class Activity
     {
         return $this->entries;
     }
+
     /**
-     * Set needsTicket
+     * Set needsTicket.
      *
-     * @param boolean $needsTicket
+     * @param bool $needsTicket
+     *
      * @return Activity
      */
     public function setNeedsTicket($needsTicket)
@@ -136,8 +149,9 @@ class Activity
 
         return $this;
     }
+
     /**
-     * Add entries
+     * Add entries.
      *
      * @return Activity
      */
@@ -147,13 +161,15 @@ class Activity
 
         return $this;
     }
+
     /**
-     * Remove entries
+     * Remove entries.
      */
     public function removeEntrie(Entry $entries)
     {
         $this->entries->removeElement($entries);
     }
+
     /**
      * Returns true if activity is a sick day.
      *
@@ -161,12 +177,13 @@ class Activity
      */
     public function isSick()
     {
-        if ($this->getName() === self::SICK) {
+        if (self::SICK === $this->getName()) {
             return true;
         }
 
         return false;
     }
+
     /**
      * Returns true if activity is holiday.
      *
@@ -174,7 +191,7 @@ class Activity
      */
     public function isHoliday()
     {
-        if ($this->getName() === self::HOLIDAY) {
+        if (self::HOLIDAY === $this->getName()) {
             return true;
         }
 

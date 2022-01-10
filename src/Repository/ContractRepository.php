@@ -1,25 +1,26 @@
 <?php
+
 namespace App\Repository;
 
 use Doctrine\ORM\EntityRepository;
 use App\Entity\Contract;
 
 /**
- * Database with all contracts
+ * Database with all contracts.
  *
  * @author Tony Kreissl <kreissl@mogic.com>
  */
 class ContractRepository extends EntityRepository
 {
     /**
-     * Find all contracts, sorted by start ascending
+     * Find all contracts, sorted by start ascending.
      *
      * @return array Array with contract data
      */
     public function getContracts()
     {
         $contracts = $this->findBy([], ['start' => 'ASC']);
-        $data = [];
+        $data      = [];
 
         /* @var Contract $contract */
         foreach ($contracts as $contract) {
@@ -29,7 +30,7 @@ class ContractRepository extends EntityRepository
                 'start'   => $contract->getStart()
                     ? $contract->getStart()->format('Y-m-d')
                     : null,
-                'end'     => $contract->getEnd()
+                'end' => $contract->getEnd()
                     ? $contract->getEnd()->format('Y-m-d')
                     : null,
                 'hours_0' => $contract->getHours0(),

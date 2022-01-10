@@ -14,7 +14,7 @@ class TeamRepository extends EntityRepository
     {
         /** @var Team[] $teams */
         $teams = $this->findBy([], ['name' => 'ASC']);
-        $data = [];
+        $data  = [];
         foreach ($teams as $team) {
             $data[] = ['team' => [
                 'id'           => $team->getId(),

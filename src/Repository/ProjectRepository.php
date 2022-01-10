@@ -7,14 +7,14 @@ use App\Entity\Project;
 use Doctrine\ORM\EntityRepository;
 
 /**
- * Class ProjectRepository
- * @package App\Repository
+ * Class ProjectRepository.
  */
 class ProjectRepository extends EntityRepository
 {
     /**
      * @param string $a
      * @param string $b
+     *
      * @return int
      */
     public function sortProjectsByName($a, $b)
@@ -30,16 +30,15 @@ class ProjectRepository extends EntityRepository
         return $this->findBy(['global' => 1]);
     }
 
-
     /**
      * Returns an array structure with keys of customer IDs
      * The values are arrays of projects.
      *
      * There is a special key "all", where all projects are in.
-     * @param int $userId
-     * @param array $customers
-     * @return array[][]
+     *
      * @throws ReflectionException
+     *
+     * @return array[][]
      */
     public function getProjectStructure(int $userId, array $customers)
     {
@@ -49,7 +48,6 @@ class ProjectRepository extends EntityRepository
 
         $projects = [];
         foreach ($customers as $customer) {
-
             // Restructure customer-specific projects
             foreach ($userProjects as $project) {
                 if ($customer['customer']['id'] === $project['project']['customer']) {
@@ -81,9 +79,9 @@ class ProjectRepository extends EntityRepository
         // Add each global project to the all-projects-list
         foreach ($globalProjects as $global) {
             $projects['all'][] = [
-                    'id'     => $global->getId(),
-                    'name'   => $global->getName(),
-                    'jiraId' => $global->getJiraId(),
+                'id'     => $global->getId(),
+                'name'   => $global->getName(),
+                'jiraId' => $global->getJiraId(),
             ];
         }
 
@@ -95,24 +93,26 @@ class ProjectRepository extends EntityRepository
         return $projects;
     }
 
-
     /**
      * Returns projects for given user, and optionally for given customer.
      *
-     * @return array[]
      * @throws ReflectionException
+     *
+     * @return array[]
      */
     public function getProjectsByUser(int $userId, int $customerId = 0)
     {
         $qb = $this->createQueryBuilder('project')
             ->where('customer.global = :global OR user.id = :userId')
             ->setParameter('global', true)
-            ->setParameter('userId', $userId);
+            ->setParameter('userId', $userId)
+        ;
 
         if ($customerId > 0) {
             $qb->andWhere('project.global = :global OR customer.id = :customerId')
                 ->setParameter('global', true)
-                ->setParameter('customerId', $customerId);
+                ->setParameter('customerId', $customerId)
+            ;
         }
 
         /** @var Project[] $result */
@@ -120,7 +120,8 @@ class ProjectRepository extends EntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
 
         $data = [];
         foreach ($result as $project) {
@@ -135,8 +136,8 @@ class ProjectRepository extends EntityRepository
      */
     public function findByCustomer(int $customerId = 0)
     {
-        /** @var Project[] $result */
-        $result = $this->createQueryBuilder('project')
+        /* @var Project[] $result */
+        return $this->createQueryBuilder('project')
             ->where('project.global = :global OR customer.id = :customerId')
             ->setParameter('global', true)
             ->setParameter('customerId', $customerId)
@@ -144,9 +145,8 @@ class ProjectRepository extends EntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute();
-
-        return $result;
+            ->execute()
+        ;
     }
 
     /**

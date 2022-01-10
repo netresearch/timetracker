@@ -8,7 +8,7 @@ use App\Entity\Customer;
 class CustomerRepository extends EntityRepository
 {
     /**
-     * Returns an array of customers available for current user
+     * Returns an array of customers available for current user.
      */
     public function getCustomersByUser(int $userId): array
     {
@@ -21,7 +21,8 @@ class CustomerRepository extends EntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
 
         $data = [];
         foreach ($result as $customer) {
@@ -42,7 +43,8 @@ class CustomerRepository extends EntityRepository
     {
         /** @var Customer[] $customers */
         $customers = $this->findBy(
-            [], ['name' => 'ASC']
+            [],
+            ['name' => 'ASC']
         );
 
         $data = [];

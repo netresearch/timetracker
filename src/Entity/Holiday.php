@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
 
 /**
- * App\Entity\Holiday
+ * App\Entity\Holiday.
  */
 #[ORM\Entity(repositoryClass: HolidayRepository::class)]
 #[ORM\Table(name: 'holidays')]
@@ -18,12 +18,14 @@ class Holiday extends Base
     #[ORM\Id]
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private $day;
+
     public function __construct($day, private $name)
     {
         $this->setDay($day);
     }
+
     /**
-     * Set day
+     * Set day.
      *
      * @param string $day
      *
@@ -36,10 +38,12 @@ class Holiday extends Base
         }
 
         $this->day = $day;
+
         return $this;
     }
+
     /**
-     * Get day
+     * Get day.
      *
      * @return DateTime
      */
@@ -47,8 +51,9 @@ class Holiday extends Base
     {
         return $this->day;
     }
+
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      */
@@ -56,8 +61,9 @@ class Holiday extends Base
     {
         $this->name = $name;
     }
+
     /**
-     * Get name
+     * Get name.
      *
      * @return string
      */
@@ -65,16 +71,17 @@ class Holiday extends Base
     {
         return $this->name;
     }
+
     /**
-     * Get array representation of holiday object
+     * Get array representation of holiday object.
      *
      * @return array
      */
     public function toArray()
     {
-        return array(
+        return [
             'day'         => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
-            'description' => $this->getName()
-        );
+            'description' => $this->getName(),
+        ];
     }
 }

@@ -1,20 +1,20 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 /**
- * Netresearch Timetracker
+ * Netresearch Timetracker.
  *
  * PHP version 5
  *
  * @category   Netresearch
- * @package    Timetracker
- * @subpackage Service
+ *
  * @author     Michael Lühr <michael.luehr@netresearch.de>
  * @author     Various Artists <info@netresearch.de>
  * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
- * @link       http://www.netresearch.de
+ *
+ * @see       http://www.netresearch.de
  */
 
 namespace App\Services;
@@ -29,23 +29,23 @@ use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class Export
+ * Class Export.
  *
  * @category   Netresearch
- * @package    Timetracker
- * @subpackage Service
+ *
  * @author     Michael Lühr <michael.luehr@netresearch.de>
  * @author     Various Artists <info@netresearch.de>
  * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
- * @link       http://www.netresearch.de
+ *
+ * @see       http://www.netresearch.de
  */
 class Export
 {
     /**
-     * mandatory dependency the service container
+     * mandatory dependency the service container.
      */
     public function __construct(
-        protected ?ContainerInterface $container = null, 
+        protected ?ContainerInterface $container = null,
         protected ManagerRegistry $doctrine,
         private readonly RouterInterface $router
     ) {
@@ -54,28 +54,27 @@ class Export
     /**
      * Returns entries filtered and ordered.
      *
-     * @param integer $userId     Filter entries by user
-     * @param integer $year       Filter entries by year
-     * @param integer $month      Filter entries by month
-     * @param integer $projectId  Filter entries by project
-     * @param integer $customerId Filter entries by customer
-     * @param array   $arSort     Sort result by given fields
+     * @param int   $userId     Filter entries by user
+     * @param int   $year       Filter entries by year
+     * @param int   $month      Filter entries by month
+     * @param int   $projectId  Filter entries by project
+     * @param int   $customerId Filter entries by customer
+     * @param array $arSort     Sort result by given fields
      *
      * @return mixed
      */
     public function exportEntries($userId, $year, $month, $projectId, $customerId, array $arSort = null)
     {
-        /** @var \App\Entity\Entry[] $arEntries */
-        $arEntries = $this->getEntryRepository()
-            ->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
-
-        return $arEntries;
+        /* @var \App\Entity\Entry[] $arEntries */
+        return $this->getEntryRepository()
+            ->findByDate($userId, $year, $month, $projectId, $customerId, $arSort)
+        ;
     }
 
     /**
      * Returns user name for given user ID.
      *
-     * @param integer $userId User ID
+     * @param int $userId User ID
      *
      * @return string $username - the name of the user or all if no valid user id is provided
      */
@@ -86,7 +85,8 @@ class Export
             /* @var $user User */
             $user = $this->doctrine
                 ->getRepository('App:User')
-                ->find($userId);
+                ->find($userId)
+            ;
             $username = $user->getUsername();
         }
 
@@ -94,7 +94,7 @@ class Export
     }
 
     /**
-     * returns the entry repository
+     * returns the entry repository.
      *
      * @return EntryRepository
      */
@@ -105,7 +105,7 @@ class Export
 
     /**
      * Adds billable (boolean) property to entries depending on the existence
-     * of a "billable" label in associated JIRA issues
+     * of a "billable" label in associated JIRA issues.
      *
      * @param int   $currentUserId     logged in users id
      * @param array $entries           entries to export
@@ -114,24 +114,27 @@ class Export
      * @return array
      */
     public function enrichEntriesWithBillableInformation(
-        $currentUserId, array $entries, $removeNotBillable = false
+        $currentUserId,
+        array $entries,
+        $removeNotBillable = false
     ) {
         /* @var $currentUser \App\Entity\User */
         $currentUser = $this->doctrine->getRepository('App:User')
-            ->find($currentUserId);
+            ->find($currentUserId)
+        ;
 
         /** @var Router $router */
         $router = $this->router;
 
         $arTickets = [];
-        $arApi = [];
+        $arApi     = [];
         /** @var Entry $entry */
         foreach ($entries as $entry) {
             if (strlen($entry->getTicket()) > 0
                 && $entry->getProject()
                 && $entry->getProject()->getTicketSystem()
                 && $entry->getProject()->getTicketSystem()->getBookTime()
-                && $entry->getProject()->getTicketSystem()->getType() == 'JIRA'
+                && 'JIRA' == $entry->getProject()->getTicketSystem()->getType()
             ) {
                 /** @var TicketSystem $ticketSystem */
                 $ticketSystem = $entry->getProject()->getTicketSystem();
@@ -150,12 +153,13 @@ class Export
         }
 
         $maxRequestsElements = 500;
-        $arBillable = [];
+        $arBillable          = [];
         /** @var JiraOAuthApi $jiraApi */
         foreach ($arApi as $idx => $jiraApi) {
-            $ticketSystemIssuesTotal = array_unique($arTickets[$idx]);
+            $ticketSystemIssuesTotal       = array_unique($arTickets[$idx]);
             $ticketSystemIssuesTotalChunks = array_chunk(
-                $ticketSystemIssuesTotal, $maxRequestsElements
+                $ticketSystemIssuesTotal,
+                $maxRequestsElements
             );
 
             if (is_array($ticketSystemIssuesTotalChunks)
@@ -163,14 +167,14 @@ class Export
             ) {
                 foreach ($ticketSystemIssuesTotalChunks as $arIssues) {
                     $ret = $jiraApi->searchTicket(
-                        'IssueKey in (' . join(',', $arIssues) . ')',
+                        'IssueKey in ('.join(',', $arIssues).')',
                         ['labels'],
                         '500'
                     );
 
                     foreach ($ret->issues as $issue) {
                         if (isset($issue->fields->labels)
-                            && in_array('billable', $issue->fields->labels)
+                            && in_array('billable', $issue->fields->labels, true)
                         ) {
                             $arBillable[] = $issue->key;
                         }
@@ -180,7 +184,7 @@ class Export
         }
 
         foreach ($entries as $key => $entry) {
-            $billable = in_array($entry->getTicket(), $arBillable);
+            $billable = in_array($entry->getTicket(), $arBillable, true);
             if (!$billable && $removeNotBillable) {
                 unset($entries[$key]);
             } else {

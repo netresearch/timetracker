@@ -15,7 +15,7 @@ class Account
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    
+
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $name;
 
@@ -26,17 +26,20 @@ class Account
     {
         $this->entries = new ArrayCollection();
     }
+
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Set id
+     * Set id.
+     *
      * @param int $id
      *
      * @return $this
@@ -44,10 +47,12 @@ class Account
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
+
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      */
@@ -55,8 +60,9 @@ class Account
     {
         $this->name = $name;
     }
+
     /**
-     * Get name
+     * Get name.
      *
      * @return string $name
      */
@@ -64,15 +70,17 @@ class Account
     {
         return $this->name;
     }
+
     /**
-     * Add entries
+     * Add entries.
      */
     public function addEntries(Entry $entries)
     {
         $this->entries[] = $entries;
     }
+
     /**
-     * Get entries
+     * Get entries.
      *
      * @return Collection $entries
      */
@@ -80,25 +88,29 @@ class Account
     {
         return $this->entries;
     }
+
     /**
-     * Add entry
+     * Add entry.
      *
      * @return Account
      */
     public function addEntry(Entry $entry)
     {
         $this->entries[] = $entry;
+
         return $this;
     }
+
     /**
-     * Remove entry
+     * Remove entry.
      */
     public function removeEntrie(Entry $entry)
     {
         $this->entries->removeElement($entry);
     }
+
     /**
-     * Add entries
+     * Add entries.
      *
      * @return Account
      */

@@ -6,7 +6,6 @@ use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\Collection;
 use App\Helper\LocalizationHelper;
-
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -57,29 +56,33 @@ class User
     {
         $this->entries = new ArrayCollection();
     }
+
     /**
-     * Set id
-     * @param integer $id
+     * Set id.
+     *
+     * @param int $id
      *
      * @return $this
      */
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Set username
+     * Set username.
      *
      * @param string $username
      *
@@ -88,10 +91,12 @@ class User
     public function setUsername($username)
     {
         $this->username = $username;
+
         return $this;
     }
+
     /**
-     * Get username
+     * Get username.
      *
      * @return string $username
      */
@@ -99,19 +104,21 @@ class User
     {
         return $this->username;
     }
-    
+
     public function setAbbr(string $abbr): static
     {
         $this->abbr = $abbr;
+
         return $this;
     }
-    
+
     public function getAbbr(): string
     {
         return $this->abbr;
     }
+
     /**
-     * Set type
+     * Set type.
      *
      * @param string $type
      *
@@ -120,10 +127,12 @@ class User
     public function setType($type)
     {
         $this->type = $type;
+
         return $this;
     }
+
     /**
-     * Get type
+     * Get type.
      *
      * @return string $type
      */
@@ -131,46 +140,57 @@ class User
     {
         return $this->type;
     }
+
     public function getShowEmptyLine()
     {
         return $this->showEmptyLine;
     }
+
     public function setShowEmptyLine($value)
     {
         $this->showEmptyLine = $value;
+
         return $this;
     }
+
     public function getSuggestTime()
     {
         return $this->suggestTime;
     }
+
     public function setSuggestTime($value)
     {
         $this->suggestTime = $value;
+
         return $this;
     }
+
     public function getShowFuture()
     {
         return $this->showFuture;
     }
+
     public function setShowFuture($value)
     {
         $this->showFuture = $value;
+
         return $this;
     }
+
     /**
-     * Add entries
-     *
+     * Add entries.
      *
      * @return $this
      */
     public function addEntries(Entry $entries)
     {
         $this->entries[] = $entries;
+
         return $this;
     }
+
     /**
-     * Get entries
+     * Get entries.
      *
      * @return Collection $entries
      */
@@ -178,8 +198,9 @@ class User
     {
         return $this->entries;
     }
+
     /**
-     * Get contracts
+     * Get contracts.
      *
      * @return Collection $contracts
      */
@@ -187,40 +208,45 @@ class User
     {
         return $this->contracts;
     }
+
     /**
-     * Add contract
-     *
+     * Add contract.
      *
      * @return $this
      */
     public function addContract(Contract $contract)
     {
         $this->contracts[] = $contract;
+
         return $this;
     }
+
     /**
-     * Reset teams
+     * Reset teams.
      *
      * @return $this
      */
     public function resetTeams()
     {
         $this->teams = new ArrayCollection();
+
         return $this;
     }
+
     /**
-     * Add team
-     *
+     * Add team.
      *
      * @return $this
      */
     public function addTeam(Team $team)
     {
         $this->teams[] = $team;
+
         return $this;
     }
+
     /**
-     * Get teams
+     * Get teams.
      *
      * @return Collection $teams
      */
@@ -228,56 +254,65 @@ class User
     {
         return $this->teams;
     }
+
     public function getLocale()
     {
         return $this->locale;
     }
+
     public function setLocale($locale)
     {
         $this->locale = LocalizationHelper::normalizeLocale($locale);
+
         return $this;
     }
+
     /**
-     * return all relevant settings in an array
+     * return all relevant settings in an array.
      */
     public function getSettings()
     {
-        return array(
-            'show_empty_line'   => $this->getShowEmptyLine(),
-            'suggest_time'      => $this->getSuggestTime(),
-            'show_future'       => $this->getShowFuture(),
-            'user_id'           => $this->getId(),
-            'user_name'         => $this->getUsername(),
-            'type'              => $this->getType(),
-            'locale'            => LocalizationHelper::normalizeLocale($this->getLocale())
-        );
+        return [
+            'show_empty_line' => $this->getShowEmptyLine(),
+            'suggest_time'    => $this->getSuggestTime(),
+            'show_future'     => $this->getShowFuture(),
+            'user_id'         => $this->getId(),
+            'user_name'       => $this->getUsername(),
+            'type'            => $this->getType(),
+            'locale'          => LocalizationHelper::normalizeLocale($this->getLocale()),
+        ];
     }
+
     /**
-     * Add entry
+     * Add entry.
      *
      * @return $this
      */
     public function addEntry(Entry $entries)
     {
         $this->entries[] = $entries;
+
         return $this;
     }
+
     /**
-     * Remove entries
+     * Remove entries.
      */
     public function removeEntrie(Entry $entries)
     {
         $this->entries->removeElement($entries);
     }
+
     /**
-     * Remove teams
+     * Remove teams.
      */
     public function removeTeam(Team $teams)
     {
         $this->teams->removeElement($teams);
     }
+
     /**
-     * Add entries
+     * Add entries.
      *
      * @return $this
      */
@@ -287,6 +322,7 @@ class User
 
         return $this;
     }
+
     /**
      * @return Collection $userTicketSystems
      */
@@ -294,36 +330,40 @@ class User
     {
         return $this->userTicketsystems;
     }
+
     /**
-     * Get Users accesstoken for a Ticketsystem
+     * Get Users accesstoken for a Ticketsystem.
      *
-     * @return null|string
+     * @return string|null
      */
     public function getTicketSystemAccessToken(TicketSystem $ticketsystem)
     {
         $return = null;
-        /** @var $userTicketsystem UserTicketsystem */
+        /** @var UserTicketsystem $userTicketsystem */
         foreach ($this->userTicketsystems as $userTicketsystem) {
             if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
                 $return = $userTicketsystem->getAccessToken();
             }
         }
+
         return $return;
     }
+
     /**
-     * Get Users tokensecret for a Ticketsystem
+     * Get Users tokensecret for a Ticketsystem.
      *
-     * @return null|string
+     * @return string|null
      */
     public function getTicketSystemAccessTokenSecret(TicketSystem $ticketsystem)
     {
         $return = null;
-        /** @var $userTicketsystem UserTicketsystem */
+        /** @var UserTicketsystem $userTicketsystem */
         foreach ($this->userTicketsystems as $userTicketsystem) {
             if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
                 $return = $userTicketsystem->getTokenSecret();
             }
         }
+
         return $return;
     }
 }

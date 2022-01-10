@@ -14,13 +14,13 @@ class UserController extends BaseController
         $username = $this->request->get('username');
 
         if (empty($username)) {
-            return new Response(json_encode(array('success' => false)));
+            return new Response(json_encode(['success' => false]));
         }
 
         // enforce ldap-style login names
         $username = str_replace(
-            [' ','ä','ö','ü','ß','é'],
-            ['.','ae','oe','ue','ss','e'],
+            [' ', 'ä', 'ö', 'ü', 'ß', 'é'],
+            ['.', 'ae', 'oe', 'ue', 'ss', 'e'],
             strtolower($username)
         );
 
@@ -32,6 +32,6 @@ class UserController extends BaseController
         $em->persist($user);
         $em->flush();
 
-        return new Response(json_encode(array('success' => true)));
+        return new Response(json_encode(['success' => true]));
     }
 }

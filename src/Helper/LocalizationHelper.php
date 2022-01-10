@@ -1,16 +1,15 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Helper;
 
 /**
- * Helper for anything related to localization
+ * Helper for anything related to localization.
  */
 class LocalizationHelper
 {
-
     /**
      * @return array
      */
@@ -35,6 +34,7 @@ class LocalizationHelper
 
     /**
      * @param $locale
+     *
      * @return string
      */
     public static function normalizeLocale($locale)
@@ -46,6 +46,4 @@ class LocalizationHelper
 
         return self::getPreferredLocale();
     }
-
 }
-

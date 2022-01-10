@@ -7,22 +7,22 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class StatusController extends BaseController
 {
-    private function getLoginStatus($userId) {
+    private function getLoginStatus($userId)
+    {
         // Check user session
         if (1 > (int) $userId) {
             return false;
-        } else {
-            return true;
         }
-    }
 
+        return true;
+    }
 
     private function getStatus($userId)
     {
         // initialize status
         $loginStatus = $this->getLoginStatus($userId);
 
-        return array('loginStatus' => $loginStatus);
+        return ['loginStatus' => $loginStatus];
     }
 
     #[Route(path: '/status/check', name: 'check_status')]
@@ -31,6 +31,7 @@ class StatusController extends BaseController
         $userId = $this->session->get('loginId');
 
         $status = $this->getStatus($userId);
+
         return new Response(json_encode($status, JSON_THROW_ON_ERROR));
     }
 
@@ -42,8 +43,9 @@ class StatusController extends BaseController
 
         $userId = $this->session->get('loginId');
         $status = $this->getStatus($userId);
-        return $this->render('status.html.twig', array(
-            'loginClass'    => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),
-        ));
+
+        return $this->render('status.html.twig', [
+            'loginClass' => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),
+        ]);
     }
 }

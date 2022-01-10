@@ -3,18 +3,19 @@
 namespace App\Helper;
 
 /**
- * Helper for permanent timetracker login
+ * Helper for permanent timetracker login.
  */
 class LoginHelper
 {
-    public final const COOKIE_NAME   = 'nr_timetracker';
-
+    final public const COOKIE_NAME = 'nr_timetracker';
 
     public static function setCookie($userId, $userName)
     {
-        setcookie(self::COOKIE_NAME,
-            $userId . ':' . md5($userName),
-            ['expires' => time() + (14*24*60*60)]);
+        setcookie(
+            self::COOKIE_NAME,
+            $userId.':'.md5($userName),
+            ['expires' => time() + (14 * 24 * 60 * 60)]
+        );
     }
 
     public static function deleteCookie()
@@ -36,10 +37,10 @@ class LoginHelper
             return false;
         }
 
-        return array(
-            'userId'   => (int)     $matches[1],
-            'userName' => (string)  $matches[2],
-        );
+        return [
+            'userId'   => (int) $matches[1],
+            'userName' => (string) $matches[2],
+        ];
     }
 
     public static function getCookieUserId()

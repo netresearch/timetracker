@@ -1,16 +1,15 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Twig;
 
-use \Twig\TwigFilter;
+use Twig\TwigFilter;
 use Twig\Extension\AbstractExtension;
 
 /**
- * Class TwigCsvEscapingExtension
- * @package App\Extension
+ * Class TwigCsvEscapingExtension.
  */
 class TwigCsvEscapingExtension extends AbstractExtension
 {
@@ -28,12 +27,13 @@ class TwigCsvEscapingExtension extends AbstractExtension
     public function getFilters()
     {
         return [
-            new TwigFilter('csv_escape', array($this, 'csvEscape')),
+            new TwigFilter('csv_escape', [$this, 'csvEscape']),
         ];
     }
 
     /**
      * @param $string
+     *
      * @return string
      */
     public function csvEscape($string)

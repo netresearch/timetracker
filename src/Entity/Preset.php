@@ -34,19 +34,22 @@ class Preset extends Base
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
+
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Set name
+     * Set name.
      * *
      * @param string $name
      *
@@ -55,10 +58,12 @@ class Preset extends Base
     public function setName($name)
     {
         $this->name = $name;
+
         return $this;
     }
+
     /**
-     * Get name
+     * Get name.
      *
      * @return string $name
      */
@@ -66,35 +71,39 @@ class Preset extends Base
     {
         return $this->name;
     }
+
     /**
-     * Get customerId
+     * Get customerId.
      *
-     * @return integer $customerId
+     * @return int $customerId
      */
     public function getCustomerId()
     {
         return $this->getCustomer() ? $this->getCustomer()->getId() : 0;
     }
+
     /**
-     * Get projectId
+     * Get projectId.
      *
-     * @return integer $projectId
+     * @return int $projectId
      */
     public function getProjectId()
     {
         return $this->getProject() ? $this->getProject()->getId() : 0;
     }
+
     /**
-     * Get activityId
+     * Get activityId.
      *
-     * @return integer $activityId
+     * @return int $activityId
      */
     public function getActivityId()
     {
         return $this->getActivity() ? $this->getActivity()->getId() : 0;
     }
+
     /**
-     * Set description
+     * Set description.
      *
      * @param string $description
      *
@@ -103,10 +112,12 @@ class Preset extends Base
     public function setDescription($description)
     {
         $this->description = $description;
+
         return $this;
     }
+
     /**
-     * Get description
+     * Get description.
      *
      * @return string $description
      */
@@ -114,19 +125,21 @@ class Preset extends Base
     {
         return $this->description;
     }
+
     /**
-     * Set customer
-     *
+     * Set customer.
      *
      * @return $this
      */
     public function setCustomer(Customer $customer)
     {
         $this->customer = $customer;
+
         return $this;
     }
+
     /**
-     * Get customer
+     * Get customer.
      *
      * @return Customer $customer
      */
@@ -134,19 +147,21 @@ class Preset extends Base
     {
         return $this->customer;
     }
+
     /**
-     * Set project
-     *
+     * Set project.
      *
      * @return $this
      */
     public function setProject(Project $project)
     {
         $this->project = $project;
+
         return $this;
     }
+
     /**
-     * Get project
+     * Get project.
      *
      * @return Project $project
      */
@@ -154,19 +169,21 @@ class Preset extends Base
     {
         return $this->project;
     }
+
     /**
-     * Set activity
-     *
+     * Set activity.
      *
      * @return $this
      */
     public function setActivity(Activity $activity)
     {
         $this->activity = $activity;
+
         return $this;
     }
+
     /**
-     * Get activity
+     * Get activity.
      *
      * @return Activity $activity
      */
@@ -174,20 +191,21 @@ class Preset extends Base
     {
         return $this->activity;
     }
+
     /**
-     * Get array representation of a preset object
+     * Get array representation of a preset object.
      *
      * @return array
      */
     public function toArray()
     {
-        return array(
+        return [
             'id'          => $this->getId(),
             'name'        => $this->getName(),
             'customer'    => $this->getCustomer() ? $this->getCustomer()->getId() : null,
             'project'     => $this->getProject() ? $this->getProject()->getId() : null,
             'activity'    => $this->getActivity() ? $this->getActivity()->getId() : null,
             'description' => $this->getDescription(),
-        );
+        ];
     }
 }

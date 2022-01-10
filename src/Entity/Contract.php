@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entity;
 
 use App\Repository\ContractRepository;
@@ -6,7 +7,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * A user contract (working hours)
+ * A user contract (working hours).
  */
 #[ORM\Entity(repositoryClass: ContractRepository::class)]
 #[ORM\Table(name: 'contracts')]
@@ -16,7 +17,7 @@ class Contract
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    
+
     #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'contracts')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected $user;
@@ -49,39 +50,43 @@ class Contract
     protected $hours_6;
 
     /**
-     * Set id
+     * Set id.
      *
-     * @param integer $id
+     * @param int $id
      *
      * @return $this
      */
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
+
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Set user
-     *
+     * Set user.
      *
      * @return $this
      */
     public function setUser(User $user)
     {
         $this->user = $user;
+
         return $this;
     }
+
     /**
-     * Get user
+     * Get user.
      *
      * @return User $user
      */
@@ -89,6 +94,7 @@ class Contract
     {
         return $this->user;
     }
+
     /**
      * @return mixed
      */
@@ -96,15 +102,19 @@ class Contract
     {
         return $this->start;
     }
+
     /**
      * @param mixed $start
+     *
      * @return $this
      */
     public function setStart($start)
     {
         $this->start = $start;
+
         return $this;
     }
+
     /**
      * @return mixed
      */
@@ -112,15 +122,19 @@ class Contract
     {
         return $this->end;
     }
+
     /**
      * @param mixed $end
+     *
      * @return $this
      */
     public function setEnd($end)
     {
         $this->end = $end;
+
         return $this;
     }
+
     /**
      * @return float
      */
@@ -128,15 +142,19 @@ class Contract
     {
         return $this->hours_0;
     }
+
     /**
      * @param float $hours_0
+     *
      * @return $this
      */
     public function setHours0($hours_0)
     {
         $this->hours_0 = $hours_0;
+
         return $this;
     }
+
     /**
      * @return float
      */
@@ -144,15 +162,19 @@ class Contract
     {
         return $this->hours_1;
     }
+
     /**
      * @param float $hours_1
+     *
      * @return $this
      */
     public function setHours1($hours_1)
     {
         $this->hours_1 = $hours_1;
+
         return $this;
     }
+
     /**
      * @return float
      */
@@ -160,15 +182,19 @@ class Contract
     {
         return $this->hours_2;
     }
+
     /**
      * @param float $hours_2
+     *
      * @return $this
      */
     public function setHours2($hours_2)
     {
         $this->hours_2 = $hours_2;
+
         return $this;
     }
+
     /**
      * @return float
      */
@@ -176,15 +202,19 @@ class Contract
     {
         return $this->hours_3;
     }
+
     /**
      * @param float $hours_3
+     *
      * @return $this
      */
     public function setHours3($hours_3)
     {
         $this->hours_3 = $hours_3;
+
         return $this;
     }
+
     /**
      * @return float
      */
@@ -192,15 +222,19 @@ class Contract
     {
         return $this->hours_4;
     }
+
     /**
      * @param float $hours_4
+     *
      * @return $this
      */
     public function setHours4($hours_4)
     {
         $this->hours_4 = $hours_4;
+
         return $this;
     }
+
     /**
      * @return float
      */
@@ -208,15 +242,19 @@ class Contract
     {
         return $this->hours_5;
     }
+
     /**
      * @param float $hours_5
+     *
      * @return $this
      */
     public function setHours5($hours_5)
     {
         $this->hours_5 = $hours_5;
+
         return $this;
     }
+
     /**
      * @return float
      */
@@ -224,13 +262,16 @@ class Contract
     {
         return $this->hours_6;
     }
+
     /**
      * @param float $hours_6
+     *
      * @return $this
      */
     public function setHours6($hours_6)
     {
         $this->hours_6 = $hours_6;
+
         return $this;
     }
 }

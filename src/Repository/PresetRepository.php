@@ -7,9 +7,8 @@ use App\Entity\Preset;
 
 class PresetRepository extends EntityRepository
 {
-
     /**
-     * get all presets
+     * get all presets.
      *
      * @return array
      */
@@ -26,4 +25,3 @@ class PresetRepository extends EntityRepository
         return $data;
     }
 }
-

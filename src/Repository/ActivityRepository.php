@@ -14,7 +14,7 @@ class ActivityRepository extends EntityRepository
     {
         /** @var Activity[] $activities */
         $activities = $this->findBy([], ['name' => 'ASC']);
-        
+
         $data = [];
         foreach ($activities as $activity) {
             $data[] = ['activity' => [

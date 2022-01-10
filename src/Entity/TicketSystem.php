@@ -8,16 +8,16 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base as Base;
 
 /**
- * App\Entity\TicketSystem
+ * App\Entity\TicketSystem.
  */
 #[ORM\Entity(repositoryClass: TicketSystemRepository::class)]
 #[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {
-    public final const TYPE_JIRA = 'JIRA';
-    public final const TYPE_OTRS = 'OTRS';
+    final public const TYPE_JIRA = 'JIRA';
+    final public const TYPE_OTRS = 'OTRS';
     /**
-     * @var integer $id
+     * @var int $id
      */
     #[ORM\Column(name: 'id', type: Types::INTEGER)]
     #[ORM\Id]
@@ -30,7 +30,7 @@ class TicketSystem extends Base
     protected $name;
 
     /**
-     * @var boolean $bookTime;
+     * @var bool $bookTime;
      */
     #[ORM\Column(name: 'book_time', type: Types::INTEGER, nullable: false)]
     protected $bookTime;
@@ -54,8 +54,8 @@ class TicketSystem extends Base
     protected $ticketUrl;
 
     /**
-    * @var string $login
-    */
+     * @var string $login
+     */
     #[ORM\Column(type: Types::STRING)]
     protected $login;
 
@@ -93,16 +93,17 @@ class TicketSystem extends Base
     protected $userTicketsystems;
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -111,10 +112,12 @@ class TicketSystem extends Base
     public function setName($name)
     {
         $this->name = $name;
+
         return $this;
     }
+
     /**
-     * Get name
+     * Get name.
      *
      * @return string
      */
@@ -122,29 +125,33 @@ class TicketSystem extends Base
     {
         return $this->name;
     }
+
     /**
-     * Set bookTime
+     * Set bookTime.
      *
-     * @param boolean $bookTime
+     * @param bool $bookTime
      *
      * @return $this
      */
     public function setBookTime($bookTime)
     {
         $this->bookTime = $bookTime;
+
         return $this;
     }
+
     /**
-     * Get bookTime
+     * Get bookTime.
      *
-     * @return boolean $bookTime
+     * @return bool $bookTime
      */
     public function getBookTime()
     {
         return $this->bookTime;
     }
+
     /**
-     * Set type
+     * Set type.
      *
      * @param string $type
      *
@@ -153,10 +160,12 @@ class TicketSystem extends Base
     public function setType($type)
     {
         $this->type = $type;
+
         return $this;
     }
+
     /**
-     * Get type
+     * Get type.
      *
      * @return string $type
      */
@@ -164,8 +173,9 @@ class TicketSystem extends Base
     {
         return $this->type;
     }
+
     /**
-     * Set url
+     * Set url.
      *
      * @param string $url
      *
@@ -174,10 +184,12 @@ class TicketSystem extends Base
     public function setUrl($url)
     {
         $this->url = $url;
+
         return $this;
     }
+
     /**
-     * Get url
+     * Get url.
      *
      * @return string $url
      */
@@ -185,6 +197,7 @@ class TicketSystem extends Base
     {
         return $this->url;
     }
+
     /**
      * Set the ticket url.
      *
@@ -195,10 +208,12 @@ class TicketSystem extends Base
     public function setTicketUrl($ticketUrl)
     {
         $this->ticketUrl = $ticketUrl;
+
         return $this;
     }
+
     /**
-     * Get url pointing to a ticket
+     * Get url pointing to a ticket.
      *
      * @return string $ticketUrl
      */
@@ -206,8 +221,9 @@ class TicketSystem extends Base
     {
         return $this->ticketUrl;
     }
+
     /**
-     * Set login
+     * Set login.
      *
      * @param string $login
      *
@@ -216,10 +232,12 @@ class TicketSystem extends Base
     public function setLogin($login)
     {
         $this->login = $login;
+
         return $this;
     }
+
     /**
-     * Get login
+     * Get login.
      *
      * @return string $login
      */
@@ -227,8 +245,9 @@ class TicketSystem extends Base
     {
         return $this->login;
     }
+
     /**
-     * Set password
+     * Set password.
      *
      * @param string $password
      *
@@ -237,10 +256,12 @@ class TicketSystem extends Base
     public function setPassword($password)
     {
         $this->password = $password;
+
         return $this;
     }
+
     /**
-     * Get password
+     * Get password.
      *
      * @return string $password
      */
@@ -248,8 +269,9 @@ class TicketSystem extends Base
     {
         return $this->password;
     }
+
     /**
-     * Set public key
+     * Set public key.
      *
      * @param string $publicKey
      *
@@ -258,10 +280,12 @@ class TicketSystem extends Base
     public function setPublicKey($publicKey)
     {
         $this->publicKey = $publicKey;
+
         return $this;
     }
+
     /**
-     * Get public key
+     * Get public key.
      *
      * @return string $publicKey
      */
@@ -269,8 +293,9 @@ class TicketSystem extends Base
     {
         return $this->publicKey;
     }
+
     /**
-     * Set private key
+     * Set private key.
      *
      * @param string $privateKey
      *
@@ -279,10 +304,12 @@ class TicketSystem extends Base
     public function setPrivateKey($privateKey)
     {
         $this->privateKey = $privateKey;
+
         return $this;
     }
+
     /**
-     * Get private key
+     * Get private key.
      *
      * @return string $privateKey
      */
@@ -290,6 +317,7 @@ class TicketSystem extends Base
     {
         return $this->privateKey;
     }
+
     /**
      * @return string
      */
@@ -297,15 +325,19 @@ class TicketSystem extends Base
     {
         return $this->oauthConsumerKey;
     }
+
     /**
      * @param string $oauthConsumerKey
+     *
      * @return $this
      */
     public function setOauthConsumerKey($oauthConsumerKey)
     {
         $this->oauthConsumerKey = $oauthConsumerKey;
+
         return $this;
     }
+
     /**
      * @return string
      */
@@ -313,14 +345,16 @@ class TicketSystem extends Base
     {
         return $this->oauthConsumerSecret;
     }
+
     /**
      * @param string $oauthConsumerSecret
+     *
      * @return $this
      */
     public function setOauthConsumerSecret($oauthConsumerSecret)
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
+
         return $this;
     }
 }
-

@@ -37,28 +37,33 @@ class Customer extends Base
         $this->entries  = new ArrayCollection();
         $this->teams    = new ArrayCollection();
     }
+
     /**
-     * Set id
-     * @param integer $id
+     * Set id.
+     *
+     * @param int $id
      *
      * @return $this
      */
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
+
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -67,10 +72,12 @@ class Customer extends Base
     public function setName($name)
     {
         $this->name = $name;
+
         return $this;
     }
+
     /**
-     * Get name
+     * Get name.
      *
      * @return string $name
      */
@@ -78,61 +85,69 @@ class Customer extends Base
     {
         return $this->name;
     }
+
     /**
-     * Set active
+     * Set active.
      *
-     * @param boolean $active
+     * @param bool $active
      *
      * @return $this
      */
     public function setActive($active)
     {
         $this->active = $active;
+
         return $this;
     }
+
     /**
-     * Get active
+     * Get active.
      *
-     * @return boolean $active
+     * @return bool $active
      */
     public function getActive()
     {
         return $this->active;
     }
+
     /**
-     * Set global
+     * Set global.
      *
-     * @param boolean $global
+     * @param bool $global
      *
      * @return $this
      */
     public function setGlobal($global)
     {
         $this->global = $global;
+
         return $this;
     }
+
     /**
-     * Get global
+     * Get global.
      *
-     * @return boolean $global
+     * @return bool $global
      */
     public function getGlobal()
     {
         return $this->global;
     }
+
     /**
-     * Add projects
-     *
+     * Add projects.
      *
      * @return $this
      */
     public function addProjects(Project $projects)
     {
         $this->projects[] = $projects;
+
         return $this;
     }
+
     /**
-     * Get projects
+     * Get projects.
      *
      * @return Collection $projects
      */
@@ -140,19 +155,21 @@ class Customer extends Base
     {
         return $this->projects;
     }
+
     /**
-     * Add entries
-     *
+     * Add entries.
      *
      * @return $this
      */
     public function addEntries(Entry $entries)
     {
         $this->entries[] = $entries;
+
         return $this;
     }
+
     /**
-     * Get entries
+     * Get entries.
      *
      * @return Collection $entries
      */
@@ -160,29 +177,33 @@ class Customer extends Base
     {
         return $this->entries;
     }
+
     /**
-     * Reset teams
+     * Reset teams.
      *
      * @return $this
      */
     public function resetTeams()
     {
         $this->teams = new ArrayCollection();
+
         return $this;
     }
+
     /**
-     * Add team
-     *
+     * Add team.
      *
      * @return $this
      */
     public function addTeam(Team $team)
     {
         $this->teams[] = $team;
+
         return $this;
     }
+
     /**
-     * Get teams
+     * Get teams.
      *
      * @return Collection $teams
      */
@@ -190,49 +211,57 @@ class Customer extends Base
     {
         return $this->teams;
     }
+
     /**
-     * Add projects
+     * Add projects.
      *
      * @return Customer
      */
     public function addProject(Project $projects)
     {
         $this->projects[] = $projects;
+
         return $this;
     }
+
     /**
-     * Remove projects
+     * Remove projects.
      */
     public function removeProject(Project $projects)
     {
         $this->projects->removeElement($projects);
     }
+
     /**
-     * Add entries
+     * Add entries.
      *
      * @return Customer
      */
     public function addEntry(Entry $entry)
     {
         $this->entries[] = $entry;
+
         return $this;
     }
+
     /**
-     * Remove entry
+     * Remove entry.
      */
     public function removeEntrie(Entry $entry)
     {
         $this->entries->removeElement($entry);
     }
+
     /**
-     * Remove teams
+     * Remove teams.
      */
     public function removeTeam(Team $teams)
     {
         $this->teams->removeElement($teams);
     }
+
     /**
-     * Add entries
+     * Add entries.
      *
      * @return Customer
      */

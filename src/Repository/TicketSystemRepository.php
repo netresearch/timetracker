@@ -8,12 +8,12 @@ use App\Entity\TicketSystem;
 
 class TicketSystemRepository extends EntityRepository
 {
-
     /**
-     * get all ticket systems
+     * get all ticket systems.
+     *
+     * @throws ReflectionException
      *
      * @return array
-     * @throws ReflectionException
      */
     public function getAllTicketSystems()
     {
@@ -27,5 +27,4 @@ class TicketSystemRepository extends EntityRepository
 
         return $data;
     }
-
 }

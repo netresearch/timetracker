@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-
 use App\Model\Base as Base;
 
 #[ORM\Entity]
@@ -38,15 +37,19 @@ class UserTicketsystem extends Base
     {
         return $this->id;
     }
+
     /**
      * @param mixed $id
+     *
      * @return $this
      */
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
+
     /**
      * @return TicketSystem
      */
@@ -54,14 +57,17 @@ class UserTicketsystem extends Base
     {
         return $this->ticketSystem;
     }
+
     /**
      * @return $this
      */
     public function setTicketSystem(TicketSystem $ticketSystem)
     {
         $this->ticketSystem = $ticketSystem;
+
         return $this;
     }
+
     /**
      * @return User
      */
@@ -69,14 +75,17 @@ class UserTicketsystem extends Base
     {
         return $this->user;
     }
+
     /**
      * @return $this
      */
     public function setUser(User $user)
     {
         $this->user = $user;
+
         return $this;
     }
+
     /**
      * @return string
      */
@@ -84,15 +93,19 @@ class UserTicketsystem extends Base
     {
         return $this->accessToken;
     }
+
     /**
      * @param string $accessToken
+     *
      * @return $this
      */
     public function setAccessToken($accessToken)
     {
         $this->accessToken = $accessToken;
+
         return $this;
     }
+
     /**
      * @return string
      */
@@ -100,29 +113,36 @@ class UserTicketsystem extends Base
     {
         return $this->tokenSecret;
     }
+
     /**
      * @param string $tokenSecret
+     *
      * @return $this
      */
     public function setTokenSecret($tokenSecret)
     {
         $this->tokenSecret = $tokenSecret;
+
         return $this;
     }
+
     /**
-     * @return boolean
+     * @return bool
      */
     public function getAvoidConnection()
     {
-        return ($this->avoidConnection == 1);
+        return 1 == $this->avoidConnection;
     }
+
     /**
-     * @param boolean $avoidConnection
+     * @param bool $avoidConnection
+     *
      * @return $this
      */
     public function setAvoidConnection($avoidConnection)
     {
-        $this->avoidConnection = ($avoidConnection? 1 : 0);
+        $this->avoidConnection = ($avoidConnection ? 1 : 0);
+
         return $this;
     }
 }

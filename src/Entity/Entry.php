@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entity;
 
 use App\Repository\EntryRepository;
@@ -12,10 +13,10 @@ use DateTime;
 #[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
-    public final const CLASS_PLAIN       = 1;
-    public final const CLASS_DAYBREAK    = 2;
-    public final const CLASS_PAUSE       = 4;
-    public final const CLASS_OVERLAP     = 8;
+    final public const CLASS_PLAIN    = 1;
+    final public const CLASS_DAYBREAK = 2;
+    final public const CLASS_PAUSE    = 4;
+    final public const CLASS_OVERLAP  = 8;
 
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
@@ -37,7 +38,7 @@ class Entry extends Base
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     protected $start;
 
-    #[ORM\Column(name: "`end`", type: Types::TIME_MUTABLE)]
+    #[ORM\Column(name: '`end`', type: Types::TIME_MUTABLE)]
     protected $end;
 
     #[ORM\Column(type: Types::INTEGER)]
@@ -64,24 +65,24 @@ class Entry extends Base
     #[ORM\Column(name: 'class', type: Types::INTEGER, nullable: false)]
     protected $class = self::CLASS_PLAIN;
     /**
-     * holds summary from external ticket system; no mapping for ORM required (yet)
+     * holds summary from external ticket system; no mapping for ORM required (yet).
      *
      * @var string
      */
     protected $externalSummary = '';
     /**
-     * Holds an array of labels assigned for the issue
+     * Holds an array of labels assigned for the issue.
      *
      * @var array
      */
-    protected $externalLabels = array();
+    protected $externalLabels = [];
     /**
      * ID of the original booked external ticket.
      *
      * @var string e.g. TYPO-1234
      */
     #[ORM\Column(name: 'internal_jira_ticket_original_key')]
-    protected $internalJiraTicketOriginalKey = null;
+    protected $internalJiraTicketOriginalKey;
 
     /**
      * @param string $externalReporter
@@ -98,6 +99,7 @@ class Entry extends Base
     {
         return $this->externalReporter;
     }
+
     /**
      * @param string $externalSummary
      */
@@ -105,6 +107,7 @@ class Entry extends Base
     {
         $this->externalSummary = $externalSummary;
     }
+
     /**
      * Returns the array of external labels.
      *
@@ -114,6 +117,7 @@ class Entry extends Base
     {
         return $this->externalLabels;
     }
+
     /**
      * Sets the array of external labels.
      */
@@ -121,6 +125,7 @@ class Entry extends Base
     {
         $this->externalLabels = $arExternalLabels;
     }
+
     /**
      * @return string
      */
@@ -129,14 +134,16 @@ class Entry extends Base
         return $this->externalSummary;
     }
     /**
-     * holds external reporter; no mapping for ORM required (yet)
+     * holds external reporter; no mapping for ORM required (yet).
      *
      * @var string
      */
     protected $externalReporter = '';
+
     /**
-     * @return $this
      * @throws Exception
+     *
+     * @return $this
      */
     public function validateDuration()
     {
@@ -149,98 +156,110 @@ class Entry extends Base
 
         return $this;
     }
+
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
+
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Get userId
+     * Get userId.
      *
-     * @return integer $userId
+     * @return int $userId
      */
     public function getUserId()
     {
-        if (! is_object($this->getUser())) {
+        if (!is_object($this->getUser())) {
             return null;
         }
 
         return $this->getUser()->getId();
     }
+
     /**
-     * Get projectId
+     * Get projectId.
      *
-     * @return integer $projectId
+     * @return int $projectId
      */
     public function getProjectId()
     {
-        if (! is_object($this->getProject())) {
+        if (!is_object($this->getProject())) {
             return null;
         }
 
         return $this->getProject()->getId();
     }
+
     /**
-     * Get accountId
+     * Get accountId.
      *
-     * @return integer $accountId
+     * @return int $accountId
      */
     public function getAccountId()
     {
-        if (! is_object($this->getAccount())) {
+        if (!is_object($this->getAccount())) {
             return null;
         }
 
         return $this->getAccount()->getId();
     }
+
     /**
-     * Get customerId
+     * Get customerId.
      *
-     * @return integer $customerId
+     * @return int $customerId
      */
     public function getCustomerId()
     {
-        if (! is_object($this->getCustomer())) {
+        if (!is_object($this->getCustomer())) {
             return null;
         }
 
         return $this->getCustomer()->getId();
     }
+
     /**
-     * Get ActivityId
+     * Get ActivityId.
      *
-     * @return integer $ActivityId
+     * @return int $ActivityId
      */
     public function getActivityId()
     {
-        if (! is_object($this->getActivity())) {
+        if (!is_object($this->getActivity())) {
             return null;
         }
 
         return $this->getActivity()->getId();
     }
+
     /**
-     * Set ticket
+     * Set ticket.
      *
      * @param string $ticket
+     *
      * @return Entry
      */
     public function setTicket($ticket)
     {
         $this->ticket = str_replace(' ', '', $ticket);
+
         return $this;
     }
+
     /**
-     * Get ticket
+     * Get ticket.
      *
      * @return string $ticket
      */
@@ -248,19 +267,23 @@ class Entry extends Base
     {
         return $this->ticket;
     }
+
     /**
-     * Set Jira WorklogId
+     * Set Jira WorklogId.
      *
      * @param int $worklog_id
+     *
      * @return Entry
      */
     public function setWorklogId($worklog_id)
     {
         $this->worklog_id = $worklog_id;
+
         return $this;
     }
+
     /**
-     * Get Jira WorklogId
+     * Get Jira WorklogId.
      *
      * @return int $worklog_id
      */
@@ -268,19 +291,23 @@ class Entry extends Base
     {
         return $this->worklog_id;
     }
+
     /**
-     * Set description
+     * Set description.
      *
      * @param string $description
+     *
      * @return Entry
      */
     public function setDescription($description)
     {
         $this->description = $description;
+
         return $this;
     }
+
     /**
-     * Get description
+     * Get description.
      *
      * @return string $description
      */
@@ -288,10 +315,12 @@ class Entry extends Base
     {
         return $this->description;
     }
+
     /**
-     * Set day
+     * Set day.
      *
      * @param string $day
+     *
      * @return Entry
      */
     public function setDay($day)
@@ -301,10 +330,12 @@ class Entry extends Base
         }
 
         $this->day = $day;
+
         return $this;
     }
+
     /**
-     * Get day
+     * Get day.
      *
      * @return DateTime $day
      */
@@ -312,26 +343,30 @@ class Entry extends Base
     {
         return $this->day;
     }
+
     /**
-     * Set start
+     * Set start.
      *
      * @param string $start
+     *
      * @return Entry
      */
     public function setStart($start)
     {
         if (!$start instanceof DateTime) {
-            $start = new DateTime($start);
+            $start                = new DateTime($start);
             [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $start->setDate($year, $month, $day);
         }
 
         $this->start = $start;
         $this->alignStartAndEnd();
+
         return $this;
     }
+
     /**
-     * Get start
+     * Get start.
      *
      * @return DateTime $start
      */
@@ -339,16 +374,18 @@ class Entry extends Base
     {
         return $this->start;
     }
+
     /**
-     * Set end
+     * Set end.
      *
      * @param string $end
+     *
      * @return Entry
      */
     public function setEnd($end)
     {
         if (!$end instanceof DateTime) {
-            $end = new DateTime($end);
+            $end                  = new DateTime($end);
             [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $end->setDate($year, $month, $day);
         }
@@ -358,16 +395,17 @@ class Entry extends Base
 
         return $this;
     }
+
     /**
-     *  Make sure end is greater or equal start
+     *  Make sure end is greater or equal start.
      */
     protected function alignStartAndEnd()
     {
-        if (! $this->start instanceof DateTime) {
+        if (!$this->start instanceof DateTime) {
             return $this;
         }
 
-        if (! $this->end instanceof DateTime) {
+        if (!$this->end instanceof DateTime) {
             return $this;
         }
 
@@ -377,8 +415,9 @@ class Entry extends Base
 
         return $this;
     }
+
     /**
-     * Get end
+     * Get end.
      *
      * @return DateTime $end
      */
@@ -386,26 +425,31 @@ class Entry extends Base
     {
         return $this->end;
     }
+
     /**
-     * Set duration
+     * Set duration.
      *
-     * @param integer $duration
+     * @param int $duration
+     *
      * @return Entry
      */
     public function setDuration($duration)
     {
         $this->duration = $duration;
+
         return $this;
     }
+
     /**
-     * Get duration
+     * Get duration.
      *
-     * @return integer $duration
+     * @return int $duration
      */
     public function getDuration()
     {
         return $this->duration;
     }
+
     /**
      * Returns duration as formatted hours:minutes string.
      *
@@ -414,24 +458,26 @@ class Entry extends Base
     public function getDurationString()
     {
         $nMinutes = $this->getDuration();
-        $nHours = floor($nMinutes / 60);
+        $nHours   = floor($nMinutes / 60);
         $nMinutes = $nMinutes % 60;
 
         return sprintf('%02d:%02d', $nHours, $nMinutes);
     }
+
     /**
-     * Set project
-     *
+     * Set project.
      *
      * @return Entry
      */
     public function setProject(Project $project)
     {
         $this->project = $project;
+
         return $this;
     }
+
     /**
-     * Get project
+     * Get project.
      *
      * @return Project $project
      */
@@ -439,18 +485,21 @@ class Entry extends Base
     {
         return $this->project;
     }
+
     /**
-     * Set user
+     * Set user.
      *
      * @return Entry
      */
     public function setUser(User $user)
     {
         $this->user = $user;
+
         return $this;
     }
+
     /**
-     * Get user
+     * Get user.
      *
      * @return User $user
      */
@@ -458,18 +507,21 @@ class Entry extends Base
     {
         return $this->user;
     }
+
     /**
-     * Set account
+     * Set account.
      *
      * @return Entry
      */
     public function setAccount(Account $account)
     {
         $this->account = $account;
+
         return $this;
     }
+
     /**
-     * Get account
+     * Get account.
      *
      * @return Account $account
      */
@@ -477,18 +529,21 @@ class Entry extends Base
     {
         return $this->account;
     }
+
     /**
-     * Set activity
+     * Set activity.
      *
      * @return Entry
      */
     public function setActivity(Activity $activity)
     {
         $this->activity = $activity;
+
         return $this;
     }
+
     /**
-     * Get activity
+     * Get activity.
      *
      * @return Activity $activity
      */
@@ -498,7 +553,7 @@ class Entry extends Base
     }
 
     /**
-     * Get array representation of entry object
+     * Get array representation of entry object.
      *
      * @return mixed[]
      */
@@ -535,17 +590,19 @@ class Entry extends Base
     }
 
     /**
-     * Calculate difference between start and end
+     * Calculate difference between start and end.
      *
      * @param int $factor
-     * @return Entry
+     *
      * @throws Exception
+     *
+     * @return Entry
      */
     public function calcDuration($factor = 1)
     {
         if ($this->getStart() && $this->getEnd()) {
             $start = new DateTime($this->getStart()->format('H:i'));
-            $end = new DateTime($this->getEnd()->format('H:i'));
+            $end   = new DateTime($this->getEnd()->format('H:i'));
 
             $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
             $this->setDuration(round($difference));
@@ -553,20 +610,24 @@ class Entry extends Base
             $this->setDuration(0);
         }
         $this->validateDuration();
+
         return $this;
     }
+
     /**
-     * Set customer
+     * Set customer.
      *
      * @return Entry
      */
     public function setCustomer(Customer $customer)
     {
         $this->customer = $customer;
+
         return $this;
     }
+
     /**
-     * Get customer
+     * Get customer.
      *
      * @return Customer
      */
@@ -574,21 +635,26 @@ class Entry extends Base
     {
         return $this->customer;
     }
+
     /**
-     * Set class
+     * Set class.
      *
-     * @param integer class
+     * @param int class
+     * @param mixed $class
+     *
      * @return Entry
      */
     public function setClass($class)
     {
         $this->class = (int) $class;
+
         return $this;
     }
+
     /**
-     * Get class
+     * Get class.
      *
-     * @return integer $class
+     * @return int $class
      */
     public function getClass()
     {
@@ -641,6 +707,7 @@ class Entry extends Base
      * Sets the original ticket name.
      *
      * @param string $strTicket
+     *
      * @return $this
      */
     public function setInternalJiraTicketOriginalKey($strTicket)
@@ -649,6 +716,7 @@ class Entry extends Base
 
         return $this;
     }
+
     /**
      * Returns the post data for the internal JIRA ticket creation.
      *
@@ -656,34 +724,37 @@ class Entry extends Base
      */
     public function getPostDataForInternalJiraTicketCreation()
     {
-       return array(
-            'fields' => array (
-                'project'     =>  array(
+        return [
+            'fields' => [
+                'project' => [
                     'key' => $this->getProject()->getInternalJiraProjectKey(),
-                ),
+                ],
                 'summary'     => $this->getTicket(),
                 'description' => $this->getTicketSystemIssueLink(),
-                'issuetype'   => array(
+                'issuetype'   => [
                     'name' => 'Task',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
+
     /**
-     * @return boolean
+     * @return bool
      */
     public function getSyncedToTicketsystem()
     {
         return $this->syncedToTicketsystem;
     }
+
     /**
-     * @param boolean $syncedToTicketsystem
+     * @param bool $syncedToTicketsystem
      *
      * @return $this
      */
     public function setSyncedToTicketsystem($syncedToTicketsystem)
     {
         $this->syncedToTicketsystem = $syncedToTicketsystem;
+
         return $this;
     }
 }

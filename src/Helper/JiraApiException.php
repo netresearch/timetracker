@@ -1,31 +1,32 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Helper;
 
 use Exception;
+
 /**
- * Class JiraApiException
- * @package App\Helper
+ * Class JiraApiException.
  */
 class JiraApiException extends Exception
 {
     /**
      * JiraApiException constructor.
+     *
      * @param $message
      * @param $code
      * @param null $redirectUrl
      */
     public function __construct($message, $code, protected $redirectUrl = null)
     {
-        $message = 'JiraApi: '. $message;
+        $message = 'JiraApi: '.$message;
         parent::__construct($message, $code, null);
     }
 
     /**
-     * @return String
+     * @return string
      */
     public function getRedirectUrl()
     {

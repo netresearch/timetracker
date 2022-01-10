@@ -22,49 +22,52 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * Class DefaultController
- * @package App\Controller
+ * Class DefaultController.
  */
 class DefaultController extends BaseController
 {
     /**
-     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
      * @throws ReflectionException
+     *
+     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
     /**
-     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
      * @throws ReflectionException
+     *
+     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
     #[Route(path: '/', name: '_start')]
-    public function indexAction(Kernel $kernel) : Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
+    public function indexAction(Kernel $kernel): Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         if (!$this->checkLogin()) {
             return $this->login();
         }
-        $userId = (int) $this->getUserId();
+        $userId   = (int) $this->getUserId();
         $doctrine = $this->doctrine;
-        $user = $doctrine->getRepository('App:User')->find($userId);
+        $user     = $doctrine->getRepository('App:User')->find($userId);
         $settings = $user->getSettings();
         // Send customers to the frontend for caching
         $customers = $doctrine
             ->getRepository('App:Customer')
-            ->getCustomersByUser($userId);
+            ->getCustomersByUser($userId)
+        ;
         // Send the customer-projects-structure to the frontend for caching
         /* @var $projectRepo \App\Repository\ProjectRepository */
         $projectRepo = $doctrine->getRepository('App:Project');
-        $projects = $projectRepo->getProjectStructure($userId, $customers);
-        return $this->render('index.html.twig', array(
-            'globalConfig'  => [
-                'logo_url'              => $this->params->get('app.logo_url'),
-                'monthly_overview_url'  => $this->params->get('app.monthly_overview_url'),
-                'header_url'            => $this->params->get('app.header_url'),
+        $projects    = $projectRepo->getProjectStructure($userId, $customers);
+
+        return $this->render('index.html.twig', [
+            'globalConfig' => [
+                'logo_url'             => $this->params->get('app.logo_url'),
+                'monthly_overview_url' => $this->params->get('app.monthly_overview_url'),
+                'header_url'           => $this->params->get('app.header_url'),
             ],
-            'environment'   => $kernel->getEnvironment(),
-            'customers'     => $customers,
-            'projects'      => $projects,
-            'settings'      => $settings,
-            'locale'        => $settings['locale']
-        ));
+            'environment' => $kernel->getEnvironment(),
+            'customers'   => $customers,
+            'projects'    => $projects,
+            'settings'    => $settings,
+            'locale'      => $settings['locale'],
+        ]);
     }
 
     /**
@@ -74,14 +77,15 @@ class DefaultController extends BaseController
      * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
     #[Route(path: '/login', name: '_login')]
-    public function loginAction(LoggerInterface $logger) : Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
+    public function loginAction(LoggerInterface $logger): Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         $client = null;
-        if ($this->request->getMethod() != 'POST') {
-            return $this->render('login.html.twig',
-                array(
-                    'locale'  => 'en',
-                )
+        if ('POST' != $this->request->getMethod()) {
+            return $this->render(
+                'login.html.twig',
+                [
+                    'locale' => 'en',
+                ]
             );
         }
         $username = $this->request->get('username');
@@ -90,9 +94,7 @@ class DefaultController extends BaseController
         $ldap = false;
 
         try {
-
             if ($ldap) {
-
                 $client = new LdapClient($logger);
 
                 $client->setHost($this->params->get('ldap_host'))
@@ -104,15 +106,17 @@ class DefaultController extends BaseController
                     ->setUserPass($password)
                     ->setUseSSL($this->params->get('ldap_usessl'))
                     ->setUserNameField($this->params->get('ldap_usernamefield'))
-                    ->login();
+                    ->login()
+                ;
             }
 
             $user = $this->doctrine
                 ->getRepository('App:User')
-                ->findOneByUsername($username);
+                ->findOneByUsername($username)
+            ;
 
             if (!$user) {
-                if ($ldap && !(boolean) $this->params->get('ldap_create_user')) {
+                if ($ldap && !(bool) $this->params->get('ldap_create_user')) {
                     throw new Exception('No equivalent timetracker user could be found.');
                 }
 
@@ -123,17 +127,19 @@ class DefaultController extends BaseController
                     ->setShowEmptyLine('0')
                     ->setSuggestTime('1')
                     ->setShowFuture('1')
-                    ->setLocale('de');
+                    ->setLocale('de')
+                ;
 
                 if ($ldap && !empty($client->getTeams())) {
                     /** @var TeamRepository $teamRepo */
                     $teamRepo = $this->doctrine
-                        ->getRepository('App:Team');
+                        ->getRepository('App:Team')
+                    ;
 
                     foreach ($client->getTeams() as $team_name) {
                         /** @var Team $team */
                         $team = $this->repository->findOneBy([
-                            'name' => $team_name
+                            'name' => $team_name,
                         ]);
 
                         if ($team) {
@@ -146,31 +152,31 @@ class DefaultController extends BaseController
                 $em->persist($user);
                 $em->flush();
             }
-
         } catch (Exception $e) {
-
             $this->session->getFlashBag()->add(
-                'error', $this->t($e->getMessage())
+                'error',
+                $this->t($e->getMessage())
             );
-            return $this->render('login.html.twig', array(
-                'login'     => false,
-                'message'   => $this->t($e->getMessage()),
-                'username'  => $username,
-                'locale'    => 'en',
-            ));
 
+            return $this->render('login.html.twig', [
+                'login'    => false,
+                'message'  => $this->t($e->getMessage()),
+                'username' => $username,
+                'locale'   => 'en',
+            ]);
         }
 
         return $this->setLoggedIn($user);
     }
 
     #[Route(path: '/logout', name: '_logout')]
-    public function logoutAction() : Response|RedirectResponse
+    public function logoutAction(): Response|RedirectResponse
     {
         if (!$this->checkLogin()) {
             return $this->login();
         }
         $this->setLoggedOut();
+
         return $this->redirectToRoute('_start');
     }
 
@@ -178,37 +184,38 @@ class DefaultController extends BaseController
      * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getTimeSummary', name: 'time_summary')]
-    public function getTimeSummaryAction() : Response|RedirectResponse
+    public function getTimeSummaryAction(): Response|RedirectResponse
     {
         if (!$this->checkLogin()) {
             return $this->login();
         }
         $userId = (int) $this->getUserId();
-        $today = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
-        $week = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
-        $month = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
-        $data = array(
+        $today  = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
+        $week   = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
+        $month  = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
+        $data   = [
             'today' => $today,
             'week'  => $week,
             'month' => $month,
-        );
+        ];
+
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
-     * Retrieves a summary of an entry (project total/own, ticket total/own)
+     * Retrieves a summary of an entry (project total/own, ticket total/own).
      *
      * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getSummary', name: '_getSummary')]
-    public function getSummaryAction() : Response|RedirectResponse
+    public function getSummaryAction(): Response|RedirectResponse
     {
         if (!$this->checkLogin()) {
             return $this->login();
         }
         $userId = (int) $this->getUserId();
-        $data = array(
-            'customer' => array(
+        $data   = [
+            'customer' => [
                 'scope'      => 'customer',
                 'name'       => '',
                 'entries'    => 0,
@@ -216,8 +223,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-            'project' => array(
+            ],
+            'project' => [
                 'scope'      => 'project',
                 'name'       => '',
                 'entries'    => 0,
@@ -225,8 +232,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-            'activity' => array(
+            ],
+            'activity' => [
                 'scope'      => 'activity',
                 'name'       => '',
                 'entries'    => 0,
@@ -234,8 +241,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-            'ticket' => array(
+            ],
+            'ticket' => [
                 'scope'      => 'ticket',
                 'name'       => '',
                 'entries'    => 0,
@@ -243,8 +250,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-        );
+            ],
+        ];
         // early exit, if POST parameter for current entry is not given
         $entryId = $this->request->get('id');
         if (!$entryId) {
@@ -256,11 +263,12 @@ class DefaultController extends BaseController
             $data['project']['quota'] =
                 TimeHelper::formatQuota(
                     $data['project']['total'],
-                    $data['project']['estimation']);
+                    $data['project']['estimation']
+                );
         }
+
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
-
 
     /**
      * Retrieves all current entries of the user logged in.
@@ -269,15 +277,16 @@ class DefaultController extends BaseController
      */
     #[Route(path: '/getData/days/{days}', name: '_getDataDays')]
     #[Route(path: '/getData', name: '_getData')]
-    public function getDataAction(int $days = 3) : Response|RedirectResponse
+    public function getDataAction(int $days = 3): Response|RedirectResponse
     {
         if (!$this->checkLogin()) {
             return $this->login();
         }
         $userId = (int) $this->getUserId();
-        $user = $this->doctrine
+        $user   = $this->doctrine
             ->getRepository('App:User')
-            ->find($userId);
+            ->find($userId)
+        ;
         //$days = $this->request->attributes->has('days') ? (int) $this->request->attributes->get('days') : 3;
         $data = $this->doctrine->getRepository('App:Entry')->getEntriesByUser($userId, $days, $user->getShowFuture());
 
@@ -293,13 +302,14 @@ class DefaultController extends BaseController
      * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getCustomers', name: '_getCustomers')]
-    public function getCustomersAction() : Response|RedirectResponse
+    public function getCustomersAction(): Response|RedirectResponse
     {
         if (!$this->checkLogin()) {
             return $this->login();
         }
         $userId = (int) $this->getUserId();
-        $data = $this->doctrine->getRepository('App:Customer')->getCustomersByUser($userId);
+        $data   = $this->doctrine->getRepository('App:Customer')->getCustomersByUser($userId);
+
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
@@ -314,6 +324,7 @@ class DefaultController extends BaseController
         } else {
             $data = $this->doctrine->getRepository('App:User')->getUsers($this->getUserId());
         }
+
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
@@ -326,30 +337,35 @@ class DefaultController extends BaseController
         if ($this->request->get('project')) {
             $project = $this->doctrine
                 ->getRepository('App:Project')
-                ->find($this->request->get('project'));
+                ->find($this->request->get('project'))
+            ;
 
-            return new Response(json_encode(array('customer' => $project->getCustomer()->getId()), JSON_THROW_ON_ERROR));
+            return new Response(json_encode(['customer' => $project->getCustomer()->getId()], JSON_THROW_ON_ERROR));
         }
-        return new Response(json_encode(array('customer' => 0)));
+
+        return new Response(json_encode(['customer' => 0]));
     }
 
     /**
-     * @return Response
      * @throws ReflectionException
+     *
+     * @return Response
      */
     #[Route(path: '/getProjects', name: '_getProjects')]
     public function getProjectsAction()
     {
         $customerId = (int) $this->request->query->get('customer');
-        $userId = (int) $this->getUserId();
-        $data = $this->doctrine->getRepository('App:Project')->getProjectsByUser($userId, $customerId);
+        $userId     = (int) $this->getUserId();
+        $data       = $this->doctrine->getRepository('App:Project')->getProjectsByUser($userId, $customerId);
+
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
     /**
-     * @return Response
      * @throws \Doctrine\DBAL\Exception
      * @throws ReflectionException
+     *
+     * @return Response
      */
     #[Route(path: '/getAllProjects', name: '_getAllProjects')]
     public function getAllProjectsAction()
@@ -364,6 +380,7 @@ class DefaultController extends BaseController
         foreach ($result as $project) {
             $data[] = ['project' => $project->toArray()];
         }
+
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
@@ -374,6 +391,7 @@ class DefaultController extends BaseController
     public function getActivitiesAction()
     {
         $data = $this->doctrine->getRepository('App:Activity')->getActivities();
+
         return new Response(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
@@ -385,7 +403,9 @@ class DefaultController extends BaseController
     {
         $holidays = $this->doctrine
             ->getRepository('App:Holiday')
-            ->findByMonth(date("Y"), date("m"));
+            ->findByMonth(date('Y'), date('m'))
+        ;
+
         return new Response(json_encode($holidays, JSON_THROW_ON_ERROR));
     }
 
@@ -394,27 +414,30 @@ class DefaultController extends BaseController
      * @throws Exception
      */
     #[Route(path: '/export/{days}', name: '_export')]
-    public function exportAction(int $days = 10000) : Response
+    public function exportAction(int $days = 10000): Response
     {
         //$days = $this->request->attributes->has('days') ? (int) $this->request->attributes->get('days') : 10000;
         $user = $this->doctrine
             ->getRepository('App:User')
-            ->find($this->getUserId());
+            ->find($this->getUserId())
+        ;
         $entries = $this->doctrine
             ->getRepository('App:Entry')
-            ->findByRecentDaysOfUser($user, $days);
+            ->findByRecentDaysOfUser($user, $days)
+        ;
         $content = $this->get('templating')->render(
             'App:Default:export.csv.twig',
-            array(
+            [
                 'entries' => $entries,
                 'labels'  => null,
-            )
+            ]
         );
-        $filename = strtolower(str_replace(' ', '-', $user->getUsername())) . '.csv';
+        $filename = strtolower(str_replace(' ', '-', $user->getUsername())).'.csv';
         $response = new Response();
         $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
-        $response->headers->set('Content-disposition', 'attachment;filename=' . $filename);
-        $response->setContent(chr(239) . chr(187) . chr(191) . $content);
+        $response->headers->set('Content-disposition', 'attachment;filename='.$filename);
+        $response->setContent(chr(239).chr(187).chr(191).$content);
+
         return $response;
     }
 
@@ -429,17 +452,20 @@ class DefaultController extends BaseController
         /** @var User $user */
         $user = $this->doctrine
             ->getRepository('App:User')
-            ->find($this->getUserId());
+            ->find($this->getUserId())
+        ;
 
         /** @var TicketSystem $ticketSystem */
         $ticketSystem = $this->doctrine
             ->getRepository('App:Ticketsystem')
-            ->find($this->request->get('tsid'));
+            ->find($this->request->get('tsid'))
+        ;
 
         try {
             $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->doctrine, $this->container->get('router'));
             $jiraOAuthApi->fetchOAuthAccessToken($this->request->get('oauth_token'), $this->request->get('oauth_verifier'));
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
+
             return $this->redirectToRoute('_start');
         } catch (JiraApiException $e) {
             return new Response($e->getMessage());
@@ -447,7 +473,7 @@ class DefaultController extends BaseController
     }
 
     /**
-     * Get a list of information (activities, times, users) about a ticket for time evaluation
+     * Get a list of information (activities, times, users) about a ticket for time evaluation.
      *
      * @return object JSON data with time information about activities, total time and users
      */
@@ -468,32 +494,33 @@ class DefaultController extends BaseController
         )->getUsersWithTime($ticket);
         if (is_null($ticket) || empty($users)) {
             return new Response(
-                'There is no information available about this ticket.', 404
+                'There is no information available about this ticket.',
+                404
             );
         }
         $time['total_time']['time'] = 0;
         foreach ($activities as $activity) {
-
             $total = $activity['total_time'];
-            $key = $activity['name'] ?? 'No activity';
+            $key   = $activity['name'] ?? 'No activity';
 
             $time['activities'][$key]['seconds'] = (int) $total * 60;
-            $time['activities'][$key]['time'] = TimeHelper::minutes2readable(
+            $time['activities'][$key]['time']    = TimeHelper::minutes2readable(
                 $total
             );
         }
         foreach ($users as $user) {
             $time['total_time']['time'] += (int) $user['total_time'];
-            $key = $user['username'];
+            $key                            = $user['username'];
             $time['users'][$key]['seconds'] = (int) $user['total_time'] * 60;
-            $time['users'][$key]['time'] = TimeHelper::minutes2readable(
+            $time['users'][$key]['time']    = TimeHelper::minutes2readable(
                 $user['total_time']
             );
         }
         $time['total_time']['seconds'] = (int) $time['total_time']['time'] * 60;
-        $time['total_time']['time'] = TimeHelper::minutes2readable(
+        $time['total_time']['time']    = TimeHelper::minutes2readable(
             $time['total_time']['time']
         );
+
         return new Response(
             json_encode($time, JSON_THROW_ON_ERROR),
             200,
@@ -510,13 +537,16 @@ class DefaultController extends BaseController
     public function getTicketTimeSummaryJsAction()
     {
         $ttUrl = $this->generateUrl(
-            '_start', [], UrlGeneratorInterface::ABSOLUTE_URL
+            '_start',
+            [],
+            UrlGeneratorInterface::ABSOLUTE_URL
         );
         $content = file_get_contents(
             $this->params->get('kernel.root_dir')
-            . '/../web/scripts/timeSummaryForJira.js'
+            .'/../web/scripts/timeSummaryForJira.js'
         );
         $content = str_replace('https://timetracker/', $ttUrl, $content);
+
         return new Response(
             $content,
             200,

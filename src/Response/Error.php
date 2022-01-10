@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Response;
@@ -8,8 +8,7 @@ namespace App\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
- * Class Error
- * @package App\Response
+ * Class Error.
  */
 class Error extends JsonResponse
 {
@@ -17,7 +16,7 @@ class Error extends JsonResponse
      * Error constructor.
      *
      * @param string      $errorMessage
-     * @param integer     $statusCode
+     * @param int         $statusCode
      * @param string|null $forwardUrl
      */
     public function __construct($errorMessage, $statusCode, $forwardUrl = null)

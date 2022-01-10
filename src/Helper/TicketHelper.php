@@ -1,22 +1,20 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Helper;
 
 /**
- * TicketHelper provides common methods for all ticket systems
+ * TicketHelper provides common methods for all ticket systems.
  */
 class TicketHelper
 {
-    /**
-     *
-     */
-    public final const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
+    final public const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
 
     /**
      * @param $ticket
+     *
      * @return bool
      */
     public static function checkFormat($ticket)
@@ -26,14 +24,13 @@ class TicketHelper
 
     /**
      * @param $ticket
-     * @return null
      */
     public static function getPrefix($ticket)
     {
-        if (! preg_match(self::TICKET_REGEXP, $ticket, $matches))
+        if (!preg_match(self::TICKET_REGEXP, $ticket, $matches)) {
             return null;
+        }
 
         return $matches[1];
     }
 }
-

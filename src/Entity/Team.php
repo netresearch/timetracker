@@ -30,7 +30,7 @@ class Team
     protected $users;
 
     /**
-     * Set id
+     * Set id.
      *
      * @param string $id
      *
@@ -39,19 +39,22 @@ class Team
     public function setId($id)
     {
         $this->id = $id;
+
         return $this;
     }
+
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId()
     {
         return $this->id;
     }
+
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -60,10 +63,12 @@ class Team
     public function setName($name)
     {
         $this->name = $name;
+
         return $this;
     }
+
     /**
-     * Get name
+     * Get name.
      *
      * @return string $name
      */
@@ -71,19 +76,21 @@ class Team
     {
         return $this->name;
     }
+
     /**
-     * Set lead user
-     *
+     * Set lead user.
      *
      * @return $this
      */
     public function setLeadUser(User $leadUser)
     {
         $this->leadUser = $leadUser;
+
         return $this;
     }
+
     /**
-     * Get lead user
+     * Get lead user.
      *
      * @return User $leadUser
      */
@@ -91,32 +98,37 @@ class Team
     {
         return $this->leadUser;
     }
+
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
         $this->customers = new ArrayCollection();
     }
+
     /**
-     * Add customers
+     * Add customers.
      *
      * @return Team
      */
     public function addCustomer(Customer $customers)
     {
         $this->customers[] = $customers;
+
         return $this;
     }
+
     /**
-     * Remove customers
+     * Remove customers.
      */
     public function removeCustomer(Customer $customers)
     {
         $this->customers->removeElement($customers);
     }
+
     /**
-     * Get customers
+     * Get customers.
      *
      * @return Collection
      */

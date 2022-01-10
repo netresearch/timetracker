@@ -1,16 +1,15 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\EventListener;
 
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
-use \Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
- * Class PreExecute
- * @package App\EventListener
+ * Class PreExecute.
  */
 class PreExecute
 {
@@ -28,4 +27,3 @@ class PreExecute
         }
     }
 }
-

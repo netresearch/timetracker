@@ -1,10 +1,9 @@
 <?php
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 /**
- *
  * @todo create own entity for certificate
  * @todo create own entity for tokens
  */
@@ -21,12 +20,10 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
-
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\UserTicketsystem;
-
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
@@ -46,7 +43,6 @@ class JiraOAuthApi
     protected $oAuthAuthUrl = '/plugins/servlet/oauth/authorize';
     /** @var Client[] */
     protected $clients;
-
 
     /**
      * JiraOAuthApi constructor.
@@ -75,8 +71,10 @@ class JiraOAuthApi
      * After receiving the OAuth request token, the OAuth access token be retrieved.
      *
      * @param string $oAuthRequestToken OAuth request token
-     * @return Client
+     *
      * @throws JiraApiException
+     *
+     * @return Client
      */
     protected function getFetchAccessTokenClient($oAuthRequestToken)
     {
@@ -88,8 +86,10 @@ class JiraOAuthApi
      *
      * @param string $oAuthToken
      * @param string $oAuthTokenSecret
-     * @return Client
+     *
      * @throws JiraApiException
+     *
+     * @return Client
      */
     protected function getClient($oAuthToken = null, $oAuthTokenSecret = null)
     {
@@ -101,23 +101,23 @@ class JiraOAuthApi
             $oAuthToken = $this->getToken();
         }
 
-        $key = (string) $oAuthToken . (string) $oAuthTokenSecret;
+        $key = (string) $oAuthToken.(string) $oAuthTokenSecret;
 
         if (isset($this->clients[$key])) {
             return $this->clients[$key];
         }
 
         $handler = new CurlHandler();
-        $stack = HandlerStack::create($handler);
+        $stack   = HandlerStack::create($handler);
 
         $middleware = new Oauth1([
-            'consumer_key'     => $this->getOAuthConsumerKey(),
-            'consumer_secret'  => $this->getOAuthConsumerSecret(),
-            'token_secret'     => $oAuthTokenSecret,
-            'token'            => $oAuthToken,
-            'request_method'   => Oauth1::REQUEST_METHOD_QUERY,
-            'signature_method' => Oauth1::SIGNATURE_METHOD_RSA,
-            'private_key_file' => $this->getPrivateKeyFile(),
+            'consumer_key'           => $this->getOAuthConsumerKey(),
+            'consumer_secret'        => $this->getOAuthConsumerSecret(),
+            'token_secret'           => $oAuthTokenSecret,
+            'token'                  => $oAuthToken,
+            'request_method'         => Oauth1::REQUEST_METHOD_QUERY,
+            'signature_method'       => Oauth1::SIGNATURE_METHOD_RSA,
+            'private_key_file'       => $this->getPrivateKeyFile(),
             'private_key_passphrase' => '',
         ]);
         $stack->push($middleware);
@@ -134,8 +134,9 @@ class JiraOAuthApi
     /**
      * Returns path to private key file.
      *
-     * @return string Path to certificate file
      * @throws JiraApiException
+     *
+     * @return string Path to certificate file
      */
     protected function getPrivateKeyFile()
     {
@@ -151,16 +152,14 @@ class JiraOAuthApi
             return $this->getTempKeyFile($certificate);
         }
 
-        throw new JiraApiException(
-            'Invalid certificate, fix your certificate information in ticket system settings.',
-            1_541_160_391
-        );
+        throw new JiraApiException('Invalid certificate, fix your certificate information in ticket system settings.', 1_541_160_391);
     }
 
     /**
      * Returns temp key file name.
      *
      * @param string $certificate Private key
+     *
      * @return string
      */
     protected function getTempKeyFile($certificate)
@@ -182,22 +181,23 @@ class JiraOAuthApi
     }
 
     /**
-     * Fetches and Stores Jira access token
+     * Fetches and Stores Jira access token.
      *
      * @param string $oAuthRequestToken The OAuth request token retrieved after user granted access for this app
      * @param string $oAuthVerifier     The OAuth verifier retrieved after user granted access for this app
+     *
      * @throws JiraApiException
      */
     public function fetchOAuthAccessToken($oAuthRequestToken, $oAuthVerifier)
     {
         try {
-            if ($oAuthVerifier == 'denied') {
+            if ('denied' == $oAuthVerifier) {
                 $this->deleteTokens();
             } else {
                 //$response = $this->oAuth->getAccessToken($this->getOAuthAccessUrl(), null, null, 'POST');
 
                 $response = $this->getFetchAccessTokenClient($oAuthRequestToken)->post(
-                    $this->getOAuthAccessUrl() . '?oauth_verifier=' . urlencode($oAuthVerifier)
+                    $this->getOAuthAccessUrl().'?oauth_verifier='.urlencode($oAuthVerifier)
                 );
                 $this->extractTokens($response);
             }
@@ -208,8 +208,6 @@ class JiraOAuthApi
 
     /**
      * Delete stored tokens.
-     *
-     * @return void
      */
     protected function deleteTokens()
     {
@@ -217,16 +215,17 @@ class JiraOAuthApi
     }
 
     /**
-     * Fetches request token
+     * Fetches request token.
+     *
+     * @throws JiraApiException
      *
      * @return string URL to Jira where User can allow / deny access
-     * @throws JiraApiException
      */
     protected function fetchOAuthRequestToken()
     {
         try {
             $response = $this->getFetchRequestTokenClient()->post(
-                $this->getOAuthRequestUrl() . '?oauth_callback=' . urlencode($this->getOAuthCallbackUrl())
+                $this->getOAuthRequestUrl().'?oauth_callback='.urlencode($this->getOAuthCallbackUrl())
             );
 
             $token = $this->extractTokens($response);
@@ -238,28 +237,26 @@ class JiraOAuthApi
     }
 
     /**
-     * @return string[]
      * @throws JiraApiException
+     *
+     * @return string[]
      */
     protected function extractTokens(ResponseInterface $response)
     {
         $body = (string) $response->getBody();
 
-        $token = array();
+        $token = [];
         parse_str($body, $token);
 
         if (empty($token)) {
-            throw new JiraApiException(
-                "An unknown error occurred while requesting OAuth token.",
-                1_541_147_716
-            );
+            throw new JiraApiException('An unknown error occurred while requesting OAuth token.', 1_541_147_716);
         }
 
         return $this->storeToken($token['oauth_token_secret'], $token['oauth_token']);
     }
 
     /**
-     *  Updates Jira work log entries to all user entries and the set ticket system
+     *  Updates Jira work log entries to all user entries and the set ticket system.
      */
     public function updateAllEntriesJiraWorkLogs()
     {
@@ -268,9 +265,9 @@ class JiraOAuthApi
 
     /**
      * Updates Jira work log entries to a set number of user entries and the set ticket system
-     * (entries ordered by date, time desc)
+     * (entries ordered by date, time desc).
      *
-     * @param integer $entryLimit  (optional) max number of entries which should be updated (null: no limit)
+     * @param int $entryLimit (optional) max number of entries which should be updated (null: no limit)
      */
     public function updateEntriesJiraWorkLogsLimited($entryLimit = null)
     {
@@ -278,8 +275,8 @@ class JiraOAuthApi
             return;
         }
 
-        $em = $this->doctrine->getManager();
-        $repo = $this->doctrine->getRepository('App:Entry');
+        $em      = $this->doctrine->getManager();
+        $repo    = $this->doctrine->getRepository('App:Entry');
         $entries = $repo->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
 
         foreach ($entries as $entry) {
@@ -287,7 +284,6 @@ class JiraOAuthApi
                 $this->updateEntryJiraWorkLog($entry);
                 $em->persist($entry);
             } catch (Exception) {
-
             } finally {
                 $em->flush();
             }
@@ -334,15 +330,15 @@ class JiraOAuthApi
 
         if ($entry->getWorklogId()) {
             $workLog = $this->put(
-                sprintf("issue/%s/worklog/%d", $sTicket, $entry->getWorklogId()),
+                sprintf('issue/%s/worklog/%d', $sTicket, $entry->getWorklogId()),
                 $arData
             );
         } else {
-            $workLog = $this->post(sprintf("issue/%s/worklog", $sTicket), $arData);
+            $workLog = $this->post(sprintf('issue/%s/worklog', $sTicket), $arData);
         }
 
         $entry->setWorklogId($workLog->id);
-        $entry->setSyncedToTicketsystem(TRUE);
+        $entry->setSyncedToTicketsystem(true);
     }
 
     /**
@@ -367,27 +363,29 @@ class JiraOAuthApi
 
         try {
             $this->delete(sprintf(
-                "issue/%s/worklog/%d",
+                'issue/%s/worklog/%d',
                 $sTicket,
                 $entry->getWorklogId()
             ));
 
-            $entry->setWorklogId(NULL);
-        } catch (JiraApiInvalidResourceException) {}
+            $entry->setWorklogId(null);
+        } catch (JiraApiInvalidResourceException) {
+        }
     }
 
     /**
-     * @return string
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     *
+     * @return string
      */
     public function createTicket(Entry $entry)
     {
         return $this->post(
-            "issue/",
+            'issue/',
             [
                 'fields' => [
-                    'project'     => [
+                    'project' => [
                         'key' => $entry->getProject()->getInternalJiraProjectKey(),
                     ],
                     'summary'     => $entry->getTicket(),
@@ -404,15 +402,17 @@ class JiraOAuthApi
      * @param string $jql
      * @param string $fields
      * @param int    $limit
-     * @return stdClass
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     *
+     * @return stdClass
      */
     public function searchTicket($jql, $fields, $limit = 1)
     {
         //we use POST to support very large queries
         return $this->post(
-            "search/",
+            'search/',
             [
                 'jql'        => $jql,
                 'fields'     => $fields,
@@ -422,36 +422,42 @@ class JiraOAuthApi
     }
 
     /**
-     * Checks existence of a ticket in Jira
+     * Checks existence of a ticket in Jira.
      *
      * @param string $sTicket
-     * @return bool
+     *
      * @throws JiraApiException
+     *
+     * @return bool
      */
     public function doesTicketExist($sTicket)
     {
-        return $this->doesResourceExist(sprintf("issue/%s", $sTicket));
+        return $this->doesResourceExist(sprintf('issue/%s', $sTicket));
     }
 
     /**
-     * Checks existence of a work log entry in Jira
+     * Checks existence of a work log entry in Jira.
      *
-     * @param string  $sTicket
-     * @param integer $workLogId
-     * @return bool
+     * @param string $sTicket
+     * @param int    $workLogId
+     *
      * @throws JiraApiException
+     *
+     * @return bool
      */
     protected function doesWorkLogExist($sTicket, $workLogId)
     {
-        return $this->doesResourceExist(sprintf("issue/%s/worklog/%d", $sTicket, $workLogId));
+        return $this->doesResourceExist(sprintf('issue/%s/worklog/%d', $sTicket, $workLogId));
     }
 
     /**
-     * Checks existence of a Jira resource
+     * Checks existence of a Jira resource.
      *
      * @param string $url
-     * @return bool
+     *
      * @throws JiraApiException
+     *
+     * @return bool
      */
     protected function doesResourceExist($url)
     {
@@ -460,6 +466,7 @@ class JiraOAuthApi
         } catch (JiraApiInvalidResourceException) {
             return false;
         }
+
         return true;
     }
 
@@ -467,9 +474,11 @@ class JiraOAuthApi
      * Execute GET request and return response as simple object.
      *
      * @param string $url
-     * @return mixed
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     *
+     * @return mixed
      */
     protected function get($url)
     {
@@ -479,11 +488,13 @@ class JiraOAuthApi
     /**
      * Execute POST request and return response as simple object.
      *
-     * @param  string $url
-     * @param  array  $data
-     * @return string
+     * @param string $url
+     * @param array  $data
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     *
+     * @return string
      */
     protected function post($url, $data = [])
     {
@@ -493,11 +504,13 @@ class JiraOAuthApi
     /**
      * Execute PUT request and return response as simple object.
      *
-     * @param  string $url
-     * @param  array  $data
-     * @return string
+     * @param string $url
+     * @param array  $data
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     *
+     * @return string
      */
     protected function put($url, $data = [])
     {
@@ -506,9 +519,11 @@ class JiraOAuthApi
 
     /**
      * @param string $url
-     * @return string
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     *
+     * @return string
      */
     protected function delete($url)
     {
@@ -516,14 +531,16 @@ class JiraOAuthApi
     }
 
     /**
-     * Get Response of Jira-API request
+     * Get Response of Jira-API request.
      *
      * @param string $method
      * @param string $url
-     * @param array $data
-     * @return mixed
+     * @param array  $data
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     *
+     * @return mixed
      */
     protected function getResponse($method, $url, $data = [])
     {
@@ -533,36 +550,35 @@ class JiraOAuthApi
                 'headers' => [
                     'Content-Type' => 'application/json',
                 ],
-                'body'    => json_encode($data, JSON_THROW_ON_ERROR),
+                'body' => json_encode($data, JSON_THROW_ON_ERROR),
             ];
         }
 
         try {
             $response = $this->getClient()->request($method, $url, $additionalParameter);
         } catch (GuzzleException $e) {
-            if ($e->getCode() === 401) {
+            if (401 === $e->getCode()) {
                 $oauthAuthUrl = $this->fetchOAuthRequestToken();
-                $message = 'Jira: 401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
+                $message      = 'Jira: 401 - Unauthorized. Please authorize: '.$oauthAuthUrl;
                 throw new JiraApiException($message, $e->getCode(), $oauthAuthUrl);
-            } elseif ($e->getCode() === 404) {
-                $message = 'Jira: 404 - Resource is not available: (' . $url . ')';
-                throw new JiraApiInvalidResourceException($message);
-            } else {
-                throw new JiraApiException(
-                    'Unknown Guzzle exception: ' . $e->getMessage(), $e->getCode()
-                );
             }
+            if (404 === $e->getCode()) {
+                $message = 'Jira: 404 - Resource is not available: ('.$url.')';
+                throw new JiraApiInvalidResourceException($message);
+            }
+            throw new JiraApiException('Unknown Guzzle exception: '.$e->getMessage(), $e->getCode());
         }
 
         return json_decode($response->getBody(), null, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
-     * Stores access token and token secret to Database
+     * Stores access token and token secret to Database.
      *
      * @param string $tokenSecret
      * @param string $accessToken
-     * @param bool $avoidConnection
+     * @param bool   $avoidConnection
+     *
      * @return string[]
      */
     protected function storeToken($tokenSecret, $accessToken = 'token_request_unfinished', $avoidConnection = false)
@@ -570,19 +586,22 @@ class JiraOAuthApi
         /** @var UserTicketSystem $userTicketSystem */
         $userTicketSystem = $this->doctrine->getRepository('App:UserTicketsystem')
             ->findOneBy([
-                'user' => $this->user,
+                'user'         => $this->user,
                 'ticketSystem' => $this->ticketSystem,
-            ]);
+            ])
+        ;
 
         if (!$userTicketSystem) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($this->user)
-                ->setTicketSystem($this->ticketSystem);
+                ->setTicketSystem($this->ticketSystem)
+            ;
         }
 
         $userTicketSystem->setTokenSecret($tokenSecret)
             ->setAccessToken($accessToken)
-            ->setAvoidConnection($avoidConnection);
+            ->setAvoidConnection($avoidConnection)
+        ;
 
         $em = $this->doctrine->getManager();
         $em->persist($userTicketSystem);
@@ -599,7 +618,7 @@ class JiraOAuthApi
      */
     protected function getJiraBaseUrl()
     {
-        return rtrim($this->ticketSystem->getUrl(), "/");
+        return rtrim($this->ticketSystem->getUrl(), '/');
     }
 
     /**
@@ -623,7 +642,7 @@ class JiraOAuthApi
      */
     protected function getJiraApiUrl()
     {
-        return $this->getJiraBaseUrl() . $this->jiraApiUrl;
+        return $this->getJiraBaseUrl().$this->jiraApiUrl;
     }
 
     /**
@@ -631,7 +650,7 @@ class JiraOAuthApi
      */
     protected function getOAuthRequestUrl()
     {
-        return $this->getJiraBaseUrl() . $this->oAuthRequestUrl;
+        return $this->getJiraBaseUrl().$this->oAuthRequestUrl;
     }
 
     /**
@@ -639,7 +658,7 @@ class JiraOAuthApi
      */
     protected function getOAuthCallbackUrl()
     {
-        return $this->oAuthCallbackUrl . '?tsid=' . $this->ticketSystem->getId();
+        return $this->oAuthCallbackUrl.'?tsid='.$this->ticketSystem->getId();
     }
 
     /**
@@ -647,17 +666,17 @@ class JiraOAuthApi
      */
     protected function getOAuthAccessUrl()
     {
-        return $this->getJiraBaseUrl() . $this->oAuthAccessUrl;
+        return $this->getJiraBaseUrl().$this->oAuthAccessUrl;
     }
 
-
     /**
-     * @param String $oAuthToken
+     * @param string $oAuthToken
+     *
      * @return string
      */
     protected function getOAuthAuthUrl($oAuthToken)
     {
-        return $this->getJiraBaseUrl() . $this->oAuthAuthUrl . '?oauth_token=' . $oAuthToken;
+        return $this->getJiraBaseUrl().$this->oAuthAuthUrl.'?oauth_token='.$oAuthToken;
     }
 
     /**
@@ -665,7 +684,7 @@ class JiraOAuthApi
      */
     protected function generateNonce()
     {
-        return md5(microtime(true) . uniqid('', true));
+        return md5(microtime(true).uniqid('', true));
     }
 
     /**
@@ -700,12 +719,12 @@ class JiraOAuthApi
             $description = 'no description given';
         }
 
-        return '#' . $entry->getId() . ': ' . $activity . ': ' . $description;
+        return '#'.$entry->getId().': '.$activity.': '.$description;
     }
 
     /**
      * Returns work log entry start date formatted for Jira API.
-     * //"2016-02-17T14:35:51.000+0100"
+     * //"2016-02-17T14:35:51.000+0100".
      *
      * @return string "2016-02-17T14:35:51.000+0100"
      */
@@ -714,7 +733,8 @@ class JiraOAuthApi
         $startDate = $entry->getDay() ?: new DateTime();
         if ($entry->getStart()) {
             $startDate->setTime(
-                $entry->getStart()->format('H'), $entry->getStart()->format('i')
+                $entry->getStart()->format('H'),
+                $entry->getStart()->format('i')
             );
         }
 
@@ -722,9 +742,9 @@ class JiraOAuthApi
     }
 
     /**
-     * Checks if Jira interaction for user and ticket system should take place
+     * Checks if Jira interaction for user and ticket system should take place.
      *
-     * @return boolean
+     * @return bool
      */
     protected function checkUserTicketSystem()
     {
@@ -732,12 +752,13 @@ class JiraOAuthApi
         $userTicketSystem = $this->doctrine
             ->getRepository('App:UserTicketsystem')
             ->findOneBy([
-                'user' => $this->user,
+                'user'         => $this->user,
                 'ticketSystem' => $this->ticketSystem,
-            ]);
+            ])
+        ;
 
-        return ((bool) $this->ticketSystem->getBookTime()
+        return (bool) $this->ticketSystem->getBookTime()
             && (!$userTicketSystem || !$userTicketSystem->getAvoidConnection())
-        );
+        ;
     }
 }

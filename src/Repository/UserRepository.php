@@ -6,27 +6,27 @@ use Doctrine\ORM\EntityRepository;
 use App\Entity\User;
 
 /**
- * Class UserRepository
- * @package App\Repository
+ * Class UserRepository.
  */
 class UserRepository extends EntityRepository
 {
     /**
-     * @param integer $currentUserId
+     * @param int $currentUserId
+     *
      * @return array
      */
     public function getUsers($currentUserId)
     {
         /** @var User[] $users */
         $users = $this->findBy(
-            [], ['username' => 'ASC']
+            [],
+            ['username' => 'ASC']
         );
 
         $data = [];
 
         foreach ($users as $user) {
             if ($currentUserId == $user->getId()) {
-
                 // Set current user on top
                 array_unshift($data, ['user' => [
                     'id'       => $user->getId(),
@@ -35,9 +35,7 @@ class UserRepository extends EntityRepository
                     'abbr'     => $user->getAbbr(),
                     'locale'   => $user->getLocale(),
                 ]]);
-
             } else {
-
                 $data[] = ['user' => [
                     'id'       => $user->getId(),
                     'username' => $user->getUsername(),
@@ -45,7 +43,6 @@ class UserRepository extends EntityRepository
                     'abbr'     => $user->getAbbr(),
                     'locale'   => $user->getLocale(),
                 ]];
-
             }
         }
 
@@ -59,7 +56,8 @@ class UserRepository extends EntityRepository
     {
         /** @var User[] $users */
         $users = $this->findBy(
-            [], ['username' => 'ASC']
+            [],
+            ['username' => 'ASC']
         );
 
         $data = [];
@@ -83,6 +81,7 @@ class UserRepository extends EntityRepository
 
     /**
      * @param $currentUserId
+     *
      * @return array
      */
     public function getUserById($currentUserId)
@@ -91,7 +90,7 @@ class UserRepository extends EntityRepository
 
         $data = [];
 
-        if (! empty($user)) {
+        if (!empty($user)) {
             $data[] = ['user' => [
                 'id'       => $user->getId(),
                 'username' => $user->getUsername(),

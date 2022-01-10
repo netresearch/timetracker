@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Helper\LocalizationHelper as LocalizationHelper;
-
 use App\Model\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -16,7 +15,7 @@ class SettingsController extends BaseController
             $userId = $this->session->get('loginId');
 
             $doctrine = $this->doctrine;
-            $user = $doctrine->getRepository('App:User')->find($userId);
+            $user     = $doctrine->getRepository('App:User')->find($userId);
 
             $user->setShowEmptyLine($this->request->get('show_empty_line'));
             $user->setSuggestTime($this->request->get('suggest_time'));
@@ -30,20 +29,19 @@ class SettingsController extends BaseController
             // Adapt to new locale immediately
             $this->request->setLocale($user->getLocale());
 
-            return new Response(json_encode(array('success' => true,
-                    'settings' => $user->getSettings(),
-                    'locale' => $user->getLocale(),
-                    'message' => $this->t('The configuration has been successfully saved.')
-                ), JSON_THROW_ON_ERROR));
+            return new Response(json_encode(['success' => true,
+                'settings'                             => $user->getSettings(),
+                'locale'                               => $user->getLocale(),
+                'message'                              => $this->t('The configuration has been successfully saved.'),
+            ], JSON_THROW_ON_ERROR));
         }
 
-        $response = new Response(json_encode(array('success' => false,
-                'message' => $this->t('The configuration could not be saved.')
-            ), JSON_THROW_ON_ERROR));
+        $response = new Response(json_encode(['success' => false,
+            'message'                                   => $this->t('The configuration could not be saved.'),
+        ], JSON_THROW_ON_ERROR));
 
         $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_SERVICE_UNAVAILABLE);
+
         return $response;
-
     }
-
 }
