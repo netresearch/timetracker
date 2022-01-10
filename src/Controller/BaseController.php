@@ -99,7 +99,7 @@ class BaseController extends AbstractController
         return true;
     }
 
-    protected function getUserId(): int
+    protected function getUserId(): ?int
     {
         return $this->session->get('loginId');
     }
