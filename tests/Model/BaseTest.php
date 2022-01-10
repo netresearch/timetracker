@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Tests\Model;
 
@@ -32,14 +32,14 @@ class TestModel extends Base
 
 class BaseTest extends TestCase
 {
-    public function testBaseModelByTestModel()
+    public function testBaseModelByTestModel(): void
     {
         $testModel = new TestModel();
-        $result = $testModel->toArray();
+        $result    = $testModel->toArray();
 
-        $this->assertEquals(4, count($result));
-        $this->assertEquals(true, array_key_exists('id', $result));
-        $this->assertEquals(500, $result['id']);
-        $this->assertEquals(true, $result['active']);
+        static::assertCount(4, $result);
+        static::assertArrayHasKey('id', $result);
+        static::assertSame(500, $result['id']);
+        static::assertTrue($result['active']);
     }
 }
