@@ -62,8 +62,7 @@ class BaseController extends AbstractController
             return;
         }
 
-        $doctrine = $this->doctrine;
-        $user     = $doctrine->getRepository('App:User')
+        $user = $this->doctrine->getRepository('App:User')
             ->find($this->getUserId())
         ;
 
@@ -154,7 +153,7 @@ class BaseController extends AbstractController
     }
 
     /**
-     * Returns true if a user is logged in or can authenticate by cookie.
+     * Returns true if a valid user is logged in or can authenticate by cookie.
      */
     protected function checkLogin(): bool
     {

@@ -392,6 +392,7 @@ class AdminController extends BaseController
         $userRepository = $this->doctrine->getRepository('App:User');
 
         if ($userId) {
+            /** @var User $user */
             $user = $userRepository->find($userId);
         } else {
             $user = new User();
