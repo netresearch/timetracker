@@ -436,7 +436,7 @@ class AdminController extends BaseController
             ->setType($type)
             ->setShowEmptyLine(0)
             ->setSuggestTime(1)
-            ->setShowFuture(1)
+            ->setShowFuture(true)
         ;
 
         $user->resetTeams();

@@ -126,7 +126,7 @@ class DefaultController extends BaseController
                     ->setType('DEV')
                     ->setShowEmptyLine('0')
                     ->setSuggestTime('1')
-                    ->setShowFuture('1')
+                    ->setShowFuture(true)
                     ->setLocale('de')
                 ;
 
