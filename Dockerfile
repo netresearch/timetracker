@@ -31,12 +31,16 @@ RUN set -eux; \
 		icu-dev \
 		libzip-dev \
 		zlib-dev \
+		libjpeg-turbo-dev \
+		libpng-dev \
 	; \
 	\
 	docker-php-ext-configure zip; \
+	docker-php-ext-configure gd; \
 	docker-php-ext-install -j$(nproc) \
 		intl \
 		zip \
+		gd \
 	; \
 	pecl install \
 		apcu-${APCU_VERSION} \
@@ -45,6 +49,7 @@ RUN set -eux; \
 	docker-php-ext-enable \
 		apcu \
 		opcache \
+		gd \
 	; \
 	\
 	runDeps="$( \
