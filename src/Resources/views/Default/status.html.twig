@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>{{ app_title }}</title>
+        <link rel="stylesheet" href="{{ asset('bundles/netresearchtimetracker/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
+        <link rel="stylesheet" href="{{ asset('bundles/netresearchtimetracker/css/timetracker.css') }}" type="text/css">
+        <script type="text/javascript">
+            setTimeout(function() { window.location.reload() }, 90000);
+        </script>
+        {% for flashMessage in app.session.flashbag.get('error') %}
+
+            <script type="text/javascript">
+                alert("{{ flashMessage }}");
+            </script>
+
+        {% endfor %}
+    </head>
+    <body class="status_page">
+        <div id="loginStatus" class="{{ loginClass }}">Login-Status</div> 
+    </body>
+</html>

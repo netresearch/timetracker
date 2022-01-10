@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>{{ app_title }}</title>
+        <link rel="stylesheet" href="{{ asset('bundles/netresearchtimetracker/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
+        <link rel="stylesheet" href="{{ asset('bundles/netresearchtimetracker/css/timetracker.css') }}" type="text/css">
+        <script type="text/javascript">
+            const statusUrlHtml = {{ url('check_page')|escape|json_encode|raw }};
+            const logoutUrlHtml = {{ url('_logout')|escape|json_encode|raw }};
+            const globalConfig = {{ globalConfig|json_encode|raw }};
+
+            const environment = {{ environment|json_encode|raw }};
+
+            const customersData = {{ customers|json_encode|raw }};
+
+            const projectsData = {{ projects|json_encode|raw }};
+
+            let settingsData = {{ settings|json_encode|raw }};
+        </script>
+        <script type="text/javascript" src="{{ asset('bundles/netresearchtimetracker/js/ext-js/ext-all.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/netresearchtimetracker/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/netresearchtimetracker/js/main.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('bundles/netresearchtimetracker/js/Notification.js') }}"></script>
+        {% for flashMessage in app.session.flashbag.get('error') %}
+
+            <script type="text/javascript">
+                alert({{ flashMessage|json_encode|raw }});
+            </script>
+
+        {% endfor %}
+        <script type="text/javascript">
+            const url = {{ url('_start')|escape|json_encode|raw }};
+        </script>
+    </head>
+    <body>
+		<div id="grid"></div>
+    </body>
+</html>

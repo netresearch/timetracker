@@ -1,52 +1,138 @@
-FROM php:7.4-fpm AS runtime
-
-RUN set -ex \
- && apt-get update -y \
- && apt-get upgrade -y \
- && apt-get install -y libzip4 libzip-dev libpng-tools libpng16-16 libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
- && docker-php-ext-install opcache pdo_mysql ldap zip xml gd intl \
-# clean up
- && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false \
-    libzip-dev libpng-dev libxml2-dev zlib1g-dev libldap2-dev \
- && apt-get -y clean \
- && rm -rf /usr/src/* \
- && rm -rf /tmp/* \
- && rm -rf /var/tmp/* \
- && for logs in `find /var/log -type f`; do > ${logs}; done \
- && rm -rf /var/lib/apt/lists/* \
- && rm -f /var/cache/apt/*.bin \
- && rm -rf /usr/share/man/* /usr/share/groff/* /usr/share/info/* /usr/share/lintian/* /usr/share/linda/* /var/cache/man/* /usr/share/doc/*
+# the different stages of this Dockerfile are meant to be built into separate images
+# https://docs.docker.com/develop/develop-images/multistage-build/#stop-at-a-specific-build-stage
+# https://docs.docker.com/compose/compose-file/#target
 
 
-FROM runtime AS builder
+# https://docs.docker.com/engine/reference/builder/#understand-how-arg-and-from-interact
+ARG PHP_VERSION=8.1
+ARG CADDY_VERSION=2
 
-RUN apt-get update -y
-RUN apt-get install -y git unzip curl
-# install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --1
-RUN mv composer.phar /usr/local/bin/composer
+# "php" stage
+FROM php:${PHP_VERSION}-fpm-alpine AS symfony_php
 
-COPY . /var/www/html
+# persistent / runtime deps
+RUN apk add --no-cache \
+		acl \
+		fcgi \
+		file \
+		gettext \
+		git \
+		gnu-libiconv \
+	;
 
-# install the composer packages
-RUN cd /var/www/html && composer install --no-dev --no-ansi
+# install gnu-libiconv and set LD_PRELOAD env to make iconv work fully on Alpine image.
+# see https://github.com/docker-library/php/issues/240#issuecomment-763112749
+ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
 
-RUN mkdir -p /var/www/html/app/logs
-RUN mkdir -p /var/www/html/app/cache
-RUN chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache
+ARG APCU_VERSION=5.1.21
+RUN set -eux; \
+	apk add --no-cache --virtual .build-deps \
+		$PHPIZE_DEPS \
+		icu-dev \
+		libzip-dev \
+		zlib-dev \
+	; \
+	\
+	docker-php-ext-configure zip; \
+	docker-php-ext-install -j$(nproc) \
+		intl \
+		zip \
+	; \
+	pecl install \
+		apcu-${APCU_VERSION} \
+	; \
+	pecl clear-cache; \
+	docker-php-ext-enable \
+		apcu \
+		opcache \
+	; \
+	\
+	runDeps="$( \
+		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
+			| tr ',' '\n' \
+			| sort -u \
+			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
+	)"; \
+	apk add --no-cache --virtual .phpexts-rundeps $runDeps; \
+	\
+	apk del .build-deps
 
+COPY docker/php/docker-healthcheck.sh /usr/local/bin/docker-healthcheck
+RUN chmod +x /usr/local/bin/docker-healthcheck
 
-FROM runtime
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 CMD ["docker-healthcheck"]
 
-COPY --from=builder /var/www/html /var/www/html/
+RUN ln -s $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
+COPY docker/php/conf.d/symfony.prod.ini $PHP_INI_DIR/conf.d/symfony.ini
 
-# replace entrypoint and add updating ca-certifcates
-RUN echo "#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates\nexec \"\$@\"" > /usr/local/bin/docker-php-entrypoint \
- && echo "short_open_tag = off" >> /usr/local/etc/php/conf.d/symfony.ini
+COPY docker/php/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
 
-VOLUME /var/www/html/app/logs /var/www/html/app/cache
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
 
-EXPOSE 9000
-WORKDIR /var/www/html
-ENTRYPOINT ["docker-php-entrypoint"]
+VOLUME /var/run/php
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# https://getcomposer.org/doc/03-cli.md#composer-allow-superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+ENV PATH="${PATH}:/root/.composer/vendor/bin"
+
+WORKDIR /srv/app
+
+# Allow to choose skeleton
+ARG SKELETON="symfony/skeleton"
+ENV SKELETON ${SKELETON}
+
+# Allow to use development versions of Symfony
+ARG STABILITY="stable"
+ENV STABILITY ${STABILITY}
+
+# Allow to select skeleton version
+ARG SYMFONY_VERSION=""
+ENV SYMFONY_VERSION ${SYMFONY_VERSION}
+
+# Download the Symfony skeleton and leverage Docker cache layers
+RUN composer create-project "${SKELETON} ${SYMFONY_VERSION}" . --stability=$STABILITY --prefer-dist --no-dev --no-progress --no-interaction; \
+	composer clear-cache
+
+###> recipes ###
+###> doctrine/doctrine-bundle ###
+RUN apk add --no-cache --virtual .pgsql-deps postgresql-dev; \
+	docker-php-ext-install -j$(nproc) pdo_pgsql; \
+	apk add --no-cache --virtual .pgsql-rundeps so:libpq.so.5; \
+	apk del .pgsql-deps
+###< doctrine/doctrine-bundle ###
+###< recipes ###
+
+COPY . .
+
+RUN set -eux; \
+	mkdir -p var/cache var/log; \
+	composer install --prefer-dist --no-dev --no-progress --no-scripts --no-interaction; \
+	composer dump-autoload --classmap-authoritative --no-dev; \
+	composer symfony:dump-env prod; \
+	composer run-script --no-dev post-install-cmd; \
+	chmod +x bin/console; sync
+VOLUME /srv/app/var
+
+ENTRYPOINT ["docker-entrypoint"]
 CMD ["php-fpm"]
+
+FROM caddy:${CADDY_VERSION}-builder-alpine AS symfony_caddy_builder
+
+RUN xcaddy build \
+	--with github.com/dunglas/mercure \
+	--with github.com/dunglas/mercure/caddy \
+	--with github.com/dunglas/vulcain \
+	--with github.com/dunglas/vulcain/caddy
+
+FROM caddy:${CADDY_VERSION} AS symfony_caddy
+
+WORKDIR /srv/app
+
+COPY --from=dunglas/mercure:v0.11 /srv/public /srv/mercure-assets/
+COPY --from=symfony_caddy_builder /usr/bin/caddy /usr/bin/caddy
+COPY --from=symfony_php /srv/app/public public/
+COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile

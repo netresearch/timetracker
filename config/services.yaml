@@ -1,0 +1,52 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+
+    locale:            en
+
+    secret:            ThisTokenIsNotSoSecretChangeIt
+
+    ldap_host:          "127.0.0.1"
+    # LDAP port: 0 use default ports; 336 non SSL; 636 SSL
+    ldap_port:          0
+    ldap_readuser:      "readuser"
+    ldap_readpass:      "readuser"
+    ldap_basedn:        "dc=company,dc=org"
+    # use sAMAccountName for AD
+    ldap_usernamefield: uid
+    # use SSL: old, deprecated, mehtod for encrypted connection
+    ldap_usessl:        true
+    # startTLS: new method for encrypted connections - not implemented yet
+    #ldap_starttls       true
+    # whether to create users in TimeTracker after successfully authenticated by LDAP but not existing in TimeTracker
+    # also see ldap_ou_team_mapping.yml.dist
+    ldap_create_user:   true
+
+    app.logo_url:             '%env(string:APP_LOGO_URL)%'
+    app.monthly_overview_url: '%env(string:APP_MONTHLY_OVERVIEW_URL)%'
+    app.title:                '%env(string:APP_TITLE)%'
+    app.header_url:           '%env(string:APP_HEADER_URL)%'
+
+    app_show_billable_field_in_export: '%env(bool:APP_SHOW_BILLABLE_FIELD_IN_EXPORT)%'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Tests/'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
