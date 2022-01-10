@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -227,7 +227,7 @@ class Customer extends Base
     /**
      * Remove projects.
      */
-    public function removeProject(Project $projects)
+    public function removeProject(Project $projects): void
     {
         $this->projects->removeElement($projects);
     }
@@ -247,7 +247,7 @@ class Customer extends Base
     /**
      * Remove entry.
      */
-    public function removeEntrie(Entry $entry)
+    public function removeEntrie(Entry $entry): void
     {
         $this->entries->removeElement($entry);
     }
@@ -255,7 +255,7 @@ class Customer extends Base
     /**
      * Remove teams.
      */
-    public function removeTeam(Team $teams)
+    public function removeTeam(Team $teams): void
     {
         $this->teams->removeElement($teams);
     }

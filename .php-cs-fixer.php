@@ -2,23 +2,23 @@
 
 $config = new PhpCsFixer\Config();
 return $config->setRules([
-        //'@PHP80Migration:risky' => true,
-        '@PHP81Migration' => true,
+        '@PHP80Migration:risky' => true,
+        //'@PHP81Migration' => true,
         
-        //'@PhpCsFixer:risky' => true,
-        '@PhpCsFixer' => true,
+        '@PhpCsFixer:risky' => true,
+        //'@PhpCsFixer' => true,
 
         // included in @PhpCsFixer:risky
-        //'@Symfony:risky' => true,
-        '@Symfony' => true,
+        '@Symfony:risky' => true,
+        //'@Symfony' => true,
 
         // included in @Symfony:risky
-        //'@PSR12:risky' => true,
-        '@PSR12' => true,
+        '@PSR12:risky' => true,
+        //'@PSR12' => true,
 
         'strict_param' => true,
         'array_syntax' => ['syntax' => 'short'],
-        
+
         'binary_operator_spaces' => [
             'operators' => [
                 '=>' => 'align',

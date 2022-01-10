@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -298,7 +298,7 @@ class User
     /**
      * Remove entries.
      */
-    public function removeEntrie(Entry $entries)
+    public function removeEntrie(Entry $entries): void
     {
         $this->entries->removeElement($entries);
     }
@@ -306,7 +306,7 @@ class User
     /**
      * Remove teams.
      */
-    public function removeTeam(Team $teams)
+    public function removeTeam(Team $teams): void
     {
         $this->teams->removeElement($teams);
     }
@@ -341,7 +341,7 @@ class User
         $return = null;
         /** @var UserTicketsystem $userTicketsystem */
         foreach ($this->userTicketsystems as $userTicketsystem) {
-            if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
+            if ($userTicketsystem->getTicketSystem()->getId() === $ticketsystem->getId()) {
                 $return = $userTicketsystem->getAccessToken();
             }
         }
@@ -359,7 +359,7 @@ class User
         $return = null;
         /** @var UserTicketsystem $userTicketsystem */
         foreach ($this->userTicketsystems as $userTicketsystem) {
-            if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
+            if ($userTicketsystem->getTicketSystem()->getId() === $ticketsystem->getId()) {
                 $return = $userTicketsystem->getTokenSecret();
             }
         }

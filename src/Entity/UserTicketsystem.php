@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -131,7 +131,7 @@ class UserTicketsystem extends Base
      */
     public function getAvoidConnection()
     {
-        return 1 == $this->avoidConnection;
+        return 1 === $this->avoidConnection;
     }
 
     /**

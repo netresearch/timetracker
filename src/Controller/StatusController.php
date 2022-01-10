@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controller;
 
@@ -32,7 +32,7 @@ class StatusController extends BaseController
 
         $status = $this->getStatus($userId);
 
-        return new Response(json_encode($status, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($status, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/status/page', name: 'check_page')]

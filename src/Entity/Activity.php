@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -165,7 +165,7 @@ class Activity
     /**
      * Remove entries.
      */
-    public function removeEntrie(Entry $entries)
+    public function removeEntrie(Entry $entries): void
     {
         $this->entries->removeElement($entries);
     }

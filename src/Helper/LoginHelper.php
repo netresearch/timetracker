@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Helper;
 
@@ -9,7 +9,7 @@ class LoginHelper
 {
     final public const COOKIE_NAME = 'nr_timetracker';
 
-    public static function setCookie($userId, $userName)
+    public static function setCookie($userId, $userName): void
     {
         setcookie(
             self::COOKIE_NAME,
@@ -18,18 +18,18 @@ class LoginHelper
         );
     }
 
-    public static function deleteCookie()
+    public static function deleteCookie(): void
     {
         setcookie(self::COOKIE_NAME, '', ['expires' => time() - 7200]);
     }
 
     private static function getCookieData()
     {
-        if (!isset($_COOKIE) || !is_array($_COOKIE)) {
+        if (!isset($_COOKIE) || !\is_array($_COOKIE)) {
             return false;
         }
 
-        if (!array_key_exists(self::COOKIE_NAME, $_COOKIE)) {
+        if (!\array_key_exists(self::COOKIE_NAME, $_COOKIE)) {
             return false;
         }
 
@@ -46,7 +46,7 @@ class LoginHelper
     public static function getCookieUserId()
     {
         $cookieData = self::getCookieData();
-        if (!is_array($cookieData)) {
+        if (!\is_array($cookieData)) {
             return false;
         }
 
@@ -56,7 +56,7 @@ class LoginHelper
     public static function checkCookieUserName($userName)
     {
         $cookieData = self::getCookieData();
-        if (!is_array($cookieData)) {
+        if (!\is_array($cookieData)) {
             return false;
         }
 

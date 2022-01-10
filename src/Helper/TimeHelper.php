@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
@@ -39,7 +39,7 @@ class TimeHelper
         }
 
         $sum = 0;
-        $c   = is_countable($matches[0]) ? count($matches[0]) : 0;
+        $c   = is_countable($matches[0]) ? \count($matches[0]) : 0;
         for ($i = 0; $i < $c; ++$i) {
             $sum += (float) str_replace(',', '.', $matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]);
         }

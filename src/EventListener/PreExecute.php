@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
@@ -13,14 +13,14 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  */
 class PreExecute
 {
-    public function onKernelController(ControllerEvent $event)
+    public function onKernelController(ControllerEvent $event): void
     {
         if (HttpKernelInterface::MASTER_REQUEST === $event->getRequestType()) {
             $controllers = $event->getController();
-            if (is_array($controllers)) {
+            if (\is_array($controllers)) {
                 $controller = $controllers[0];
 
-                if (is_object($controller) && method_exists($controller, 'preExecute')) {
+                if (\is_object($controller) && method_exists($controller, 'preExecute')) {
                     $controller->preExecute($event->getRequest());
                 }
             }

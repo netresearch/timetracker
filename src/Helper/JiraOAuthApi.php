@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
@@ -188,10 +188,10 @@ class JiraOAuthApi
      *
      * @throws JiraApiException
      */
-    public function fetchOAuthAccessToken($oAuthRequestToken, $oAuthVerifier)
+    public function fetchOAuthAccessToken($oAuthRequestToken, $oAuthVerifier): void
     {
         try {
-            if ('denied' == $oAuthVerifier) {
+            if ('denied' === $oAuthVerifier) {
                 $this->deleteTokens();
             } else {
                 //$response = $this->oAuth->getAccessToken($this->getOAuthAccessUrl(), null, null, 'POST');
@@ -209,7 +209,7 @@ class JiraOAuthApi
     /**
      * Delete stored tokens.
      */
-    protected function deleteTokens()
+    protected function deleteTokens(): void
     {
         $this->storeToken('', '', true);
     }
@@ -258,7 +258,7 @@ class JiraOAuthApi
     /**
      *  Updates Jira work log entries to all user entries and the set ticket system.
      */
-    public function updateAllEntriesJiraWorkLogs()
+    public function updateAllEntriesJiraWorkLogs(): void
     {
         $this->updateEntriesJiraWorkLogsLimited();
     }
@@ -269,7 +269,7 @@ class JiraOAuthApi
      *
      * @param int $entryLimit (optional) max number of entries which should be updated (null: no limit)
      */
-    public function updateEntriesJiraWorkLogsLimited($entryLimit = null)
+    public function updateEntriesJiraWorkLogsLimited($entryLimit = null): void
     {
         if (!$this->checkUserTicketSystem()) {
             return;
@@ -296,7 +296,7 @@ class JiraOAuthApi
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    public function updateEntryJiraWorkLog(Entry $entry)
+    public function updateEntryJiraWorkLog(Entry $entry): void
     {
         $sTicket = $entry->getTicket();
         if (empty($sTicket)) {
@@ -346,7 +346,7 @@ class JiraOAuthApi
      *
      * @throws JiraApiException
      */
-    public function deleteEntryJiraWorkLog(Entry $entry)
+    public function deleteEntryJiraWorkLog(Entry $entry): void
     {
         $sTicket = $entry->getTicket();
         if (empty($sTicket)) {
@@ -550,7 +550,7 @@ class JiraOAuthApi
                 'headers' => [
                     'Content-Type' => 'application/json',
                 ],
-                'body' => json_encode($data, JSON_THROW_ON_ERROR),
+                'body' => json_encode($data, \JSON_THROW_ON_ERROR),
             ];
         }
 
@@ -569,7 +569,7 @@ class JiraOAuthApi
             throw new JiraApiException('Unknown Guzzle exception: '.$e->getMessage(), $e->getCode());
         }
 
-        return json_decode($response->getBody(), null, 512, JSON_THROW_ON_ERROR);
+        return json_decode($response->getBody(), null, 512, \JSON_THROW_ON_ERROR);
     }
 
     /**

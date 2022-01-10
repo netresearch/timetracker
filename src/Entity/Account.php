@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -56,7 +56,7 @@ class Account
      *
      * @param string $name
      */
-    public function setName($name)
+    public function setName($name): void
     {
         $this->name = $name;
     }
@@ -74,7 +74,7 @@ class Account
     /**
      * Add entries.
      */
-    public function addEntries(Entry $entries)
+    public function addEntries(Entry $entries): void
     {
         $this->entries[] = $entries;
     }
@@ -104,7 +104,7 @@ class Account
     /**
      * Remove entry.
      */
-    public function removeEntrie(Entry $entry)
+    public function removeEntrie(Entry $entry): void
     {
         $this->entries->removeElement($entry);
     }

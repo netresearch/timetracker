@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controller;
 
@@ -47,7 +47,7 @@ class InterpretationController extends BaseController
             $entryList[]           = ['entry' => $flatEntry];
         }
 
-        return new Response(json_encode($entryList, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($entryList, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -57,7 +57,7 @@ class InterpretationController extends BaseController
      */
     private function getCachedEntries()
     {
-        if (null != $this->cache) {
+        if (null !== $this->cache) {
             return $this->cache;
         }
 
@@ -71,7 +71,7 @@ class InterpretationController extends BaseController
      */
     private function getCachedSum()
     {
-        if (null == $this->cache) {
+        if (null === $this->cache) {
             return 0;
         }
 
@@ -85,7 +85,7 @@ class InterpretationController extends BaseController
 
     private function calculateSum(&$entries)
     {
-        if (!is_array($entries)) {
+        if (!\is_array($entries)) {
             return 0;
         }
 
@@ -116,7 +116,7 @@ class InterpretationController extends BaseController
         $customers = [];
 
         foreach ($entries as $entry) {
-            if (!is_object($entry->getCustomer())) {
+            if (!\is_object($entry->getCustomer())) {
                 continue;
             }
             $customer = $entry->getCustomer()->getId();
@@ -139,7 +139,7 @@ class InterpretationController extends BaseController
 
         usort($customers, [$this, 'sortByName']);
 
-        return new Response(json_encode($this->normalizeData($customers), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->normalizeData($customers), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/interpretation/project', name: 'interpretation_project')]
@@ -161,7 +161,7 @@ class InterpretationController extends BaseController
         $projects = [];
 
         foreach ($entries as $entry) {
-            if (!is_object($entry->getProject())) {
+            if (!\is_object($entry->getProject())) {
                 continue;
             }
             $project = $entry->getProject()->getId();
@@ -184,7 +184,7 @@ class InterpretationController extends BaseController
 
         usort($projects, [$this, 'sortByName']);
 
-        return new Response(json_encode($this->normalizeData($projects), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->normalizeData($projects), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/interpretation/ticket', name: 'interpretation_ticket')]
@@ -208,7 +208,7 @@ class InterpretationController extends BaseController
         foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
 
-            if (!empty($ticket) && '-' != $ticket) {
+            if (!empty($ticket) && '-' !== $ticket) {
                 if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = [
                         'name'  => $ticket,
@@ -228,7 +228,7 @@ class InterpretationController extends BaseController
 
         usort($tickets, [$this, 'sortByName']);
 
-        return new Response(json_encode($this->normalizeData($tickets), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->normalizeData($tickets), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -276,7 +276,7 @@ class InterpretationController extends BaseController
 
         usort($users, [$this, 'sortByName']);
 
-        return new Response(json_encode($this->normalizeData($users), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->normalizeData($users), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -322,7 +322,7 @@ class InterpretationController extends BaseController
 
         usort($times, [$this, 'sortByName']);
 
-        return new Response(json_encode($this->normalizeData(array_reverse($times)), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->normalizeData(array_reverse($times)), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/interpretation/activity', name: 'interpretation_activity')]
@@ -364,7 +364,7 @@ class InterpretationController extends BaseController
 
         usort($activities, [$this, 'sortByName']);
 
-        return new Response(json_encode($this->normalizeData($activities), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->normalizeData($activities), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -427,7 +427,7 @@ class InterpretationController extends BaseController
             throw new Exception($this->t('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
-        /* @var $repository \App\Repository\EntryRepository */
+        /** @var $repository \App\Repository\EntryRepository */
         $repository = $this->doctrine->getRepository('App:Entry');
 
         return $repository->findByFilterArray($arParams);

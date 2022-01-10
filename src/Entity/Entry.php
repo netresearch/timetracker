@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -87,7 +87,7 @@ class Entry extends Base
     /**
      * @param string $externalReporter
      */
-    public function setExternalReporter($externalReporter)
+    public function setExternalReporter($externalReporter): void
     {
         $this->externalReporter = $externalReporter;
     }
@@ -103,7 +103,7 @@ class Entry extends Base
     /**
      * @param string $externalSummary
      */
-    public function setExternalSummary($externalSummary)
+    public function setExternalSummary($externalSummary): void
     {
         $this->externalSummary = $externalSummary;
     }
@@ -121,7 +121,7 @@ class Entry extends Base
     /**
      * Sets the array of external labels.
      */
-    public function setExternalLabels(array $arExternalLabels)
+    public function setExternalLabels(array $arExternalLabels): void
     {
         $this->externalLabels = $arExternalLabels;
     }
@@ -181,7 +181,7 @@ class Entry extends Base
      */
     public function getUserId()
     {
-        if (!is_object($this->getUser())) {
+        if (!\is_object($this->getUser())) {
             return null;
         }
 
@@ -195,7 +195,7 @@ class Entry extends Base
      */
     public function getProjectId()
     {
-        if (!is_object($this->getProject())) {
+        if (!\is_object($this->getProject())) {
             return null;
         }
 
@@ -209,7 +209,7 @@ class Entry extends Base
      */
     public function getAccountId()
     {
-        if (!is_object($this->getAccount())) {
+        if (!\is_object($this->getAccount())) {
             return null;
         }
 
@@ -223,7 +223,7 @@ class Entry extends Base
      */
     public function getCustomerId()
     {
-        if (!is_object($this->getCustomer())) {
+        if (!\is_object($this->getCustomer())) {
             return null;
         }
 
@@ -237,7 +237,7 @@ class Entry extends Base
      */
     public function getActivityId()
     {
-        if (!is_object($this->getActivity())) {
+        if (!\is_object($this->getActivity())) {
             return null;
         }
 

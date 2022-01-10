@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controller;
 
@@ -11,7 +11,7 @@ class SettingsController extends BaseController
     #[Route(path: '/settings/save')]
     public function saveAction()
     {
-        if ('POST' == $this->request->getMethod()) {
+        if ('POST' === $this->request->getMethod()) {
             $userId = $this->session->get('loginId');
 
             $doctrine = $this->doctrine;
@@ -33,12 +33,12 @@ class SettingsController extends BaseController
                 'settings'                             => $user->getSettings(),
                 'locale'                               => $user->getLocale(),
                 'message'                              => $this->t('The configuration has been successfully saved.'),
-            ], JSON_THROW_ON_ERROR));
+            ], \JSON_THROW_ON_ERROR));
         }
 
         $response = new Response(json_encode(['success' => false,
             'message'                                   => $this->t('The configuration could not be saved.'),
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_SERVICE_UNAVAILABLE);
 

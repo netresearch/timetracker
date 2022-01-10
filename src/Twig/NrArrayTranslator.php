@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Json array translator for twig-templates.
  *
@@ -74,16 +74,16 @@ class NrArrayTranslator extends AbstractExtension
         $languageFile = 'messages',
         array $keys = ['name']
     ) {
-        $data = json_decode($string, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($string, true, 512, \JSON_THROW_ON_ERROR);
         unset($string);
 
         foreach ($data as $rowKey => $row) {
-            if (!array_key_exists($arrayKey, $row)) {
+            if (!\array_key_exists($arrayKey, $row)) {
                 continue;
             }
 
             foreach ($row[$arrayKey] as $key => $value) {
-                if (in_array($key, $keys, true)) {
+                if (\in_array($key, $keys, true)) {
                     $data[$rowKey][$arrayKey][$key] = $this->translator->trans(
                         $value,
                         [],
@@ -93,6 +93,6 @@ class NrArrayTranslator extends AbstractExtension
             }
         }
 
-        return json_encode($data, JSON_THROW_ON_ERROR);
+        return json_encode($data, \JSON_THROW_ON_ERROR);
     }
 }

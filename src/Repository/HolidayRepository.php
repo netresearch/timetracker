@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Repository;
 
@@ -18,7 +18,7 @@ class HolidayRepository extends EntityRepository
     {
         $em = $this->getEntityManager();
 
-        $pattern = $year.'-'.str_pad($month, 2, '0', STR_PAD_LEFT).'-'.'%';
+        $pattern = $year.'-'.str_pad($month, 2, '0', \STR_PAD_LEFT).'-'.'%';
 
         $query = $em->createQuery(
             'SELECT h FROM App:Holiday h'

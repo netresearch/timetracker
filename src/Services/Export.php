@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
@@ -45,7 +45,7 @@ class Export
      * mandatory dependency the service container.
      */
     public function __construct(
-        protected ?ContainerInterface $container = null,
+        protected ?ContainerInterface $container,
         protected ManagerRegistry $doctrine,
         private readonly RouterInterface $router
     ) {
@@ -82,7 +82,7 @@ class Export
     {
         $username = 'all';
         if (0 < (int) $userId) {
-            /* @var $user User */
+            /** @var $user User */
             $user = $this->doctrine
                 ->getRepository('App:User')
                 ->find($userId)
@@ -118,7 +118,7 @@ class Export
         array $entries,
         $removeNotBillable = false
     ) {
-        /* @var $currentUser \App\Entity\User */
+        /** @var $currentUser \App\Entity\User */
         $currentUser = $this->doctrine->getRepository('App:User')
             ->find($currentUserId)
         ;
@@ -130,11 +130,11 @@ class Export
         $arApi     = [];
         /** @var Entry $entry */
         foreach ($entries as $entry) {
-            if (strlen($entry->getTicket()) > 0
+            if ($entry->getTicket() !== ''
                 && $entry->getProject()
                 && $entry->getProject()->getTicketSystem()
                 && $entry->getProject()->getTicketSystem()->getBookTime()
-                && 'JIRA' == $entry->getProject()->getTicketSystem()->getType()
+                && 'JIRA' === $entry->getProject()->getTicketSystem()->getType()
             ) {
                 /** @var TicketSystem $ticketSystem */
                 $ticketSystem = $entry->getProject()->getTicketSystem();
@@ -162,19 +162,19 @@ class Export
                 $maxRequestsElements
             );
 
-            if (is_array($ticketSystemIssuesTotalChunks)
+            if (\is_array($ticketSystemIssuesTotalChunks)
                 && !empty($ticketSystemIssuesTotalChunks)
             ) {
                 foreach ($ticketSystemIssuesTotalChunks as $arIssues) {
                     $ret = $jiraApi->searchTicket(
-                        'IssueKey in ('.join(',', $arIssues).')',
+                        'IssueKey in ('.implode(',', $arIssues).')',
                         ['labels'],
                         '500'
                     );
 
                     foreach ($ret->issues as $issue) {
                         if (isset($issue->fields->labels)
-                            && in_array('billable', $issue->fields->labels, true)
+                            && \in_array('billable', $issue->fields->labels, true)
                         ) {
                             $arBillable[] = $issue->key;
                         }
@@ -184,7 +184,7 @@ class Export
         }
 
         foreach ($entries as $key => $entry) {
-            $billable = in_array($entry->getTicket(), $arBillable, true);
+            $billable = \in_array($entry->getTicket(), $arBillable, true);
             if (!$billable && $removeNotBillable) {
                 unset($entries[$key]);
             } else {

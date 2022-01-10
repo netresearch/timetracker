@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
@@ -103,7 +103,7 @@ class LdapClient
             throw new Exception('No connection to LDAP: '.$this->getLdapOptions()['host'].': '.$e->getMessage().'');
         }
 
-        /* @var $result Ldap\Collection */
+        /** @var $result Ldap\Collection */
         $result = $ldap->search(
             '('.$this->_userNameField.'='.ldap_escape($this->_userName).')',
             $this->_baseDn,
@@ -111,7 +111,7 @@ class LdapClient
             ['cn', 'dn']
         );
 
-        if (!is_object($result) || (null == $result->getFirst())) {
+        if (!\is_object($result) || (null === $result->getFirst())) {
             throw new Exception('Username unknown.');
         }
 
@@ -310,7 +310,7 @@ class LdapClient
     /**
      * @param array $ldapResponse
      */
-    protected function setTeamsByLdapResponse($ldapResponse)
+    protected function setTeamsByLdapResponse($ldapResponse): void
     {
         $dn          = $ldapResponse['dn'];
         $mappingFile = __DIR__.'/../../../../app/config/ldap_ou_team_mapping.yml';

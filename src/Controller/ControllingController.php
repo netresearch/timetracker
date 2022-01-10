@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Netresearch Timetracker.
  *
@@ -90,7 +90,7 @@ class ControllingController extends BaseController
 
         $filename = strtolower(
             $year.'_'
-            .str_pad($month, 2, '0', STR_PAD_LEFT)
+            .str_pad($month, 2, '0', \STR_PAD_LEFT)
             .'_'
             .str_replace(' ', '-', $username)
         );
@@ -121,7 +121,7 @@ class ControllingController extends BaseController
 
             $activity = $entry->getActivity();
 
-            if (!is_null($activity)) {
+            if (null !== $activity) {
                 if ($activity->isHoliday()) {
                     ++$stats[$entry->getUser()->getAbbr()]['holidays'];
                 }
@@ -219,7 +219,7 @@ class ControllingController extends BaseController
      *
      * @throws Exception
      */
-    protected static function setCellDate(Worksheet $sheet, $column, $row, $date, $format = NumberFormat::FORMAT_DATE_YYYYMMDD2)
+    protected static function setCellDate(Worksheet $sheet, $column, $row, $date, $format = NumberFormat::FORMAT_DATE_YYYYMMDD2): void
     {
         // Set date value
         $sheet->setCellValue(
@@ -244,7 +244,7 @@ class ControllingController extends BaseController
      *
      * @throws Exception
      */
-    protected static function setCellHours(Worksheet $sheet, $column, $row, $date)
+    protected static function setCellHours(Worksheet $sheet, $column, $row, $date): void
     {
         $dateValue = Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);

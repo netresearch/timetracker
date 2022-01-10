@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
@@ -40,7 +40,7 @@ class LocalizationHelper
     public static function normalizeLocale($locale)
     {
         $locale = strtolower(trim($locale));
-        if (array_key_exists($locale, self::getAvailableLocales())) {
+        if (\array_key_exists($locale, self::getAvailableLocales())) {
             return $locale;
         }
 

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Repository;
 
@@ -42,7 +42,7 @@ class ProjectRepository extends EntityRepository
      */
     public function getProjectStructure(int $userId, array $customers)
     {
-        /* @var $globalProjects Project[] */
+        /** @var $globalProjects Project[] */
         $globalProjects = $this->getGlobalProjects();
         $userProjects   = $this->getProjectsByUser($userId);
 

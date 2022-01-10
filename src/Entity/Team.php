@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -122,7 +122,7 @@ class Team
     /**
      * Remove customers.
      */
-    public function removeCustomer(Customer $customers)
+    public function removeCustomer(Customer $customers): void
     {
         $this->customers->removeElement($customers);
     }

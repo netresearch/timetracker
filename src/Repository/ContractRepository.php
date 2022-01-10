@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Repository;
 
@@ -22,7 +22,7 @@ class ContractRepository extends EntityRepository
         $contracts = $this->findBy([], ['start' => 'ASC']);
         $data      = [];
 
-        /* @var Contract $contract */
+        /** @var Contract $contract */
         foreach ($contracts as $contract) {
             $data[] = ['contract' => [
                 'id'      => $contract->getId(),

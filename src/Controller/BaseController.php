@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * basic controller to share some features with the child controllers.
  *
@@ -67,7 +67,7 @@ class BaseController extends AbstractController
             ->find($this->getUserId())
         ;
 
-        if (!is_object($user)) {
+        if (!\is_object($user)) {
             return;
         }
 
@@ -119,7 +119,7 @@ class BaseController extends AbstractController
             ->find($userId)
         ;
 
-        return 'PL' == $user->getType();
+        return 'PL' === $user->getType();
     }
 
     /**
@@ -137,7 +137,7 @@ class BaseController extends AbstractController
             ->find($userId)
         ;
 
-        return 'DEV' == $user->getType();
+        return 'DEV' === $user->getType();
     }
 
     /**
@@ -155,7 +155,7 @@ class BaseController extends AbstractController
             return false;
         }
 
-        /* @var $user User */
+        /** @var $user User */
         $user = $this->doctrine
             ->getRepository('App:User')
             ->findOneById($userId)
@@ -209,7 +209,7 @@ class BaseController extends AbstractController
      */
     protected function setLoggedIn(User $user, bool $setCookie = false): Response|RedirectResponse
     {
-        if (!is_object($user)) {
+        if (!\is_object($user)) {
             $this->session->getFlashBag()->add(
                 'error',
                 $this->t('Could not find user.')
@@ -247,7 +247,7 @@ class BaseController extends AbstractController
         string $domain = 'messages',
         string $locale = null
     ): mixed {
-        $locale = (is_null($locale)) ? $this->translator->getLocale() : $locale;
+        $locale = (null === $locale) ? $this->translator->getLocale() : $locale;
 
         return $this->translator->trans($id, $parameters, $domain, $locale);
     }

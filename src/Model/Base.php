@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
@@ -33,7 +33,7 @@ class Base
         foreach ($r->getProperties(ReflectionProperty::IS_PROTECTED) as $property) {
             $method = 'get'.ucwords($property->getName());
             $value  = $this->{$method}();
-            if (is_object($value) && method_exists($value, 'getId')) {
+            if (\is_object($value) && method_exists($value, 'getId')) {
                 $value = $value->getId();
             }
 

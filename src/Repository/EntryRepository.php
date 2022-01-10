@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Netresearch Timetracker.
  *
@@ -55,7 +55,7 @@ class EntryRepository extends EntityRepository
         $weeks    = floor((int) $workingDays / 5);
         $restDays = ((int) $workingDays) % 5;
 
-        if (0 == $restDays) {
+        if (0 === $restDays) {
             return $weeks * 7;
         }
 
@@ -167,8 +167,8 @@ class EntryRepository extends EntityRepository
     protected function getDatePattern(int $year, int $month = null): string
     {
         $pattern = $year.'-';
-        if (0 < intval($month)) {
-            $pattern .= str_pad($month, 2, '0', STR_PAD_LEFT).'-';
+        if (0 < (int) $month) {
+            $pattern .= str_pad($month, 2, '0', \STR_PAD_LEFT).'-';
         }
         $pattern .= '%';
 
@@ -348,7 +348,7 @@ class EntryRepository extends EntityRepository
         $sql['project']['where_p'] = 'AND e.project_id = '.(int) $entry->getProject()->getId();
 
         // activity total / activity total by current user
-        if (is_object($entry->getActivity())) {
+        if (\is_object($entry->getActivity())) {
             $sql['activity']['select'] = "SELECT 'activity' AS scope,
                 CONCAT(a.name) AS name,
                 COUNT(e.id) AS entries,
@@ -366,7 +366,7 @@ class EntryRepository extends EntityRepository
             $sql['activity']['select'] = "SELECT 'activity' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own";
         }
 
-        if ('' != $entry->getTicket()) {
+        if ('' !== $entry->getTicket()) {
             // ticket total / ticket total by current user
             $sql['ticket']['select'] = "SELECT 'ticket' AS scope,
                 ticket AS name,
@@ -469,28 +469,28 @@ class EntryRepository extends EntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('e');
 
-        if (isset($arFilter['customer']) && !is_null($arFilter['customer'])) {
+        if (isset($arFilter['customer']) && null !== $arFilter['customer']) {
             $queryBuilder
                 ->andWhere('e.customer = :customer')
                 ->setParameter('customer', (int) $arFilter['customer'])
             ;
         }
 
-        if (isset($arFilter['project']) && !is_null($arFilter['project'])) {
+        if (isset($arFilter['project']) && null !== $arFilter['project']) {
             $queryBuilder
                 ->andWhere('e.project = :project')
                 ->setParameter('project', (int) $arFilter['project'])
             ;
         }
 
-        if (isset($arFilter['user']) && !is_null($arFilter['user'])) {
+        if (isset($arFilter['user']) && null !== $arFilter['user']) {
             $queryBuilder
                 ->andWhere('e.user = :user')
                 ->setParameter('user', (int) $arFilter['user'])
             ;
         }
 
-        if (isset($arFilter['teams']) && !is_null($arFilter['teams'])) {
+        if (isset($arFilter['teams']) && null !== $arFilter['teams']) {
             $queryBuilder
                 ->join('e.user', 'u')
                 ->join('u.teams', 't')
@@ -499,35 +499,35 @@ class EntryRepository extends EntityRepository
             ;
         }
 
-        if (isset($arFilter['datestart']) && !is_null($arFilter['datestart'])) {
+        if (isset($arFilter['datestart']) && null !== $arFilter['datestart']) {
             $date = new DateTime($arFilter['datestart']);
             $queryBuilder->andWhere('e.day >= :start')
                 ->setParameter('start', $date->format('Y-m-d'))
             ;
         }
 
-        if (isset($arFilter['dateend']) && !is_null($arFilter['dateend'])) {
+        if (isset($arFilter['dateend']) && null !== $arFilter['dateend']) {
             $date = new DateTime($arFilter['dateend']);
             $queryBuilder->andWhere('e.day <= :end')
                 ->setParameter('end', $date->format('Y-m-d'))
             ;
         }
 
-        if (isset($arFilter['activity']) && !is_null($arFilter['activity'])) {
+        if (isset($arFilter['activity']) && null !== $arFilter['activity']) {
             $queryBuilder
                 ->andWhere('e.activity = :activity')
                 ->setParameter('activity', (int) $arFilter['activity'])
             ;
         }
 
-        if (isset($arFilter['ticket']) && !is_null($arFilter['ticket'])) {
+        if (isset($arFilter['ticket']) && null !== $arFilter['ticket']) {
             $queryBuilder
                 ->andWhere('e.ticket LIKE :ticket')
                 ->setParameter('ticket', $arFilter['ticket'])
             ;
         }
 
-        if (isset($arFilter['description']) && !is_null($arFilter['description'])) {
+        if (isset($arFilter['description']) && null !== $arFilter['description']) {
             $queryBuilder
                 ->andWhere('e.description LIKE :description')
                 ->setParameter('description', '%'.$arFilter['description'].'%')
@@ -541,7 +541,7 @@ class EntryRepository extends EntityRepository
             ;
         }
 
-        if (isset($arFilter['visibility_user']) && !is_null($arFilter['visibility_user'])) {
+        if (isset($arFilter['visibility_user']) && null !== $arFilter['visibility_user']) {
             $queryBuilder
                 ->andWhere('e.user = :vis_user')
                 ->setParameter('vis_user', (int) $arFilter['visibility_user'])

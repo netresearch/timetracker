@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controller;
 
@@ -38,7 +38,7 @@ class AdminController extends BaseController
             $data[] = ['project' => $project->toArray()];
         }
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getAllCustomers', name: '_getAllCustomers')]
@@ -48,10 +48,10 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \App\Repository\CustomerRepository */
+        /** @var $repo \App\Repository\CustomerRepository */
         $repo = $this->doctrine->getRepository('App:Customer');
 
-        return new Response(json_encode($repo->getAllCustomers(), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($repo->getAllCustomers(), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getAllUsers', name: '_getAllUsers')]
@@ -61,10 +61,10 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \App\Repository\UserRepository */
+        /** @var $repo \App\Repository\UserRepository */
         $repo = $this->doctrine->getRepository('App:User');
 
-        return new Response(json_encode($repo->getAllUsers(), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($repo->getAllUsers(), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getAllTeams', name: '_getAllTeams')]
@@ -74,10 +74,10 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \App\Repository\TeamRepository */
+        /** @var $repo \App\Repository\TeamRepository */
         $repo = $this->doctrine->getRepository('App:Team');
 
-        return new Response(json_encode($repo->findAll(), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($repo->findAll(), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getAllPresets', name: '_getAllPresets')]
@@ -87,10 +87,10 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \App\Repository\PresetRepository */
+        /** @var $repo \App\Repository\PresetRepository */
         $repo = $this->doctrine->getRepository('App:Preset');
 
-        return new Response(json_encode($repo->getAllPresets(), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($repo->getAllPresets(), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -103,18 +103,18 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \App\Repository\TicketSystemRepository */
+        /** @var $repo \App\Repository\TicketSystemRepository */
         $repo          = $this->doctrine->getRepository('App:TicketSystem');
         $ticketSystems = $repo->getAllTicketSystems();
 
         if (false === $this->isPl()) {
-            $c = is_countable($ticketSystems) ? count($ticketSystems) : 0;
+            $c = is_countable($ticketSystems) ? \count($ticketSystems) : 0;
             for ($i = 0; $i < $c; ++$i) {
                 unset($ticketSystems[$i]['ticketSystem']['login'], $ticketSystems[$i]['ticketSystem']['password'], $ticketSystems[$i]['ticketSystem']['publicKey'], $ticketSystems[$i]['ticketSystem']['privateKey'], $ticketSystems[$i]['ticketSystem']['oauthConsumerSecret'], $ticketSystems[$i]['ticketSystem']['oauthConsumerKey']);
             }
         }
 
-        return new Response(json_encode($ticketSystems, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($ticketSystems, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/project/save')]
@@ -155,7 +155,7 @@ class AdminController extends BaseController
         $costCenter                        = $this->request->get('cost_center') ?: null;
         $offer                             = $this->request->get('offer') ?: 0;
         $additionalInformationFromExternal = $this->request->get('additionalInformationFromExternal') ?: 0;
-        /* @var $projectRepository \App\Repository\ProjectRepository */
+        /** @var $projectRepository \App\Repository\ProjectRepository */
         $projectRepository        = $this->doctrine->getRepository('App:Project');
         $internalJiraTicketSystem = (int) $this->request->get('internalJiraTicketSystem', 0);
         $internalJiraProjectKey   = $this->request->get('internalJiraProjectKey', 0);
@@ -181,7 +181,7 @@ class AdminController extends BaseController
             $project->setCustomer($customer);
         }
 
-        if (strlen($name) < 3) {
+        if (\strlen($name) < 3) {
             $response = new Response($this->t('Please provide a valid project name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -192,7 +192,7 @@ class AdminController extends BaseController
             ['name' => $name, 'customer' => $project->getCustomer()->getId()]
         );
         if ($sameNamedProject) {
-            if ($project->getId() != $sameNamedProject->getId()) {
+            if ($project->getId() !== $sameNamedProject->getId()) {
                 $response = new Response($this->t('The project name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -200,14 +200,14 @@ class AdminController extends BaseController
             }
         }
 
-        if ((1 < strlen($jiraId)) && ($project->getJiraId() !== $jiraId)) {
+        if ((1 < \strlen($jiraId)) && ($project->getJiraId() !== $jiraId)) {
             $search = ['jiraId' => $jiraId];
             if ($ticketSystem) {
                 $search['ticketSystem'] = $ticketSystem;
             }
         }
 
-        if (strlen($jiraId) && false == $projectRepository->isValidJiraPrefix($jiraId)) {
+        if (\strlen($jiraId) && false === $projectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->t('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -237,7 +237,7 @@ class AdminController extends BaseController
 
         $data = [$project->getId(), $name, $project->getCustomer()->getId(), $jiraId];
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/project/delete')]
@@ -293,7 +293,7 @@ class AdminController extends BaseController
             $customer = new Customer();
         }
 
-        if (strlen($name) < 3) {
+        if (\strlen($name) < 3) {
             $response = new Response($this->t('Please provide a valid customer name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -301,7 +301,7 @@ class AdminController extends BaseController
         }
 
         if ($sameNamedCustomer = $customerRepository->findOneByName($name)) {
-            if ($customer->getId() != $sameNamedCustomer->getId()) {
+            if ($customer->getId() !== $sameNamedCustomer->getId()) {
                 $response = new Response($this->t('The customer name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -327,7 +327,7 @@ class AdminController extends BaseController
             }
         }
 
-        if (0 == $customer->getTeams()->count() && false == $global) {
+        if (0 === $customer->getTeams()->count() && false === $global) {
             $response = new Response($this->t('Every customer must belong to at least one team if it is not global.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -340,7 +340,7 @@ class AdminController extends BaseController
 
         $data = [$customer->getId(), $name, $active, $global, $teamIds];
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/customer/delete')]
@@ -388,7 +388,7 @@ class AdminController extends BaseController
         $locale  = $this->request->get('locale');
         $teamIds = $this->request->get('teams') ?: [];
 
-        /* @var UserRepository $userRepository */
+        /** @var UserRepository $userRepository */
         $userRepository = $this->doctrine->getRepository('App:User');
 
         if ($userId) {
@@ -397,14 +397,14 @@ class AdminController extends BaseController
             $user = new User();
         }
 
-        if (strlen($name) < 3) {
+        if (\strlen($name) < 3) {
             $response = new Response($this->t('Please provide a valid user name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        if (strlen($abbr) < 3) {
+        if (\strlen($abbr) < 3) {
             $response = new Response($this->t('Please provide a valid user name abbreviation with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -412,7 +412,7 @@ class AdminController extends BaseController
         }
 
         if ($sameNamedUser = $userRepository->findOneByUsername($name)) {
-            if ($user->getId() != $sameNamedUser->getId()) {
+            if ($user->getId() !== $sameNamedUser->getId()) {
                 $response = new Response($this->t('The user name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -421,7 +421,7 @@ class AdminController extends BaseController
         }
 
         if ($sameAbbrUser = $userRepository->findOneByAbbr($abbr)) {
-            if ($user->getId() != $sameAbbrUser->getId()) {
+            if ($user->getId() !== $sameAbbrUser->getId()) {
                 $response = new Response($this->t('The user name abreviation provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -454,7 +454,7 @@ class AdminController extends BaseController
             }
         }
 
-        if (0 == $user->getTeams()->count()) {
+        if (0 === $user->getTeams()->count()) {
             $response = new Response($this->t('Every user must belong to at least one team'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -467,7 +467,7 @@ class AdminController extends BaseController
 
         $data = [$user->getId(), $name, $abbr, $type];
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/user/delete')]
@@ -555,7 +555,7 @@ class AdminController extends BaseController
         ;
         $description = $this->request->get('description');
 
-        if (strlen($name) < 3) {
+        if (\strlen($name) < 3) {
             $response = new Response($this->t('Please provide a valid preset name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -588,7 +588,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($preset->toArray(), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($preset->toArray(), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -622,7 +622,7 @@ class AdminController extends BaseController
             $ticketSystem = new TicketSystem();
         }
 
-        if (strlen($name) < 3) {
+        if (\strlen($name) < 3) {
             $response = new Response($this->t('Please provide a valid ticket system name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -630,7 +630,7 @@ class AdminController extends BaseController
         }
 
         if ($sameNamedSystem = $repository->findOneByName($name)) {
-            if ($ticketSystem->getId() != $sameNamedSystem->getId()) {
+            if ($ticketSystem->getId() !== $sameNamedSystem->getId()) {
                 $response = new Response($this->t('The ticket system name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -663,7 +663,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($ticketSystem->toArray(), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($ticketSystem->toArray(), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/ticketsystem/delete')]
@@ -722,7 +722,7 @@ class AdminController extends BaseController
         }
 
         if ($sameNamedActivity = $repository->findOneByName($name)) {
-            if ($activity->getId() != $sameNamedActivity->getId()) {
+            if ($activity->getId() !== $sameNamedActivity->getId()) {
                 $response = new Response($this->t('The activity name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -749,7 +749,7 @@ class AdminController extends BaseController
 
         $data = [$activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor()];
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/activity/delete')]
@@ -811,7 +811,7 @@ class AdminController extends BaseController
         }
 
         if ($sameNamedTeam = $repository->findOneByName($name)) {
-            if ($team->getId() != $sameNamedTeam->getId()) {
+            if ($team->getId() !== $sameNamedTeam->getId()) {
                 $response = new Response($this->t('The team name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -819,7 +819,7 @@ class AdminController extends BaseController
             }
         }
 
-        if (is_null($teamLead)) {
+        if (null === $teamLead) {
             $response = new Response($this->t('Please provide a valid user as team leader.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -844,7 +844,7 @@ class AdminController extends BaseController
 
         $data = [$team->getId(), $team->getName(), ($team->getLeadUser() ? $team->getLeadUser()->getId() : '')];
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/team/delete')]
@@ -917,7 +917,7 @@ class AdminController extends BaseController
             }
         }
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getContracts', name: '_getContracts')]
@@ -927,10 +927,10 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \App\Repository\ContractRepository */
+        /** @var $repo \App\Repository\ContractRepository */
         $repo = $this->doctrine->getRepository('App:Contract');
 
-        return new Response(json_encode($repo->getContracts(), JSON_THROW_ON_ERROR));
+        return new Response(json_encode($repo->getContracts(), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -961,7 +961,7 @@ class AdminController extends BaseController
                 ->find($this->request->get('user_id'))
             : null;
 
-        /* @var $contractRepository \App\Repository\ContractRepository */
+        /** @var $contractRepository \App\Repository\ContractRepository */
         $contractRepository = $this->doctrine->getRepository('App:Contract');
 
         if ($contractId) {
@@ -1022,7 +1022,7 @@ class AdminController extends BaseController
 
         $data = [$contract->getId()];
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/contract/delete')]

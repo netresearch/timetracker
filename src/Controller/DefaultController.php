@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Controller;
 
@@ -52,7 +52,7 @@ class DefaultController extends BaseController
             ->getCustomersByUser($userId)
         ;
         // Send the customer-projects-structure to the frontend for caching
-        /* @var $projectRepo \App\Repository\ProjectRepository */
+        /** @var $projectRepo \App\Repository\ProjectRepository */
         $projectRepo = $doctrine->getRepository('App:Project');
         $projects    = $projectRepo->getProjectStructure($userId, $customers);
 
@@ -80,7 +80,7 @@ class DefaultController extends BaseController
     public function loginAction(LoggerInterface $logger): Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         $client = null;
-        if ('POST' != $this->request->getMethod()) {
+        if ('POST' !== $this->request->getMethod()) {
             return $this->render(
                 'login.html.twig',
                 [
@@ -199,7 +199,7 @@ class DefaultController extends BaseController
             'month' => $month,
         ];
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -267,7 +267,7 @@ class DefaultController extends BaseController
                 );
         }
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -295,7 +295,7 @@ class DefaultController extends BaseController
             $result[] = ['entry' => $entry->toArray()];
         }
 
-        return new Response(json_encode($result, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($result, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -310,7 +310,7 @@ class DefaultController extends BaseController
         $userId = (int) $this->getUserId();
         $data   = $this->doctrine->getRepository('App:Customer')->getCustomersByUser($userId);
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -325,7 +325,7 @@ class DefaultController extends BaseController
             $data = $this->doctrine->getRepository('App:User')->getUsers($this->getUserId());
         }
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -340,7 +340,7 @@ class DefaultController extends BaseController
                 ->find($this->request->get('project'))
             ;
 
-            return new Response(json_encode(['customer' => $project->getCustomer()->getId()], JSON_THROW_ON_ERROR));
+            return new Response(json_encode(['customer' => $project->getCustomer()->getId()], \JSON_THROW_ON_ERROR));
         }
 
         return new Response(json_encode(['customer' => 0]));
@@ -358,7 +358,7 @@ class DefaultController extends BaseController
         $userId     = (int) $this->getUserId();
         $data       = $this->doctrine->getRepository('App:Project')->getProjectsByUser($userId, $customerId);
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -381,7 +381,7 @@ class DefaultController extends BaseController
             $data[] = ['project' => $project->toArray()];
         }
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -392,7 +392,7 @@ class DefaultController extends BaseController
     {
         $data = $this->doctrine->getRepository('App:Activity')->getActivities();
 
-        return new Response(json_encode($data, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -406,7 +406,7 @@ class DefaultController extends BaseController
             ->findByMonth(date('Y'), date('m'))
         ;
 
-        return new Response(json_encode($holidays, JSON_THROW_ON_ERROR));
+        return new Response(json_encode($holidays, \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -436,7 +436,7 @@ class DefaultController extends BaseController
         $response = new Response();
         $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
         $response->headers->set('Content-disposition', 'attachment;filename='.$filename);
-        $response->setContent(chr(239).chr(187).chr(191).$content);
+        $response->setContent(\chr(239).\chr(187).\chr(191).$content);
 
         return $response;
     }
@@ -492,7 +492,7 @@ class DefaultController extends BaseController
         $users = $this->doctrine->getRepository(
             'App:Entry'
         )->getUsersWithTime($ticket);
-        if (is_null($ticket) || empty($users)) {
+        if (null === $ticket || empty($users)) {
             return new Response(
                 'There is no information available about this ticket.',
                 404
@@ -522,7 +522,7 @@ class DefaultController extends BaseController
         );
 
         return new Response(
-            json_encode($time, JSON_THROW_ON_ERROR),
+            json_encode($time, \JSON_THROW_ON_ERROR),
             200,
             ['Content-type' => 'application/json']
         );

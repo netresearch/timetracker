@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Repository;
 
@@ -26,7 +26,7 @@ class UserRepository extends EntityRepository
         $data = [];
 
         foreach ($users as $user) {
-            if ($currentUserId == $user->getId()) {
+            if ($currentUserId === $user->getId()) {
                 // Set current user on top
                 array_unshift($data, ['user' => [
                     'id'       => $user->getId(),
