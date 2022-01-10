@@ -81,7 +81,23 @@ class BaseController extends AbstractController
      */
     protected function isLoggedIn(): mixed
     {
-        return $this->session->get('loggedIn');
+        if (false === $this->session->get('loggedIn')) {
+            return false;
+        }
+
+        if (null === $this->getUserId()) {
+            return false;
+        }
+
+        $user = $this->doctrine->getRepository('App:User')
+            ->find($this->getUserId())
+        ;
+
+        if (!\is_object($user)) {
+            return false;
+        }
+
+        return true;
     }
 
     protected function getUserId(): int
