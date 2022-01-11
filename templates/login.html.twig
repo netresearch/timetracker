@@ -10,29 +10,29 @@
         <script type="text/javascript" src="{{ asset('/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>
         <script type="text/javascript">
             var url = {{ url('_start')|escape|json_encode|raw }};
-        	Ext.onReady(function() {
-				var window = Ext.create('Ext.window.Window', {
-					title: 'Login',
+            Ext.onReady(function() {
+                var window = Ext.create('Ext.window.Window', {
+                    title: 'Login',
                     width: 280,
-					closable: false,
-					modal: true,
-					draggable: false,
-					items: [
+                    closable: false,
+                    modal: true,
+                    draggable: false,
+                    items: [
                     {% for flashMessage in app.session.flashbag.get('error') %}
-						Ext.create('Ext.panel.Panel', {
-							html: "{{ flashMessage|escape('js') }}"
-						}),
-        			{% endfor %}
-					    Ext.create('Ext.form.Panel', {
-					    	bodyPadding: 5,
-					    	standardSubmit: true,
-					    	url: "{{ path('_login') }}",
-					    	items: [
-					    		{
-					    			xtype: 'textfield',
-					    			fieldLabel: 'Benutzername',
-					    			name: 'username',
-					    			allowBlank: false,
+                        Ext.create('Ext.panel.Panel', {
+                            html: "{{ flashMessage|escape('js') }}"
+                        }),
+                    {% endfor %}
+                        Ext.create('Ext.form.Panel', {
+                            bodyPadding: 5,
+                            standardSubmit: true,
+                            url: "{{ path('_login') }}",
+                            items: [
+                                {
+                                    xtype: 'textfield',
+                                    fieldLabel: 'Benutzername',
+                                    name: 'username',
+                                    allowBlank: false,
                                     {% if username is defined %}
                                         value: '{{ username }}',
                                     {% endif %}
@@ -54,49 +54,49 @@
                                             });
                                         }
                                     }
-					    		}, {
-					    			xtype: 'textfield',
-					    			fieldLabel: 'Passwort',
-					    			name: 'password',
-					    			inputType: 'password',
-					    			allowBlank: false,
-					    			listeners: {
-					    				specialkey: function(field, e) {
-					    					if(e.getKey() == e.ENTER) {
-					    						form = field.up('form').getForm();
-					    						form.submit();
-					    					}
-					    				}
-					    			}
-					    		},
-								{
-									xtype: 'checkbox',
-									fieldLabel: 'Angemeldet bleiben',
-									name: 'loginCookie',
-									allowBlank: true,
+                                }, {
+                                    xtype: 'textfield',
+                                    fieldLabel: 'Passwort',
+                                    name: 'password',
+                                    inputType: 'password',
+                                    allowBlank: false,
+                                    listeners: {
+                                        specialkey: function(field, e) {
+                                            if(e.getKey() == e.ENTER) {
+                                                form = field.up('form').getForm();
+                                                form.submit();
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'checkbox',
+                                    fieldLabel: 'Angemeldet bleiben',
+                                    name: 'loginCookie',
+                                    allowBlank: true,
                                     checked: true
-								}
-					    	],
-					    	buttons: [
-				                {
-				                	text: 'Login',
-				                	id: 'form-submit',
-				                	scope: this,
-				                	handler: function(btn) {
-				                		var form = btn.up('form').getForm();
+                                }
+                            ],
+                            buttons: [
+                                {
+                                    text: 'Login',
+                                    id: 'form-submit',
+                                    scope: this,
+                                    handler: function(btn) {
+                                        var form = btn.up('form').getForm();
 
-				                		if(form.isValid()) {
-					                		form.submit();
-				                		}
-				                	}
-				                }
-							]
-					    })
-					]
-				});
+                                        if(form.isValid()) {
+                                            form.submit();
+                                        }
+                                    }
+                                }
+                            ]
+                        })
+                    ]
+                });
 
-				window.show();
-			});
+                window.show();
+            });
         </script>
     </head>
     <body>
