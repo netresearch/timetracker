@@ -213,7 +213,7 @@ class Entry extends Base
         return $this->description;
     }
 
-    public function setDay(string $day): static
+    public function setDay(string|DateTimeInterface $day): static
     {
         if (!$day instanceof DateTime) {
             $day = new DateTime($day);
@@ -229,7 +229,7 @@ class Entry extends Base
         return $this->day;
     }
 
-    public function setStart(string $start): static
+    public function setStart(string|DateTimeInterface $start): static
     {
         if (!$start instanceof DateTime) {
             $start_time = $start;
@@ -248,7 +248,7 @@ class Entry extends Base
         return $this->start;
     }
 
-    public function setEnd(string $end): static
+    public function setEnd(string|DateTimeInterface $end): static
     {
         if (!$end instanceof DateTime) {
             $end_time = $end;

@@ -349,3 +349,13 @@ __ https://addons.mozilla.org/de/firefox/addon/greasemonkey/
 API documentation
 =================
 The timetracker API is documented in ``web/api.yml`` (OpenAPI v3).
+
+
+Developer References
+====================
+
+- https://symfony.com/doc/current/setup/docker.html
+- https://github.com/friendsofphp/PHP-CS-Fixer
+- https://github.com/symfony/demo
+- https://github.com/rectorphp/rector
+  - https://github.com/rectorphp/rector/blob/main/docs/rector_rules_overview.md

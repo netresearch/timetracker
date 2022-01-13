@@ -1,40 +1,119 @@
 security:
     enable_authenticator_manager: true
+
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
-    password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+    # password_hashers:
+    #     # auto hasher with default options for the User class (and children)
+    #     App\Entity\User:
+    #         #algorithm: 'auto'
+    #         algorithm: 'plaintext'
+
+    #     # auto hasher with custom options for all PasswordAuthenticatedUserInterface instances
+    #     Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+    #         #algorithm: 'auto'
+    #         #cost:      15
+    #         algorithm: 'plaintext'
+
+    role_hierarchy:
+        ROLE_DEV:  [ROLE_USER]
+        ROLE_PL:   [ROLE_DEV, ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+        ROLE_CTL:  [ROLE_DEV, ROLE_ADMIN]
+
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        # users_in_memory:
+        #     memory:
+        #         users:
+        #             user:
+        #                 #password: '$2y$13$ovgMQQgJa6yzeALEfXcqkuHotLyXjfIZcAXPoALr4T.e08kv1/miW'
+        #                 password: 'user'
+        #                 roles: ['ROLE_DEV']
+        #             admin:
+        #                 #password: '$2y$13$uCue.2ptVATJwavQrlJZx.M8xSj7KJAMoSMsOFtzjqgX1OH.09PeO'
+        #                 password: 'admin'
+        #                 roles: ['ROLE_PL']
+
+        # used to reload user from session & other features (e.g. switch_user)
+        # app_user_provider:
+        #     entity:
+        #         class: App\Entity\User
+        #         property: username
+
+        ldap_server:
+            ldap:
+                service: ldap
+                base_dn: '%env(string:LDAP_BASE_DN)%'
+                search_dn: '%env(string:LDAP_SEARCH_DN)%'
+                search_password: '%env(string:LDAP_SEARCH_PASSWORD)%'
+                #extra_fields: []
+                default_roles: ['ROLE_DEV']
+                uid_key: '%env(string:LDAP_UID_KEY)%'
+                #filter: '%env(string:LDAP_FILTER)%'
+                #password_attribute: null
+
+        # chain_provider:
+        #     chain:
+        #         providers: [ 'users_in_memory', 'ldap_server' ]
+
+        # local_users:
+        #     chain:
+        #         providers: [ 'users_in_memory', 'app_user_provider' ]
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
+            #access_denied_url: /login
             lazy: true
-            provider: users_in_memory
+            # entry_point: form_login_ldap
+
+            # form_login:
+            #     login_path: login
+            #     check_path: login
+            #     provider: chain_provider
+
+            form_login_ldap:
+                login_path: login
+                check_path: login
+                provider: ldap_server
+                dn_string: '%env(string:LDAP_DN_STRING)%'
+
+            logout:
+                path: logout
+                target: login
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
 
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
+            
+            remember_me:
+                secret:   '%kernel.secret%'
+                lifetime: 604800 # 1 week in seconds
+                path:     /
+                # by default, the feature is enabled by checking a
+                # checkbox in the login form (see below), uncomment the
+                # following line to always enable it.
+                #always_remember_me: true
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # allow unauthenticated users to access the login form
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
 
 when@test:
     security:
-        password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
-            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
-                algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+        # password_hashers:
+        #     # By default, password hashers are resource intensive and take time. This is
+        #     # important to generate secure password hashes. In tests however, secure hashes
+        #     # are not important, waste resources and increase test times. The following
+        #     # reduces the work factor to the lowest possible values.
+        #     Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+        #         algorithm: auto
+        #         cost: 4 # Lowest possible value for bcrypt
+        #         time_cost: 3 # Lowest possible value for argon
+        #         memory_cost: 10 # Lowest possible value for argon

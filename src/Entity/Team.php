@@ -29,72 +29,38 @@ class Team
     #[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'teams')]
     protected $users;
 
-    /**
-     * Set id.
-     *
-     * @param string $id
-     *
-     * @return $this
-     */
-    public function setId(string $id)
+    public function setId(int $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    /**
-     * Get id.
-     *
-     * @return int $id
-     */
     public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName(string $name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string $name
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Set lead user.
-     *
-     * @return $this
-     */
-    public function setLeadUser(User $leadUser)
+    public function setLeadUser(?User $leadUser): static
     {
         $this->leadUser = $leadUser;
 
         return $this;
     }
 
-    /**
-     * Get lead user.
-     *
-     * @return User $leadUser
-     */
-    public function getLeadUser(): User
+    public function getLeadUser(): ?User
     {
         return $this->leadUser;
     }
@@ -107,31 +73,18 @@ class Team
         $this->customers = new ArrayCollection();
     }
 
-    /**
-     * Add customers.
-     *
-     * @return Team
-     */
-    public function addCustomer(Customer $customers): self
+    public function addCustomer(Customer $customers): static
     {
         $this->customers[] = $customers;
 
         return $this;
     }
 
-    /**
-     * Remove customers.
-     */
     public function removeCustomer(Customer $customers): void
     {
         $this->customers->removeElement($customers);
     }
 
-    /**
-     * Get customers.
-     *
-     * @return Collection
-     */
     public function getCustomers(): Collection
     {
         return $this->customers;

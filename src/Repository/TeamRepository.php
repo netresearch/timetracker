@@ -7,9 +7,6 @@ use App\Entity\Team;
 
 class TeamRepository extends EntityRepository
 {
-    /**
-     * @return array[]
-     */
     public function findAll(): array
     {
         /** @var Team[] $teams */
@@ -19,7 +16,7 @@ class TeamRepository extends EntityRepository
             $data[] = ['team' => [
                 'id'           => $team->getId(),
                 'name'         => $team->getName(),
-                'lead_user_id' => $team->getLeadUser()->getId(),
+                'lead_user_id' => $team->getLeadUser()?->getId(),
             ]];
         }
 

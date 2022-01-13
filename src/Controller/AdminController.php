@@ -18,6 +18,10 @@ use App\Entity\Preset;
 use App\Entity\TicketSystem;
 use App\Entity\Activity;
 use App\Helper\TimeHelper;
+use App\Repository\ActivityRepository;
+use App\Repository\CustomerRepository;
+use App\Repository\TeamRepository;
+use App\Repository\TicketSystemRepository;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -27,10 +31,6 @@ class AdminController extends BaseController
 {
     public function getAllProjectsAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         $result = $this->doctrine->getRepository('App:Project')->findAll();
 
         $data = [];
@@ -44,10 +44,6 @@ class AdminController extends BaseController
     #[Route(path: '/getAllCustomers', name: '_getAllCustomers')]
     public function getCustomersAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         /** @var \App\Repository\CustomerRepository $repo */
         $repo = $this->doctrine->getRepository('App:Customer');
 
@@ -57,10 +53,6 @@ class AdminController extends BaseController
     #[Route(path: '/getAllUsers', name: '_getAllUsers')]
     public function getUsersAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         /** @var \App\Repository\UserRepository $repo */
         $repo = $this->doctrine->getRepository('App:User');
 
@@ -70,10 +62,6 @@ class AdminController extends BaseController
     #[Route(path: '/getAllTeams', name: '_getAllTeams')]
     public function getTeamsAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         /** @var \App\Repository\TeamRepository $repo */
         $repo = $this->doctrine->getRepository('App:Team');
 
@@ -83,10 +71,6 @@ class AdminController extends BaseController
     #[Route(path: '/getAllPresets', name: '_getAllPresets')]
     public function getPresetsAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         /** @var \App\Repository\PresetRepository $repo */
         $repo = $this->doctrine->getRepository('App:Preset');
 
@@ -99,15 +83,11 @@ class AdminController extends BaseController
     #[Route(path: '/getTicketSystems', name: '_getTicketSystems')]
     public function getTicketSystemsAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         /** @var \App\Repository\TicketSystemRepository $repo */
         $repo          = $this->doctrine->getRepository('App:TicketSystem');
         $ticketSystems = $repo->getAllTicketSystems();
 
-        if (false === $this->isPl()) {
+        if (false === $this->isGranted('ROLE_PL')) {
             $c = is_countable($ticketSystems) ? \count($ticketSystems) : 0;
             for ($i = 0; $i < $c; ++$i) {
                 unset($ticketSystems[$i]['ticketSystem']['login'], $ticketSystems[$i]['ticketSystem']['password'], $ticketSystems[$i]['ticketSystem']['publicKey'], $ticketSystems[$i]['ticketSystem']['privateKey'], $ticketSystems[$i]['ticketSystem']['oauthConsumerSecret'], $ticketSystems[$i]['ticketSystem']['oauthConsumerKey']);
@@ -120,9 +100,7 @@ class AdminController extends BaseController
     #[Route(path: '/project/save')]
     public function saveProjectAction(): Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         $data      = null;
         $projectId = (int) $this->request->get('id');
@@ -148,16 +126,16 @@ class AdminController extends BaseController
             : null;
 
         $jiraId                            = strtoupper($this->request->get('jiraId'));
-        $active                            = $this->request->get('active') ?: 0;
-        $global                            = $this->request->get('global') ?: 0;
+        $active                            = $this->request->request->getBoolean('active', true);
+        $global                            = $this->request->request->getBoolean('global', false);
         $estimation                        = TimeHelper::readable2minutes($this->request->get('estimation') ?: '0m');
         $billing                           = $this->request->get('billing') ?: 0;
         $costCenter                        = $this->request->get('cost_center') ?: null;
         $offer                             = $this->request->get('offer') ?: 0;
-        $additionalInformationFromExternal = $this->request->get('additionalInformationFromExternal') ?: 0;
+        $additionalInformationFromExternal = $this->request->request->getBoolean('additionalInformationFromExternal');
         /** @var \App\Repository\ProjectRepository $projectRepository */
         $projectRepository        = $this->doctrine->getRepository('App:Project');
-        $internalJiraTicketSystem = (int) $this->request->get('internalJiraTicketSystem', 0);
+        $internalJiraTicketSystem = $this->request->request->getInt('internalJiraTicketSystem', 0);
         $internalJiraProjectKey   = $this->request->get('internalJiraProjectKey', 0);
 
         if ($projectId) {
@@ -243,9 +221,7 @@ class AdminController extends BaseController
     #[Route(path: '/project/delete')]
     public function deleteProjectAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');
@@ -274,17 +250,16 @@ class AdminController extends BaseController
     #[Route(path: '/customer/save')]
     public function saveCustomerAction(): Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         $data       = null;
         $customerId = (int) $this->request->get('id');
         $name       = $this->request->get('name');
-        $active     = $this->request->get('active') ?: 0;
-        $global     = $this->request->get('global') ?: 0;
+        $active     = (bool) $this->request->get('active');
+        $global     = (bool) $this->request->get('global');
         $teamIds    = $this->request->get('teams') ?: [];
 
+        /** @var CustomerRepository */
         $customerRepository = $this->doctrine->getRepository('App:Customer');
 
         if ($customerId) {
@@ -346,9 +321,7 @@ class AdminController extends BaseController
     #[Route(path: '/customer/delete')]
     public function deleteCustomerAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');
@@ -377,9 +350,7 @@ class AdminController extends BaseController
     #[Route(path: '/user/save')]
     public function saveUserAction(): Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         $userId  = (int) $this->request->get('id');
         $name    = $this->request->get('username');
@@ -474,9 +445,7 @@ class AdminController extends BaseController
     #[Route(path: '/user/delete')]
     public function deleteUserAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');
@@ -505,9 +474,7 @@ class AdminController extends BaseController
     #[Route(path: '/preset/delete')]
     public function deletePresetAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');
@@ -536,9 +503,7 @@ class AdminController extends BaseController
     #[Route(path: '/preset/save')]
     public function savePresetAction(): Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         $id       = (int) $this->request->get('id');
         $name     = $this->request->get('name');
@@ -598,10 +563,9 @@ class AdminController extends BaseController
     #[Route(path: '/ticketsystem/save')]
     public function saveTicketSystemAction(): Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
+        /** @var TicketSystemRepository */
         $repository = $this->doctrine->getRepository('App:TicketSystem');
 
         $id                  = (int) $this->request->get('id');
@@ -670,9 +634,7 @@ class AdminController extends BaseController
     #[Route(path: '/ticketsystem/delete')]
     public function deleteTicketSystemAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');
@@ -701,14 +663,9 @@ class AdminController extends BaseController
     #[Route(path: '/activity/save')]
     public function saveActivityAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
+        /** @var ActivityRepository */
         $repository = $this->doctrine->getRepository('App:Activity');
 
         $id          = (int) $this->request->get('id');
@@ -756,9 +713,7 @@ class AdminController extends BaseController
     #[Route(path: '/activity/delete')]
     public function deleteActivityAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');
@@ -787,14 +742,9 @@ class AdminController extends BaseController
     #[Route(path: '/team/save')]
     public function saveTeamAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
+        /** @var TeamRepository */
         $repository = $this->doctrine->getRepository('App:Team');
 
         $id       = (int) $this->request->get('id');
@@ -806,6 +756,7 @@ class AdminController extends BaseController
             : null;
 
         if ($id) {
+            /** @var Team $team */
             $team = $repository->find($id);
         } else {
             $team = new Team();
@@ -820,12 +771,15 @@ class AdminController extends BaseController
             }
         }
 
-        if (null === $teamLead) {
-            $response = new Response($this->t('Please provide a valid user as team leader.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+        // Disabled enforcement of team lead, because of:
+        // You cannot create a user, because it requires a team,
+        // and you cannot create a team, because it requires a user.
+        // if (null === $teamLead) {
+        //     $response = new Response($this->t('Please provide a valid user as team leader.'));
+        //     $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
-            return $response;
-        }
+        //     return $response;
+        // }
 
         try {
             $team
@@ -851,9 +805,7 @@ class AdminController extends BaseController
     #[Route(path: '/team/delete')]
     public function deleteTeamAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');
@@ -882,13 +834,7 @@ class AdminController extends BaseController
     #[Route(path: '/syncentries/jira')]
     public function jiraSyncEntriesAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         $doctrine = $this->doctrine;
 
@@ -924,10 +870,6 @@ class AdminController extends BaseController
     #[Route(path: '/getContracts', name: '_getContracts')]
     public function getContractsAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         /** @var \App\Repository\ContractRepository $repo */
         $repo = $this->doctrine->getRepository('App:Contract');
 
@@ -940,9 +882,7 @@ class AdminController extends BaseController
     #[Route(path: '/contract/save')]
     public function saveContractAction(): Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         $data       = null;
         $contractId = (int) $this->request->get('id');
@@ -985,12 +925,12 @@ class AdminController extends BaseController
 
             return $response;
         }
-        $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), 1);
+        $dateStart->setDate((int) $dateStart->format('Y'), (int) $dateStart->format('m'), 1);
         $dateStart->setTime(0, 0, 0);
 
         $dateEnd = DateTime::createFromFormat('Y-m-d', $end);
         if ($dateEnd) {
-            $dateEnd->setDate($dateEnd->format('Y'), $dateEnd->format('m'), 1);
+            $dateEnd->setDate((int) $dateEnd->format('Y'), (int) $dateEnd->format('m'), 1);
             $dateEnd->add(new DateInterval('P1M'));
             $dateEnd->sub(new DateInterval('P1D'));
             $dateEnd->setTime(23, 59, 59);
@@ -1029,9 +969,7 @@ class AdminController extends BaseController
     #[Route(path: '/contract/delete')]
     public function deleteContractAction(): Error|Response
     {
-        if (false === $this->isPl()) {
-            return $this->getFailedAuthorizationResponse();
-        }
+        $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
             $id       = (int) $this->request->get('id');

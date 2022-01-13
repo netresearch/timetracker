@@ -8,18 +8,21 @@ use Doctrine\Common\Collections\Collection;
 use App\Helper\LocalizationHelper;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Security\Core\User\EquatableInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
-    #[ORM\GeneratedValue(strategy: 'AUTO')]
-    protected $id;
+    #[ORM\GeneratedValue]
+    private $id;
 
-    #[ORM\Column(type: Types::STRING, length: 50)]
-    protected $username;
+    #[ORM\Column(type: Types::STRING, length: 180, unique: true)]
+    private $username;
 
     #[ORM\Column(type: Types::STRING)]
     protected $abbr = '';
@@ -27,14 +30,14 @@ class User
     #[ORM\Column(type: Types::STRING)]
     protected $type;
 
-    #[ORM\Column(name: 'show_empty_line', type: Types::INTEGER)]
-    protected $showEmptyLine;
+    #[ORM\Column(name: 'show_empty_line', type: Types::BOOLEAN)]
+    protected $showEmptyLine = true;
 
-    #[ORM\Column(name: 'suggest_time', type: Types::INTEGER)]
-    protected $suggestTime;
+    #[ORM\Column(name: 'suggest_time', type: Types::BOOLEAN)]
+    protected $suggestTime = true;
 
     #[ORM\Column(name: 'show_future', type: Types::BOOLEAN)]
-    protected $showFuture;
+    protected $showFuture = true;
 
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'user')]
     protected $entries;
@@ -47,10 +50,16 @@ class User
     protected $teams;
 
     #[ORM\Column(name: 'locale', type: Types::STRING)]
-    protected $locale;
+    protected $locale = 'en';
 
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'user')]
     protected $userTicketsystems;
+
+    #[ORM\Column(type: 'json')]
+    private $roles = [];
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private $password;
 
     public function __construct()
     {
@@ -58,20 +67,66 @@ class User
     }
 
     /**
-     * Set id.
+     * A visual identifier that represents this user.
      *
-     * @param int $id
-     *
-     * @return $this
+     * @see UserInterface
      */
-    public function setId(int $id)
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->username;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_DEV
+        $roles[] = 'ROLE_DEV';
+
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): static
+    {
+        $this->roles = $roles;
+
+        return $this;
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): static
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials()
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
+    }
+
+    public function setId(int $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function getId(): int
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -83,7 +138,7 @@ class User
         return $this;
     }
 
-    public function getUsername(): string
+    public function getUsername(): ?string
     {
         return $this->username;
     }
@@ -277,5 +332,25 @@ class User
         }
 
         return $return;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isEqualTo(UserInterface $user): bool
+    {
+        if (!$user instanceof self) {
+            return false;
+        }
+
+        if ($this->getPassword() !== $user->getPassword()) {
+            return false;
+        }
+
+        if ($this->getUserIdentifier() !== $user->getUserIdentifier()) {
+            return false;
+        }
+
+        return true;
     }
 }

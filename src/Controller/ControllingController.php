@@ -51,10 +51,6 @@ class ControllingController extends BaseController
     #[Route(path: '//controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}')]
     public function exportAction(Export $export, Kernel $kernel)
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         $projectId    = (int) $this->request->get('project');
         $userId       = (int) $this->request->get('userid');
         $year         = (int) $this->request->get('year');
@@ -90,7 +86,7 @@ class ControllingController extends BaseController
 
         $filename = strtolower(
             $year.'_'
-            .str_pad($month, 2, '0', \STR_PAD_LEFT)
+            .str_pad((string) $month, 2, '0', \STR_PAD_LEFT)
             .'_'
             .str_replace(' ', '-', $username)
         );
@@ -211,15 +207,9 @@ class ControllingController extends BaseController
     /**
      * Set cell value to numeric date value and given display format.
      *
-     * @param Worksheet $sheet  Spreadsheet
-     * @param string    $column Spreadsheet column
-     * @param number    $row    Spreadsheet row
-     * @param string    $date   Date should be inserted
-     * @param string    $format Display date format
-     *
      * @throws Exception
      */
-    protected static function setCellDate(Worksheet $sheet, string $column, number $row, string $date, string $format = NumberFormat::FORMAT_DATE_YYYYMMDD2): void
+    protected static function setCellDate(Worksheet $sheet, string $column, int $row, string $date, string $format = NumberFormat::FORMAT_DATE_YYYYMMDD2): void
     {
         // Set date value
         $sheet->setCellValue(
@@ -237,14 +227,9 @@ class ControllingController extends BaseController
     /**
      * Set cell value to a numeric time value and display format to HH::MM.
      *
-     * @param Worksheet $sheet  Spreadsheet
-     * @param string    $column Spreadsheet column
-     * @param number    $row    Spreadsheet row
-     * @param string    $date   Date with time which time value should be inserted
-     *
      * @throws Exception
      */
-    protected static function setCellHours(Worksheet $sheet, string $column, number $row, string $date): void
+    protected static function setCellHours(Worksheet $sheet, string $column, int $row, string $date): void
     {
         $dateValue = Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);

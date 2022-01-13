@@ -7,7 +7,7 @@
         <link rel="stylesheet" href="{{ asset('/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('/css/timetracker.css') }}" type="text/css">
         <script type="text/javascript" src="{{ asset('/js/ext-js/ext-all.js') }}"></script>
-        <script type="text/javascript" src="{{ asset('/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('/js/ext-js/locale/ext-lang-' ~ locale|default('en') ~ '.js') }}"></script>
         <script type="text/javascript">
             var url = {{ url('_start')|escape|json_encode|raw }};
             Ext.onReady(function() {
@@ -23,18 +23,23 @@
                             html: "{{ flashMessage|escape('js') }}"
                         }),
                     {% endfor %}
+                    {% if error %}
+                        Ext.create('Ext.panel.Panel', {
+                            html: "{{ error.messageKey|trans(error.messageData, 'security')|escape('js') }}"
+                        }),
+                    {% endif %}
                         Ext.create('Ext.form.Panel', {
                             bodyPadding: 5,
                             standardSubmit: true,
-                            url: "{{ path('_login') }}",
+                            url: "{{ path('login') }}",
                             items: [
                                 {
                                     xtype: 'textfield',
                                     fieldLabel: 'Benutzername',
-                                    name: 'username',
+                                    name: '_username',
                                     allowBlank: false,
                                     {% if username is defined %}
-                                        value: '{{ username }}',
+                                        value: '{{ last_username }}',
                                     {% endif %}
                                     listeners: {
                                         specialkey: function (field, e) {
@@ -57,7 +62,7 @@
                                 }, {
                                     xtype: 'textfield',
                                     fieldLabel: 'Passwort',
-                                    name: 'password',
+                                    name: '_password',
                                     inputType: 'password',
                                     allowBlank: false,
                                     listeners: {
@@ -72,7 +77,7 @@
                                 {
                                     xtype: 'checkbox',
                                     fieldLabel: 'Angemeldet bleiben',
-                                    name: 'loginCookie',
+                                    name: '_remember_me',
                                     allowBlank: true,
                                     checked: true
                                 }

@@ -12,17 +12,14 @@ class SettingsController extends BaseController
     public function saveAction()
     {
         if ('POST' === $this->request->getMethod()) {
-            $userId = $this->session->get('loginId');
+            $user = $this->getWorkUser();
 
-            $doctrine = $this->doctrine;
-            $user     = $doctrine->getRepository('App:User')->find($userId);
-
-            $user->setShowEmptyLine($this->request->get('show_empty_line'));
-            $user->setSuggestTime($this->request->get('suggest_time'));
-            $user->setShowFuture($this->request->get('show_future'));
+            $user->setShowEmptyLine($this->request->request->getBoolean('show_empty_line'));
+            $user->setSuggestTime($this->request->request->getBoolean('suggest_time'));
+            $user->setShowFuture($this->request->request->getBoolean('show_future'));
             $user->setLocale(LocalizationHelper::normalizeLocale($this->request->get('locale')));
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrine->getManager();
             $em->persist($user);
             $em->flush();
 

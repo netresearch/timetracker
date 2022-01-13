@@ -25,10 +25,6 @@ class InterpretationController extends BaseController
     #[Route(path: '/interpretation/entries', name: 'interpretation_entries')]
     public function getLastEntriesAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $entries = $this->getEntries(50);
         } catch (Exception $e) {
@@ -100,10 +96,6 @@ class InterpretationController extends BaseController
     #[Route(path: '/interpretation/customer', name: 'interpretation_customer')]
     public function groupByCustomerAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $entries = $this->getCachedEntries();
         } catch (Exception $e) {
@@ -145,10 +137,6 @@ class InterpretationController extends BaseController
     #[Route(path: '/interpretation/project', name: 'interpretation_project')]
     public function groupByProjectAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $entries = $this->getCachedEntries();
         } catch (Exception $e) {
@@ -190,10 +178,6 @@ class InterpretationController extends BaseController
     #[Route(path: '/interpretation/ticket', name: 'interpretation_ticket')]
     public function groupByTicketAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $entries = $this->getCachedEntries();
         } catch (Exception $e) {
@@ -240,10 +224,6 @@ class InterpretationController extends BaseController
         //NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
         $this->request->query->set('user', $this->getUserId());
 
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $entries = $this->getCachedEntries();
         } catch (Exception $e) {
@@ -285,10 +265,6 @@ class InterpretationController extends BaseController
     #[Route(path: '/interpretation/time', name: 'interpretation_time')]
     public function groupByWorktimeAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $entries = $this->getCachedEntries();
         } catch (Exception $e) {
@@ -328,10 +304,6 @@ class InterpretationController extends BaseController
     #[Route(path: '/interpretation/activity', name: 'interpretation_activity')]
     public function groupByActivityAction()
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $entries = $this->getCachedEntries();
         } catch (Exception $e) {
@@ -384,7 +356,7 @@ class InterpretationController extends BaseController
             'team'            => $this->evalParam('team'),
             'ticket'          => $this->evalParam('ticket'),
             'description'     => $this->evalParam('description'),
-            'visibility_user' => ($this->isDEV() ? $this->getUserId() : null),
+            'visibility_user' => ($this->isGranted('ROLE_DEV') ? $this->getUserId() : null),
             'maxResults'      => $maxResults,
             'datestart'       => $this->evalParam('datestart'),
             'dateend'         => $this->evalParam('dateend'),

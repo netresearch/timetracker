@@ -145,7 +145,7 @@ class Project extends Base
      *
      * @param string $nInternalJiraTicketSystem the id of internal jira ticketsystem
      */
-    public function setInternalJiraTicketSystem(string $nInternalJiraTicketSystem): static
+    public function setInternalJiraTicketSystem(int $nInternalJiraTicketSystem): static
     {
         $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
 
@@ -345,80 +345,43 @@ class Project extends Base
         return $this->technicalLead;
     }
 
-    /**
-     * Set internalReference.
-     *
-     * @param string $internalReference
-     *
-     * @return Project
-     */
-    public function setInternalReference(string $internalReference): self
+    public function setInternalReference(string $internalReference): static
     {
         $this->internalReference = $internalReference;
 
         return $this;
     }
 
-    /**
-     * Get internalReference.
-     *
-     * @return string
-     */
-    public function getInternalReference(): string
+    public function getInternalReference(): ?string
     {
         return $this->internalReference;
     }
 
-    /**
-     * Set externalReference.
-     *
-     * @param string $externalReference
-     *
-     * @return Project
-     */
-    public function setExternalReference(string $externalReference): self
+    public function setExternalReference(string $externalReference): static
     {
         $this->externalReference = $externalReference;
 
         return $this;
     }
 
-    /**
-     * Get externalReference.
-     *
-     * @return string
-     */
-    public function getExternalReference(): string
+    public function getExternalReference(): ?string
     {
         return $this->externalReference;
     }
 
-    /**
-     * Add entries.
-     *
-     * @return Project
-     */
-    public function addEntry(Entry $entries): self
+    public function addEntry(Entry $entries): static
     {
         $this->entries[] = $entries;
 
         return $this;
     }
 
-    /**
-     * Remove entries.
-     */
     public function removeEntrie(Entry $entries): void
     {
         $this->entries->removeElement($entries);
     }
 
-    /**
-     * Add entries.
-     *
-     * @return Project
-     */
-    public function addEntrie(Entry $entries): self
+    public function addEntrie(Entry $entries): static
     {
         $this->entries[] = $entries;
 

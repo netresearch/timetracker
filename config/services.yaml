@@ -5,25 +5,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
 
-    locale:            en
-
-    secret:            ThisTokenIsNotSoSecretChangeIt
-
-    ldap_host:          "127.0.0.1"
-    # LDAP port: 0 use default ports; 336 non SSL; 636 SSL
-    ldap_port:          0
-    ldap_readuser:      "readuser"
-    ldap_readpass:      "readuser"
-    ldap_basedn:        "dc=company,dc=org"
-    # use sAMAccountName for AD
-    ldap_usernamefield: uid
-    # use SSL: old, deprecated, mehtod for encrypted connection
-    ldap_usessl:        true
-    # startTLS: new method for encrypted connections - not implemented yet
-    #ldap_starttls       true
-    # whether to create users in TimeTracker after successfully authenticated by LDAP but not existing in TimeTracker
-    # also see ldap_ou_team_mapping.yml.dist
-    ldap_create_user:   true
+    locale:                 en
 
     app.logo_url:             '%env(string:APP_LOGO_URL)%'
     app.monthly_overview_url: '%env(string:APP_MONTHLY_OVERVIEW_URL)%'
@@ -62,11 +44,20 @@ services:
     #     tags:
     #         - { name: twig.extension }
 
-    preexecute:
-        class: App\EventListener\PreExecute
-        tags:
-            - { name: kernel.event_listener, event: kernel.controller }
-
     nr.timetracker.export:
         class: App\Services\Export
         arguments: ['@service_container']
+
+    ldap:
+        class: Symfony\Component\Ldap\Ldap
+        arguments: [ '@Symfony\Component\Ldap\Adapter\ExtLdap\Adapter' ]
+        tags: ['ldap']
+
+    Symfony\Component\Ldap\Adapter\ExtLdap\Adapter:
+        arguments:
+            - host: '%env(string:LDAP_HOST)%'
+              port: '%env(string:LDAP_PORT)%'
+              encryption: '%env(string:LDAP_ENCRYPTION)%'
+              options:
+                  protocol_version: 3
+                  referrals: false

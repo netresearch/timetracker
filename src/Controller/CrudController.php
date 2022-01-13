@@ -13,6 +13,7 @@ use App\Entity\Project;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\User\Types;
 use App\Response\Error;
 use App\Helper\JiraApiException;
 use App\Helper\JiraOAuthApi;
@@ -27,10 +28,6 @@ class CrudController extends BaseController
     #[Route(path: '/tracking/delete', name: 'timetracking_delete')]
     public function deleteAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         $alert = null;
 
         if (0 !== $this->request->get('id')) {
@@ -176,10 +173,6 @@ class CrudController extends BaseController
     #[Route(path: '/tracking/save', name: 'timetracking_save')]
     public function saveAction(): Error|Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $alert = null;
             $this->logDataToFile($_POST, true);
@@ -213,10 +206,7 @@ class CrudController extends BaseController
                 $entry->setCustomer($customer);
             }
 
-            /** @var \App\Entity\User $user */
-            $user = $this->doctrine->getRepository('App:User')
-                ->find($this->getUserId())
-            ;
+            $user = $this->getWorkUser();
             $entry->setUser($user);
 
             $ticketSystem = $project->getTicketSystem();
@@ -262,7 +252,7 @@ class CrudController extends BaseController
             $this->logDataToFile($entry->toArray());
 
             // Check if the activity needs a ticket
-            if (('DEV' === $user->getType()) && \is_object($activity) && $activity->getNeedsTicket()) {
+            if ((Types::DEV === $user->getType()) && \is_object($activity) && $activity->getNeedsTicket()) {
                 if ($entry->getTicket() === '') {
                     $message = $this->t(
                         "For the activity '%activity%' you must specify a ticket.",
@@ -341,10 +331,6 @@ class CrudController extends BaseController
     #[Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry')]
     public function bulkentryAction(): Response
     {
-        if (!$this->checkLogin()) {
-            return $this->getFailedLoginResponse();
-        }
-
         try {
             $alert = null;
             $this->logDataToFile($_POST, true);
@@ -356,9 +342,8 @@ class CrudController extends BaseController
 
             // Retrieve needed objects
             /** @var User $user */
-            $user = $this->doctrine->getRepository('App:User')
-                ->find($this->getUserId())
-            ;
+            $user = $this->getWorkUser();
+
             /** @var Customer $customer */
             $customer = $this->doctrine->getRepository('App:Customer')
                 ->find($preset->getCustomerId())
@@ -566,7 +551,7 @@ class CrudController extends BaseController
     {
         return;
 
-        $file = $this->get('kernel')->getRootDir().'/logs/'.self::LOG_FILE;
+        $file = $this->getParameter('kernel.root_dir').'/logs/'.self::LOG_FILE;
         if (!file_exists($file) && !touch($file)) {
             throw new Exception($this->t('Could not create log file: %log_file%', ['%log_file%' => $file]));
         }

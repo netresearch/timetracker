@@ -18,6 +18,8 @@ RUN apk add --no-cache \
 		gettext \
 		git \
 		gnu-libiconv \
+		# php-ldap
+		libldap \
 	;
 
 # install gnu-libiconv and set LD_PRELOAD env to make iconv work fully on Alpine image.
@@ -25,31 +27,40 @@ RUN apk add --no-cache \
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
 
 ARG APCU_VERSION=5.1.21
+ARG XDEBUG_VERSION=3.1.2
 RUN set -eux; \
 	apk add --no-cache --virtual .build-deps \
 		$PHPIZE_DEPS \
 		icu-dev \
 		libzip-dev \
 		zlib-dev \
+		# php-gd
 		libjpeg-turbo-dev \
 		libpng-dev \
+		# php-ldap
+		ldb-dev \
+		openldap-dev \
 	; \
 	\
 	docker-php-ext-configure zip; \
 	docker-php-ext-configure gd; \
+	docker-php-ext-configure ldap; \
 	docker-php-ext-install -j$(nproc) \
 		intl \
 		zip \
 		gd \
+		ldap \
 	; \
 	pecl install \
 		apcu-${APCU_VERSION} \
+		xdebug-${XDEBUG_VERSION} \
 	; \
 	pecl clear-cache; \
 	docker-php-ext-enable \
 		apcu \
 		opcache \
 		gd \
+		xdebug \
 	; \
 	\
 	runDeps="$( \

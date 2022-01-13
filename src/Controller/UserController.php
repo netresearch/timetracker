@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\User\Types;
 use App\Model\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -26,7 +27,7 @@ class UserController extends BaseController
 
         $user = new User();
         $user->setUsername($username);
-        $user->setType('DEV');
+        $user->setType(Types::DEV);
 
         $em = $this->doctrine->getManager();
         $em->persist($user);

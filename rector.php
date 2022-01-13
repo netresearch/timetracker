@@ -16,9 +16,9 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     // region Symfony Container
     $parameters = $containerConfigurator->parameters();
     $parameters->set(Option::PATHS, [
-        __DIR__ . '/src',
+        //__DIR__ . '/src',
         //__DIR__ . '/templates',
-        //__DIR__ . '/tests',
+        __DIR__ . '/tests',
     ]);
     $parameters->set(
         Option::SYMFONY_CONTAINER_XML_PATH_PARAMETER,
