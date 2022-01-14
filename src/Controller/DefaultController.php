@@ -250,8 +250,8 @@ class DefaultController extends BaseController
         //$days = $this->request->attributes->has('days') ? (int) $this->request->attributes->get('days') : 10000;
 
         $entries = $this->entryRepo->findByRecentDaysOfUser($this->getWorkUser(), $days);
-        $content = $this->get('templating')->render(
-            'App:Default:export.csv.twig',
+        $content = $this->render(
+            'export.csv.twig',
             [
                 'entries' => $entries,
                 'labels'  => null,
