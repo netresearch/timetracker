@@ -9,7 +9,6 @@ use DateInterval;
 use App\Model\Response;
 use App\Entity\Contract;
 use App\Entity\Team;
-use App\Helper\JiraOAuthApi;
 use App\Response\Error;
 use App\Entity\Project;
 use App\Entity\Customer;
@@ -18,6 +17,7 @@ use App\Entity\Preset;
 use App\Entity\TicketSystem;
 use App\Entity\Activity;
 use App\Helper\TimeHelper;
+use App\Services\JiraOAuthApi;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -721,6 +721,13 @@ class AdminController extends BaseController
         return new Response(json_encode(['success' => true]));
     }
 
+    protected function getJiraOAuthApi(User $user, TicketSystem $ticketSystem): JiraOAuthApi
+    {
+        return $this->container->get('JiraOAuthApi')
+            ->setUser($user)
+            ->setTicketSystem($ticketSystem);
+    }
+
     #[Route(path: '/syncentries/jira')]
     public function jiraSyncEntriesAction(): Response
     {
@@ -735,8 +742,7 @@ class AdminController extends BaseController
             /** @var TicketSystem $ticketSystem */
             foreach ($ticketSystems as $ticketSystem) {
                 try {
-                    $jiraOauthApi = new JiraOAuthApi($user, $ticketSystem, $this->doctrine, $this->container->get('router'));
-                    $jiraOauthApi->updateAllEntriesJiraWorkLogs();
+                    $this->getJiraOAuthApi($user, $ticketSystem)->updateAllEntriesJiraWorkLogs();
                     $data[$ticketSystem->getName().' | '.$user->getUsername()] = 'success';
                 } catch (Exception $e) {
                     $data[$ticketSystem->getName().' | '.$user->getUsername()] = 'error ('.$e->getMessage().')';

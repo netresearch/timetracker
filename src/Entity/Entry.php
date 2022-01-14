@@ -189,7 +189,7 @@ class Entry extends Base
         return $this->ticket;
     }
 
-    public function setWorklogId(int $worklog_id): static
+    public function setWorklogId(?int $worklog_id): static
     {
         $this->worklog_id = $worklog_id;
 

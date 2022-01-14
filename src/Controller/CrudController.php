@@ -7,7 +7,6 @@ use Throwable;
 use DateTime;
 use DateInterval;
 use App\Helper\JiraApiInvalidResourceException;
-use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
@@ -15,7 +14,7 @@ use App\Entity\User;
 use App\Entity\User\Types;
 use App\Response\Error;
 use App\Helper\JiraApiException;
-use App\Helper\JiraOAuthApi;
+use App\Services\JiraOAuthApi;
 use App\Helper\TicketHelper;
 use App\Model\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -56,6 +55,13 @@ class CrudController extends BaseController
         return new Response(json_encode(['success' => true, 'alert' => $alert], \JSON_THROW_ON_ERROR));
     }
 
+    protected function getJiraOAuthApi(User $user, TicketSystem $ticketSystem): JiraOAuthApi
+    {
+        return $this->container->get('JiraOAuthApi')
+            ->setUser($user)
+            ->setTicketSystem($ticketSystem);
+    }
+
     /**
      * Deletes a work log entry in a remote JIRA installation.
      * JIRA instance is defined by ticket system in project.
@@ -85,13 +91,7 @@ class CrudController extends BaseController
             return;
         }
 
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $ticketSystem,
-            $this->doctrine,
-            $this->container->get('router')
-        );
-        $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
+        $this->getJiraOAuthApi($entry->getUser(), $ticketSystem)->deleteEntryJiraWorkLog($entry);
     }
 
     /**
@@ -196,12 +196,7 @@ class CrudController extends BaseController
                     return $this->getFailedResponse($message, 400);
                 }
 
-                $jiraOAuthApi = new JiraOAuthApi(
-                    $entry->getUser(),
-                    $ticketSystem,
-                    $this->doctrine,
-                    $this->container->get('router')
-                );
+                $jiraOAuthApi = $this->getJiraOAuthApi($entry->getUser(), $ticketSystem);
 
                 if ('' !== $this->request->get('ticket')
                     && !$jiraOAuthApi->doesTicketExist($this->request->get('ticket'))
@@ -569,13 +564,7 @@ class CrudController extends BaseController
             $entry->setWorklogId(null);
         }
 
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $ticketSystem,
-            $this->doctrine,
-            $this->container->get('router')
-        );
-        $jiraOAuthApi->updateEntryJiraWorkLog($entry);
+        $this->getJiraOAuthApi($entry->getUser(), $ticketSystem)->updateEntryJiraWorkLog($entry);
     }
 
     /**
@@ -592,14 +581,7 @@ class CrudController extends BaseController
         Entry $entry,
         TicketSystem $ticketSystem = null
     ): string {
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $ticketSystem,
-            $this->doctrine,
-            $this->container->get('router')
-        );
-
-        return $jiraOAuthApi->createTicket($entry);
+        return $this->getJiraOAuthApi($entry->getUser(), $ticketSystem)->createTicket($entry);
     }
 
     /**
@@ -647,12 +629,7 @@ class CrudController extends BaseController
         $internalTicketSystem = $this->ticketSystemRepo->find($internalTicketSystem);
 
         // check if issue exist
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $internalTicketSystem,
-            $this->doctrine,
-            $this->container->get('router')
-        );
+        $jiraOAuthApi = $this->getJiraOAuthApi($entry->getUser(), $internalTicketSystem);
         $searchResult = $jiraOAuthApi->searchTicket(
             sprintf(
                 'project = %s AND summary ~ %s',

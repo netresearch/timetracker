@@ -2,16 +2,18 @@
 
 namespace App\Controller;
 
+use App\Entity\TicketSystem;
+use App\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Exception;
 use Twig\Error\Error;
 use App\Helper\JiraApiException;
-use App\Helper\JiraOAuthApi;
 use App\Helper\TimeHelper;
 use App\Repository\EntryRepository;
 use App\Entity\User\Types;
 use App\Kernel;
 use App\Model\Response;
+use App\Services\JiraOAuthApi;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -266,6 +268,13 @@ class DefaultController extends BaseController
         return $response;
     }
 
+    protected function getJiraOAuthApi(User $user, TicketSystem $ticketSystem): JiraOAuthApi
+    {
+        return $this->container->get('JiraOAuthApi')
+            ->setUser($user)
+            ->setTicketSystem($ticketSystem);
+    }
+
     /**
      * Handles returning user from OAuth service.
      *
@@ -278,7 +287,7 @@ class DefaultController extends BaseController
         $ticketSystem = $this->ticketSystemRepo->find($this->request->get('tsid'));
 
         try {
-            $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->doctrine, $this->container->get('router'));
+            $jiraOAuthApi = $this->getJiraOAuthApi($user, $ticketSystem);
             $jiraOAuthApi->fetchOAuthAccessToken($this->request->get('oauth_token'), $this->request->get('oauth_verifier'));
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
 

@@ -61,3 +61,6 @@ services:
               options:
                   protocol_version: 3
                   referrals: false
+
+    App\Services\JiraOAuthApi:
+        shared: false

@@ -12,23 +12,13 @@ use Exception;
  */
 class JiraApiException extends Exception
 {
-    /**
-     * JiraApiException constructor.
-     *
-     * @param $message
-     * @param $code
-     * @param null $redirectUrl
-     */
     public function __construct($message, $code, protected $redirectUrl = null)
     {
         $message = 'JiraApi: '.$message;
         parent::__construct($message, $code, null);
     }
 
-    /**
-     * @return string
-     */
-    public function getRedirectUrl(): string
+    public function getRedirectUrl(): ?string
     {
         return $this->redirectUrl;
     }

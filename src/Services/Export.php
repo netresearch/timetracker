@@ -23,7 +23,8 @@ use Symfony\Component\Routing\RouterInterface;
 use App\Repository\EntryRepository;
 use App\Entity\Entry as Entry;
 use App\Entity\TicketSystem;
-use App\Helper\JiraOAuthApi;
+use App\Entity\User;
+use App\Services\JiraOAuthApi;
 use App\Repository\UserRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
@@ -78,6 +79,13 @@ class Export
         return $username;
     }
 
+    protected function getJiraOAuthApi(User $user, TicketSystem $ticketSystem): JiraOAuthApi
+    {
+        return $this->container->get('JiraOAuthApi')
+            ->setUser($user)
+            ->setTicketSystem($ticketSystem);
+    }
+
     /**
      * Adds billable (boolean) property to entries depending on the existence
      * of a "billable" label in associated JIRA issues.
@@ -112,12 +120,7 @@ class Export
                 $ticketSystem = $entry->getProject()->getTicketSystem();
 
                 if (!isset($arApi[$ticketSystem->getId()])) {
-                    $arApi[$ticketSystem->getId()] = new JiraOAuthApi(
-                        $currentUser,
-                        $ticketSystem,
-                        $this->doctrine,
-                        $router
-                    );
+                    $arApi[$ticketSystem->getId()] = $this->getJiraOAuthApi($currentUser, $ticketSystem);
                 }
 
                 $arTickets[$ticketSystem->getId()][] = $entry->getTicket();

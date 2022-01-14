@@ -8,7 +8,7 @@
  * @todo create own entity for tokens
  */
 
-namespace App\Helper;
+namespace App\Services;
 
 use Doctrine\Persistence\ManagerRegistry;
 use Throwable;
@@ -24,6 +24,8 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\UserTicketsystem;
+use App\Helper\JiraApiException;
+use App\Helper\JiraApiInvalidResourceException;
 use App\Repository\EntryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -50,14 +52,28 @@ class JiraOAuthApi
      * JiraOAuthApi constructor.
      */
     public function __construct(
-        protected User $user,
-        protected TicketSystem $ticketSystem,
+        #protected User $user,
+        #protected TicketSystem $ticketSystem,
         protected ManagerRegistry $doctrine,
         protected EntryRepository $entryRepo,
         protected EntityManagerInterface $em,
         Router $router
     ) {
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
+    }
+
+    public function setUser(User $user): static
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function setTicketSystem(TicketSystem $ticketSystem): static
+    {
+        $this->ticketSystem = $ticketSystem;
+
+        return $this;
     }
 
     /**
@@ -455,7 +471,7 @@ class JiraOAuthApi
     /**
      * Execute PUT request and return response as simple object.
      */
-    protected function put(string $url, array $data = []): string
+    protected function put(string $url, array $data = []): object
     {
         return $this->getResponse('PUT', $url, $data);
     }
@@ -495,7 +511,7 @@ class JiraOAuthApi
             throw new JiraApiException('Unknown Guzzle exception: '.$e->getMessage(), $e->getCode());
         }
 
-        return json_decode($response->getBody(), null, 512, \JSON_THROW_ON_ERROR);
+        return json_decode($response->getBody()->getContents(), null, 512, \JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -614,11 +630,11 @@ class JiraOAuthApi
      */
     protected function getTicketSystemWorkLogStartDate(Entry $entry): string
     {
-        $startDate = $entry->getDay() ?: new DateTime();
+        $startDate = $entry->getDay() ?? new DateTime();
         if ($entry->getStart()) {
             $startDate->setTime(
-                $entry->getStart()->format('H'),
-                $entry->getStart()->format('i')
+                (int) $entry->getStart()->format('H'),
+                (int) $entry->getStart()->format('i')
             );
         }
 
