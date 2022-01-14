@@ -17,6 +17,17 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Model\Response;
+use App\Repository\ActivityRepository;
+use App\Repository\ContractRepository;
+use App\Repository\CustomerRepository;
+use App\Repository\EntryRepository;
+use App\Repository\HolidayRepository;
+use App\Repository\PresetRepository;
+use App\Repository\ProjectRepository;
+use App\Repository\TeamRepository;
+use App\Repository\TicketSystemRepository;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\Persistence\ManagerRegistry;
@@ -29,8 +40,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * @category Controller
  *
- * @author   Mathias Lieber <mathias.lieber@netresearch.de>
- * @license  No license
+ * @author     Mathias Lieber <mathias.lieber@netresearch.de>
+ * @license    No license
+ * @deprecated Avoid using BaseController
  *
  * @see     http://www.netresearch.de
  */
@@ -39,18 +51,27 @@ class BaseController extends AbstractController
     protected Request $request;
 
     public function __construct(
-        protected ManagerRegistry $doctrine,
         protected RequestStack $requestStack,
         protected TranslatorInterface $translator,
-        protected ParameterBagInterface $params
+        protected ParameterBagInterface $params,
+        protected UserRepository $userRepo,
+        protected EntryRepository $entryRepo,
+        protected CustomerRepository $customerRepo,
+        protected ProjectRepository $projectRepo,
+        protected ActivityRepository $activityRepo,
+        protected HolidayRepository $holidayRepo,
+        protected TicketSystemRepository $ticketSystemRepo,
+        protected TeamRepository $teamRepo,
+        protected PresetRepository $presetRepo,
+        protected ContractRepository $contractRepo,
+        protected EntityManagerInterface $em
     ) {
         $this->request = $requestStack->getCurrentRequest();
     }
 
     protected function getWorkUser(): ?User
     {
-        return $this->doctrine->getRepository('App:User')
-            ->findOneBy(['username' => $this->getUser()->getUserIdentifier()]);
+        return $this->userRepo->findOneBy(['username' => $this->getUser()->getUserIdentifier()]);
     }
 
     protected function getUserId(): ?int

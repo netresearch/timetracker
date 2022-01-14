@@ -4,14 +4,17 @@ namespace App\EventSubscriber;
 
 use App\Entity\User;
 use App\Entity\User\Types;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
 class LoginSubscriber implements EventSubscriberInterface
 {
-    public function __construct(protected EntityManagerInterface $em)
-    {
+    public function __construct(
+        protected EntityManagerInterface $em, 
+        protected UserRepository $userRepo
+    ) {
 
     }
 
@@ -26,7 +29,7 @@ class LoginSubscriber implements EventSubscriberInterface
         // ToDo
         #$this->setTeamsByLdapResponse($event);
 
-        $user  = $this->em->getRepository('App:User')->findOneBy(['username' => $authUser->getUserIdentifier()]);
+        $user  = $this->userRepo->findOneBy(['username' => $authUser->getUserIdentifier()]);
 
         if ($user instanceof User) {
             return;

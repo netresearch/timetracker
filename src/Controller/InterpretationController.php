@@ -14,6 +14,7 @@ class InterpretationController extends BaseController
 {
     /**
      * @var Entry[]
+     * @deprecated use doctrine orm caching
      */
     private ?array $cache = null;
 
@@ -399,10 +400,7 @@ class InterpretationController extends BaseController
             throw new Exception($this->t('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
-        /** @var \App\Repository\EntryRepository $repository */
-        $repository = $this->doctrine->getRepository('App:Entry');
-
-        return $repository->findByFilterArray($arParams);
+        return $this->entryRepo->findByFilterArray($arParams);
     }
 
     private function evalParam($param)

@@ -2,16 +2,22 @@
 
 namespace App\Repository;
 
-use Doctrine\ORM\EntityRepository;
 use App\Entity\Contract;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Database with all contracts.
  *
  * @author Tony Kreissl <kreissl@mogic.com>
  */
-class ContractRepository extends EntityRepository
+class ContractRepository extends ServiceEntityRepository
 {
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Contract::class);
+    }
+
     /**
      * Find all contracts, sorted by start ascending.
      *

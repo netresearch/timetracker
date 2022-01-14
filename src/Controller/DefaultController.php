@@ -3,40 +3,23 @@
 namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use ReflectionException;
-use Psr\Log\LoggerInterface;
 use Exception;
 use Twig\Error\Error;
-use App\Entity\Team;
-use App\Repository\TeamRepository;
-use App\Entity\TicketSystem;
 use App\Helper\JiraApiException;
 use App\Helper\JiraOAuthApi;
 use App\Helper\TimeHelper;
 use App\Repository\EntryRepository;
-use App\Entity\User;
 use App\Entity\User\Types;
 use App\Kernel;
 use App\Model\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 /**
  * Class DefaultController.
  */
 class DefaultController extends BaseController
 {
-    /**
-     * @throws ReflectionException
-     *
-     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
-     */
-    /**
-     * @throws ReflectionException
-     *
-     * @return Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
-     */
     #[Route(path: '/', name: '_start')]
     public function indexAction(Kernel $kernel): Response|RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
@@ -45,14 +28,10 @@ class DefaultController extends BaseController
 
         if ($user) {
             // Send customers to the frontend for caching
-            $customers = $this->doctrine
-                ->getRepository('App:Customer')
-                ->getCustomersByUser($user->getId())
+            $customers = $this->customerRepo->getCustomersByUser($user->getId())
             ;
             // Send the customer-projects-structure to the frontend for caching
-            /** @var \App\Repository\ProjectRepository $projectRepo */
-            $projectRepo = $this->doctrine->getRepository('App:Project');
-            $projects    = $projectRepo->getProjectStructure($user->getId(), $customers);
+            $projects    = $this->projectRepo->getProjectStructure($user->getId(), $customers);
         }
 
         // these settings are used to render frontend according to user settings and permissions
@@ -79,16 +58,13 @@ class DefaultController extends BaseController
         ]);
     }
 
-    /**
-     * @throws \Doctrine\DBAL\Exception
-     */
     #[Route(path: '/getTimeSummary', name: 'time_summary')]
     public function getTimeSummaryAction(): Response|RedirectResponse
     {
         $userId = (int) $this->getUserId();
-        $today  = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
-        $week   = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
-        $month  = $this->doctrine->getRepository('App:Entry')->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
+        $today  = $this->entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
+        $week   = $this->entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
+        $month  = $this->entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
         $data   = [
             'today' => $today,
             'week'  => $week,
@@ -100,8 +76,6 @@ class DefaultController extends BaseController
 
     /**
      * Retrieves a summary of an entry (project total/own, ticket total/own).
-     *
-     * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getSummary', name: '_getSummary')]
     public function getSummaryAction(): Response|RedirectResponse
@@ -151,7 +125,7 @@ class DefaultController extends BaseController
             return new Response(json_encode($data));
         }
         // Collect all entries data
-        $data = $this->doctrine->getRepository('App:Entry')->getEntrySummary($entryId, $userId, $data);
+        $data = $this->entryRepo->getEntrySummary($entryId, $userId, $data);
         if ($data['project']['estimation']) {
             $data['project']['quota'] =
                 TimeHelper::formatQuota(
@@ -165,19 +139,15 @@ class DefaultController extends BaseController
 
     /**
      * Retrieves all current entries of the user logged in.
-     *
-     * @throws \Doctrine\DBAL\Exception
      */
     #[Route(path: '/getData/days/{days}', name: '_getDataDays')]
     #[Route(path: '/getData', name: '_getData')]
     public function getDataAction(int $days = 3): Response|RedirectResponse
     {
         $result = [];
-
-        $user = $this->getWorkUser();
-
+        $user   = $this->getWorkUser();
         //$days = $this->request->attributes->has('days') ? (int) $this->request->attributes->get('days') : 3;
-        $data = $this->doctrine->getRepository('App:Entry')->getEntriesByUser($user->getId(), $days, $user->getShowFuture());
+        $data   = $this->entryRepo->getEntriesByUser($user->getId(), $days, $user->getShowFuture());
 
         // BC - convert object into array
         foreach ($data as $entry) {
@@ -187,13 +157,10 @@ class DefaultController extends BaseController
         return new Response(json_encode($result, \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @throws \Doctrine\DBAL\Exception
-     */
     #[Route(path: '/getCustomers', name: '_getCustomers')]
     public function getCustomersAction(): Response|RedirectResponse
     {
-        $data = $this->doctrine->getRepository('App:Customer')->getCustomersByUser($this->getUserId());
+        $data = $this->customerRepo->getCustomersByUser($this->getUserId());
 
         return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
@@ -212,25 +179,19 @@ class DefaultController extends BaseController
         }
 
         if ($this->isGranted('ROLE_DEV')) {
-            $data = $this->doctrine->getRepository('App:User')->getUserById($userId);
+            $data = $this->userRepo->getUserById($userId);
         } else {
-            $data = $this->doctrine->getRepository('App:User')->getUsers($userId);
+            $data = $this->userRepo->getUsers($userId);
         }
 
         return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
     #[Route(path: '/getCustomer', name: '_getCustomer')]
-    public function getCustomerAction()
+    public function getCustomerAction(): Response
     {
         if ($this->request->get('project')) {
-            $project = $this->doctrine
-                ->getRepository('App:Project')
-                ->find($this->request->get('project'))
-            ;
+            $project = $this->projectRepo->find($this->request->get('project'));
 
             return new Response(json_encode(['customer' => $project->getCustomer()->getId()], \JSON_THROW_ON_ERROR));
         }
@@ -238,35 +199,24 @@ class DefaultController extends BaseController
         return new Response(json_encode(['customer' => 0]));
     }
 
-    /**
-     * @throws ReflectionException
-     *
-     * @return Response
-     */
     #[Route(path: '/getProjects', name: '_getProjects')]
-    public function getProjectsAction()
+    public function getProjectsAction(): Response
     {
         $customerId = (int) $this->request->query->get('customer');
         $userId     = (int) $this->getUserId();
-        $data       = $this->doctrine->getRepository('App:Project')->getProjectsByUser($userId, $customerId);
+        $data       = $this->projectRepo->getProjectsByUser($userId, $customerId);
 
         return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @throws \Doctrine\DBAL\Exception
-     * @throws ReflectionException
-     *
-     * @return Response
-     */
     #[Route(path: '/getAllProjects', name: '_getAllProjects')]
-    public function getAllProjectsAction()
+    public function getAllProjectsAction(): Response
     {
         $customerId = (int) $this->request->query->get('customer');
         if ($customerId > 0) {
-            $result = $this->doctrine->getRepository('App:Project')->findByCustomer($customerId);
+            $result = $this->projectRepo->findByCustomer($customerId);
         } else {
-            $result = $this->doctrine->getRepository('App:Project')->findAll();
+            $result = $this->projectRepo->findAll();
         }
         $data = [];
         foreach ($result as $project) {
@@ -276,27 +226,16 @@ class DefaultController extends BaseController
         return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
     #[Route(path: '/getActivities', name: '_getActivities')]
-    public function getActivitiesAction()
+    public function getActivitiesAction(): Response
     {
-        $data = $this->doctrine->getRepository('App:Activity')->getActivities();
-
-        return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->activityRepo->getActivities(), \JSON_THROW_ON_ERROR));
     }
 
-    /**
-     * @return Response
-     */
     #[Route(path: '/getHolidays', name: '_getHolidays')]
-    public function getHolidaysAction()
+    public function getHolidaysAction(): Response
     {
-        $holidays = $this->doctrine
-            ->getRepository('App:Holiday')
-            ->findByMonth(date('Y'), date('m'))
-        ;
+        $holidays = $this->holidayRepo->findByMonth((int) date('Y'), (int) date('m'));
 
         return new Response(json_encode($holidays, \JSON_THROW_ON_ERROR));
     }
@@ -310,10 +249,7 @@ class DefaultController extends BaseController
     {
         //$days = $this->request->attributes->has('days') ? (int) $this->request->attributes->get('days') : 10000;
 
-        $entries = $this->doctrine
-            ->getRepository('App:Entry')
-            ->findByRecentDaysOfUser($this->getWorkUser(), $days)
-        ;
+        $entries = $this->entryRepo->findByRecentDaysOfUser($this->getWorkUser(), $days);
         $content = $this->get('templating')->render(
             'App:Default:export.csv.twig',
             [
@@ -338,17 +274,8 @@ class DefaultController extends BaseController
     #[Route(path: '/jiraoauthcallback')]
     public function jiraOAuthCallbackAction(): Response|RedirectResponse
     {
-        /** @var User $user */
-        $user = $this->doctrine
-            ->getRepository('App:User')
-            ->find($this->getUserId())
-        ;
-
-        /** @var TicketSystem $ticketSystem */
-        $ticketSystem = $this->doctrine
-            ->getRepository('App:Ticketsystem')
-            ->find($this->request->get('tsid'))
-        ;
+        $user         = $this->userRepo->find($this->getUserId());
+        $ticketSystem = $this->ticketSystemRepo->find($this->request->get('tsid'));
 
         try {
             $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->doctrine, $this->container->get('router'));
@@ -373,12 +300,8 @@ class DefaultController extends BaseController
         
         //$attributes = $this->request->attributes;
         //$ticket = $attributes->has('ticket') ? $attributes->get('ticket') : null;
-        $activities = $this->doctrine->getRepository(
-            'App:Entry'
-        )->getActivitiesWithTime($ticket);
-        $users = $this->doctrine->getRepository(
-            'App:Entry'
-        )->getUsersWithTime($ticket);
+        $activities = $this->entryRepo->getActivitiesWithTime($ticket);
+        $users = $this->entryRepo->getUsersWithTime($ticket);
         if (null === $ticket || empty($users)) {
             return new Response(
                 'There is no information available about this ticket.',

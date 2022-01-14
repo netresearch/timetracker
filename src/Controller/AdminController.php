@@ -18,10 +18,6 @@ use App\Entity\Preset;
 use App\Entity\TicketSystem;
 use App\Entity\Activity;
 use App\Helper\TimeHelper;
-use App\Repository\ActivityRepository;
-use App\Repository\CustomerRepository;
-use App\Repository\TeamRepository;
-use App\Repository\TicketSystemRepository;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -31,7 +27,7 @@ class AdminController extends BaseController
 {
     public function getAllProjectsAction(): Response
     {
-        $result = $this->doctrine->getRepository('App:Project')->findAll();
+        $result = $this->projectRepo->findAll();
 
         $data = [];
         foreach ($result as $project) {
@@ -44,37 +40,25 @@ class AdminController extends BaseController
     #[Route(path: '/getAllCustomers', name: '_getAllCustomers')]
     public function getCustomersAction(): Response
     {
-        /** @var \App\Repository\CustomerRepository $repo */
-        $repo = $this->doctrine->getRepository('App:Customer');
-
-        return new Response(json_encode($repo->getAllCustomers(), \JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->customerRepo->getAllCustomers(), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getAllUsers', name: '_getAllUsers')]
     public function getUsersAction(): Response
     {
-        /** @var \App\Repository\UserRepository $repo */
-        $repo = $this->doctrine->getRepository('App:User');
-
-        return new Response(json_encode($repo->getAllUsers(), \JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->userRepo->getAllUsers(), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getAllTeams', name: '_getAllTeams')]
     public function getTeamsAction(): Response
     {
-        /** @var \App\Repository\TeamRepository $repo */
-        $repo = $this->doctrine->getRepository('App:Team');
-
-        return new Response(json_encode($repo->findAll(), \JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->teamRepo->findAll(), \JSON_THROW_ON_ERROR));
     }
 
     #[Route(path: '/getAllPresets', name: '_getAllPresets')]
     public function getPresetsAction(): Response
     {
-        /** @var \App\Repository\PresetRepository $repo */
-        $repo = $this->doctrine->getRepository('App:Preset');
-
-        return new Response(json_encode($repo->getAllPresets(), \JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->presetRepo->getAllPresets(), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -83,9 +67,7 @@ class AdminController extends BaseController
     #[Route(path: '/getTicketSystems', name: '_getTicketSystems')]
     public function getTicketSystemsAction(): Response
     {
-        /** @var \App\Repository\TicketSystemRepository $repo */
-        $repo          = $this->doctrine->getRepository('App:TicketSystem');
-        $ticketSystems = $repo->getAllTicketSystems();
+        $ticketSystems = $this->ticketSystemRepo->getAllTicketSystems();
 
         if (false === $this->isGranted('ROLE_PL')) {
             $c = is_countable($ticketSystems) ? \count($ticketSystems) : 0;
@@ -106,24 +88,9 @@ class AdminController extends BaseController
         $projectId = (int) $this->request->get('id');
         $name      = $this->request->get('name');
 
-        /** @var TicketSystem $ticketSystem */
-        $ticketSystem = $this->request->get('ticket_system') ?
-            $this->doctrine
-                ->getRepository('App:TicketSystem')
-                ->find($this->request->get('ticket_system'))
-            : null;
-
-        $projectLead = $this->request->get('project_lead') ?
-            $this->doctrine
-                ->getRepository('App:User')
-                ->find($this->request->get('project_lead'))
-            : null;
-
-        $technicalLead = $this->request->get('technical_lead') ?
-            $this->doctrine
-                ->getRepository('App:User')
-                ->find($this->request->get('technical_lead'))
-            : null;
+        $ticketSystem  = $this->ticketSystemRepo->find($this->request->get('ticket_system'));
+        $projectLead   = $this->userRepo->find($this->request->get('project_lead'));
+        $technicalLead = $this->userRepo->find($this->request->get('technical_lead'));
 
         $jiraId                            = strtoupper($this->request->get('jiraId'));
         $active                            = $this->request->request->getBoolean('active', true);
@@ -133,21 +100,16 @@ class AdminController extends BaseController
         $costCenter                        = $this->request->get('cost_center') ?: null;
         $offer                             = $this->request->get('offer') ?: 0;
         $additionalInformationFromExternal = $this->request->request->getBoolean('additionalInformationFromExternal');
-        /** @var \App\Repository\ProjectRepository $projectRepository */
-        $projectRepository        = $this->doctrine->getRepository('App:Project');
-        $internalJiraTicketSystem = $this->request->request->getInt('internalJiraTicketSystem', 0);
-        $internalJiraProjectKey   = $this->request->get('internalJiraProjectKey', 0);
+        $internalJiraTicketSystem          = $this->request->request->getInt('internalJiraTicketSystem', 0);
+        $internalJiraProjectKey            = $this->request->get('internalJiraProjectKey', 0);
 
         if ($projectId) {
-            $project = $projectRepository->find($projectId);
+            $project = $this->projectRepo->find($projectId);
         } else {
             $project = new Project();
 
             /** @var Customer $customer */
-            $customer = $this->doctrine
-                ->getRepository('App:Customer')
-                ->find($this->request->get('customer'))
-            ;
+            $customer = $this->customerRepo->find($this->request->get('customer'));
 
             if (!$customer) {
                 $response = new Response($this->t('Please choose a customer.'));
@@ -166,7 +128,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $sameNamedProject = $projectRepository->findOneBy(
+        $sameNamedProject = $this->projectRepo->findOneBy(
             ['name' => $name, 'customer' => $project->getCustomer()->getId()]
         );
         if ($sameNamedProject) {
@@ -185,7 +147,7 @@ class AdminController extends BaseController
             }
         }
 
-        if (\strlen($jiraId) && false === $projectRepository->isValidJiraPrefix($jiraId)) {
+        if (\strlen($jiraId) && false === $this->projectRepo->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->t('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -209,9 +171,8 @@ class AdminController extends BaseController
             ->setInternalJiraTicketSystem($internalJiraTicketSystem)
         ;
 
-        $em = $this->doctrine->getManager();
-        $em->persist($project);
-        $em->flush();
+        $this->em->persist($project);
+        $this->em->flush();
 
         $data = [$project->getId(), $name, $project->getCustomer()->getId(), $jiraId];
 
@@ -224,16 +185,11 @@ class AdminController extends BaseController
         $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
-            $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
+            $id      = (int) $this->request->get('id');
+            $project = $this->projectRepo->find($id);
 
-            $project = $doctrine->getRepository('App:Project')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($project);
-            $em->flush();
+            $this->em->remove($project);
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
@@ -259,11 +215,8 @@ class AdminController extends BaseController
         $global     = (bool) $this->request->get('global');
         $teamIds    = $this->request->get('teams') ?: [];
 
-        /** @var CustomerRepository */
-        $customerRepository = $this->doctrine->getRepository('App:Customer');
-
         if ($customerId) {
-            $customer = $customerRepository->find($customerId);
+            $customer = $this->customerRepo->find($customerId);
         } else {
             $customer = new Customer();
         }
@@ -275,7 +228,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if ($sameNamedCustomer = $customerRepository->findOneByName($name)) {
+        if ($sameNamedCustomer = $this->customerRepo->findOneByName($name)) {
             if ($customer->getId() !== $sameNamedCustomer->getId()) {
                 $response = new Response($this->t('The customer name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -292,7 +245,7 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
-            if ($team = $this->doctrine->getRepository('App:Team')->find((int) $teamId)) {
+            if ($team = $this->teamRepo->find((int) $teamId)) {
                 $customer->addTeam($team);
             } else {
                 $response = new Response(sprintf($this->t('Could not find team with ID %s.'), (int) $teamId));
@@ -309,9 +262,8 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->doctrine->getManager();
-        $em->persist($customer);
-        $em->flush();
+        $this->em->persist($customer);
+        $this->em->flush();
 
         $data = [$customer->getId(), $name, $active, $global, $teamIds];
 
@@ -325,15 +277,10 @@ class AdminController extends BaseController
 
         try {
             $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
+            $customer = $this->customerRepo->find($id);
 
-            $customer = $doctrine->getRepository('App:Customer')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($customer);
-            $em->flush();
+            $this->em->remove($customer);
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
@@ -359,12 +306,9 @@ class AdminController extends BaseController
         $locale  = $this->request->get('locale');
         $teamIds = $this->request->get('teams') ?: [];
 
-        /** @var UserRepository $userRepository */
-        $userRepository = $this->doctrine->getRepository('App:User');
-
         if ($userId) {
             /** @var User $user */
-            $user = $userRepository->find($userId);
+            $user = $this->userRepo->find($userId);
         } else {
             $user = new User();
         }
@@ -383,7 +327,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if ($sameNamedUser = $userRepository->findOneByUsername($name)) {
+        if ($sameNamedUser = $this->userRepo->findOneByUsername($name)) {
             if ($user->getId() !== $sameNamedUser->getId()) {
                 $response = new Response($this->t('The user name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -392,7 +336,7 @@ class AdminController extends BaseController
             }
         }
 
-        if ($sameAbbrUser = $userRepository->findOneByAbbr($abbr)) {
+        if ($sameAbbrUser = $this->userRepo->findOneByAbbr($abbr)) {
             if ($user->getId() !== $sameAbbrUser->getId()) {
                 $response = new Response($this->t('The user name abreviation provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -416,7 +360,7 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
-            if ($team = $this->doctrine->getRepository('App:Team')->find((int) $teamId)) {
+            if ($team = $this->teamRepo->find((int) $teamId)) {
                 $user->addTeam($team);
             } else {
                 $response = new Response(sprintf($this->t('Could not find team with ID %s.'), (int) $teamId));
@@ -433,9 +377,8 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->doctrine->getManager();
-        $em->persist($user);
-        $em->flush();
+        $this->em->persist($user);
+        $this->em->flush();
 
         $data = [$user->getId(), $name, $abbr, $type];
 
@@ -448,16 +391,11 @@ class AdminController extends BaseController
         $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
-            $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
+            $id   = (int) $this->request->get('id');
+            $user = $this->userRepo->find($id);
 
-            $user = $doctrine->getRepository('App:User')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($user);
-            $em->flush();
+            $this->em->remove($user);
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
@@ -477,16 +415,11 @@ class AdminController extends BaseController
         $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
-            $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
+            $id     = (int) $this->request->get('id');
+            $preset = $this->presetRepo->find($id);
 
-            $preset = $doctrine->getRepository('App:Preset')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($preset);
-            $em->flush();
+            $this->em->remove($preset);
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
@@ -505,20 +438,11 @@ class AdminController extends BaseController
     {
         $this->denyAccessUnlessGranted('ROLE_PL');
 
-        $id       = (int) $this->request->get('id');
-        $name     = $this->request->get('name');
-        $customer = $this->doctrine
-            ->getRepository('App:Customer')
-            ->find($this->request->get('customer'))
-        ;
-        $project = $this->doctrine
-            ->getRepository('App:Project')
-            ->find($this->request->get('project'))
-        ;
-        $activity = $this->doctrine
-            ->getRepository('App:Activity')
-            ->find($this->request->get('activity'))
-        ;
+        $id          = (int) $this->request->get('id');
+        $name        = $this->request->get('name');
+        $customer    = $this->customerRepo->find($this->request->get('customer'));
+        $project     = $this->projectRepo->find($this->request->get('project'));
+        $activity    = $this->activityRepo->find($this->request->get('activity'));
         $description = $this->request->get('description');
 
         if (\strlen($name) < 3) {
@@ -528,10 +452,8 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $repository = $this->doctrine->getRepository('App:Preset');
-
         if ($id) {
-            $preset = $repository->find($id);
+            $preset = $this->presetRepo->find($id);
         } else {
             $preset = new Preset();
         }
@@ -544,9 +466,8 @@ class AdminController extends BaseController
                 ->setDescription($description)
             ;
 
-            $em = $this->doctrine->getManager();
-            $em->persist($preset);
-            $em->flush();
+            $this->em->persist($preset);
+            $this->em->flush();
         } catch (Exception) {
             $response = new Response($this->t('Please choose a customer, a project and an activity.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
@@ -565,9 +486,6 @@ class AdminController extends BaseController
     {
         $this->denyAccessUnlessGranted('ROLE_PL');
 
-        /** @var TicketSystemRepository */
-        $repository = $this->doctrine->getRepository('App:TicketSystem');
-
         $id                  = (int) $this->request->get('id');
         $name                = $this->request->get('name');
         $type                = $this->request->get('type');
@@ -582,7 +500,7 @@ class AdminController extends BaseController
         $oauthConsumerSecret = $this->request->get('oauthConsumerSecret');
 
         if ($id) {
-            $ticketSystem = $repository->find($id);
+            $ticketSystem = $this->ticketSystemRepo->find($id);
         } else {
             $ticketSystem = new TicketSystem();
         }
@@ -594,7 +512,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if ($sameNamedSystem = $repository->findOneByName($name)) {
+        if ($sameNamedSystem = $this->ticketSystemRepo->findOneByName($name)) {
             if ($ticketSystem->getId() !== $sameNamedSystem->getId()) {
                 $response = new Response($this->t('The ticket system name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -618,9 +536,8 @@ class AdminController extends BaseController
                 ->setOauthConsumerSecret($oauthConsumerSecret)
             ;
 
-            $em = $this->doctrine->getManager();
-            $em->persist($ticketSystem);
-            $em->flush();
+            $this->em->persist($ticketSystem);
+            $this->em->flush();
         } catch (Exception $e) {
             $response = new Response($this->t('Error on save').': '.$e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
@@ -637,16 +554,11 @@ class AdminController extends BaseController
         $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
-            $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
+            $id           = (int) $this->request->get('id');
+            $ticketSystem = $this->ticketSystemRepo->find($id);
 
-            $ticketSystem = $doctrine->getRepository('App:TicketSystem')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($ticketSystem);
-            $em->flush();
+            $this->em->remove($ticketSystem);
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
@@ -665,21 +577,18 @@ class AdminController extends BaseController
     {
         $this->denyAccessUnlessGranted('ROLE_PL');
 
-        /** @var ActivityRepository */
-        $repository = $this->doctrine->getRepository('App:Activity');
-
         $id          = (int) $this->request->get('id');
         $name        = $this->request->get('name');
         $needsTicket = (bool) $this->request->get('needsTicket');
         $factor      = str_replace(',', '.', $this->request->get('factor'));
 
         if ($id) {
-            $activity = $repository->find($id);
+            $activity = $this->activityRepo->find($id);
         } else {
             $activity = new Activity();
         }
 
-        if ($sameNamedActivity = $repository->findOneByName($name)) {
+        if ($sameNamedActivity = $this->activityRepo->findOneByName($name)) {
             if ($activity->getId() !== $sameNamedActivity->getId()) {
                 $response = new Response($this->t('The activity name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -695,9 +604,8 @@ class AdminController extends BaseController
                 ->setFactor($factor)
             ;
 
-            $em = $this->doctrine->getManager();
-            $em->persist($activity);
-            $em->flush();
+            $this->em->persist($activity);
+            $this->em->flush();
         } catch (Exception $e) {
             $response = new Response($this->t('Error on save').': '.$e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
@@ -716,16 +624,9 @@ class AdminController extends BaseController
         $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
-            $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
-
-            $activity = $doctrine->getRepository('App:Activity')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($activity);
-            $em->flush();
+            $id = (int) $this->request->get('id');
+            $this->em->remove($this->activityRepo->find($id));
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
@@ -744,25 +645,20 @@ class AdminController extends BaseController
     {
         $this->denyAccessUnlessGranted('ROLE_PL');
 
-        /** @var TeamRepository */
-        $repository = $this->doctrine->getRepository('App:Team');
-
         $id       = (int) $this->request->get('id');
         $name     = $this->request->get('name');
         $teamLead = $this->request->get('lead_user_id') ?
-            $this->doctrine
-                ->getRepository('App:User')
-                ->find($this->request->get('lead_user_id'))
+            $this->userRepo->find($this->request->get('lead_user_id'))
             : null;
 
         if ($id) {
             /** @var Team $team */
-            $team = $repository->find($id);
+            $team = $this->teamRepo->find($id);
         } else {
             $team = new Team();
         }
 
-        if ($sameNamedTeam = $repository->findOneByName($name)) {
+        if ($sameNamedTeam = $this->teamRepo->findOneByName($name)) {
             if ($team->getId() !== $sameNamedTeam->getId()) {
                 $response = new Response($this->t('The team name provided already exists.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -787,9 +683,8 @@ class AdminController extends BaseController
                 ->setLeadUser($teamLead)
             ;
 
-            $em = $this->doctrine->getManager();
-            $em->persist($team);
-            $em->flush();
+            $this->em->persist($team);
+            $this->em->flush();
         } catch (Exception $e) {
             $response = new Response($this->t('Error on save').': '.$e->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
@@ -808,16 +703,11 @@ class AdminController extends BaseController
         $this->denyAccessUnlessGranted('ROLE_PL');
 
         try {
-            $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
+            $id   = (int) $this->request->get('id');
+            $team = $this->teamRepo->find($id);
 
-            $team = $doctrine->getRepository('App:Team')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($team);
-            $em->flush();
+            $this->em->remove($team);
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {
@@ -836,26 +726,16 @@ class AdminController extends BaseController
     {
         $this->denyAccessUnlessGranted('ROLE_PL');
 
-        $doctrine = $this->doctrine;
-
-        $users = $doctrine
-            ->getRepository('App:User')
-            ->findAll()
-        ;
-
-        $ticketSystems = $doctrine
-            ->getRepository('App:TicketSystem')
-            ->findAll()
-        ;
-
-        $data = [];
+        $users         = $this->userRepo->findAll();
+        $ticketSystems = $this->ticketSystemRepo->findAll();
+        $data          = [];
 
         /** @var User $user */
         foreach ($users as $user) {
             /** @var TicketSystem $ticketSystem */
             foreach ($ticketSystems as $ticketSystem) {
                 try {
-                    $jiraOauthApi = new JiraOAuthApi($user, $ticketSystem, $doctrine, $this->container->get('router'));
+                    $jiraOauthApi = new JiraOAuthApi($user, $ticketSystem, $this->doctrine, $this->container->get('router'));
                     $jiraOauthApi->updateAllEntriesJiraWorkLogs();
                     $data[$ticketSystem->getName().' | '.$user->getUsername()] = 'success';
                 } catch (Exception $e) {
@@ -870,10 +750,7 @@ class AdminController extends BaseController
     #[Route(path: '/getContracts', name: '_getContracts')]
     public function getContractsAction(): Response
     {
-        /** @var \App\Repository\ContractRepository $repo */
-        $repo = $this->doctrine->getRepository('App:Contract');
-
-        return new Response(json_encode($repo->getContracts(), \JSON_THROW_ON_ERROR));
+        return new Response(json_encode($this->contractRepo->getContracts(), \JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -897,16 +774,11 @@ class AdminController extends BaseController
         $hours_6    = $this->request->get('hours_6');
         /** @var User $user */
         $user = $this->request->get('user_id') ?
-            $this->doctrine
-                ->getRepository('App:User')
-                ->find($this->request->get('user_id'))
+            $this->userRepo->find($this->request->get('user_id'))
             : null;
 
-        /** @var \App\Repository\ContractRepository $contractRepository */
-        $contractRepository = $this->doctrine->getRepository('App:Contract');
-
         if ($contractId) {
-            $contract = $contractRepository->find($contractId);
+            $contract = $this->contractRepo->find($contractId);
         } else {
             $contract = new Contract();
         }
@@ -957,9 +829,8 @@ class AdminController extends BaseController
             ->setHours6($hours_6)
         ;
 
-        $em = $this->doctrine->getManager();
-        $em->persist($contract);
-        $em->flush();
+        $this->em->persist($contract);
+        $this->em->flush();
 
         $data = [$contract->getId()];
 
@@ -973,15 +844,10 @@ class AdminController extends BaseController
 
         try {
             $id       = (int) $this->request->get('id');
-            $doctrine = $this->doctrine;
+            $contract = $this->contractRepo->find($id);
 
-            $contract = $doctrine->getRepository('App:Contract')
-                ->find($id)
-            ;
-
-            $em = $doctrine->getManager();
-            $em->remove($contract);
-            $em->flush();
+            $this->em->remove($contract);
+            $this->em->flush();
         } catch (Exception $e) {
             $reason = '';
             if (str_contains($e->getMessage(), 'Integrity constraint violation')) {

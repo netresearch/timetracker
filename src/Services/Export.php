@@ -24,6 +24,7 @@ use App\Repository\EntryRepository;
 use App\Entity\Entry as Entry;
 use App\Entity\TicketSystem;
 use App\Helper\JiraOAuthApi;
+use App\Repository\UserRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -47,32 +48,22 @@ class Export
     public function __construct(
         protected ?ContainerInterface $container,
         protected ManagerRegistry $doctrine,
-        private readonly RouterInterface $router
+        private readonly RouterInterface $router,
+        protected UserRepository $userRepo,
+        protected EntryRepository $entryRepo
     ) {
     }
 
     /**
      * Returns entries filtered and ordered.
-     *
-     * @param int   $userId     Filter entries by user
-     * @param int   $year       Filter entries by year
-     * @param int   $month      Filter entries by month
-     * @param int   $projectId  Filter entries by project
-     * @param int   $customerId Filter entries by customer
-     * @param array $arSort     Sort result by given fields
      */
     public function exportEntries(int $userId, int $year, int $month, int $projectId, int $customerId, array $arSort = null): array
     {
-        /* @var \App\Entity\Entry[] $arEntries */
-        return $this->getEntryRepository()
-            ->findByDate($userId, $year, $month, $projectId, $customerId, $arSort)
-        ;
+        return $this->entryRepo->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
     }
 
     /**
      * Returns user name for given user ID.
-     *
-     * @param int $userId User ID
      *
      * @return string $username - the name of the user or all if no valid user id is provided
      */
@@ -80,20 +71,11 @@ class Export
     {
         $username = 'all';
         if (0 < (int) $userId) {
-            /** @var User $user */
-            $user = $this->doctrine
-                ->getRepository('App:User')
-                ->find($userId)
-            ;
+            $user = $this->userRepo->find($userId);
             $username = $user->getUsername();
         }
 
         return $username;
-    }
-
-    protected function getEntryRepository(): EntryRepository
-    {
-        return $this->doctrine->getRepository('App:Entry');
     }
 
     /**
@@ -111,10 +93,7 @@ class Export
         array $entries,
         bool $removeNotBillable = false
     ): array {
-        /** @var \App\Entity\User $currentUser */
-        $currentUser = $this->doctrine->getRepository('App:User')
-            ->find($currentUserId)
-        ;
+        $currentUser = $this->userRepo->find($currentUserId);
 
         /** @var Router $router */
         $router = $this->router;
@@ -136,7 +115,7 @@ class Export
                     $arApi[$ticketSystem->getId()] = new JiraOAuthApi(
                         $currentUser,
                         $ticketSystem,
-                        $doctrine,
+                        $this->doctrine,
                         $router
                     );
                 }

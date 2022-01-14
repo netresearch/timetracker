@@ -4,13 +4,19 @@ namespace App\Repository;
 
 use ReflectionException;
 use App\Entity\Project;
-use Doctrine\ORM\EntityRepository;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Class ProjectRepository.
  */
-class ProjectRepository extends EntityRepository
+class ProjectRepository extends ServiceEntityRepository
 {
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Project::class);
+    }
+
     /**
      * @param string $a
      * @param string $b

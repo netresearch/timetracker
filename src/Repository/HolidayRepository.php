@@ -2,10 +2,17 @@
 
 namespace App\Repository;
 
-use Doctrine\ORM\EntityRepository;
+use App\Entity\Holiday;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
-class HolidayRepository extends EntityRepository
+class HolidayRepository extends ServiceEntityRepository
 {
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Holiday::class);
+    }
+
     /**
      * get all holidays in a given year and month.
      *
@@ -18,7 +25,7 @@ class HolidayRepository extends EntityRepository
     {
         $em = $this->getEntityManager();
 
-        $pattern = $year.'-'.str_pad($month, 2, '0', \STR_PAD_LEFT).'-'.'%';
+        $pattern = $year.'-'.str_pad((string) $month, 2, '0', \STR_PAD_LEFT).'-'.'%';
 
         $query = $em->createQuery(
             'SELECT h FROM App:Holiday h'

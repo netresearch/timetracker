@@ -29,9 +29,8 @@ class UserController extends BaseController
         $user->setUsername($username);
         $user->setType(Types::DEV);
 
-        $em = $this->doctrine->getManager();
-        $em->persist($user);
-        $em->flush();
+        $this->em->persist($user);
+        $this->em->flush();
 
         return new Response(json_encode(['success' => true]));
     }

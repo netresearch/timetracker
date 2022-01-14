@@ -23,7 +23,8 @@ use Doctrine\ORM\Query\Expr\Join;
 use App\Entity\Entry;
 use App\Entity\User;
 use DateTimeZone;
-use Doctrine\ORM\EntityRepository;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Class EntryRepository.
@@ -35,11 +36,16 @@ use Doctrine\ORM\EntityRepository;
  *
  * @see       http://www.netresearch.de
  */
-class EntryRepository extends EntityRepository
+class EntryRepository extends ServiceEntityRepository
 {
     final public const PERIOD_DAY   = 1;
     final public const PERIOD_WEEK  = 2;
     final public const PERIOD_MONTH = 3;
+
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Entry::class);
+    }
 
     /**
      * Returns count of calendar days which include given amount of working days.

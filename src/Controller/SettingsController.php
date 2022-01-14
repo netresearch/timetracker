@@ -19,9 +19,8 @@ class SettingsController extends BaseController
             $user->setShowFuture($this->request->request->getBoolean('show_future'));
             $user->setLocale(LocalizationHelper::normalizeLocale($this->request->get('locale')));
 
-            $em = $this->doctrine->getManager();
-            $em->persist($user);
-            $em->flush();
+            $this->em->persist($user);
+            $this->em->flush();
 
             // Adapt to new locale immediately
             $this->request->setLocale($user->getLocale());
