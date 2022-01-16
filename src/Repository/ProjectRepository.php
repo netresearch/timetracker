@@ -18,17 +18,6 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param string $a
-     * @param string $b
-     *
-     * @return int
-     */
-    public function sortProjectsByName(string $a, string $b): int
-    {
-        return strcasecmp($a['name'], $b['name']);
-    }
-
-    /**
      * @return Project[]
      */
     public function getGlobalProjects(): array
@@ -93,7 +82,13 @@ class ProjectRepository extends ServiceEntityRepository
 
         // Sort projects by name for each customer
         foreach ($projects as &$customerProjects) {
-            usort($customerProjects, [$this, 'sortProjectsByName']);
+            usort(
+                $customerProjects,
+                function (array $projectA, array $projectB): int
+                {
+                    return strcasecmp($projectA['name'], $projectB['name']);
+                }
+            );
         }
 
         return $projects;
