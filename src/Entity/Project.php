@@ -116,6 +116,11 @@ class Project extends Base
     #[ORM\Column(name: 'internal_jira_ticket_system', nullable: true)]
     protected $internalJiraTicketSystem;
 
+    public function __construct()
+    {
+        $this->entries = new ArrayCollection();
+    }
+
     /**
      * Sets the additional Information.
      *
@@ -155,11 +160,6 @@ class Project extends Base
     public function getAdditionalInformationFromExternal(): bool
     {
         return $this->additionalInformationFromExternal;
-    }
-
-    public function __construct()
-    {
-        $this->entries = new ArrayCollection();
     }
 
     public function getId(): ?int

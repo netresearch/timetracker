@@ -30,118 +30,74 @@ class UserTicketsystem extends Base
     #[ORM\Column(type: Types::BOOLEAN, options: ["default" => 0])]
     protected $avoidConnection = false;
 
-    /**
-     * @return mixed
-     */
-    public function getId(): mixed
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * @param mixed $id
-     *
-     * @return $this
-     */
-    public function setId($id)
+    public function setId(int $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    /**
-     * @return TicketSystem
-     */
     public function getTicketSystem(): TicketSystem
     {
         return $this->ticketSystem;
     }
 
-    /**
-     * @return $this
-     */
-    public function setTicketSystem(TicketSystem $ticketSystem)
+    public function setTicketSystem(TicketSystem $ticketSystem): static
     {
         $this->ticketSystem = $ticketSystem;
 
         return $this;
     }
 
-    /**
-     * @return User
-     */
     public function getUser(): User
     {
         return $this->user;
     }
 
-    /**
-     * @return $this
-     */
-    public function setUser(User $user)
+    public function setUser(User $user): static
     {
         $this->user = $user;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getAccessToken(): string
     {
         return $this->accessToken;
     }
 
-    /**
-     * @param string $accessToken
-     *
-     * @return $this
-     */
-    public function setAccessToken(string $accessToken)
+    public function setAccessToken(string $accessToken): static
     {
         $this->accessToken = $accessToken;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getTokenSecret(): string
     {
         return $this->tokenSecret;
     }
 
-    /**
-     * @param string $tokenSecret
-     *
-     * @return $this
-     */
-    public function setTokenSecret(string $tokenSecret)
+    public function setTokenSecret(string $tokenSecret): static
     {
         $this->tokenSecret = $tokenSecret;
 
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function getAvoidConnection(): bool
     {
-        return 1 === $this->avoidConnection;
+        return $this->avoidConnection;
     }
 
-    /**
-     * @param bool $avoidConnection
-     *
-     * @return $this
-     */
-    public function setAvoidConnection(bool $avoidConnection)
+    public function setAvoidConnection(bool $avoidConnection): static
     {
-        $this->avoidConnection = ($avoidConnection ? 1 : 0);
+        $this->avoidConnection = $avoidConnection;
 
         return $this;
     }

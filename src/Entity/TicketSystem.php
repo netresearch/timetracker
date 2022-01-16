@@ -16,16 +16,12 @@ class TicketSystem extends Base
 {
     final public const TYPE_JIRA = 'JIRA';
     final public const TYPE_OTRS = 'OTRS';
-    /**
-     * @var int $id
-     */
+
     #[ORM\Column(name: 'id', type: Types::INTEGER)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-    /**
-     * @var string $name
-     */
+
     #[ORM\Column(type: Types::STRING)]
     protected $name;
 
@@ -62,266 +58,137 @@ class TicketSystem extends Base
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'ticketSystem')]
     protected $userTicketsystems;
 
-    /**
-     * Get id.
-     *
-     * @return int
-     */
     public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName(string $name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Set bookTime.
-     *
-     * @param bool $bookTime
-     *
-     * @return $this
-     */
-    public function setBookTime(bool $bookTime)
+    public function setBookTime(bool $bookTime): static
     {
         $this->bookTime = $bookTime;
 
         return $this;
     }
 
-    /**
-     * Get bookTime.
-     *
-     * @return bool $bookTime
-     */
     public function getBookTime(): bool
     {
         return $this->bookTime;
     }
 
-    /**
-     * Set type.
-     *
-     * @param string $type
-     *
-     * @return $this
-     */
-    public function setType(string $type)
+    public function setType(string $type): static
     {
         $this->type = $type;
 
         return $this;
     }
 
-    /**
-     * Get type.
-     *
-     * @return string $type
-     */
     public function getType(): string
     {
         return $this->type;
     }
 
-    /**
-     * Set url.
-     *
-     * @param string $url
-     *
-     * @return $this
-     */
-    public function setUrl(string $url)
+    public function setUrl(string $url): static
     {
         $this->url = $url;
 
         return $this;
     }
 
-    /**
-     * Get url.
-     *
-     * @return string $url
-     */
     public function getUrl(): string
     {
         return $this->url;
     }
 
-    /**
-     * Set the ticket url.
-     *
-     * @param string $ticketUrl
-     *
-     * @return $this
-     */
-    public function setTicketUrl(string $ticketUrl)
+    public function setTicketUrl(string $ticketUrl): static
     {
         $this->ticketUrl = $ticketUrl;
 
         return $this;
     }
 
-    /**
-     * Get url pointing to a ticket.
-     *
-     * @return string $ticketUrl
-     */
     public function getTicketUrl(): string
     {
         return $this->ticketUrl;
     }
 
-    /**
-     * Set login.
-     *
-     * @param string $login
-     *
-     * @return $this
-     */
-    public function setLogin(string $login)
+    public function setLogin(string $login): static
     {
         $this->login = $login;
 
         return $this;
     }
 
-    /**
-     * Get login.
-     *
-     * @return string $login
-     */
     public function getLogin(): string
     {
         return $this->login;
     }
 
-    /**
-     * Set password.
-     *
-     * @param string $password
-     *
-     * @return $this
-     */
-    public function setPassword(string $password)
+    public function setPassword(string $password): static
     {
         $this->password = $password;
 
         return $this;
     }
 
-    /**
-     * Get password.
-     *
-     * @return string $password
-     */
     public function getPassword(): string
     {
         return $this->password;
     }
 
-    /**
-     * Set public key.
-     *
-     * @param string $publicKey
-     *
-     * @return $this
-     */
-    public function setPublicKey(string $publicKey)
+    public function setPublicKey(string $publicKey): static
     {
         $this->publicKey = $publicKey;
 
         return $this;
     }
 
-    /**
-     * Get public key.
-     *
-     * @return string $publicKey
-     */
     public function getPublicKey(): string
     {
         return $this->publicKey;
     }
 
-    /**
-     * Set private key.
-     *
-     * @param string $privateKey
-     *
-     * @return $this
-     */
-    public function setPrivateKey(string $privateKey)
+    public function setPrivateKey(string $privateKey): static
     {
         $this->privateKey = $privateKey;
 
         return $this;
     }
 
-    /**
-     * Get private key.
-     *
-     * @return string $privateKey
-     */
     public function getPrivateKey(): string
     {
         return $this->privateKey;
     }
 
-    /**
-     * @return string
-     */
     public function getOauthConsumerKey(): string
     {
         return $this->oauthConsumerKey;
     }
 
-    /**
-     * @param string $oauthConsumerKey
-     *
-     * @return $this
-     */
-    public function setOauthConsumerKey(string $oauthConsumerKey)
+    public function setOauthConsumerKey(string $oauthConsumerKey): static
     {
         $this->oauthConsumerKey = $oauthConsumerKey;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getOauthConsumerSecret(): string
     {
         return $this->oauthConsumerSecret;
     }
 
-    /**
-     * @param string $oauthConsumerSecret
-     *
-     * @return $this
-     */
-    public function setOauthConsumerSecret(string $oauthConsumerSecret)
+    public function setOauthConsumerSecret(string $oauthConsumerSecret): static
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
 

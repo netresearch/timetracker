@@ -29,6 +29,14 @@ class Team
     #[ORM\ManyToMany(targetEntity: 'User', mappedBy: 'teams')]
     protected $users;
 
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        $this->customers = new ArrayCollection();
+    }
+
     public function setId(int $id): static
     {
         $this->id = $id;
@@ -63,14 +71,6 @@ class Team
     public function getLeadUser(): ?User
     {
         return $this->leadUser;
-    }
-
-    /**
-     * Constructor.
-     */
-    public function __construct()
-    {
-        $this->customers = new ArrayCollection();
     }
 
     public function addCustomer(Customer $customers): static

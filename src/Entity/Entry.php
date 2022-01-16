@@ -84,9 +84,11 @@ class Entry extends Base
     #[ORM\Column(name: 'internal_jira_ticket_original_key', options: ['default' => ''])]
     protected $internalJiraTicketOriginalKey = '';
 
-    public function setExternalReporter(string $externalReporter): void
+    public function setExternalReporter(string $externalReporter): static
     {
         $this->externalReporter = $externalReporter;
+
+        return $this;
     }
 
     public function getExternalReporter(): string
@@ -94,9 +96,11 @@ class Entry extends Base
         return $this->externalReporter;
     }
 
-    public function setExternalSummary(string $externalSummary): void
+    public function setExternalSummary(string $externalSummary): static
     {
         $this->externalSummary = $externalSummary;
+
+        return $this;
     }
 
     /**
@@ -398,8 +402,6 @@ class Entry extends Base
 
     /**
      * Calculate difference between start and end.
-     *
-     * @throws Exception
      */
     public function calcDuration(float $factor = 1): static
     {

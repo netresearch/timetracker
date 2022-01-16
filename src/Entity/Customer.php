@@ -17,6 +17,7 @@ class Customer extends Base
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
+
     #[ORM\Column(type: Types::STRING)]
     protected $name;
 
@@ -28,6 +29,7 @@ class Customer extends Base
 
     #[ORM\OneToMany(targetEntity: 'Project', mappedBy: 'customer')]
     protected $projects;
+
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'customer')]
     protected $entries;
 
@@ -41,234 +43,129 @@ class Customer extends Base
         $this->teams    = new ArrayCollection();
     }
 
-    /**
-     * Set id.
-     *
-     * @param int $id
-     *
-     * @return $this
-     */
-    public function setId(int $id)
+    public function setId(int $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    /**
-     * Get id.
-     *
-     * @return int $id
-     */
     public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName(string $name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string $name
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Set active.
-     *
-     * @param bool $active
-     *
-     * @return $this
-     */
-    public function setActive(bool $active)
+    public function setActive(bool $active): static
     {
         $this->active = $active;
 
         return $this;
     }
 
-    /**
-     * Get active.
-     *
-     * @return bool $active
-     */
     public function getActive(): bool
     {
         return $this->active;
     }
 
-    /**
-     * Set global.
-     *
-     * @param bool $global
-     *
-     * @return $this
-     */
-    public function setGlobal(bool $global)
+    public function setGlobal(bool $global): static
     {
         $this->global = $global;
 
         return $this;
     }
 
-    /**
-     * Get global.
-     *
-     * @return bool $global
-     */
     public function getGlobal(): bool
     {
         return $this->global;
     }
 
-    /**
-     * Add projects.
-     *
-     * @return $this
-     */
-    public function addProjects(Project $projects)
+    public function addProjects(Project $projects): static
     {
         $this->projects[] = $projects;
 
         return $this;
     }
 
-    /**
-     * Get projects.
-     *
-     * @return Collection $projects
-     */
     public function getProjects(): Collection
     {
         return $this->projects;
     }
 
-    /**
-     * Add entries.
-     *
-     * @return $this
-     */
-    public function addEntries(Entry $entries)
+    public function addEntries(Collection $entries): static
     {
-        $this->entries[] = $entries;
+        $this->entries = new ArrayCollection(
+            array_merge($this->entries->toArray(), $entries->toArray())
+        );
 
         return $this;
     }
 
-    /**
-     * Get entries.
-     *
-     * @return Collection $entries
-     */
     public function getEntries(): Collection
     {
         return $this->entries;
     }
 
-    /**
-     * Reset teams.
-     *
-     * @return $this
-     */
-    public function resetTeams()
+    public function resetTeams(): static
     {
         $this->teams = new ArrayCollection();
 
         return $this;
     }
 
-    /**
-     * Add team.
-     *
-     * @return $this
-     */
-    public function addTeam(Team $team)
+    public function addTeam(Team $team): static
     {
         $this->teams[] = $team;
 
         return $this;
     }
 
-    /**
-     * Get teams.
-     *
-     * @return Collection $teams
-     */
     public function getTeams(): Collection
     {
         return $this->teams;
     }
 
-    /**
-     * Add projects.
-     *
-     * @return Customer
-     */
-    public function addProject(Project $projects): self
+    public function addProject(Project $projects): static
     {
         $this->projects[] = $projects;
 
         return $this;
     }
 
-    /**
-     * Remove projects.
-     */
-    public function removeProject(Project $projects): void
+    public function removeProject(Project $projects): bool
     {
         $this->projects->removeElement($projects);
     }
 
-    /**
-     * Add entries.
-     *
-     * @return Customer
-     */
-    public function addEntry(Entry $entry): self
+    public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
 
         return $this;
     }
 
-    /**
-     * Remove entry.
-     */
-    public function removeEntrie(Entry $entry): void
+    public function removeEntrie(Entry $entry): bool
     {
         $this->entries->removeElement($entry);
     }
 
-    /**
-     * Remove teams.
-     */
-    public function removeTeam(Team $teams): void
+    public function removeTeam(Team $teams): bool
     {
         $this->teams->removeElement($teams);
     }
 
-    /**
-     * Add entries.
-     *
-     * @return Customer
-     */
-    public function addEntrie(Entry $entries): self
+    public function addEntrie(Entry $entries): static
     {
         $this->entries[] = $entries;
 

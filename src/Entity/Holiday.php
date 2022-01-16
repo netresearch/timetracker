@@ -7,6 +7,7 @@ use Doctrine\DBAL\Types\Types;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
+use DateTimeInterface;
 
 /**
  * App\Entity\Holiday.
@@ -24,14 +25,7 @@ class Holiday extends Base
         $this->setDay($day);
     }
 
-    /**
-     * Set day.
-     *
-     * @param string $day
-     *
-     * @return $this
-     */
-    public function setDay(string $day)
+    public function setDay(string $day): static
     {
         if (!$day instanceof DateTime) {
             $day = new DateTime($day);
@@ -42,41 +36,21 @@ class Holiday extends Base
         return $this;
     }
 
-    /**
-     * Get day.
-     *
-     * @return DateTime
-     */
-    public function getDay(): DateTime
+    public function getDay(): DateTimeInterface
     {
         return $this->day;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     */
     public function setName(string $name): void
     {
         $this->name = $name;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Get array representation of holiday object.
-     *
-     * @return array
-     */
     public function toArray(): array
     {
         return [
