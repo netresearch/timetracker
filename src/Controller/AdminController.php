@@ -70,6 +70,7 @@ class AdminController extends BaseController
         $ticketSystems = $this->ticketSystemRepo->getAllTicketSystems();
 
         if (false === $this->isGranted('ROLE_PL')) {
+            // drop credentials from response data for non admin users
             $c = is_countable($ticketSystems) ? \count($ticketSystems) : 0;
             for ($i = 0; $i < $c; ++$i) {
                 unset($ticketSystems[$i]['ticketSystem']['login'], $ticketSystems[$i]['ticketSystem']['password'], $ticketSystems[$i]['ticketSystem']['publicKey'], $ticketSystems[$i]['ticketSystem']['privateKey'], $ticketSystems[$i]['ticketSystem']['oauthConsumerSecret'], $ticketSystems[$i]['ticketSystem']['oauthConsumerKey']);

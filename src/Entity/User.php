@@ -57,7 +57,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     protected $userTicketsystems;
 
     #[ORM\Column(type: 'json', options: ["default" => ''])]
-    private $roles = [];
+    private $roles = ['ROLE_DEV'];
 
     #[ORM\Column(type: 'string', nullable: true)]
     private $password;
@@ -82,16 +82,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
         // guarantee every user at least has ROLE_DEV
-        $roles[] = 'ROLE_DEV';
-
-        return array_unique($roles);
+        return array_unique($this->roles + ['ROLE_DEV']);
     }
 
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
+
+        return $this;
+    }
+
+    public function addRole(string $role): static
+    {
+        $this->roles = array_unique($this->roles + [$role]);
 
         return $this;
     }

@@ -357,7 +357,7 @@ class InterpretationController extends BaseController
             'team'            => $this->evalParam('team'),
             'ticket'          => $this->evalParam('ticket'),
             'description'     => $this->evalParam('description'),
-            'visibility_user' => ($this->isGranted('ROLE_DEV') ? $this->getUserId() : null),
+            'visibility_user' => $this->isGranted('ROLE_ADMIN') ? null : $this->getUserId(),
             'maxResults'      => $maxResults,
             'datestart'       => $this->evalParam('datestart'),
             'dateend'         => $this->evalParam('dateend'),

@@ -37,12 +37,16 @@ class DefaultController extends BaseController
         }
 
         // these settings are used to render frontend according to user settings and permissions
+        // this should also work for users not loaded rom ldap_user_provider or db
         // that's why we need to override 'type' for user accordingly to permission level
         if ($this->isGranted('ROLE_PL')) {
+            $settings['role'] = 'ROLE_PL';
             $settings['type'] = Types::PL;
         } elseif ($this->isGranted('ROLE_CTL')) {
+            $settings['role'] = 'ROLE_CTL';
             $settings['type'] = Types::CTL;
         } else {
+            $settings['role'] = 'ROLE_DEV';
             $settings['type'] = Types::DEV;
         }
 
@@ -168,7 +172,7 @@ class DefaultController extends BaseController
     }
 
     /**
-     * Developers may see their own data only, CTL and PL may see everyone.
+     * Developers may see their own data only, ROLE_ADMIN (CTL and PL) may see everyone.
      */
     #[Route(path: '/getUsers', name: '_getUsers')]
     public function getUsersAction(): Response
@@ -180,10 +184,11 @@ class DefaultController extends BaseController
             return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
         }
 
-        if ($this->isGranted('ROLE_DEV')) {
-            $data = $this->userRepo->getUserById($userId);
-        } else {
+        if ($this->isGranted('ROLE_ADMIN')) {
+            // return all users for admins
             $data = $this->userRepo->getUsers($userId);
+        } else {
+            $data = $this->userRepo->getUserById($userId);
         }
 
         return new Response(json_encode($data, \JSON_THROW_ON_ERROR));
