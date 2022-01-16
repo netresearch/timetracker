@@ -28,8 +28,8 @@ class Preset extends Base
     #[ORM\ManyToOne(targetEntity: 'Activity')]
     protected $activity;
 
-    #[ORM\Column(type: Types::STRING)]
-    protected $description;
+    #[ORM\Column(type: Types::STRING, options: ['default' => ''])]
+    protected $description = '';
 
     public function setId($id)
     {

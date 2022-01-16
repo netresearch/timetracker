@@ -19,10 +19,13 @@ class Customer extends Base
     protected $id;
     #[ORM\Column(type: Types::STRING)]
     protected $name;
-    #[ORM\Column(type: Types::BOOLEAN)]
-    protected $active;
-    #[ORM\Column(type: Types::BOOLEAN)]
-    protected $global;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => 1])]
+    protected $active = true;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => 0])]
+    protected $global = false;
+
     #[ORM\OneToMany(targetEntity: 'Project', mappedBy: 'customer')]
     protected $projects;
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'customer')]

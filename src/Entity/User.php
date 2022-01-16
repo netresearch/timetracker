@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\User\Types as UserTypes;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\Collection;
@@ -27,8 +28,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     #[ORM\Column(type: Types::STRING)]
     protected $abbr = '';
 
-    #[ORM\Column(type: Types::STRING)]
-    protected $type;
+    #[ORM\Column(type: Types::STRING, options: ["default" => UserTypes::DEV])]
+    protected $type = UserTypes::DEV;
 
     #[ORM\Column(name: 'show_empty_line', type: Types::BOOLEAN)]
     protected $showEmptyLine = true;
@@ -49,13 +50,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     #[ORM\JoinTable(name: 'teams_users')]
     protected $teams;
 
-    #[ORM\Column(name: 'locale', type: Types::STRING)]
+    #[ORM\Column(name: 'locale', type: Types::STRING, options: ["default" => 'en'])]
     protected $locale = 'en';
 
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'user')]
     protected $userTicketsystems;
 
-    #[ORM\Column(type: 'json')]
+    #[ORM\Column(type: 'json', options: ["default" => ''])]
     private $roles = [];
 
     #[ORM\Column(type: 'string', nullable: true)]

@@ -23,11 +23,11 @@ class Activity
     #[ORM\Column(type: Types::STRING, length: 50)]
     protected $name;
 
-    #[ORM\Column(name: 'needs_ticket', type: Types::BOOLEAN)]
-    protected $needsTicket;
+    #[ORM\Column(name: 'needs_ticket', type: Types::BOOLEAN, options: ['default' => 0])]
+    protected $needsTicket = false;
 
-    #[ORM\Column(name: 'factor', type: Types::FLOAT)]
-    protected $factor;
+    #[ORM\Column(name: 'factor', type: Types::FLOAT, options: ['default' => 1.0])]
+    protected $factor = 1.0;
 
     #[ORM\OneToMany(targetEntity: 'Entry', mappedBy: 'activity')]
     protected $entries;

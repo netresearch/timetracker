@@ -23,21 +23,21 @@ class Project extends Base
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    #[ORM\Column(type: Types::STRING)]
-    protected $name;
+    #[ORM\Column(type: Types::STRING, options: ["default" => ''])]
+    protected $name = '';
 
-    #[ORM\Column(type: Types::BOOLEAN)]
-    protected $active;
+    #[ORM\Column(type: Types::BOOLEAN, options: ["default" => 1])]
+    protected $active = true;
 
     #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
 
-    #[ORM\Column(type: Types::BOOLEAN)]
-    protected $global;
+    #[ORM\Column(type: Types::BOOLEAN, options: ["default" => 1])]
+    protected $global = true;
 
-    #[ORM\Column(type: Types::STRING, name: 'jira_id')]
-    protected $jiraId;
+    #[ORM\Column(type: Types::STRING, name: 'jira_id', options: ["default" => ''])]
+    protected $jiraId = '';
 
     #[ORM\ManyToOne(targetEntity: 'TicketSystem')]
     protected $ticketSystem;
@@ -48,38 +48,38 @@ class Project extends Base
     /**
      * Estimated project duration in minutes.
      */
-    #[ORM\Column(type: Types::INTEGER, name: 'estimation')]
-    protected $estimation;
+    #[ORM\Column(type: Types::INTEGER, name: 'estimation', options: ["default" => 0])]
+    protected $estimation = 0;
 
     /**
      * Offer number.
      */
-    #[ORM\Column(name: 'offer', length: 31)]
-    protected $offer;
+    #[ORM\Column(name: 'offer', length: 31, options: ["default" => ''])]
+    protected $offer = '';
 
     /**
      * Used billing method.
      */
-    #[ORM\Column(type: Types::INTEGER, name: 'billing')]
-    protected $billing;
+    #[ORM\Column(type: Types::INTEGER, name: 'billing', options: ["default" => Project::BILLING_NONE])]
+    protected $billing = 0;
 
     /**
      * cost center (number or name).
      */
-    #[ORM\Column(name: 'cost_center', length: 31, nullable: true)]
-    protected $costCenter;
+    #[ORM\Column(name: 'cost_center', length: 31, options: ["default" => ''])]
+    protected $costCenter = '';
 
     /**
      * internal reference number.
      */
-    #[ORM\Column(name: 'internal_ref', length: 31, nullable: true)]
-    protected $internalReference;
+    #[ORM\Column(name: 'internal_ref', length: 31, options: ["default" => ''])]
+    protected $internalReference = '';
 
     /**
      * external (clients) reference number.
      */
-    #[ORM\Column(name: 'external_ref', length: 31, nullable: true)]
-    protected $externalReference;
+    #[ORM\Column(name: 'external_ref', length: 31, options: ["default" => ''])]
+    protected $externalReference = '';
 
     /**
      * project manager user.
@@ -98,22 +98,22 @@ class Project extends Base
     /**
      * invoice number, reserved for future use.
      */
-    #[ORM\Column(name: 'invoice', length: 31, nullable: true)]
-    protected $invoice;
+    #[ORM\Column(name: 'invoice', length: 31, options: ["default" => ''])]
+    protected $invoice = '';
 
-    #[ORM\Column(name: 'additional_information_from_external', type: Types::BOOLEAN)]
-    protected $additionalInformationFromExternal;
+    #[ORM\Column(name: 'additional_information_from_external', type: Types::BOOLEAN, options: ["default" => 0])]
+    protected $additionalInformationFromExternal = 0;
 
     /**
      * the internal key of the project the current ticket should be booked to.
      */
-    #[ORM\Column(name: 'internal_jira_project_key')]
-    protected $internalJiraProjectKey;
+    #[ORM\Column(name: 'internal_jira_project_key', options: ["default" => ''])]
+    protected $internalJiraProjectKey = '';
 
     /**
      * the id of the internal jira ticket system.
      */
-    #[ORM\Column(name: 'internal_jira_ticket_system')]
+    #[ORM\Column(name: 'internal_jira_ticket_system', nullable: true)]
     protected $internalJiraTicketSystem;
 
     /**

@@ -24,14 +24,14 @@ class Entry extends Base
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    #[ORM\Column(type: Types::STRING, length: 31, nullable: true)]
-    protected $ticket;
+    #[ORM\Column(type: Types::STRING, length: 31, options: ['default' => ''])]
+    protected $ticket = '';
 
     #[ORM\Column(name: 'worklog_id', type: Types::INTEGER, nullable: true)]
     protected $worklog_id;
 
-    #[ORM\Column(type: Types::STRING)]
-    protected $description;
+    #[ORM\Column(type: Types::STRING, options: ['default' => ''])]
+    protected $description = '';
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     protected $day;
@@ -45,8 +45,8 @@ class Entry extends Base
     #[ORM\Column(type: Types::INTEGER)]
     protected $duration;
 
-    #[ORM\Column(name: 'synced_to_ticketsystem', type: Types::BOOLEAN)]
-    protected $syncedToTicketsystem;
+    #[ORM\Column(name: 'synced_to_ticketsystem', type: Types::BOOLEAN, options: ['default' => 0])]
+    protected $syncedToTicketsystem = false;
 
     #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries')]
     protected $project;
@@ -81,8 +81,8 @@ class Entry extends Base
      *
      * @var string e.g. TYPO-1234
      */
-    #[ORM\Column(name: 'internal_jira_ticket_original_key')]
-    protected $internalJiraTicketOriginalKey;
+    #[ORM\Column(name: 'internal_jira_ticket_original_key', options: ['default' => ''])]
+    protected $internalJiraTicketOriginalKey = '';
 
     public function setExternalReporter(string $externalReporter): void
     {

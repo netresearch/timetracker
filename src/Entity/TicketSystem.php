@@ -29,65 +29,35 @@ class TicketSystem extends Base
     #[ORM\Column(type: Types::STRING)]
     protected $name;
 
-    /**
-     * @var bool $bookTime;
-     */
-    #[ORM\Column(name: 'book_time', type: Types::INTEGER, nullable: false)]
-    protected $bookTime;
+    #[ORM\Column(name: 'book_time', type: Types::INTEGER, options: ["default" => 0])]
+    protected $bookTime = 0;
 
-    /**
-     * @var string $type;
-     */
-    #[ORM\Column(type: Types::STRING)]
-    protected $type;
+    #[ORM\Column(type: Types::STRING, options: ["default" => ''])]
+    protected $type = '';
 
-    /**
-     * @var string $url
-     */
-    #[ORM\Column(type: Types::STRING)]
-    protected $url;
+    #[ORM\Column(type: Types::STRING, options: ["default" => ''])]
+    protected $url = '';
 
-    /**
-     * @var string $ticketUrl
-     */
-    #[ORM\Column(type: Types::STRING)]
-    protected $ticketUrl;
+    #[ORM\Column(type: Types::STRING, options: ["default" => ''])]
+    protected $ticketUrl = '';
 
-    /**
-     * @var string $login
-     */
-    #[ORM\Column(type: Types::STRING)]
-    protected $login;
+    #[ORM\Column(type: Types::STRING, options: ["default" => ''])]
+    protected $login = '';
 
-    /**
-     * @var string $password
-     */
-    #[ORM\Column(type: Types::STRING)]
-    protected $password;
+    #[ORM\Column(type: Types::STRING, options: ["default" => ''])]
+    protected $password = '';
 
-    /**
-     * @var string $publicKey
-     */
-    #[ORM\Column(type: Types::STRING, name: 'public_key')]
-    protected $publicKey;
+    #[ORM\Column(type: Types::STRING, name: 'public_key', options: ["default" => ''])]
+    protected $publicKey = '';
 
-    /**
-     * @var string $privateKey
-     */
-    #[ORM\Column(type: Types::STRING, name: 'private_key')]
-    protected $privateKey;
+    #[ORM\Column(type: Types::STRING, name: 'private_key', options: ["default" => ''])]
+    protected $privateKey = '';
 
-    /**
-     * @var string $oauthConsumerKey
-     */
-    #[ORM\Column(type: Types::STRING, name: 'oauth_consumer_key')]
-    protected $oauthConsumerKey;
+    #[ORM\Column(type: Types::STRING, name: 'oauth_consumer_key', options: ["default" => ''])]
+    protected $oauthConsumerKey = '';
 
-    /**
-     * @var string $oauthConsumerSecret
-     */
-    #[ORM\Column(type: Types::STRING, name: 'oauth_consumer_secret')]
-    protected $oauthConsumerSecret;
+    #[ORM\Column(type: Types::STRING, name: 'oauth_consumer_secret', options: ["default" => ''])]
+    protected $oauthConsumerSecret = '';
 
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'ticketSystem')]
     protected $userTicketsystems;
