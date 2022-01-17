@@ -30,10 +30,9 @@ class DefaultController extends BaseController
 
         if ($user) {
             // Send customers to the frontend for caching
-            $customers = $this->customerRepo->getCustomersByUser($user->getId())
-            ;
+            $customers = $this->customerRepo->getCustomersByUser($user->getId());
             // Send the customer-projects-structure to the frontend for caching
-            $projects    = $this->projectRepo->getProjectStructure($user->getId(), $customers);
+            $projects  = $this->projectRepo->getProjectStructure($user->getId(), $customers);
         }
 
         // these settings are used to render frontend according to user settings and permissions
