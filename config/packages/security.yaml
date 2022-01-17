@@ -2,11 +2,11 @@ security:
     enable_authenticator_manager: true
 
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
-    # password_hashers:
-    #     # auto hasher with default options for the User class (and children)
-    #     App\Entity\User:
-    #         #algorithm: 'auto'
-    #         algorithm: 'plaintext'
+    password_hashers:
+        # auto hasher with default options for the User class (and children)
+        App\Entity\User:
+            algorithm: 'auto'
+            #algorithm: 'plaintext'
 
     #     # auto hasher with custom options for all PasswordAuthenticatedUserInterface instances
     #     Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
@@ -34,21 +34,21 @@ security:
         #                 roles: ['ROLE_PL']
 
         # used to reload user from session & other features (e.g. switch_user)
-        # app_user_provider:
-        #     entity:
-        #         class: App\Entity\User
-        #         property: username
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: username
 
         ldap_server:
             ldap:
                 service: ldap
-                base_dn: '%env(string:LDAP_BASE_DN)%'
-                search_dn: '%env(string:LDAP_SEARCH_DN)%'
-                search_password: '%env(string:LDAP_SEARCH_PASSWORD)%'
+                base_dn: '%ldap.base_dn%'
+                search_dn: '%ldap.search_dn%'
+                search_password: '%ldap.search_password%'
                 #extra_fields: []
-                default_roles: ['ROLE_DEV']
-                uid_key: '%env(string:LDAP_UID_KEY)%'
-                #filter: '%env(string:LDAP_FILTER)%'
+                default_roles: '%ldap.default_roles%'
+                uid_key: '%ldap.uid_key%'
+                #filter: '%ldap.filter%'
                 #password_attribute: null
 
         # chain_provider:
@@ -59,6 +59,10 @@ security:
         #     chain:
         #         providers: [ 'users_in_memory', 'app_user_provider' ]
 
+        ldap_users:
+            chain:
+                providers: [ 'app_user_provider', 'ldap_server' ]
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -66,18 +70,23 @@ security:
         main:
             #access_denied_url: /login
             lazy: true
-            # entry_point: form_login_ldap
+            entry_point: form_login_ldap
 
             # form_login:
             #     login_path: login
             #     check_path: login
-            #     provider: chain_provider
+            #     provider: local_users
 
             form_login_ldap:
                 login_path: login
                 check_path: login
-                provider: ldap_server
-                dn_string: '%env(string:LDAP_DN_STRING)%'
+                provider: ldap_users
+                dn_string: '%ldap.dn_string%'
+                service: ldap
+                search_dn: '%ldap.search_dn%'
+                search_password: '%ldap.search_password%'
+                remember_me: true
+                use_forward: false
 
             logout:
                 path: logout

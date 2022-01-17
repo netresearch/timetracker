@@ -5,14 +5,48 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
 
-    locale:                 en
+    env(locale):                            'en'
+    env(LDAP_HOST):                         'ldap.acme.org'
+    env(LDAP_PORT):                         '636'
+    env(LDAP_ENCRYPTION):                   'ssl'
+    env(LDAP_BASE_DN):                      'DC=ACME,DC=ORG'
+    env(LDAP_SEARCH_DN):                    'cn=readuser,DC=ACME,DC=ORG'
+    env(LDAP_SEARCH_PASSWORD):              'readuser'
+    env(LDAP_UID_KEY):                      'sAMAccountName'
+    env(LDAP_FILTER):                       '({uid_key}={username})'
+    env(LDAP_DN_STRING):                    'acme\\{username}'
+    env(APP_CREATE_LDAP_USER):              'true'
+    env(APP_LOGO_URL):                      'images/logo.png'
+    env(APP_MONTHLY_OVERVIEW_URL):          'https://stats.timetracker.nr/?user='
+    env(APP_TITLE):                         'Netresearch TimeTracker'
+    env(APP_HEADER_URL):                    ''
+    env(APP_SHOW_BILLABLE_FIELD_IN_EXPORT): 'false'
+    env(APP_ENV):                           'dev'
+    env(APP_SECRET):                        'ca347f9e9be41d6439cb31f4f8e4159f'
+    # the minimum role every user gets assigned
+    env(LDAP_DEFAULT_ROLE):                 'ROLE_DEV'
+    # name of users who always get ROLE_ADMIN
+    env(APP_ADMIN_USERS):                   ''
+    env(DATABASE_URL):                      'postgresql://symfony:ChangeMe@database:5432/app?serverVersion=13&charset=utf8'
+
+    locale:                   '%env(string:locale)%'
 
     app.logo_url:             '%env(string:APP_LOGO_URL)%'
     app.monthly_overview_url: '%env(string:APP_MONTHLY_OVERVIEW_URL)%'
     app.title:                '%env(string:APP_TITLE)%'
     app.header_url:           '%env(string:APP_HEADER_URL)%'
 
+    app.admin_users:          '%env(csv:APP_ADMIN_USERS)%'
+
     app_show_billable_field_in_export: '%env(bool:APP_SHOW_BILLABLE_FIELD_IN_EXPORT)%'
+
+    ldap.dn_string:       '%env(string:LDAP_DN_STRING)%'
+    ldap.base_dn:         '%env(string:LDAP_BASE_DN)%'
+    ldap.search_dn:       '%env(string:LDAP_SEARCH_DN)%'
+    ldap.search_password: '%env(string:LDAP_SEARCH_PASSWORD)%'
+    ldap.default_roles:   '%env(string:LDAP_DEFAULT_ROLE)%'
+    ldap.uid_key:         '%env(string:LDAP_UID_KEY)%'
+    ldap.filter:          '%env(string:LDAP_FILTER)%'
 
 services:
     # default configuration for services in *this* file
@@ -64,3 +98,7 @@ services:
 
     App\Services\JiraOAuthApi:
         shared: false
+
+    App\EventSubscriber\LoginSubscriber:
+        arguments:
+            $adminUsers: '%app.admin_users%'

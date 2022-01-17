@@ -3,7 +3,6 @@
 namespace App\EventSubscriber;
 
 use App\Entity\User;
-use App\Entity\User\Types;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -12,34 +11,36 @@ use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 class LoginSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        protected EntityManagerInterface $em, 
-        protected UserRepository $userRepo
+        protected EntityManagerInterface $em,
+        protected UserRepository $userRepo,
+        protected array $adminUsers = []
     ) {
 
     }
 
     /**
-     * Store user in local database.
+     * Apply additional roles to user and store/update user in local database.
      */
     public function onLoginSuccess(LoginSuccessEvent $event): void
     {
-        /** @var User $user */
         $authUser = $event->getUser();
 
-        // ToDo
-        #$this->setTeamsByLdapResponse($event);
+        if ($authUser instanceof User) {
+            $user = $authUser;
+        } else {
+            $user = $this->userRepo->findOneBy(['username' => $authUser->getUserIdentifier()])
+                ?? new User;
 
-        $user  = $this->userRepo->findOneBy(['username' => $authUser->getUserIdentifier()]);
-
-        if ($user instanceof User) {
-            return;
+            $user->setUsername($authUser->getUserIdentifier())
+                ->setRoles($user->getRoles() + $authUser->getRoles());
         }
 
-        $user  = new User;
-        $user->setUsername($authUser->getUserIdentifier());
+        if (in_array($user->getUserIdentifier(), $this->adminUsers)) {
+            $user->setRoles($user->getRoles() + ['ROLE_ADMIN']);
+        }
 
-        // ToDo: assign LDAP/AD groups to roles
-        $user->setType(Types::DEV);
+        // ToDo assign LDAP teams and roles
+        #$this->setTeamsByLdapResponse($event);
 
         $this->em->persist($user);
         $this->em->flush();

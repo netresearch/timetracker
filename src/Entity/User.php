@@ -56,11 +56,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     #[ORM\OneToMany(targetEntity: 'UserTicketsystem', mappedBy: 'user')]
     protected $userTicketsystems;
 
-    #[ORM\Column(type: 'json', options: ["default" => ''])]
+    #[ORM\Column(type: 'json', options: ["default" => '[]'])]
     private $roles = ['ROLE_DEV'];
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private $password;
+    #[ORM\Column(type: 'string', options: ["default" => ''])]
+    private $password = '';
 
     public function __construct()
     {
