@@ -168,9 +168,12 @@ class BaseController extends Controller
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->findOneById($userId);
 
-        // Re-Login by cookie
-        if (LoginHelper::checkCookieUserName($user->getUsername())) {
+        // Re-Login with "keep me logged in" cookie
+        if (LoginHelper::checkCookieUserName($user->getUsername(), $this->container->getParameter('secret'))) {
             $this->setLoggedIn($request, $user, true);
+        } else {
+            LoginHelper::deleteCookie();
+            return false;
         }
 
         return true;
@@ -252,7 +255,10 @@ class BaseController extends Controller
 
         // Set login cookies, if wanted
         if ($setCookie) {
-            LoginHelper::setCookie($user->getId(), $user->getUsername());
+            LoginHelper::setCookie(
+                $user->getId(), $user->getUsername(),
+                $this->container->getParameter('secret')
+            );
         }
 
         return $this->redirect($this->generateUrl('_start'));
