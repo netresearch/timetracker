@@ -9475,8 +9475,8 @@ Ext.EventManager = new function() {
             }
         },
 
-        
-        useKeyDown: Ext.isWebKit ?
+        useKeyDown: true,
+        olduseKeyDown: Ext.isWebKit ?
                        parseInt(navigator.userAgent.match(/AppleWebKit\/(\d+)/)[1], 10) >= 525 :
                        !((Ext.isGecko && !Ext.isWindows) || Ext.isOpera),
 
