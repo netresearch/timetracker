@@ -376,7 +376,7 @@ function findProjects(customer, ticket)
 
     // Support 2nd-trial mode: find projects without defined prefix
     let prefix = "";
-    const regexp = /([ ,]+)?([A-Za-z]+)([ ,]+)?/;
+    const regexp = /([ ,]+)?([A-Za-z][A-Za-z0-9]*)([ ,]+)?/;
 
     if (ticket == "") {
         prefix = "";
