@@ -1,3 +1,4 @@
+---
 "Entwicklung": "Development"
 "QA": "QA"
 "Konzeption": "Conception"
@@ -29,7 +30,7 @@
 "Schulung": "Education"
 "Urlaub": "Holiday"
 "Elternzeit": "Parental leave"
-"Krank": "Sickness"
+"Krankheit": "Krankheit"
 "Buchhaltung": "Accounting"
 "Angebotserstellung": "Quote preparation"
 "Standup": "Standup"
