@@ -89,9 +89,19 @@ class AdminController extends BaseController
         $projectId = (int) $this->request->get('id');
         $name      = $this->request->get('name');
 
-        $ticketSystem  = $this->ticketSystemRepo->find($this->request->get('ticket_system'));
-        $projectLead   = $this->userRepo->find($this->request->get('project_lead'));
-        $technicalLead = $this->userRepo->find($this->request->get('technical_lead'));
+        $ticketSystem  = null;
+        $projectLead   = null;
+        $technicalLead = null;
+
+        if (!empty($this->request->get('ticket_system'))) {
+            $ticketSystem  = $this->ticketSystemRepo->find($this->request->get('ticket_system'));
+        }
+        if (!empty($this->request->get('project_lead'))) {
+            $projectLead   = $this->userRepo->find($this->request->get('project_lead'));
+        }
+        if (!empty($this->request->get('technical_lead'))) {
+            $technicalLead = $this->userRepo->find($this->request->get('technical_lead'));
+        }
 
         $jiraId                            = strtoupper($this->request->get('jiraId'));
         $active                            = $this->request->request->getBoolean('active', true);
