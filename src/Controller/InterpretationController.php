@@ -40,7 +40,7 @@ class InterpretationController extends BaseController
         foreach ($entries as $entry) {
             $flatEntry             = $entry->toArray();
             $flatEntry['duration'] = TimeHelper::formatDuration($flatEntry['duration']);
-            $flatEntry['quota']    = TimeHelper::formatQuota($flatEntry['duration'], $sum);
+            $flatEntry['quota']    = TimeHelper::formatQuota((float) $flatEntry['duration'], $sum);
             $entryList[]           = ['entry' => $flatEntry];
         }
 
@@ -127,7 +127,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($customers as &$customer) {
-            $customer['quota'] = TimeHelper::formatQuota($customer['hours'], $sum);
+            $customer['quota'] = TimeHelper::formatQuota((float) $customer['hours'], $sum);
         }
 
         usort($customers, [$this, 'sortByName']);
@@ -168,7 +168,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($projects as &$project) {
-            $project['quota'] = TimeHelper::formatQuota($project['hours'], $sum);
+            $project['quota'] = TimeHelper::formatQuota((float) $project['hours'], $sum);
         }
 
         usort($projects, [$this, 'sortByName']);
@@ -208,7 +208,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($tickets as &$ticket) {
-            $ticket['quota'] = TimeHelper::formatQuota($ticket['hours'], $sum);
+            $ticket['quota'] = TimeHelper::formatQuota((float) $ticket['hours'], $sum);
         }
 
         usort($tickets, [$this, 'sortByName']);
@@ -252,7 +252,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($users as $user) {
-            $user['quota'] = TimeHelper::formatQuota($user['hours'], $sum);
+            $user['quota'] = TimeHelper::formatQuota((float) $user['hours'], $sum);
         }
 
         usort($users, [$this, 'sortByName']);
@@ -294,7 +294,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($times as &$time) {
-            $time['quota'] = TimeHelper::formatQuota($time['hours'], $sum);
+            $time['quota'] = TimeHelper::formatQuota((float) $time['hours'], $sum);
         }
 
         usort($times, [$this, 'sortByName']);
@@ -332,7 +332,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($activities as &$activity) {
-            $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $sum);
+            $activity['quota'] = TimeHelper::formatQuota((float) $activity['hours'], $sum);
         }
 
         usort($activities, [$this, 'sortByName']);

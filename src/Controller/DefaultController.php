@@ -134,7 +134,7 @@ class DefaultController extends BaseController
         if ($data['project']['estimation']) {
             $data['project']['quota'] =
                 TimeHelper::formatQuota(
-                    $data['project']['total'],
+                    (float) $data['project']['total'],
                     $data['project']['estimation']
                 );
         }

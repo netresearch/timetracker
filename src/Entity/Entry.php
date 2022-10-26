@@ -482,7 +482,7 @@ class Entry extends Base
     /**
      * Sets the original ticket name.
      */
-    public function setInternalJiraTicketOriginalKey(string $strTicket): static
+    public function setInternalJiraTicketOriginalKey(string $strTicket = null): static
     {
         $this->internalJiraTicketOriginalKey = (string) $strTicket;
 

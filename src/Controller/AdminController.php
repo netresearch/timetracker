@@ -108,7 +108,7 @@ class AdminController extends BaseController
         $global                            = $this->request->request->getBoolean('global', false);
         $estimation                        = TimeHelper::readable2minutes($this->request->get('estimation') ?: '0m');
         $billing                           = $this->request->get('billing') ?: 0;
-        $costCenter                        = $this->request->get('cost_center') ?: null;
+        $costCenter                        = $this->request->get('cost_center') ?: '';
         $offer                             = $this->request->get('offer') ?: 0;
         $additionalInformationFromExternal = $this->request->request->getBoolean('additionalInformationFromExternal');
         $internalJiraTicketSystem          = $this->request->request->getInt('internalJiraTicketSystem', 0);
@@ -591,7 +591,7 @@ class AdminController extends BaseController
         $id          = (int) $this->request->get('id');
         $name        = $this->request->get('name');
         $needsTicket = (bool) $this->request->get('needsTicket');
-        $factor      = str_replace(',', '.', $this->request->get('factor'));
+        $factor      = (float) str_replace(',', '.', $this->request->get('factor'));
 
         if ($id) {
             $activity = $this->activityRepo->find($id);
