@@ -136,7 +136,7 @@ class Entry extends Base
     {
         if (($this->getStart() instanceof DateTime)
             && ($this->getEnd() instanceof DateTime)
-            && ($this->getEnd()->getTimestamp() <= $this->getStart()->getTimestamp())
+            && ($this->getEnd()->getTimestamp() >= $this->getStart()->getTimestamp())
         ) {
             throw new Exception('Duration must be greater than 0!');
         }
