@@ -40,47 +40,47 @@ class ProjectTest extends TestCase
         static::assertSame(17, $project->getId());
 
         // test name
-        static::assertNull($project->getName());
+        static::assertEmpty($project->getName());
         $project->setName('Test-Project');
         static::assertSame('Test-Project', $project->getName());
 
         // test ticket prefix 
-        static::assertNull($project->getJiraId());
+        static::assertEmpty($project->getJiraId());
         $project->setJiraId('ABC');
         static::assertSame('ABC', $project->getJiraId());
 
         // test active
-        static::assertNull($project->getActive());
-        $project->setActive(true);
         static::assertTrue($project->getActive());
+        $project->setActive(false);
+        static::assertFalse($project->getActive());
 
         // test global
-        static::assertNull($project->getGlobal());
-        $project->setGlobal(true);
         static::assertTrue($project->getGlobal());
+        $project->setGlobal(false);
+        static::assertFalse($project->getGlobal());
 
         // test estimation
-        static::assertNull($project->getEstimation());
+        static::assertSame(0, $project->getEstimation());
         $project->setEstimation(120);
         static::assertSame(120, $project->getEstimation());
 
         // test offer
-        static::assertNull($project->getOffer());
+        static::assertEmpty($project->getOffer());
         $project->setOffer('12-UF9182-4');
         static::assertSame('12-UF9182-4', $project->getOffer());
 
         // test cost center
-        static::assertNull($project->getCostCenter());
+        static::assertEmpty($project->getCostCenter());
         $project->setCostCenter('12345');
         static::assertSame('12345', $project->getCostCenter());
 
         // test billing
-        static::assertNull($project->getBilling());
+        static::assertSame(Project::BILLING_NONE, $project->getBilling());
         $project->setBilling(Project::BILLING_TM);
         static::assertSame(Project::BILLING_TM, $project->getBilling());
 
         // test invoice 
-        static::assertNull($project->getInvoice());
+        static::assertEmpty($project->getInvoice());
         $project->setInvoice('20130122456');
         static::assertSame('20130122456', $project->getInvoice());
 

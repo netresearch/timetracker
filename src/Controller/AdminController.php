@@ -115,6 +115,7 @@ class AdminController extends BaseController
         $internalJiraProjectKey            = $this->request->get('internalJiraProjectKey', 0);
 
         if ($projectId) {
+            /** @var Project $project */
             $project = $this->projectRepo->find($projectId);
         } else {
             $project = new Project();
