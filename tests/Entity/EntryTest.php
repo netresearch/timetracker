@@ -27,10 +27,6 @@ class EntryTest extends TestCase
         static::assertSame($account, $entry->getAccount());
         static::assertSame(6, $entry->getAccountId());
 
-        // test duration
-        $entry->setDuration(95);
-        static::assertSame(95, $entry->getDuration());
-
         // test ticket
         $entry->setTicket('ABCDE-12345678');
         static::assertSame('ABCDE-12345678', $entry->getTicket());
@@ -132,36 +128,10 @@ class EntryTest extends TestCase
         $entry = new Entry();
         $entry->setDay($day);
         $entry->setStart($start);
-        $entry->calcDuration(1);
         static::assertSame(0, $entry->getDuration());
 
         $entry->setEnd($end);
-        $entry->calcDuration(1);
         static::assertSame(622, $entry->getDuration());
-        $entry->calcDuration(0.5);
-        static::assertSame(311, $entry->getDuration());
-    }
-
-    /**
-     * @expectedExceptionMessage Duration must be greater than 0!
-     */
-    public function testNullDurationException(): void
-    {
-        $e     = null;
-        $day   = '2011-11-11';
-        $start = '22:22';
-        $end   = '11:11';
-        $entry = new Entry();
-        $entry->setDay($day);
-        $entry->setStart($start);
-        $entry->setEnd($end);
-        try {
-            $entry->validateDuration();
-        } catch(Exception $e) {
-
-        }
-
-        static::assertNotNull($e, 'An expected exception has not been raised.');
     }
 
     public function testToArray(): void

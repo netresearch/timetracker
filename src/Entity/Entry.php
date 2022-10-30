@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use App\Repository\EntryRepository;
 use Doctrine\DBAL\Types\Types;
-use Exception;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
 use DateTime;
@@ -128,21 +127,6 @@ class Entry extends Base
      * holds external reporter; no mapping for ORM required (yet).
      */
     protected string $externalReporter = '';
-
-    /**
-     * @throws Exception
-     */
-    public function validateDuration(): static
-    {
-        if (($this->getStart() instanceof DateTime)
-            && ($this->getEnd() instanceof DateTime)
-            && ($this->getEnd()->getTimestamp() >= $this->getStart()->getTimestamp())
-        ) {
-            throw new Exception('Duration must be greater than 0!');
-        }
-
-        return $this;
-    }
 
     public function setId($id): static
     {
@@ -283,6 +267,8 @@ class Entry extends Base
             $this->end = clone $this->start;
         }
 
+        $this->calcDuration();
+
         return $this;
     }
 
@@ -291,7 +277,7 @@ class Entry extends Base
         return $this->end;
     }
 
-    public function setDuration(int $duration): static
+    private function setDuration(int $duration): static
     {
         $this->duration = $duration;
 
@@ -403,7 +389,7 @@ class Entry extends Base
     /**
      * Calculate difference between start and end.
      */
-    public function calcDuration(float $factor = 1): static
+    private function calcDuration(float $factor = 1): static
     {
         if ($this->getStart() && $this->getEnd()) {
             $start = new DateTime($this->getStart()->format('H:i'));
@@ -414,7 +400,6 @@ class Entry extends Base
         } else {
             $this->setDuration(0);
         }
-        $this->validateDuration();
 
         return $this;
     }

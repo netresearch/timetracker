@@ -216,8 +216,6 @@ class CrudController extends BaseController
                 ->setStart($this->request->get('start') ?: null)
                 ->setEnd($this->request->get('end') ?: null)
                 ->setInternalJiraTicketOriginalKey($this->request->get('extTicket') ?: null)
-                // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
-                ->calcDuration()
                 ->setSyncedToTicketsystem(false)
             ;
 
@@ -399,8 +397,6 @@ class CrudController extends BaseController
                     ->setDay($date)
                     ->setStart($this->request->get('starttime') ?: null)
                     ->setEnd($this->request->get('endtime') ?: null)
-                    //->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
-                    ->calcDuration()
                 ;
 
                 if ($project) {
