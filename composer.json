@@ -49,7 +49,8 @@
         "symfony/web-link": "6.1.*",
         "symfony/yaml": "6.1.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^2.12|^3.0"
+        "twig/twig": "^2.12|^3.0",
+        "webonyx/graphql-php": "^14.11"
     },
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^3.4",
