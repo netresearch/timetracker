@@ -145,7 +145,7 @@ class Customer extends Base
 
     public function removeProject(Project $projects): bool
     {
-        $this->projects->removeElement($projects);
+        return $this->projects->removeElement($projects);
     }
 
     public function addEntry(Entry $entry): static
@@ -157,12 +157,12 @@ class Customer extends Base
 
     public function removeEntrie(Entry $entry): bool
     {
-        $this->entries->removeElement($entry);
+        return $this->entries->removeElement($entry);
     }
 
     public function removeTeam(Team $teams): bool
     {
-        $this->teams->removeElement($teams);
+        return $this->teams->removeElement($teams);
     }
 
     public function addEntrie(Entry $entries): static
