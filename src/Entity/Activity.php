@@ -7,6 +7,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ActivityRepository::class)]
 #[ORM\Table(name: 'activities')]
@@ -18,9 +19,11 @@ class Activity
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
+    #[Groups('entry')]
     protected $id;
 
     #[ORM\Column(type: Types::STRING, length: 50)]
+    #[Groups('entry')]
     protected $name;
 
     #[ORM\Column(name: 'needs_ticket', type: Types::BOOLEAN, options: ['default' => 0])]

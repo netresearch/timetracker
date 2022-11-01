@@ -2,15 +2,22 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\EntryRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Model\Base;
 use DateTime;
 use DateTimeInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: EntryRepository::class)]
 #[ORM\Table(name: 'entries')]
+#[ApiResource(
+    normalizationContext: ['groups' => ['entry']]
+)]
 class Entry extends Base
 {
     final public const CLASS_PLAIN    = 1;
@@ -21,48 +28,77 @@ class Entry extends Base
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
-    protected $id;
+    #[Groups('entry')]
+    protected ?int $id = null;
 
     #[ORM\Column(type: Types::STRING, length: 31, options: ['default' => ''])]
-    protected $ticket = '';
+    #[Groups('entry')]
+    protected string $ticket = '';
 
     #[ORM\Column(name: 'worklog_id', type: Types::INTEGER, nullable: true)]
-    protected $worklog_id;
+    #[Groups('entry')]
+    protected ?int $worklog_id = null;
 
     #[ORM\Column(type: Types::STRING, options: ['default' => ''])]
-    protected $description = '';
+    #[Groups('entry')]
+    protected string $description = '';
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    protected $day;
+    #[Groups('entry')]
+    #[ApiProperty(types: ['https://schema.org/startTime'])]
+    #[Assert\NotNull]
+    #[Assert\Type(DateTimeInterface::class)]
+    protected ?DateTimeInterface $day = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
-    protected $start;
+    #[Groups('entry')]
+    #[ApiProperty(types: ['https://schema.org/startTime'])]
+    #[Assert\NotNull]
+    #[Assert\Type(DateTimeInterface::class)]
+    protected ?DateTimeInterface $start = null;
 
     #[ORM\Column(name: '`end`', type: Types::TIME_MUTABLE)]
-    protected $end;
+    #[Groups('entry')]
+    #[ApiProperty(types: ['https://schema.org/endTime'])]
+    #[Assert\NotNull]
+    #[Assert\Type(DateTimeInterface::class)]
+    protected ?DateTimeInterface $end = null;
 
     #[ORM\Column(type: Types::INTEGER)]
-    protected $duration;
+    #[Groups('entry')]
+    #[Assert\GreaterThanOrEqual(0)]
+    protected int $duration = 0;
 
     #[ORM\Column(name: 'synced_to_ticketsystem', type: Types::BOOLEAN, options: ['default' => 0])]
-    protected $syncedToTicketsystem = false;
+    #[Groups('entry')]
+    protected bool $syncedToTicketsystem = false;
 
-    #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries')]
-    protected $project;
+    #[ORM\ManyToOne(targetEntity: 'Project', inversedBy: 'entries', fetch: 'EAGER')]
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    #[Groups('entry')]
+    protected ?Project $project = null;
 
-    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'entries')]
-    protected $customer;
+    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'entries', fetch: 'EAGER')]
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    #[Groups('entry')]
+    protected ?Customer $customer = null;
 
-    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'entries')]
-    protected $user;
+    #[ORM\ManyToOne(targetEntity: 'User', inversedBy: 'entries', fetch: 'EAGER')]
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    #[Groups('entry')]
+    protected ?User $user = null;
 
-    #[ORM\ManyToOne(targetEntity: 'Account', inversedBy: 'entries')]
-    protected $account;
+    #[ORM\ManyToOne(targetEntity: 'Account', inversedBy: 'entries', fetch: 'EAGER')]
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    protected ?Account $account = null;
 
-    #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'entries')]
-    protected $activity;
+    #[ORM\ManyToOne(targetEntity: 'Activity', inversedBy: 'entries', fetch: 'EAGER')]
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    #[Groups('entry')]
+    protected ?Activity $activity = null;
 
     #[ORM\Column(name: 'class', type: Types::INTEGER, nullable: false)]
+    #[Groups('entry')]
     protected $class = self::CLASS_PLAIN;
 
     /**

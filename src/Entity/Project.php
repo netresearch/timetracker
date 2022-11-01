@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base as Base;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
@@ -21,9 +22,11 @@ class Project extends Base
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
+    #[Groups('entry')]
     protected $id;
 
     #[ORM\Column(type: Types::STRING, options: ["default" => ''])]
+    #[Groups('entry')]
     protected $name = '';
 
     #[ORM\Column(type: Types::BOOLEAN, options: ["default" => 1])]

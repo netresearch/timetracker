@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[ORM\Table(name: 'customers')]
@@ -16,9 +17,11 @@ class Customer extends Base
     #[ORM\Id]
     #[ORM\Column(type: Types::INTEGER)]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
+    #[Groups('entry')]
     protected $id;
 
     #[ORM\Column(type: Types::STRING)]
+    #[Groups('entry')]
     protected $name;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => 1])]
