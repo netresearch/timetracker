@@ -1,0 +1,49 @@
+App\Entity\User:
+    user_{1..10}:
+        username: <username()>
+        abbr:  <regexify('[A-Z]{3}')>
+        password: <password()>
+
+App\Entity\Customer:
+    customer_{1..10}:
+        name: <company()>
+
+App\Entity\Project:
+    project_{1..10}:
+        name: <domainWord()>
+        customer: '@customer_*'
+
+App\Entity\Activity:
+    activity1:
+        name: 'Research'
+        needsTicket: false
+        factor: 1
+    activity2:
+        name: 'Support'
+        needsTicket: false
+        factor: 1
+    activity3:
+        name: 'Development'
+        needsTicket: false
+        factor: 1
+    activity4:
+        name: 'QA'
+        needsTicket: false
+        factor: 1
+    activity5:
+        name: 'Misc.'
+        needsTicket: false
+        factor: 1
+
+App\Entity\Entry:
+    entry_{1..100}:
+        #ticket: <regexify('[A-Z]{3,5}-[0-9]{1,4}')>
+        #worklog_id: <randomNumber(5, true)>
+        description: <sentence()>
+        day: <date()>
+        start: <time()>
+        end: <time()>
+        project: '@project_*'
+        customer: '@customer_*'
+        user: '@user_*'
+        activity: '@activity_*'
