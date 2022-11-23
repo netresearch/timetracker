@@ -1,5 +1,7 @@
 FROM php:7.4-fpm AS runtime
 
+#ENV SYMFONY_ENV=prod
+
 RUN set -ex \
  && apt-get update -y \
  && apt-get upgrade -y \
@@ -23,17 +25,22 @@ FROM runtime AS builder
 RUN apt-get update -y
 RUN apt-get install -y git unzip curl
 # install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --1
+RUN curl -sS https://getcomposer.org/installer | php -- --version=2.2.9
 RUN mv composer.phar /usr/local/bin/composer
 
 COPY . /var/www/html
 
 # install the composer packages
-RUN cd /var/www/html && composer install --no-dev --no-ansi
+WORKDIR /var/www/html
+RUN cp app/config/sentry.yml.dist app/config/sentry.yml
+#RUN composer install --no-dev --no-ansi
+RUN composer install --no-ansi
+#RUN app/console cache:clear --no-warmup
+#RUN app/console assets:install 'web'
 
-RUN mkdir -p /var/www/html/app/logs
-RUN mkdir -p /var/www/html/app/cache
-RUN chmod ugo+rwX /var/www/html/app/logs /var/www/html/app/cache
+RUN mkdir -p app/logs
+RUN mkdir -p app/cache
+RUN chmod ugo+rwX app/logs app/cache
 
 
 FROM runtime
