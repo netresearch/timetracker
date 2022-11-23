@@ -35,6 +35,7 @@
         "incenteev/composer-parameter-handler": "^2.0",
         "jms/di-extra-bundle": "*",
         "jms/security-extra-bundle": "*",
+        "laminas/laminas-zendframework-bridge": "^1.6",
         "phpoffice/phpspreadsheet": "^1.4",
         "psr/link": "1.0.0",
         "sensio/distribution-bundle": "^5.0.19",

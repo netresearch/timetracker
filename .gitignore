@@ -11,6 +11,7 @@
 /app/build/
 /app/bootstrap.php.cache
 /bin/*
+!/bin/console
 /web/bundles/*
 /web/.htaccess
 /vendor/*
