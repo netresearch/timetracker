@@ -3,7 +3,7 @@ services:
 
   app:
     build: .
-    image: netresearch/timetracker
+    image: ghcr.io/netresearch/timetracker:v4
     volumes:
       - app-cache:/var/www/html/app/cache
       - app-logs:/var/www/html/app/logs
