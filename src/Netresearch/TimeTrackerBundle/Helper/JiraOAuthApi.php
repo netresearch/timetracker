@@ -162,7 +162,8 @@ class JiraOAuthApi
         }
 
         throw new JiraApiException(
-            'Invalid certificate, fix your certificate information in ticket system settings.',
+            'Invalid certificate, fix your certificate information in ticket system settings for: "'
+            . $this->ticketSystem->getName() . '"',
             1541160391
         );
     }
