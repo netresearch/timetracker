@@ -183,7 +183,7 @@ class Project extends Base
     }
 
 
-/**
+    /**
      * @return boolean
      */
     public function getAdditionalInformationFromExternal()
