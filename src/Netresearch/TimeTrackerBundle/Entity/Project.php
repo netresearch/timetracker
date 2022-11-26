@@ -567,7 +567,7 @@ class Project extends Base
      * @param string $projectKey
      * @return bool
      */
-    public function matchesInternalProject($projectKey)
+    public function matchesInternalJiraProject($projectKey)
     {
         return $projectKey === $this->getInternalJiraProjectKey();
     }
