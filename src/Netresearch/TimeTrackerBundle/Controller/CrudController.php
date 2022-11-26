@@ -282,7 +282,7 @@ class CrudController extends BaseController
             $em->flush();
 
             try {
-                $this->handleInternalTicketSystem($entry, $oldEntry);
+                $this->handleInternalJiraTicketSystem($entry, $oldEntry);
             } catch (\Throwable $exception) {
                 $alert = $exception->getMessage();
             }
@@ -540,7 +540,7 @@ class CrudController extends BaseController
         $projectIds = explode(",", $project->getJiraId());
 
         foreach ($projectIds as $pId) {
-            if (trim($pId) == $jiraId || $project->matchesInternalProject($jiraId)) {
+            if (trim($pId) == $jiraId || $project->matchesInternalJiraProject($jiraId)) {
                 return;
             }
         }
@@ -677,20 +677,20 @@ class CrudController extends BaseController
      * @throws \Netresearch\TimeTrackerBundle\Helper\JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-query-issues
      */
-    protected  function handleInternalTicketSystem($entry, $oldEntry)
+    protected  function handleInternalJiraTicketSystem($entry, $oldEntry)
     {
         $project = $entry->getProject();
 
-        $internalTicketSystem = $project->getInternalJiraTicketSystem();
-        $internalProjectKey = $project->getInternalJiraProjectKey();
+        $internalJiraTicketSystem = $project->getInternalJiraTicketSystem();
+        $internalJiraProjectKey = $project->getInternalJiraProjectKey();
 
         // if we do not have an internal ticket system we could do nothing here
-        if (empty($internalTicketSystem)) {
+        if (empty($internalJiraTicketSystem)) {
             return;
         }
 
         // if we do not have an internal project key, we can do nothing here
-        if (empty($internalProjectKey)) {
+        if (empty($internalJiraProjectKey)) {
             return;
         }
 
@@ -709,14 +709,14 @@ class CrudController extends BaseController
 
 
         // get ticket system for internal work log
-        /** @var TicketSystem $internalTicketSystem */
-        $internalTicketSystem = $this->getDoctrine()
+        /** @var TicketSystem $internalJiraTicketSystem */
+        $internalJiraTicketSystem = $this->getDoctrine()
                 ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
-                ->find($internalTicketSystem);
+                ->find($internalJiraTicketSystem);
 
         // check if issue exist
         $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(), $internalTicketSystem, $this->getDoctrine(), $this->container->get('router')
+            $entry->getUser(), $internalJiraTicketSystem, $this->getDoctrine(), $this->container->get('router')
         );
         $searchResult = $jiraOAuthApi->searchTicket(
             sprintf(
@@ -733,7 +733,7 @@ class CrudController extends BaseController
             $issue = reset($searchResult->issues);
         } else {
             //issue does not exists, create it.
-            $issue = $this->createTicket($entry, $internalTicketSystem);
+            $issue = $this->createTicket($entry, $internalJiraTicketSystem);
         }
 
         $entry->setInternalJiraTicketOriginalKey(
@@ -750,7 +750,7 @@ class CrudController extends BaseController
         $this->updateJiraWorklog(
             $entry,
             $oldEntry,
-            $internalTicketSystem
+            $internalJiraTicketSystem
         );
     }
 
