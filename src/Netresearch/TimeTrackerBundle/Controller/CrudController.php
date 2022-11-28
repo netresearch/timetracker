@@ -220,7 +220,14 @@ class CrudController extends BaseController
                 ->find($this->getUserId($request));
             $entry->setUser($user);
 
-            $ticketSystem = $project->getTicketSystem();
+            if ($project->hasInternalJiraProjectKey()) {
+                $ticketSystem = $this->getDoctrine()
+                    ->getRepository('NetresearchTimeTrackerBundle:TicketSystem')
+                    ->find($project->getInternalJiraTicketSystem());
+            } else {
+                $ticketSystem = $project->getTicketSystem();
+            }
+
             if ($ticketSystem != null) {
                 if (!$ticketSystem instanceof TicketSystem) {
                     $message = 'Einstellungen für das Ticket System überprüfen';
@@ -231,11 +238,16 @@ class CrudController extends BaseController
                     $entry->getUser(), $ticketSystem, $doctrine, $this->container->get('router')
                 );
 
-                if ($request->get('ticket') != ''
-                    && !$jiraOAuthApi->doesTicketExist($request->get('ticket'))
-                ) {
-                    $message = $request->get('ticket') . ' existiert nicht';
-                    throw new \Exception($message);
+                if (! $project->hasInternalJiraProjectKey()) {
+                    // ticekts do not exist for external project tickets booked on internal ticket system
+                    // so no need to check for existence
+                    // they are created automatically
+                    if ($request->get('ticket') != ''
+                        && !$jiraOAuthApi->doesTicketExist($request->get('ticket'))
+                    ) {
+                        $message = $request->get('ticket') . ' existiert nicht';
+                        throw new \Exception($message);
+                    }
                 }
             }
 
