@@ -417,7 +417,7 @@ class JiraOAuthApi
 
     /**
      * @param string $jql
-     * @param string $fields
+     * @param array  $fields
      * @param int    $limit
      * @return \stdClass
      * @throws JiraApiException
@@ -425,7 +425,7 @@ class JiraOAuthApi
      */
     public function searchTicket($jql, $fields, $limit = 1)
     {
-        //we use POST to support very large queries
+        // we use POST to support very large queries
         return $this->post(
             "search/",
             [
