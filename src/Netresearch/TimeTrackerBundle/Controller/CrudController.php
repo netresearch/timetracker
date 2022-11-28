@@ -736,7 +736,7 @@ class CrudController extends BaseController
                 $project->getInternalJiraProjectKey(),
                 $strTicket
             ),
-            'key,summary',
+            ['key', 'summary'],
             1
         );
 
