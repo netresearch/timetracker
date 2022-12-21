@@ -70,6 +70,14 @@ PL (Project leader)
   ticket systems and activities in **Administration** tab
 
 
+Service users
+-------------
+Users may be declared as "service user" and may act on behalf on other users.
+
+Put their user name into app/config/parameters.yml#service_users, and they
+can use the "user" key in API calls to act on behalf of that user ID.
+
+
 Installation and set up
 =======================
 
