@@ -20,6 +20,7 @@ use Netresearch\TimeTrackerBundle\Helper\LoginHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * Class BaseController
@@ -73,15 +74,36 @@ class BaseController extends Controller
 
 
     /**
-     * returns the user id
+     * Returns the user id
      *
      * @param Request $request
      *
-     * @return mixed
+     * @return int User ID
+     *
+     * @throw AccessDeniedException
      */
     protected function getUserId(Request $request)
     {
-        return $request->getSession()->get('loginId');
+        $realUserId      = $request->getSession()->get('loginId');
+        $simulatedUserId = $request->get('user', null);
+        if ($realUserId == $simulatedUserId) {
+            return $realUserId;
+        }
+
+        if ($simulatedUserId === '') {
+            $simulatedUserId = null;
+        }
+        if ($simulatedUserId !== null) {
+            $realUser = $this->getDoctrine()
+                ->getRepository('NetresearchTimeTrackerBundle:User')
+                ->find($realUserId);
+            $serviceUserNames = explode(',', $this->container->getParameter('service_users'));
+            if (!in_array($realUser->getUsername(), $serviceUserNames)) {
+                throw new AccessDeniedException('This user may not simulate other users');
+            }
+            return (int) $simulatedUserId;
+        }
+        return (int) $realUserId;
     }
 
     /**
