@@ -1622,6 +1622,7 @@ paths:
                 user:
                   type: integer
                   example: 1
+                  description: User ID of the user to simulate. Only allowed when the logged in user is whitelisted in "service_user_ids" setting. May be empty.
                 customer:
                   type: integer
                   example: 1

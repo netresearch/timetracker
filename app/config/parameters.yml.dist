@@ -37,3 +37,6 @@ parameters:
     app_header_url:           "https://acme.org/corpnav/"
 
     app_show_billable_field_in_export: false
+
+    # comma-separated list of user names that may act on behalf on other users
+    service_users:
