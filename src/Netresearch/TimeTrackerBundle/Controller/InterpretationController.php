@@ -37,8 +37,8 @@ class InterpretationController extends BaseController
         $entryList = array();
         foreach ($entries as $entry) {
             $flatEntry = $entry->toArray();
-            $flatEntry['duration'] = TimeHelper::formatDuration($flatEntry['duration']);
             $flatEntry['quota'] = TimeHelper::formatQuota($flatEntry['duration'], $sum);
+            $flatEntry['duration'] = TimeHelper::formatDuration($flatEntry['duration']);
             $entryList[] = array('entry' => $flatEntry);
         }
         return new Response(json_encode($entryList));
