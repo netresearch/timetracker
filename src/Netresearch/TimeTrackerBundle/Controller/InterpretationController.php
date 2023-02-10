@@ -3,6 +3,7 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry;
+use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,6 +14,20 @@ class InterpretationController extends BaseController
      * @var Entry[]
      */
     private $cache = null;
+
+    /**
+     * Check if the current user may impersonate as the given simulated user ID
+     *
+     * Interpretation for other users is allowed for project managers
+     * and controllers.
+     */
+    protected function mayImpersonate(User $realUser, $simulatedUserId): bool
+    {
+        if ($realUser->getType() === 'CTL' || $realUser->getType() === 'PL') {
+            return true;
+        }
+        return in_array($realUser->getUsername(), $serviceUserNames);
+    }
 
     public function sortByName($a, $b)
     {
