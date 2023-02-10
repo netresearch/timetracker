@@ -97,13 +97,21 @@ class BaseController extends Controller
             $realUser = $this->getDoctrine()
                 ->getRepository('NetresearchTimeTrackerBundle:User')
                 ->find($realUserId);
-            $serviceUserNames = explode(',', $this->container->getParameter('service_users'));
-            if (!in_array($realUser->getUsername(), $serviceUserNames)) {
+            if (!$this->mayImpersonate($realUser, $simulatedUserId)) {
                 throw new AccessDeniedException('This user may not simulate other users');
             }
             return (int) $simulatedUserId;
         }
         return (int) $realUserId;
+    }
+
+    /**
+     * Check if the current user may impersonate as the given simulated user ID
+     */
+    protected function mayImpersonate(User $realUser, $simulatedUserId): bool
+    {
+        $serviceUserNames = explode(',', $this->container->getParameter('service_users'));
+        return in_array($realUser->getUsername(), $serviceUserNames);
     }
 
     /**
