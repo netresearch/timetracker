@@ -973,13 +973,13 @@ class AdminController extends BaseController
         $contractId = (int) $request->get('id');
         $start      = $request->get('start');
         $end        = $request->get('end');
-        $hours_0    = $request->get('hours_0');
-        $hours_1    = $request->get('hours_1');
-        $hours_2    = $request->get('hours_2');
-        $hours_3    = $request->get('hours_3');
-        $hours_4    = $request->get('hours_4');
-        $hours_5    = $request->get('hours_5');
-        $hours_6    = $request->get('hours_6');
+        $hours_0    = str_replace(',', '.', $request->get('hours_0'));
+        $hours_1    = str_replace(',', '.', $request->get('hours_1'));
+        $hours_2    = str_replace(',', '.', $request->get('hours_2'));
+        $hours_3    = str_replace(',', '.', $request->get('hours_3'));
+        $hours_4    = str_replace(',', '.', $request->get('hours_4'));
+        $hours_5    = str_replace(',', '.', $request->get('hours_5'));
+        $hours_6    = str_replace(',', '.', $request->get('hours_6'));
         /** @var User $user */
         $user       = $request->get('user_id') ?
             $this->getDoctrine()
