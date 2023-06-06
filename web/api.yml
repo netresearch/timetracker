@@ -1809,6 +1809,10 @@ components:
     ChartDataSuccessResponse:
       type: object
       properties:
+        id:
+          type: integer
+          example: 1
+          description: id of user/customer/projekt/activity
         name:
           type: string
           example: "Kunde1"
