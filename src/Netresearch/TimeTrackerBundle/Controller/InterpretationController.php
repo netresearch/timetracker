@@ -128,6 +128,7 @@ class InterpretationController extends BaseController
 
             if(!isset($customers[$customer])) {
                 $customers[$customer] = array(
+                    'id'  => $customer,
                     'name'  => $entry->getCustomer()->getName(),
                     'hours' => 0,
                     'quota' => 0,
@@ -168,6 +169,7 @@ class InterpretationController extends BaseController
 
             if(!isset($projects[$project])) {
                 $projects[$project] = array(
+                    'id'  => $project,
                     'name'  => $entry->getProject()->getName(),
                     'hours' => 0,
                     'quota' => 0,
@@ -208,6 +210,7 @@ class InterpretationController extends BaseController
             if(!empty($ticket) && $ticket != '-'){
                 if(!isset($tickets[$ticket])) {
                     $tickets[$ticket] = array(
+                        'id'  => $entry->getId(),
                         'name'  => $ticket,
                         'hours' => 0,
                         'quota' => 0,
@@ -257,6 +260,7 @@ class InterpretationController extends BaseController
 
             if (!isset($users[$user])) {
                 $users[$user] = array(
+                    'id'  => $user,
                     'name'  => $entry->getUser()->getUsername(),
                     'hours' => 0,
                     'quota' => 0,
