@@ -26,7 +26,7 @@ class InterpretationController extends BaseController
         if ($realUser->getType() === 'CTL' || $realUser->getType() === 'PL') {
             return true;
         }
-        return in_array($realUser->getUsername(), $serviceUserNames);
+        return parent::mayImpersonate($realUser, $simulatedUserId);
     }
 
     public function sortByName($a, $b)
