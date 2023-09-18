@@ -90,7 +90,9 @@ class Export
             $user = $this->container->get('doctrine')
                 ->getRepository('NetresearchTimeTrackerBundle:User')
                 ->find($userId);
-            $username = $user->getUsername();
+            if ($user !== null) {
+                $username = $user->getUsername();
+            }
         }
 
         return $username;
