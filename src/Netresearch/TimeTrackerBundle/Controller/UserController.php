@@ -4,7 +4,7 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\User as User;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Netresearch\TimeTrackerBundle\Model\Response;
+use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class UserController extends Controller
@@ -14,7 +14,7 @@ class UserController extends Controller
 		$username = $request->request->get('username');
 
 		if (empty($username)) {
-			return new Response(json_encode(array('success' => false)));
+			return new JsonResponse(array('success' => false));
 		}
 
 		// enforce ldap-style login names
@@ -32,6 +32,6 @@ class UserController extends Controller
 		$em->persist($user);
 		$em->flush();
 
-		return new Response(json_encode(array('success' => true)));
+		return new JsonResponse(array('success' => true));
 	}
 }

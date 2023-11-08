@@ -5,7 +5,7 @@ namespace Netresearch\TimeTrackerBundle\Controller;
 use Netresearch\TimeTrackerBundle\Helper\LocalizationHelper as LocalizationHelper;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Netresearch\TimeTrackerBundle\Model\Response;
+use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class SettingsController extends Controller
@@ -30,16 +30,16 @@ class SettingsController extends Controller
             // Adapt to new locale immediately
             $request->setLocale($user->getLocale());
 
-            return new Response(json_encode(array('success' => true,
+            return new JsonResponse(array('success' => true,
                     'settings' => $user->getSettings(),
                     'locale' => $user->getLocale(),
                     'message' => $this->get('translator')->trans('The configuration has been successfully saved.')
-                )));
+                ));
         }
 
-        $response = new Response(json_encode(array('success' => false,
+        $response = new JsonResponse(array('success' => false,
                 'message' => $this->get('translator')->trans('The configuration could not be saved.')
-            )));
+            ));
 
         $response->setStatusCode(503);
         return $response;

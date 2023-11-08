@@ -2,7 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
-use Netresearch\TimeTrackerBundle\Model\Response;
+use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class StatusController extends BaseController
@@ -30,7 +30,7 @@ class StatusController extends BaseController
         $userId = $request->getSession()->get('loginId');
 
         $status = $this->getStatus($userId);
-        return new Response(json_encode($status));
+        return new JsonResponse($status);
     }
 
     public function pageAction(Request $request)
