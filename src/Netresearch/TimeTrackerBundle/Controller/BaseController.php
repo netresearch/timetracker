@@ -148,7 +148,7 @@ class BaseController extends Controller
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->find($userId);
 
-        return ('PL' == $user->getType());
+        return is_object($user) && 'PL' == $user->getType();
     }
 
 
@@ -170,7 +170,7 @@ class BaseController extends Controller
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->find($userId);
 
-        return ('DEV' == $user->getType());
+        return is_object($user) && 'DEV' == $user->getType();
     }
 
 
