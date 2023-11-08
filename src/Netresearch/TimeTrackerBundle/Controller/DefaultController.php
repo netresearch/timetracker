@@ -12,6 +12,7 @@ use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Repository\EntryRepository;
 use Netresearch\TimeTrackerBundle\Entity\User;
 
+use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -192,7 +193,7 @@ class DefaultController extends BaseController
             'month' => $month,
         );
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -252,7 +253,7 @@ class DefaultController extends BaseController
         // early exit, if POST parameter for current entry is not given
         $entryId = $request->request->get('id');
         if (!$entryId) {
-            return new Response(json_encode($data));
+            return new JsonResponse($data);
         }
 
         // Collect all entries data
@@ -265,7 +266,7 @@ class DefaultController extends BaseController
                     $data['project']['estimation']);
         }
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
 
@@ -291,7 +292,7 @@ class DefaultController extends BaseController
         $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 3;
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry')->getEntriesByUser($userId, $days, $user->getShowFuture());
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -308,7 +309,7 @@ class DefaultController extends BaseController
         $userId = (int) $this->getUserId($request);
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer')->getCustomersByUser($userId);
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -329,7 +330,7 @@ class DefaultController extends BaseController
             $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUsers($this->getUserId($request));
         }
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -347,10 +348,10 @@ class DefaultController extends BaseController
                 ->getRepository('NetresearchTimeTrackerBundle:Project')
                 ->find($request->get('project'));
 
-            return new Response(json_encode(array('customer' => $project->getCustomer()->getId())));
+            return new JsonResponse(array('customer' => $project->getCustomer()->getId()));
         }
 
-        return new Response(json_encode(array('customer' => 0)));
+        return new JsonResponse(array('customer' => 0));
     }
 
     /**
@@ -369,7 +370,7 @@ class DefaultController extends BaseController
 
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->getProjectsByUser($userId, $customerId);
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -396,7 +397,7 @@ class DefaultController extends BaseController
             $data[] = ['project' => $project->toArray()];
         }
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -409,7 +410,7 @@ class DefaultController extends BaseController
         }
 
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Activity')->getActivities();
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -420,7 +421,7 @@ class DefaultController extends BaseController
         $holidays = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:Holiday')
             ->findByMonth(date("Y"), date("m"));
-        return new Response(json_encode($holidays));
+        return new JsonResponse($holidays);
     }
 
     /**
@@ -546,11 +547,7 @@ class DefaultController extends BaseController
             $time['total_time']['time']
         );
 
-        return new Response(
-            json_encode($time),
-            200,
-            ['Content-type' => 'application/json']
-        );
+        return new JsonResponse($time);
     }
 
     /**
@@ -570,10 +567,6 @@ class DefaultController extends BaseController
         );
         $content = str_replace('https://timetracker/', $ttUrl, $content);
 
-        return new Response(
-            $content,
-            200,
-            ['Content-type' => 'application/javascript']
-        );
+        return new JsonResponse($content);
     }
 }
