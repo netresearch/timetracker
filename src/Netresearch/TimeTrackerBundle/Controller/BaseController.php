@@ -84,6 +84,10 @@ class BaseController extends Controller
      */
     protected function getUserId(Request $request)
     {
+        if (!$this->isLoggedIn($request)) {
+            throw new AccessDeniedException('No user logged in');
+        }
+
         $realUserId      = $request->getSession()->get('loginId');
         $simulatedUserId = $request->get('user', null);
         if ($realUserId == $simulatedUserId) {
@@ -110,6 +114,10 @@ class BaseController extends Controller
      */
     protected function mayImpersonate(User $realUser, $simulatedUserId): bool
     {
+        if ($realUser->getId() === $simulatedUserId) {
+            return true;
+        }
+
         $serviceUserNames = explode(',', $this->container->getParameter('service_users'));
         return in_array($realUser->getUsername(), $serviceUserNames);
     }
