@@ -3,6 +3,7 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Repository\UserRepository;
+use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Netresearch\TimeTrackerBundle\Entity\Contract;
 use Netresearch\TimeTrackerBundle\Entity\Team;
@@ -41,7 +42,7 @@ class AdminController extends BaseController
             $data[] = ['project' => $project->toArray()];
         }
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -57,7 +58,7 @@ class AdminController extends BaseController
         /* @var $repo \Netresearch\TimeTrackerBundle\Repository\CustomerRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Customer');
 
-        return new Response(json_encode($repo->getAllCustomers()));
+        return new JsonResponse($repo->getAllCustomers());
     }
 
     /**
@@ -73,7 +74,7 @@ class AdminController extends BaseController
         /* @var $repo \Netresearch\TimeTrackerBundle\Repository\UserRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User');
 
-        return new Response(json_encode($repo->getAllUsers()));
+        return new JsonResponse($repo->getAllUsers());
     }
 
     /**
@@ -89,7 +90,7 @@ class AdminController extends BaseController
         /* @var $repo \Netresearch\TimeTrackerBundle\Repository\TeamRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Team');
 
-        return new Response(json_encode($repo->findAll()));
+        return new JsonResponse($repo->findAll());
     }
 
     /**
@@ -105,7 +106,7 @@ class AdminController extends BaseController
         /* @var $repo \Netresearch\TimeTrackerBundle\Repository\PresetRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Preset');
 
-        return new Response(json_encode($repo->getAllPresets()));
+        return new JsonResponse($repo->getAllPresets());
     }
 
     /**
@@ -135,7 +136,7 @@ class AdminController extends BaseController
             }
         }
 
-        return new Response(json_encode($ticketSystems));
+        return new JsonResponse($ticketSystems);
     }
 
     /**
@@ -255,7 +256,7 @@ class AdminController extends BaseController
 
         $data = array($project->getId(), $name, $project->getCustomer()->getId(), $jiraId);
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -287,7 +288,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
     /**
@@ -358,7 +359,7 @@ class AdminController extends BaseController
 
         $data = array($customer->getId(), $name, $active, $global, $teamIds);
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -390,7 +391,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
     /**
@@ -481,7 +482,7 @@ class AdminController extends BaseController
         $em->flush();
 
         $data = array($user->getId(), $name, $abbr, $type);
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
     /**
@@ -513,7 +514,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
     /**
@@ -545,7 +546,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
     /**
@@ -601,7 +602,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($preset->toArray()));
+        return new JsonResponse($preset->toArray());
     }
 
 
@@ -674,7 +675,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        return new Response(json_encode($ticketSystem->toArray()));
+        return new JsonResponse($ticketSystem->toArray());
     }
 
 
@@ -707,7 +708,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
 
@@ -763,7 +764,7 @@ class AdminController extends BaseController
 
         $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
 
@@ -796,7 +797,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
 
@@ -860,7 +861,7 @@ class AdminController extends BaseController
 
         $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
 
@@ -893,7 +894,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
 
@@ -937,7 +938,7 @@ class AdminController extends BaseController
             }
         }
 
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
 
@@ -954,7 +955,7 @@ class AdminController extends BaseController
         /* @var $repo \Netresearch\TimeTrackerBundle\Repository\ContractRepository */
         $repo = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Contract');
 
-        return new Response(json_encode($repo->getContracts()));
+        return new JsonResponse($repo->getContracts());
     }
 
 
@@ -1043,7 +1044,7 @@ class AdminController extends BaseController
         $em->flush();
 
         $data = array($contract->getId());
-        return new Response(json_encode($data));
+        return new JsonResponse($data);
     }
 
 
@@ -1076,7 +1077,7 @@ class AdminController extends BaseController
             return new Error($msg, 422);
         }
 
-        return new Response(json_encode(array('success' => true)));
+        return new JsonResponse(array('success' => true));
     }
 
 }

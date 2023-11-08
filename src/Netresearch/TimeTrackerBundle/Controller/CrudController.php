@@ -13,6 +13,7 @@ use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
+use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Netresearch\TimeTrackerBundle\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -56,7 +57,7 @@ class CrudController extends BaseController
             $this->calculateClasses($this->getUserId($request), $day);
         }
 
-        return new Response(json_encode(array('success' => true, 'alert' => $alert)));
+        return new JsonResponse(array('success' => true, 'alert' => $alert));
     }
 
     /**
@@ -333,7 +334,7 @@ class CrudController extends BaseController
                 'alert'  => $alert
             );
 
-            return new Response(json_encode($response));
+            return new JsonResponse($response);
         } catch (\Exception $e) {
             return new Error($this->get('translator')->trans($e->getMessage()), 406);
         } catch (\Throwable $exception) {
