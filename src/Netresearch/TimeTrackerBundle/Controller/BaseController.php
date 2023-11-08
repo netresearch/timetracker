@@ -197,6 +197,10 @@ class BaseController extends Controller
         $user = $this->getDoctrine()
             ->getRepository('NetresearchTimeTrackerBundle:User')
             ->findOneById($userId);
+        if (!is_object($user)) {
+            LoginHelper::deleteCookie();
+            return false;
+        }
 
         // Re-Login with "keep me logged in" cookie
         if (LoginHelper::checkCookieUserName($user->getUsername(), $this->container->getParameter('secret'))) {
