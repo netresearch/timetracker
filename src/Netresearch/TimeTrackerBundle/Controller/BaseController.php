@@ -131,7 +131,9 @@ class BaseController extends Controller
      */
     protected function login(Request $request)
     {
-        if (!$request->isXmlHttpRequest()) {
+        if (!$request->isXmlHttpRequest()
+            && !$this->isJsonRequest($request)
+        ) {
             return $this->redirect($this->generateUrl('_login'));
         } else {
             return new Response($this->generateUrl('_login'), 403);
@@ -181,6 +183,14 @@ class BaseController extends Controller
         return is_object($user) && 'DEV' == $user->getType();
     }
 
+    /**
+     * Check if the client wants JSON
+     */
+    protected function isJsonRequest(Request $request)
+    {
+        $types = $request->getAcceptableContentTypes();
+        return isset($types[0]) && $types[0] == 'application/json';
+    }
 
     /**
      * Returns true if a user is logged in or can authenticate by cookie
