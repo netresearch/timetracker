@@ -319,6 +319,10 @@ class DefaultController extends BaseController
      */
     public function getUsersAction(Request $request)
     {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
         if ($this->isDEV($request)) {
             $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User')->getUserById($this->getUserId($request));
         } else {
@@ -334,6 +338,10 @@ class DefaultController extends BaseController
      */
     public function getCustomerAction(Request $request)
     {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
         if ($request->get('project')) {
             $project = $this->getDoctrine()
                 ->getRepository('NetresearchTimeTrackerBundle:Project')
@@ -352,6 +360,10 @@ class DefaultController extends BaseController
      */
     public function getProjectsAction(Request $request)
     {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
         $customerId = (int) $request->query->get('customer');
         $userId = (int) $this->getUserId($request);
 
@@ -368,6 +380,10 @@ class DefaultController extends BaseController
      */
     public function getAllProjectsAction(Request $request)
     {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
         $customerId = (int) $request->query->get('customer');
         if ($customerId > 0) {
             $result = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findByCustomer($customerId);
@@ -386,8 +402,12 @@ class DefaultController extends BaseController
     /**
      * @return Response
      */
-    public function getActivitiesAction()
+    public function getActivitiesAction(Request $request)
     {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Activity')->getActivities();
         return new Response(json_encode($data));
     }
