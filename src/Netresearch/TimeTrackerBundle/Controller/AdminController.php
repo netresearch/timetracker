@@ -17,6 +17,7 @@ use Netresearch\TimeTrackerBundle\Entity\Preset;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\Activity;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
+use Netresearch\TimeTrackerBundle\Services\SubticketSyncService;
 
 /**
  * Class AdminController
@@ -258,6 +259,16 @@ class AdminController extends BaseController
 
         $data = array($project->getId(), $name, $project->getCustomer()->getId(), $jiraId);
 
+        try {
+            $stss = new SubticketSyncService($this->container);
+            $subtickets = $stss->syncProjectSubtickets($project->getId());
+        } catch (\Exception $e) {
+            //we do not let it fail because creating a new project
+            // would lead to inconsistencies in the frontend
+            // ("project with that name exists already")
+            $data['message'] = $e->getMessage();
+        }
+
         return new JsonResponse($data);
     }
 
@@ -291,6 +302,33 @@ class AdminController extends BaseController
         }
 
         return new JsonResponse(array('success' => true));
+    }
+
+    /**
+     * Fetch subtickets from Jira and update the project record's "subtickets" field.
+     *
+     * The project lead user's Jira tokens are used for access.
+     */
+    public function syncProjectSubticketsAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        $projectId = (int) $request->get('project');
+
+        try {
+            $stss = new SubticketSyncService($this->container);
+            $subtickets = $stss->syncProjectSubtickets($projectId);
+            return new JsonResponse(
+                [
+                    'success'    => true,
+                    'subtickets' => $subtickets
+                ]
+            );
+        } catch (\Exception $e) {
+            return new Error($e->getMessage(), $e->getCode());
+        }
     }
 
     /**

@@ -449,6 +449,38 @@ class JiraOAuthApi
     }
 
     /**
+     * Get an array of ticket numbers that are subtickets of the given issue
+     *
+     * @return array
+     */
+    public function getSubtickets($sTicket)
+    {
+        if (!$this->doesTicketExist($sTicket)) {
+            return [];
+        }
+
+        $ticket = $this->get('issue/' . $sTicket);
+
+        $subtickets = [];
+        foreach ($ticket->fields->subtasks as $subtask) {
+            $subtickets[] = $subtask->key;
+        }
+
+        if ($ticket->fields->issuetype->id == 10002) {
+            //Epic
+            $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
+            foreach ($epicSubs->issues as $epicSubtask) {
+                $subtickets[] = $epicSubtask->key;
+                foreach ($epicSubtask->fields->subtasks as $subtask) {
+                    $subtickets[] = $subtask->key;
+                }
+            }
+        }
+
+        return $subtickets;
+    }
+
+    /**
      * Checks existence of a work log entry in Jira
      *
      * @param string  $sTicket
