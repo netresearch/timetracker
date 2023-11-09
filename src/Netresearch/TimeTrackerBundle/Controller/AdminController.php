@@ -173,6 +173,7 @@ class AdminController extends BaseController
             : null;
 
         $jiraId       = strtoupper($request->get('jiraId'));
+        $jiraTicket   = strtoupper($request->get('jiraTicket'));
         $active       = $request->get('active') ? $request->get('active') : 0;
         $global       = $request->get('global') ? $request->get('global') : 0;
         $estimation   = TimeHelper::readable2minutes($request->get('estimation') ? $request->get('estimation') : '0m');
@@ -238,6 +239,7 @@ class AdminController extends BaseController
             ->setName($name)
             ->setTicketSystem($ticketSystem)
             ->setJiraId($jiraId)
+            ->setJiraTicket($jiraTicket)
             ->setActive($active)
             ->setGlobal($global)
             ->setEstimation($estimation)
