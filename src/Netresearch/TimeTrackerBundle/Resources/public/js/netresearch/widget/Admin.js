@@ -37,6 +37,8 @@ Ext.define('Netresearch.widget.Admin', {
     _customerTitle: 'Customer',
     _ticketPrefixTitle: 'Ticket prefix',
     _ticketPrefixTitleHelp: 'Multiple may be separated with commas',
+    _ticketNumberTitle: 'Ticket number',
+    _ticketNumberTitleHelp: 'Instead of the ticket prefix. Tasks in Epics and subtasks are taken into account. Separate multiple with a comma.',
     _ticketSystemTitle: 'Ticket system',
     _internalJiraTicketSystem: 'internal JIRA Ticket-System',
     _projectTitle: 'Project',
@@ -440,6 +442,14 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 },
                 {
+                    header: this._ticketNumberTitle,
+                    dataIndex: 'jiraTicket',
+                    flex: 1,
+                    field: {
+                        xtype: 'textfield'
+                    }
+                },
+                {
                     header: this._ticketSystemTitle,
                     dataIndex: 'ticket_system',
                     flex: 1,
@@ -671,6 +681,13 @@ Ext.define('Netresearch.widget.Admin', {
                                     name: 'jiraId',
                                     anchor: '100%',
                                     value: record.jiraId ? record.jiraId : ''
+                                },
+                                {
+                                    fieldLabel: panel._ticketNumberTitle,
+                                    afterSubTpl: panel._ticketNumberTitleHelp,
+                                    name: 'jiraTicket',
+                                    anchor: '100%',
+                                    value: record.jiraTicket ? record.jiraTicket : ''
                                 },
                                 new Ext.form.field.Checkbox({
                                     fieldLabel: panel._additionalInformationFromExternal,
@@ -2389,6 +2406,8 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _customerTitle: 'Kunde',
         _ticketPrefixTitle: 'Ticket-Präfix',
         _ticketPrefixTitleHelp: 'Mehrere können kommasepariert angegeben werden',
+        _ticketNumberTitle: 'Ticketnummer',
+        _ticketNumberTitleHelp: 'Anstelle des Ticket-Präfix. Aufgaben in Epics und Unteraufgaben werden mit reingezählt. Mehrere mit Komma trennen.',
         _ticketSystemTitle: 'Ticket-System',
         _internalJiraTicketSystem: 'internal JIRA Ticket-System',
         _projectTitle: 'Projekt',

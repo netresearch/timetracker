@@ -2007,6 +2007,10 @@ components:
           type: string
           example: "TIM"
           description: Ticket prefix with only capital letters
+        jiraTicket:
+          type: string
+          example: "TIM-12"
+          description: Specific ticket key this project is meant for, instead of a whole "jiraId". See "subtickets" property. May contain multiple issue keys separated by a comma.
         ticket_system:
           type: string
           example: TestTicketSystem

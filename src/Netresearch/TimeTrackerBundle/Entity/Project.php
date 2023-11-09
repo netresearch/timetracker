@@ -53,6 +53,11 @@ class Project extends Base
     protected $jiraId;
 
     /**
+     * @ORM\Column(type="string", name="jira_ticket")
+     */
+    protected $jiraTicket;
+
+    /**
      * @ORM\ManyToOne(targetEntity="TicketSystem", inversedBy="projects")
      * @ORM\JoinColumn(name="ticket_system", referencedColumnName="id")
      */
@@ -350,6 +355,20 @@ class Project extends Base
     public function setJiraId($jiraId)
     {
         $this->jiraId = $jiraId;
+        return $this;
+    }
+
+    public function getJiraTicket()
+    {
+        return $this->jiraTicket;
+    }
+
+    public function setJiraTicket($jiraTicket)
+    {
+        if ($jiraTicket === '') {
+            $jiraTicket = null;
+        }
+        $this->jiraTicket = $jiraTicket;
         return $this;
     }
 
