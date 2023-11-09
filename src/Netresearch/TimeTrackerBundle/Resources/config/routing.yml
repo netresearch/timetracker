@@ -166,6 +166,10 @@ deleteProject:
     path: /project/delete
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteProject }
 
+syncProjectSubtickets:
+    path: /projects/{project}/syncsubtickets
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:syncProjectSubtickets }
+
 saveCustomer:
     path: /customer/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:saveCustomer }
