@@ -363,10 +363,11 @@ function extractTicketPrefix(ticket)
 function findProjects(customer, ticket)
 {
     // 1. Find all projects by this customer, if defined
-    if ((null == customer) || (undefined == customer) || (1 > parseInt(customer)))
+    if ((null == customer) || (undefined == customer) || (1 > parseInt(customer))) {
         customer = 'all';
-    else
+    } else {
         customer = parseInt(customer);
+    }
     var projects = projectsData[customer];
 
     // 2. Filter projects by prefix, if defined
@@ -376,46 +377,42 @@ function findProjects(customer, ticket)
 
     // Support 2nd-trial mode: find projects without defined prefix
     let prefix = "";
-    const regexp = /([ ,]+)?([A-Za-z][A-Za-z0-9]*)([ ,]+)?/;
 
     if (ticket == "") {
-        prefix = "";
-    } else {
-        prefix = extractTicketPrefix(ticket);
-        if (prefix === false)
-            return projects;
+        let validProjects = [];
+        let project;
+        for (let key in projects) {
+            project = projects[key];
+            if ((undefined == project['jiraId']) || (null == project['jiraId']) || ("" == project['jiraId'])) {
+                validProjects.push(project);
+            }
+        }
+        return validProjects;
+    }
+    ticket = ticket.toUpperCase();
+
+    prefix = extractTicketPrefix(ticket);
+    if (prefix === false) {
+        return projects;
     }
 
     let validProjects = [];
-    let value;
+    let project;
+
+    //find project by ticket prefix
+    const prefixesRegexp = /(?:[ ,]+)?(?<prefix>[A-Za-z][A-Za-z0-9]*)(?:[ ,]+)?/g;
     for (let key in projects) {
-        value = projects[key];
-
-        if (prefix == "") {
-            if ((undefined == value['jiraId']) || (null == value['jiraId']) || ("" == value['jiraId'])) {
-                validProjects.push(value);
-            }
+        project = projects[key];
+        if ((undefined == project['jiraId']) || (null == project['jiraId']) || ("" == project['jiraId'])) {
             continue;
         }
 
-        if ((undefined == value['jiraId']) || (null == value['jiraId']))
-            continue;
-
-        if (value['jiraId'] == prefix) {
-            validProjects.push(value);
-            continue;
-        }
-
-        const result = value['jiraId'].match(regexp);
-        if (!result) {
-            continue;
-        }
-
-        for (var i=1; i < result.length; i++) {
-            if (result[i] == prefix) {
-                // console.log("Found project " + value['id'] + ", " + value['name'] + " of customer " + value['customer'] + " by prefix " + prefix);
-                validProjects.push(value);
-
+        const projectPrefixes = [...project['jiraId'].matchAll(prefixesRegexp)];
+        for (var i = 0; i < projectPrefixes.length; i++) {
+            projectPrefix = projectPrefixes[i][1];
+            if (projectPrefix == prefix) {
+                validProjects.push(project);
+                break;
             }
         }
     }
