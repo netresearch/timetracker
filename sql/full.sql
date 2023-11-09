@@ -174,6 +174,7 @@ CREATE TABLE `projects` (
   `additional_information_from_external` tinyint(1) NOT NULL,
   `internal_jira_project_key` VARCHAR(50) NULL,
   `internal_jira_ticket_system` INTEGER(11) NULL,
+  `subtickets` TEXT DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `customer_id` (`customer_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

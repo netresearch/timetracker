@@ -58,6 +58,15 @@ class Project extends Base
     protected $jiraTicket;
 
     /**
+     * Ticket numbers that are subtickets of $jiraTicket
+     * Gets calculated automatically.
+     * Comma-separated string.
+     *
+     * @ORM\Column(type="string", name="subtickets")
+     */
+    protected $subtickets;
+
+    /**
      * @ORM\ManyToOne(targetEntity="TicketSystem", inversedBy="projects")
      * @ORM\JoinColumn(name="ticket_system", referencedColumnName="id")
      */
@@ -369,6 +378,23 @@ class Project extends Base
             $jiraTicket = null;
         }
         $this->jiraTicket = $jiraTicket;
+        return $this;
+    }
+
+    public function getSubtickets()
+    {
+        if ($this->subtickets == '') {
+            return [];
+        }
+        return explode(',', $this->subtickets);
+    }
+
+    public function setSubtickets($subtickets)
+    {
+        if (is_array($subtickets)) {
+            $subtickets = implode(',', $subtickets);
+        }
+        $this->subtickets = $subtickets;
         return $this;
     }
 
