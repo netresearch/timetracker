@@ -36,6 +36,7 @@ Ext.define('Netresearch.widget.Admin', {
     _seriousErrorTitle: 'A serious error occurred. Find more details in Firebug or the Chrome Developer Tools.',
     _customerTitle: 'Customer',
     _ticketPrefixTitle: 'Ticket prefix',
+    _ticketPrefixTitleHelp: 'Multiple may be separated with commas',
     _ticketSystemTitle: 'Ticket system',
     _internalJiraTicketSystem: 'internal JIRA Ticket-System',
     _projectTitle: 'Project',
@@ -666,6 +667,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 }),
                                 {
                                     fieldLabel: panel._ticketPrefixTitle,
+                                    afterSubTpl: panel._ticketPrefixTitleHelp,
                                     name: 'jiraId',
                                     anchor: '100%',
                                     value: record.jiraId ? record.jiraId : ''
@@ -2386,6 +2388,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _seriousErrorTitle: ' Ein schwerer Fehler ist aufgetreten. Mehr Details gibts im Firebug/in den Chrome Developer Tools.',
         _customerTitle: 'Kunde',
         _ticketPrefixTitle: 'Ticket-Präfix',
+        _ticketPrefixTitleHelp: 'Mehrere können kommasepariert angegeben werden',
         _ticketSystemTitle: 'Ticket-System',
         _internalJiraTicketSystem: 'internal JIRA Ticket-System',
         _projectTitle: 'Projekt',
