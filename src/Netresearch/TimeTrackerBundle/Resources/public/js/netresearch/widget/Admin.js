@@ -44,6 +44,7 @@ Ext.define('Netresearch.widget.Admin', {
     _projectTitle: 'Project',
     _addProjectTitle: 'Add project',
     _editProjectTitle: 'Edit project',
+    _projectSubticketsTitle: 'Known subtickets',
     _forAllCustomersTitle: 'for all customers',
     _userNameTitle: 'User name',
     _abbreviationTitle: 'Abbr',
@@ -575,13 +576,22 @@ Ext.define('Netresearch.widget.Admin', {
                     var contextMenu = Ext.create('Ext.menu.Menu', {
                         items: [
                             {
+                                text: panel._projectSubticketsTitle,
+                                iconCls: 'icon-info',
+                                scope: this,
+                                handler: function() {
+                                    this.showProjectSubtickets(record.data);
+                                }
+                            },
+                            {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
                                 handler: function() {
                                     this.editProject(record.data);
                                 }
-                            }, {
+                            },
+                            {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
@@ -840,6 +850,13 @@ Ext.define('Netresearch.widget.Admin', {
                         });
                     }
                 });
+            },
+            showProjectSubtickets: function(project) {
+                Ext.Msg.alert(
+                    panel._projectSubticketsTitle + ': ' + project['name'],
+                    project['jiraTicket'] + "<br/>\n"
+                    + project['subtickets']
+                );
             },
             refresh: function() {
                 this.customerStore.load();
@@ -2413,6 +2430,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _projectTitle: 'Projekt',
         _addProjectTitle: 'Neues Projekt',
         _editProjectTitle: 'Projekt bearbeiten',
+        _projectSubticketsTitle: 'Bekannte Untertickets',
         _forAllCustomersTitle: 'für alle Kunden',
         _userNameTitle: 'Username',
         _abbreviationTitle: 'Kürzel',
