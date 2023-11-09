@@ -45,6 +45,7 @@ Ext.define('Netresearch.widget.Admin', {
     _addProjectTitle: 'Add project',
     _editProjectTitle: 'Edit project',
     _projectSubticketsTitle: 'Known subtickets',
+    _projectSubticketsSyncTitle: 'Sync subtickets',
     _forAllCustomersTitle: 'for all customers',
     _userNameTitle: 'User name',
     _abbreviationTitle: 'Abbr',
@@ -576,14 +577,6 @@ Ext.define('Netresearch.widget.Admin', {
                     var contextMenu = Ext.create('Ext.menu.Menu', {
                         items: [
                             {
-                                text: panel._projectSubticketsTitle,
-                                iconCls: 'icon-info',
-                                scope: this,
-                                handler: function() {
-                                    this.showProjectSubtickets(record.data);
-                                }
-                            },
-                            {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
@@ -597,6 +590,25 @@ Ext.define('Netresearch.widget.Admin', {
                                 scope: this,
                                 handler: function() {
                                     this.deleteProject(record.data);
+                                }
+                            },
+                            {
+                                xtype: 'menuseparator'
+                            },
+                            {
+                                text: panel._projectSubticketsTitle,
+                                iconCls: 'icon-info',
+                                scope: this,
+                                handler: function() {
+                                    this.showProjectSubtickets(record.data);
+                                }
+                            },
+                            {
+                                text: panel._projectSubticketsSyncTitle,
+                                iconCls: 'icon-refresh',
+                                scope: this,
+                                handler: function() {
+                                    this.syncProjectSubtickets(record.data);
                                 }
                             }
                         ]
@@ -807,6 +819,10 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function(response) {
+                                                let data = Ext.decode(response.responseText);
+                                                if (data.message) {
+                                                    showNotification(panel._errorTitle, data.message, false);
+                                                }
                                                 window.close();
                                             },
                                             failure: function(response) {
@@ -845,7 +861,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: function(response) {
                                 var data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -857,6 +873,22 @@ Ext.define('Netresearch.widget.Admin', {
                     project['jiraTicket'] + "<br/>\n"
                     + project['subtickets']
                 );
+            },
+            syncProjectSubtickets: function(project) {
+                var grid = this;
+                Ext.Ajax.request({
+                    method: 'POST',
+                    url: url + 'projects/' + project.id + '/syncsubtickets',
+                    scope: this,
+                    success: function(response) {
+                        grid.refresh();
+                        grid.showProjectSubtickets(project);
+                    },
+                    failure: function(response) {
+                        var data = Ext.decode(response.responseText);
+                        showNotification(panel._errorTitle, data.message, false);
+                    }
+                });
             },
             refresh: function() {
                 this.customerStore.load();
@@ -2431,6 +2463,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _addProjectTitle: 'Neues Projekt',
         _editProjectTitle: 'Projekt bearbeiten',
         _projectSubticketsTitle: 'Bekannte Untertickets',
+        _projectSubticketsSyncTitle: 'Untertickets synchronisieren',
         _forAllCustomersTitle: 'für alle Kunden',
         _userNameTitle: 'Username',
         _abbreviationTitle: 'Kürzel',
@@ -2469,7 +2502,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _privateKeyTitle: 'Private Key',
         _errorsTitle: 'Fehler',
         _errorTitle: 'Fehler',
-        _successTitle: 'Success',
+        _successTitle: 'Erfolg',
         _estimationTitle: 'Geschätzte Dauer',
         _internalJiraProjectKey: 'internal JIRA Projekt Key',
         _offerTitle: 'Angebot',

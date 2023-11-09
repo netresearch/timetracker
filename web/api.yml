@@ -1392,6 +1392,32 @@ paths:
                 description: id, name, customer, jiraId
                 example: [1,"TestProject",1,"TIM"]
 
+  /projects/{projectId}/syncsubtickets:
+    post:
+      summary: Synchronize subticket information from Jira into TimeTracker
+      tags: Project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: string
+            example: 23
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectSubticketSyncResponse'
+        400:
+          description: Some error occured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
   /settings/save:
     post:
       summary: Update settings
@@ -2068,6 +2094,18 @@ components:
       required:
         - name
         - customer
+
+    ProjectSubticketSyncResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        subtickets:
+          type: array
+          items:
+            type: string
+            example: "TEST-23"
+
 
     SuccessResponse:
       type: object
