@@ -399,6 +399,22 @@ function findProjects(customer, ticket)
     let validProjects = [];
     let project;
 
+    //find project by exact ticket number
+    for (let projectKey in projects) {
+        project = projects[projectKey];
+        if (null == project['jiraTicket']) {
+            continue;
+        }
+        for (let i = 0; i < project['subtickets'].length; i++) {
+            if (project['subtickets'][i] == ticket) {
+                validProjects.push(project);
+            }
+        }
+    }
+    if (validProjects.length > 0) {
+        return validProjects;
+    }
+
     //find project by ticket prefix
     const prefixesRegexp = /(?:[ ,]+)?(?<prefix>[A-Za-z][A-Za-z0-9]*)(?:[ ,]+)?/g;
     for (let key in projects) {

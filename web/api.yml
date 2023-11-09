@@ -2011,6 +2011,9 @@ components:
           type: string
           example: "TIM-12"
           description: Specific ticket key this project is meant for, instead of a whole "jiraId". See "subtickets" property. May contain multiple issue keys separated by a comma.
+        subtickets:
+          type: array
+          description: List of ticket keys that are considered to be children of the jiraTicket, e.g. child issues and issues within an epic. Includes the jiraTicket key itself.
         ticket_system:
           type: string
           example: TestTicketSystem
