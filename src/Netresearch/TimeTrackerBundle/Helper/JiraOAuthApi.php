@@ -558,7 +558,7 @@ class JiraOAuthApi
             if ($e->getCode() === 401) {
                 $oauthAuthUrl = $this->fetchOAuthRequestToken();
                 $message = 'Jira: 401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
-                throw new JiraApiException($message, $e->getCode(), $oauthAuthUrl);
+                throw new JiraApiUnauthorizedException($message, $e->getCode(), $oauthAuthUrl);
             } elseif ($e->getCode() === 404) {
                 $message = 'Jira: 404 - Resource is not available: (' . $url . ')';
                 throw new JiraApiInvalidResourceException($message);
