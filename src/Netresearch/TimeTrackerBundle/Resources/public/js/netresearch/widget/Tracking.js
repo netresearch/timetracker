@@ -460,7 +460,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     tooltip: 'Shortcut (Alt + r)',
                     scope: this,
                     handler: function() {
-                        this.refresh();
+                        this.refreshHard();
                     }
                 }, {
                     text: this._exportTitle,
@@ -1095,6 +1095,20 @@ Ext.define('Netresearch.widget.Tracking', {
             this.days = 10000;
         }
         window.location.href = 'export/' + this.days;
+    },
+
+    /**
+     * Reload project data, then refresh
+     * Useful when project data/settings changed in the background,
+     * and we do not want to get them with a hard page reload.
+     */
+    refreshHard: function() {
+        tracking = this;
+        tracking.customerStore.reloadFromServer(function () {
+            tracking.projectStore.reloadFromServer(function () {
+                tracking.refresh();
+            });
+        });
     },
 
     /*
