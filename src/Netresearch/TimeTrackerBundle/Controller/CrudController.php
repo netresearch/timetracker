@@ -10,6 +10,7 @@ use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
 use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Response\Error;
 use Netresearch\TimeTrackerBundle\Helper\JiraApiException;
+use Netresearch\TimeTrackerBundle\Helper\JiraApiUnauthorizedException;
 use Netresearch\TimeTrackerBundle\Helper\JiraOAuthApi;
 use Netresearch\TimeTrackerBundle\Helper\TicketHelper;
 
@@ -37,11 +38,12 @@ class CrudController extends BaseController
 
             try {
                 $this->deleteJiraWorklog($entry);
+
+            } catch (JiraApiUnauthorizedException $e) {
+                // Invalid JIRA token
+                return new Error($e->getMessage(), 403, $e->getRedirectUrl());
+
             } catch (JiraApiException $e) {
-                if ($e->getRedirectUrl()) {
-                    // Invalid JIRA token
-                    return new Error($e->getMessage(), 403, $e->getRedirectUrl());
-                }
                 $alert = $e->getMessage() . '<br />' .
                     $this->get('translator')->trans("Dataset was modified in Timetracker anyway");
             }
@@ -321,9 +323,8 @@ class CrudController extends BaseController
                 $em->persist($entry);
                 $em->flush();
             } catch (JiraApiException $e) {
-                if ($e->getRedirectUrl()) {
-                    // Invalid JIRA token
-                    return new Error($e->getMessage(), 403, $e->getRedirectUrl());
+                if ($e instanceof JiraApiUnauthorizedException) {
+                    throw $e;
                 }
                 $alert = $e->getMessage() . '<br />' .
                     $this->get('translator')->trans("Dataset was modified in Timetracker anyway");
@@ -335,6 +336,11 @@ class CrudController extends BaseController
             );
 
             return new JsonResponse($response);
+
+        } catch (JiraApiUnauthorizedException $e) {
+            // Invalid JIRA token
+            return new Error($e->getMessage(), 403, $e->getRedirectUrl());
+
         } catch (\Exception $e) {
             return new Error($this->get('translator')->trans($e->getMessage()), 406);
         } catch (\Throwable $exception) {
