@@ -11,6 +11,8 @@ Ext.define('Netresearch.widget.Tracking', {
         'Ext.ux.window.Notification'
     ],
 
+    debug: false,
+
     /* Create stores */
     customerStore: Ext.create('Netresearch.store.Customers'),
     projectStore: Ext.create('Netresearch.store.Projects'),
@@ -593,10 +595,10 @@ Ext.define('Netresearch.widget.Tracking', {
     mapTicketToProject: function(ticket) {
         const validProjects = findProjects(null, ticket);
 
-        console.log("Mapping ticket " + ticket);
+        this.debug && console.log("Mapping ticket " + ticket);
 
         if ((!validProjects) || (!validProjects.length)) {
-            console.log("Mapped to no project");
+            this.debug && console.log("Mapped to no project");
             return false;
         }
 
@@ -605,7 +607,7 @@ Ext.define('Netresearch.widget.Tracking', {
         let sure = true;
 
         if (validProjects.length == 1) {
-            console.log("Mapped to customer " + customer + " and project " + " (sure, single)");
+            this.debug && console.log("Mapped to customer " + customer + " and project " + " (sure, single)");
             return { customer: parseInt(customer), id: parseInt(id), sure: sure };
         }
 
@@ -626,7 +628,7 @@ Ext.define('Netresearch.widget.Tracking', {
             }
         }
 
-        console.log("Mapped to customer " + customer + " and project " + id + (sure ? " (sure)" : " (unsure)"));
+        this.debug && console.log("Mapped to customer " + customer + " and project " + id + (sure ? " (sure)" : " (unsure)"));
         return { customer: parseInt(customer), id: parseInt(id), sure: sure };
     },
 
@@ -1446,4 +1448,3 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'ru')) {
     });
 }
 */
-
