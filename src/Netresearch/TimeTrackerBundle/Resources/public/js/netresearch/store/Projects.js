@@ -17,6 +17,19 @@ Ext.define('Netresearch.store.Projects', {
         }
     },
 
+    /* Update projectsData */
+    reloadFromServer: function(callback) {
+        Ext.Ajax.request({
+            url: url + 'getProjectStructure',
+            success: function(response) {
+                let data = Ext.decode(response.responseText);
+                //update the locally available project data
+                projectsData = data;
+                callback();
+            }
+        });
+    },
+
     /* Read data from json var in html source code */
     load: function(options) {
         return this.loadData(projectsData, null, null, false);

@@ -12,9 +12,9 @@
 
             const environment = {{ environment|json_encode|raw }};
 
-            const customersData = {{ customers|json_encode|raw }};
+            let customersData = {{ customers|json_encode|raw }};
 
-            const projectsData = {{ projects|json_encode|raw }};
+            let projectsData = {{ projects|json_encode|raw }};
 
             let settingsData = {{ settings|json_encode|raw }};
         </script>
