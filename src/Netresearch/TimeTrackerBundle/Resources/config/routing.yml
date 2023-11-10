@@ -96,6 +96,10 @@ _getAllProjects:
     path:  /getAllProjects
     defaults: { _controller: NetresearchTimeTrackerBundle:Default:getAllProjects }
 
+_getProjectStructure:
+    path:  /getProjectStructure
+    defaults: { _controller: NetresearchTimeTrackerBundle:Default:getProjectStructure }
+
 _getActivities:
     path:  /getActivities
     defaults: { _controller: NetresearchTimeTrackerBundle:Default:getActivities }

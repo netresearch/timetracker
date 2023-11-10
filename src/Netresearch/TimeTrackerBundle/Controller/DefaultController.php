@@ -401,6 +401,32 @@ class DefaultController extends BaseController
     }
 
     /**
+     * Return projects grouped by customer ID.
+     *
+     * Needed for frontend tracking autocompletion.
+     */
+    public function getProjectStructureAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $userId = (int) $this->getUserId($request);
+        $doctrine = $this->getDoctrine();
+
+        // Send customers to the frontend for caching
+        $customers = $doctrine
+            ->getRepository('NetresearchTimeTrackerBundle:Customer')
+            ->getCustomersByUser($userId);
+
+        /* @var $projectRepo \Netresearch\TimeTrackerBundle\Repository\ProjectRepository */
+        $projectRepo = $doctrine->getRepository('NetresearchTimeTrackerBundle:Project');
+        $projectStructure = $projectRepo->getProjectStructure($userId, $customers);
+
+        return new JsonResponse($projectStructure);
+    }
+
+    /**
      * @return Response
      */
     public function getActivitiesAction(Request $request)
