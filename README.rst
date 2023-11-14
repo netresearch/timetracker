@@ -200,7 +200,7 @@ Using OAuth to transmit work logs to Jira ticket system
    - After new Application is created click on action "edit" (the little pencil at the right to your new application)
       - Select "Incoming Authentication"
       - Consumer Key:
-           timetracker (or chose any other name you like)
+           timetracker (It must be unique among all application links!)
       - Consumer Name:
            TimeTracker (or chose any other name you like)
       - Public Key:
