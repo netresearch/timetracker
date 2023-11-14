@@ -32,7 +32,7 @@ class Error extends JsonResponse
             $message['exception'] = $this->getExceptionAsArray($exception);
         }
 
-        parent::__construct($message, $statusCode);
+        parent::__construct($message, $statusCode > 0 ? $statusCode : 400);
     }
 
     protected function getExceptionAsArray(\Throwable $exception = null)
