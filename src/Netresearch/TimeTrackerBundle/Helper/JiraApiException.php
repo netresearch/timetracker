@@ -21,11 +21,11 @@ class JiraApiException extends \Exception
      * @param $code
      * @param null $redirectUrl
      */
-    public function __construct($message, $code, $redirectUrl = null)
+    public function __construct($message, $code, $redirectUrl = null, \Throwable $previous = null)
     {
         $this->redirectUrl = $redirectUrl;
         $message = 'JiraApi: '. $message;
-        parent::__construct($message, $code, null);
+        parent::__construct($message, $code, $previous);
     }
 
     /**

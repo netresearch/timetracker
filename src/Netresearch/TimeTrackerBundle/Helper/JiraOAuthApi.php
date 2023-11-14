@@ -244,7 +244,7 @@ class JiraOAuthApi
 
             return $this->getOAuthAuthUrl($token['oauth_token']);
         } catch (\Throwable $e) {
-            throw new JiraApiException($e->getMessage(), $e->getCode(), null);
+            throw new JiraApiException($e->getMessage(), $e->getCode(), null, $e);
         }
     }
 
@@ -587,16 +587,25 @@ class JiraOAuthApi
         try {
             $response = $this->getClient()->request($method, $url, $additionalParameter);
         } catch (GuzzleException $e) {
-            if ($e->getCode() === 401) {
-                $oauthAuthUrl = $this->fetchOAuthRequestToken();
+            if ($e->getCode() == 401) {
+                try {
+                    $oauthAuthUrl = $this->fetchOAuthRequestToken();
+                } catch (JiraApiException $e2) {
+                    throw new JiraApiException(
+                        'Failed to fetch OAuth URL: ' . $e2->getPrevious()->getMessage(),
+                        400, null, $e2
+                    );
+                }
                 $message = 'Jira: 401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
-                throw new JiraApiUnauthorizedException($message, $e->getCode(), $oauthAuthUrl);
+                throw new JiraApiUnauthorizedException($message, $e->getCode(), $oauthAuthUrl, $e);
+
             } elseif ($e->getCode() === 404) {
                 $message = 'Jira: 404 - Resource is not available: (' . $url . ')';
-                throw new JiraApiInvalidResourceException($message);
+                throw new JiraApiInvalidResourceException($message, 404, $e);
+
             } else {
                 throw new JiraApiException(
-                    'Unknown Guzzle exception: ' . $e->getMessage(), $e->getCode()
+                    'Unknown Guzzle exception: ' . $e->getMessage(), $e->getCode(), null, $e
                 );
             }
         }
