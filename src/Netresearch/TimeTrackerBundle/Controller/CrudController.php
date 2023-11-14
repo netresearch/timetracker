@@ -339,12 +339,12 @@ class CrudController extends BaseController
 
         } catch (JiraApiUnauthorizedException $e) {
             // Invalid JIRA token
-            return new Error($e->getMessage(), 403, $e->getRedirectUrl());
+            return new Error($e->getMessage(), 403, $e->getRedirectUrl(), $e);
 
         } catch (\Exception $e) {
-            return new Error($this->get('translator')->trans($e->getMessage()), 406);
+            return new Error($this->get('translator')->trans($e->getMessage()), 406, null, $e);
         } catch (\Throwable $exception) {
-            return new Error($exception->getMessage(), 503);
+            return new Error($exception->getMessage(), 503, null, $e);
         }
     }
 
