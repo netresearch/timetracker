@@ -51,7 +51,7 @@ Ext.define('Netresearch.store.Customers', {
             this.add(record);
             c++;
         }
-        console.log("Loaded " + c + " customers.");
+
         this.loadRecords(newData, {"append": false});
     }
 });
