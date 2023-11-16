@@ -12,6 +12,7 @@ Ext.define('Netresearch.widget.Tracking', {
     ],
 
     debug: false,
+    autoRefreshInterval: false,
 
     /* Create stores */
     customerStore: Ext.create('Netresearch.store.Customers'),
@@ -74,6 +75,12 @@ Ext.define('Netresearch.widget.Tracking', {
         const entryStore = Ext.create('Netresearch.store.Entries');
         const grid = this;
         entryStore.on("load", function() { grid.selectRow(0); });
+
+        if (this.autoRefreshInterval === true) {
+            this.autoRefreshInterval = window.setInterval(
+                this.autoRefreshProjectData, 15 * 60 * 1000, this
+            );
+        }
 
         const config = {
             title: this._tabTitle,
@@ -1111,18 +1118,32 @@ Ext.define('Netresearch.widget.Tracking', {
         });
     },
 
+    /**
+     * Reload project data, then refresh store data.
+     * Used for automatic background refreshes to make subtickets available.
+     */
+    autoRefreshProjectData: function(tracking) {
+        tracking.customerStore.reloadFromServer(function () {
+            tracking.projectStore.reloadFromServer(function () {
+                tracking.refresh(false);
+            });
+        });
+    },
+
     /*
      * Refresh stores
      */
-    refresh: function() {
+    refresh: function(reloadView = true) {
         this.clearProjectStore();
         this.customerStore.load();
         this.activityStore.load();
         this.userStore.load();
         this.ticketSystemStore.load();
-        this.getStore().load();
 
-        this.getView().refresh();
+        if (reloadView) {
+            this.getStore().load();
+            this.getView().refresh();
+        }
         countTime();
     },
 
