@@ -1956,6 +1956,12 @@ components:
       properties:
         message:
           type: string
+        forwardUrl:
+          type: string
+          description: Optional URL to redirect to (e.g. Jira OAuth)
+        exception:
+          type: object
+          description: Only when debugging is enabled
 
     ForbiddenResponse:
       type: object
