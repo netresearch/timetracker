@@ -170,6 +170,10 @@ deleteProject:
     path: /project/delete
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:deleteProject }
 
+syncAllProjectSubtickets:
+    path: /projects/syncsubtickets
+    defaults: { _controller: NetresearchTimeTrackerBundle:Admin:syncAllProjectSubtickets }
+
 syncProjectSubtickets:
     path: /projects/{project}/syncsubtickets
     defaults: { _controller: NetresearchTimeTrackerBundle:Admin:syncProjectSubtickets }

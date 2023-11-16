@@ -1392,6 +1392,24 @@ paths:
                 description: id, name, customer, jiraId
                 example: [1,"TestProject",1,"TIM"]
 
+  /projects/syncsubtickets:
+    post:
+      summary: Synchronize subticket information from Jira into TimeTracker for all projects
+      tags: Project
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        400:
+          description: Some error occured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /projects/{projectId}/syncsubtickets:
     post:
       summary: Synchronize subticket information from Jira into TimeTracker
