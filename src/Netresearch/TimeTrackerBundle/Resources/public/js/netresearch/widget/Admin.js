@@ -46,6 +46,7 @@ Ext.define('Netresearch.widget.Admin', {
     _editProjectTitle: 'Edit project',
     _projectSubticketsTitle: 'Known subtickets',
     _projectSubticketsSyncTitle: 'Sync subtickets',
+    _subticketSyncFinishedTitle: 'Subtickets have been synchronized from Jira.',
     _forAllCustomersTitle: 'for all customers',
     _userNameTitle: 'User name',
     _abbreviationTitle: 'Abbr',
@@ -567,6 +568,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         projectGrid.refresh();
                     }
+                }, {
+                    text: this._projectSubticketsSyncTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        projectGrid.syncAllProjectSubtickets();
+                    }
                 }
             ],
             listeners: {
@@ -883,6 +891,22 @@ Ext.define('Netresearch.widget.Admin', {
                     success: function(response) {
                         grid.refresh();
                         grid.showProjectSubtickets(project);
+                    },
+                    failure: function(response) {
+                        var data = Ext.decode(response.responseText);
+                        showNotification(panel._errorTitle, data.message, false);
+                    }
+                });
+            },
+            syncAllProjectSubtickets: function() {
+                var grid = this;
+                Ext.Ajax.request({
+                    method: 'POST',
+                    url: url + 'projects/syncsubtickets',
+                    scope: this,
+                    success: function(response) {
+                        grid.refresh();
+                        showNotification(panel._successTitle, panel._subticketSyncFinishedTitle, true);
                     },
                     failure: function(response) {
                         var data = Ext.decode(response.responseText);
@@ -2464,6 +2488,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _editProjectTitle: 'Projekt bearbeiten',
         _projectSubticketsTitle: 'Bekannte Untertickets',
         _projectSubticketsSyncTitle: 'Untertickets synchronisieren',
+        _subticketSyncFinishedTitle: 'Untertickets wurden von Jira synchronisiert.',
         _forAllCustomersTitle: 'für alle Kunden',
         _userNameTitle: 'Username',
         _abbreviationTitle: 'Kürzel',
