@@ -305,6 +305,39 @@ class AdminController extends BaseController
     }
 
     /**
+     * Update the subtickets for all projects.
+     */
+    public function syncAllProjectSubticketsAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        $projectRepo = $this->container->get('doctrine')
+            ->getRepository('NetresearchTimeTrackerBundle:Project');
+        $projects = $projectRepo->createQueryBuilder('p')
+            ->where('p.ticketSystem IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+
+        try {
+            $stss = new SubticketSyncService($this->container);
+
+            foreach ($projects as $project) {
+                $subtickets = $stss->syncProjectSubtickets($project->getId());
+            }
+
+            return new JsonResponse(
+                [
+                    'success' => true
+                ]
+            );
+        } catch (\Exception $e) {
+            return new Error($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
      * Fetch subtickets from Jira and update the project record's "subtickets" field.
      *
      * The project lead user's Jira tokens are used for access.
