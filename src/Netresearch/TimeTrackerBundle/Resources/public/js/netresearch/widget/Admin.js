@@ -396,9 +396,19 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function() {
-                this.store.load();
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
                 this.teamStore.load();
-                this.getView().refresh();
             }
         });
 
@@ -915,10 +925,20 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function() {
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
                 this.customerStore.load();
                 this.ticketSystemStore.load();
-                this.store.load();
-                this.getView().refresh();
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
             }
         });
 
@@ -1188,9 +1208,19 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function() {
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
                 this.teamStore.load();
-                this.store.load();
-                this.getView().refresh();
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
             }
         });
 
@@ -1373,9 +1403,19 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function() {
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
                 this.userStore.load();
-                this.store.load();
-                this.getView().refresh();
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
             }
         });
 
