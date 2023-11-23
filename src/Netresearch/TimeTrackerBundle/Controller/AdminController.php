@@ -259,14 +259,16 @@ class AdminController extends BaseController
 
         $data = array($project->getId(), $name, $project->getCustomer()->getId(), $jiraId);
 
-        try {
-            $stss = new SubticketSyncService($this->container);
-            $subtickets = $stss->syncProjectSubtickets($project->getId());
-        } catch (\Exception $e) {
-            //we do not let it fail because creating a new project
-            // would lead to inconsistencies in the frontend
-            // ("project with that name exists already")
-            $data['message'] = $e->getMessage();
+        if ($ticketSystem) {
+            try {
+                $stss = new SubticketSyncService($this->container);
+                $subtickets = $stss->syncProjectSubtickets($project->getId());
+            } catch (\Exception $e) {
+                //we do not let it fail because creating a new project
+                // would lead to inconsistencies in the frontend
+                // ("project with that name exists already")
+                $data['message'] = $e->getMessage();
+            }
         }
 
         return new JsonResponse($data);
