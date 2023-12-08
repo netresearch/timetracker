@@ -899,6 +899,8 @@ Ext.define('Netresearch.widget.Admin', {
                     url: url + 'projects/' + project.id + '/syncsubtickets',
                     scope: this,
                     success: function(response) {
+                        var data = Ext.decode(response.responseText);
+                        project['subtickets'] = data.subtickets;
                         grid.refresh();
                         grid.showProjectSubtickets(project);
                     },
