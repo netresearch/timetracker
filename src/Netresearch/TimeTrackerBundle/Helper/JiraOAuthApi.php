@@ -466,8 +466,7 @@ class JiraOAuthApi
             $subtickets[] = $subtask->key;
         }
 
-        if ($ticket->fields->issuetype->id == 10002) {
-            //Epic
+        if (strtolower($ticket->fields->issuetype->name) == 'epic') {
             $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
             foreach ($epicSubs->issues as $epicSubtask) {
                 $subtickets[] = $epicSubtask->key;
