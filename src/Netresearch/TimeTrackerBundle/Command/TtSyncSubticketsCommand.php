@@ -18,7 +18,7 @@ class TtSyncSubticketsCommand extends ContainerAwareCommand
         $this
             ->setName('tt:sync-subtickets')
             ->setDescription('Update project subtickets from Jira')
-            ->addArgument('project', InputArgument::OPTIONAL, 'Single project to update')
+            ->addArgument('project', InputArgument::OPTIONAL, 'Single project ID to update')
         ;
     }
 
