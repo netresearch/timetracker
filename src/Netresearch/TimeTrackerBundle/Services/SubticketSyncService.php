@@ -86,7 +86,7 @@ class SubticketSyncService
         $em->persist($project);
         $em->flush();
 
-        return $allSubtickets;
+        return array_values($allSubtickets);
     }
 
     protected function getDoctrine()
