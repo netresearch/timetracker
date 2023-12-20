@@ -1,0 +1,6 @@
+# This file is auto-generated during the composer install
+parameters:
+    database_driver: mysqli
+    database_name: unittest
+    database_user: unittest
+    database_password: unittest
