@@ -2077,12 +2077,13 @@ components:
           - "1"
           example: "1"
         estimation:
-          type: string
-          example: "0"
+          type: number
+          example: 2400
+          description: Estimated duration in minutes
         estimationText:
           type: string
-          description: Estimated duration in minutes
-          example: 16m
+          example: 16d 4h
+          description: 'Human readable estimated duration ("w"eeks, "d"ays, "m"inutes)'
         billing:
           type: string
           enum:
