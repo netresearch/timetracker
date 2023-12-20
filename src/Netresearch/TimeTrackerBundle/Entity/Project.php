@@ -3,6 +3,8 @@ namespace Netresearch\TimeTrackerBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+
+use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Model\Base as Base;
 
 /**
@@ -211,6 +213,15 @@ class Project extends Base
         $this->entries = new ArrayCollection();
     }
 
+    /**
+     * Convert to array and add additional properties.
+     */
+    public function toArray()
+    {
+        $data = parent::toArray();
+        $data['estimationText'] = TimeHelper::minutes2readable($this->getEstimation(), false);
+        return $data;
+    }
 
     /**
      * Get id
