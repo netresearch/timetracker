@@ -357,3 +357,6 @@ __ https://addons.mozilla.org/de/firefox/addon/greasemonkey/
 API documentation
 =================
 The timetracker API is documented in ``web/api.yml`` (OpenAPI v3).
+
+You can view a rendered version in your browser by opening
+``http://timetracker.example/docs/swagger/index.html``.
