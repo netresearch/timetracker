@@ -87,6 +87,7 @@ Ext.define('Netresearch.widget.Admin', {
     _errorTitle: 'Error',
     _successTitle: 'Success',
     _estimationTitle: 'Estimated Duration',
+    _estimationTooltip: 'Example: 2w 3d 4h',
     _internalJiraProjectKey: 'internal JIRA Project Key',
     _offerTitle: 'Offer',
     _billingTitle: 'Billing',
@@ -804,7 +805,15 @@ Ext.define('Netresearch.widget.Admin', {
                                     fieldLabel: panel._estimationTitle,
                                     name: 'estimation',
                                     anchor: '100%',
-                                    value: record.estimationText ? record.estimationText : ''
+                                    value: record.estimationText ? record.estimationText : '',
+                                    listeners: {
+                                        render: function (field) {
+                                            new Ext.ToolTip({
+                                                target: field.getEl(),
+                                                html: panel._estimationTooltip
+                                            });
+                                        }
+                                    }
                                 },
                                 {
                                     fieldLabel: panel._internalJiraProjectKey,
@@ -2571,6 +2580,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _errorTitle: 'Fehler',
         _successTitle: 'Erfolg',
         _estimationTitle: 'Geschätzte Dauer',
+        _estimationTooltip: 'Beispiel: 2w 3d 4h',
         _internalJiraProjectKey: 'internal JIRA Projekt Key',
         _offerTitle: 'Angebot',
         _billingTitle: 'Abrechnung',
