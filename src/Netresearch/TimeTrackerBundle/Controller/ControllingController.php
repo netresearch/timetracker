@@ -93,9 +93,16 @@ class ControllingController extends BaseController
         );
 
         $sheet = $spreadsheet->getSheet(0);
+
+        $headingStyle = [
+            'font' => [
+                'bold' => true,
+            ]
+        ];
         if ($showBillableField) {
             //add header
             $sheet->setCellValue('N2', 'billable');
+            $sheet->getStyle('N2')->applyFromArray($headingStyle);
         }
 
         // https://jira.netresearch.de/browse/TTT-561
