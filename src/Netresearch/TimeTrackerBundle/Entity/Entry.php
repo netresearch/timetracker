@@ -114,7 +114,7 @@ class Entry extends Base
      * @var array
      */
     protected $externalLabels = array();
-    
+
     /**
      * ID of the original booked external ticket.
      * @ORM\Column(name="internal_jira_ticket_original_key")
@@ -122,6 +122,13 @@ class Entry extends Base
      * @var string e.g. TYPO-1234
      */
     protected $internalJiraTicketOriginalKey = null;
+
+    /**
+     * Title in ticket system; no ORM mapping.
+     *
+     * @var string
+     */
+    protected $ticketTitle = null;
 
     /**
      * @param string $externalReporter
@@ -303,6 +310,17 @@ class Entry extends Base
     public function getTicket()
     {
         return $this->ticket;
+    }
+
+    public function setTicketTitle($ticketTitle)
+    {
+        $this->ticketTitle = $ticketTitle;
+        return $this;
+    }
+
+    public function getTicketTitle()
+    {
+        return $this->ticketTitle;
     }
 
     /**

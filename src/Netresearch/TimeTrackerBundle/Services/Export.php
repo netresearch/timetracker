@@ -114,12 +114,16 @@ class Export
      *
      * @param int   $currentUserId     logged in users id
      * @param array $entries           entries to export
+     * @param bool  $showBillableField Add the "billable" information field
      * @param bool  $removeNotBillable remove not billable entries
+     * @param bool  $showTicketTitles  Add ticket title field
      *
      * @return array
      */
-    public function enrichEntriesWithBillableInformation(
-        $currentUserId, array $entries, $removeNotBillable = false
+    public function enrichEntriesWithTicketInformation(
+        $currentUserId, array $entries,
+        $showBillableField, $removeNotBillable = false,
+        $showTicketTitles = false
     ) {
         /* @var $currentUser \Netresearch\TimeTrackerBundle\Entity\User */
         $doctrine = $this->container->get('doctrine');
@@ -157,6 +161,8 @@ class Export
 
         $maxRequestsElements = 500;
         $arBillable = [];
+        $arTicketTitles = [];
+
         /** @var JiraOAuthApi $jiraApi */
         foreach ($arApi as $idx => $jiraApi) {
             $ticketSystemIssuesTotal = array_unique($arTickets[$idx]);
@@ -164,21 +170,33 @@ class Export
                 $ticketSystemIssuesTotal, $maxRequestsElements
             );
 
+            $jiraFields = [];
+            if ($showBillableField) {
+                $jiraFields[] = 'labels';
+            }
+            if ($showTicketTitles) {
+                $jiraFields[] = 'summary';
+            }
+
             if (is_array($ticketSystemIssuesTotalChunks)
                 && !empty($ticketSystemIssuesTotalChunks)
             ) {
                 foreach ($ticketSystemIssuesTotalChunks as $arIssues) {
                     $ret = $jiraApi->searchTicket(
                         'IssueKey in (' . join(',', $arIssues) . ')',
-                        ['labels'],
+                        $jiraFields,
                         '500'
                     );
 
                     foreach ($ret->issues as $issue) {
-                        if (isset($issue->fields->labels)
+                        if ($showBillableField
+                            && isset($issue->fields->labels)
                             && in_array('billable', $issue->fields->labels)
                         ) {
                             $arBillable[] = $issue->key;
+                        }
+                        if ($showTicketTitles) {
+                            $arTicketTitles[$issue->key] = $issue->fields->summary;
                         }
                     }
                 }
@@ -186,11 +204,16 @@ class Export
         }
 
         foreach ($entries as $key => $entry) {
-            $billable = in_array($entry->getTicket(), $arBillable);
-            if (!$billable && $removeNotBillable) {
-                unset($entries[$key]);
-            } else {
-                $entry->billable = $billable;
+            if ($showBillableField) {
+                $billable = in_array($entry->getTicket(), $arBillable);
+                if (!$billable && $removeNotBillable) {
+                    unset($entries[$key]);
+                } else {
+                    $entry->billable = $billable;
+                }
+            }
+            if ($showTicketTitles) {
+                $entry->setTicketTitle($arTicketTitles[$entry->getTicket()] ?? null);
             }
         }
 

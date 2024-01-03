@@ -56,6 +56,7 @@ class ControllingController extends BaseController
         $month        = (int)  $request->get('month');
         $customerId   = (int)  $request->get('customer');
         $onlyBillable = (bool) $request->get('billable');
+        $showTicketTitles = (bool) $request->get('tickettitles');
 
         $service = $this->get('nr.timetracker.export');
         /** @var \Netresearch\TimeTrackerBundle\Entity\Entry[] $entries */
@@ -69,9 +70,11 @@ class ControllingController extends BaseController
 
         $showBillableField = $this->container->hasParameter('app_show_billable_field_in_export')
             && $this->container->getParameter('app_show_billable_field_in_export');
-        if ($showBillableField) {
-            $entries = $service->enrichEntriesWithBillableInformation(
-                $this->getUserId($request), $entries, $onlyBillable
+        if ($showBillableField || $showTicketTitles) {
+            $entries = $service->enrichEntriesWithTicketInformation(
+                $this->getUserId($request), $entries,
+                $showBillableField, $onlyBillable,
+                $showTicketTitles
             );
         }
 
@@ -103,6 +106,10 @@ class ControllingController extends BaseController
             //add header
             $sheet->setCellValue('N2', 'billable');
             $sheet->getStyle('N2')->applyFromArray($headingStyle);
+        }
+        if ($showTicketTitles) {
+            $sheet->setCellValue('O2', 'Tickettitel');
+            $sheet->getStyle('O2')->applyFromArray($headingStyle);
         }
 
         // https://jira.netresearch.de/browse/TTT-561
@@ -154,6 +161,9 @@ class ControllingController extends BaseController
             $sheet->setCellValue('M' . $lineNumber, implode(', ', $entry->getExternalLabels()));
             if ($showBillableField) {
                 $sheet->setCellValue('N' . $lineNumber, (int) $entry->billable);
+            }
+            if ($showTicketTitles) {
+                $sheet->setCellValue('O' . $lineNumber, $entry->getTicketTitle());
             }
 
             $lineNumber++;
