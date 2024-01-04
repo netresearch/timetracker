@@ -24,7 +24,9 @@ class JiraApiException extends \Exception
     public function __construct($message, $code, $redirectUrl = null, \Throwable $previous = null)
     {
         $this->redirectUrl = $redirectUrl;
-        $message = 'JiraApi: '. $message;
+        if (substr($message, 0, 5) != 'Jira:') {
+            $message = 'Jira: '. $message;
+        }
         parent::__construct($message, $code, $previous);
     }
 
