@@ -595,11 +595,11 @@ class JiraOAuthApi
                         400, null, $e2
                     );
                 }
-                $message = 'Jira: 401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
+                $message = '401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
                 throw new JiraApiUnauthorizedException($message, $e->getCode(), $oauthAuthUrl, $e);
 
             } elseif ($e->getCode() === 404) {
-                $message = 'Jira: 404 - Resource is not available: (' . $url . ')';
+                $message = '404 - Resource is not available: (' . $url . ')';
                 throw new JiraApiInvalidResourceException($message, 404, $e);
 
             } else {
