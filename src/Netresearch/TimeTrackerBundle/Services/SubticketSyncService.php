@@ -57,11 +57,19 @@ class SubticketSyncService
 
         $userWithJiraAccess = $project->getProjectLead();
         if (!$userWithJiraAccess) {
-            throw new \Exception('Project has no lead user', 400);
+            throw new \Exception(
+                'Project has no lead user: ' . $project->getName(),
+                400
+            );
         }
         $token = $userWithJiraAccess->getTicketSystemAccessToken($ticketSystem);
         if (!$token) {
-            throw new \Exception('Project user has no token for ticket system', 400);
+            throw new \Exception(
+                'Project user has no token for ticket system: '
+                . $userWithJiraAccess->getUsername()
+                . '@' . $project->getName(),
+                400
+            );
         }
 
         $jiraOAuthApi = new JiraOAuthApi(

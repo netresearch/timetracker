@@ -2,6 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Command;
 
+use Netresearch\TimeTrackerBundle\Helper\JiraApiUnauthorizedException;
 use Netresearch\TimeTrackerBundle\Services\SubticketSyncService;
 
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
@@ -55,7 +56,16 @@ class TtSyncSubticketsCommand extends ContainerAwareCommand
                 'Syncing ' . $project->getId() . ' ' . $project->getName(),
                 OutputInterface::VERBOSITY_VERBOSE
             );
-            $subtickets = $stss->syncProjectSubtickets($project);
+            try {
+                $subtickets = $stss->syncProjectSubtickets($project);
+            } catch (JiraApiUnauthorizedException $e) {
+                throw new JiraApiUnauthorizedException(
+                    $e->getMessage() . ' - project ' . $project->getName(),
+                    $e->getCode(),
+                    $e->getRedirectUrl(),
+                    $e
+                );
+            }
 
             $output->writeln(
                 ' ' . count($subtickets) . ' subtickets found',
