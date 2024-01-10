@@ -27,7 +27,8 @@ Ext.define('Netresearch.widget.Controlling', {
     _monthTitle: 'Month',
     _exportTitle: 'Export',
     _tabTitle: 'Controlling',
-    _billableTitle: 'limit export to billable entries',
+    _billableTitle: 'Limit export to billable entries',
+    _ticketTitlesTitle: 'Insert ticket titles',
 
     initComponent: function() {
         this.on('render', this.refreshStores, this);
