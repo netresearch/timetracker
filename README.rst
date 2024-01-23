@@ -360,3 +360,11 @@ The timetracker API is documented in ``web/api.yml`` (OpenAPI v3).
 
 You can view a rendered version in your browser by opening
 ``http://timetracker.example/docs/swagger/index.html``.
+
+
+Automated tests
+===============
+
+1. Run ``./tests/prepare-test-sql.sh``
+2. Create a separate database with settings from ``app/config/parameters_test.yml``
+3. Run ``./bin/simple-phpunit``
