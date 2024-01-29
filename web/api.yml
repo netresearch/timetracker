@@ -1152,20 +1152,20 @@ paths:
               properties:
                 startdate:
                   type: string
-                  format: date-time
-                  example: "2019-11-23T00:00:00"
+                  format: date
+                  example: "2019-11-23"
                 enddate:
                   type: string
-                  format: date-time
-                  example: "2019-11-24T00:00:00"
+                  format: date
+                  example: "2019-11-29"
                 starttime:
                   type: string
-                  format: date-time
-                  example: "2008-01-01T08:00:00"
+                  format: time
+                  example: "08:00:00"
                 endtime:
                   type: string
-                  format: date-time
-                  example: "2008-01-01T16:00:00"
+                  format: time
+                  example: "16:00:00"
                 skipweekend:
                   type: integer
                   example: 1
@@ -1174,7 +1174,7 @@ paths:
                   example: 1
                 preset:
                   type: integer
-                  example: 11
+                  example: 1
               required:
                 - starttime
                 - preset
@@ -1224,6 +1224,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedResponse'
+        '404':
+          description: No entry for id
+          content:
+            text/html:
+              schema:
+                type: string
+                example: No entry for id.
         '200':
           description: OK
           content:
@@ -1653,45 +1660,48 @@ paths:
               properties:
                 date:
                   type: string
-                  format: date-time
-                  example: "2019-11-22T00:00:00"
+                  description: Default date is now
+                  format: date
+                  example: "2019-11-22"
                 start:
                   type: string
-                  format: date-time
-                  example: "2019-11-22T09:55:00"
+                  format: time
+                  example: "09:55:00"
                 end:
                   type: string
-                  format: date-time
-                  example: "2019-11-22T13:25:00"
+                  description: Default end is now
+                  format: time
+                  example: "13:25:00"
                 user:
                   type: integer
                   example: 1
                   description: User ID of the user to simulate. Only allowed when the logged in user is whitelisted in "service_user_ids" setting. May be empty.
                 customer:
                   type: integer
+                  description: Key is required, value may be empty string
                   example: 1
                 project:
                   type: integer
                   example: 7
                 activity:
                   type: integer
+                  description: Key is required, value may be empty string
                   example: 3
                 description:
                   type: string
                   example: Button hinzugefügt
                 ticket:
+                  description: May be empty
                   type: string
-                  example: TIM-1
-                duration:
-                  type: string
-                  format: date-time
-                  example: "1899-12-31T03:30:00"
+                  example: 'PHR-1'
                 class:
                   type: integer
                   example: 0
               required:
                 - start
+                - customer
                 - project
+                - activity
       responses:
         '500':
           description: Error
@@ -1748,7 +1758,7 @@ paths:
                         example: Button hinzugef\u00fcgt
                       ticket:
                         type: string
-                        example: TIM-1
+                        example: PHR-1
                       duration:
                         type: integer
                         example: 210
@@ -1762,6 +1772,9 @@ paths:
                         type: string
                         nullable: true
                         example: null
+                      extTicket:
+                        type: string
+                        example: ""
                   alert:
                     type: string
                     nullable: true
@@ -2132,6 +2145,10 @@ components:
         success:
           type: boolean
           example: true
+        alert:
+          type: string
+          nullable: true
+          example: null
 
     SummaryInfo:
       type: object
