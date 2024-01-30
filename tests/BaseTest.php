@@ -5,10 +5,15 @@ namespace Tests;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+/**
+ * TODO: When updating to PHPUnit > 8.x a new dependency is needed:
+ * https://github.com/rdohms/phpunit-arraysubset-asserts
+ */
 abstract class BaseTest extends WebTestCase
 {
     protected $client = null;
     protected $container;
+    protected $connection;
     protected $filepath = "/../sql/unittest/002_testdata.sql";
 
     public function setUp()
@@ -27,7 +32,6 @@ abstract class BaseTest extends WebTestCase
      * Each test has a path to the file with the sql testdata
      * When executing loadTestData() the file from the $filepath
      * of current scope will be imported.
-     *
      */
     protected function loadTestData(string $filepath = null)
     {
@@ -38,9 +42,13 @@ abstract class BaseTest extends WebTestCase
         }
         //turn on error reporting
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-        $connection = $this->container->get('doctrine.dbal.default_connection')->getWrappedConnection()->getWrappedResourceHandle();
-        $connection->multi_query($file);
-        while ($connection->next_result());
+        $this->connection = $this->container
+            ->get('doctrine.dbal.default_connection')
+            ->getWrappedConnection()
+            ->getWrappedResourceHandle();
+
+        $this->connection->multi_query($file);
+        while ($this->connection->next_result());
         //turn off error reporting
         mysqli_report(MYSQLI_REPORT_OFF);
     }
@@ -62,17 +70,30 @@ abstract class BaseTest extends WebTestCase
     /**
      * Tests $statusCode against response status code
      */
-    protected function assertStatusCode(int $statusCode): void
+    protected function assertStatusCode(int $statusCode, string $message = ''): void
     {
-        $this->assertSame($statusCode, $this->client->getResponse()->getStatusCode());
+        $this->assertSame($statusCode, $this->client->getResponse()->getStatusCode(), $message);
     }
 
     protected function assertMessage(string $message): void
     {
         $this->assertSame($message, $this->client->getResponse()->getContent());
     }
+
     protected function assertContentType(string $contentType): void
     {
-        $this->assertContains($contentType, $this->client->getResponse()->headers->get('content-type'));
+        $this->assertContains(
+            $contentType,
+            $this->client->getResponse()->headers->get('content-type')
+        );
+    }
+
+    /**
+     * Takes a JSON in array and compares it against the response content
+     */
+    protected function assertJsonStructure(array $json): void
+    {
+        $responseJson = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertArraySubset($json, $responseJson);
     }
 }
