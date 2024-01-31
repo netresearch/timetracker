@@ -2322,7 +2322,7 @@ components:
       name: activity
       schema:
         type: integer
-        example: 1
+        example: 2
 
     customer:
       in: query
@@ -2336,37 +2336,37 @@ components:
       name: dateend
       schema:
         type: string
-        format: date-time
-        example: "2019-11-30T00:00:00"
+        format: date
+        example: "2019-11-30"
 
     datestart:
       in: query
       name: datestart
       schema:
         type: string
-        format: date-time
-        example: "2019-11-01T00:00:00"
+        format: date
+        example: "2019-11-01"
 
     description:
       in: query
       name: description
       schema:
         type: string
-        example: "Button hinzugefügt"
+        example: "Lebkuchen"
 
     project:
       in: query
       name: project
       schema:
         type: integer
-        example: 1
+        example: 2
 
     re_ticket:
       in: query
       name: ticket
       schema:
         type: string
-        example: "TIM-1"
+        example: "LK-12"
       required: true
 
     team:
@@ -2381,7 +2381,7 @@ components:
       name: ticket
       schema:
         type: string
-        example: "TIM-1"
+        example: "LK-12"
 
     user:
       in: query
