@@ -1408,7 +1408,8 @@ paths:
   /projects/syncsubtickets:
     post:
       summary: Synchronize subticket information from Jira into TimeTracker for all projects
-      tags: Project
+      tags:
+      - Project
       responses:
         200:
           description: OK
@@ -1426,7 +1427,8 @@ paths:
   /projects/{projectId}/syncsubtickets:
     post:
       summary: Synchronize subticket information from Jira into TimeTracker
-      tags: Project
+      tags:
+      - Project
       parameters:
         - in: path
           name: projectId
