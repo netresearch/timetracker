@@ -114,4 +114,15 @@ abstract class BaseTest extends WebTestCase
         );
         $this->assertArraySubset($json, $responseJson);
     }
+
+    protected function assertLength(int $length)
+    {
+        $responseLength = count(
+            json_decode(
+                $this->client->getResponse()->getContent(),
+                true
+            )
+        );
+        $this->assertSame($length, $responseLength);
+    }
 }

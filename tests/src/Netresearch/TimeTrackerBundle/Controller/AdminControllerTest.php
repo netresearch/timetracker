@@ -176,7 +176,7 @@ class AdminControllerTest extends BaseTest
         $this->assertSame($oldDb, $newDb);
     }
 
-    //-------------- customer Routes ----------------------------------------
+    //-------------- customer routes ----------------------------------------
 
     public function testSaveCustomerAction()
     {
@@ -361,6 +361,12 @@ class AdminControllerTest extends BaseTest
             ],
             [
                 'customer' => [
+                    'name' => 'Der Globale Customer',
+                    'teams' => [],
+                ],
+            ],
+            [
+                'customer' => [
                     'name' => 'Der nebenan vom Bäcker',
                     'teams' => [2],
                 ],
@@ -369,5 +375,163 @@ class AdminControllerTest extends BaseTest
         $this->client->request('GET', '/getAllCustomers');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
+    }
+
+    //-------------- project routes ----------------------------------------
+
+    public function testSaveProjectAction()
+    {
+        $parameter = [
+            'name' => 'testProject', //req
+            'customer' => 1, //req
+        ];
+
+        $this->client->request('POST', '/project/save', $parameter);
+
+        $expectedJson = [
+            1 => 'testProject',
+            2 => 1,
+        ];
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+
+        $this->queryBuilder->select('name', 'customer_id')
+            ->from('projects')->where('name = ?')
+            ->setParameter(0, 'testProject');
+        $result = $this->queryBuilder->execute()->fetchAll();
+
+        $expectedDBentry = [
+            [
+                'name' => 'testProject',
+                'customer_id' => 1,
+            ]
+        ];
+        $this->assertArraySubset($expectedDBentry, $result);
+
+    }
+
+    public function testSaveProjectActionDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('projects')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant save project
+        $parameter = [
+            'name' => 'testProject', //req
+            'customer' => 1, //req
+        ];
+        $this->logInSession('developer');
+        $this->client->request('POST', '/project/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('projects')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testUpdateProject()
+    {
+        $parameter = [
+            'id' => 1,
+            'name' => 'updatedTestProject', //req
+            'customer' => 2, //req
+        ];
+        $this->client->request('POST', '/project/save', $parameter);
+        $expectedJson = [
+            0 => 1,
+            1 => 'updatedTestProject',
+            2 => 1,
+        ];
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+
+        // validate updated entry in db
+        $this->queryBuilder->select('name', 'customer_id')
+            ->from('projects')->where('id = ?')
+            ->setParameter(0, 1);
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDBentry = [
+            [
+                'name' => 'updatedTestProject',
+                'customer_id' => 1,
+            ]
+        ];
+        $this->assertArraySubset($expectedDBentry, $result);
+    }
+
+    public function testUpdateProjectDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('projects')
+            ->execute()
+            ->fetchAll();
+
+        //test that dev cant update project
+        $this->logInSession('developer');
+        $parameter = [
+            'id' => 1,
+            'name' => 'updatedTestProject', //req
+            'customer' => 2, //req
+        ];
+        $this->client->request('POST', '/project/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('projects')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testdeleteProjectAction()
+    {
+        $parameter = ['id' => 2,];
+        $expectedJson1 = [
+            'success' => true,
+        ];
+        $this->client->request('POST', '/project/delete', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson1);
+        //  second delete
+        $expectedJson2 = [
+            'message' => 'Dataset could not be removed. ',
+        ];
+        $this->client->request('POST', '/project/delete', $parameter);
+        $this->assertStatusCode(422, 'Second delete did not return expected 422');
+        $this->assertContentType('application/json');
+        $this->assertJsonStructure($expectedJson2);
+    }
+
+    public function testdeleteProjectActionDevNotAllowed()
+    {
+        //test that dev cant delete project and db is the same after that
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('projects')
+            ->execute()
+            ->fetchAll();
+
+        $this->logInSession('developer');
+        $parameter = ['id' => 1,];
+        $this->client->request('POST', '/project/delete', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('projects')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
     }
 }
