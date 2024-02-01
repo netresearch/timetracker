@@ -53,7 +53,8 @@ INSERT INTO `teams_users` (`id`, `team_id`, `user_id`) VALUES
 --
 INSERT INTO `customers` (`id`, `name`, `active`, `global`) VALUES
 (1,    'Der Bäcker von nebenan',       1,        0),
-(2,    'Der nebenan vom Bäcker',       0,        0);
+(2,    'Der nebenan vom Bäcker',       0,        0),
+(3,    'Der Globale Customer'  ,       0,        1);
 
 --
 -- customers-to-teams
@@ -65,8 +66,11 @@ INSERT INTO `teams_customers` (`id`, `team_id`, `customer_id`) VALUES
 --
 -- projects
 --
-INSERT INTO `projects` (`id`, `customer_id`, `name`, `jira_id`, `ticket_system`, `active`, `global`, `estimation`, `offer`, `billing`, `cost_center`, `internal_ref`, `external_ref`, `project_lead_id`, `technical_lead_id`, `invoice`, `additional_information_from_external`, `internal_jira_project_key`, `internal_jira_ticket_system`) VALUES
-(1,    1,   'Server attack',  'SA',          NULL,   1,         0,               0,        '0',      0,            NULL,    NULL,      NULL,          1,              1,              NULL,              0,                   '',        0);
+INSERT INTO `projects`
+(`id`, `customer_id`, `name`             , `jira_id`         , `ticket_system`, `active`     , `global`  , `estimation`  , `offer`, `billing`      , `cost_center`    , `internal_ref`     , `external_ref`   , `project_lead_id`  , `technical_lead_id`   , `invoice` , `additional_information_from_external`, `internal_jira_project_key`, `internal_jira_ticket_system`) VALUES
+(1   , 1            ,'Server attack'     ,'SA'               ,NULL            ,1             ,0          ,0          ,'0'    ,0          ,NULL              ,NULL           ,NULL           ,1                   ,1                      ,NULL       ,0                        ,''       ,0                       ),
+(2   , 1            ,'Attack Server'     ,'TIM-1'            ,NULL            ,0             ,0          ,0          ,'0'    ,0          ,NULL              ,NULL           ,NULL           ,NULL                ,NULL                   ,NULL       ,0                        ,''       ,0                       ),
+(3   , 3            ,'GlobalProject'     ,'TIM-1'            ,NULL            ,0             ,0          ,0          ,'0'    ,0          ,NULL              ,NULL           ,NULL           ,NULL                ,NULL                   ,NULL       ,0                        ,''       ,0                       );
 
 --
 -- presets
