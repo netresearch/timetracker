@@ -343,8 +343,9 @@ class CrudController extends BaseController
 
         } catch (\Exception $e) {
             return new Error($this->get('translator')->trans($e->getMessage()), 406, null, $e);
-        } catch (\Throwable $exception) {
-            return new Error($exception->getMessage(), 503, null, $e);
+
+        } catch (\Throwable $e) {
+            return new Error($e->getMessage(), 503, null, $e);
         }
     }
 
