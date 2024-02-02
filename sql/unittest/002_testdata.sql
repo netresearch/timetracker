@@ -26,7 +26,8 @@ INSERT INTO `activities` (`id`, `name`, `needs_ticket`, `factor`) VALUES
 -- users
 --
 INSERT INTO `users` (`id`, `username`, `abbr`, `type`, `jira_token`, `show_empty_line`, `suggest_time`, `show_future`, `locale`) VALUES
-(1,   'i.myself',         'IMY',      'PL',   NULL,   0,            1,                 1,      'de');
+(1,   'i.myself',         'IMY',      'PL',    NULL,   0,            1,                 1,      'de'),
+(2,   'developer',        'NPL',      'DEV',   NULL,   0,            1,                 1,      'de');
 
 --
 -- user contracts
@@ -38,7 +39,8 @@ INSERT INTO `contracts` (`id`, `user_id`, `start`, `end`, `hours_0`, `hours_1`, 
 -- teams
 --
 INSERT INTO `teams` (`id`, `name`, `lead_user_id`) VALUES
-(1,    'Kuchenbäcker',     1);
+(1,    'Kuchenbäcker',     1),
+(2,    'Hackerman',        1);
 
 --
 -- users-to-teams
