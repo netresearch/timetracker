@@ -902,6 +902,11 @@ class AdminController extends BaseController
 
         if ($id) {
             $team = $repository->find($id);
+            //abort for non existing id
+            if (!$team) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $team = new Team();
         }
