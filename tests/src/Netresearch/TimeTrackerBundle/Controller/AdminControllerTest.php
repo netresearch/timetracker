@@ -10,10 +10,10 @@ class AdminControllerTest extends BaseTest
     {
         $parameter = [
             'username' => 'unittest',
-            'abbr'     => 'IMY',
+            'abbr' => 'IMY',
             //FIXME: 500 when non-existing abb is used
-            'teams'    => [1], //req
-            'locale'   => 'en',   //req
+            'teams' => [1], //req
+            'locale' => 'en',   //req
         ];
         $this->client->request('POST', '/user/save', $parameter);
         $this->assertStatusCode(406);
