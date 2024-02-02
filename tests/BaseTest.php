@@ -15,7 +15,7 @@ abstract class BaseTest extends WebTestCase
     protected $container;
     protected $connection;
     protected $queryBuilder;
-    protected $filepath = "/../sql/unittest/002_testdata.sql";
+    protected $filepath = '/../sql/unittest/002_testdata.sql';
 
     public function setUp()
     {
@@ -37,9 +37,9 @@ abstract class BaseTest extends WebTestCase
     protected function loadTestData(string $filepath = null)
     {
         if (!$filepath) {
-            $file = file_get_contents(dirname(__FILE__) .  $this->filepath);
+            $file = file_get_contents(dirname(__FILE__) . $this->filepath);
         } else {
-            $file = file_get_contents(dirname(__FILE__) .  $filepath);
+            $file = file_get_contents(dirname(__FILE__) . $filepath);
         }
         //turn on error reporting
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -83,7 +83,11 @@ abstract class BaseTest extends WebTestCase
      */
     protected function assertStatusCode(int $statusCode, string $message = ''): void
     {
-        $this->assertSame($statusCode, $this->client->getResponse()->getStatusCode(), $message);
+        $this->assertSame(
+            $statusCode,
+            $this->client->getResponse()->getStatusCode(),
+            $message
+        );
     }
 
     protected function assertMessage(string $message): void
@@ -104,7 +108,10 @@ abstract class BaseTest extends WebTestCase
      */
     protected function assertJsonStructure(array $json): void
     {
-        $responseJson = json_decode($this->client->getResponse()->getContent(), true);
+        $responseJson = json_decode(
+            $this->client->getResponse()->getContent(),
+            true
+        );
         $this->assertArraySubset($json, $responseJson);
     }
 }
