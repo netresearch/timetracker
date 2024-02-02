@@ -1078,6 +1078,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ForbiddenResponse'
+
         '422':
           description: Error
           content:
@@ -1582,7 +1583,7 @@ paths:
 
   /team/save:
     post:
-      summary: Create a team
+      summary: Create a team (id=empty value) or update a existing team by id
       tags:
         - Team
       requestBody:
@@ -1598,6 +1599,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedResponse'
+        '404':
+          description: No entry for id
+          content:
+            text/html:
+              schema:
+                type: string
+                example: No entry for id.
         '406':
           description: Error Not Acceptable
           content:
@@ -2179,6 +2187,10 @@ components:
     Team:
       type: object
       properties:
+        id:
+          description: 'If an ID already exists, using it will update the associated entry in the database.'
+          type: integer
+          example: 1
         name:
           type: string
           example: Backend
