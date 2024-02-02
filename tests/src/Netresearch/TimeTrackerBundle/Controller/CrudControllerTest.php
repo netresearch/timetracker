@@ -66,7 +66,7 @@ class CrudControllerTest extends BaseTest
         $this->assertJsonStructure(['success' => true, 'alert' => null]);
         //  second delete
         $this->client->request('POST', '/tracking/delete', $parameter);
-        $this->assertStatusCode(404, "Second delete did not return expected 404");
+        $this->assertStatusCode(404, 'Second delete did not return expected 404');
         $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
 
