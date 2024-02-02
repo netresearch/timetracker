@@ -37,8 +37,8 @@ class CrudController extends BaseController
                 ->find($request->request->get('id'));
 
             if (!$entry) {
-                $message = $this->get('translator')->trans("No entry for id.");
-                return $this->getFailedResponse($message, 404);
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
             }
 
             try {
