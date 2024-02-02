@@ -14,6 +14,7 @@ abstract class BaseTest extends WebTestCase
     protected $client = null;
     protected $container;
     protected $connection;
+    protected $queryBuilder;
     protected $filepath = "/../sql/unittest/002_testdata.sql";
 
     public function setUp()
@@ -51,17 +52,27 @@ abstract class BaseTest extends WebTestCase
         while ($this->connection->next_result());
         //turn off error reporting
         mysqli_report(MYSQLI_REPORT_OFF);
+        //get the queryBuilder
+        $this->queryBuilder = $this->container
+            ->get('doctrine.dbal.default_connection')
+            ->createQueryBuilder();
     }
 
     /**
      *  Authenticate the query with credentials from the set-up test projectlader
      */
-    protected function logInSession()
+    protected function logInSession(string $user = 'unittest')
     {
         $session = $this->container->get('session');
         $session->set('loggedIn', true);
-        $session->set('loginUsername', 'unittest');
-        $session->set('loginId', '1');
+
+        if ($user == 'unittest') {
+            $session->set('loginId', '1');
+        } elseif ($user == 'developer') {
+            $session->set('loginId', '2');
+        }
+        $session->set('loginUsername', $user);
+
         $cookie = new Cookie($session->getName(), $session->getId());
         $this->client->getCookieJar()->set($cookie);
         $session->save();
