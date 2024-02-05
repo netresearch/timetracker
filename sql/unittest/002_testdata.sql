@@ -52,13 +52,15 @@ INSERT INTO `teams_users` (`id`, `team_id`, `user_id`) VALUES
 -- customers
 --
 INSERT INTO `customers` (`id`, `name`, `active`, `global`) VALUES
-(1,    'Der Bäcker von nebenan',       1,        0);
+(1,    'Der Bäcker von nebenan',       1,        0),
+(2,    'Der nebenan vom Bäcker',       0,        0);
 
 --
 -- customers-to-teams
 --
 INSERT INTO `teams_customers` (`id`, `team_id`, `customer_id`) VALUES
-(1,    1,   1);
+(1,    1,   1),
+(2,    2,   2);
 
 --
 -- projects
