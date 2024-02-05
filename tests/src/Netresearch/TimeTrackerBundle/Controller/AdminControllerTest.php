@@ -175,4 +175,199 @@ class AdminControllerTest extends BaseTest
             ->fetchAll();
         $this->assertSame($oldDb, $newDb);
     }
+
+    //-------------- customer Routes ----------------------------------------
+
+    public function testSaveCustomerAction()
+    {
+        $parameter = [
+            'name' => 'testCustomer',
+            'teams' => [2],
+        ];
+        $this->client->request('POST', '/customer/save', $parameter);
+        $expectedJson = [
+            1 => 'testCustomer',
+            4 => [2],
+        ];
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+
+        //test that customer was added to db
+        //test that teams_customers entry was created
+        $this->queryBuilder->select('c.name', 'tc.team_id')
+            ->from('customers', 'c')
+            ->leftJoin('c', 'teams_customers', 'tc', 'c.id = tc.customer_id')
+            ->where('c.name = ?')
+            ->setParameter(0, 'testCustomer');
+        $result1 = $this->queryBuilder->execute()->fetchAll();
+        $expectedDBentry = [
+            [
+                'name' => 'testCustomer',
+                'team_id' => 2,
+            ]
+        ];
+        $this->assertArraySubset($expectedDBentry, $result1);
+    }
+
+    public function testSaveCustomerActionDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('customers')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant save customer
+        $this->logInSession('developer');
+        $parameter = [
+            'name' => 'testCustomer',
+            'teams' => [2],
+        ];
+        $this->client->request('POST', '/customer/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('customers')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testUpdateCustomer()
+    {
+        $parameter = [
+            'id' => 1,
+            'name' => 'updatedTestCustomer',
+            'teams' => [2],
+        ];
+        $this->client->request('POST', '/customer/save', $parameter);
+        $expectedJson = [
+            1 => 'updatedTestCustomer',
+            4 => [2],
+        ];
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+
+        //validate updated entry in db
+        $this->queryBuilder->select('c.name', 'tc.team_id')
+            ->from('customers', 'c')
+            ->leftJoin('c', 'teams_customers', 'tc', 'c.id = tc.customer_id')
+            ->where('c.id = ?')
+            ->setParameter(0, 1);
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDBentry = [
+            [
+                'name' => 'updatedTestCustomer',
+                'team_id' => 2,
+            ]
+        ];
+        $this->assertArraySubset($expectedDBentry, $result);
+    }
+
+    public function testUpdateCustomerDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('customers')
+            ->execute()
+            ->fetchAll();
+
+        //test that dev cant update team
+        $this->logInSession('developer');
+        $parameter = [
+            'id' => 1,
+            'name' => 'updatedTestCustomer',
+            'teams' => [2],
+        ];
+        $this->client->request('POST', '/customer/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('customers')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testDeleteCustomerAction()
+    {
+        //create customer for deletion
+        $this->queryBuilder
+            ->insert('customers')
+            ->values(
+                [
+                    'id' => '?',
+                    'name' => '?',
+                ]
+            )
+            ->setParameter(0, 42)
+            ->setParameter(1, 'customerForDeletion')
+            ->execute();
+        //Use ID of 42 to avoid problems when adding a new customer for testing
+        $parameter = ['id' => 42,];
+
+        //first delete
+        $expectedJson = [
+            'success' => true,
+        ];
+        $this->client->request('POST', '/customer/delete', $parameter);
+        $this->assertStatusCode(200, 'First delete did not return expected 200');
+        $this->assertJsonStructure($expectedJson);
+
+        //  second delete
+        $expectedJson2 = [
+            'message' => 'Dataset could not be removed. ',
+        ];
+        $this->client->request('POST', '/customer/delete', $parameter);
+        $this->assertStatusCode(422, 'Second delete did not return expected 422');
+        $this->assertContentType('application/json');
+        $this->assertJsonStructure($expectedJson2);
+    }
+
+    public function testDeleteCustomerActionDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('customers')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant delete team
+        $this->logInSession('developer');
+        $parameter = ['id' => 1,];
+        $this->client->request('POST', '/customer/delete', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('customers')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testGetCustomersAction()
+    {
+        $expectedJson = [
+            [
+                'customer' => [
+                    'name' => 'Der Bäcker von nebenan',
+                    'teams' => [1],
+                ],
+            ],
+            [
+                'customer' => [
+                    'name' => 'Der nebenan vom Bäcker',
+                    'teams' => [2],
+                ],
+            ],
+        ];
+        $this->client->request('GET', '/getAllCustomers');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
 }
