@@ -405,9 +405,15 @@ paths:
 
   /getAllProjects:
     get:
-      summary: Returns a list of all projects
+      summary: Returns a list of all projects or all global projects and projects of specified customer
       tags:
         - Project
+      parameters:
+        - in: query
+          name: customer
+          schema:
+            type: integer
+            example: 1
       responses:
         '200':
           description: OK
@@ -552,9 +558,15 @@ paths:
 
   /getProjects:
     get:
-      summary: Returns a list of all projects with a "global" customer
+      summary: Returns all projects of logged in user plus all projects of global customers. When a customer is given returns from this selection all projects of the customer plus global projects
       tags:
         - Project
+      parameters:
+        - in: query
+          name: customer
+          schema:
+            type: integer
+            example: 1
       responses:
         '200':
           description: OK
