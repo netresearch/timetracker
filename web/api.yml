@@ -269,7 +269,7 @@ paths:
 
   /customer/save:
     post:
-      summary: Create a customer
+      summary: Create a customer (id=empty value) or update a existing team by id
       tags:
         - Customer
       requestBody:
@@ -281,6 +281,12 @@ paths:
       responses:
         '500':
           description: Error Internal Server Error
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '200':
           description: OK
           content:
@@ -1228,10 +1234,9 @@ paths:
         '404':
           description: No entry for id
           content:
-            text/html:
+            application/json:
               schema:
-                type: string
-                example: No entry for id.
+                $ref: '#/components/schemas/NoEntryForId'
         '200':
           description: OK
           content:
@@ -1604,8 +1609,7 @@ paths:
           content:
             text/html:
               schema:
-                type: string
-                example: No entry for id.
+                $ref: '#/components/schemas/NoEntryForId'
         '406':
           description: Error Not Acceptable
           content:
@@ -1938,6 +1942,10 @@ components:
     Customer:
       type: object
       properties:
+        id:
+          type: integer
+          description: If an ID already exists, using it will update the associated entry in the database.
+          example: 1
         name:
           type: string
           description: name with at least 3 letters
@@ -2277,6 +2285,13 @@ components:
         message:
           type: string
           example: You need to login.
+
+    NoEntryForId:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'No entry for id.'
 
     User:
       type: object
