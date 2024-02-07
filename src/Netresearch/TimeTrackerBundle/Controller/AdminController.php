@@ -387,6 +387,10 @@ class AdminController extends BaseController
 
         if ($customerId) {
             $customer = $customerRepository->find($customerId);
+            if (!$customer) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $customer = new Customer();
         }
