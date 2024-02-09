@@ -1081,6 +1081,10 @@ class AdminController extends BaseController
 
         if ($contractId) {
             $contract = $contractRepository->find($contractId);
+            if (!$contract) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $contract = new Contract();
         }
