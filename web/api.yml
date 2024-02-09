@@ -155,7 +155,7 @@ paths:
 
   /contract/save:
     post:
-      summary: Create a contract
+      summary: Create a contract (id=empty value) or update a existing team by id
       tags:
         - Contract
       requestBody:
@@ -165,6 +165,12 @@ paths:
             schema:
               $ref: '#/components/schemas/Contract'
       responses:
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '406':
           description: Error
           content:
@@ -1921,6 +1927,9 @@ components:
     Contract:
       type: object
       properties:
+        id:
+          type: integer
+          example: 1
         user_id:
           type: integer
           example: 1
@@ -1963,6 +1972,12 @@ components:
       required:
         - user_id
         - start
+        - hours_1
+        - hours_2
+        - hours_3
+        - hours_4
+        - hours_5
+        - hours_6
 
     Customer:
       type: object
