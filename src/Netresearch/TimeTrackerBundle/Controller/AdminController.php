@@ -814,6 +814,10 @@ class AdminController extends BaseController
 
         if ($id) {
             $activity = $repository->find($id);
+            if (!$activity) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $activity = new Activity();
         }

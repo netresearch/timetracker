@@ -59,7 +59,7 @@ paths:
 
   /activity/save:
     post:
-      summary: Create an activity
+      summary: Create an activity (id=empty value) or update a existing team by id
       tags:
         - Activity
       requestBody:
@@ -69,6 +69,10 @@ paths:
             schema:
               type: object
               properties:
+                id:
+                  type: integer
+                  example: 1
+                  description: If an ID already exists, using it will update the associated entry in the database.
                 name:
                   type: string
                   example: Design
@@ -81,6 +85,7 @@ paths:
                   example: 1
               required:
               - name
+              - factor
       responses:
         '401':
           description: Error Unauthorized
@@ -88,6 +93,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedResponse'
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '406':
           description: Error
           content:
