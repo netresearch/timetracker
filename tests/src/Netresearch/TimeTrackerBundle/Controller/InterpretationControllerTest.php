@@ -80,4 +80,22 @@ class InterpretationControllerTest extends BaseTest
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
+
+    public function testGroupByActivityAction()
+    {
+        $parameter = [
+            'user' => 1,    //req
+        ];
+        $expectedJson = array(
+            0 => array(
+                'id' => 1,
+                'name' => 'Backen',
+                'hours' => 3.9,
+                'quota' => '100.00%',
+            ),
+        );
+        $this->client->request('GET', '/interpretation/activity', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
 }
