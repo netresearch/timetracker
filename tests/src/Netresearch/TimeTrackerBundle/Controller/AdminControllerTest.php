@@ -534,4 +534,169 @@ class AdminControllerTest extends BaseTest
             ->fetchAll();
         $this->assertSame($oldDb, $newDb);
     }
+
+    //-------------- activities routes ----------------------------------------
+    public function testSaveActivityAction()
+    {
+        $parameter = [
+            'name' => 'Lachen', //req
+            'factor' => 2, //req
+        ];
+        $this->client->request('POST', '/activity/save', $parameter);
+        $expectedJson = array(
+            1 => 'Lachen',
+            3 => '2',
+        );
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        //assert that activity was saved
+        $this->queryBuilder->select('name', 'factor')
+            ->from('activities')->where('name = ?')
+            ->setParameter(0, 'Lachen');
+        $result = $this->queryBuilder->execute()->fetchAll();
+
+        $expectedDBentry = [
+            [
+                'name' => 'Lachen',
+                'factor' => 2,
+            ]
+        ];
+        $this->assertArraySubset($expectedDBentry, $result);
+    }
+
+    public function testSaveActivityActionDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('activities')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant save activities
+        $parameter = [
+            'name' => 'testActivities', //req
+            'factor' => 2, //req
+        ];
+        $this->logInSession('developer');
+        $this->client->request('POST', '/activity/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('activities')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testUpdateActivityAction()
+    {
+        $parameter = [
+            'id' => 1,  //req
+            'name' => 'update', //req
+            'factor' => 2, //req
+        ];
+        $expectedJson = array(
+            1 => 'update',
+            3 => '2',
+        );
+        $this->client->request('POST', '/activity/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        //assert that activity was updated
+        $this->queryBuilder->select('name', 'factor')
+            ->from('activities')->where('name = ?')
+            ->setParameter(0, 'update');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDBentry = array(
+            0 => array(
+                'name' => 'update',
+                'factor' => 2,
+            ),
+        );
+        $this->assertArraySubset($expectedDBentry, $result);
+    }
+
+    public function testUpdateActivityActionDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('activities')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant save activities
+        $parameter = [
+            'id' => 1,
+            'name' => 'testActivities', //req
+            'factor' => 2, //req
+        ];
+        $this->logInSession('developer');
+        $this->client->request('POST', '/activity/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('activities')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testDeleteActivityAction()
+    {
+        //create activity for deletion
+        $this->queryBuilder
+            ->insert('activities')
+            ->values(
+                [
+                    'id' => '?',
+                    'name' => '?',
+                    'factor' => '?',
+                ]
+            )
+            ->setParameter(0, 42)
+            ->setParameter(1, 'activityForDeletion')
+            ->setParameter(2, '1')
+            ->execute();
+        //Use ID of 42 to avoid problems when adding a new activity for testing
+        $parameter = ['id' => 42];
+        $expectedJson1 = [
+            'success' => true,
+        ];
+        $this->client->request('POST', '/activity/delete', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson1);
+        //  second delete
+        $expectedJson2 = [
+            'message' => 'Dataset could not be removed. ',
+        ];
+        $this->client->request('POST', '/activity/delete', $parameter);
+        $this->assertStatusCode(422, 'Second delete did not return expected 422');
+        $this->assertContentType('application/json');
+        $this->assertJsonStructure($expectedJson2);
+    }
+
+    public function testDeleteActivityActionDevNotAllowed()
+    {
+        //test that dev cant delete activity and db is the same after that
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('activities')
+            ->execute()
+            ->fetchAll();
+
+        $this->logInSession('developer');
+        $parameter = ['id' => 1];
+        $this->client->request('POST', '/activity/delete', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('activities')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
 }

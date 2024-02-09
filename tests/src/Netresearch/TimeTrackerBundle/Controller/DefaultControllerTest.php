@@ -213,4 +213,23 @@ class DefaultControllerTest extends BaseTest
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
+
+    //-------------- activities routes ----------------------------------------
+    public function testGetActivitiesAction()
+    {
+        $expectedJson = array(
+            0 => array(
+                'activity' => array(
+                    'id' => 1,
+                    'name' => 'Backen',
+                    'needsTicket' => false,
+                    'factor' => 1,
+                ),
+            ),
+        );
+
+        $this->client->request('GET', '/getActivities');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
 }
