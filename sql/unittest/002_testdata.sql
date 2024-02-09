@@ -33,7 +33,8 @@ INSERT INTO `users` (`id`, `username`, `abbr`, `type`, `jira_token`, `show_empty
 -- user contracts
 --
 INSERT INTO `contracts` (`id`, `user_id`, `start`, `end`, `hours_0`, `hours_1`, `hours_2`, `hours_3`, `hours_4`, `hours_5`, `hours_6`) VALUES
-(1,    1,   '2020-01-01',      NULL,      0,       8,     8,         8,         8,         8,         0);
+(1,    1,   '2020-01-01',      NULL,      0,       8,     8,         8,         8,         8,         0),
+(2,    2,   '1020-01-01',      '2020-01-01',      1,       1,     1,         1,         1,         1,         1);
 
 --
 -- teams
