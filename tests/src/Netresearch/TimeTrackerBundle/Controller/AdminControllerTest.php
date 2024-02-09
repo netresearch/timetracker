@@ -699,4 +699,226 @@ class AdminControllerTest extends BaseTest
             ->fetchAll();
         $this->assertSame($oldDb, $newDb);
     }
+
+    //-------------- contract routes ----------------------------------------
+    public function testSaveContractAction()
+    {
+        $parameter = [
+            'user_id' => '1', //req
+            'start' => '2019-11-01', //req
+            'hours_0' => 1,
+            'hours_1' => 2,
+            'hours_2' => 3,
+            'hours_3' => 4.3,
+            'hours_4' => 5,
+            'hours_5' => 6,
+            'hours_6' => 7,
+        ];
+        $this->client->request('POST', '/contract/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->where('start = ?')
+            ->setParameter(0, '2019-11-01');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDBentry = array(
+            0 => array(
+                'user_id' => 1,
+                'start' => '2019-11-01',
+                'hours_0' => 1.0,
+                'hours_1' => 2.0,
+                'hours_2' => 3.0,
+                'hours_3' => 4.3,
+                'hours_4' => 5.0,
+                'hours_5' => 6.0,
+                'hours_6' => 7.0,
+            ),
+        );
+        $this->assertArraySubset($expectedDBentry, $result);
+    }
+
+    public function testSaveContractActionDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant save contract
+        $parameter = [
+            'user_id' => '1', //req
+            'start' => '2019-11-01', //req
+            'hours_0' => 1,
+            'hours_1' => 2,
+            'hours_2' => 3,
+            'hours_3' => 4.3,
+            'hours_4' => 5,
+            'hours_5' => 6,
+            'hours_6' => 7,
+        ];
+        $this->logInSession('developer');
+        $this->client->request('POST', '/contract/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testUpdateContract()
+    {
+        $parameter = [
+            'id' => 1,
+            'user_id' => '2', //req
+            'start' => '1000-01-01', //req
+            'hours_0' => 0,
+            'hours_1' => 0,
+            'hours_2' => 0,
+            'hours_3' => 0,
+            'hours_4' => 0,
+            'hours_5' => 0,
+            'hours_6' => 0,
+        ];
+        $expectedJson = [
+            0 => 1,
+        ];
+        $this->client->request('POST', '/contract/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        // validate updated contract in db
+        $this->queryBuilder->select('*')
+            ->from('contracts')->where('id = ?')
+            ->setParameter(0, 1);
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDBentry = [
+            [
+                'user_id' => 2,
+                'start' => '1000-01-01',
+                'hours_0' => 0,
+                'hours_1' => 0,
+                'hours_2' => 0,
+                'hours_3' => 0,
+                'hours_4' => 0,
+                'hours_5' => 0,
+                'hours_6' => 0,
+            ]
+        ];
+        $this->assertArraySubset($expectedDBentry, $result);
+    }
+
+    public function testUpdateContractDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant update project
+        $this->logInSession('developer');
+        $parameter = [
+            'id' => 1,
+            'user_id' => '2', //req
+            'start' => '1000-01-01', //req
+            'hours_0' => 0,
+            'hours_1' => 0,
+            'hours_2' => 0,
+            'hours_3' => 0,
+            'hours_4' => 0,
+            'hours_5' => 0,
+            'hours_6' => 0,
+        ];
+        $this->client->request('POST', '/contract/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testDeleteContractAction()
+    {
+        $parameter = ['id' => 1,];
+        $expectedJson1 = [
+            'success' => true,
+        ];
+        $this->client->request('POST', '/contract/delete', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson1);
+        //  second delete
+        $expectedJson2 = [
+            'message' => 'Dataset could not be removed. ',
+        ];
+        $this->client->request('POST', '/contract/delete', $parameter);
+        $this->assertStatusCode(422, 'Second delete did not return expected 422');
+        $this->assertContentType('application/json');
+        $this->assertJsonStructure($expectedJson2);
+    }
+
+    public function testDeleteContractActionDevNotAllowed()
+    {
+        //test that dev cant delete project and db is the same after that
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->execute()
+            ->fetchAll();
+        $this->logInSession('developer');
+        $parameter = ['id' => 1,];
+        $this->client->request('POST', '/contract/delete', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testGetContractAction()
+    {
+        $expectedJson = array(
+            0 => array(
+                'contract' => array(
+                    'id' => 2,
+                    'user_id' => 2,
+                    'start' => '1020-01-01',
+                    'end' => '2020-01-01',
+                    'hours_0' => 1,
+                    'hours_1' => 1,
+                    'hours_2' => 1,
+                    'hours_3' => 1,
+                    'hours_4' => 1,
+                    'hours_5' => 1,
+                    'hours_6' => 1,
+                ),
+            ),
+            1 => array(
+                'contract' => array(
+                    'id' => 1,
+                    'user_id' => 1,
+                    'start' => '2020-01-01',
+                    'hours_0' => 0,
+                    'hours_1' => 8,
+                    'hours_2' => 8,
+                    'hours_3' => 8,
+                    'hours_4' => 8,
+                    'hours_5' => 8,
+                    'hours_6' => 0,
+                ),
+            ),
+        );
+        $this->client->request('GET', '/getContracts');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
 }
