@@ -512,7 +512,7 @@ class AdminControllerTest extends BaseTest
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testdeleteProjectActionDevNotAllowed()
+    public function testDeleteProjectActionDevNotAllowed()
     {
         //test that dev cant delete project and db is the same after that
         $oldDb = $this->queryBuilder
