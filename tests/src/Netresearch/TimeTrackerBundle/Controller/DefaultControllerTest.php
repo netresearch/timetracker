@@ -232,4 +232,54 @@ class DefaultControllerTest extends BaseTest
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
+
+    //-------------- users routes ----------------------------------------
+    /**
+     * Returns all users
+     */
+    public function testGetUsersAction()
+    {
+        $expectedJson = array(
+            0 => array(
+                'user' => array(
+                    'username' => 'i.myself',
+                    'type' => 'PL',
+                    'abbr' => 'IMY',
+                    'locale' => 'de',
+                ),
+            ),
+            1 => array(
+                'user' => array(
+                    'username' => 'developer',
+                    'type' => 'DEV',
+                    'abbr' => 'NPL',
+                    'locale' => 'de',
+                ),
+            ),
+        );
+        $this->client->request('GET', '/getUsers');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    /**
+     * Returns the user logged in seassion
+     */
+    public function testGetUsersActionDev()
+    {
+        $expectedJson = array(
+            0 => array(
+                'user' => array(
+                    'username' => 'developer',
+                    'type' => 'DEV',
+                    'abbr' => 'NPL',
+                    'locale' => 'de',
+                ),
+            ),
+        );
+        $this->logInSession('developer');
+        $this->client->request('GET', '/getUsers');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
 }
