@@ -6,20 +6,212 @@ use Tests\BaseTest;
 
 class AdminControllerTest extends BaseTest
 {
-    public function testUserSaveUserExists()
+    //-------------- users routes ----------------------------------------
+    public function testSaveUserAction()
     {
         $parameter = [
             'username' => 'unittest',
+            'abbr' => 'WAS',
+            'teams' => ['2'], //req
+            'locale' => 'en',   //req
+            'type' => 'PL'    //req
+        ];
+        $expectedJson = [
+            1 => 'unittest',
+            2 => 'WAS',
+            3 => 'PL',
+        ];
+        $this->client->request('POST', '/user/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    public function testSaveUserActionDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('users')
+            ->execute()
+            ->fetchAll();
+        //test that dev cant save users
+        $this->logInSession('developer');
+        $parameter = [
+            'username' => 'unittest',
             'abbr' => 'IMY',
-            //FIXME: 500 when non-existing abb is used
             'teams' => [1], //req
             'locale' => 'en',   //req
         ];
         $this->client->request('POST', '/user/save', $parameter);
-        $this->assertStatusCode(406);
-        $this->assertMessage('The user name abreviation provided already exists.');
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('users')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
     }
 
+    public function testUpdateUser()
+    {
+        $parameter = [
+            'id' => 1,
+            'username' => 'unittestUpdate',
+            'abbr' => 'WAR',
+            'teams' => ['1'], //req
+            'locale' => 'de',   //req
+            'type' => 'DEV'    //req
+        ];
+        $this->client->request('POST', '/user/save', $parameter);
+
+        $expectedJson = array(
+            1 => 'unittestUpdate',
+            2 => 'WAR',
+            3 => 'DEV',
+        );
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+
+        // validate updated entry in db
+        $this->queryBuilder->select('*')
+            ->from('users')->where('id = ?')
+            ->setParameter(0, 1);
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDBentry = array(
+            0 => array(
+                'id' => 1,
+                'username' => 'unittestUpdate',
+                'abbr' => 'WAR',
+                'type' => 'DEV',
+                'jira_token' => null,
+                'locale' => 'de',
+            ),
+        );
+        $this->assertArraySubset($expectedDBentry, $result);
+    }
+
+    public function testUpdateUserDevNotAllowed()
+    {
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('users')
+            ->execute()
+            ->fetchAll();
+
+        //test that dev cant update user
+        $this->logInSession('developer');
+        $parameter = [
+            'id' => 1,
+            'username' => 'unittestUpdate',
+            'abbr' => 'WAR',
+            'teams' => ['1'], //req
+            'locale' => 'de',   //req
+            'type' => 'DEV'    //req
+        ];
+        $this->client->request('POST', '/user/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        //test that database ist still the same
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('users')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    public function testDeleteUserAction()
+    {
+        //create user for deletion
+        $this->queryBuilder
+            ->insert('users')
+            ->values(
+                [
+                    'id' => '?',
+                    'username' => '?',
+                    'type' => '?',
+                ]
+            )
+            ->setParameter(0, 42)
+            ->setParameter(1, 'userForDeletetion')
+            ->setParameter(2, 'DEV')
+            ->execute();
+        //Use ID of 42 to avoid problems when adding a new user for testing
+        $parameter = ['id' => 42,];
+        $expectedJson1 = [
+            'success' => true,
+        ];
+        $this->client->request('POST', '/user/delete', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson1);
+        //  second delete
+        $expectedJson2 = [
+            'message' => 'Dataset could not be removed. ',
+        ];
+        $this->client->request('POST', '/user/delete', $parameter);
+        $this->assertStatusCode(422, 'Second delete did not return expected 422');
+        $this->assertContentType('application/json');
+        $this->assertJsonStructure($expectedJson2);
+    }
+
+    public function testDeleteUserActionDevNotAllowed()
+    {
+        //test that dev cant delete user and db is the same after that
+        $oldDb = $this->queryBuilder
+            ->select('*')
+            ->from('users')
+            ->execute()
+            ->fetchAll();
+        $this->logInSession('developer');
+        $parameter = ['id' => 1,];
+        $this->client->request('POST', '/user/delete', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $newDb = $this->queryBuilder
+            ->select('*')
+            ->from('users')
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($oldDb, $newDb);
+    }
+
+    /**
+     * Returns all Users for dev and non dev
+     * unique feature = returns teams for user
+     *
+     */
+    public function testGetUsersAction()
+    {
+        $expectedJson = array(
+            0 => array(
+                'user' => array(
+                    'username' => 'developer',
+                    'type' => 'DEV',
+                    'abbr' => 'NPL',
+                    'locale' => 'de',
+                    'teams' => array(),
+                ),
+            ),
+            1 => array(
+                'user' => array(
+                    'username' => 'i.myself',
+                    'type' => 'PL',
+                    'abbr' => 'IMY',
+                    'locale' => 'de',
+                    'teams' => array(
+                        0 => 1,
+                    ),
+                ),
+            ),
+        );
+        $this->client->request('GET', '/getAllUsers');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+
+    //-------------- teams routes ----------------------------------------
     public function testGetTeamsAction()
     {
         $expectedJson = [
@@ -493,7 +685,7 @@ class AdminControllerTest extends BaseTest
         $this->assertSame($oldDb, $newDb);
     }
 
-    public function testdeleteProjectAction()
+    public function testDeleteProjectAction()
     {
         $parameter = ['id' => 2,];
         $expectedJson1 = [
