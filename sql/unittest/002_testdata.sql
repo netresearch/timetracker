@@ -86,3 +86,10 @@ INSERT INTO `entries` (`id`, `day`, `start`, `end`, `customer_id`, `project_id`,
 (1,    '1000-01-30',  '08:00:00',   '08:50:00',     1,             1,            NULL,         1,             'testGetLastEntriesAction',   NULL,         '/interpretation/entries',      50,        1,       1,                        0,                                   ''),
 (2,    '1000-01-30',  '10:00:00',   '12:50:00',     1,             1,            NULL,         1,             'testGetLastEntriesAction',   NULL,         '/interpretation/entries',      170,       1,       1,                        0,                                   ''),
 (3,    '1000-01-29',  '13:00:00',   '13:14:00',     1,             1,            NULL,         1,             'testGroupByWorktimeAction',  NULL,         '/interpretation/entries',      14,        1,       1,                        0,                                   '');
+
+
+--
+-- ticket_systems entries for first user for today
+--
+INSERT INTO `ticket_systems` (`id`, `name`, `type`, `book_time`, `url`, `login`, `password`, `public_key`, `private_key`, `ticketurl`, `oauth_consumer_key`, `oauth_consumer_secret`) VALUES
+(1,	'testSystem',	'',	0,	'',	'',	'',	'',	'',	'',	'',	'');
