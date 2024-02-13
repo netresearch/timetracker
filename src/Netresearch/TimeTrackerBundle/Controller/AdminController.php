@@ -713,6 +713,10 @@ class AdminController extends BaseController
 
         if ($id) {
             $ticketSystem = $repository->find($id);
+            if (!$ticketSystem) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $ticketSystem = new TicketSystem();
         }
