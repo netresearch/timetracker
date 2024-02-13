@@ -470,7 +470,7 @@ paths:
 
   /getAllUsers:
     get:
-      summary: Returns a list of all users
+      summary: Returns a list of all users and their teams
       tags:
         - User
       responses:
@@ -713,7 +713,7 @@ paths:
 
   /getUsers:
     get:
-      summary: Returns a list of users without teams
+      summary: Returns a list of users
       tags:
         - User
       responses:
@@ -2372,6 +2372,7 @@ components:
         - abbr
         - locale
         - teams
+        - type
 
     Users:
       type: array
