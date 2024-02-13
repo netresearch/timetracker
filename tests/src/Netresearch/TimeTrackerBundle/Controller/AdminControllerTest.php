@@ -928,4 +928,155 @@ class AdminControllerTest extends BaseTest
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
+
+    //-------------- ticketSystems routes ----------------------------------------
+    public function testGetTicketSystemsAction()
+    {
+        $expectedJson = array(
+            0 => array(
+                'ticketSystem' => array(
+                    'name' => 'testSystem',
+                ),
+            ),
+        );
+        $this->client->request('GET', '/getTicketSystems');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    public function testSaveTicketSystemAction()
+    {
+        $parameter = [
+            'name' => 'testSaveTicketSystem', //req
+            'url' => '',
+            'type' => '',
+            'ticketUrl' => '',
+            'login' => '',
+            'password' => '',
+            'publicKey' => '',
+            'privateKey' => '',
+        ];
+        $expectedJson = array(
+            'name' => 'testSaveTicketSystem',
+        );
+        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        $this->queryBuilder
+            ->select('*')
+            ->from('ticket_systems')
+            ->where('name = ?')
+            ->setParameter(0, 'testSaveTicketSystem');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDbEntry = array(
+            0 => array(
+                'name' => 'testSaveTicketSystem',
+            ),
+        );
+        $this->assertArraySubset($expectedDbEntry, $result);
+    }
+
+    public function testSaveTicketSystemActionDevNotAllowed()
+    {
+        $this->setInitalDbState('ticket_systems');
+        $this->logInSession('developer');
+        $parameter = [
+            'name' => 'testSaveTicketSystem', //req
+            'url' => '',
+            'type' => '',
+            'ticketUrl' => '',
+            'login' => '',
+            'password' => '',
+            'publicKey' => '',
+            'privateKey' => '',
+        ];
+        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $this->assertDbState('ticket_systems');
+    }
+
+    public function testUpdateTicketSystem()
+    {
+        $parameter = [
+            'id' => 1,
+            'name' => 'testSaveTicketSystemUpdate', //req
+            'url' => '',
+            'type' => '',
+            'ticketUrl' => '',
+            'login' => '',
+            'password' => '',
+            'publicKey' => '',
+            'privateKey' => '',
+        ];
+        $expectedJson = array(
+            'name' => 'testSaveTicketSystemUpdate',
+        );
+        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        $this->queryBuilder
+            ->select('*')
+            ->from('ticket_systems')
+            ->where('name = ?')
+            ->setParameter(0, 'testSaveTicketSystemUpdate');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDbEntry = array(
+            0 => array(
+                'name' => 'testSaveTicketSystemUpdate',
+            ),
+        );
+        $this->assertArraySubset($expectedDbEntry, $result);
+    }
+
+    public function testUpdateTicketSystemDevNotAllowed()
+    {
+        $this->setInitalDbState('ticket_systems');
+        $this->logInSession('developer');
+        $parameter = [
+            'id' => 1,
+            'name' => 'testSaveTicketSystemUpdate', //req
+            'url' => '',
+            'type' => '',
+            'ticketUrl' => '',
+            'login' => '',
+            'password' => '',
+            'publicKey' => '',
+            'privateKey' => '',
+        ];
+        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $this->assertDbState('ticket_systems');
+    }
+
+    public function testDeleteTicketSystemAction()
+    {
+        $parameter = ['id' => 1,];
+        $expectedJson1 = [
+            'success' => true,
+        ];
+        $this->client->request('POST', '/ticketsystem/delete', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson1);
+        //  second delete
+        $expectedJson2 = [
+            'message' => 'Dataset could not be removed. ',
+        ];
+        $this->client->request('POST', '/ticketsystem/delete', $parameter);
+        $this->assertStatusCode(422, 'Second delete did not return expected 422');
+        $this->assertContentType('application/json');
+        $this->assertJsonStructure($expectedJson2);
+    }
+
+    public function testDeleteTicketSystemActionDevNotAllowed()
+    {
+        $this->setInitalDbState('ticket_systems');
+        $this->logInSession('developer');
+        $parameter = ['id' => 1,];
+        $this->client->request('POST', '/ticketsystem/delete', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $this->assertDbState('ticket_systems');
+    }
 }
