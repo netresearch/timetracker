@@ -1675,6 +1675,12 @@ paths:
             schema:
               $ref: '#/components/schemas/TicketSystem'
       responses:
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '403':
           description: Error Forbidden
           content:
@@ -2251,6 +2257,9 @@ components:
     TicketSystem:
       type: object
       properties:
+        id:
+          type: integer
+          example: 1
         name:
           type: string
           example: TestTicketSystem
