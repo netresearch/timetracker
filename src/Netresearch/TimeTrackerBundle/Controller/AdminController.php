@@ -488,7 +488,7 @@ class AdminController extends BaseController
         $abbr     = $request->get('abbr');
         $type     = $request->get('type');
         $locale   = $request->get('locale');
-        $teamIds  = $request->get('teams')  ? $request->get('teams')  : array();
+        $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : array();
 
         /* @var UserRepository $userRepository */
         $userRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User');
@@ -505,8 +505,8 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (strlen($abbr) < 3) {
-            $response = new Response($this->translate('Please provide a valid user name abbreviation with at least 3 letters.'));
+        if (strlen($abbr) != 3) {
+            $response = new Response($this->translate('Please provide a valid user name abbreviation with 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
