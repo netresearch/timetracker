@@ -17,6 +17,38 @@ abstract class BaseTest extends WebTestCase
     protected $queryBuilder;
     protected $filepath = '/../sql/unittest/002_testdata.sql';
 
+    /**
+     * The inital state of a table
+     * used to assert integrity of table after a DEV test
+     */
+    protected $tableInitalState;
+
+    /**
+     * Used in test for DEV users
+     */
+    protected function setInitalDbState(string $tableName)
+    {
+        $this->tableInitalState = $this->queryBuilder
+            ->select('*')
+            ->from($tableName)
+            ->execute()
+            ->fetchAll();
+    }
+
+    /**
+     * Only Call in test where setInitalDbState was called before
+     */
+    protected function assertDbState(string $tableName)
+    {
+        $newTableState = $this->queryBuilder
+            ->select('*')
+            ->from($tableName)
+            ->execute()
+            ->fetchAll();
+        $this->assertSame($this->tableInitalState, $newTableState);
+        $this->tableInitalState = null;
+    }
+
     public function setUp()
     {
         // create test env.

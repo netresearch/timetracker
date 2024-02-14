@@ -28,12 +28,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveUserActionDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('users')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant save users
+        $this->setInitalDbState('users');
         $this->logInSession('developer');
         $parameter = [
             'username' => 'unittest',
@@ -44,13 +39,7 @@ class AdminControllerTest extends BaseTest
         $this->client->request('POST', '/user/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('users')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('users');
     }
 
     public function testUpdateUser()
@@ -93,13 +82,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateUserDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('users')
-            ->execute()
-            ->fetchAll();
-
-        //test that dev cant update user
+        $this->setInitalDbState('users');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -112,13 +95,7 @@ class AdminControllerTest extends BaseTest
         $this->client->request('POST', '/user/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('users')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('users');
     }
 
     public function testDeleteUserAction()
@@ -157,23 +134,13 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteUserActionDevNotAllowed()
     {
-        //test that dev cant delete user and db is the same after that
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('users')
-            ->execute()
-            ->fetchAll();
+        $this->setInitalDbState('users');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/user/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('users')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('users');
     }
 
     /**
@@ -254,7 +221,6 @@ class AdminControllerTest extends BaseTest
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
 
-        //test that dev cant delete team
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/team/delete', $parameter);
@@ -292,7 +258,6 @@ class AdminControllerTest extends BaseTest
         ];
         $this->assertArraySubset($expectedDBentry, $result);
 
-        //test that dev cant save team
         $this->logInSession('developer');
         $parameter = [
             'name' => 'testSaveTeamActionFromNotPL', //opt
@@ -342,13 +307,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateTeamPermission()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('teams')
-            ->execute()
-            ->fetchAll();
-
-        //test that dev cant update team
+        $this->setInitalDbState('teams');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -358,14 +317,7 @@ class AdminControllerTest extends BaseTest
         $this->client->request('POST', '/team/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('teams')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('teams');
     }
 
     //-------------- customer routes ----------------------------------------
@@ -403,12 +355,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveCustomerActionDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('customers')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant save customer
+        $this->setInitalDbState('customers');
         $this->logInSession('developer');
         $parameter = [
             'name' => 'testCustomer',
@@ -417,13 +364,7 @@ class AdminControllerTest extends BaseTest
         $this->client->request('POST', '/customer/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('customers')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('customers');
     }
 
     public function testUpdateCustomer()
@@ -459,13 +400,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateCustomerDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('customers')
-            ->execute()
-            ->fetchAll();
-
-        //test that dev cant update team
+        $this->setInitalDbState('customers');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -475,14 +410,7 @@ class AdminControllerTest extends BaseTest
         $this->client->request('POST', '/customer/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('customers')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('customers');
     }
 
     public function testDeleteCustomerAction()
@@ -522,24 +450,13 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteCustomerActionDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('customers')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant delete team
+        $this->setInitalDbState('customers');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/customer/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('customers')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('customers');
     }
 
     public function testGetCustomersAction()
@@ -604,27 +521,16 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveProjectActionDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('projects')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant save project
+        $this->setInitalDbState('projects');
+        $this->logInSession('developer');
         $parameter = [
             'name' => 'testProject', //req
             'customer' => 1, //req
         ];
-        $this->logInSession('developer');
         $this->client->request('POST', '/project/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('projects')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('projects');
     }
 
     public function testUpdateProject()
@@ -659,13 +565,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateProjectDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('projects')
-            ->execute()
-            ->fetchAll();
-
-        //test that dev cant update project
+        $this->setInitalDbState('projects');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -675,14 +575,7 @@ class AdminControllerTest extends BaseTest
         $this->client->request('POST', '/project/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('projects')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('projects');
     }
 
     public function testDeleteProjectAction()
@@ -706,25 +599,13 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteProjectActionDevNotAllowed()
     {
-        //test that dev cant delete project and db is the same after that
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('projects')
-            ->execute()
-            ->fetchAll();
-
+        $this->setInitalDbState('projects');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/project/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('projects')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('projects');
     }
 
     //-------------- activities routes ----------------------------------------
@@ -758,27 +639,16 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveActivityActionDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('activities')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant save activities
+        $this->setInitalDbState('activities');
+        $this->logInSession('developer');
         $parameter = [
             'name' => 'testActivities', //req
             'factor' => 2, //req
         ];
-        $this->logInSession('developer');
         $this->client->request('POST', '/activity/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('activities')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('activities');
     }
 
     public function testUpdateActivityAction()
@@ -811,28 +681,17 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateActivityActionDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('activities')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant save activities
+        $this->setInitalDbState('activities');
+        $this->logInSession('developer');
         $parameter = [
             'id' => 1,
             'name' => 'testActivities', //req
             'factor' => 2, //req
         ];
-        $this->logInSession('developer');
         $this->client->request('POST', '/activity/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('activities')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('activities');
     }
 
     public function testDeleteActivityAction()
@@ -871,25 +730,13 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteActivityActionDevNotAllowed()
     {
-        //test that dev cant delete activity and db is the same after that
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('activities')
-            ->execute()
-            ->fetchAll();
-
+        $this->setInitalDbState('activities');
         $this->logInSession('developer');
         $parameter = ['id' => 1];
         $this->client->request('POST', '/activity/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('activities')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('activities');
     }
 
     //-------------- contract routes ----------------------------------------
@@ -932,12 +779,8 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveContractActionDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('contracts')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant save contract
+        $this->setInitalDbState('contracts');
+        $this->logInSession('developer');
         $parameter = [
             'user_id' => '1', //req
             'start' => '2019-11-01', //req
@@ -949,17 +792,10 @@ class AdminControllerTest extends BaseTest
             'hours_5' => 6,
             'hours_6' => 7,
         ];
-        $this->logInSession('developer');
         $this->client->request('POST', '/contract/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('contracts')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('contracts');
     }
 
     public function testUpdateContract()
@@ -1005,12 +841,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateContractDevNotAllowed()
     {
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('contracts')
-            ->execute()
-            ->fetchAll();
-        //test that dev cant update project
+        $this->setInitalDbState('contracts');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -1027,13 +858,7 @@ class AdminControllerTest extends BaseTest
         $this->client->request('POST', '/contract/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        //test that database ist still the same
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('contracts')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('contracts');
     }
 
     public function testDeleteContractAction()
@@ -1057,23 +882,13 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteContractActionDevNotAllowed()
     {
-        //test that dev cant delete project and db is the same after that
-        $oldDb = $this->queryBuilder
-            ->select('*')
-            ->from('contracts')
-            ->execute()
-            ->fetchAll();
+        $this->setInitalDbState('contracts');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/contract/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
-        $newDb = $this->queryBuilder
-            ->select('*')
-            ->from('contracts')
-            ->execute()
-            ->fetchAll();
-        $this->assertSame($oldDb, $newDb);
+        $this->assertDbState('contracts');
     }
 
     public function testGetContractAction()
