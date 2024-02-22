@@ -1308,7 +1308,7 @@ paths:
 
   /preset/save:
     post:
-      summary: Create a preset
+      summary: Create a preset (id=empty value) or update a existing preset by id
       tags:
         - Preset
       requestBody:
@@ -1319,6 +1319,12 @@ paths:
               type: object
               $ref: '#/components/schemas/Preset'
       responses:
+        '404':
+          description: No entry for id
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '403':
           description: Error Forbidden
           content:
@@ -2092,6 +2098,10 @@ components:
     Preset:
       type: object
       properties:
+        id:
+          description: 'If an ID already exists, using it will update the associated entry in the database.'
+          type: integer
+          example: 1
         name:
           type: string
           example: Urlaub
