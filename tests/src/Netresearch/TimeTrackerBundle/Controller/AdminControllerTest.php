@@ -1079,4 +1079,164 @@ class AdminControllerTest extends BaseTest
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('ticket_systems');
     }
+
+    //-------------- presets routes ----------------------------------------
+    public function testGetPresetsAction()
+    {
+        $expectedJson = array(
+            0 => array(
+                'preset' => array(
+                    'id' => 1,
+                    'name' => 'Urlaub',
+                    'customer' => 1,
+                    'project' => 1,
+                    'activity' => 1,
+                    'description' => 'Urlaub',
+                ),
+            ),
+        );
+        $this->client->request('GET', '/getAllPresets');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    public function testSavePresetAction()
+    {
+        $parameter = [
+            'name' => 'newPreset', //req
+            'customer' => 1, //req
+            'project' => 1, //req
+            'activity' => 1, //req
+            'description' => '',    //req
+        ];
+        $expectedJson = array(
+            'name' => 'newPreset',
+            'customer' => 1,
+            'project' => 1,
+            'activity' => 1,
+            'description' => '',
+        );
+        $this->client->request('POST', '/preset/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        $this->queryBuilder
+            ->select('*')
+            ->from('presets')
+            ->where('name = ?')
+            ->setParameter(0, 'newPreset');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDbEntry = array(
+            0 => array(
+                'name' => 'newPreset',
+                'customer_id' => 1,
+                'project_id' => 1,
+                'activity_id' => 1,
+                'description' => '',
+            ),
+        );
+        $this->assertArraySubset($expectedDbEntry, $result);
+    }
+
+    public function testSavePresetActionDevNotAllowed()
+    {
+        $this->setInitalDbState('presets');
+        $this->logInSession('developer');
+        $parameter = [
+            'name' => 'newPreset', //req
+            'customer' => 1, //req
+            'project' => 1, //req
+            'activity' => 1, //req
+            'description' => '',    //reg
+        ];
+        $this->client->request('POST', '/contract/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $this->assertDbState('presets');
+    }
+
+    public function testUpdatePreset()
+    {
+        $parameter = [
+            'id' => 1,
+            'name' => 'newPresetUpdated', //req
+            'customer' => 1, //req
+            'project' => 1, //req
+            'activity' => 1, //req
+            'description' => '',    //reg
+        ];
+        $expectedJson = array(
+            'name' => 'newPresetUpdated',
+            'customer' => 1,
+            'project' => 1,
+            'activity' => 1,
+            'description' => '',
+        );
+        $this->client->request('POST', '/preset/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        $this->queryBuilder
+            ->select('*')
+            ->from('presets')
+            ->where('name = ?')
+            ->setParameter(0, 'newPresetUpdated');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDbEntry = array(
+            0 => array(
+                'name' => 'newPresetUpdated',
+                'customer_id' => 1,
+                'project_id' => 1,
+                'activity_id' => 1,
+                'description' => '',
+            ),
+        );
+        $this->assertArraySubset($expectedDbEntry, $result);
+    }
+
+    public function testUpdatePresetDevNotAllowed()
+    {
+        $this->setInitalDbState('presets');
+        $this->logInSession('developer');
+        $parameter = [
+            'id' => 1,
+            'name' => 'newPresetUpdated', //req
+            'customer' => 1, //req
+            'project' => 1, //req
+            'activity' => 1, //req
+            'description' => '',    //reg
+        ];
+        $this->client->request('POST', '/preset/save', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $this->assertDbState('presets');
+    }
+
+    public function testDeletePresetAction()
+    {
+        $parameter = ['id' => 1,];
+        $expectedJson1 = [
+            'success' => true,
+        ];
+        $this->client->request('POST', '/preset/delete', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson1);
+        //  second delete
+        $expectedJson2 = [
+            'message' => 'Dataset could not be removed. ',
+        ];
+        $this->client->request('POST', '/preset/delete', $parameter);
+        $this->assertStatusCode(422, 'Second delete did not return expected 422');
+        $this->assertContentType('application/json');
+        $this->assertJsonStructure($expectedJson2);
+    }
+
+    public function testDeletePresetActionDevNotAllowed()
+    {
+        $this->setInitalDbState('presets');
+        $this->logInSession('developer');
+        $parameter = ['id' => 1,];
+        $this->client->request('POST', '/preset/delete', $parameter);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
+        $this->assertDbState('presets');
+    }
 }
