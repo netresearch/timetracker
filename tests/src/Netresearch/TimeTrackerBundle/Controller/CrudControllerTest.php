@@ -41,7 +41,7 @@ class CrudControllerTest extends BaseTest
         $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
         $result = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
 
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'day' => '2024-01-01',
                 'start' => '09:25:00',
@@ -54,7 +54,7 @@ class CrudControllerTest extends BaseTest
                 'class' => '2',
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testDeleteAction()
@@ -92,7 +92,7 @@ class CrudControllerTest extends BaseTest
             ORDER BY `id` ASC';
         $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
 
-        $expectedDBentry = [
+        $expectedDbEntry = [
             'start' => '08:00:00',
             'end' => '10:00:00',
             'customer_id' => '1',
@@ -108,7 +108,7 @@ class CrudControllerTest extends BaseTest
 
         // assert static key => values
         foreach ($results as $res) {
-            $this->assertArraySubset($expectedDBentry, $res);
+            $this->assertArraySubset($expectedDbEntry, $res);
         }
 
         // assert days

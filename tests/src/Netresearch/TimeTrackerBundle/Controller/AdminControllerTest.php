@@ -67,7 +67,7 @@ class AdminControllerTest extends BaseTest
             ->from('users')->where('id = ?')
             ->setParameter(0, 1);
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = array(
+        $expectedDbEntry = array(
             0 => array(
                 'id' => 1,
                 'username' => 'unittestUpdate',
@@ -77,7 +77,7 @@ class AdminControllerTest extends BaseTest
                 'locale' => 'de',
             ),
         );
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testUpdateUserDevNotAllowed()
@@ -250,13 +250,13 @@ class AdminControllerTest extends BaseTest
             ->setParameter(0, 'testSaveTeamAction');
         $result = $this->queryBuilder->execute()->fetchAll();
 
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'name' => 'testSaveTeamAction',
                 'lead_user_id' => 1,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
 
         $this->logInSession('developer');
         $parameter = [
@@ -296,13 +296,13 @@ class AdminControllerTest extends BaseTest
             ->from('teams')->where('id = ?')
             ->setParameter(0, 1);
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'name' => 'updatedKuchenbäcker',
                 'lead_user_id' => 2,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testUpdateTeamPermission()
@@ -344,13 +344,13 @@ class AdminControllerTest extends BaseTest
             ->where('c.name = ?')
             ->setParameter(0, 'testCustomer');
         $result1 = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'name' => 'testCustomer',
                 'team_id' => 2,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result1);
+        $this->assertArraySubset($expectedDbEntry, $result1);
     }
 
     public function testSaveCustomerActionDevNotAllowed()
@@ -389,13 +389,13 @@ class AdminControllerTest extends BaseTest
             ->where('c.id = ?')
             ->setParameter(0, 1);
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'name' => 'updatedTestCustomer',
                 'team_id' => 2,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testUpdateCustomerDevNotAllowed()
@@ -509,13 +509,13 @@ class AdminControllerTest extends BaseTest
             ->setParameter(0, 'testProject');
         $result = $this->queryBuilder->execute()->fetchAll();
 
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'name' => 'testProject',
                 'customer_id' => 1,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
 
     }
 
@@ -554,13 +554,13 @@ class AdminControllerTest extends BaseTest
             ->from('projects')->where('id = ?')
             ->setParameter(0, 1);
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'name' => 'updatedTestProject',
                 'customer_id' => 1,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testUpdateProjectDevNotAllowed()
@@ -628,13 +628,13 @@ class AdminControllerTest extends BaseTest
             ->setParameter(0, 'Lachen');
         $result = $this->queryBuilder->execute()->fetchAll();
 
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'name' => 'Lachen',
                 'factor' => 2,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testSaveActivityActionDevNotAllowed()
@@ -670,13 +670,13 @@ class AdminControllerTest extends BaseTest
             ->from('activities')->where('name = ?')
             ->setParameter(0, 'update');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = array(
+        $expectedDbEntry = array(
             0 => array(
                 'name' => 'update',
                 'factor' => 2,
             ),
         );
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testUpdateActivityActionDevNotAllowed()
@@ -761,7 +761,7 @@ class AdminControllerTest extends BaseTest
             ->where('start = ?')
             ->setParameter(0, '2019-11-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = array(
+        $expectedDbEntry = array(
             0 => array(
                 'user_id' => 1,
                 'start' => '2019-11-01',
@@ -774,7 +774,7 @@ class AdminControllerTest extends BaseTest
                 'hours_6' => 7.0,
             ),
         );
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testSaveContractActionDevNotAllowed()
@@ -823,7 +823,7 @@ class AdminControllerTest extends BaseTest
             ->from('contracts')->where('id = ?')
             ->setParameter(0, 1);
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDBentry = [
+        $expectedDbEntry = [
             [
                 'user_id' => 2,
                 'start' => '1000-01-01',
@@ -836,7 +836,7 @@ class AdminControllerTest extends BaseTest
                 'hours_6' => 0,
             ]
         ];
-        $this->assertArraySubset($expectedDBentry, $result);
+        $this->assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testUpdateContractDevNotAllowed()
