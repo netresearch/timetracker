@@ -661,6 +661,10 @@ class AdminController extends BaseController
 
         if ($id) {
             $preset = $repository->find($id);
+            if (!$preset) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $preset = new Preset();
         }
