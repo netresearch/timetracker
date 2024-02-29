@@ -27,7 +27,8 @@ INSERT INTO `activities` (`id`, `name`, `needs_ticket`, `factor`) VALUES
 --
 INSERT INTO `users` (`id`, `username`, `abbr`, `type`, `jira_token`, `show_empty_line`, `suggest_time`, `show_future`, `locale`) VALUES
 (1,   'i.myself',         'IMY',      'PL',    NULL,   0,            1,                 1,      'de'),
-(2,   'developer',        'NPL',      'DEV',   NULL,   0,            1,                 1,      'de');
+(2,   'developer',        'NPL',      'DEV',   NULL,   0,            1,                 1,      'de'),
+(3,   'testGroupByActionUser','NPL',  'DEV',   NULL,   0,            1,                 1,      'de');
 
 --
 -- user contracts
@@ -85,8 +86,11 @@ INSERT INTO `presets` (`id`, `name`, `customer_id`, `project_id`, `activity_id`,
 INSERT INTO `entries` (`id`, `day`, `start`, `end`, `customer_id`, `project_id`, `account_id`, `activity_id`, `ticket`, `worklog_id`, `description`, `duration`, `user_id`, `class`, `synced_to_ticketsystem`, `internal_jira_ticket_original_key`) VALUES
 (1,    '1000-01-30',  '08:00:00',   '08:50:00',     1,             1,            NULL,         1,             'testGetLastEntriesAction',   NULL,         '/interpretation/entries',      50,        1,       1,                        0,                                   ''),
 (2,    '1000-01-30',  '10:00:00',   '12:50:00',     1,             1,            NULL,         1,             'testGetLastEntriesAction',   NULL,         '/interpretation/entries',      170,       1,       1,                        0,                                   ''),
-(3,    '1000-01-29',  '13:00:00',   '13:14:00',     1,             1,            NULL,         1,             'testGroupByWorktimeAction',  NULL,         '/interpretation/entries',      14,        1,       1,                        0,                                   '');
-
+(3,    '1000-01-29',  '13:00:00',   '13:14:00',     1,             1,            NULL,         1,             'testGroupByWorktimeAction',  NULL,         '/interpretation/entries',      14,        1,       1,                        0,                                   ''),
+(4,    CURDATE()   ,  '13:00:00',   '13:25:00',     1,             1,            NULL,         1,             'testGetDataAction'       ,   NULL,         'testGetDataAction'      ,      25,        1,       1,                        0,                                   ''),
+(5,    DATE_ADD(CURDATE(), INTERVAL -3 DAY),'14:00:00','14:25:00', 1,1,          NULL,         1,             'testGetDataAction'       ,   NULL,         'testGetDataAction'      ,      25,        1,       1,                        0,                                   ''),
+(6,    '500-01-30',  '14:00:00',   '14:50:00',      1,             1,            NULL,         1,             'testGroupByActivityAction',  NULL,         'testGroupByActivityAction',    50,        3,       1,                        0,                                   ''),
+(7,    '500-01-31',  '14:00:00',   '14:20:00',      1,             1,            NULL,         1,             'testGroupByActivityAction',  NULL,         'testGroupByActivityAction',    20,        3,       1,                        0,                                   '');
 
 --
 -- ticket_systems entries for first user for today

@@ -62,7 +62,7 @@ _getDataDays:
     path:  /getData/days/{days}
     defaults: { _controller: NetresearchTimeTrackerBundle:Default:getData, days: 3 }
     requirements:
-        days:  \d{1,2}
+        days:  \d+
 
 _getCustomers:
     path:  /getCustomers
