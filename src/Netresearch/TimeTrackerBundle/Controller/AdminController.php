@@ -28,27 +28,6 @@ class AdminController extends BaseController
     /**
      * @param Request $request
      * @return Response
-     * @throws \ReflectionException
-     */
-    public function getAllProjectsAction(Request $request)
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        $result = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findAll();
-
-        $data = [];
-        foreach ($result as $project) {
-            $data[] = ['project' => $project->toArray()];
-        }
-
-        return new JsonResponse($data);
-    }
-
-    /**
-     * @param Request $request
-     * @return Response
      */
     public function getCustomersAction(Request $request)
     {
