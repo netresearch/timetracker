@@ -282,4 +282,152 @@ class DefaultControllerTest extends BaseTest
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
+
+    //-------------- data routes ----------------------------------------
+    public function testGetDataActionDefaultParameter()
+    {
+        $expectedJson = array(
+            0 => array(
+                'entry' => array(
+                    'date' => date('d/m/Y'),
+                    'start' => '13:00',
+                    'end' => '13:25',
+                    'user' => 1,
+                    'customer' => 1,
+                    'project' => 1,
+                    'activity' => 1,
+                    'description' => 'testGetDataAction',
+                    'ticket' => 'testGetDataAction',
+                    'class' => 1,
+                    'duration' => '00:25',
+                ),
+            ),
+            1 => array(
+                'entry' => array(
+                    'date' => date('d/m/Y', strtotime('-3 days')),
+                    'start' => '14:00',
+                    'end' => '14:25',
+                    'user' => 1,
+                    'customer' => 1,
+                    'project' => 1,
+                    'activity' => 1,
+                    'description' => 'testGetDataAction',
+                    'ticket' => 'testGetDataAction',
+                    'class' => 1,
+                    'duration' => '00:25',
+                ),
+            ),
+        );
+        $this->client->request('GET', '/getData');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    public function testGetDataActionForParameter()
+    {
+        $parameter = [
+            'days' => 1,
+        ];
+        $expectedJson = array(
+            0 => array(
+                'entry' => array(
+                    'date' => date('d/m/Y'),
+                    'start' => '13:00',
+                    'end' => '13:25',
+                    'user' => 1,
+                    'customer' => 1,
+                    'project' => 1,
+                    'activity' => 1,
+                    'description' => 'testGetDataAction',
+                    'ticket' => 'testGetDataAction',
+                    'class' => 1,
+                    'duration' => '00:25',
+                ),
+            ),
+        );
+        $this->client->request('GET', '/getData/days/' . $parameter['days']);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+
+        // because route skips non workdays
+        // 1 translates to , today and the last workday
+        if (date('N') == 1) {
+            $this->assertLength(2);
+        } else {
+            $this->assertLength(1);
+        }
+    }
+
+    //-------------- summary routes ----------------------------------------
+    public function testGetSummaryAction()
+    {
+        $parameter = [
+            'id' => 1,  //req
+        ];
+        $expectedJson = array(
+            'customer' => array(
+                'scope' => 'customer',
+                'name' => 'Der Bäcker von nebenan',
+                'entries' => 7,
+                'total' => '354',
+                'own' => '284',
+                'estimation' => 0,
+            ),
+            'project' => array(
+                'scope' => 'project',
+                'name' => 'Server attack',
+                'entries' => 7,
+                'total' => '354',
+                'own' => '284',
+                'estimation' => 0,
+            ),
+            'activity' => array(
+                'scope' => 'activity',
+                'name' => 'Backen',
+                'entries' => 7,
+                'total' => '354',
+                'own' => '284',
+                'estimation' => 0,
+            ),
+            'ticket' => array(
+                'scope' => 'ticket',
+                'name' => 'testGetLastEntriesAction',
+                'entries' => 2,
+                'total' => '220',
+                'own' => '220',
+                'estimation' => 0,
+            ),
+        );
+        $this->client->request('POST', '/getSummary', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    public function testGetSummaryIncorrectIdAction()
+    {
+        // test for non existent id
+        $parameter = [
+            'id' => 999,  //req
+        ];
+        $this->client->request('POST', '/getSummary', $parameter);
+        $this->assertStatusCode(404, 'Second delete did not return expected 404');
+        $this->assertJsonStructure(['message' => 'No entry for id.']);
+    }
+
+    public function testGetTimeSummaryAction()
+    {
+        $expectedJson = array(
+            'today' => array(),
+            'week' => array(),
+            'month' => array(),
+        );
+        $this->client->request('GET', '/getTimeSummary');
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+        // assert that the duration is greater 0
+        $result = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertGreaterThan(0, $result['today']['duration']);
+        $this->assertGreaterThan(0, $result['week']['duration']);
+        $this->assertGreaterThan(0, $result['month']['duration']);
+    }
 }

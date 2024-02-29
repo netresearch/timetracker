@@ -84,13 +84,13 @@ class InterpretationControllerTest extends BaseTest
     public function testGroupByActivityAction()
     {
         $parameter = [
-            'user' => 1,    //req
+            'user' => 3,    //req
         ];
         $expectedJson = array(
             0 => array(
                 'id' => 1,
                 'name' => 'Backen',
-                'hours' => 3.9,
+                'hours' => 1.1666666666666667,
                 'quota' => '100.00%',
             ),
         );
