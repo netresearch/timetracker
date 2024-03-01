@@ -320,6 +320,7 @@ class DefaultController extends BaseController
 
     /**
      * Developers may see their own data only, CTL and PL may see everyone.
+     * Used in Interpretation tab to get all users
      *
      * @param Request $request
      * @return Response
