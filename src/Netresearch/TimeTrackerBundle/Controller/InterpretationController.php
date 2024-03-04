@@ -3,10 +3,12 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Entry;
+use Netresearch\TimeTrackerBundle\Response\Error;
 use Netresearch\TimeTrackerBundle\Entity\User;
 use Netresearch\TimeTrackerBundle\Helper\TimeHelper;
 use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Netresearch\TimeTrackerBundle\Model\Response;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\Request;
 
 class InterpretationController extends BaseController
@@ -455,4 +457,116 @@ class InterpretationController extends BaseController
         return $normalized;
     }
 
+    /**
+     * Retrieves filtered time tracker entries based on request parameters.
+     * Applies pagination.
+     *
+     * @param Request $request
+     * @return \Netresearch\TimeTrackerBundle\Model\JsonResponse|Error
+     * @throws \Exception
+     */
+    public function getAllEntriesAction(Request $request)
+    {
+        if (false === $this->isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        $project = (int) $request->get('project_id');
+        $datestart = $request->get('datestart');
+        $dateend = $request->get('dateend');
+        $customer = (int) $request->get('customer_id');
+        $activity = (int) $request->get('activity_id');
+        $maxResults = (int) $request->get('maxResults');
+        $page = (int) $request->get('page');
+
+        //prepare data
+        if ($page < 0) {
+            $message = $this->get('translator')->trans('page can not be negative.');
+            return new Error($message, 400);
+        }
+        $maxResults = $maxResults > 0 ? $maxResults : 50;    //cant be lower than 0
+
+        $searchArray = [
+            'maxResults' => $maxResults,   //default 50
+            'page' => $page
+        ];
+        // parameter has to exist in request and has to be different from null -> return true -> set array key
+        ($activity ?? null) ? $searchArray['activity'] = $activity : null;
+        ($project ?? null) ? $searchArray['project'] = $project : null;
+        ($datestart ?? null) ? $searchArray['datestart'] = $datestart : null;
+        ($dateend ?? null) ? $searchArray['dateend'] = $dateend : null;
+        ($customer ?? null) ? $searchArray['customer'] = $customer : null;
+
+        $repository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry');
+        try {
+            $paginator = new Paginator($repository->queryByFilterArray($searchArray));
+        } catch (\Exception $e) {
+            $response = new Response($this->translate($e->getMessage()));
+            $response->setStatusCode(406);
+        }
+
+        // get data
+        $entries = $paginator->getQuery()->getResult();
+        $entryList = array();
+        foreach ($entries as $entry) {
+            $flatEntry = $entry->toArray();
+            unset($flatEntry['class']);
+            $flatEntry['date'] = $entry->getDay() ? $entry->getDay()->format('Y-m-d') : null;
+
+            // add id suffix to if parameter
+            $flatEntry['user_id'] = $flatEntry['user'];
+            $flatEntry['project_id'] = $flatEntry['project'];
+            $flatEntry['customer_id'] = $flatEntry['customer'];
+            $flatEntry['activity_id'] = $flatEntry['activity'];
+            $flatEntry['worklog_id'] = $flatEntry['worklog'];
+            // unset old keys
+            unset($flatEntry['user']);
+            unset($flatEntry['project']);
+            unset($flatEntry['customer']);
+            unset($flatEntry['activity']);
+            unset($flatEntry['worklog']);
+
+            // build result
+            $entryList[] = $flatEntry;
+        }
+
+        // build url
+        parse_str($request->getQueryString(), $queryString);
+        unset($queryString['page']);
+        $queryString = '?' . http_build_query($queryString);
+        $route = $request->getUriForPath($request->getPathInfo()). $queryString;
+
+        // negative firstResult are interpreted as 0
+        $total = $paginator->count();
+
+        //self
+        $self = $route . '&' . http_build_query(['page' => $page]);
+
+        // returns null for empty Paginator, else returns last page for given $maxResults
+        $lastPage = ceil($total / $maxResults) - 1;
+        $last = $total
+            ? $route . '&' . http_build_query(['page' => $lastPage])
+            : null;
+
+        // returns the last previous page with data, or null if you are on page 0 or there is no data
+        $prev = $page && $total
+            ? $route . '&' . http_build_query(['page' => min($page - 1, $lastPage)])
+            : null;
+
+        //null when query would return empty data
+        $next = $page < $lastPage
+            ? $route . '&' . http_build_query(['page' => $page + 1])
+            : null;
+
+        $links = [
+            'links' => [
+                'self' => $self,
+                'last' => $last,
+                'prev' => $prev,
+                'next' => $next,
+            ],
+        ];
+        $entryList = array_merge($links, ['data' => $entryList]);
+        return new JsonResponse($entryList);
+    }
 }
