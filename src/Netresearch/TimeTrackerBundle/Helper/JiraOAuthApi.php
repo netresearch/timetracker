@@ -76,7 +76,7 @@ class JiraOAuthApi
      */
     protected function getFetchRequestTokenClient()
     {
-        return $this->getClient('', '');
+        return $this->getClient('new');
     }
 
     /**
@@ -90,25 +90,39 @@ class JiraOAuthApi
      */
     protected function getFetchAccessTokenClient($oAuthRequestToken)
     {
-        return $this->getClient($oAuthRequestToken);
+        return $this->getClient('request', $oAuthRequestToken);
     }
 
     /**
      * Returns a HTTP client preconfigured for OAuth communication.
      *
-     * @param string $oAuthToken
-     * @param string $oAuthTokenSecret
+     * @param string $tokenMode How to fetch the token:
+     *                          - user: fetch user token from database
+     *                          - new: obtain new user token
+     *                          - request: fetch access token from given request token
+     * @param string $oAuthToken Request token when supplied
+     *
      * @return Client
      * @throws JiraApiException
      */
-    protected function getClient($oAuthToken = null, $oAuthTokenSecret = null)
+    protected function getClient($tokenMode = 'user', $oAuthToken = null)
     {
-        if (null === $oAuthTokenSecret) {
+        if ($tokenMode === 'user') {
             $oAuthTokenSecret = $this->getTokenSecret();
-        }
-
-        if (null === $oAuthToken) {
             $oAuthToken = $this->getToken();
+            if ($oAuthToken == '' && $oAuthTokenSecret == '') {
+                $this->throwUnauthorizedRedirect(null);
+            }
+
+        } elseif ($tokenMode === 'new') {
+            $oAuthToken = '';
+            $oAuthTokenSecret = '';
+
+        } elseif ($tokenMode === 'request') {
+            $oAuthTokenSecret = '';
+
+        } else {
+            throw new \UnexpectedValueException('Invalid token mode: ' . $tokenMode);
         }
 
         $key = (string) $oAuthToken . (string) $oAuthTokenSecret;
@@ -587,16 +601,7 @@ class JiraOAuthApi
             $response = $this->getClient()->request($method, $url, $additionalParameter);
         } catch (GuzzleException $e) {
             if ($e->getCode() == 401) {
-                try {
-                    $oauthAuthUrl = $this->fetchOAuthRequestToken();
-                } catch (JiraApiException $e2) {
-                    throw new JiraApiException(
-                        'Failed to fetch OAuth URL: ' . $e2->getPrevious()->getMessage(),
-                        400, null, $e2
-                    );
-                }
-                $message = '401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
-                throw new JiraApiUnauthorizedException($message, $e->getCode(), $oauthAuthUrl, $e);
+                $this->throwUnauthorizedRedirect($e);
 
             } elseif ($e->getCode() === 404) {
                 $message = '404 - Resource is not available: (' . $url . ')';
@@ -796,5 +801,24 @@ class JiraOAuthApi
         return ((bool) $this->ticketSystem->getBookTime()
             && (!$userTicketSystem || !$userTicketSystem->getAvoidConnection())
         );
+    }
+
+    /**
+     * Throw an exception that causes the user to jump to Jira to authorize timetracker
+     *
+     * @throws JiraApiUnauthorizedException
+     */
+    protected function throwUnauthorizedRedirect(\Exception $e = null)
+    {
+        try {
+            $oauthAuthUrl = $this->fetchOAuthRequestToken();
+        } catch (JiraApiException $e2) {
+            throw new JiraApiException(
+                'Failed to fetch OAuth URL: ' . $e2->getPrevious()->getMessage(),
+                400, null, $e2
+            );
+        }
+        $message = '401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
+        throw new JiraApiUnauthorizedException($message, 401, $oauthAuthUrl, $e);
     }
 }
