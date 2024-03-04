@@ -42,6 +42,7 @@ class Error extends JsonResponse
         }
         return [
             'message' => $exception->getMessage(),
+            'class'   => get_class($exception),
             'code'    => $exception->getCode(),
             'file'    => $exception->getFile(),
             'line'    => $exception->getLine(),
