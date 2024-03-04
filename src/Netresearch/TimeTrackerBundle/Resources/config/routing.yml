@@ -38,6 +38,10 @@ interpretation_entries:
     path: /interpretation/entries
     defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:getLastEntries }
 
+interpretation_all_entries:
+    path:  /interpretation/allEntries
+    defaults: { _controller: NetresearchTimeTrackerBundle:Interpretation:getAllEntries }
+
 timetracking_save:
     path: /tracking/save
     defaults: { _controller: NetresearchTimeTrackerBundle:Crud:save }
