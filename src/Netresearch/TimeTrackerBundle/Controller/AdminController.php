@@ -28,27 +28,6 @@ class AdminController extends BaseController
     /**
      * @param Request $request
      * @return Response
-     * @throws \ReflectionException
-     */
-    public function getAllProjectsAction(Request $request)
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        $result = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Project')->findAll();
-
-        $data = [];
-        foreach ($result as $project) {
-            $data[] = ['project' => $project->toArray()];
-        }
-
-        return new JsonResponse($data);
-    }
-
-    /**
-     * @param Request $request
-     * @return Response
      */
     public function getCustomersAction(Request $request)
     {
@@ -387,6 +366,10 @@ class AdminController extends BaseController
 
         if ($customerId) {
             $customer = $customerRepository->find($customerId);
+            if (!$customer) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $customer = new Customer();
         }
@@ -484,7 +467,7 @@ class AdminController extends BaseController
         $abbr     = $request->get('abbr');
         $type     = $request->get('type');
         $locale   = $request->get('locale');
-        $teamIds  = $request->get('teams')  ? $request->get('teams')  : array();
+        $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : array();
 
         /* @var UserRepository $userRepository */
         $userRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:User');
@@ -501,8 +484,8 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (strlen($abbr) < 3) {
-            $response = new Response($this->translate('Please provide a valid user name abbreviation with at least 3 letters.'));
+        if (strlen($abbr) != 3) {
+            $response = new Response($this->translate('Please provide a valid user name abbreviation with 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
@@ -657,6 +640,10 @@ class AdminController extends BaseController
 
         if ($id) {
             $preset = $repository->find($id);
+            if (!$preset) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $preset = new Preset();
         }
@@ -709,6 +696,10 @@ class AdminController extends BaseController
 
         if ($id) {
             $ticketSystem = $repository->find($id);
+            if (!$ticketSystem) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $ticketSystem = new TicketSystem();
         }
@@ -810,6 +801,10 @@ class AdminController extends BaseController
 
         if ($id) {
             $activity = $repository->find($id);
+            if (!$activity) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $activity = new Activity();
         }
@@ -902,6 +897,11 @@ class AdminController extends BaseController
 
         if ($id) {
             $team = $repository->find($id);
+            //abort for non existing id
+            if (!$team) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $team = new Team();
         }
@@ -1068,6 +1068,10 @@ class AdminController extends BaseController
 
         if ($contractId) {
             $contract = $contractRepository->find($contractId);
+            if (!$contract) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $contract = new Contract();
         }

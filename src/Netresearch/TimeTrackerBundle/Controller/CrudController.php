@@ -36,6 +36,11 @@ class CrudController extends BaseController
             $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')
                 ->find($request->request->get('id'));
 
+            if (!$entry) {
+                $message = $this->get('translator')->trans('No entry for id.');
+                return new Error($message, 404);
+            }
+
             try {
                 $this->deleteJiraWorklog($entry);
 

@@ -2,6 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
+use Netresearch\TimeTrackerBundle\Response\Error;
 use Netresearch\TimeTrackerBundle\Entity\Team;
 use Netresearch\TimeTrackerBundle\Repository\TeamRepository;
 use Netresearch\TimeTrackerBundle\Entity\TicketSystem;
@@ -256,6 +257,11 @@ class DefaultController extends BaseController
             return new JsonResponse($data);
         }
 
+        $entryRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry');
+        if (!$entryRepository->find($entryId)) {
+            $message = $this->get('translator')->trans('No entry for id.');
+            return new Error($message, 404);
+        }
         // Collect all entries data
         $data = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Entry')->getEntrySummary($entryId, $userId, $data);
 
@@ -314,6 +320,7 @@ class DefaultController extends BaseController
 
     /**
      * Developers may see their own data only, CTL and PL may see everyone.
+     * Used in Interpretation tab to get all users
      *
      * @param Request $request
      * @return Response

@@ -59,7 +59,7 @@ paths:
 
   /activity/save:
     post:
-      summary: Create an activity
+      summary: Create an activity (id=empty value) or update a existing team by id
       tags:
         - Activity
       requestBody:
@@ -69,6 +69,10 @@ paths:
             schema:
               type: object
               properties:
+                id:
+                  type: integer
+                  example: 1
+                  description: If an ID already exists, using it will update the associated entry in the database.
                 name:
                   type: string
                   example: Design
@@ -81,6 +85,7 @@ paths:
                   example: 1
               required:
               - name
+              - factor
       responses:
         '401':
           description: Error Unauthorized
@@ -88,6 +93,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedResponse'
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '406':
           description: Error
           content:
@@ -144,7 +155,7 @@ paths:
 
   /contract/save:
     post:
-      summary: Create a contract
+      summary: Create a contract (id=empty value) or update a existing team by id
       tags:
         - Contract
       requestBody:
@@ -154,6 +165,12 @@ paths:
             schema:
               $ref: '#/components/schemas/Contract'
       responses:
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '406':
           description: Error
           content:
@@ -269,7 +286,7 @@ paths:
 
   /customer/save:
     post:
-      summary: Create a customer
+      summary: Create a customer (id=empty value) or update a existing team by id
       tags:
         - Customer
       requestBody:
@@ -281,6 +298,12 @@ paths:
       responses:
         '500':
           description: Error Internal Server Error
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '200':
           description: OK
           content:
@@ -399,9 +422,15 @@ paths:
 
   /getAllProjects:
     get:
-      summary: Returns a list of all projects
+      summary: Returns a list of all projects or all global projects and projects of specified customer
       tags:
         - Project
+      parameters:
+        - in: query
+          name: customer
+          schema:
+            type: integer
+            example: 1
       responses:
         '200':
           description: OK
@@ -441,7 +470,7 @@ paths:
 
   /getAllUsers:
     get:
-      summary: Returns a list of all users
+      summary: Returns a list of all users and their teams
       tags:
         - User
       responses:
@@ -546,9 +575,15 @@ paths:
 
   /getProjects:
     get:
-      summary: Returns a list of all projects with a "global" customer
+      summary: Returns all projects of logged in user plus all projects of global customers. When a customer is given returns from this selection all projects of the customer plus global projects
       tags:
         - Project
+      parameters:
+        - in: query
+          name: customer
+          schema:
+            type: integer
+            example: 1
       responses:
         '200':
           description: OK
@@ -563,11 +598,29 @@ paths:
                       $ref: '#/components/schemas/ProjectInfo'
 
   /getSummary:
-    get:
+    post:
       summary: Returns a summary about the customer, project,activity and ticket
       tags:
         - Summary
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+              required:
+              - id
       responses:
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '200':
           description: OK
           content:
@@ -678,7 +731,7 @@ paths:
 
   /getUsers:
     get:
-      summary: Returns a list of users without teams
+      summary: Returns a list of users
       tags:
         - User
       responses:
@@ -1078,6 +1131,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ForbiddenResponse'
+
         '422':
           description: Error
           content:
@@ -1152,20 +1206,20 @@ paths:
               properties:
                 startdate:
                   type: string
-                  format: date-time
-                  example: "2019-11-23T00:00:00"
+                  format: date
+                  example: "2019-11-23"
                 enddate:
                   type: string
-                  format: date-time
-                  example: "2019-11-24T00:00:00"
+                  format: date
+                  example: "2019-11-29"
                 starttime:
                   type: string
-                  format: date-time
-                  example: "2008-01-01T08:00:00"
+                  format: time
+                  example: "08:00:00"
                 endtime:
                   type: string
-                  format: date-time
-                  example: "2008-01-01T16:00:00"
+                  format: time
+                  example: "16:00:00"
                 skipweekend:
                   type: integer
                   example: 1
@@ -1174,7 +1228,7 @@ paths:
                   example: 1
                 preset:
                   type: integer
-                  example: 11
+                  example: 1
               required:
                 - starttime
                 - preset
@@ -1224,6 +1278,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedResponse'
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '200':
           description: OK
           content:
@@ -1266,7 +1326,7 @@ paths:
 
   /preset/save:
     post:
-      summary: Create a preset
+      summary: Create a preset (id=empty value) or update a existing preset by id
       tags:
         - Preset
       requestBody:
@@ -1277,6 +1337,12 @@ paths:
               type: object
               $ref: '#/components/schemas/Preset'
       responses:
+        '404':
+          description: No entry for id
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '403':
           description: Error Forbidden
           content:
@@ -1395,7 +1461,8 @@ paths:
   /projects/syncsubtickets:
     post:
       summary: Synchronize subticket information from Jira into TimeTracker for all projects
-      tags: Project
+      tags:
+      - Project
       responses:
         200:
           description: OK
@@ -1413,7 +1480,8 @@ paths:
   /projects/{projectId}/syncsubtickets:
     post:
       summary: Synchronize subticket information from Jira into TimeTracker
-      tags: Project
+      tags:
+      - Project
       parameters:
         - in: path
           name: projectId
@@ -1575,7 +1643,7 @@ paths:
 
   /team/save:
     post:
-      summary: Create a team
+      summary: Create a team (id=empty value) or update a existing team by id
       tags:
         - Team
       requestBody:
@@ -1591,6 +1659,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedResponse'
+        '404':
+          description: No entry for id
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '406':
           description: Error Not Acceptable
           content:
@@ -1625,6 +1699,12 @@ paths:
             schema:
               $ref: '#/components/schemas/TicketSystem'
       responses:
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
         '403':
           description: Error Forbidden
           content:
@@ -1653,45 +1733,48 @@ paths:
               properties:
                 date:
                   type: string
-                  format: date-time
-                  example: "2019-11-22T00:00:00"
+                  description: Default date is now
+                  format: date
+                  example: "2019-11-22"
                 start:
                   type: string
-                  format: date-time
-                  example: "2019-11-22T09:55:00"
+                  format: time
+                  example: "09:55:00"
                 end:
                   type: string
-                  format: date-time
-                  example: "2019-11-22T13:25:00"
+                  description: Default end is now
+                  format: time
+                  example: "13:25:00"
                 user:
                   type: integer
                   example: 1
                   description: User ID of the user to simulate. Only allowed when the logged in user is whitelisted in "service_user_ids" setting. May be empty.
                 customer:
                   type: integer
+                  description: Key is required, value may be empty string
                   example: 1
                 project:
                   type: integer
                   example: 7
                 activity:
                   type: integer
+                  description: Key is required, value may be empty string
                   example: 3
                 description:
                   type: string
                   example: Button hinzugefügt
                 ticket:
+                  description: May be empty
                   type: string
-                  example: TIM-1
-                duration:
-                  type: string
-                  format: date-time
-                  example: "1899-12-31T03:30:00"
+                  example: 'PHR-1'
                 class:
                   type: integer
                   example: 0
               required:
                 - start
+                - customer
                 - project
+                - activity
       responses:
         '500':
           description: Error
@@ -1748,7 +1831,7 @@ paths:
                         example: Button hinzugef\u00fcgt
                       ticket:
                         type: string
-                        example: TIM-1
+                        example: PHR-1
                       duration:
                         type: integer
                         example: 210
@@ -1762,6 +1845,9 @@ paths:
                         type: string
                         nullable: true
                         example: null
+                      extTicket:
+                        type: string
+                        example: ""
                   alert:
                     type: string
                     nullable: true
@@ -1871,6 +1957,9 @@ components:
     Contract:
       type: object
       properties:
+        id:
+          type: integer
+          example: 1
         user_id:
           type: integer
           example: 1
@@ -1913,10 +2002,20 @@ components:
       required:
         - user_id
         - start
+        - hours_1
+        - hours_2
+        - hours_3
+        - hours_4
+        - hours_5
+        - hours_6
 
     Customer:
       type: object
       properties:
+        id:
+          type: integer
+          description: If an ID already exists, using it will update the associated entry in the database.
+          example: 1
         name:
           type: string
           description: name with at least 3 letters
@@ -2017,6 +2116,10 @@ components:
     Preset:
       type: object
       properties:
+        id:
+          description: 'If an ID already exists, using it will update the associated entry in the database.'
+          type: integer
+          example: 1
         name:
           type: string
           example: Urlaub
@@ -2132,6 +2235,10 @@ components:
         success:
           type: boolean
           example: true
+        alert:
+          type: string
+          nullable: true
+          example: null
 
     SummaryInfo:
       type: object
@@ -2162,6 +2269,10 @@ components:
     Team:
       type: object
       properties:
+        id:
+          description: 'If an ID already exists, using it will update the associated entry in the database.'
+          type: integer
+          example: 1
         name:
           type: string
           example: Backend
@@ -2174,6 +2285,9 @@ components:
     TicketSystem:
       type: object
       properties:
+        id:
+          type: integer
+          example: 1
         name:
           type: string
           example: TestTicketSystem
@@ -2249,6 +2363,13 @@ components:
           type: string
           example: You need to login.
 
+    NoEntryForId:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'No entry for id.'
+
     User:
       type: object
       properties:
@@ -2288,6 +2409,7 @@ components:
         - abbr
         - locale
         - teams
+        - type
 
     Users:
       type: array
@@ -2305,7 +2427,7 @@ components:
       name: activity
       schema:
         type: integer
-        example: 1
+        example: 2
 
     customer:
       in: query
@@ -2319,37 +2441,37 @@ components:
       name: dateend
       schema:
         type: string
-        format: date-time
-        example: "2019-11-30T00:00:00"
+        format: date
+        example: "2019-11-30"
 
     datestart:
       in: query
       name: datestart
       schema:
         type: string
-        format: date-time
-        example: "2019-11-01T00:00:00"
+        format: date
+        example: "2019-11-01"
 
     description:
       in: query
       name: description
       schema:
         type: string
-        example: "Button hinzugefügt"
+        example: "Lebkuchen"
 
     project:
       in: query
       name: project
       schema:
         type: integer
-        example: 1
+        example: 2
 
     re_ticket:
       in: query
       name: ticket
       schema:
         type: string
-        example: "TIM-1"
+        example: "LK-12"
       required: true
 
     team:
@@ -2364,7 +2486,7 @@ components:
       name: ticket
       schema:
         type: string
-        example: "TIM-1"
+        example: "LK-12"
 
     user:
       in: query
