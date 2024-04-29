@@ -501,8 +501,7 @@ class InterpretationController extends BaseController
         try {
             $paginator = new Paginator($repository->queryByFilterArray($searchArray));
         } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
-            $response->setStatusCode(406);
+            return new Error($this->translate($e->getMessage()), 406);
         }
 
         // get data
@@ -534,28 +533,28 @@ class InterpretationController extends BaseController
         parse_str($request->getQueryString(), $queryString);
         unset($queryString['page']);
         $queryString = '?' . http_build_query($queryString);
-        $route = $request->getUriForPath($request->getPathInfo()). $queryString;
+        $route = $request->getUriForPath($request->getPathInfo()). $queryString . (!str_ends_with($queryString, '?')? '&' : '');
 
         // negative firstResult are interpreted as 0
         $total = $paginator->count();
 
         //self
-        $self = $route . '&' . http_build_query(['page' => $page]);
+        $self = $route . http_build_query(['page' => $page]);
 
         // returns null for empty Paginator, else returns last page for given $maxResults
         $lastPage = ceil($total / $maxResults) - 1;
         $last = $total
-            ? $route . '&' . http_build_query(['page' => $lastPage])
+            ? $route . http_build_query(['page' => $lastPage])
             : null;
 
         // returns the last previous page with data, or null if you are on page 0 or there is no data
         $prev = $page && $total
-            ? $route . '&' . http_build_query(['page' => min($page - 1, $lastPage)])
+            ? $route . http_build_query(['page' => min($page - 1, $lastPage)])
             : null;
 
         //null when query would return empty data
         $next = $page < $lastPage
-            ? $route . '&' . http_build_query(['page' => $page + 1])
+            ? $route . http_build_query(['page' => $page + 1])
             : null;
 
         $links = [
