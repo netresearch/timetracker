@@ -317,7 +317,6 @@ class EntryRepository extends EntityRepository
         return $data;
     }
 
-
     /**
      * Get array of entries of given user and ticketsystem which should be synced to the ticketsystem.
      * Ordered by date, starttime desc
@@ -486,9 +485,8 @@ class EntryRepository extends EntityRepository
         return $data;
     }
 
-
     /**
-     * Get array of entries for given filter params
+     * Get query of entries for given filter params
      *
      * @param array $arFilter every value is optional
      *
@@ -504,10 +502,10 @@ class EntryRepository extends EntityRepository
      *           [maxResults]       => int max number of returned datasets
      *           [visibility_user]  => user_id restricts entry visibility by users teams
      *
-     * @return array
+     * @return \Doctrine\ORM\Query
      * @throws \Exception
      */
-    public function findByFilterArray($arFilter = [])
+    public function queryByFilterArray($arFilter = [])
     {
         $queryBuilder = $this->createQueryBuilder('e');
 
@@ -573,13 +571,44 @@ class EntryRepository extends EntityRepository
                 ->setMaxResults((int) $arFilter['maxResults']);
         }
 
+        //pagination offset
+        if (isset($arFilter['page']) && isset($arFilter['maxResults'])) {
+            $queryBuilder
+                ->setFirstResult((int) $arFilter['page'] * $arFilter['maxResults']);
+        }
+
         if (isset($arFilter['visibility_user']) && !is_null($arFilter['visibility_user'])) {
             $queryBuilder
                 ->andWhere('e.user = :vis_user')
                 ->setParameter('vis_user', (int) $arFilter['visibility_user']);
         }
 
-        return $queryBuilder->getQuery()->getResult();
+        return $queryBuilder->getQuery();
+    }
+
+    /**
+     * Get array of entries for given filter params
+     *
+     * @param array $arFilter every value is optional
+     *
+     *  $arFilter[customer]         => int customer_id
+     *           [project]          => int project_id
+     *           [user]             => int user_id
+     *           [activity]         => int activity_id
+     *           [team]             => int team_id
+     *           [datestart]        => string
+     *           [dateend]          => string
+     *           [ticket]           => string
+     *           [description]      => string
+     *           [maxResults]       => int max number of returned datasets
+     *           [visibility_user]  => user_id restricts entry visibility by users teams
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function findByFilterArray($arFilter = [])
+    {
+        return $this->queryByFilterArray($arFilter)->getResult();
     }
 
     /**
