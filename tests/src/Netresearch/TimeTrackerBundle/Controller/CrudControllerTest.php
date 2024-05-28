@@ -70,15 +70,90 @@ class CrudControllerTest extends BaseTest
         $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
 
+    //-------------- Bulkentry routes ----------------------------------------
+
+    public function testBulkentryActionNonExistendPreset()
+    {
+        $parameter = [
+            'preset' => 42,   //req
+        ];
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(406);
+        $this->assertMessage('Preset not found');
+    }
+
+    public function testBulkentryActionZeroTimeDiff()
+    {
+        // test duration = 0
+        $parameter = [
+            'preset' => 1,   //req
+            'starttime' => '08:00:00',    //req
+            'endtime' => '08:00:00',    //opt
+        ];
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(406);
+        $this->assertMessage('Die Aktivität muss mindestens eine Minute angedauert haben!');
+    }
+
     public function testBulkentryAction()
+    {
+        $parameter = [
+            'startdate' => '2020-01-25',    //opt
+            'enddate' => '2020-02-06',  //opt
+            'preset' => 1,   //req
+            'usecontract' => 1,   //opt
+        ];
+
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertMessage('10 Einträge wurden angelegt.');
+
+        $query = 'SELECT *
+            FROM `entries`
+            WHERE `day` >= "2020-01-25"
+            AND `day` <= "2020-02-5"
+            ORDER BY `id` ASC';
+        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+
+        $this->assertSame(9, count($results));
+
+        $staticExpected = [
+            'start' => '08:00:00',
+            'customer_id' => '1',
+            'project_id' => '1',
+            'activity_id' => '1',
+            'description' => 'Urlaub',
+            'user_id' => '1',
+            'class' => '2',
+        ];
+
+        $variableExpected = [
+            ['day' => '2020-01-27', 'end' => '09:00:00', 'duration' => '60'],
+            ['day' => '2020-01-28', 'end' => '10:00:00', 'duration' => '120'],
+            ['day' => '2020-01-29', 'end' => '11:00:00', 'duration' => '180'],
+            ['day' => '2020-01-30', 'end' => '12:00:00', 'duration' => '240'],
+            ['day' => '2020-01-31', 'end' => '13:00:00', 'duration' => '300'],
+            ['day' => '2020-02-01', 'end' => '08:30:00', 'duration' => '30'],
+            ['day' => '2020-02-03', 'end' => '09:06:00', 'duration' => '66'],
+            ['day' => '2020-02-04', 'end' => '10:12:00', 'duration' => '132'],
+            ['day' => '2020-02-05', 'end' => '11:18:00', 'duration' => '198'],
+        ];
+
+        for ($i = 0; $i < count($results); $i++) {
+            $this->assertArraySubset($staticExpected, $results[$i]);
+            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        }
+    }
+
+    public function testBulkentryActionCustomTime()
     {
         $parameter = [
             'startdate' => '2024-01-01',    //opt
             'enddate' => '2024-01-10',  //opt
-            'starttime' => '8:00:00',    //req
+            'starttime' => '08:00:00',    //req
             'endtime' => '10:00:00',    //opt
             'preset' => 1,   //req
-            'skipweekend' => '1',
+            'skipweekend' => 1,   //opt
         ];
 
         $this->client->request('POST', '/tracking/bulkentry', $parameter);
@@ -91,8 +166,10 @@ class CrudControllerTest extends BaseTest
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
         $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $this->assertSame(8, count($results));
 
-        $expectedDbEntry = [
+        // assert days
+        $staticExpected = [
             'start' => '08:00:00',
             'end' => '10:00:00',
             'customer_id' => '1',
@@ -103,26 +180,64 @@ class CrudControllerTest extends BaseTest
             'user_id' => '1',
             'class' => '2',
         ];
-        //assert count of bulkentries
-        $this->assertSame(8, count($results));
 
-        // assert static key => values
-        foreach ($results as $res) {
-            $this->assertArraySubset($expectedDbEntry, $res);
-        }
-
-        // assert days
-        $days = array_column($results, 'day');
-        $expectedDays = [
-            '2024-01-01',
-            '2024-01-02',
-            '2024-01-03',
-            '2024-01-04',
-            '2024-01-05',
-            '2024-01-08',
-            '2024-01-09',
-            '2024-01-10',
+        $variableExpected = [
+            ['day' => '2024-01-01',],
+            ['day' => '2024-01-02',],
+            ['day' => '2024-01-03',],
+            ['day' => '2024-01-04',],
+            ['day' => '2024-01-05',],
+            ['day' => '2024-01-08',],
+            ['day' => '2024-01-09',],
+            ['day' => '2024-01-10',],
         ];
-        $this->assertSame($expectedDays, $days);
+
+        for ($i = 0; $i < count($results); $i++) {
+            $this->assertArraySubset($staticExpected, $results[$i]);
+            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        }
+    }
+
+    public function testBulkentryActionSkipWeekend()
+    {
+        $parameter = [
+            'startdate' => '2020-02-07',    //opt
+            'enddate' => '2020-02-10',  //opt
+            'preset' => 1,   //req
+            'usecontract' => 1,   //opt
+            'skipweekend' => 1,   //opt
+        ];
+
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertMessage('2 Einträge wurden angelegt.');
+
+        $query = 'SELECT *
+            FROM `entries`
+            WHERE `day` >= "2020-02-07"
+            AND `day` <= "2020-02-10"
+            ORDER BY `id` ASC';
+        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $this->assertSame(2, count($results));
+
+        $staticExpected =  [
+            'start' => '08:00:00',
+            'customer_id' => '1',
+            'project_id' => '1',
+            'activity_id' => '1',
+            'description' => 'Urlaub',
+            'user_id' => '1',
+            'class' => '2',
+        ];
+
+        $variableExpected = [
+            ['day' => '2020-02-07', 'end' => '13:30:00', 'duration' => '330'],
+            ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
+        ];
+
+        for ($i = 0; $i < count($results); $i++) {
+            $this->assertArraySubset($staticExpected, $results[$i]);
+            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        }
     }
 }

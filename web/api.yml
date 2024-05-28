@@ -1337,6 +1337,7 @@ paths:
   /tracking/bulkentry:
     post:
       summary: Create a bulk entry
+      description: Max timespan is 100 days (skipped days included)
       tags:
         - Entries
       requestBody:
@@ -1347,32 +1348,41 @@ paths:
               type: object
               properties:
                 startdate:
+                  description: Default startdate is today
                   type: string
                   format: date
                   example: "2019-11-23"
                 enddate:
+                  description: Default enddate is today
                   type: string
                   format: date
                   example: "2019-11-29"
                 starttime:
+                  description: Default starttime is now, only used when 'usecontract' is false
                   type: string
                   format: time
                   example: "08:00:00"
                 endtime:
+                  description: Default endtime is now, only used when usecontract is false/0
                   type: string
                   format: time
                   example: "16:00:00"
                 skipweekend:
+                  description: By default days with in the contract defined work hours of zero are skipped, dont use with usecontract
                   type: integer
                   example: 1
                 skipholidays:
+                  description: Only skips regular holidays
                   type: integer
                   example: 1
                 preset:
                   type: integer
                   example: 1
+                usecontract:
+                  description: When true time from user contract is used, when false time from request is used
+                  type: boolean
+                  example: false
               required:
-                - starttime
                 - preset
       responses:
         '401':

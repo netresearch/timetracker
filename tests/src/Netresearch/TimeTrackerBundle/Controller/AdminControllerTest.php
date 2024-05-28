@@ -893,10 +893,10 @@ class AdminControllerTest extends BaseTest
 
     public function testGetContractAction()
     {
-        $expectedJson = array(
-            0 => array(
-                'contract' => array(
-                    'id' => 2,
+        $expectedJson = [
+            [
+                'contract' => [
+                    'id' => 3,
                     'user_id' => 2,
                     'start' => '1020-01-01',
                     'end' => '2020-01-01',
@@ -907,26 +907,43 @@ class AdminControllerTest extends BaseTest
                     'hours_4' => 1,
                     'hours_5' => 1,
                     'hours_6' => 1,
-                ),
-            ),
-            1 => array(
-                'contract' => array(
+                ],
+            ],
+            [
+                'contract' => [
                     'id' => 1,
                     'user_id' => 1,
                     'start' => '2020-01-01',
+                    'end' => '2020-01-31',
                     'hours_0' => 0,
-                    'hours_1' => 8,
-                    'hours_2' => 8,
-                    'hours_3' => 8,
-                    'hours_4' => 8,
-                    'hours_5' => 8,
+                    'hours_1' => 1,
+                    'hours_2' => 2,
+                    'hours_3' => 3,
+                    'hours_4' => 4,
+                    'hours_5' => 5,
                     'hours_6' => 0,
-                ),
-            ),
-        );
+                ],
+            ],
+            [
+                'contract' => [
+                    'id' => 2,
+                    'user_id' => 1,
+                    'start' => '2020-02-01',
+                    'hours_0' => 0,
+                    'hours_1' => 1.1,
+                    'hours_2' => 2.2,
+                    'hours_3' => 3.3,
+                    'hours_4' => 4.4,
+                    'hours_5' => 5.5,
+                    'hours_6' => 0.5,
+                ],
+            ],
+        ];
+
         $this->client->request('GET', '/getContracts');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
+
     }
 
     //-------------- ticketSystems routes ----------------------------------------
