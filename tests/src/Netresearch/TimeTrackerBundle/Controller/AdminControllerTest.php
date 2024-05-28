@@ -124,7 +124,7 @@ class AdminControllerTest extends BaseTest
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/user/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
@@ -214,7 +214,7 @@ class AdminControllerTest extends BaseTest
 
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/team/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
@@ -440,7 +440,7 @@ class AdminControllerTest extends BaseTest
 
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/customer/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
@@ -589,7 +589,7 @@ class AdminControllerTest extends BaseTest
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/project/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
@@ -720,7 +720,7 @@ class AdminControllerTest extends BaseTest
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/activity/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
@@ -872,7 +872,7 @@ class AdminControllerTest extends BaseTest
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/contract/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
@@ -1061,7 +1061,7 @@ class AdminControllerTest extends BaseTest
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/ticketsystem/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
@@ -1221,7 +1221,7 @@ class AdminControllerTest extends BaseTest
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
-            'message' => 'Dataset could not be removed. ',
+            'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
         $this->client->request('POST', '/preset/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
