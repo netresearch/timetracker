@@ -57,6 +57,7 @@ class BaseController extends Controller
         $locale = LocalizationHelper::normalizeLocale($user->getLocale());
 
         $request->setLocale($locale);
+        $this->get('translator')->setLocale($locale);
     }
 
 
