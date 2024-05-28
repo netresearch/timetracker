@@ -83,7 +83,7 @@ class CrudControllerTest extends BaseTest
 
         $this->client->request('POST', '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
-        $this->assertMessage('All entries have been saved.');
+        $this->assertMessage('Alle Einträge wurden gespeichert.');
 
         $query = 'SELECT *
             FROM `entries`
