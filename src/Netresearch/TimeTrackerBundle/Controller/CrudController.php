@@ -3,6 +3,7 @@
 namespace Netresearch\TimeTrackerBundle\Controller;
 
 use Netresearch\TimeTrackerBundle\Entity\Activity;
+use Netresearch\TimeTrackerBundle\Entity\Contract;
 use Netresearch\TimeTrackerBundle\Entity\Customer;
 use Netresearch\TimeTrackerBundle\Entity\Project;
 use Netresearch\TimeTrackerBundle\Entity\Entry as Entry;
@@ -391,6 +392,28 @@ class CrudController extends BaseController
             /** @var Activity $activity */
             $activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')
                 ->find($preset->getActivityId());
+
+            if ($request->get('usecontract')) {
+                /** @var Contract $contract */
+                $contracts = $doctrine->getRepository('NetresearchTimeTrackerBundle:Contract')
+                    ->findBy(['user' => $this->getUserId($request)], ['start' => 'ASC']);
+
+                $contractHoursArray = [];
+                foreach ($contracts as $contract) {
+                    $contractHoursArray[] = [
+                        'start' => $contract->getStart(),
+                        'stop'  => $contract->getEnd() ?? new \DateTime(),
+                        7 => $contract->getHours0(), // So
+                        1 => $contract->getHours1(), // mo
+                        2 => $contract->getHours2(), // di
+                        3 => $contract->getHours3(), // mi
+                        4 => $contract->getHours4(), // do
+                        5 => $contract->getHours5(), // fr
+                        6 => $contract->getHours6(), // Sa
+                    ];
+                }
+            }
+
             $em = $doctrine->getManager();
 
             $date = new \DateTime($request->get('startdate'));
@@ -467,13 +490,40 @@ class CrudController extends BaseController
                     }
                 }
 
+                if ($request->get('usecontract')) {
+                    foreach ($contractHoursArray as $contractHours) {
+
+                        // we can have multiple contracts per user with different date intervals
+                        $workTime = 0;
+                        if ($contractHours['start'] <= $date && $contractHours['stop'] >= $date) {
+                            $workTime = $contractHours[$date->format('N')];
+                            break;
+                        }
+                    }
+
+                    // We Skip days without worktime
+                    if (!$workTime) {
+                        $date->add(new \DateInterval('P1D'));
+                        continue;
+                    }
+
+                    // Partial Worktime (e.g 0.5) Must be parsed, Fractional minutes are calculated into full minutes
+                    $workTime = sscanf($workTime, '%d.%d');
+                    $hoursToAdd = new \DateInterval('PT' . $workTime[0] . 'H' . (60 * ('0.' . $workTime[1] ?? 0)) . 'M');
+                    $startTime = new \DateTime('08:00:00');
+                    $endTime = (new \DateTime('08:00:00'))->add($hoursToAdd);
+                } else {
+                    $startTime = new \DateTime($request->get('starttime') ? $request->get('starttime') : null);
+                    $endTime = new \DateTime($request->get('endtime') ? $request->get('endtime') : null);
+                }
+
                 $entry = new Entry();
                 $entry->setUser($user)
                     ->setTicket('')
                     ->setDescription($preset->getDescription())
                     ->setDay($date)
-                    ->setStart($request->get('starttime') ? $request->get('starttime') : null)
-                    ->setEnd($request->get('endtime') ? $request->get('endtime') : null)
+                    ->setStart($startTime->format('H:i:s'))
+                    ->setEnd($endTime->format('H:i:s'))
                     //->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                     ->calcDuration();
 
