@@ -6,7 +6,7 @@
 "You need to specify at least customer, project, user or month and year.": "Du musst mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat auswählen."
 "The ticket's format is not recognized.": "Das Ticket-Format konnte nicht erkannt werden."
 "For the activity '%activity%' you must specify a ticket.": "Die Tätigkeit '%activity%' verlangt die Angabe eines Tickets."
-"All entries have been saved.": "Alle Einträge wurden gespeichert."
+"%num% entries have been added": "%num% Einträge wurden angelegt."
 "The configuration has been successfully saved.": "Die Konfiguration wurde erfolgreich gespeichert."
 "The configuration could not be saved.": "Die Konfiguration konnte nicht gespeichert werden."
 "Every user must belong to at least one team.": "Jeder Benutzer muss mindestens einem Team zugeordnet sein!"

@@ -438,6 +438,7 @@ class CrudController extends BaseController
                 "2015-11-18",
             );
 
+            $numAdded = 0;
             do {
                 // some loop security
                 $c++;
@@ -491,6 +492,7 @@ class CrudController extends BaseController
 
                 $em->persist($entry);
                 $em->flush();
+                $numAdded++;
 
                 // calculate color lines for the changed days
                 $this->calculateClasses($user->getId(), $entry->getDay()->format("Y-m-d"));
@@ -499,7 +501,12 @@ class CrudController extends BaseController
                 $date->add(new \DateInterval('P1D'));
             } while ($date <= $endDate);
 
-            $response = new Response($this->get('translator')->trans('All entries have been saved.'));
+            $response = new Response(
+                $this->get('translator')->trans(
+                    '%num% entries have been added',
+                    ['%num%' => $numAdded]
+                )
+            );
             $response->setStatusCode(200);
             return $response;
 
