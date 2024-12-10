@@ -2293,43 +2293,43 @@ Ext.define('Netresearch.widget.Admin', {
                                     id: 'hours_0',
                                     fieldLabel: panel._hours0Title,
                                     name: 'hours_0',
-                                    value: record.hours_0 ? record.hours_0 : 0
+                                    value: record.hours_0 !== undefined ? record.hours_0 : 0
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_1',
                                     fieldLabel: panel._hours1Title,
                                     name: 'hours_1',
-                                    value: record.hours_1 ? record.hours_1 : 8
+                                    value: record.hours_1 !== undefined ? record.hours_1 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_2',
                                     fieldLabel: panel._hours2Title,
                                     name: 'hours_2',
-                                    value: record.hours_2 ? record.hours_2 : 8
+                                    value: record.hours_2 !== undefined ? record.hours_2 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_3',
                                     fieldLabel: panel._hours3Title,
                                     name: 'hours_3',
-                                    value: record.hours_3 ? record.hours_3 : 8
+                                    value: record.hours_3 !== undefined ? record.hours_3 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_4',
                                     fieldLabel: panel._hours4Title,
                                     name: 'hours_4',
-                                    value: record.hours_4 ? record.hours_4 : 8
+                                    value: record.hours_4 !== undefined ? record.hours_4 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_5',
                                     fieldLabel: panel._hours5Title,
                                     name: 'hours_5',
-                                    value: record.hours_5 ? record.hours_5 : 8
+                                    value: record.hours_5 !== undefined ? record.hours_5 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_6',
                                     fieldLabel: panel._hours6Title,
                                     name: 'hours_6',
-                                    value: record.hours_6 ? record.hours_6 : 0
+                                    value: record.hours_6 !== undefined ? record.hours_6 : 0
                                 })
                             ],
                             buttons: [
