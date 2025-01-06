@@ -14,7 +14,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.10",
         "guzzlehttp/guzzle": "^7.4",
-        "guzzlehttp/oauth-subscriber": "^0.6.0",
+        "guzzlehttp/oauth-subscriber": "^0.8.1",
         "nelmio/cors-bundle": "^2.2",
         "phpdocumentor/reflection-docblock": "^5.3",
         "phpoffice/phpspreadsheet": "^1.20",
