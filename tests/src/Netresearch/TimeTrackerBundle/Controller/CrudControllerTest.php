@@ -111,11 +111,11 @@ class CrudControllerTest extends BaseTest
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "2020-01-25"
-            AND `day` <= "2020-02-5"
+            AND `day` <= "2020-02-06"
             ORDER BY `id` ASC';
         $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
 
-        $this->assertSame(9, count($results));
+        $this->assertSame(10, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -137,6 +137,7 @@ class CrudControllerTest extends BaseTest
             ['day' => '2020-02-03', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-04', 'end' => '10:12:00', 'duration' => '132'],
             ['day' => '2020-02-05', 'end' => '11:18:00', 'duration' => '198'],
+            ['day' => '2020-02-06', 'end' => '12:24:00', 'duration' => '264'],
         ];
 
         for ($i = 0; $i < count($results); $i++) {
