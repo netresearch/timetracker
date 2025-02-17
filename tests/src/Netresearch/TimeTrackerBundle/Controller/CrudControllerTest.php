@@ -309,4 +309,78 @@ class CrudControllerTest extends BaseTest
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
+
+    public function testBulkentryActionContractEnded()
+    {
+        $this->logInSession('developer');
+
+        $parameter = [
+            'startdate' => '0020-02-10',    //opt
+            'enddate' => '0020-02-20',  //opt
+            'preset' => 1,   //req
+            'usecontract' => 1,   //opt
+        ];
+
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertMessage('0 Einträge wurden angelegt.<br/>Vertrag ist gültig ab 01.01.1020.');
+
+        $query = 'SELECT *
+            FROM `entries`
+            WHERE `day` >= "0020-02-10"
+            AND `day` <= "0020-02-20"
+            ORDER BY `id` ASC';
+        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+
+        $this->assertSame(0, count($results));
+    }
+
+    public function testBulkentryActionContractEndedDuringBulkentry()
+    {
+        $this->logInSession('developer');
+
+        $parameter = [
+            'startdate' => '2019-12-29',    //opt
+            'enddate' => '2020-01-05',  //opt
+            'preset' => 1,   //req
+            'usecontract' => 1,   //opt
+        ];
+
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertMessage('4 Einträge wurden angelegt.<br/>Vertrag ist am 01.01.2020. abgelaufen.');
+
+        $query = 'SELECT *
+            FROM `entries`
+            WHERE `day` >= "2019-12-29"
+            AND `day` <= "2020-01-05"
+            ORDER BY `id` ASC';
+        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+
+        $this->assertSame(4, count($results));
+
+        $staticExpected = [
+            'start' => '08:00:00',
+            'customer_id' => '1',
+            'project_id' => '1',
+            'activity_id' => '1',
+            'description' => 'Urlaub',
+            'user_id' => '2',
+            'class' => '2',
+            'end' => '09:00:00',
+            'duration' => '60'
+        ];
+
+        $variableExpected = [
+            ['day' => '2019-12-29'],
+            ['day' => '2019-12-30'],
+            ['day' => '2019-12-31'],
+            ['day' => '2020-01-01'],
+        ];
+
+        for ($i = 0; $i < count($results); $i++) {
+            $this->assertArraySubset($staticExpected, $results[$i]);
+            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        }
+    }
 }
