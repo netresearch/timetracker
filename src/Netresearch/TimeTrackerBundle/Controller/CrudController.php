@@ -563,12 +563,29 @@ class CrudController extends BaseController
                 $date->add(new \DateInterval('P1D'));
             } while ($date <= $endDate);
 
-            $response = new Response(
-                $this->get('translator')->trans(
-                    '%num% entries have been added',
-                    ['%num%' => $numAdded]
-                )
+            $responseContent = $this->get('translator')->trans(
+                '%num% entries have been added',
+                ['%num%' => $numAdded]
             );
+
+            // Send Message when contract starts during bulkentry
+            if (isset($contractHoursArray) && new \DateTime($request->get('startdate')) < $contractHoursArray[0]['start']) {
+                $responseContent .= '<br/>' .
+                    $this->get('translator')->trans(
+                        "Contract is valid from %date%.",
+                        ['%date%' => $contractHoursArray[0]['start']->format('d.m.Y')]
+                    );
+            }
+            // Send Message when contract ends during bulkentry
+            if (isset($contractHoursArray) && $endDate > end($contractHoursArray)['stop']) {
+                $responseContent .= '<br/>' .
+                    $this->get('translator')->trans(
+                        "Contract expired at %date%.",
+                        ['%date%' => end($contractHoursArray)['stop']->format('d.m.Y')]
+                    );
+            }
+
+            $response = new Response($responseContent);
             $response->setStatusCode(200);
             return $response;
 

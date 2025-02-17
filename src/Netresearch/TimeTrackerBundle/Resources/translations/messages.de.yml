@@ -44,3 +44,5 @@
 "Please enter a valid contract start.": "Bitte geben Sie einen gültigen Vertragsbeginn an"
 "End date has to be greater than the start date.": "Das Vertragsende muss nach dem Vertragsbeginn liegen."
 "No contract for user found. Please use custome time." : "Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit."
+"Contract expired at %date%." : "Vertrag ist am %date%. abgelaufen."
+"Contract is valid from %date%." : "Vertrag ist gültig ab %date%."
