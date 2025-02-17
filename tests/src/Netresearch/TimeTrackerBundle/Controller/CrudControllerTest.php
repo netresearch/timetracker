@@ -259,4 +259,54 @@ class CrudControllerTest extends BaseTest
         $this->assertMessage('Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.');
     }
 
+    public function testBulkentryActionContractEnddateIsNull()
+    {
+        $parameter = [
+            'startdate' => '2020-02-10',    //opt
+            'enddate' => '2020-02-20',  //opt
+            'preset' => 1,   //req
+            'usecontract' => 1,   //opt
+        ];
+
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertMessage('10 Einträge wurden angelegt.');
+
+        $query = 'SELECT *
+            FROM `entries`
+            WHERE `day` >= "2020-02-10"
+            AND `day` <= "2020-02-20"
+            ORDER BY `id` ASC';
+        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+
+        $this->assertSame(10, count($results));
+
+        $staticExpected = [
+            'start' => '08:00:00',
+            'customer_id' => '1',
+            'project_id' => '1',
+            'activity_id' => '1',
+            'description' => 'Urlaub',
+            'user_id' => '1',
+            'class' => '2',
+        ];
+
+        $variableExpected = [
+            ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
+            ['day' => '2020-02-11', 'end' => '10:12:00', 'duration' => '132'],
+            ['day' => '2020-02-12', 'end' => '11:18:00', 'duration' => '198'],
+            ['day' => '2020-02-13', 'end' => '12:24:00', 'duration' => '264'],
+            ['day' => '2020-02-14', 'end' => '13:30:00', 'duration' => '330'],
+            ['day' => '2020-02-15', 'end' => '08:30:00', 'duration' => '30'],
+            ['day' => '2020-02-17', 'end' => '09:06:00', 'duration' => '66'],
+            ['day' => '2020-02-18', 'end' => '10:12:00', 'duration' => '132'],
+            ['day' => '2020-02-19', 'end' => '11:18:00', 'duration' => '198'],
+            ['day' => '2020-02-20', 'end' => '12:24:00', 'duration' => '264'],
+        ];
+
+        for ($i = 0; $i < count($results); $i++) {
+            $this->assertArraySubset($staticExpected, $results[$i]);
+            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        }
+    }
 }

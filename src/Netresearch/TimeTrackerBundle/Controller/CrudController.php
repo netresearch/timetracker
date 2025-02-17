@@ -402,7 +402,8 @@ class CrudController extends BaseController
                 foreach ($contracts as $contract) {
                     $contractHoursArray[] = [
                         'start' => $contract->getStart(),
-                        'stop'  => $contract->getEnd() ?? new \DateTime(),
+                        // when user contract has no stop date, take the enddate of bulkentry
+                        'stop'  => $contract->getEnd() ?? new \DateTime($request->get('enddate')),
                         7 => $contract->getHours0(), // So
                         1 => $contract->getHours1(), // mo
                         2 => $contract->getHours2(), // di
