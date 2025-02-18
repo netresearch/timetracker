@@ -2,6 +2,7 @@
 
 namespace Netresearch\TimeTrackerBundle\Controller;
 
+use DateTime;
 use Netresearch\TimeTrackerBundle\Repository\UserRepository;
 use Netresearch\TimeTrackerBundle\Model\JsonResponse;
 use Netresearch\TimeTrackerBundle\Model\Response;
@@ -1120,12 +1121,115 @@ class AdminController extends BaseController
 
         $em = $this->getDoctrine()->getManager();
         $em->persist($contract);
-        $em->flush();
 
-        $data = array($contract->getId());
-        return new JsonResponse($data);
+        // when updating a existing contract dont look for other contracts for the user
+        if ($contractId) {
+            $em->flush();
+            return new JsonResponse(array($contract->getId()));
+        }
+
+        // update old contracts,
+        $responseMessage = $this->updateOldContractAction($user, $dateStart, $dateEnd);
+        if($responseMessage) {
+            $response = new Response($responseMessage);
+            $response->setStatusCode(406);
+            return $response;
+        }
+
+        // save new contract
+        $em->flush();
+        return new JsonResponse(array($contract->getId()));
     }
 
+    /**
+     * Look for existing contracts for user and update the latest if open-ended
+     * When updating to PHP8 change return type to string|null
+     */
+    protected function updateOldContractAction(User $user, DateTime $newStartDate, ?DateTime $newEndDate): string
+    {
+        $em = $this->getDoctrine()->getManager();
+        $contractRepository = $this->getDoctrine()->getRepository('NetresearchTimeTrackerBundle:Contract');
+
+        // get existing contracts for the user
+        $contractsOld = $contractRepository->findBy(['user' => $user]);
+
+        if (!$contractsOld) {
+            return "";
+        }
+
+        if ($this->checkOldContractsStartDateOverlap($contractsOld, $newStartDate, $newEndDate)) {
+            return $this->translate('There is already an ongoing contract with a start date in the future that overlaps with the new contract.');
+        }
+
+        if ($this->checkOldContractsEndDateOverlap($contractsOld, $newStartDate)) {
+            return $this->translate('There is already an ongoing contract with a closed end date in the future.');
+        }
+
+        // filter to get only open-ended contracts
+        $contractsOld = array_filter($contractsOld, fn($n) => ($n->getEnd() == null));
+        if (count((array) $contractsOld) > 1) {
+            return $this->translate('There is more than one open-ended contract for the user.');
+        }
+
+        if(!$contractsOld) {
+            return "";
+        }
+
+        $contractOld = array_values($contractsOld)[0];
+
+        // alter exisiting contract with open end
+        // |--old--(update)
+        //      |--new----(|)->
+        if ($contractOld->getStart() <= $newStartDate) {
+            $oldContractEndDate = clone $newStartDate;
+            $contractOld->setEnd($oldContractEndDate->sub(new \DateInterval('P1D')));
+            $em->persist((object) $contractOld);
+            $em->flush();
+        }
+        //skip old contract edit for
+        // |--new--| |--old--(|)-->
+        // and
+        // |--old--| |--new--(|)-->
+        return "";
+    }
+
+    /**
+     * look for old contracts that start during the duration of the new contract
+     *      |--old----->
+     *  |--new--(|)-->
+     */
+    protected function checkOldContractsStartDateOverlap(array $contracts, DateTime $newStartDate, ?DateTime $newEndDate): bool
+    {
+        $filteredContracts = [];
+        foreach ($contracts as $contract) {
+            $startsAfterOrOnNewStartDate = $contract->getStart() >= $newStartDate;
+            $startsBeforeOrOnNewEndDate = ($newEndDate !== null) ? ($contract->getStart() <= $newEndDate) : true;
+
+            if ($startsAfterOrOnNewStartDate && $startsBeforeOrOnNewEndDate) {
+                $filteredContracts[] = $contract;
+            }
+        }
+        return (bool) $filteredContracts;
+    }
+
+    /** look for contract with ongoing end
+     * |--old--|
+     *      |--new----->
+     */
+    protected function checkOldContractsEndDateOverlap(array $contracts, DateTime $newStartDate): bool
+    {
+        $filteredContracts = [];
+        foreach ($contracts as $contract) {
+            $startsBeforeOrOnNewDate = $contract->getStart() <= $newStartDate;
+            $endsAfterOrOnNewDate = $contract->getEnd() >= $newStartDate;
+            $hasEndDate = $contract->getEnd() !== null;
+
+            if ($startsBeforeOrOnNewDate && $endsAfterOrOnNewDate && $hasEndDate) {
+                $filteredContracts[] = $contract;
+            }
+        }
+        return (bool) $filteredContracts;
+    }
 
     /**
      * @param Request $request
