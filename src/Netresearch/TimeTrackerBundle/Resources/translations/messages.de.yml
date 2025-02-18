@@ -46,3 +46,6 @@
 "No contract for user found. Please use custome time." : "Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit."
 "Contract expired at %date%." : "Vertrag ist am %date%. abgelaufen."
 "Contract is valid from %date%." : "Vertrag ist gültig ab %date%."
+"There is already an ongoing contract with a closed end date in the future." : "Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft."
+"There is already an ongoing contract with a start date in the future that overlaps with the new contract." : "Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet."
+"There is more than one open-ended contract for the user." : "Für den Nutzer besteht mehr als ein unbefristeter Vertrag."
