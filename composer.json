@@ -27,7 +27,7 @@
         "symfony/flex": "^2",
         "symfony/form": "6.1.*",
         "symfony/framework-bundle": "6.1.*",
-        "symfony/http-client": "6.1.*",
+        "symfony/http-client": "6.4.*",
         "symfony/intl": "6.1.*",
         "symfony/ldap": "6.1.*",
         "symfony/mailer": "6.1.*",
