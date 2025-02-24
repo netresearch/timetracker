@@ -102,6 +102,8 @@ abstract class BaseTest extends WebTestCase
             $session->set('loginId', '1');
         } elseif ($user == 'developer') {
             $session->set('loginId', '2');
+        } elseif ($user == 'noContract') {
+            $session->set('loginId', '4');
         }
         $session->set('loginUsername', $user);
 
