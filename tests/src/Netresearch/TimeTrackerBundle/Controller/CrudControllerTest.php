@@ -241,4 +241,22 @@ class CrudControllerTest extends BaseTest
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
+
+    public function testBulkentryActionNoContractInDatabase()
+    {
+        // login as user without contract
+        $this->logInSession('noContract');
+
+        $parameter = [
+            'startdate' => '2020-01-25',    //opt
+            'enddate' => '2020-02-06',  //opt
+            'preset' => 1,   //req
+            'usecontract' => 1,   //opt
+        ];
+
+        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->assertStatusCode(406);
+        $this->assertMessage('Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.');
+    }
+
 }

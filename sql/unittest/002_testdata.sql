@@ -70,7 +70,8 @@ VALUES
     1,
     1,
     'de'
-  );
+  ),
+  (4, 'noContract', 'NCO', 'PL', NULL, 0, 1, 1, 'de');
 
 --
 -- user contracts
