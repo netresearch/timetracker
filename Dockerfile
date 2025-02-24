@@ -148,7 +148,7 @@ FROM caddy:${CADDY_VERSION} AS symfony_caddy
 
 WORKDIR /srv/app
 
-COPY --from=dunglas/mercure:v0.11 /srv/public /srv/mercure-assets/
+COPY --from=dunglas/mercure:v0.18 /srv/public /srv/mercure-assets/
 COPY --from=symfony_caddy_builder /usr/bin/caddy /usr/bin/caddy
 COPY --from=symfony_php /srv/app/public public/
 COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile
