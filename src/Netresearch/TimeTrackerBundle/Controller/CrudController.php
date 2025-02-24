@@ -412,6 +412,17 @@ class CrudController extends BaseController
                         6 => $contract->getHours6(), // Sa
                     ];
                 }
+
+                // Error when no contract exist
+                if (!$contracts) {
+                    $response = new Response(
+                        $this->get('translator')->trans(
+                            'No contract for user found. Please use custome time.'
+                        )
+                    );
+                    $response->setStatusCode(406);
+                    return $response;
+                }
             }
 
             $em = $doctrine->getManager();
