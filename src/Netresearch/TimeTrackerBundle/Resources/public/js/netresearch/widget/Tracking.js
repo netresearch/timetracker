@@ -203,6 +203,8 @@ Ext.define('Netresearch.widget.Tracking', {
                     field: {
                         xtype: 'timefield',
                         format: 'H:i',
+                        //we add "Gi" (1530) to the list of supported input formats
+                        altFormats: "g:ia|g:iA|g:i a|g:i A|h:i|g:i|H:i|ga|ha|gA|h a|g a|g A|gi|Gi|hi|gia|hia|g|H|gi a|hi a|giA|hiA|gi A|hi A",
                         increment: 1440,
                         hideTrigger: true,
                         selectOnTab: true,
@@ -217,6 +219,8 @@ Ext.define('Netresearch.widget.Tracking', {
                     field: {
                         xtype: 'timefield',
                         format: 'H:i',
+                        //we add "Gi" (1530) to the list of supported input formats
+                        altFormats: "g:ia|g:iA|g:i a|g:i A|h:i|g:i|H:i|ga|ha|gA|h a|g a|g A|gi|Gi|hi|gia|hia|g|H|gi a|hi a|giA|hiA|gi A|hi A",
                         increment: 1440,
                         hideTrigger: true,
                         selectOnTab: true,
