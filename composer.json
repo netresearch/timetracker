@@ -53,7 +53,7 @@
         "webonyx/graphql-php": "^14.11"
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^3.4",
+        "doctrine/doctrine-fixtures-bundle": "^4.0",
         "hautelook/alice-bundle": "^2.11",
         "phpunit/phpunit": "^9.5",
         "rector/rector": "^0.19.0",
