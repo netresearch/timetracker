@@ -17,7 +17,7 @@
         "guzzlehttp/oauth-subscriber": "^0.8.1",
         "nelmio/cors-bundle": "^2.2",
         "phpdocumentor/reflection-docblock": "^5.3",
-        "phpoffice/phpspreadsheet": "^1.20",
+        "phpoffice/phpspreadsheet": "^4.0",
         "phpstan/phpdoc-parser": "^1.2",
         "sensio/framework-extra-bundle": "^6.2",
         "symfony/asset": "6.1.*",
