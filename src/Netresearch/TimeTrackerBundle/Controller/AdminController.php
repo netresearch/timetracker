@@ -1089,14 +1089,12 @@ class AdminController extends BaseController
             $response->setStatusCode(406);
             return $response;
         }
-        $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), 1);
+        $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), $dateStart->format('d'));
         $dateStart->setTime(0, 0, 0);
 
         $dateEnd = \DateTime::createFromFormat('Y-m-d', $end);
         if ($dateEnd) {
-            $dateEnd->setDate($dateEnd->format('Y'), $dateEnd->format('m'), 1);
-            $dateEnd->add(new \DateInterval('P1M'));
-            $dateEnd->sub(new \DateInterval('P1D'));
+            $dateEnd->setDate($dateEnd->format('Y'), $dateEnd->format('m'), $dateEnd->format('d'));
             $dateEnd->setTime(23, 59, 59);
 
             if ($dateEnd < $dateStart) {
