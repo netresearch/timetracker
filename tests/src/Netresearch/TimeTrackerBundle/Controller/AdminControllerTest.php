@@ -793,6 +793,59 @@ class AdminControllerTest extends BaseTest
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
+    public function testSaveContractActionStartNotFirstOfMonth()
+    {
+        $parameter = [
+            'user_id' => '1', //req
+            'start' => '2025-11-11', //req
+            'hours_0' => 1,
+            'hours_1' => 2,
+            'hours_2' => 3,
+            'hours_3' => 4.3,
+            'hours_4' => 5,
+            'hours_5' => 6,
+            'hours_6' => 7,
+        ];
+        $this->client->request('POST', '/contract/save', $parameter);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure([5]);
+        $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->where('start = ?')
+            ->setParameter(0, '2025-11-11');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDbEntry = array(
+            0 => array(
+                'user_id' => 1,
+                'start' => '2025-11-11',
+                'hours_0' => 1.0,
+                'hours_1' => 2.0,
+                'hours_2' => 3.0,
+                'hours_3' => 4.3,
+                'hours_4' => 5.0,
+                'hours_5' => 6.0,
+                'hours_6' => 7.0,
+            ),
+        );
+        $this->assertArraySubset($expectedDbEntry, $result);
+        // test old contract updated
+        $this->queryBuilder
+            ->select('*')
+            ->from('contracts')
+            ->where('start = ?')
+            ->setParameter(0, '2020-02-01');
+        $result = $this->queryBuilder->execute()->fetchAll();
+        $expectedDbEntry = array(
+            0 => array(
+                'user_id' => 1,
+                'start' => '2020-02-01',
+                'end' => '2025-11-10'
+            ),
+        );
+        $this->assertArraySubset($expectedDbEntry, $result);
+    }
+
     public function testSaveContractActionAlterExistingContract()
     {
         $parameter = [
