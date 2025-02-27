@@ -29,7 +29,7 @@
         "ext-pcre": "*",
         "ext-pdo": "*",
         "ext-reflection": "*",
-        "doctrine/doctrine-bundle": "^1.6",
+        "doctrine/doctrine-bundle": "^2.0",
         "doctrine/doctrine-migrations-bundle": "*",
         "doctrine/orm": "^2.5",
         "fig/link-util": "^1.1.0",
