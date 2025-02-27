@@ -1,4 +1,4 @@
-FROM php:7.4-fpm AS runtime
+FROM php:8.4-fpm AS runtime
 
 #ENV SYMFONY_ENV=prod
 
