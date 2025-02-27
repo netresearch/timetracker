@@ -39,7 +39,7 @@
         "jms/di-extra-bundle": "*",
         "jms/security-extra-bundle": "*",
         "laminas/laminas-zendframework-bridge": "^1.6",
-        "phpoffice/phpspreadsheet": "^1.4",
+        "phpoffice/phpspreadsheet": "^4.0",
         "psr/link": "1.0.0",
         "sensio/distribution-bundle": "^5.0.19",
         "sensio/framework-extra-bundle": "^5.0.0",
