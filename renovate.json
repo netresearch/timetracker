@@ -7,6 +7,6 @@
     "schedule": ["at any time"]
   },
   "env": {
-    "COMPOSER_WITH_ALL_DEPENDENCIES": "1"
+    "COMPOSER_WITH_DEPENDENCIES": "1"
   }
 }
