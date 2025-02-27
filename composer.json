@@ -31,7 +31,7 @@
         "ext-reflection": "*",
         "doctrine/doctrine-bundle": "^1.6",
         "doctrine/doctrine-migrations-bundle": "*",
-        "doctrine/orm": "^2.5",
+        "doctrine/orm": "^3.0",
         "fig/link-util": "^1.1.0",
         "guzzlehttp/guzzle": "^7.3",
         "guzzlehttp/oauth-subscriber": "^0.6",
