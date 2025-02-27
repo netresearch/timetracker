@@ -19,7 +19,6 @@ use App\Entity\Entry;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
-use App\Helper\LOReadFilter;
 use App\Kernel;
 use App\Model\Response;
 use App\Services\Export;
@@ -93,7 +92,6 @@ class ControllingController extends BaseController
 
         //$spreadsheet = new Spreadsheet();
         $reader = IOFactory::createReader('Xlsx');
-        $reader->setReadFilter(new LOReadFilter());
         $spreadsheet = $reader->load(
             $kernel->getProjectDir().'/assets/template.xlsx'
         );
