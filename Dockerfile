@@ -24,7 +24,7 @@ RUN apk add --no-cache \
 
 # install gnu-libiconv and set LD_PRELOAD env to make iconv work fully on Alpine image.
 # see https://github.com/docker-library/php/issues/240#issuecomment-763112749
-ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
+ENV LD_PRELOAD="/usr/lib/preloadable_libiconv.so"
 
 ARG APCU_VERSION=5.1.21
 ARG XDEBUG_VERSION=3.1.2
@@ -99,15 +99,15 @@ WORKDIR /srv/app
 
 # Allow to choose skeleton
 ARG SKELETON="symfony/skeleton"
-ENV SKELETON ${SKELETON}
+ENV SKELETON="${SKELETON}"
 
 # Allow to use development versions of Symfony
 ARG STABILITY="stable"
-ENV STABILITY ${STABILITY}
+ENV STABILITY="${STABILITY}"
 
 # Allow to select skeleton version
 ARG SYMFONY_VERSION=""
-ENV SYMFONY_VERSION ${SYMFONY_VERSION}
+ENV SYMFONY_VERSION="${SYMFONY_VERSION}"
 
 # Download the Symfony skeleton and leverage Docker cache layers
 RUN composer create-project "${SKELETON} ${SYMFONY_VERSION}" . --stability=$STABILITY --prefer-dist --no-dev --no-progress --no-interaction; \
