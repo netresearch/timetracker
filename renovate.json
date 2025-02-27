@@ -5,5 +5,8 @@
   "lockFileMaintenance" {
     "enabled": true,
     "schedule": ["at any time"]
+  },
+  "env": {
+    "COMPOSER_WITH_ALL_DEPENDENCIES": "1"
   }
 }
