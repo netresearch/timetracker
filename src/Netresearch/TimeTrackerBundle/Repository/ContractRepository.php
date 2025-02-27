@@ -18,7 +18,12 @@ class ContractRepository extends EntityRepository
      */
     public function getContracts()
     {
-        $contracts = $this->findBy([], ['start' => 'ASC']);
+        $contracts = $this->createQuerybuilder('contracts')
+            ->join('contracts.user', 'users')
+            ->orderBy('users.username', 'ASC')
+            ->addOrderBy('contracts.start', 'ASC')
+            ->getQuery()
+            ->getResult();
         $data = [];
 
         /* @var Contract $contract */
