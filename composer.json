@@ -34,7 +34,7 @@
         "doctrine/orm": "^2.5",
         "fig/link-util": "^1.1.0",
         "guzzlehttp/guzzle": "^7.3",
-        "guzzlehttp/oauth-subscriber": "^0.6",
+        "guzzlehttp/oauth-subscriber": "^0.8",
         "incenteev/composer-parameter-handler": "^2.0",
         "jms/di-extra-bundle": "*",
         "jms/security-extra-bundle": "*",
