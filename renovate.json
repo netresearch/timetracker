@@ -1,5 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "baseBranches": ["main", "v4"]
+  "baseBranches": ["main", "v4"],
+  "lockFileMaintenance" {
+    "enabled": true,
+    "schedule": ["at any time"]
+  }
 }
