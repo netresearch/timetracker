@@ -938,6 +938,20 @@ class AdminControllerTest extends BaseTest
                     'hours_6' => 0.5,
                 ],
             ],
+            [
+                'contract' => [
+                    'id' => 4,
+                    'user_id' => 3,
+                    'start' => '0700-01-01',
+                    'hours_0' => 1,
+                    'hours_1' => 2,
+                    'hours_2' => 3,
+                    'hours_3' => 4,
+                    'hours_4' => 5,
+                    'hours_5' => 5,
+                    'hours_6' => 5,
+                ],
+            ],
         ];
 
         $this->client->request('GET', '/getContracts');
