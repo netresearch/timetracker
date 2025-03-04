@@ -779,37 +779,39 @@ Ext.define('Netresearch.widget.Interpretation', {
 });
 
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
-    Ext.apply(Netresearch.widget.Interpretation.prototype, {
-        _tabTitle: 'Auswertung',
-        _monthTitle: 'Monat',
-        _yearTitle: 'Jahr',
-        _customerTitle: 'Kunde',
-        _datestartTitle: 'Datum von',
-        _dateendTitle: 'Datum bis',
-        _hoursTitle: 'Stunden',
-        _projectTitle: 'Projekt',
-        _userTitle: 'Mitarbeiter',
-        _teamTitle: 'Team',
-        _dayTitle: 'Tag',
-        _activityTitle: 'Tätigkeit',
-        _ticketTitle: 'Fall',
-        _descriptionTitle: 'Beschreibung',
-        _searchInDescriptionTitle: 'Suche in Beschreibung',
-        _effortByCustomerTitle: 'Aufwand nach Kunden',
-        _effortByProjectTitle: 'Aufwand nach Projekt',
-        _effortByUserTitle: 'Aufwand nach Mitarbeitern',
-        _effortByTeamTitle: 'Aufwand nach Teams',
-        _effortByActivityTitle: 'Aufwand nach Tätigkeiten',
-        _effortByDayTitle: 'Aufwand nach Tagen',
-        _effortByTicketTitle: 'Aufwand nach Fall',
-        _shortcutsTitle: 'Shortcuts',
-        _refreshTitle: 'Aktualisieren',
-        _resetTitle: 'Zurücksetzen',
-        _showHelpTitle: 'Hilfe anzeigen',
-        _noDataFoundTitle: 'Es konnten keine Daten gefunden werden.',
-        _lastEntriesTitle: 'Letzte Einträge',
-        _attentionTitle: 'Achtung',
-        _chooseCustomerProjectUserOrYearAndMonthTitle: 'Es muss mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat ausgewählt werden.'
-    });
-}
+Ext.onReady(function () {
+    if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+        Ext.apply(Netresearch.widget.Interpretation.prototype, {
+            _tabTitle: 'Auswertung',
+            _monthTitle: 'Monat',
+            _yearTitle: 'Jahr',
+            _customerTitle: 'Kunde',
+            _datestartTitle: 'Datum von',
+            _dateendTitle: 'Datum bis',
+            _hoursTitle: 'Stunden',
+            _projectTitle: 'Projekt',
+            _userTitle: 'Mitarbeiter',
+            _teamTitle: 'Team',
+            _dayTitle: 'Tag',
+            _activityTitle: 'Tätigkeit',
+            _ticketTitle: 'Fall',
+            _descriptionTitle: 'Beschreibung',
+            _searchInDescriptionTitle: 'Suche in Beschreibung',
+            _effortByCustomerTitle: 'Aufwand nach Kunden',
+            _effortByProjectTitle: 'Aufwand nach Projekt',
+            _effortByUserTitle: 'Aufwand nach Mitarbeitern',
+            _effortByTeamTitle: 'Aufwand nach Teams',
+            _effortByActivityTitle: 'Aufwand nach Tätigkeiten',
+            _effortByDayTitle: 'Aufwand nach Tagen',
+            _effortByTicketTitle: 'Aufwand nach Fall',
+            _shortcutsTitle: 'Shortcuts',
+            _refreshTitle: 'Aktualisieren',
+            _resetTitle: 'Zurücksetzen',
+            _showHelpTitle: 'Hilfe anzeigen',
+            _noDataFoundTitle: 'Es konnten keine Daten gefunden werden.',
+            _lastEntriesTitle: 'Letzte Einträge',
+            _attentionTitle: 'Achtung',
+            _chooseCustomerProjectUserOrYearAndMonthTitle: 'Es muss mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat ausgewählt werden.'
+        });
+    }
+});
