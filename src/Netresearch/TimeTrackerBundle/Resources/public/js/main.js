@@ -74,7 +74,7 @@ function addTab(component) {
     ttt_items.push(component);
 }
 
-Ext.onDocumentReady(function() {
+Ext.onReady(function() {
     // Setup state manager
     Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 
