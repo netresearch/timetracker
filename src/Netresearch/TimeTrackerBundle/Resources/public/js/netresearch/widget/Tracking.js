@@ -1389,7 +1389,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
 });
 
-Ext.onReady(function () {
+function NetresearchWidgetTrackingLoadSettings(settingsData) {
     if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         Ext.apply(Netresearch.widget.Tracking.prototype, {
             _tabTitle: 'Zeiterfassung',
@@ -1436,4 +1436,4 @@ Ext.onReady(function () {
             _successTitle: 'Erfolg'
         });
     }
-});
+};
