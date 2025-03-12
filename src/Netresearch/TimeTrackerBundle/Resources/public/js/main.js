@@ -19,6 +19,7 @@ Ext.require([
     'Ext.container.Viewport',
     'Ext.form.*',
     'Ext.ux.window.Notification',
+    'Netresearch.model.Entry',
     'Netresearch.widget.Tracking',
     'Netresearch.widget.Interpretation',
     'Netresearch.widget.Extras',

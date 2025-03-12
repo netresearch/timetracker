@@ -106,7 +106,6 @@ Ext.define('Netresearch.widget.Interpretation', {
     }),
 
     entryStore: Ext.create('Ext.data.JsonStore', {
-        fields: ['name', 'hours', 'quota'],
         requires: [
             'Netresearch.model.Entry'
         ],
