@@ -78,12 +78,14 @@ Ext.onReady(function() {
     // Setup state manager
     Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 
+    NetresearchWidgetTrackingLoadSettings(settingsData);
     const trackingWidget = Ext.create('Netresearch.widget.Tracking', {
         itemId: 'tracking',
         plugins: [cellEditing],
         autoRefreshInterval: true
     });
 
+    NetresearchWidgetInterpretationLoadSettings(settingsData);
     const interpretationWidget = Ext.create('Netresearch.widget.Interpretation', { itemId: 'interpretation' });
     const extrasWidget = Ext.create('Netresearch.widget.Extras', { itemId: 'extras'});
     const settingsWidget = Ext.create('Netresearch.widget.Settings', { itemId: 'settings' });
