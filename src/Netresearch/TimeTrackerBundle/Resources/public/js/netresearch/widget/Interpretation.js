@@ -572,7 +572,7 @@ Ext.define('Netresearch.widget.Interpretation', {
                     mode: 'local',
                     listeners: {
                         select: function(field, value) {
-                            widget.filterableProjectStore.load({ 
+                            widget.filterableProjectStore.load({
                                 params: {
                                     customer: value[0].data.id
                                 }
@@ -768,8 +768,8 @@ Ext.define('Netresearch.widget.Interpretation', {
 
     displayShortcuts: function() {
         var shortcuts = new Array(
-                'ALT-R: ' + this._refreshTitle + ' (<b>R</b>efresh)', 
-                '', 
+                'ALT-R: ' + this._refreshTitle + ' (<b>R</b>efresh)',
+                '',
                 '?: ' + this._showHelpTitle);
         var grid = this;
         Ext.MessageBox.alert(this._shortcutsTitle, shortcuts.join('<br/>'), function(btn) {
