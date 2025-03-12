@@ -779,7 +779,7 @@ Ext.define('Netresearch.widget.Interpretation', {
 });
 
 
-Ext.onReady(function () {
+function NetresearchWidgetInterpretationLoadSettings(settingsData) {
     if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         Ext.apply(Netresearch.widget.Interpretation.prototype, {
             _tabTitle: 'Auswertung',
@@ -814,4 +814,4 @@ Ext.onReady(function () {
             _chooseCustomerProjectUserOrYearAndMonthTitle: 'Es muss mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat ausgewählt werden.'
         });
     }
-});
+}
