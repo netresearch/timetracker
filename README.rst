@@ -18,11 +18,10 @@ Features:
 - Administration interface for customers, projects, users and teams
 - XLSX export for controlling tasks
 - AD/LDAP authentication
-- Jira integration: Creates and updates worklog entries in issues
+- Jira integration: Creates and updates work log entries in issues
 
 
 __ https://github.com/netresearch/timalytics
-
 
 
 .. sectnum::
@@ -32,27 +31,27 @@ __ https://github.com/netresearch/timalytics
 Usage
 =====
 
-Add worklog entry
------------------
+Add work log entry
+------------------
 
 Click the button **Add Entry**.
 Or use the keyboard shortcut **a**.
 
-Edit worklog entry
-------------------
+Edit work log entry
+-------------------
 
-Just click inside any field of any existing worklog entry.
+Just click inside any field of any existing work log entry.
 
-Delete worklog entry
---------------------
+Delete work log entry
+---------------------
 
-Rightclick on an worklog entry and select **Delete** from context menu.
-Or use keyboard shortcut **d** to delete focused worklog entry.
+Right-click on an work log entry and select **Delete** from context menu.
+Or use keyboard shortcut **d** to delete focused work log entry.
 
 Focus
 -----
 
-Worklog entry with focus has a yellow background.
+Work log entry with focus has a yellow background.
 Move the focus with keyboard **up** and **down** keys.
 
 User roles
@@ -139,11 +138,11 @@ Setup - with prebuilt docker images
 -----------------------------------
 
 #. Create an empty folder
-#. Put the provided docker-composer.yml from this git repo in it
+#. Put the provided composer.yml from this git repo in it
 #. Put the provided nginx configuration file from this repo into the above created folder
 #. Put the provided ``app/config/parameters.yml.dist`` from this repo as ``parameters.yml`` into the above created folder, and ``sentry.yml.dist`` as ``sentry.yml``.
-#. Check and adapt the copied confoguration files to your needs
-#. Run ``docker-compose up -d``
+#. Check and adapt the copied configuration files to your needs
+#. Run ``docker compose up -d``
 
 
 Trusted proxies

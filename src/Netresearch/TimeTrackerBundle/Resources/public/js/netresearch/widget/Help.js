@@ -25,15 +25,15 @@ Ext.define('Netresearch.widget.Help', {
             margin: '0 0 10 0',
             items: [{
                 html:
-                    "<h3>Add worklog entry</h3>" +
+                    "<h3>Add work log entry</h3>" +
                     "<p>Click the button <strong>Add Entry</strong>. Use the keyboard shortcut <strong>a</strong>.</p>" +
-                    "<h3>Edit worklog entry</h3>" +
-                    "<p>Just click inside any field of any existing worklog entry.</p>" +
-                    "<h3>Delete worklog entry</h3>" +
-                    "<p>Rightclick on an worklog entry and select <strong>Delete</strong> from context menu." +
-                    "Use keyboard shortcut <strong>d</strong> to delete focused worklog entry.</p>" +
+                    "<h3>Edit work log entry</h3>" +
+                    "<p>Just click inside any field of any existing work log entry.</p>" +
+                    "<h3>Delete work log entry</h3>" +
+                    "<p>Right-click on an work log entry and select <strong>Delete</strong> from context menu." +
+                    "Use keyboard shortcut <strong>d</strong> to delete focused work log entry.</p>" +
                     "<h3>Focus</h3>" +
-                    "<p>Worklog entry with focus has a yellow background." +
+                    "<p>Work log entry with focus has a yellow background." +
                     "Move the focus with keyboard <strong>up</strong> and <strong>down</strong> keys.</p>"
                 ,
                 xtype: "panel"
