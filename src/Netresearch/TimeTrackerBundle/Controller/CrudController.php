@@ -325,7 +325,7 @@ class CrudController extends BaseController
             // update JIRA, if necessary
             try {
                 $this->updateJiraWorklog($entry, $oldEntry);
-                // Save potential worklog ID
+                // Save potential work log ID
                 $em->persist($entry);
                 $em->flush();
             } catch (JiraApiException $e) {
@@ -740,7 +740,7 @@ class CrudController extends BaseController
 
         if ($this->shouldTicketBeDeleted($entry, $oldEntry)) {
             // ticket number changed
-            // delete old worklog - new one will be created later
+            // delete old work log - new one will be created later
             $this->deleteJiraWorklog($oldEntry, $ticketSystem);
             $entry->setWorklogId(NULL);
         }

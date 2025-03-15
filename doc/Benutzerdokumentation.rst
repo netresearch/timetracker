@@ -45,23 +45,23 @@ It tracks working hours for employees and expenses for costumers/projects.
 Beside working hours you can also track sick days and holidays.
 
 
-Basics of worktime calculations
--------------------------------
+Basics of work time calculations
+--------------------------------
 
-Worklog is tracked in minutes and saved as integer.
+Work log is tracked in minutes and saved as integer.
 Times are rendered in 24h hh:mm (13:30) format.
 If useful their is an additional value for person days in parentheses (16:00 (2 PD))
 One person day consist always of 8 hours.
 
 |
 
-Timetracking
-============
+Time tracking
+=============
 
 |
 
-Add worklog entry
------------------
+Add work log entry
+------------------
 
 Click the button **Add Entry**.
 Or use the keyboard shortcut **a**.
