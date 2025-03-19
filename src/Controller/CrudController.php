@@ -17,11 +17,24 @@ use App\Helper\TicketHelper;
 
 use App\Model\JsonResponse;
 use App\Model\Response;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 class CrudController extends BaseController
 {
-    const LOG_FILE = 'trackingsave.log';
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @required
+     * @param LoggerInterface $trackingLogger
+     */
+    public function setLogger(LoggerInterface $trackingLogger)
+    {
+        $this->logger = $trackingLogger;
+    }
 
     public function deleteAction(Request $request)
     {
@@ -190,7 +203,7 @@ class CrudController extends BaseController
 
         try {
             $alert = null;
-            $this->logDataToFile($_POST, TRUE);
+            $this->logData($_POST, TRUE);
 
             $doctrine = $this->getDoctrine();
             /** @var \App\Repository\EntryRepository $entryRepo */
@@ -280,7 +293,7 @@ class CrudController extends BaseController
                 ->setSyncedToTicketsystem(FALSE);
 
             // write log
-            $this->logDataToFile($entry->toArray());
+            $this->logData($entry->toArray());
 
             // Check if the activity needs a ticket
             if (($user->getType() == 'DEV') && is_object($activity) && $activity->getNeedsTicket()) {
@@ -373,7 +386,7 @@ class CrudController extends BaseController
 
         try {
             $alert = null;
-            $this->logDataToFile($_POST, TRUE);
+            $this->logData($_POST, TRUE);
 
             $doctrine = $this->getDoctrine();
 
@@ -552,7 +565,7 @@ class CrudController extends BaseController
                 }
 
                 // write log
-                $this->logDataToFile($entry->toArray());
+                $this->logData($entry->toArray());
 
                 $em->persist($entry);
                 $em->flush();
@@ -663,42 +676,19 @@ class CrudController extends BaseController
     }
 
     /**
-     * Write log entry to log file.
+     * Write log entry using Symfony's standard logging mechanism.
      *
-     * @param array $data
-     * @param bool  $raw
-     * @throws \Exception
+     * @param array $data The data to log
+     * @param bool  $raw  Whether this is raw input data
      */
-    private function logDataToFile(array $data, $raw = FALSE)
+    private function logData(array $data, $raw = FALSE)
     {
-        $file = $this->kernel->getProjectDir() . '/src/logs/' . self::LOG_FILE;
-        if (!file_exists($file) && !touch($file)) {
-            throw new \Exception(
-                $this->translator->trans(
-                    'Could not create log file: %log_file%',
-                    array('%log_file%' => $file)
-                )
-            );
-        }
+        $context = [
+            'type' => ($raw ? 'raw' : 'obj'),
+            'data' => $data
+        ];
 
-        if (!is_writable($file)) {
-            throw new \Exception(
-                $this->translator->trans(
-                    'Cannot write to log file: %log_file%',
-                    array('%log_file%' => $file)
-                )
-            );
-        }
-
-        $log = sprintf(
-            '[%s][%s]: %s %s',
-            date('d.m.Y H:i:s'),
-            ($raw ? 'raw' : 'obj'),
-            json_encode($data),
-            PHP_EOL
-        );
-
-        file_put_contents($file, $log, FILE_APPEND);
+        $this->logger->info('Tracking data', $context);
     }
 
     /**
