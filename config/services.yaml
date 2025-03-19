@@ -39,12 +39,18 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            - '../src/Migrations/'
+            - '../src/Tests/'
 
-    # Controllers are imported separately to make sure services can be injected
-    # as action arguments even if you don't extend any base controller class
+    # Controllers are tagged automatically
     App\Controller\:
-        resource: '../src/Controller'
+        resource: '../src/Controller/'
         tags: ['controller.service_arguments']
+
+    # Add this if you use repositories
+    App\Repository\:
+        resource: '../src/Repository/'
+        tags: ['doctrine.repository_service']
 
     # Add more service definitions when explicit configuration is needed
     # Please note that last definitions always *replace* previous ones
