@@ -47,6 +47,11 @@ class Customer extends Base
     protected $entries;
 
     /**
+     * @ORM\OneToMany(targetEntity="Preset", mappedBy="customer")
+     */
+    protected $presets;
+
+    /**
      * @ORM\ManyToMany(targetEntity="Team", inversedBy="customers")
      * @ORM\JoinTable(name="teams_customers",
      *     joinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")},
@@ -60,6 +65,7 @@ class Customer extends Base
         $this->projects = new ArrayCollection();
         $this->entries  = new ArrayCollection();
         $this->teams    = new ArrayCollection();
+        $this->presets  = new ArrayCollection();
     }
 
 
@@ -301,5 +307,37 @@ class Customer extends Base
         $this->entries[] = $entries;
 
         return $this;
+    }
+
+    /**
+     * Get presets
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getPresets()
+    {
+        return $this->presets;
+    }
+
+    /**
+     * Add preset
+     *
+     * @param Preset $preset
+     * @return Customer
+     */
+    public function addPreset(Preset $preset)
+    {
+        $this->presets[] = $preset;
+        return $this;
+    }
+
+    /**
+     * Remove preset
+     *
+     * @param Preset $preset
+     */
+    public function removePreset(Preset $preset)
+    {
+        $this->presets->removeElement($preset);
     }
 }

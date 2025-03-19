@@ -24,13 +24,13 @@ class Team
     protected $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="teams")
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="leadTeams")
      * @ORM\JoinColumn(name="lead_user_id", referencedColumnName="id")
      */
     protected $leadUser;
 
     /**
-     * @ORM\ManyToMany(targetEntity="Customer", inversedBy="teams")
+     * @ORM\ManyToMany(targetEntity="Customer", mappedBy="teams")
      * @ORM\JoinTable(name="teams_customers",
      *     joinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")},
      *     inverseJoinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")}
