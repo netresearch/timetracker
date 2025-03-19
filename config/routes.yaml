@@ -1,10 +1,15 @@
 # config/routes.yaml
 # Main routing configuration
 
-# Direct login route to bypass any routing issues
-_login_form:
-    path: /login_form
+# Standard login route (Symfony 4 convention)
+_login:
+    path: /login
     controller: App\Controller\SecurityController::login
+
+# Logout route (Symfony 4 convention)
+_logout:
+    path: /logout
+    controller: App\Controller\SecurityController::logout
 
 # TimeTracker routes - Load from the legacy bundle config for backward compatibility
 timetracker:

@@ -32,7 +32,7 @@ security:
             # Standard logout configuration
             logout:
                 path: _logout
-                target: _login_form
+                target: _login
                 # Add any other logout handlers if needed
                 # handlers:
                 #    - App\Security\LogoutHandler
@@ -45,7 +45,6 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/login_form, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/logout, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/start, roles: ROLE_USER }
