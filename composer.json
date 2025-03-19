@@ -39,48 +39,47 @@
         "doctrine/persistence": "^2.0",
         "guzzlehttp/guzzle": "^7.3",
         "guzzlehttp/oauth-subscriber": "^0.8",
-        "incenteev/composer-parameter-handler": "^2.0",
         "laminas/laminas-ldap": "^2.19",
         "phpoffice/phpspreadsheet": "^1.4",
         "sentry/sentry-symfony": "^4.2",
+        "symfony/asset": "^4.4",
+        "symfony/console": "^4.4",
+        "symfony/dotenv": "^4.4",
+        "symfony/flex": "^1.19",
+        "symfony/form": "^4.4",
         "symfony/framework-bundle": "^4.4",
         "symfony/mailer": "^4.4",
         "symfony/monolog-bundle": "^3.1.0",
-        "symfony/symfony": "^4.4",
-        "twig/twig": "^1.0||^2.0"
+        "symfony/security-bundle": "^4.4",
+        "symfony/translation": "^4.4",
+        "symfony/twig-bundle": "^4.4",
+        "symfony/validator": "^4.4",
+        "symfony/yaml": "^4.4",
+        "twig/twig": "^2.12|^3.0"
     },
     "require-dev": {
-        "symfony/debug-bundle": "*",
+        "phpunit/phpunit": "^9.5",
+        "symfony/debug-bundle": "^4.4",
         "symfony/maker-bundle": "^1.39",
-        "symfony/phpunit-bridge": "^3.0",
-        "symfony/web-profiler-bundle": "*",
-        "symfony/webpack-encore-bundle": "*"
+        "symfony/web-profiler-bundle": "^4.4",
+        "symfony/webpack-encore-bundle": "^1.0"
     },
     "scripts": {
-        "symfony-scripts": [
-            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::buildBootstrap",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installAssets",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile",
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::prepareDeploymentTarget"
-        ],
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        },
         "post-install-cmd": [
-            "@symfony-scripts"
+            "@auto-scripts"
         ],
         "post-update-cmd": [
-            "@symfony-scripts"
+            "@auto-scripts"
         ]
     },
     "extra": {
-        "symfony-app-dir": "app",
-        "symfony-bin-dir": "bin",
-        "symfony-var-dir": "var",
-        "symfony-web-dir": "web",
-        "symfony-tests-dir": "tests",
-        "incenteev-parameters": {
-            "file": "app/config/parameters.yml",
-            "dist-file": "app/config/parameters.yml.dist"
+        "symfony": {
+            "allow-contrib": false,
+            "require": "4.4.*"
         },
         "branch-alias": null
     }
