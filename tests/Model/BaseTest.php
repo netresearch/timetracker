@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Tests\Model;
+namespace Tests\Model;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Model\Base;
 
 class TestModel extends Base

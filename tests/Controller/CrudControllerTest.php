@@ -1,11 +1,10 @@
 <?php
 
-namespace Tests\Netresearch\TimeTrackerBundle\Controller;
+namespace Tests\Controller;
 
-use Tests\BaseTest;
-use Illuminate\Support\Facades\DB;
+use Tests\Base;
 
-class CrudControllerTest extends BaseTest
+class CrudControllerTest extends Base
 {
     public function testSaveAction()
     {

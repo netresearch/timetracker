@@ -145,9 +145,9 @@ VALUES
 -- users-to-teams
 --
 INSERT INTO
-  `teams_users` (`id`, `team_id`, `user_id`)
+  `teams_users` (`team_id`, `user_id`)
 VALUES
-  (1, 1, 1);
+  (1, 1);
 
 --
 -- customers
@@ -163,10 +163,10 @@ VALUES
 -- customers-to-teams
 --
 INSERT INTO
-  `teams_customers` (`id`, `team_id`, `customer_id`)
+  `teams_customers` (`team_id`, `customer_id`)
 VALUES
-  (1, 1, 1),
-  (2, 2, 2);
+  (1, 1),
+  (2, 2);
 
 --
 -- projects

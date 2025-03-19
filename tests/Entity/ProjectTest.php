@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Entity;
+namespace Tests\Entity;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -15,7 +15,7 @@ class ProjectTest extends TestCase
     {
         $project = new Project();
 
-        $this->assertEquals($project, 
+        $this->assertEquals($project,
             $project
                 ->setId(null)
                 ->setName(null)
@@ -43,7 +43,7 @@ class ProjectTest extends TestCase
         $project->setName('Test-Project');
         $this->assertEquals('Test-Project', $project->getName());
 
-        // test ticket prefix 
+        // test ticket prefix
         $this->assertEquals(null, $project->getJiraId());
         $project->setJiraId('ABC');
         $this->assertEquals('ABC', $project->getJiraId());
@@ -78,7 +78,7 @@ class ProjectTest extends TestCase
         $project->setBilling(Project::BILLING_TM);
         $this->assertEquals(Project::BILLING_TM, $project->getBilling());
 
-        // test invoice 
+        // test invoice
         $this->assertEquals(null, $project->getInvoice());
         $project->setInvoice('20130122456');
         $this->assertEquals('20130122456', $project->getInvoice());
