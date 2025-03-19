@@ -76,7 +76,12 @@ class User implements UserInterface
     protected $teams;
 
     /**
-     * @ORM\Column(name="locale", type="string", nullable=false)
+     * @ORM\OneToMany(targetEntity="Team", mappedBy="leadUser")
+     */
+    protected $leadTeams;
+
+    /**
+     * @ORM\Column(type="string", nullable=false)
      */
     protected $locale;
 
@@ -91,6 +96,7 @@ class User implements UserInterface
     public function __construct()
     {
         $this->entries = new ArrayCollection();
+        $this->leadTeams = new ArrayCollection();
     }
 
     /**
@@ -453,5 +459,37 @@ class User implements UserInterface
     {
         // Since we're using LDAP, we don't store passwords
         return '';
+    }
+
+    /**
+     * Get the teams where this user is a lead
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getLeadTeams()
+    {
+        return $this->leadTeams;
+    }
+
+    /**
+     * Add a team where this user is lead
+     *
+     * @param Team $team
+     * @return User
+     */
+    public function addLeadTeam(Team $team)
+    {
+        $this->leadTeams[] = $team;
+        return $this;
+    }
+
+    /**
+     * Remove a team where this user is lead
+     *
+     * @param Team $team
+     */
+    public function removeLeadTeam(Team $team)
+    {
+        $this->leadTeams->removeElement($team);
     }
 }

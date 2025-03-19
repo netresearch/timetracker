@@ -23,32 +23,32 @@ class UserTicketsystem extends Base
 
     /**
      * @ORM\ManyToOne(targetEntity="TicketSystem")
-     * @ORM\JoinColumn(name="ticket_system_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="ticket_system_id", referencedColumnName="id", nullable=true)
      */
     protected $ticketSystem;
 
 
     /**
      * @ORM\ManyToOne(targetEntity="User", inversedBy="userTicketsystems")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true)
      */
     protected $user;
 
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(name="access_token", type="string", length=50)
      */
     protected $accessToken;
 
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(name="token_secret", type="string", length=50)
      */
     protected $tokenSecret;
 
 
     /**
-     * @ORM\Column(columnDefinition="TINYINT(1) unsigned DEFAULT 0 NOT NULL")
+     * @ORM\Column(name="avoid_connection", columnDefinition="TINYINT(1) unsigned DEFAULT 0 NOT NULL")
      */
     protected $avoidConnection;
 

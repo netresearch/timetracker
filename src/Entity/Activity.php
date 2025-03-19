@@ -14,7 +14,7 @@ class Activity
 {
     const SICK    = 'Krank';
     const HOLIDAY = 'Urlaub';
-	
+
 	/**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -42,9 +42,15 @@ class Activity
      */
     protected $entries;
 
+    /**
+     * @ORM\OneToMany(targetEntity="Preset", mappedBy="activity")
+     */
+    protected $presets;
+
     public function __construct()
     {
     	$this->entries = new ArrayCollection();
+        $this->presets = new ArrayCollection();
     }
 
 
@@ -226,5 +232,37 @@ class Activity
         }
 
         return false;
+    }
+
+    /**
+     * Get presets
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getPresets()
+    {
+        return $this->presets;
+    }
+
+    /**
+     * Add preset
+     *
+     * @param Preset $preset
+     * @return Activity
+     */
+    public function addPreset(Preset $preset)
+    {
+        $this->presets[] = $preset;
+        return $this;
+    }
+
+    /**
+     * Remove preset
+     *
+     * @param Preset $preset
+     */
+    public function removePreset(Preset $preset)
+    {
+        $this->presets->removeElement($preset);
     }
 }

@@ -51,7 +51,7 @@ class TicketSystem extends Base
 
     /**
      * @var string $ticketUrl
-     * @ORM\Column(type="string", name="ticketurl")
+     * @ORM\Column(name="ticketurl", type="string", length=255, nullable=false)
      */
     protected $ticketUrl;
 
@@ -82,13 +82,13 @@ class TicketSystem extends Base
 
     /**
      * @var string $oauthConsumerKey
-     * @ORM\Column(type="string", name="oauth_consumer_key")
+     * @ORM\Column(name="oauth_consumer_key", type="string", length=255, nullable=false)
      */
     protected $oauthConsumerKey;
 
     /**
      * @var string $oauthConsumerSecret
-     * @ORM\Column(type="string", name="oauth_consumer_secret")
+     * @ORM\Column(name="oauth_consumer_secret", type="string", length=255, nullable=false)
      */
     protected $oauthConsumerSecret;
 

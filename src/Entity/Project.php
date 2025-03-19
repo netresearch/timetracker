@@ -69,7 +69,7 @@ class Project extends Base
     protected $subtickets;
 
     /**
-     * @ORM\ManyToOne(targetEntity="TicketSystem", inversedBy="projects")
+     * @ORM\ManyToOne(targetEntity="TicketSystem")
      * @ORM\JoinColumn(name="ticket_system", referencedColumnName="id")
      */
     protected $ticketSystem;
@@ -79,6 +79,10 @@ class Project extends Base
      */
     protected $entries;
 
+    /**
+     * @ORM\OneToMany(targetEntity="Preset", mappedBy="project")
+     */
+    protected $presets;
 
     /**
      * Estimated project duration in minutes
@@ -211,6 +215,7 @@ class Project extends Base
     public function __construct()
     {
         $this->entries = new ArrayCollection();
+        $this->presets = new ArrayCollection();
     }
 
     /**
@@ -626,6 +631,38 @@ class Project extends Base
     public function matchesInternalJiraProject($projectKey)
     {
         return $projectKey === $this->getInternalJiraProjectKey();
+    }
+
+    /**
+     * Get presets
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getPresets()
+    {
+        return $this->presets;
+    }
+
+    /**
+     * Add preset
+     *
+     * @param Preset $preset
+     * @return Project
+     */
+    public function addPreset(Preset $preset)
+    {
+        $this->presets[] = $preset;
+        return $this;
+    }
+
+    /**
+     * Remove preset
+     *
+     * @param Preset $preset
+     */
+    public function removePreset(Preset $preset)
+    {
+        $this->presets->removeElement($preset);
     }
 
 }
