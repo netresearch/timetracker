@@ -1,35 +1,44 @@
 monolog:
-    channels: ['deprecation', 'ldap', 'exceptions']  # Add exceptions channel
+    channels: ['deprecation', 'ldap']
     handlers:
         main:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
-            channels: ["!event", "!ldap", "!exceptions"]
-        # Add specific handler for exceptions
-        exceptions:
-            type: stream
-            path: "%kernel.logs_dir%/%kernel.environment%.exceptions.log"
-            level: debug
-            channels: ["exceptions"]
+            channels: ["!event", "!ldap", "!deprecation"]
             formatter: monolog.formatter.json
-        # Add specific handler for LDAP logs
+
+        # Dedicated handler for LDAP logs
         ldap:
-            type: stream
+            type: rotating_file
             path: "%kernel.logs_dir%/%kernel.environment%.ldap.log"
             level: debug
             channels: ["ldap"]
+            max_files: 10
+            formatter: monolog.formatter.json
+
+        # Dedicated handler for deprecations
         deprecation:
-            type: stream
+            type: rotating_file
             path: "%kernel.logs_dir%/%kernel.environment%.deprecations.log"
             level: debug
-            channels: ["php", "doctrine"]  # These are built-in channels
+            channels: ["deprecation"]
+            max_files: 10
+            formatter: monolog.formatter.json
+
+        # Filter to only capture deprecation messages
         deprecation_filter:
             type: filter
             handler: deprecation
             max_level: info
-            channels: ["php", "doctrine"]  # These are built-in channels
-        # uncomment to get logging in your browser
+            channels: ["php", "doctrine"]
+
+        console:
+            type: console
+            process_psr_3_messages: false
+            channels: ["!event", "!console"]
+
+        # Uncomment to get logging in your browser
         # you may have to allow bigger header sizes in your Web server configuration
         #firephp:
         #    type: firephp
@@ -37,7 +46,3 @@ monolog:
         #chromephp:
         #    type: chromephp
         #    level: info
-        console:
-            type: console
-            process_psr_3_messages: false
-            channels: ["!event", "!console"]

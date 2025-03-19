@@ -39,7 +39,7 @@ class Team
     protected $customers;
 
     /**
-     * @ORM\ManyToMany(targetEntity="User", inversedBy="teams")
+     * @ORM\ManyToMany(targetEntity="User", mappedBy="teams")
      * @ORM\JoinTable(name="teams_users",
      *     joinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")},
      *     inverseJoinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")}

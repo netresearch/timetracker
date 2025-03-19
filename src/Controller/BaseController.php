@@ -108,19 +108,18 @@ class BaseController extends AbstractController
         $this->get('translator')->setLocale($locale);
     }
 
-
     /**
-     * check the login status
+     * Check if user is logged in via Symfony Security
      *
      * @param Request $request
      *
-     * @return mixed
+     * @return bool
      */
     protected function isLoggedIn(Request $request)
     {
-        return $request->getSession()->get('loggedIn');
+        // Use Symfony security component to check if user is authenticated
+        return $this->isGranted('IS_AUTHENTICATED_FULLY');
     }
-
 
     /**
      * Returns the user id
@@ -137,25 +136,14 @@ class BaseController extends AbstractController
             throw new AccessDeniedException('No user logged in');
         }
 
-        $realUserId      = $request->getSession()->get('loginId');
-        $simulatedUserId = $request->get('user', null);
-        if ($realUserId == $simulatedUserId) {
-            return $realUserId;
+        // Get user from Symfony security context
+        $user = $this->getUser();
+
+        if ($request->getSession()->has('loginRealId')) {
+            return $request->getSession()->get('loginRealId');
         }
 
-        if ($simulatedUserId === '') {
-            $simulatedUserId = null;
-        }
-        if ($simulatedUserId !== null) {
-            /** @var \App\Repository\UserRepository $userRepo */
-            $userRepo = $this->getDoctrine()->getRepository(\App\Entity\User::class);
-            $realUser = $userRepo->find($realUserId);
-            if (!$this->mayImpersonate($realUser, $simulatedUserId)) {
-                throw new AccessDeniedException('This user may not simulate other users');
-            }
-            return (int) $simulatedUserId;
-        }
-        return (int) $realUserId;
+        return $user->getId();
     }
 
     /**
@@ -163,9 +151,8 @@ class BaseController extends AbstractController
      */
     protected function mayImpersonate(User $realUser, $simulatedUserId): bool
     {
-        if ($realUser->isSuperuser()
-            || $realUser->getRole() === 'ADMIN'
-        ) {
+        // Check if user is admin or has special role
+        if ($this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_SUPER_ADMIN')) {
             return true;
         }
 
@@ -244,19 +231,21 @@ class BaseController extends AbstractController
     }
 
     /**
-     * Returns true if a user is logged in or can authenticate by cookie
+     * Checks if the user is logged in. Either in the session or via cookie
      *
-     * @param Request $request
+     * @param Request $request The request object
      *
      * @return bool
      */
     protected function checkLogin(Request $request)
     {
-        if ($this->isLoggedIn($request)) {
+        // First, check if the user is authenticated via Symfony security
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
             return true;
         }
 
-        $userId = (int) LoginHelper::getUserIdFromCookie();
+        // For backward compatibility, also check cookie-based authentication
+        $userId = (int) LoginHelper::getCookieUserId();
         if ($userId > 0) {
             /* @var $user User */
             $user = $this->entityManager
@@ -264,8 +253,8 @@ class BaseController extends AbstractController
                 ->find($userId);
 
             if ($user && LoginHelper::checkCookieUserName($user->getUsername(), $this->params->get('secret'))) {
+                // Authenticate in Symfony security system
                 $this->setLoggedIn($request, $user);
-
                 return true;
             }
         }
@@ -316,9 +305,9 @@ class BaseController extends AbstractController
     }
 
     /**
-     * Handles all after-login stuff
+     * Sets the session values to "logged in"
      *
-     * @param Request $request
+     * @param Request $request The request object
      * @param User    $user      user object
      * @param bool    $setCookie set a cookie or not
      *
@@ -353,31 +342,45 @@ class BaseController extends AbstractController
 
         if (true === $setCookie) {
             // set login cookie for autologin and 30 days persistence
-            LoginHelper::setLoginCookie($user->getId(), $user->getUsername(),
-                $this->params->get('secret'));
+            LoginHelper::setCookie($user->getId(), $user->getUsername(), $this->params->get('secret'));
         }
 
         $this->addFlash('success', $this->translate('Login successful.'));
 
-        return $this->redirect($this->generateUrl('_start'));
+        return $this->redirectToRoute('_start');
     }
 
-
     /**
-     * logout of an user
+     * sets the user logged out
      *
      * @param Request $request
      *
-     * @return void
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     protected function setLoggedOut(Request $request)
     {
-        // delete login cookies
+        $session = $request->getSession();
+
+        // if we're impersonating someone - get back to real user
+        if ($session->has('loginRealId')) {
+            $session->set('loginId', $session->get('loginRealId'));
+            $session->set('loginName', $session->get('loginRealName'));
+            $session->set('loginType', $session->get('loginRealType'));
+            $session->remove('loginRealId');
+            $session->remove('loginRealName');
+            $session->remove('loginRealType');
+
+            return $this->redirectToRoute('_start');
+        }
+
+        // set logout flash message
+        $this->addFlash('success', $this->translate('You are now logged out.'));
+
+        $session->clear();
         LoginHelper::deleteCookie();
 
-        $request->getSession()->clear();
+        return $this->redirectToRoute('_login');
     }
-
 
     /**
      * helper method to shorten the usage of the translator in the controllers

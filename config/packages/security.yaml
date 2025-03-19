@@ -1,15 +1,14 @@
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     encoders:
-        Symfony\Component\Security\Core\User\User: plaintext
+        App\Entity\User: plaintext
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        in_memory:
-            memory:
-                users:
-                    user: { password: userpass, roles: ['ROLE_USER'] }
-                    admin: { password: adminpass, roles: ['ROLE_ADMIN'] }
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: username
 
     role_hierarchy:
         ROLE_ADMIN: ROLE_USER
@@ -22,20 +21,36 @@ security:
 
         main:
             anonymous: true
+            provider: app_user_provider
 
-            # Example of login configuration - uncomment and modify as needed
-            # form_login:
-            #     login_path: login
-            #     check_path: login_check
-            # logout:
-            #     path: logout
-            #     target: homepage
+            # Custom authenticator for LDAP login
+            guard:
+                authenticators:
+                    - App\Security\LdapAuthenticator
+                entry_point: App\Security\LdapAuthenticator
+
+            # Standard logout configuration
+            logout:
+                path: _logout
+                target: _login_form
+                # Add any other logout handlers if needed
+                # handlers:
+                #    - App\Security\LogoutHandler
+
+            # Remember me functionality (optional)
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 2592000 # 30 days in seconds
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/login_form, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/logout, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/start, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/, roles: ROLE_USER }
 
         # Uncomment to restrict access to paths starting with /_internal to only localhost
         # - { path: ^/_internal/secure, roles: IS_AUTHENTICATED_ANONYMOUSLY, ip: 127.0.0.1 }

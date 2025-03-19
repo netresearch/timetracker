@@ -6,13 +6,14 @@ use App\Helper\LocalizationHelper;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  *
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  * @ORM\Table(name="users")
  */
-class User
+class User implements UserInterface
 {
 
     /**
@@ -421,5 +422,36 @@ class User
             }
         }
         return $return;
+    }
+
+    public function getRoles(): array
+    {
+        $roles = ['ROLE_USER'];
+        if ($this->type === 'ADMIN') {
+            $roles[] = 'ROLE_ADMIN';
+        }
+        return array_unique($roles);
+    }
+
+    public function eraseCredentials(): void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->username;
+    }
+
+    public function getSalt(): ?string
+    {
+        // Since we're using LDAP, we don't need a salt
+        return null;
+    }
+
+    public function getPassword(): string
+    {
+        // Since we're using LDAP, we don't store passwords
+        return '';
     }
 }

@@ -18,29 +18,33 @@
 					modal: true,
 					draggable: false,
 					items: [
-                    {% for flashMessage in app.session.flashbag.get('error') %}
+                    {% if error %}
 						Ext.create('Ext.panel.Panel', {
-							html: "{{ flashMessage }}"
+							html: "{{ error.message is defined ? error.message : 'Authentication error, please try again.' }}"
 						}),
-        			{% endfor %}
+        			{% endif %}
 					    Ext.create('Ext.form.Panel', {
 					    	bodyPadding: 5,
 					    	standardSubmit: true,
-					    	url: "{{ path('_login') }}",
+					    	url: "{{ path('_login_form') }}",
 					    	items: [
+                            {
+                                xtype: 'hiddenfield',
+                                name: '_csrf_token',
+                                value: '{{ csrf_token('authenticate') }}'
+                            },
 					    		{
 					    			xtype: 'textfield',
 					    			fieldLabel: 'Benutzername',
 					    			name: 'username',
 					    			allowBlank: false,
-                                    {% if username is defined %}
-                                        value: '{{ username }}',
+                                    {% if last_username is defined %}
+                                        value: '{{ last_username }}',
                                     {% endif %}
                                     listeners: {
                                         specialkey: function (field, e) {
                                             if (e.getKey() == e.ENTER) {
                                                 form = field.up('form').getForm();
-
                                                 form.submit();
                                             }
                                         },

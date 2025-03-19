@@ -1,6 +1,11 @@
 # config/routes.yaml
 # Main routing configuration
 
+# Direct login route to bypass any routing issues
+_login_form:
+    path: /login_form
+    controller: App\Controller\SecurityController::login
+
 # TimeTracker routes - Load from the legacy bundle config for backward compatibility
 timetracker:
     resource: "./legacy_bundle/routing.yml"

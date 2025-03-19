@@ -36,12 +36,19 @@ class DefaultController extends BaseController
     private $logger;
 
     /**
+     * @var \Symfony\Component\HttpKernel\KernelInterface
+     */
+    private $kernel;
+
+    /**
      * DefaultController constructor.
      * @param LoggerInterface $logger
+     * @param \Symfony\Component\HttpKernel\KernelInterface $kernel
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, \Symfony\Component\HttpKernel\KernelInterface $kernel)
     {
         $this->logger = $logger;
+        $this->kernel = $kernel;
     }
 
     /**
@@ -77,7 +84,7 @@ class DefaultController extends BaseController
                 'header_url'            => $this->params->get('app_header_url'),
             ],
             'apptitle'      => $this->params->get('app_title'),
-            'environment'   => $this->get('kernel')->getEnvironment(),
+            'environment'   => $this->kernel->getEnvironment(),
             'customers'     => $customers,
             'projects'      => $projects,
             'settings'      => $settings,
@@ -91,104 +98,30 @@ class DefaultController extends BaseController
      */
     public function loginAction(Request $request)
     {
-        if ($request->getMethod() != 'POST') {
-            return $this->render('login.html.twig',
-                array(
-                    'locale'  => 'en',
-                    'apptitle' => $this->params->get('app_title'),
-                )
-            );
-        }
-
-        $username = $request->request->get('username');
-        $password = $request->request->get('password');
-
-        try {
-
-            $client = new LdapClient($this->logger);
-
-            $client->setHost($this->params->get('ldap_host'))
-                ->setPort($this->params->get('ldap_port'))
-                ->setReadUser($this->params->get('ldap_readuser'))
-                ->setReadPass($this->params->get('ldap_readpass'))
-                ->setBaseDn($this->params->get('ldap_basedn'))
-                ->setUserName($username)
-                ->setUserPass($password)
-                ->setUseSSL($this->params->get('ldap_usessl'))
-                ->setUserNameField($this->params->get('ldap_usernamefield'))
-                ->login();
-
-            /** @var \App\Repository\UserRepository $userRepo */
-            $userRepo = $this->getDoctrine()
-                ->getRepository(User::class);
-            $user = $userRepo->findOneByUsername($username);
-
-            if (!$user) {
-                if (!(boolean) $this->params->get('ldap_create_user')) {
-                    throw new \Exception('No equivalent timetracker user could be found.');
-                }
-
-                // create new user if users.username doesn't exist for valid ldap-authentication
-                $user = new User();
-                $user->setUsername($username)
-                    ->setType('DEV')
-                    ->setShowEmptyLine('0')
-                    ->setSuggestTime('1')
-                    ->setShowFuture('1')
-                    ->setLocale('de');
-
-                if (!empty($client->getTeams())) {
-                    /** @var TeamRepository $teamRepo */
-                    $teamRepo = $this->getDoctrine()
-                        ->getRepository(Team::class);
-
-                    foreach ($client->getTeams() as $teamname) {
-                        /** @var Team $team */
-                        $team = $teamRepo->findOneBy([
-                            'name' => $teamname
-                        ]);
-
-                        if ($team) {
-                            $user->addTeam($team);
-                        }
-                    }
-                }
-
-                $em = $this->getDoctrine()->getManager();
-                $em->persist($user);
-                $em->flush();
-            }
-
-        } catch (\Exception $e) {
-
-            $this->get('session')->getFlashBag()->add(
-                'error', $this->translate($e->getMessage())
-            );
-            return $this->render('login.html.twig', array(
-                'locale'   => 'en',
-                'apptitle' => $this->params->get('app_title'),
-                'username' => $username,
-                'error'    => true,
-                'message'  => $this->translate($e->getMessage())
-            ));
-
-        }
-
-        return $this->setLoggedIn($request, $user, $request->request->has('loginCookie'));
+        // Force rendering the template without any redirects
+        $response = new Response();
+        $content = $this->renderView('login.html.twig', [
+            'locale'  => 'en',
+            'apptitle' => $this->params->get('app_title'),
+            'last_username' => $request->getSession()->get('_security.last_username'),
+            'error' => null,
+        ]);
+        $response->setContent($content);
+        return $response;
     }
 
     /**
      * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
     public function logoutAction(Request $request)
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
+        // Nothing to do here - Symfony security component handles the logout
+        // This method will never be executed because Symfony's security logout handler
+        // is configured to handle logout requests
 
-        $this->setLoggedOut($request);
-        return $this->redirect($this->generateUrl('_start'));
+        // For compatibility with the old system
+        return $this->setLoggedOut($request);
     }
 
     /**

@@ -14,6 +14,7 @@
 /core
 /sql/unittest/001_testtables.sql
 /README.html
+/var/*
 
 ###> symfony/phpunit-bridge ###
 .phpunit
