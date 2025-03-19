@@ -73,7 +73,7 @@ Service users
 -------------
 Users may be declared as "service user" and may act on behalf on other users.
 
-Put their user name into app/config/parameters.yml#service_users, and they
+Put their user name into .env.local#SERVICE_USERS, and they
 can use the "user" key in API calls to act on behalf of that user ID.
 
 
@@ -104,9 +104,9 @@ Setup - manual from from sources
 
    It will ask you for some configuration options.
 
-   If you want to adjust that later, edit ``app/config/parameters.yml``
+   If you want to adjust that later, edit ``.env.local``
 
-   Also copy ``app/config/sentry.yml.dist`` to ``app/config/sentry.yml``,
+   Also copy ``config/sentry.yml.dist`` to ``config/sentry.yml``,
    and fill the ``dsn`` key if necessary.
 
 #. Make cache and log directory writable::
@@ -140,7 +140,7 @@ Setup - with prebuilt docker images
 #. Create an empty folder
 #. Put the provided composer.yml from this git repo in it
 #. Put the provided nginx configuration file from this repo into the above created folder
-#. Put the provided ``app/config/parameters.yml.dist`` from this repo as ``parameters.yml`` into the above created folder, and ``sentry.yml.dist`` as ``sentry.yml``.
+#. Put the ``.env.local`` into the above created folder, and ``sentry.yml.dist`` as ``sentry.yml``.
 #. Check and adapt the copied configuration files to your needs
 #. Run ``docker compose up -d``
 
@@ -237,7 +237,7 @@ Automatically create TimeTracker user on valid LDAP authentication
 ------------------------------------------------------------------
 
 Per default every TimeTracker user has to be created manually.
-While setting **ldap_create_user** in **app/config/parameters.yml** to **true** new users of type **DEV** are going
+While setting **LDAP_CREATE_USER** in **.env.local** to **true** new users of type **DEV** are going
 to be created automatically on a valid LDAP authentication. The type can be changed afterwards via the
 users panel in the administration tab or directly in the database.
 
