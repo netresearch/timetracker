@@ -30,25 +30,11 @@ use Psr\Log\LoggerInterface;
  */
 class DefaultController extends BaseController
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var \Symfony\Component\HttpKernel\KernelInterface
-     */
-    private $kernel;
-
-    /**
-     * DefaultController constructor.
-     * @param LoggerInterface $logger
-     * @param \Symfony\Component\HttpKernel\KernelInterface $kernel
-     */
-    public function __construct(LoggerInterface $logger, \Symfony\Component\HttpKernel\KernelInterface $kernel)
+    public function __construct(
+        private LoggerInterface $logger,
+        private \Symfony\Component\HttpKernel\KernelInterface $kernel
+    )
     {
-        $this->logger = $logger;
-        $this->kernel = $kernel;
     }
 
     /**
