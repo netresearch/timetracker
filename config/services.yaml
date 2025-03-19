@@ -55,9 +55,3 @@ services:
     # Make core services public if needed for direct access
     Psr\Log\LoggerInterface:
         public: true
-
-    App\Security\LdapAuthenticationHandler:
-        arguments:
-            $logger: '@logger'
-        tags:
-            - { name: 'security.authenticator.handler' }
