@@ -63,7 +63,7 @@ class DefaultController extends BaseController
         $projectRepo = $doctrine->getRepository(Project::class);
         $projects = $projectRepo->getProjectStructure($userId, $customers);
 
-        return $this->render('Default/index.html.twig', array(
+        return $this->render('index.html.twig', array(
             'globalConfig'  => [
                 'logo_url'              => $this->params->get('app_logo_url'),
                 'monthly_overview_url'  => $this->params->get('app_monthly_overview_url'),
@@ -432,7 +432,7 @@ class DefaultController extends BaseController
         $entries = $entryRepo->findByRecentDaysOfUser($user, $days);
 
         $content = $this->get('twig')->render(
-            'Default/export.csv.twig',
+            'export.csv.twig',
             array(
                 'entries' => $entries,
                 'labels'  => null,

@@ -40,7 +40,7 @@ class StatusController extends BaseController
 
         $userId = $request->getSession()->get('loginId');
         $status = $this->getStatus($userId);
-        return $this->render('Default/status.html.twig', array(
+        return $this->render('status.html.twig', array(
             'loginClass'    => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),
             'apptitle'      => $this->container->getParameter('app_title'),
         ));
