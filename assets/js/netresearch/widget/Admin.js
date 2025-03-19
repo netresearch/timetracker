@@ -2360,8 +2360,8 @@ Ext.define('Netresearch.widget.Admin', {
  * Render image representation of a checkbox instead of 1 and 0
  */
 function renderCheckbox(val) {
-    var checkedImg = '/js/ext-js/resources/themes/images/default/menu/checked.gif';
-    var uncheckedImg = '/js/ext-js/resources/themes/images/default/menu/unchecked.gif';
+    var checkedImg = '/build/js/ext-js/resources/themes/images/default/menu/checked.gif';
+    var uncheckedImg = '/build/js/ext-js/resources/themes/images/default/menu/unchecked.gif';
     var result = '<div style="text-align:center;height:13px;overflow:visible"><img style="vertical-align:-3px" src="'
         + (val ? checkedImg : uncheckedImg)
         + '" /></div>';

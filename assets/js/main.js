@@ -7,8 +7,8 @@ Ext.Loader.setConfig({
 });
 
 // Link NR bundle to Namespace
-Ext.Loader.setPath('Netresearch', '../js/netresearch');
-Ext.Loader.setPath('Ext.ux.window', '../js');
+Ext.Loader.setPath('Netresearch', '/build/js/netresearch');
+Ext.Loader.setPath('Ext.ux.window', '/build/js');
 
 /* Load necessary requirements */
 Ext.require([
