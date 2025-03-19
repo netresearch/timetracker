@@ -1,0 +1,5 @@
+services:
+    # Configure the tracking logger service
+    App\Controller\CrudController:
+        calls:
+            - [setLogger, ['@monolog.logger.tracking']]

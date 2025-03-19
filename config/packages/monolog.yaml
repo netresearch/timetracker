@@ -1,0 +1,8 @@
+monolog:
+    channels: ['tracking']
+    handlers:
+        tracking:
+            type: stream
+            path: "%kernel.logs_dir%/tracking.log"
+            level: info
+            channels: ['tracking']
