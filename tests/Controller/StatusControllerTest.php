@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Netresearch\TimeTrackerBundle\Controller;
+namespace Tests\Controller;
 
-use Tests\BaseTest;
+use Tests\Base;
 
-class StatusControllerTest extends BaseTest
+class StatusControllerTest extends Base
 {
     public function testCheckAction()
     {

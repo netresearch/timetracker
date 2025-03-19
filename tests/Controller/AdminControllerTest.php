@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Netresearch\TimeTrackerBundle\Controller;
+namespace Tests\Controller;
 
-use Tests\BaseTest;
+use Tests\Base;
 
-class AdminControllerTest extends BaseTest
+class AdminControllerTest extends Base
 {
     //-------------- users routes ----------------------------------------
     public function testSaveUserAction()
@@ -28,7 +28,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveUserActionDevNotAllowed()
     {
-        $this->setInitalDbState('users');
+        $this->setInitialDbState('users');
         $this->logInSession('developer');
         $parameter = [
             'username' => 'unittest',
@@ -82,7 +82,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateUserDevNotAllowed()
     {
-        $this->setInitalDbState('users');
+        $this->setInitialDbState('users');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -134,7 +134,7 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteUserActionDevNotAllowed()
     {
-        $this->setInitalDbState('users');
+        $this->setInitialDbState('users');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/user/delete', $parameter);
@@ -307,7 +307,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateTeamPermission()
     {
-        $this->setInitalDbState('teams');
+        $this->setInitialDbState('teams');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -355,7 +355,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveCustomerActionDevNotAllowed()
     {
-        $this->setInitalDbState('customers');
+        $this->setInitialDbState('customers');
         $this->logInSession('developer');
         $parameter = [
             'name' => 'testCustomer',
@@ -400,7 +400,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateCustomerDevNotAllowed()
     {
-        $this->setInitalDbState('customers');
+        $this->setInitialDbState('customers');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -450,7 +450,7 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteCustomerActionDevNotAllowed()
     {
-        $this->setInitalDbState('customers');
+        $this->setInitialDbState('customers');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/customer/delete', $parameter);
@@ -521,7 +521,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveProjectActionDevNotAllowed()
     {
-        $this->setInitalDbState('projects');
+        $this->setInitialDbState('projects');
         $this->logInSession('developer');
         $parameter = [
             'name' => 'testProject', //req
@@ -565,7 +565,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateProjectDevNotAllowed()
     {
-        $this->setInitalDbState('projects');
+        $this->setInitialDbState('projects');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -599,7 +599,7 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteProjectActionDevNotAllowed()
     {
-        $this->setInitalDbState('projects');
+        $this->setInitialDbState('projects');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/project/delete', $parameter);
@@ -639,7 +639,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveActivityActionDevNotAllowed()
     {
-        $this->setInitalDbState('activities');
+        $this->setInitialDbState('activities');
         $this->logInSession('developer');
         $parameter = [
             'name' => 'testActivities', //req
@@ -681,7 +681,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateActivityActionDevNotAllowed()
     {
-        $this->setInitalDbState('activities');
+        $this->setInitialDbState('activities');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -730,7 +730,7 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteActivityActionDevNotAllowed()
     {
-        $this->setInitalDbState('activities');
+        $this->setInitialDbState('activities');
         $this->logInSession('developer');
         $parameter = ['id' => 1];
         $this->client->request('POST', '/activity/delete', $parameter);
@@ -1385,7 +1385,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveContractActionDevNotAllowed()
     {
-        $this->setInitalDbState('contracts');
+        $this->setInitialDbState('contracts');
         $this->logInSession('developer');
         $parameter = [
             'user_id' => '1', //req
@@ -1520,7 +1520,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateContractDevNotAllowed()
     {
-        $this->setInitalDbState('contracts');
+        $this->setInitialDbState('contracts');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -1561,7 +1561,7 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteContractActionDevNotAllowed()
     {
-        $this->setInitalDbState('contracts');
+        $this->setInitialDbState('contracts');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/contract/delete', $parameter);
@@ -1687,7 +1687,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSaveTicketSystemActionDevNotAllowed()
     {
-        $this->setInitalDbState('ticket_systems');
+        $this->setInitialDbState('ticket_systems');
         $this->logInSession('developer');
         $parameter = [
             'name' => 'testSaveTicketSystem', //req
@@ -1740,7 +1740,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdateTicketSystemDevNotAllowed()
     {
-        $this->setInitalDbState('ticket_systems');
+        $this->setInitialDbState('ticket_systems');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -1780,7 +1780,7 @@ class AdminControllerTest extends BaseTest
 
     public function testDeleteTicketSystemActionDevNotAllowed()
     {
-        $this->setInitalDbState('ticket_systems');
+        $this->setInitialDbState('ticket_systems');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/ticketsystem/delete', $parameter);
@@ -1848,7 +1848,7 @@ class AdminControllerTest extends BaseTest
 
     public function testSavePresetActionDevNotAllowed()
     {
-        $this->setInitalDbState('presets');
+        $this->setInitialDbState('presets');
         $this->logInSession('developer');
         $parameter = [
             'name' => 'newPreset', //req
@@ -1903,7 +1903,7 @@ class AdminControllerTest extends BaseTest
 
     public function testUpdatePresetDevNotAllowed()
     {
-        $this->setInitalDbState('presets');
+        $this->setInitialDbState('presets');
         $this->logInSession('developer');
         $parameter = [
             'id' => 1,
@@ -1940,7 +1940,7 @@ class AdminControllerTest extends BaseTest
 
     public function testDeletePresetActionDevNotAllowed()
     {
-        $this->setInitalDbState('presets');
+        $this->setInitialDbState('presets');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
         $this->client->request('POST', '/preset/delete', $parameter);

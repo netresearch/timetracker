@@ -12,7 +12,7 @@
  * @link      http://www.netresearch.de
  */
 
-namespace App\Tests;
+namespace Tests\Extension;
 
 use App\Extension\NrArrayTranslator;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +47,7 @@ class NrArrayTranslatorTest
      *
      * @return void
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->translator = new Translator('de');
         $this->nrArrayTranslator = new NrArrayTranslator($this->translator);
@@ -75,7 +75,7 @@ class NrArrayTranslatorTest
         $this->assertTrue(is_array($filters));
         $this->assertTrue(array_key_exists('nr_array_translator', $filters));
         $this->assertTrue(
-            $filters['nr_array_translator'] instanceof \Twig_SimpleFilter
+            $filters['nr_array_translator'] instanceof \Twig\TwigFilter
         );
 
     }

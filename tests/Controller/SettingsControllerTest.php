@@ -1,8 +1,10 @@
 <?php
 
-use Tests\BaseTest;
+namespace Tests\Controller;
 
-class SettingsControllerTest extends BaseTest
+use Tests\Base;
+
+class SettingsControllerTest extends Base
 {
     public function testSaveAction()
     {

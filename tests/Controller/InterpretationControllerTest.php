@@ -1,8 +1,10 @@
 <?php
 
-use Tests\BaseTest;
+namespace Tests\Controller;
 
-class InterpretationControllerTest extends BaseTest
+use Tests\Base;
+
+class InterpretationControllerTest extends Base
 {
     public function testGetLastEntriesAction()
     {

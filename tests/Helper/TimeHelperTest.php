@@ -1,8 +1,6 @@
 <?php
 
-namespace App\Tests\Helper;
-
-require_once(dirname(__FILE__) . "/../../Helper/TimeHelper.php");
+namespace Tests\Helper;
 
 use App\Helper\TimeHelper;
 use PHPUnit\Framework\TestCase;

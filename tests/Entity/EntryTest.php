@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Entity;
+namespace Tests\Entity;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -34,7 +34,7 @@ class EntryTest extends TestCase
         $entry->setTicket('ABCDE-12345678');
         $this->assertEquals('ABCDE-12345678', $entry->getTicket());
 
-        // test class 
+        // test class
         $entry->setClass(Entry::CLASS_OVERLAP);
         $this->assertEquals(Entry::CLASS_OVERLAP, $entry->getClass());
 

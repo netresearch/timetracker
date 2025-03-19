@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Netresearch\TimeTrackerBundle\Controller;
+namespace Tests\Controller;
 
-use Tests\BaseTest;
+use Tests\Base;
 
-class DefaultControllerTest extends BaseTest
+class DefaultControllerTest extends Base
 {
     /**
      * AdminController and DefaultController both have a function
