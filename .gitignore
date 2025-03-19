@@ -15,6 +15,9 @@
 /sql/unittest/001_testtables.sql
 /README.html
 /var/*
+/.env.local
+/.env.local.php
+/.env.*.local
 
 ###> symfony/phpunit-bridge ###
 .phpunit
