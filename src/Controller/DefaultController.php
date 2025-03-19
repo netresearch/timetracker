@@ -23,6 +23,7 @@ use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Psr\Log\LoggerInterface;
+use Twig\Environment as TwigEnvironment;
 
 /**
  * Class DefaultController
@@ -32,6 +33,7 @@ class DefaultController extends BaseController
 {
     public function __construct(
         private LoggerInterface $logger,
+        private TwigEnvironment $twig,
     )
     {
     }
@@ -430,7 +432,7 @@ class DefaultController extends BaseController
         $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
         $entries = $entryRepo->findByRecentDaysOfUser($user, $days);
 
-        $content = $this->get('twig')->render(
+        $content = $this->twig->render(
             'export.csv.twig',
             array(
                 'entries' => $entries,

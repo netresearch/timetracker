@@ -16,6 +16,7 @@ namespace App\Controller;
 
 use App\Helper\LOReadFilter;
 use App\Model\Response;
+use App\Services\Export;
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -33,6 +34,19 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ControllingController extends BaseController
 {
+    /**
+     * @var Export
+     */
+    private $exportService;
+
+    /**
+     * @required
+     */
+    public function setExportService(Export $exportService)
+    {
+        $this->exportService = $exportService;
+    }
+
     /**
      * Exports a users timetable from one specific year and month
      *
@@ -57,7 +71,7 @@ class ControllingController extends BaseController
         $onlyBillable = (bool) $request->get('billable');
         $showTicketTitles = (bool) $request->get('tickettitles');
 
-        $service = $this->get('nr.timetracker.export');
+        $service = $this->exportService;
         /** @var \App\Entity\Entry[] $entries */
         $entries = $service->exportEntries(
             $userId, $year, $month, $projectId, $customerId, [
@@ -90,7 +104,7 @@ class ControllingController extends BaseController
         $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
         $reader->setReadFilter(new LOReadFilter());
         $spreadsheet = $reader->load(
-            $this->kernel->getProjectDir() . '/web/template.xlsx'
+            $this->kernel->getProjectDir() . '/public/template.xlsx'
         );
 
         $sheet = $spreadsheet->getSheet(0);
