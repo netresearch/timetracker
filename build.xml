@@ -119,11 +119,4 @@
             <arg path="app/build/logs/clover.xml"/>
         </exec>
     </target>
-       
-    <target name="parameters" description="Copy parameters">
-        <exec executable="cp" failonerror="true">
-            <arg path="app/config/parameters.yml.dist" />
-            <arg path="app/config/parameters.yml" />
-        </exec>
-    </target>
 </project>
