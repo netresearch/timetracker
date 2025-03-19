@@ -143,8 +143,8 @@ class AdminController extends BaseController
         $projectLead = $request->get('project_lead') ? $userRepo->find($request->get('project_lead')) : null;
         $technicalLead = $request->get('technical_lead') ? $userRepo->find($request->get('technical_lead')) : null;
 
-        $jiraId       = strtoupper($request->get('jiraId'));
-        $jiraTicket   = strtoupper($request->get('jiraTicket'));
+        $jiraId       = $request->get('jiraId') ? strtoupper($request->get('jiraId')) : '';
+        $jiraTicket   = $request->get('jiraTicket') ? strtoupper($request->get('jiraTicket')) : '';
         $active       = $request->get('active') ? $request->get('active') : 0;
         $global       = $request->get('global') ? $request->get('global') : 0;
         $estimation   = TimeHelper::readable2minutes($request->get('estimation') ? $request->get('estimation') : '0m');
@@ -230,7 +230,7 @@ class AdminController extends BaseController
 
         if ($ticketSystem) {
             try {
-                $stss = new SubticketSyncService($this->container);
+                $stss = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
                 $subtickets = $stss->syncProjectSubtickets($project->getId());
             } catch (\Exception $e) {
                 //we do not let it fail because creating a new project
@@ -284,6 +284,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
+        /** @var \App\Repository\ProjectRepository $projectRepo */
         $projectRepo = $this->doctrineRegistry->getRepository(Project::class);
         $projects = $projectRepo->createQueryBuilder('p')
             ->where('p.ticketSystem IS NOT NULL')
@@ -291,7 +292,7 @@ class AdminController extends BaseController
             ->getResult();
 
         try {
-            $stss = new SubticketSyncService($this->container);
+            $stss = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
 
             foreach ($projects as $project) {
                 $subtickets = $stss->syncProjectSubtickets($project->getId());
@@ -321,7 +322,7 @@ class AdminController extends BaseController
         $projectId = (int) $request->get('project');
 
         try {
-            $stss = new SubticketSyncService($this->container);
+            $stss = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
             $subtickets = $stss->syncProjectSubtickets($projectId);
             return new JsonResponse(
                 [
@@ -351,6 +352,7 @@ class AdminController extends BaseController
         $global     = $request->get('global') ? $request->get('global') : 0;
         $teamIds    = $request->get('teams')  ? $request->get('teams')  : array();
 
+        /** @var \App\Repository\CustomerRepository $customerRepository */
         $customerRepository = $this->doctrineRegistry->getRepository(Customer::class);
 
         if ($customerId) {
@@ -458,7 +460,7 @@ class AdminController extends BaseController
         $locale   = $request->get('locale');
         $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : array();
 
-        /* @var UserRepository $userRepository */
+        /** @var \App\Repository\UserRepository $userRepository */
         $userRepository = $this->doctrineRegistry->getRepository(User::class);
 
         if ($userId) {
@@ -665,6 +667,7 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
+        /** @var \App\Repository\TicketSystemRepository $repository */
         $repository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
         $id                  = (int) $request->get('id');
@@ -778,6 +781,7 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
+        /** @var \App\Repository\ActivityRepository $repository */
         $repository = $this->doctrineRegistry->getRepository(Activity::class);
 
         $id             = (int) $request->get('id');
@@ -871,6 +875,7 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
+        /** @var \App\Repository\TeamRepository $repository */
         $repository = $this->doctrineRegistry->getRepository(Team::class);
 
         $id         = (int) $request->get('id');
@@ -1014,7 +1019,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        /* @var $repo \App\Repository\ContractRepository */
+        /** @var \App\Repository\ContractRepository $repo */
         $repo = $this->doctrineRegistry->getRepository(Contract::class);
 
         return new JsonResponse($repo->getContracts());
