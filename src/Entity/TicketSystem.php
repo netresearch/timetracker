@@ -51,7 +51,7 @@ class TicketSystem extends Base
 
     /**
      * @var string $ticketUrl
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", name="ticketurl")
      */
     protected $ticketUrl;
 

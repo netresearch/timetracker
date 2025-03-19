@@ -8,7 +8,7 @@
 }
 
 .icon-info {
-    background-image: url(../images/information.png) !important;
+    background-image: url(/build/images/information.png) !important;
 }
 
 .icon-add {
