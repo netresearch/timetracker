@@ -37,7 +37,7 @@ class AdminController extends BaseController
         }
 
         /** @var \App\Repository\CustomerRepository $repo */
-        $repo = $this->getDoctrine()->getRepository(Customer::class);
+        $repo = $this->doctrineRegistry->getRepository(Customer::class);
 
         return new JsonResponse($repo->getAllCustomers());
     }
@@ -53,7 +53,7 @@ class AdminController extends BaseController
         }
 
         /** @var \App\Repository\UserRepository $repo */
-        $repo = $this->getDoctrine()->getRepository(User::class);
+        $repo = $this->doctrineRegistry->getRepository(User::class);
 
         return new JsonResponse($repo->getAllUsers());
     }
@@ -69,7 +69,7 @@ class AdminController extends BaseController
         }
 
         /** @var \App\Repository\TeamRepository $repo */
-        $repo = $this->getDoctrine()->getRepository(Team::class);
+        $repo = $this->doctrineRegistry->getRepository(Team::class);
 
         return new JsonResponse($repo->findAll());
     }
@@ -85,7 +85,7 @@ class AdminController extends BaseController
         }
 
         /** @var \App\Repository\PresetRepository $repo */
-        $repo = $this->getDoctrine()->getRepository(Preset::class);
+        $repo = $this->doctrineRegistry->getRepository(Preset::class);
 
         return new JsonResponse($repo->getAllPresets());
     }
@@ -102,7 +102,7 @@ class AdminController extends BaseController
         }
 
         /** @var \App\Repository\TicketSystemRepository $repo */
-        $repo = $this->getDoctrine()->getRepository(TicketSystem::class);
+        $repo = $this->doctrineRegistry->getRepository(TicketSystem::class);
         $ticketSystems = $repo->getAllTicketSystems();
 
         if (false === $this->isPl($request)) {
@@ -135,11 +135,11 @@ class AdminController extends BaseController
         $name       = $request->get('name');
 
         /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
-        $ticketSystemRepo = $this->getDoctrine()->getRepository(TicketSystem::class);
+        $ticketSystemRepo = $this->doctrineRegistry->getRepository(TicketSystem::class);
         $ticketSystem = $request->get('ticket_system') ? $ticketSystemRepo->find($request->get('ticket_system')) : null;
 
         /** @var \App\Repository\UserRepository $userRepo */
-        $userRepo = $this->getDoctrine()->getRepository(User::class);
+        $userRepo = $this->doctrineRegistry->getRepository(User::class);
         $projectLead = $request->get('project_lead') ? $userRepo->find($request->get('project_lead')) : null;
         $technicalLead = $request->get('technical_lead') ? $userRepo->find($request->get('technical_lead')) : null;
 
@@ -152,8 +152,8 @@ class AdminController extends BaseController
         $costCenter   = $request->get('cost_center') ? $request->get('cost_center') : NULL;
         $offer        = $request->get('offer') ? $request->get('offer') : 0;
         $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ? $request->get('additionalInformationFromExternal') : 0;
-        /* @var $projectRepository \App\Repository\ProjectRepository */
-        $projectRepository = $this->getDoctrine()->getRepository(Project::class);
+        /** @var \App\Repository\ProjectRepository $projectRepository */
+        $projectRepository = $this->doctrineRegistry->getRepository(Project::class);
         $internalJiraTicketSystem = (int) $request->get('internalJiraTicketSystem', 0);
         $internalJiraProjectKey   = $request->get('internalJiraProjectKey', 0);
 
@@ -163,8 +163,7 @@ class AdminController extends BaseController
             $project = new Project();
 
             /** @var Customer $customer */
-            $customer = $this->getDoctrine()
-                ->getRepository(Customer::class)
+            $customer = $this->doctrineRegistry->getRepository(Customer::class)
                 ->find($request->get('customer'));
 
             if (!$customer) {
@@ -223,7 +222,7 @@ class AdminController extends BaseController
             ->setInternalJiraProjectKey($internalJiraProjectKey)
             ->setInternalJiraTicketSystem($internalJiraTicketSystem);
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrineRegistry->getManager();
         $em->persist($project);
         $em->flush();
 
@@ -256,7 +255,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $project = $doctrine->getRepository(Project::class)
                 ->find($id);
@@ -285,8 +284,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        $projectRepo = $this->container->get('doctrine')
-            ->getRepository(Project::class);
+        $projectRepo = $this->doctrineRegistry->getRepository(Project::class);
         $projects = $projectRepo->createQueryBuilder('p')
             ->where('p.ticketSystem IS NOT NULL')
             ->getQuery()
@@ -353,12 +351,12 @@ class AdminController extends BaseController
         $global     = $request->get('global') ? $request->get('global') : 0;
         $teamIds    = $request->get('teams')  ? $request->get('teams')  : array();
 
-        $customerRepository = $this->getDoctrine()->getRepository(Customer::class);
+        $customerRepository = $this->doctrineRegistry->getRepository(Customer::class);
 
         if ($customerId) {
             $customer = $customerRepository->find($customerId);
             if (!$customer) {
-                $message = $this->get('translator')->trans('No entry for id.');
+                $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
             }
         } else {
@@ -387,7 +385,7 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
-            if ($team = $this->getDoctrine()->getRepository(Team::class)->find( (int) $teamId)) {
+            if ($team = $this->doctrineRegistry->getRepository(Team::class)->find( (int) $teamId)) {
                 $customer->addTeam($team);
             } else {
                 $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
@@ -402,7 +400,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrineRegistry->getManager();
         $em->persist($customer);
         $em->flush();
 
@@ -423,7 +421,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $customer = $doctrine->getRepository(Customer::class)
                 ->find($id);
@@ -461,7 +459,7 @@ class AdminController extends BaseController
         $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : array();
 
         /* @var UserRepository $userRepository */
-        $userRepository = $this->getDoctrine()->getRepository(User::class);
+        $userRepository = $this->doctrineRegistry->getRepository(User::class);
 
         if ($userId) {
             $user = $userRepository->find($userId);
@@ -511,7 +509,7 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
-            if ($team = $this->getDoctrine()->getRepository(Team::class)->find((int)$teamId)) {
+            if ($team = $this->doctrineRegistry->getRepository(Team::class)->find((int)$teamId)) {
                 $user->addTeam($team);
             } else {
                 $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
@@ -526,7 +524,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrineRegistry->getManager();
         $em->persist($user);
         $em->flush();
 
@@ -546,7 +544,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $user = $doctrine->getRepository(User::class)
                 ->find($id);
@@ -578,7 +576,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $preset = $doctrine->getRepository(Preset::class)
                     ->find($id);
@@ -610,14 +608,11 @@ class AdminController extends BaseController
 
         $id          = (int) $request->get('id');
         $name        = $request->get('name');
-        $customer    = $this->getDoctrine()
-            ->getRepository(Customer::class)
+        $customer    = $this->doctrineRegistry->getRepository(Customer::class)
             ->find($request->get('customer'));
-        $project     = $this->getDoctrine()
-            ->getRepository(Project::class)
+        $project     = $this->doctrineRegistry->getRepository(Project::class)
             ->find($request->get('project'));
-        $activity    = $this->getDoctrine()
-            ->getRepository(Activity::class)
+        $activity    = $this->doctrineRegistry->getRepository(Activity::class)
             ->find($request->get('activity'));
         $description = $request->get('description');
 
@@ -627,12 +622,12 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $repository = $this->getDoctrine()->getRepository(Preset::class);
+        $repository = $this->doctrineRegistry->getRepository(Preset::class);
 
         if ($id) {
             $preset = $repository->find($id);
             if (!$preset) {
-                $message = $this->get('translator')->trans('No entry for id.');
+                $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
             }
         } else {
@@ -646,7 +641,7 @@ class AdminController extends BaseController
                 ->setActivity($activity)
                 ->setDescription($description);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrineRegistry->getManager();
             $em->persist($preset);
             $em->flush();
         } catch (\Exception $e) {
@@ -670,7 +665,7 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $repository = $this->getDoctrine()->getRepository(TicketSystem::class);
+        $repository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
         $id                  = (int) $request->get('id');
         $name                = $request->get('name');
@@ -688,7 +683,7 @@ class AdminController extends BaseController
         if ($id) {
             $ticketSystem = $repository->find($id);
             if (!$ticketSystem) {
-                $message = $this->get('translator')->trans('No entry for id.');
+                $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
             }
         } else {
@@ -723,7 +718,7 @@ class AdminController extends BaseController
                 ->setOauthConsumerKey($oauthConsumerKey)
                 ->setOauthConsumerSecret($oauthConsumerSecret);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);
             $em->flush();
         } catch (\Exception $e) {
@@ -748,7 +743,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $ticketSystem = $doctrine->getRepository(TicketSystem::class)
                 ->find($id);
@@ -783,7 +778,7 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $repository = $this->getDoctrine()->getRepository(Activity::class);
+        $repository = $this->doctrineRegistry->getRepository(Activity::class);
 
         $id             = (int) $request->get('id');
         $name           = $request->get('name');
@@ -793,7 +788,7 @@ class AdminController extends BaseController
         if ($id) {
             $activity = $repository->find($id);
             if (!$activity) {
-                $message = $this->get('translator')->trans('No entry for id.');
+                $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
             }
         } else {
@@ -814,7 +809,7 @@ class AdminController extends BaseController
                 ->setNeedsTicket($needsTicket)
                 ->setFactor($factor);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrineRegistry->getManager();
             $em->persist($activity);
             $em->flush();
         } catch (\Exception $e) {
@@ -841,7 +836,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $activity = $doctrine->getRepository(Activity::class)
                 ->find($id);
@@ -876,13 +871,12 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $repository = $this->getDoctrine()->getRepository(Team::class);
+        $repository = $this->doctrineRegistry->getRepository(Team::class);
 
         $id         = (int) $request->get('id');
         $name       = $request->get('name');
         $teamLead   = $request->get('lead_user_id') ?
-            $this->getDoctrine()
-                ->getRepository(User::class)
+            $this->doctrineRegistry->getRepository(User::class)
                 ->find($request->get('lead_user_id'))
             : null;
 
@@ -890,7 +884,7 @@ class AdminController extends BaseController
             $team = $repository->find($id);
             //abort for non existing id
             if (!$team) {
-                $message = $this->get('translator')->trans('No entry for id.');
+                $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
             }
         } else {
@@ -916,7 +910,7 @@ class AdminController extends BaseController
                 ->setName($name)
                 ->setLeadUser($teamLead);
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrineRegistry->getManager();
             $em->persist($team);
             $em->flush();
         } catch (\Exception $e) {
@@ -943,7 +937,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $team = $doctrine->getRepository(Team::class)
                 ->find($id);
@@ -978,7 +972,7 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $doctrine = $this->getDoctrine();
+        $doctrine = $this->doctrineRegistry;
 
         $users = $doctrine
             ->getRepository(User::class)
@@ -995,7 +989,9 @@ class AdminController extends BaseController
             /** @var TicketSystem $ticketSystem */
             foreach ($ticketSystems as $ticketSystem) {
                 try {
-                    $jiraOauthApi = new JiraOAuthApi($user, $ticketSystem, $doctrine, $this->container->get('router'));
+                    $jiraOauthApi = new JiraOAuthApi(
+                        $user, $ticketSystem, $doctrine, $this->router
+                    );
                     $jiraOauthApi->updateAllEntriesJiraWorkLogs();
                     $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'success';
                 } catch (\Exception $e) {
@@ -1019,7 +1015,7 @@ class AdminController extends BaseController
         }
 
         /* @var $repo \App\Repository\ContractRepository */
-        $repo = $this->getDoctrine()->getRepository(Contract::class);
+        $repo = $this->doctrineRegistry->getRepository(Contract::class);
 
         return new JsonResponse($repo->getContracts());
     }
@@ -1049,18 +1045,17 @@ class AdminController extends BaseController
         $hours_6    = str_replace(',', '.', $request->get('hours_6'));
         /** @var User $user */
         $user       = $request->get('user_id') ?
-            $this->getDoctrine()
-                ->getRepository(User::class)
+            $this->doctrineRegistry->getRepository(User::class)
                 ->find($request->get('user_id'))
             : null;
 
         /* @var $contractRepository \App\Repository\ContractRepository */
-        $contractRepository = $this->getDoctrine()->getRepository(Contract::class);
+        $contractRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         if ($contractId) {
             $contract = $contractRepository->find($contractId);
             if (!$contract) {
-                $message = $this->get('translator')->trans('No entry for id.');
+                $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
             }
         } else {
@@ -1107,7 +1102,7 @@ class AdminController extends BaseController
             ->setHours5($hours_5)
             ->setHours6($hours_6);
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrineRegistry->getManager();
         $em->persist($contract);
 
         // when updating a existing contract dont look for other contracts for the user
@@ -1135,8 +1130,8 @@ class AdminController extends BaseController
      */
     protected function updateOldContractAction(User $user, DateTime $newStartDate, ?DateTime $newEndDate): string
     {
-        $em = $this->getDoctrine()->getManager();
-        $contractRepository = $this->getDoctrine()->getRepository(Contract::class);
+        $em = $this->doctrineRegistry->getManager();
+        $contractRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         // get existing contracts for the user
         $contractsOld = $contractRepository->findBy(['user' => $user]);
@@ -1231,7 +1226,7 @@ class AdminController extends BaseController
 
         try {
             $id = (int) $request->get('id');
-            $doctrine = $this->getDoctrine();
+            $doctrine = $this->doctrineRegistry;
 
             $contract = $doctrine->getRepository(Contract::class)
                 ->find($id);
