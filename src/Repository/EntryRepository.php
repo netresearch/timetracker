@@ -107,7 +107,7 @@ class EntryRepository extends ServiceEntityRepository
 
         $em = $this->getEntityManager();
         $query = $em->createQuery(
-            'SELECT e FROM NetresearchTimeTrackerBundle:Entry e'
+            'SELECT e FROM App\Entity\Entry e'
             . ' WHERE e.user = :user_id AND e.day >= :fromDate'
             . ' ORDER BY e.day, e.start ASC'
         )->setParameter('user_id', $user->getId())->setParameter('fromDate', $fromDate);
@@ -141,7 +141,7 @@ class EntryRepository extends ServiceEntityRepository
         $qb = $this->getEntityManager()->createQueryBuilder();
 
         $qb->select('entry')
-            ->from('NetresearchTimeTrackerBundle:Entry', 'entry')
+            ->from('App\Entity\Entry', 'entry')
             ->leftJoin('entry.user', 'user');
 
         foreach ($arSort as $strField => $bAsc) {
@@ -211,7 +211,7 @@ class EntryRepository extends ServiceEntityRepository
         $em  = $this->getEntityManager();
         $qb = $em->createQueryBuilder()
             ->select('distinct e.ticket, ts.id, ts.url, ts.login, ts.password')
-            ->from('NetresearchTimeTrackerBundle:Entry', 'e')
+            ->from('App\Entity\Entry', 'e')
             ->innerJoin('e.project', 'p', 'e.projectId = p.id')
             ->innerJoin('p.ticketSystem', 'ts', 'p.ticketSystem = ts.id')
             ->where('p.additionalInformationFromExternal = 1')
@@ -258,7 +258,7 @@ class EntryRepository extends ServiceEntityRepository
         $em = $this->getEntityManager();
 
         $query = $em->createQuery(
-            'SELECT e FROM NetresearchTimeTrackerBundle:Entry e'
+            'SELECT e FROM App\Entity\Entry e'
             . ' WHERE e.user = :user_id'
             . ' AND e.day = :day'
             . ' ORDER BY e.start ASC, e.end ASC, e.id ASC'
@@ -342,8 +342,8 @@ class EntryRepository extends ServiceEntityRepository
         $qb = $this->getEntityManager()->createQueryBuilder();
         $qb
             ->select('e')
-            ->from('NetresearchTimeTrackerBundle:Entry', 'e')
-            ->join('NetresearchTimeTrackerBundle:Project', 'p', Join::WITH, 'e.project = p.id')
+            ->from('App\Entity\Entry', 'e')
+            ->join('App\Entity\Project', 'p', Join::WITH, 'e.project = p.id')
             ->where('e.user = :user_id')
             ->andWhere('e.syncedToTicketsystem = false')
             ->andWhere('p.ticketSystem = :ticket_system_id')
