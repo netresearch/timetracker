@@ -1,0 +1,51 @@
+// assets/styles/app.scss
+
+// Variables
+$primary-color: #0078D4;
+$secondary-color: #2b2b2b;
+$text-color: #333;
+$light-bg: #f5f5f5;
+
+// Base styles
+body {
+    background-color: $light-bg;
+    color: $text-color;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+// Header styles
+header {
+    background-color: $primary-color;
+    color: white;
+    padding: 20px 0;
+
+    h1 {
+        margin: 0;
+    }
+
+    nav {
+        margin-top: 10px;
+
+        a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
+// You can import other SCSS files here
+// @import 'components/buttons';
+// @import 'components/forms';

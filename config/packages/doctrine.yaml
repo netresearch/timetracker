@@ -1,0 +1,30 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+
+        # IMPORTANT: You MUST configure your server version,
+        # either here or in the DATABASE_URL env var (see .env file)
+        #server_version: '16'
+
+        # only needed for MySQL
+        charset: utf8mb4
+        default_table_options:
+            collate: utf8mb4_unicode_ci
+
+        # Native SQL logging configuration
+        logging: true
+        profiling: '%kernel.debug%'
+
+        # backtrace queries in profiler (increases memory usage per request)
+        #profiling_collect_backtrace: '%kernel.debug%'
+    orm:
+        auto_generate_proxy_classes: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore
+        auto_mapping: true
+        mappings:
+            App:
+                is_bundle: false
+                type: annotation
+                dir: '%kernel.project_dir%/src/Entity'
+                prefix: 'App\Entity'
+                alias: App

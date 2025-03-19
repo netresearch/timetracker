@@ -1,0 +1,43 @@
+monolog:
+    channels: ['deprecation', 'ldap', 'exceptions']  # Add exceptions channel
+    handlers:
+        main:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            level: debug
+            channels: ["!event", "!ldap", "!exceptions"]
+        # Add specific handler for exceptions
+        exceptions:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.exceptions.log"
+            level: debug
+            channels: ["exceptions"]
+            formatter: monolog.formatter.json
+        # Add specific handler for LDAP logs
+        ldap:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.ldap.log"
+            level: debug
+            channels: ["ldap"]
+        deprecation:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.deprecations.log"
+            level: debug
+            channels: ["php", "doctrine"]  # These are built-in channels
+        deprecation_filter:
+            type: filter
+            handler: deprecation
+            max_level: info
+            channels: ["php", "doctrine"]  # These are built-in channels
+        # uncomment to get logging in your browser
+        # you may have to allow bigger header sizes in your Web server configuration
+        #firephp:
+        #    type: firephp
+        #    level: info
+        #chromephp:
+        #    type: chromephp
+        #    level: info
+        console:
+            type: console
+            process_psr_3_messages: false
+            channels: ["!event", "!console"]

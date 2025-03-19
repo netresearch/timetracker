@@ -2,14 +2,6 @@
 /.buildpath
 /.project
 /.settings
-/app/config/parameters.yml
-/app/config/parameters.ini
-/app/config/ldap_ou_team_mapping.yml
-/app/config/sentry.yml
-/app/logs/*.log
-/app/cache/*
-/app/build/
-/app/bootstrap.php.cache
 /bin/*
 !/bin/console
 /web/bundles/*
@@ -22,3 +14,16 @@
 /core
 /sql/unittest/001_testtables.sql
 /README.html
+
+###> symfony/phpunit-bridge ###
+.phpunit
+.phpunit.result.cache
+/phpunit.xml
+###< symfony/phpunit-bridge ###
+
+###> symfony/webpack-encore-bundle ###
+/node_modules/
+/public/build/
+npm-debug.log
+yarn-error.log
+###< symfony/webpack-encore-bundle ###

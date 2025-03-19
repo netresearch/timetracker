@@ -1,0 +1,58 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+parameters:
+    locale: 'en'
+    app_title: '%env(APP_TITLE)%'
+    app_locale: '%env(APP_LOCALE)%'
+    app_logo_url: '%env(APP_LOGO_URL)%'
+    app_monthly_overview_url: '%env(APP_MONTHLY_OVERVIEW_URL)%'
+    app_header_url: '%env(APP_HEADER_URL)%'
+    app_show_billable_field_in_export: '%env(bool:APP_SHOW_BILLABLE_FIELD_IN_EXPORT)%'
+    service_users: '%env(SERVICE_USERS)%'
+    # LDAP configuration parameters
+    ldap_host: '%env(LDAP_HOST)%'
+    ldap_port: '%env(int:LDAP_PORT)%'
+    ldap_readuser: '%env(LDAP_READUSER)%'
+    ldap_readpass: '%env(LDAP_READPASS)%'
+    ldap_basedn: '%env(LDAP_BASEDN)%'
+    ldap_usernamefield: '%env(LDAP_USERNAMEFIELD)%'
+    ldap_usessl: '%env(bool:LDAP_USESSL)%'
+    ldap_create_user: '%env(bool:LDAP_CREATE_USER)%'
+
+services:
+    # Default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        public: false       # Allows optimizing the container by removing unused services
+
+    # Makes classes in src/ available to be used as services
+    # This creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php,Legacy}'
+
+    # Controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: '../src/Controller'
+        tags: ['controller.service_arguments']
+
+    # Add more service definitions when explicit configuration is needed
+    # Please note that last definitions always *replace* previous ones
+
+    # Alias TranslatorInterface to the translator service
+    Symfony\Component\Translation\TranslatorInterface: '@translator'
+
+    # Make core services public if needed for direct access
+    Psr\Log\LoggerInterface:
+        public: true
+
+    # Add the ExceptionSubscriber service with the exceptions logger
+    App\EventSubscriber\ExceptionSubscriber:
+        arguments:
+            $logger: '@monolog.logger.exceptions'
+        tags:
+            - { name: kernel.event_subscriber }
