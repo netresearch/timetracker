@@ -5,4 +5,4 @@ twig:
     exception_controller: null
     form_themes: ['bootstrap_4_layout.html.twig']
     paths:
-        '%kernel.project_dir%/templates': 'NetresearchTimeTrackerBundle'
+        '%kernel.project_dir%/templates': 'App'
