@@ -32,7 +32,6 @@ class DefaultController extends BaseController
 {
     public function __construct(
         private LoggerInterface $logger,
-        private \Symfony\Component\HttpKernel\KernelInterface $kernel
     )
     {
     }
@@ -200,7 +199,7 @@ class DefaultController extends BaseController
         /** @var \App\Repository\EntryRepository $entryRepo */
         $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
         if (!$entryRepo->find($entryId)) {
-            $message = $this->get('translator')->trans('No entry for id.');
+            $message = $this->translator->trans('No entry for id.');
             return new Error($message, 404);
         }
         // Collect all entries data
@@ -470,7 +469,9 @@ class DefaultController extends BaseController
             ->find($request->get('tsid'));
 
         try {
-            $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
+            $jiraOAuthApi = new JiraOAuthApi(
+                $user, $ticketSystem, $this->getDoctrine(), $this->router
+            );
             $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
             return $this->redirectToRoute('_start');

@@ -25,6 +25,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * BaseController.php
@@ -48,6 +51,15 @@ class BaseController extends AbstractController
 
     /** @var TranslatorInterface */
     protected $translator;
+
+    /** @var RouterInterface */
+    protected $router;
+
+    /** @var KernelInterface */
+    protected $kernel;
+
+    /** @var ManagerRegistry */
+    protected $doctrineRegistry;
 
     /**
      * @required
@@ -82,6 +94,30 @@ class BaseController extends AbstractController
     }
 
     /**
+     * @required
+     */
+    public function setRouter(RouterInterface $router)
+    {
+        $this->router = $router;
+    }
+
+    /**
+     * @required
+     */
+    public function setKernel(KernelInterface $kernel)
+    {
+        $this->kernel = $kernel;
+    }
+
+    /**
+     * @required
+     */
+    public function setDoctrineRegistry(ManagerRegistry $doctrineRegistry)
+    {
+        $this->doctrineRegistry = $doctrineRegistry;
+    }
+
+    /**
      * set up function before actions are dispatched
      *
      * @param Request $request
@@ -105,7 +141,6 @@ class BaseController extends AbstractController
         $locale = LocalizationHelper::normalizeLocale($user->getLocale());
 
         $request->setLocale($locale);
-        $this->get('translator')->setLocale($locale);
     }
 
     /**

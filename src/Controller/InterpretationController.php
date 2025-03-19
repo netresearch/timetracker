@@ -481,7 +481,7 @@ class InterpretationController extends BaseController
 
         //prepare data
         if ($page < 0) {
-            $message = $this->get('translator')->trans('page can not be negative.');
+            $message = $this->translator->trans('page can not be negative.');
             return new Error($message, 400);
         }
         $maxResults = $maxResults > 0 ? $maxResults : 50;    //cant be lower than 0

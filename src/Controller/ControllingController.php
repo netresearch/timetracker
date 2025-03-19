@@ -33,7 +33,6 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ControllingController extends BaseController
 {
-
     /**
      * Exports a users timetable from one specific year and month
      *
@@ -68,8 +67,8 @@ class ControllingController extends BaseController
             ]
         );
 
-        $showBillableField = $this->container->hasParameter('app_show_billable_field_in_export')
-            && $this->container->getParameter('app_show_billable_field_in_export');
+        $showBillableField = $this->params->has('app_show_billable_field_in_export')
+            && $this->params->get('app_show_billable_field_in_export');
         if ($showBillableField || $showTicketTitles) {
             $entries = $service->enrichEntriesWithTicketInformation(
                 $this->getUserId($request), $entries,
@@ -91,8 +90,7 @@ class ControllingController extends BaseController
         $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
         $reader->setReadFilter(new LOReadFilter());
         $spreadsheet = $reader->load(
-            $this->container->getParameter('kernel.root_dir')
-            . '/../web/template.xlsx'
+            $this->kernel->getProjectDir() . '/web/template.xlsx'
         );
 
         $sheet = $spreadsheet->getSheet(0);

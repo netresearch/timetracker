@@ -3,13 +3,24 @@
 namespace App\Controller;
 
 use App\Helper\LocalizationHelper as LocalizationHelper;
-
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class SettingsController extends AbstractController
 {
+    /** @var TranslatorInterface */
+    protected $translator;
+
+    /**
+     * @required
+     */
+    public function setTranslator(TranslatorInterface $translator)
+    {
+        $this->translator = $translator;
+    }
+
     public function saveAction(Request $request)
     {
         if ('POST' == $request->getMethod()) {
@@ -35,12 +46,12 @@ class SettingsController extends AbstractController
             return new JsonResponse(array('success' => true,
                     'settings' => $user->getSettings(),
                     'locale' => $user->getLocale(),
-                    'message' => $this->get('translator')->trans('The configuration has been successfully saved.')
+                    'message' => $this->translator->trans('The configuration has been successfully saved.')
                 ));
         }
 
         $response = new JsonResponse(array('success' => false,
-                'message' => $this->get('translator')->trans('The configuration could not be saved.')
+                'message' => $this->translator->trans('The configuration could not be saved.')
             ));
 
         $response->setStatusCode(503);
