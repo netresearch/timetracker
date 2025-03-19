@@ -166,6 +166,10 @@ check_page:
     path: /status/page
     defaults: { _controller: App\Controller\StatusController::pageAction }
 
+status:
+    path: /status
+    defaults: { _controller: App\Controller\StatusController::pageAction }
+
 saveProject:
     path: /project/save
     defaults: { _controller: App\Controller\AdminController::saveProjectAction }

@@ -44,9 +44,7 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
 
     public function supports(Request $request)
     {
-        // Support both the original login route and our new login_form route
-        return ($request->attributes->get('_route') === '_login' ||
-                $request->attributes->get('_route') === '_login_form') &&
+        return ($request->attributes->get('_route') === '_login') &&
                $request->isMethod('POST');
     }
 
@@ -165,7 +163,7 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
 
     protected function getLoginUrl()
     {
-        return $this->router->generate('_login_form');
+        return $this->router->generate('_login');
     }
 
     public function supportsRememberMe()
