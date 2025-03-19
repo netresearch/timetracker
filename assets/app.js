@@ -8,6 +8,9 @@
 // Import styles
 import './styles/app.scss';
 
+// Import main JavaScript file
+import './js/main.js';
+
 // Start the app
 console.log('Webpack Encore is now set up! Start building your app.');
 
