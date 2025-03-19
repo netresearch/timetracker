@@ -20,9 +20,3 @@ services:
       - ./app/logs:/var/www/html/app/logs
       - ./app/config/parameters.yml:/var/www/html/app/config/parameters.yml
       - /usr/local/share/ca-certificates/:/usr/local/share/ca-certificates/host
-
-###> doctrine/doctrine-bundle ###
-  database:
-    ports:
-      - "5432"
-###< doctrine/doctrine-bundle ###

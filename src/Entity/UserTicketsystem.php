@@ -29,7 +29,7 @@ class UserTicketsystem extends Base
 
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="userTicketsystem")
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="userTicketsystems")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      */
     protected $user;
