@@ -11,9 +11,6 @@ services:
       - app-pub:/var/www/html/web
       - app-cache:/var/www/html/app/cache
       - app-logs:/var/www/html/app/logs
-      - type: bind
-        source: ./app/config/parameters.yml
-        target: /var/www/html/app/config/parameters.yml
     links:
       - db:db
     restart: always
