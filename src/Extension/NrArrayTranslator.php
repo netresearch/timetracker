@@ -14,7 +14,7 @@
 
 namespace App\Extension;
 
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class NrArrayTranslator
@@ -26,7 +26,7 @@ use Symfony\Component\Translation\TranslatorInterface;
  * @link     http://www.netresearch.de
  */
 class NrArrayTranslator
-    extends \Twig_Extension
+    extends \Twig\Extension\AbstractExtension
 {
 
     /**
@@ -66,7 +66,7 @@ class NrArrayTranslator
     public function getFilters()
     {
         return [
-            'nr_array_translator' => new \Twig_SimpleFilter('nr_array_translator', array($this, 'filterArray')),
+            'nr_array_translator' => new \Twig\TwigFilter('nr_array_translator', array($this, 'filterArray')),
         ];
     }
 

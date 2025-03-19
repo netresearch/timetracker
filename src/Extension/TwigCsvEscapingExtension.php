@@ -5,13 +5,13 @@
 
 namespace App\Extension;
 
-use \Twig_Extension as Extension;
+use \Twig\Extension\AbstractExtension;
 
 /**
  * Class TwigCsvEscapingExtension
  * @package App\Extension
  */
-class TwigCsvEscapingExtension extends Extension
+class TwigCsvEscapingExtension extends AbstractExtension
 {
     /**
      * @return string
@@ -22,12 +22,12 @@ class TwigCsvEscapingExtension extends Extension
     }
 
     /**
-     * @return \Twig_SimpleFilter[]
+     * @return \Twig\TwigFilter[]
      */
     public function getFilters()
     {
         return array(
-            new \Twig_SimpleFilter('csv_escape', array($this, 'csvEscape')),
+            new \Twig\TwigFilter('csv_escape', array($this, 'csvEscape')),
         );
     }
 
