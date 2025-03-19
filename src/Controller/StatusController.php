@@ -4,33 +4,24 @@ namespace App\Controller;
 
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Security;
 
 class StatusController extends BaseController
 {
-    private function getLoginStatus($userId) {
-        // Check user session
-        if (1 > (int) $userId) {
-            return false;
-        } else {
-            return true;
-        }
+    public function __construct(
+        private Security $security
+    ) { }
+
+    private function getStatus(): array
+    {
+        return [
+            'loginStatus' => $this->security->isGranted('IS_AUTHENTICATED_FULLY')
+        ];
     }
 
-
-    private function getStatus($userId)
+    public function checkAction()
     {
-        // initialize status
-        $loginStatus = $this->getLoginStatus($userId);
-
-        return array('loginStatus' => $loginStatus);
-    }
-
-    public function checkAction(Request $request)
-    {
-        $userId = $request->getSession()->get('loginId');
-
-        $status = $this->getStatus($userId);
-        return new JsonResponse($status);
+        return new JsonResponse($this->getStatus());
     }
 
     public function pageAction(Request $request)
@@ -39,7 +30,7 @@ class StatusController extends BaseController
         $this->checkLogin($request);
 
         $userId = $request->getSession()->get('loginId');
-        $status = $this->getStatus($userId);
+        $status = $this->getStatus();
         return $this->render('status.html.twig', array(
             'loginClass'    => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),
             'apptitle'      => $this->params->get('app_title'),
