@@ -1,5 +1,0 @@
-files:
-  - source: /src/Netresearch/TimeTrackerBundle/Resources/translations/activities.de.yml
-    translation: /src/Netresearch/TimeTrackerBundle/Resources/translations/activities.%two_letters_code%.yml
-  - source: /src/Netresearch/TimeTrackerBundle/Resources/translations/messages.de.yml
-    translation: /src/Netresearch/TimeTrackerBundle/Resources/translations/messages.%two_letters_code%.yml

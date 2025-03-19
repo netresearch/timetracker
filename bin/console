@@ -1,27 +1,38 @@
 #!/usr/bin/env php
 <?php
 
+use App\Kernel;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
-use Symfony\Component\Debug\Debug;
+use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\ErrorHandler\Debug;
 
-// if you don't want to setup permissions the proper way, just uncomment the following PHP line
-// read https://symfony.com/doc/current/setup.html#checking-symfony-application-configuration-and-setup
-// for more information
-//umask(0000);
+if (!in_array(PHP_SAPI, ['cli', 'phpdbg', 'embed'], true)) {
+    echo 'Warning: The console should be invoked via the CLI version of PHP, not the '.PHP_SAPI.' SAPI'.PHP_EOL;
+}
 
 set_time_limit(0);
 
-require __DIR__.'/../vendor/autoload.php';
+require dirname(__DIR__).'/vendor/autoload.php';
+
+// Load cached env vars if the .env.local.php file exists
+// Run "composer dump-env prod" to create it (requires symfony/flex >=1.2)
+if (is_array($env = @include dirname(__DIR__).'/.env.local.php') && (!isset($env['APP_ENV']) || ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? $env['APP_ENV']) === $env['APP_ENV'])) {
+    (new Dotenv())->populate($env);
+} else {
+    // load all the .env files
+    (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+}
 
 $input = new ArgvInput();
-$env = $input->getParameterOption(['--env', '-e'], getenv('SYMFONY_ENV') ?: 'dev');
-$debug = getenv('SYMFONY_DEBUG') !== '0' && !$input->hasParameterOption(['--no-debug', '']) && $env !== 'prod';
+$env = $input->getParameterOption(['--env', '-e'], $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? 'dev', true);
+$debug = (bool) ($_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? ('prod' !== $env));
 
 if ($debug) {
+    umask(0000);
     Debug::enable();
 }
 
-$kernel = new AppKernel($env, $debug);
+$kernel = new Kernel($env, $debug);
 $application = new Application($kernel);
 $application->run($input);

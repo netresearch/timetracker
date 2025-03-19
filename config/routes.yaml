@@ -1,0 +1,6 @@
+# config/routes.yaml
+# Main routing configuration
+
+# TimeTracker routes - Load from the legacy bundle config for backward compatibility
+timetracker:
+    resource: "./legacy_bundle/routing.yml"

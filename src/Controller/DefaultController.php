@@ -1,0 +1,640 @@
+<?php
+
+namespace App\Controller;
+
+use App\Response\Error;
+use App\Entity\Team;
+use App\Repository\TeamRepository;
+use App\Entity\TicketSystem;
+use App\Helper\JiraApiException;
+use App\Helper\JiraOAuthApi;
+use App\Helper\LdapClient;
+use App\Helper\TimeHelper;
+use App\Repository\EntryRepository;
+use App\Entity\User;
+use App\Entity\Customer;
+use App\Entity\Project;
+use App\Entity\Activity;
+use App\Entity\Entry;
+use App\Entity\Holiday;
+
+use App\Model\JsonResponse;
+use App\Model\Response;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Class DefaultController
+ * @package App\Controller
+ */
+class DefaultController extends BaseController
+{
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * DefaultController constructor.
+     * @param LoggerInterface $logger
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     * @throws \ReflectionException
+     */
+    public function indexAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $userId = (int) $this->getUserId($request);
+        $doctrine = $this->getDoctrine();
+
+        $user = $doctrine->getRepository(User::class)->find($userId);
+        $settings = $user->getSettings();
+
+        /** @var \App\Repository\CustomerRepository $customerRepo */
+        $customerRepo = $doctrine->getRepository(Customer::class);
+        $customers = $customerRepo->getCustomersByUser($userId);
+
+        // Send the customer-projects-structure to the frontend for caching
+        /** @var \App\Repository\ProjectRepository $projectRepo */
+        $projectRepo = $doctrine->getRepository(Project::class);
+        $projects = $projectRepo->getProjectStructure($userId, $customers);
+
+        return $this->render('Default/index.html.twig', array(
+            'globalConfig'  => [
+                'logo_url'              => $this->params->get('app_logo_url'),
+                'monthly_overview_url'  => $this->params->get('app_monthly_overview_url'),
+                'header_url'            => $this->params->get('app_header_url'),
+            ],
+            'apptitle'      => $this->params->get('app_title'),
+            'environment'   => $this->get('kernel')->getEnvironment(),
+            'customers'     => $customers,
+            'projects'      => $projects,
+            'settings'      => $settings,
+            'locale'        => $settings['locale']
+        ));
+    }
+
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
+     */
+    public function loginAction(Request $request)
+    {
+        if ($request->getMethod() != 'POST') {
+            return $this->render('login.html.twig',
+                array(
+                    'locale'  => 'en',
+                    'apptitle' => $this->params->get('app_title'),
+                )
+            );
+        }
+
+        $username = $request->request->get('username');
+        $password = $request->request->get('password');
+
+        try {
+
+            $client = new LdapClient($this->logger);
+
+            $client->setHost($this->params->get('ldap_host'))
+                ->setPort($this->params->get('ldap_port'))
+                ->setReadUser($this->params->get('ldap_readuser'))
+                ->setReadPass($this->params->get('ldap_readpass'))
+                ->setBaseDn($this->params->get('ldap_basedn'))
+                ->setUserName($username)
+                ->setUserPass($password)
+                ->setUseSSL($this->params->get('ldap_usessl'))
+                ->setUserNameField($this->params->get('ldap_usernamefield'))
+                ->login();
+
+            /** @var \App\Repository\UserRepository $userRepo */
+            $userRepo = $this->getDoctrine()
+                ->getRepository(User::class);
+            $user = $userRepo->findOneByUsername($username);
+
+            if (!$user) {
+                if (!(boolean) $this->params->get('ldap_create_user')) {
+                    throw new \Exception('No equivalent timetracker user could be found.');
+                }
+
+                // create new user if users.username doesn't exist for valid ldap-authentication
+                $user = new User();
+                $user->setUsername($username)
+                    ->setType('DEV')
+                    ->setShowEmptyLine('0')
+                    ->setSuggestTime('1')
+                    ->setShowFuture('1')
+                    ->setLocale('de');
+
+                if (!empty($client->getTeams())) {
+                    /** @var TeamRepository $teamRepo */
+                    $teamRepo = $this->getDoctrine()
+                        ->getRepository(Team::class);
+
+                    foreach ($client->getTeams() as $teamname) {
+                        /** @var Team $team */
+                        $team = $teamRepo->findOneBy([
+                            'name' => $teamname
+                        ]);
+
+                        if ($team) {
+                            $user->addTeam($team);
+                        }
+                    }
+                }
+
+                $em = $this->getDoctrine()->getManager();
+                $em->persist($user);
+                $em->flush();
+            }
+
+        } catch (\Exception $e) {
+
+            $this->get('session')->getFlashBag()->add(
+                'error', $this->translate($e->getMessage())
+            );
+            return $this->render('login.html.twig', array(
+                'locale'   => 'en',
+                'apptitle' => $this->params->get('app_title'),
+                'username' => $username,
+                'error'    => true,
+                'message'  => $this->translate($e->getMessage())
+            ));
+
+        }
+
+        return $this->setLoggedIn($request, $user, $request->request->has('loginCookie'));
+    }
+
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     */
+    public function logoutAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $this->setLoggedOut($request);
+        return $this->redirect($this->generateUrl('_start'));
+    }
+
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function getTimeSummaryAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $userId = (int) $this->getUserId($request);
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
+        $today = $entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
+        $week = $entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
+        $month = $entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
+
+        $data = array(
+            'today' => $today,
+            'week'  => $week,
+            'month' => $month,
+        );
+
+        return new JsonResponse($data);
+    }
+
+    /**
+     * Retrieves a summary of an entry (project total/own, ticket total/own)
+     *
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function getSummaryAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $userId = (int) $this->getUserId($request);
+
+        $data = array(
+            'customer' => array(
+                'scope'      => 'customer',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
+            ),
+            'project' => array(
+                'scope'      => 'project',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
+            ),
+            'activity' => array(
+                'scope'      => 'activity',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
+            ),
+            'ticket' => array(
+                'scope'      => 'ticket',
+                'name'       => '',
+                'entries'    => 0,
+                'total'      => 0,
+                'own'        => 0,
+                'estimation' => 0,
+                'quota'      => 0,
+            ),
+        );
+
+        // early exit, if POST parameter for current entry is not given
+        $entryId = $request->request->get('id');
+        if (!$entryId) {
+            return new JsonResponse($data);
+        }
+
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
+        if (!$entryRepo->find($entryId)) {
+            $message = $this->get('translator')->trans('No entry for id.');
+            return new Error($message, 404);
+        }
+        // Collect all entries data
+        $data = $entryRepo->getEntrySummary($entryId, $userId, $data);
+
+        if ($data['project']['estimation']) {
+            $data['project']['quota'] =
+                TimeHelper::formatQuota(
+                    $data['project']['total'],
+                    $data['project']['estimation']);
+        }
+
+        return new JsonResponse($data);
+    }
+
+
+    /**
+     * Retrieves all current entries of the user logged in.
+     *
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function getDataAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $userId = (int) $this->getUserId($request);
+
+        $user = $this->getDoctrine()
+            ->getRepository(User::class)
+            ->find($userId);
+
+        $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 3;
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
+        $data = $entryRepo->getEntriesByUser($userId, $days, $user->getShowFuture());
+
+        return new JsonResponse($data);
+    }
+
+    /**
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     * @throws \Doctrine\DBAL\DBALException
+     */
+    public function getCustomersAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $userId = (int) $this->getUserId($request);
+        /** @var \App\Repository\CustomerRepository $customerRepo */
+        $customerRepo = $this->getDoctrine()->getRepository(Customer::class);
+        $data = $customerRepo->getCustomersByUser($userId);
+
+        return new JsonResponse($data);
+    }
+
+    /**
+     * Developers may see their own data only, CTL and PL may see everyone.
+     * Used in Interpretation tab to get all users
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getUsersAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        if ($this->isDEV($request)) {
+            /** @var \App\Repository\UserRepository $userRepo */
+            $userRepo = $this->getDoctrine()->getRepository(User::class);
+            $data = $userRepo->getUserById($this->getUserId($request));
+        } else {
+            /** @var \App\Repository\UserRepository $userRepo */
+            $userRepo = $this->getDoctrine()->getRepository(User::class);
+            $data = $userRepo->getUsers($this->getUserId($request));
+        }
+
+        return new JsonResponse($data);
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     */
+    public function getCustomerAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        if ($request->get('project')) {
+            $project = $this->getDoctrine()
+                ->getRepository(Project::class)
+                ->find($request->get('project'));
+
+            return new JsonResponse(array('customer' => $project->getCustomer()->getId()));
+        }
+
+        return new JsonResponse(array('customer' => 0));
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \ReflectionException
+     */
+    public function getProjectsAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $customerId = (int) $request->query->get('customer');
+        $userId = (int) $this->getUserId($request);
+
+        /** @var \App\Repository\ProjectRepository $projectRepo */
+        $projectRepo = $this->getDoctrine()->getRepository(Project::class);
+        $data = $projectRepo->getProjectsByUser($userId, $customerId);
+
+        return new JsonResponse($data);
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\DBAL\DBALException
+     * @throws \ReflectionException
+     */
+    public function getAllProjectsAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $customerId = (int) $request->query->get('customer');
+        $doctrine = $this->getDoctrine();
+        /** @var \App\Repository\ProjectRepository $projectRepo */
+        $projectRepo = $doctrine->getRepository(Project::class);
+        if ($customerId > 0) {
+            $result = $projectRepo->findByCustomer($customerId);
+        } else {
+            $result = $projectRepo->findAll();
+        }
+
+        $data = [];
+        foreach ($result as $project) {
+            $data[] = ['project' => $project->toArray()];
+        }
+
+        return new JsonResponse($data);
+    }
+
+    /**
+     * Return projects grouped by customer ID.
+     *
+     * Needed for frontend tracking autocompletion.
+     */
+    public function getProjectStructureAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $userId = (int) $this->getUserId($request);
+        $doctrine = $this->getDoctrine();
+
+        /** @var \App\Repository\CustomerRepository $customerRepo */
+        $customerRepo = $doctrine->getRepository(Customer::class);
+        $customers = $customerRepo->getCustomersByUser($userId);
+
+        /** @var \App\Repository\ProjectRepository $projectRepo */
+        $projectRepo = $doctrine->getRepository(Project::class);
+        $projectStructure = $projectRepo->getProjectStructure($userId, $customers);
+
+        return new JsonResponse($projectStructure);
+    }
+
+    /**
+     * @return Response
+     */
+    public function getActivitiesAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        /** @var \App\Repository\ActivityRepository $activityRepo */
+        $activityRepo = $this->getDoctrine()->getRepository(Activity::class);
+        $data = $activityRepo->getActivities();
+        return new JsonResponse($data);
+    }
+
+    /**
+     * @return Response
+     */
+    public function getHolidaysAction()
+    {
+        /** @var \App\Repository\HolidayRepository $holidayRepo */
+        $holidayRepo = $this->getDoctrine()
+            ->getRepository(Holiday::class);
+        $holidays = $holidayRepo->findByMonth(date("Y"), date("m"));
+        return new JsonResponse($holidays);
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws \Twig\Error\Error
+     * @throws \Exception
+     */
+    public function exportAction(Request $request)
+    {
+        $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 10000;
+
+        $user = $this->getDoctrine()
+            ->getRepository(User::class)
+            ->find($this->getUserId($request));
+
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
+        $entries = $entryRepo->findByRecentDaysOfUser($user, $days);
+
+        $content = $this->get('twig')->render(
+            'Default/export.csv.twig',
+            array(
+                'entries' => $entries,
+                'labels'  => null,
+            )
+        );
+
+        $filename = strtolower(str_replace(' ', '-', $user->getUsername())) . '.csv';
+
+        $response = new Response();
+        $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
+        $response->headers->set('Content-disposition', 'attachment;filename=' . $filename);
+        $response->setContent(chr(239) . chr(187) . chr(191) . $content);
+
+        return $response;
+    }
+
+    /**
+     * Handles returning user from OAuth service.
+     *
+     * User is redirected to app after accepting or declining granting access for this app.
+     *
+     * @param Request $request
+     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
+     */
+    public function jiraOAuthCallbackAction(Request $request)
+    {
+        /** @var User $user */
+        $user = $this->getDoctrine()
+            ->getRepository(User::class)
+            ->find($this->getUserId($request));
+
+        /** @var TicketSystem $ticketSystem */
+        $ticketSystem = $this->getDoctrine()
+            ->getRepository(TicketSystem::class)
+            ->find($request->get('tsid'));
+
+        try {
+            $jiraOAuthApi = new JiraOAuthApi($user, $ticketSystem, $this->getDoctrine(), $this->container->get('router'));
+            $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
+            $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
+            return $this->redirectToRoute('_start');
+        } catch (JiraApiException $e) {
+            return new Response($e->getMessage());
+        }
+    }
+
+    /**
+     * Get a list of information (activities, times, users) about a ticket for time evaluation
+     *
+     * @param Request $request Incoming HTTP request
+     *
+     * @return object JSON data with time information about activities, total time and users
+     */
+    public function getTicketTimeSummaryAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->login($request);
+        }
+
+        $attributes = $request->attributes;
+        $name = $attributes->has('ticket') ? $attributes->get('ticket') : null;
+
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
+        $activities = $entryRepo->getActivitiesWithTime($name);
+
+        $users = $entryRepo->getUsersWithTime($name);
+
+        if (is_null($name) || empty($users)) {
+            return new Response(
+                'There is no information available about this ticket.', 404
+            );
+        }
+
+        $time['total_time']['time'] = 0;
+
+        foreach ($activities as $activity) {
+
+            $total = $activity['total_time'];
+            $key = $activity['name'] ?? 'No activity';
+
+            $time['activities'][$key]['seconds'] = (int) $total * 60;
+            $time['activities'][$key]['time'] = TimeHelper::minutes2readable(
+                $total
+            );
+        }
+
+        foreach ($users as $user) {
+            $time['total_time']['time'] += (int) $user['total_time'];
+            $key = $user['username'];
+            $time['users'][$key]['seconds'] = (int) $user['total_time'] * 60;
+            $time['users'][$key]['time'] = TimeHelper::minutes2readable(
+                $user['total_time']
+            );
+        }
+
+        $time['total_time']['seconds'] = (int) $time['total_time']['time'] * 60;
+        $time['total_time']['time'] = TimeHelper::minutes2readable(
+            $time['total_time']['time']
+        );
+
+        return new JsonResponse($time);
+    }
+
+    /**
+     * Return the jira cloud ticket summary javascript with a correct TT URL.
+     *
+     * @return Response
+     */
+    public function getTicketTimeSummaryJsAction()
+    {
+        $ttUrl = $this->generateUrl(
+            '_start', [], UrlGeneratorInterface::ABSOLUTE_URL
+        );
+
+        $content = file_get_contents(
+            $this->params->get('kernel.root_dir')
+            . '/../web/scripts/timeSummaryForJira.js'
+        );
+        $content = str_replace('https://timetracker/', $ttUrl, $content);
+
+        return new JsonResponse($content);
+    }
+}
