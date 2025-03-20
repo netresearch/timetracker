@@ -83,7 +83,7 @@ Installation and set up
 Requirements
 ------------
 
-- PHP >= 7.2
+- PHP >= 8.2
 - MySQL compatible database
 - Composer
 - For more details see ``composer.json``
@@ -102,28 +102,26 @@ Setup - manual from from sources
 
    $ composer install
 
-   It will ask you for some configuration options.
-
-   If you want to adjust that later, edit ``.env.local``
+   Create a ``.env.local``, copy the contents of ``.env`` to it and adjust the settings to your needs.
 
    Also copy ``config/sentry.yml.dist`` to ``config/sentry.yml``,
    and fill the ``dsn`` key if necessary.
 
 #. Make cache and log directory writable::
 
-   $ chmod -R og+w app/cache/ app/logs/
+   $ chmod -R og+w var/cache/ var/log/
 
-#. For Apache, copy ``web/.htaccess_dev`` to ``web/.htaccess``.
+#. For Apache, check ``public/.htaccess`` to see if it is correct for your setup.
 
-   For nginx, symlink ``web/app_dev.php`` or ``web/app.php`` to ``web/index.php``.
+   For nginx, see ``nginx-conf.d-default.conf.
 
 #. Create a virtual host web server entry
 
-   pointing to ``/path/to/timetracker/web/``
+   pointing to ``/path/to/timetracker/public/``
 
 #. Open the timetracker URL in your browser. If you see a white page, run::
 
-   $ php app/console assets:install
+   $ php bin/console assets:install
 
 #. Import test data so that you have a set of data to work and play with::
 
@@ -355,7 +353,7 @@ __ https://addons.mozilla.org/de/firefox/addon/greasemonkey/
 
 API documentation
 =================
-The timetracker API is documented in ``web/api.yml`` (OpenAPI v3).
+The timetracker API is documented in ``public/api.yml`` (OpenAPI v3).
 
 You can view a rendered version in your browser by opening
 ``http://timetracker.example/docs/swagger/index.html``.
@@ -365,5 +363,5 @@ Automated tests
 ===============
 
 1. Run ``./tests/prepare-test-sql.sh``
-2. Create a separate database with settings from ``app/config/parameters_test.yml``
-3. Run ``./bin/simple-phpunit``
+2. Create a separate database with settings from ``.env.test``
+3. Run ``./bin/phpunit tests/``

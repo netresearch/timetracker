@@ -6,6 +6,6 @@ php_value date.timezone "Europe/Berlin"
     RewriteBase /
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ app_dev.php [QSA,L]
-    DirectoryIndex index.php app_dev.php
+    RewriteRule ^(.*)$ index.php [QSA,L]
+    DirectoryIndex index.php
 </IfModule>
