@@ -142,21 +142,8 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
             return new RedirectResponse($targetPath);
         }
 
-        // Set the credentials in the session
-        $session = $request->getSession();
-        /** @var User $user */
-        $user = $token->getUser();
-        $session->set('loggedIn', true); // Set the loggedIn flag expected by BaseController
-        $session->set('loginTime', date('Y-m-d H:i:s'));
-        $session->set('loginId', $user->getId());
-        $session->set('loginName', $user->getUsername());
-        $session->set('loginType', $user->getType());
-
-        // Remember me cookie
-        if ($request->request->has('loginCookie')) {
-            // Call the helper to set a cookie
-            LoginHelper::setCookie($user->getId(), $user->getUsername(), $this->params->get('secret'));
-        }
+        // Remember me cookie is handled by Symfony's remember_me functionality
+        // No need to set custom session variables as Symfony's security system manages authentication state
 
         return new RedirectResponse($this->router->generate('_start'));
     }

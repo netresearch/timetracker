@@ -9,7 +9,7 @@ _login:
 # Logout route (Symfony 4 convention)
 _logout:
     path: /logout
-    controller: App\Controller\SecurityController::logout
+    methods: GET
 
 # TimeTracker routes - Load from the legacy bundle config for backward compatibility
 timetracker:

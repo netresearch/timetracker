@@ -23,40 +23,42 @@ class SettingsController extends AbstractController
 
     public function saveAction(Request $request)
     {
-        if ('POST' == $request->getMethod()) {
-            $userId = $request->getSession()->get('loginId');
-
-            $doctrine = $this->getDoctrine();
-            /** @var \App\Repository\UserRepository $userRepo */
-            $userRepo = $doctrine->getRepository(\App\Entity\User::class);
-            $user = $userRepo->find($userId);
-
-            $user->setShowEmptyLine($request->request->get('show_empty_line'));
-            $user->setSuggestTime($request->request->get('suggest_time'));
-            $user->setShowFuture($request->request->get('show_future'));
-            $user->setLocale(LocalizationHelper::normalizeLocale($request->request->get('locale')));
-
-            $em = $doctrine->getManager();
-            $em->persist($user);
-            $em->flush();
-
-            // Adapt to new locale immediately
-            $request->setLocale($user->getLocale());
-
-            return new JsonResponse(array('success' => true,
-                    'settings' => $user->getSettings(),
-                    'locale' => $user->getLocale(),
-                    'message' => $this->translator->trans('The configuration has been successfully saved.')
-                ));
+        if ('POST' != $request->getMethod()) {
+            $response = new JsonResponse([
+                'success' => false,
+                'message' => $this->translator->trans('The configuration could not be saved.')
+            ]);
+            $response->setStatusCode(503);
+            return $response;
         }
 
-        $response = new JsonResponse(array('success' => false,
-                'message' => $this->translator->trans('The configuration could not be saved.')
-            ));
+        $user = $this->getUser();
+        if (!$user) {
+            $response = new JsonResponse([
+                'success' => false,
+                'message' => $this->translator->trans('User not found.')
+            ]);
+            $response->setStatusCode(404);
+            return $response;
+        }
 
-        $response->setStatusCode(503);
-        return $response;
+        $user->setShowEmptyLine($request->request->get('show_empty_line'));
+        $user->setSuggestTime($request->request->get('suggest_time'));
+        $user->setShowFuture($request->request->get('show_future'));
+        $user->setLocale(LocalizationHelper::normalizeLocale($request->request->get('locale')));
 
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($user);
+        $em->flush();
+
+        // Adapt to new locale immediately
+        $request->setLocale($user->getLocale());
+
+        return new JsonResponse([
+            'success' => true,
+            'settings' => $user->getSettings(),
+            'locale' => $user->getLocale(),
+            'message' => $this->translator->trans('The configuration has been successfully saved.')
+        ]);
     }
-
 }

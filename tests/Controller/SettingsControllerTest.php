@@ -25,15 +25,15 @@ class SettingsControllerTest extends Base
                 'locale' => 'de',
             ),
             'locale' => 'de',
-            'message' => 'The configuration has been successfully saved.',
+            'message' => 'Die Konfiguration wurde erfolgreich gespeichert.',
         );
         $this->client->request('POST', '/settings/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder->select('*')
-            ->from('users')->where('id = ?')
-            ->setParameter(0, 1);
-        $result = $this->queryBuilder->execute()->fetchAll();
+            ->from('users')->where('id = :userId')
+            ->setParameter('userId', 1);
+        $result = $this->queryBuilder->execute()->fetchAllAssociative();
         $expectedDbEntry = array(
             0 => array(
                 'username' => 'i.myself',

@@ -117,7 +117,7 @@ class InterpretationControllerTest extends Base
         $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(406);
         $this->assertJsonStructure([
-            'message' => 'DateTime::__construct(): Failed to parse time string (not a date) at position 0 (n): The timezone could not be found in the database',
+            'message' => 'Failed to parse time string (not a date) at position 0 (n): The timezone could not be found in the database',
         ]);
     }
 
@@ -129,7 +129,7 @@ class InterpretationControllerTest extends Base
         $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(406);
         $this->assertJsonStructure([
-            'message' => 'DateTime::__construct(): Failed to parse time string (1) at position 0 (1): Unexpected character',
+            'message' => 'Failed to parse time string (1) at position 0 (1): Unexpected character',
         ]);
     }
 

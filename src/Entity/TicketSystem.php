@@ -33,7 +33,7 @@ class TicketSystem extends Base
 
     /**
      * @var boolean $bookTime;
-     * @ORM\Column(name="book_time", type="integer", nullable=false)
+     * @ORM\Column(name="book_time", type="boolean", nullable=false)
      */
     protected $bookTime;
 

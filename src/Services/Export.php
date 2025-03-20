@@ -100,7 +100,7 @@ class Export
     {
         $username = 'all';
         if (0 < (int) $userId) {
-            /* @var $user User */
+            /** @var \App\Entity\User $user */
             $user = $this->doctrine
                 ->getRepository(\App\Entity\User::class)
                 ->find($userId);
@@ -139,10 +139,11 @@ class Export
         $showBillableField, $removeNotBillable = false,
         $showTicketTitles = false
     ) {
-        /* @var $currentUser \App\Entity\User */
         $doctrine = $this->doctrine;
-        $currentUser = $doctrine->getRepository(\App\Entity\User::class)
-            ->find($currentUserId);
+        /** @var \App\Repository\UserRepository $userRepository */
+        $userRepository = $doctrine->getRepository(\App\Entity\User::class);
+        /** @var \App\Entity\User $currentUser */
+        $currentUser = $userRepository->find($currentUserId);
 
         // Use the injected router
         $router = $this->router;

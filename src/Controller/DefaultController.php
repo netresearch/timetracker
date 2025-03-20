@@ -103,12 +103,9 @@ class DefaultController extends BaseController
      */
     public function logoutAction(Request $request)
     {
-        // Nothing to do here - Symfony security component handles the logout
-        // This method will never be executed because Symfony's security logout handler
-        // is configured to handle logout requests
-
-        // For compatibility with the old system
-        return $this->setLoggedOut($request);
+        // This method should no longer be called directly since Symfony's security component handles the logout
+        // Redirect to the logout route which is handled by Symfony's security logout handler
+        return $this->redirectToRoute('_logout');
     }
 
     /**

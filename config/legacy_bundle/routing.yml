@@ -132,14 +132,6 @@ _getTicketTimeSummaryJs:
     path: /scripts/timeSummaryForJira
     defaults: { _controller: App\Controller\DefaultController::getTicketTimeSummaryJsAction }
 
-_login:
-    path:  /login
-    defaults: { _controller: App\Controller\DefaultController::loginAction }
-
-_logout:
-    path:  /logout
-    defaults: { _controller: App\Controller\DefaultController::logoutAction }
-
 _export:
     path: /export/{days}
     defaults: { _controller: App\Controller\DefaultController::exportAction, days: 10000 }

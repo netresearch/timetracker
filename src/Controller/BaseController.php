@@ -153,7 +153,7 @@ class BaseController extends AbstractController
     protected function isLoggedIn(Request $request)
     {
         // Use Symfony security component to check if user is authenticated
-        return $this->isGranted('IS_AUTHENTICATED_FULLY');
+        return $this->isGranted('IS_AUTHENTICATED_FULLY') || $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
     }
 
     /**
@@ -174,25 +174,8 @@ class BaseController extends AbstractController
         // Get user from Symfony security context
         $user = $this->getUser();
 
-        if ($request->getSession()->has('loginRealId')) {
-            return $request->getSession()->get('loginRealId');
-        }
-
+        // Handle impersonation through Symfony's built-in functionality
         return $user->getId();
-    }
-
-    /**
-     * Check if the current user may impersonate as the given simulated user ID
-     */
-    protected function mayImpersonate(User $realUser, $simulatedUserId): bool
-    {
-        // Check if user is admin or has special role
-        if ($this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_SUPER_ADMIN')) {
-            return true;
-        }
-
-        $serviceUserNames = explode(',', $this->params->get('service_users'));
-        return in_array($realUser->getUsername(), $serviceUserNames);
     }
 
     /**
@@ -266,7 +249,7 @@ class BaseController extends AbstractController
     }
 
     /**
-     * Checks if the user is logged in. Either in the session or via cookie
+     * Checks if the user is logged in via Symfony Security
      *
      * @param Request $request The request object
      *
@@ -274,27 +257,8 @@ class BaseController extends AbstractController
      */
     protected function checkLogin(Request $request)
     {
-        // First, check if the user is authenticated via Symfony security
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return true;
-        }
-
-        // For backward compatibility, also check cookie-based authentication
-        $userId = (int) LoginHelper::getCookieUserId();
-        if ($userId > 0) {
-            /* @var $user User */
-            $user = $this->entityManager
-                ->getRepository(User::class)
-                ->find($userId);
-
-            if ($user && LoginHelper::checkCookieUserName($user->getUsername(), $this->params->get('secret'))) {
-                // Authenticate in Symfony security system
-                $this->setLoggedIn($request, $user);
-                return true;
-            }
-        }
-
-        return false;
+        // Only use Symfony's security component to check authentication
+        return $this->isGranted('IS_AUTHENTICATED_FULLY') || $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
     }
 
     /**
@@ -337,84 +301,6 @@ class BaseController extends AbstractController
         $response = new Response($message);
         $response->setStatusCode($status);
         return $response;
-    }
-
-    /**
-     * Sets the session values to "logged in"
-     *
-     * @param Request $request The request object
-     * @param User    $user      user object
-     * @param bool    $setCookie set a cookie or not
-     *
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse|Response
-     */
-    protected function setLoggedIn(Request $request, $user, $setCookie = true)
-    {
-        $session = $request->getSession();
-        $session->set('loginTime', date('Y-m-d H:i:s'));
-        $session->set('loginId', $user->getId());
-        $session->set('loginName', $user->getUsername());
-        $session->set('loginType', $user->getType());
-
-        // Check for impersonation
-        $simulatedUserId = $request->query->get('simulateUserId');
-        if (!empty($simulatedUserId)
-            && $this->mayImpersonate($user, $simulatedUserId)
-        ) {
-            $simulatedUser = $this->entityManager
-                ->getRepository(User::class)
-                ->find($simulatedUserId);
-
-            if ($simulatedUser) {
-                $session->set('loginRealId', $session->get('loginId'));
-                $session->set('loginRealName', $session->get('loginName'));
-                $session->set('loginRealType', $session->get('loginType'));
-                $session->set('loginId', $simulatedUser->getId());
-                $session->set('loginName', $simulatedUser->getUsername());
-                $session->set('loginType', $simulatedUser->getType());
-            }
-        }
-
-        if (true === $setCookie) {
-            // set login cookie for autologin and 30 days persistence
-            LoginHelper::setCookie($user->getId(), $user->getUsername(), $this->params->get('secret'));
-        }
-
-        $this->addFlash('success', $this->translate('Login successful.'));
-
-        return $this->redirectToRoute('_start');
-    }
-
-    /**
-     * sets the user logged out
-     *
-     * @param Request $request
-     *
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    protected function setLoggedOut(Request $request)
-    {
-        $session = $request->getSession();
-
-        // if we're impersonating someone - get back to real user
-        if ($session->has('loginRealId')) {
-            $session->set('loginId', $session->get('loginRealId'));
-            $session->set('loginName', $session->get('loginRealName'));
-            $session->set('loginType', $session->get('loginRealType'));
-            $session->remove('loginRealId');
-            $session->remove('loginRealName');
-            $session->remove('loginRealType');
-
-            return $this->redirectToRoute('_start');
-        }
-
-        // set logout flash message
-        $this->addFlash('success', $this->translate('You are now logged out.'));
-
-        $session->clear();
-        LoginHelper::deleteCookie();
-
-        return $this->redirectToRoute('_login');
     }
 
     /**

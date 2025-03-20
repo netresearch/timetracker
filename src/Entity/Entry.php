@@ -46,12 +46,12 @@ class Entry extends Base
     protected $day;
 
     /**
-     * @ORM\Column(type="time")
+     * @ORM\Column(type="datetime")
      */
     protected $start;
 
     /**
-     * @ORM\Column(type="time")
+     * @ORM\Column(type="datetime")
      */
     protected $end;
 
@@ -61,7 +61,7 @@ class Entry extends Base
     protected $duration;
 
     /**
-     * @ORM\Column(name="synced_to_ticketsystem", type="boolean", nullable=false)
+     * @ORM\Column(name="synced_to_ticketsystem", type="boolean", nullable=true)
      */
     protected $syncedToTicketsystem;
 
@@ -117,7 +117,7 @@ class Entry extends Base
 
     /**
      * ID of the original booked external ticket.
-     * @ORM\Column(name="internal_jira_ticket_original_key", type="string", length=255, nullable=false)
+     * @ORM\Column(name="internal_jira_ticket_original_key", type="string", length=31, nullable=true)
      *
      * @var string e.g. TYPO-1234
      */

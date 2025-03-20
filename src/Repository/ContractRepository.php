@@ -29,15 +29,19 @@ class ContractRepository extends ServiceEntityRepository
      */
     public function getContracts()
     {
-        $contracts = $this->createQueryBuilder('contracts')
+        /** @var \Doctrine\ORM\QueryBuilder $queryBuilder */
+        $queryBuilder = $this->createQueryBuilder('contracts')
             ->join('contracts.user', 'users')
             ->orderBy('users.username', 'ASC')
-            ->addOrderBy('contracts.start', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->addOrderBy('contracts.start', 'ASC');
+
+        /** @var \Doctrine\ORM\Query $query */
+        $query = $queryBuilder->getQuery();
+        /** @var \App\Entity\Contract[] $contracts */
+        $contracts = $query->getResult();
         $data = [];
 
-        /* @var Contract $contract */
+        /** @var \App\Entity\Contract $contract */
         foreach ($contracts as $contract) {
             $data[] = ['contract' => [
                 'id'      => $contract->getId(),

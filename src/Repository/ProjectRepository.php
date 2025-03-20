@@ -52,8 +52,9 @@ class ProjectRepository extends ServiceEntityRepository
      */
     public function getProjectStructure(int $userId, array $customers)
     {
-        /* @var $globalProjects Project[] */
+        /** @var \App\Entity\Project[] $globalProjects */
         $globalProjects = $this->getGlobalProjects();
+        /** @var \App\Entity\Project[] $userProjects */
         $userProjects   = $this->getProjectsByUser($userId);
 
         $projects = [];

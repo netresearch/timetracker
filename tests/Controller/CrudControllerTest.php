@@ -38,7 +38,7 @@ class CrudControllerTest extends Base
         $this->assertJsonStructure($expectedJson);
 
         $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
-        $result = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $result = $this->connection->query($query)->fetchAllAssociative();
 
         $expectedDbEntry = [
             [
@@ -112,7 +112,7 @@ class CrudControllerTest extends Base
             WHERE `day` >= "2020-01-25"
             AND `day` <= "2020-02-06"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $results = $this->connection->query($query)->fetchAllAssociative();
 
         $this->assertSame(10, count($results));
 
@@ -165,7 +165,7 @@ class CrudControllerTest extends Base
             WHERE `day` >= "2024-01-01"
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $results = $this->connection->query($query)->fetchAllAssociative();
         $this->assertSame(8, count($results));
 
         // assert days
@@ -217,7 +217,7 @@ class CrudControllerTest extends Base
             WHERE `day` >= "2020-02-07"
             AND `day` <= "2020-02-10"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $results = $this->connection->query($query)->fetchAllAssociative();
         $this->assertSame(2, count($results));
 
         $staticExpected =  [
@@ -276,7 +276,7 @@ class CrudControllerTest extends Base
             WHERE `day` >= "2020-02-10"
             AND `day` <= "2020-02-20"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $results = $this->connection->query($query)->fetchAllAssociative();
 
         $this->assertSame(10, count($results));
 
@@ -329,7 +329,7 @@ class CrudControllerTest extends Base
             WHERE `day` >= "0020-02-10"
             AND `day` <= "0020-02-20"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $results = $this->connection->query($query)->fetchAllAssociative();
 
         $this->assertSame(0, count($results));
     }
@@ -354,7 +354,7 @@ class CrudControllerTest extends Base
             WHERE `day` >= "2019-12-29"
             AND `day` <= "2020-01-05"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetch_all(MYSQLI_ASSOC);
+        $results = $this->connection->query($query)->fetchAllAssociative();
 
         $this->assertSame(4, count($results));
 

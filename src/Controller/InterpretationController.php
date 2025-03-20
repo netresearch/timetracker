@@ -18,20 +18,6 @@ class InterpretationController extends BaseController
      */
     private $cache = null;
 
-    /**
-     * Check if the current user may impersonate as the given simulated user ID
-     *
-     * Interpretation for other users is allowed for project managers
-     * and controllers.
-     */
-    protected function mayImpersonate(User $realUser, $simulatedUserId): bool
-    {
-        if ($realUser->getType() === 'CTL' || $realUser->getType() === 'PL') {
-            return true;
-        }
-        return parent::mayImpersonate($realUser, $simulatedUserId);
-    }
-
     public function sortByName($a, $b)
     {
         return strcmp($b['name'], $a['name']);
@@ -531,31 +517,38 @@ class InterpretationController extends BaseController
         }
 
         // build url
-        parse_str($request->getQueryString(), $queryString);
-        unset($queryString['page']);
-        $queryString = '?' . http_build_query($queryString);
-        $route = $request->getUriForPath($request->getPathInfo()). $queryString . (!str_ends_with($queryString, '?')? '&' : '');
+        $route = $request->getUriForPath($request->getPathInfo()) . '?';
+
+        $query_params = [];
+        if ($request->getQueryString()) {
+            parse_str($request->getQueryString(), $query_params);
+            unset($query_params['page']);
+        }
 
         // negative firstResult are interpreted as 0
         $total = $paginator->count();
 
         //self
-        $self = $route . http_build_query(['page' => $page]);
+        $query_params['page'] = $page;
+        $self = $route . http_build_query($query_params);
 
         // returns null for empty Paginator, else returns last page for given $maxResults
         $lastPage = ceil($total / $maxResults) - 1;
+        $query_params['page'] = $lastPage;
         $last = $total
-            ? $route . http_build_query(['page' => $lastPage])
+            ? $route . http_build_query($query_params)
             : null;
 
         // returns the last previous page with data, or null if you are on page 0 or there is no data
+        $query_params['page'] = min($page - 1, $lastPage);
         $prev = $page && $total
-            ? $route . http_build_query(['page' => min($page - 1, $lastPage)])
+            ? $route . http_build_query($query_params)
             : null;
 
         //null when query would return empty data
+        $query_params['page'] = $page + 1;
         $next = $page < $lastPage
-            ? $route . http_build_query(['page' => $page + 1])
+            ? $route . http_build_query($query_params)
             : null;
 
         $links = [
