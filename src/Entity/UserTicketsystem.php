@@ -48,7 +48,7 @@ class UserTicketsystem extends Base
 
 
     /**
-     * @ORM\Column(name="avoid_connection", columnDefinition="TINYINT(1) unsigned DEFAULT 0 NOT NULL")
+     * @ORM\Column(name="avoid_connection", type="boolean", options={"default"=false})
      */
     protected $avoidConnection;
 

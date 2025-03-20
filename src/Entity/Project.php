@@ -50,12 +50,12 @@ class Project extends Base
 
 
     /**
-     * @ORM\Column(type="string", name="jira_id")
+     * @ORM\Column(type="string", name="jira_id", nullable=true)
      */
     protected $jiraId;
 
     /**
-     * @ORM\Column(type="string", name="jira_ticket")
+     * @ORM\Column(type="string", name="jira_ticket", length=255, nullable=true)
      */
     protected $jiraTicket;
 
@@ -64,7 +64,7 @@ class Project extends Base
      * Gets calculated automatically.
      * Comma-separated string.
      *
-     * @ORM\Column(type="string", name="subtickets")
+     * @ORM\Column(type="string", name="subtickets", length=255, nullable=true)
      */
     protected $subtickets;
 
@@ -148,7 +148,7 @@ class Project extends Base
     /**
      * the internal key of the project the current ticket should be booked to.
      *
-     * @ORM\Column(name="internal_jira_project_key")
+     * @ORM\Column(name="internal_jira_project_key", type="string", length=255, nullable=true)
      */
     protected $internalJiraProjectKey;
 
@@ -156,7 +156,7 @@ class Project extends Base
     /**
      * the id of the internal jira ticket system
      *
-     * @ORM\Column(name="internal_jira_ticket_system")
+     * @ORM\Column(name="internal_jira_ticket_system", type="string", length=255, nullable=true)
      */
     protected $internalJiraTicketSystem;
 

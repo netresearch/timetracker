@@ -33,24 +33,30 @@ security:
             logout:
                 path: _logout
                 target: _login
-                # Add any other logout handlers if needed
-                # handlers:
-                #    - App\Security\LogoutHandler
+                # Ensure any custom session data is cleared on logout
+                invalidate_session: true
 
-            # Remember me functionality (optional)
+            # Remember me functionality (uses Symfony's built-in feature)
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 2592000 # 30 days in seconds
+                path: /
+                secure: false  # Set to true in production with HTTPS
 
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+            # Enable user switching (impersonation)
+            switch_user:
+                parameter: simulateUserId
+                role: ROLE_ALLOWED_TO_SWITCH
+
+    # Access control settings
     access_control:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/logout, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/css, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/js, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/images, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/status/check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/start, roles: ROLE_USER }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/, roles: ROLE_USER }
+        - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
 
         # Uncomment to restrict access to paths starting with /_internal to only localhost
         # - { path: ^/_internal/secure, roles: IS_AUTHENTICATED_ANONYMOUSLY, ip: 127.0.0.1 }

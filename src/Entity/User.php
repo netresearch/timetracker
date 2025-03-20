@@ -81,7 +81,7 @@ class User implements UserInterface
     protected $leadTeams;
 
     /**
-     * @ORM\Column(type="string", nullable=false)
+     * @ORM\Column(name="locale", type="string", length=255, nullable=false)
      */
     protected $locale;
 

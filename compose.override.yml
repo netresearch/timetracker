@@ -16,3 +16,27 @@ services:
     volumes:
       - .:/var/www/html
       - /usr/local/share/ca-certificates/:/usr/local/share/ca-certificates/host
+
+  db:
+    volumes:
+      - ./tt_dump.sql:/docker-entrypoint-initdb.d/999_dump.sql
+
+
+  db_unittest:
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=global123
+      - MYSQL_USER=unittest
+      - MYSQL_PASSWORD=unittest
+      - MYSQL_DATABASE=unittest
+    volumes:
+      - db-unittest-data:/var/lib/mysql
+      - ./sql/unittest/001_testtables.sql:/docker-entrypoint-initdb.d/001_testtables.sql
+      - ./sql/unittest/002_testdata.sql:/docker-entrypoint-initdb.d/002_testdata.sql
+    restart: always
+
+volumes:
+
+  db-unittest-data:
+    driver: local
+

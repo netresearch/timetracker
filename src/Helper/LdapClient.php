@@ -116,7 +116,7 @@ class LdapClient
             throw new \Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $e->getMessage() . '');
         }
 
-        /* @var $result Laminas\Ldap\Collection */
+        /** @var \Laminas\Ldap\Collection $result */
         $result = $ldap->search(
             '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')',
             $this->_baseDn, Ldap::SEARCH_SCOPE_SUB, array('cn', 'dn')

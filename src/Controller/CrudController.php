@@ -141,7 +141,7 @@ class CrudController extends BaseController
         $manager = $doctrine->getManager();
         /** @var \App\Repository\EntryRepository $entryRepo */
         $entryRepo = $doctrine->getRepository(\App\Entity\Entry::class);
-        /* @var $entries Entry[] */
+        /** @var Entry[] $entries */
         $entries = $entryRepo->findByDay((int) $userId, $day);
 
         if (!count($entries)) {
@@ -242,7 +242,7 @@ class CrudController extends BaseController
 
             /** @var \App\Repository\UserRepository $userRepo */
             $userRepo = $doctrine->getRepository(\App\Entity\User::class);
-            /* @var $user \App\Entity\User */
+            /** @var \App\Entity\User $user */
             $user = $userRepo->find($this->getUserId($request));
             $entry->setUser($user);
 
@@ -417,7 +417,7 @@ class CrudController extends BaseController
                 foreach ($contracts as $contract) {
                     $contractHoursArray[] = [
                         'start' => $contract->getStart(),
-                        // when user contract has no stop date, take the enddate of bulkentry
+                        // when user contract has no stop date, take the end date of bulkentry
                         'stop'  => $contract->getEnd() ?? new \DateTime($request->get('enddate')),
                         7 => $contract->getHours0(), // So
                         1 => $contract->getHours1(), // mo
@@ -443,8 +443,8 @@ class CrudController extends BaseController
 
             $em = $doctrine->getManager();
 
-            $date = new \DateTime($request->get('startdate'));
-            $endDate = new \DateTime($request->get('enddate'));
+            $date = new \DateTime($request->get('startdate') ?: '');
+            $endDate = new \DateTime($request->get('enddate') ?: '');
 
             $c = 0;
 

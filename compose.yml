@@ -37,7 +37,7 @@ services:
       - MYSQL_DATABASE=timetracker
     volumes:
       - db-data:/var/lib/mysql
-      - ./tt_dump.sql:/docker-entrypoint-initdb.d/tt_dump.sql
+      - ./sql/full.sql:/docker-entrypoint-initdb.d/001_full.sql
     restart: always
 
 networks:

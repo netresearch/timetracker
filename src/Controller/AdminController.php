@@ -1054,9 +1054,10 @@ class AdminController extends BaseController
                 ->find($request->get('user_id'))
             : null;
 
-        /* @var $contractRepository \App\Repository\ContractRepository */
+        /** @var \App\Repository\ContractRepository $contractRepository */
         $contractRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
+        /** @var \App\Entity\Contract $contract */
         if ($contractId) {
             $contract = $contractRepository->find($contractId);
             if (!$contract) {
@@ -1073,7 +1074,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $dateStart = \DateTime::createFromFormat('Y-m-d', $start);
+        $dateStart = \DateTime::createFromFormat('Y-m-d', $start ?: '');
         if (!$dateStart) {
             $response = new Response($this->translate('Please enter a valid contract start.'));
             $response->setStatusCode(406);
@@ -1082,7 +1083,7 @@ class AdminController extends BaseController
         $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), $dateStart->format('d'));
         $dateStart->setTime(0, 0, 0);
 
-        $dateEnd = \DateTime::createFromFormat('Y-m-d', $end);
+        $dateEnd = \DateTime::createFromFormat('Y-m-d', $end ?: '');
         if ($dateEnd) {
             $dateEnd->setDate($dateEnd->format('Y'), $dateEnd->format('m'), $dateEnd->format('d'));
             $dateEnd->setTime(23, 59, 59);
@@ -1110,7 +1111,7 @@ class AdminController extends BaseController
         $em = $this->doctrineRegistry->getManager();
         $em->persist($contract);
 
-        // when updating a existing contract dont look for other contracts for the user
+        // when updating a existing contract don't look for other contracts for the user
         if ($contractId) {
             $em->flush();
             return new JsonResponse(array($contract->getId()));
