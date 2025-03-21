@@ -1,5 +1,5 @@
 .. header::
-   .. image:: doc/netresearch.jpg
+   .. image:: docs/netresearch.jpg
       :height: 25px
       :align: left
 
@@ -329,11 +329,11 @@ Extras
 JIRA cloud integration
 ----------------------
 
-.. image:: doc/images/jira-cloud-1.png
+.. image:: docs/images/jira-cloud-1.png
    :alt: Jira cloud: Button "Zeiten aus Timetracker laden"
 
 
-.. image:: doc/images/jira-cloud-2.png
+.. image:: docs/images/jira-cloud-2.png
    :alt: Jira cloud displaying times
 
 
