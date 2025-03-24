@@ -15,6 +15,9 @@ services:
     image: ghcr.io/netresearch/timetracker:devbox
     volumes:
       - .:/var/www/html
+      - ./public:/var/www/html/public
+      - ./var/cache:/var/www/html/var/cache
+      - ./var/log:/var/www/html/var/log
       - /usr/local/share/ca-certificates/:/usr/local/share/ca-certificates/host
 
   db:
