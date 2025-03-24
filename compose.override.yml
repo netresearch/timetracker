@@ -13,6 +13,9 @@ services:
       dockerfile: Dockerfile
       target: devbox
     image: ghcr.io/netresearch/timetracker:devbox
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=1
     volumes:
       - .:/var/www/html
       - ./public:/var/www/html/public
