@@ -1,6 +1,7 @@
 FROM php:8.2-fpm AS runtime
 
-#ENV SYMFONY_ENV=prod
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
 
 RUN set -ex \
  && apt-get update -y \
@@ -60,35 +61,48 @@ RUN apt-get install -y nodejs
 RUN npm install -g npm@latest
 
 
-FROM devbox AS builder
+FROM devbox AS app_builder
 
 COPY . /var/www/html
+
+RUN npm install --legacy-peer-deps
 
 # install the composer packages
 WORKDIR /var/www/html
 RUN composer install --no-dev --no-ansi
-#RUN composer install --no-ansi
-#RUN app/console cache:clear --no-warmup
-#RUN app/console assets:install 'web'
+RUN composer dump-env prod
+
+RUN mkdir -p var/log
+RUN mkdir -p var/cache
+RUN chmod ugo+rwX var/log var/cache
+
+
+FROM app_builder AS assets_builder
+
+RUN composer install --no-ansi
 
 # Build webpack assets
-RUN npm install
 RUN npm run build
-
-RUN mkdir -p app/logs
-RUN mkdir -p app/cache
-RUN chmod ugo+rwX app/logs app/cache
-
 
 FROM runtime AS production
 
-COPY --from=builder /var/www/html /var/www/html/
+COPY --from=app_builder /var/www/html/vendor /var/www/html/vendor
+COPY --from=app_builder /var/www/html/public /var/www/html/public
+COPY --from=app_builder /var/www/html/config /var/www/html/config
+COPY --from=app_builder /var/www/html/bin /var/www/html/bin
+COPY --from=app_builder /var/www/html/src /var/www/html/src
+COPY --from=app_builder /var/www/html/templates /var/www/html/templates
+COPY --from=app_builder /var/www/html/translations /var/www/html/translations
+COPY --from=app_builder /var/www/html/var /var/www/html/var
+COPY --from=app_builder /var/www/html/sql /var/www/html/sql
+COPY --from=app_builder /var/www/html/.env.local.php /var/www/html/.env.local.php
+
+COPY --from=assets_builder /var/www/html/public/build /var/www/html/public/build
 
 # replace entrypoint and add updating ca-certifcates
-RUN echo "#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates\nexec \"\$@\"" > /usr/local/bin/docker-php-entrypoint \
- && echo "short_open_tag = off" >> /usr/local/etc/php/conf.d/symfony.ini
+RUN echo "#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates\nexec \"\$@\"" > /usr/local/bin/docker-php-entrypoint
 
-VOLUME /var/www/html/app/logs /var/www/html/app/cache
+VOLUME /var/www/html/var/log /var/www/html/var/cache
 
 EXPOSE 9000
 WORKDIR /var/www/html

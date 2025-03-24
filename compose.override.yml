@@ -12,7 +12,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: devbox
-    image: ghcr.io/netresearch/timetracker:devbox_v4
+    image: ghcr.io/netresearch/timetracker:devbox
     volumes:
       - .:/var/www/html
       - /usr/local/share/ca-certificates/:/usr/local/share/ca-certificates/host
