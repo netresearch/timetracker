@@ -4,14 +4,22 @@
         <meta charset="UTF-8" />
         <title>{% block title %}Welcome!{% endblock %}</title>
         {% block stylesheets %}
-            {{ encore_entry_link_tags('app') }}
+            {% if app.environment == 'prod' %}
+                <link rel="stylesheet" href="{{ asset('build/app.css') }}">
+            {% else %}
+                {{ encore_entry_link_tags('app') }}
+            {% endif %}
         {% endblock %}
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
     </head>
     <body>
         {% block body %}{% endblock %}
         {% block javascripts %}
-            {{ encore_entry_script_tags('app') }}
+            {% if app.environment == 'prod' %}
+                <script src="{{ asset('build/app.js') }}" defer></script>
+            {% else %}
+                {{ encore_entry_script_tags('app') }}
+            {% endif %}
         {% endblock %}
     </body>
 </html>

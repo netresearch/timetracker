@@ -4,20 +4,10 @@
 /.settings
 /bin/*
 !/bin/console
-/web/bundles/*
-/web/custom
-/web/timalytics
-/web/.htaccess
-/vendor/*
 /timalytics
-/web/stats
 /core
 /sql/unittest/001_testtables.sql
 /README.html
-/var/*
-/.env.local
-/.env.local.php
-/.env.*.local
 ###> symfony/webpack-encore-bundle ###
 /node_modules/
 /public/build/
