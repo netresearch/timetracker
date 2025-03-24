@@ -70,7 +70,8 @@ RUN npm install --legacy-peer-deps
 # install the composer packages
 WORKDIR /var/www/html
 RUN composer install --no-dev --no-ansi
-RUN composer dump-env prod
+# should happen in entrypoint
+#RUN composer dump-env prod
 
 RUN mkdir -p var/log
 RUN mkdir -p var/cache
@@ -95,7 +96,7 @@ COPY --from=app_builder /var/www/html/templates /var/www/html/templates
 COPY --from=app_builder /var/www/html/translations /var/www/html/translations
 COPY --from=app_builder /var/www/html/var /var/www/html/var
 COPY --from=app_builder /var/www/html/sql /var/www/html/sql
-COPY --from=app_builder /var/www/html/.env.local.php /var/www/html/.env.local.php
+#COPY --from=app_builder /var/www/html/.env.local.php /var/www/html/.env.local.php
 
 COPY --from=assets_builder /var/www/html/public/build /var/www/html/public/build
 
