@@ -70,28 +70,27 @@ class TicketSystem extends Base
     protected $password;
 
     /**
-     * @var string $publicKey
      * @ORM\Column(type="string", name="public_key")
      */
-    protected $publicKey;
+    protected string $publicKey = '';
 
     /**
      * @var string $privateKey
      * @ORM\Column(type="string", name="private_key")
      */
-    protected $privateKey;
+    protected string $privateKey = '';
 
     /**
      * @var string $oauthConsumerKey
-     * @ORM\Column(name="oauth_consumer_key", type="string", length=255, nullable=false)
+     * @ORM\Column(name="oauth_consumer_key", type="string", length=255, nullable=true)
      */
-    protected $oauthConsumerKey;
+    protected ?string $oauthConsumerKey = null;
 
     /**
      * @var string $oauthConsumerSecret
-     * @ORM\Column(name="oauth_consumer_secret", type="string", length=255, nullable=false)
+     * @ORM\Column(name="oauth_consumer_secret", type="string", length=255, nullable=true)
      */
-    protected $oauthConsumerSecret;
+    protected ?string $oauthConsumerSecret = null;
 
 
 
@@ -270,15 +269,7 @@ class TicketSystem extends Base
         return $this->password;
     }
 
-
-    /**
-     * Set public key
-     *
-     * @param string $publicKey
-     *
-     * @return $this
-     */
-    public function setPublicKey($publicKey): static
+    public function setPublicKey(string $publicKey): static
     {
         $this->publicKey = $publicKey;
         return $this;

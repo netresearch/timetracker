@@ -41,18 +41,18 @@ class User implements UserInterface
     /**
      * @ORM\Column(name="show_empty_line", type="integer", nullable=false)
      */
-    protected $showEmptyLine;
+    protected int $showEmptyLine = 0;
 
     /**
      * @ORM\Column(name="suggest_time", type="integer", nullable=false)
      */
-    protected $suggestTime;
+    protected int $suggestTime = 1;
 
 
     /**
      * @ORM\Column(name="show_future", type="integer", nullable=false)
      */
-    protected $showFuture;
+    protected int $showFuture = 1;
 
 
     /**
@@ -196,7 +196,7 @@ class User implements UserInterface
     }
 
 
-    public function setShowEmptyLine($value): static
+    public function setShowEmptyLine(int $value): static
     {
         $this->showEmptyLine = $value;
         return $this;
@@ -208,7 +208,7 @@ class User implements UserInterface
     }
 
 
-    public function setSuggestTime($value): static
+    public function setSuggestTime(int $value): static
     {
         $this->suggestTime = $value;
         return $this;
@@ -220,7 +220,7 @@ class User implements UserInterface
     }
 
 
-    public function setShowFuture($value): static
+    public function setShowFuture(int $value): static
     {
         $this->showFuture = $value;
         return $this;
