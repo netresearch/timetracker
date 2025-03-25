@@ -11,19 +11,16 @@ class PresetRepository extends ServiceEntityRepository
 {
     /**
      * PresetRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Preset::class);
+        parent::__construct($managerRegistry, Preset::class);
     }
 
     /**
      * get all presets
-     *
-     * @return array
      */
-    public function getAllPresets()
+    public function getAllPresets(): array
     {
         /** @var Preset[] $presets */
         $presets = $this->findBy([], ['name' => 'ASC']);

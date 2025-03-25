@@ -51,7 +51,7 @@ class Account
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -62,7 +62,7 @@ class Account
      *
      * @param string $name
      */
-    public function setName($name)
+    public function setName($name): void
     {
         $this->name = $name;
     }
@@ -79,12 +79,10 @@ class Account
 
     /**
      * Add entries
-     *
-     * @param Entry $entries
      */
-    public function addEntries(Entry $entries)
+    public function addEntries(Entry $entry): void
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
     }
 
     /**
@@ -99,11 +97,8 @@ class Account
 
     /**
      * Add entry
-     *
-     * @param Entry $entry
-     * @return Account
      */
-    public function addEntry(Entry $entry)
+    public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
         return $this;
@@ -111,23 +106,18 @@ class Account
 
     /**
      * Remove entry
-     *
-     * @param Entry $entry
      */
-    public function removeEntrie(Entry $entry)
+    public function removeEntrie(Entry $entry): void
     {
         $this->entries->removeElement($entry);
     }
 
     /**
      * Add entries
-     *
-     * @param Entry $entries
-     * @return Account
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
 
         return $this;
     }

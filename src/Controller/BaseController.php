@@ -15,7 +15,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Helper\LocalizationHelper as LocalizationHelper;
+use App\Helper\LocalizationHelper;
 use App\Helper\LoginHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\Response;
@@ -64,15 +64,15 @@ class BaseController extends AbstractController
     /**
      * @required
      */
-    public function setParameters(ParameterBagInterface $params)
+    public function setParameters(ParameterBagInterface $parameterBag): void
     {
-        $this->params = $params;
+        $this->params = $parameterBag;
     }
 
     /**
      * @required
      */
-    public function setEntityManager(EntityManagerInterface $entityManager)
+    public function setEntityManager(EntityManagerInterface $entityManager): void
     {
         $this->entityManager = $entityManager;
     }
@@ -80,7 +80,7 @@ class BaseController extends AbstractController
     /**
      * @required
      */
-    public function setSession(SessionInterface $session)
+    public function setSession(SessionInterface $session): void
     {
         $this->session = $session;
     }
@@ -88,7 +88,7 @@ class BaseController extends AbstractController
     /**
      * @required
      */
-    public function setTranslator(TranslatorInterface $translator)
+    public function setTranslator(TranslatorInterface $translator): void
     {
         $this->translator = $translator;
     }
@@ -96,7 +96,7 @@ class BaseController extends AbstractController
     /**
      * @required
      */
-    public function setRouter(RouterInterface $router)
+    public function setRouter(RouterInterface $router): void
     {
         $this->router = $router;
     }
@@ -104,7 +104,7 @@ class BaseController extends AbstractController
     /**
      * @required
      */
-    public function setKernel(KernelInterface $kernel)
+    public function setKernel(KernelInterface $kernel): void
     {
         $this->kernel = $kernel;
     }
@@ -112,27 +112,26 @@ class BaseController extends AbstractController
     /**
      * @required
      */
-    public function setDoctrineRegistry(ManagerRegistry $doctrineRegistry)
+    public function setDoctrineRegistry(ManagerRegistry $managerRegistry): void
     {
-        $this->doctrineRegistry = $doctrineRegistry;
+        $this->doctrineRegistry = $managerRegistry;
     }
 
     /**
      * set up function before actions are dispatched
      *
-     * @param Request $request
      *
-     * @return void
      */
-    public function preExecute(Request $request)
+    public function preExecute(Request $request): void
     {
-        if (!$this->checkLogin($request))
+        if (!$this->checkLogin($request)) {
             return;
+        }
 
-        $doctrine = $this->getDoctrine();
-        /** @var \App\Repository\UserRepository $userRepo */
-        $userRepo = $doctrine->getRepository(\App\Entity\User::class);
-        $user = $userRepo->find($this->getUserId($request));
+        $managerRegistry = $this->getDoctrine();
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $managerRegistry->getRepository(\App\Entity\User::class);
+        $user = $objectRepository->find($this->getUserId($request));
 
         if (!is_object($user)) {
             return;
@@ -146,23 +145,24 @@ class BaseController extends AbstractController
     /**
      * Check if user is logged in via Symfony Security
      *
-     * @param Request $request
      *
      * @return bool
      */
     protected function isLoggedIn(Request $request)
     {
         // Use Symfony security component to check if user is authenticated
-        return $this->isGranted('IS_AUTHENTICATED_FULLY') || $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+            return true;
+        }
+
+        return $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
     }
 
     /**
      * Returns the user id
      *
-     * @param Request $request
      *
      * @return int User ID
-     *
      * @throw AccessDeniedException
      */
     protected function getUserId(Request $request)
@@ -181,25 +181,22 @@ class BaseController extends AbstractController
     /**
      * Redirects to the login page
      *
-     * @param Request $request
      *
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse|Response
      */
-    protected function login(Request $request)
+    protected function login(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
         if (!$request->isXmlHttpRequest()
             && !$this->isJsonRequest($request)
         ) {
             return $this->redirect($this->generateUrl('_login'));
-        } else {
-            return new Response($this->generateUrl('_login'), 403);
         }
+
+        return new Response($this->generateUrl('_login'), 403);
     }
 
     /**
      * checks the user type to be PL
      *
-     * @param Request $request
      *
      * @return bool
      */
@@ -210,9 +207,9 @@ class BaseController extends AbstractController
         }
 
         $userId = $this->getUserId($request);
-        /** @var \App\Repository\UserRepository $userRepo */
-        $userRepo = $this->getDoctrine()->getRepository(\App\Entity\User::class);
-        $user = $userRepo->find($userId);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\User::class);
+        $user = $objectRepository->find($userId);
 
         return is_object($user) && 'PL' == $user->getType();
     }
@@ -221,7 +218,6 @@ class BaseController extends AbstractController
     /**
      * checks the user type to be DEV
      *
-     * @param Request $request
      *
      * @return bool
      */
@@ -232,9 +228,9 @@ class BaseController extends AbstractController
         }
 
         $userId = $this->getUserId($request);
-        /** @var \App\Repository\UserRepository $userRepo */
-        $userRepo = $this->getDoctrine()->getRepository(\App\Entity\User::class);
-        $user = $userRepo->find($userId);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\User::class);
+        $user = $objectRepository->find($userId);
 
         return is_object($user) && 'DEV' == $user->getType();
     }
@@ -242,7 +238,7 @@ class BaseController extends AbstractController
     /**
      * Check if the client wants JSON
      */
-    protected function isJsonRequest(Request $request)
+    protected function isJsonRequest(Request $request): bool
     {
         $types = $request->getAcceptableContentTypes();
         return isset($types[0]) && $types[0] == 'application/json';
@@ -258,15 +254,17 @@ class BaseController extends AbstractController
     protected function checkLogin(Request $request)
     {
         // Only use Symfony's security component to check authentication
-        return $this->isGranted('IS_AUTHENTICATED_FULLY') || $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+            return true;
+        }
+
+        return $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
     }
 
     /**
      * Provide a standard response for cases where the login failed.
-     *
-     * @return Response
      */
-    protected function getFailedLoginResponse()
+    protected function getFailedLoginResponse(): \App\Model\Response
     {
         $message = $this->translate('You need to login.');
         $response = new Response($message);
@@ -276,10 +274,8 @@ class BaseController extends AbstractController
 
     /**
      * returns an error message for not allowed actions
-     *
-     * @return Response
      */
-    protected function getFailedAuthorizationResponse()
+    protected function getFailedAuthorizationResponse(): \App\Model\Response
     {
         $message = $this->translate('You are not allowed to perform this action.');
         $response = new Response($message);
@@ -293,10 +289,8 @@ class BaseController extends AbstractController
      *
      * @param string $message Error message
      * @param int    $status  HTTP status code
-     *
-     * @return Response
      */
-    protected function getFailedResponse($message, $status)
+    protected function getFailedResponse($message, int $status): \App\Model\Response
     {
         $response = new Response($message);
         $response->setStatusCode($status);
@@ -314,7 +308,7 @@ class BaseController extends AbstractController
      * @return mixed
      */
     protected function translate(
-        $id, array $parameters = array(), $domain = 'messages', $locale = null
+        string $id, array $parameters = [], ?string $domain = 'messages', ?string $locale = null
     ) {
         return $this->translator->trans($id, $parameters, $domain, $locale);
     }

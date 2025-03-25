@@ -10,7 +10,7 @@ use Symfony\Component\Security\Core\Security;
 class StatusController extends BaseController
 {
     public function __construct(
-        private Security $security
+        private readonly Security $security
     ) { }
 
     private function getStatus(): array
@@ -25,7 +25,7 @@ class StatusController extends BaseController
         return new JsonResponse($this->getStatus());
     }
 
-    public function pageAction(Request $request)
+    public function pageAction(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $status = $this->getStatus();
 

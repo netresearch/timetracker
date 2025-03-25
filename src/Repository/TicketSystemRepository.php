@@ -11,20 +11,18 @@ class TicketSystemRepository extends ServiceEntityRepository
 {
     /**
      * TicketSystemRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, TicketSystem::class);
+        parent::__construct($managerRegistry, TicketSystem::class);
     }
 
     /**
      * get all ticket systems
      *
-     * @return array
      * @throws \ReflectionException
      */
-    public function getAllTicketSystems()
+    public function getAllTicketSystems(): array
     {
         /** @var TicketSystem[] $systems */
         $systems = $this->findBy([], ['name' => 'ASC']);

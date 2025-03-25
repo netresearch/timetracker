@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Helper\LocalizationHelper as LocalizationHelper;
+use App\Helper\LocalizationHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,7 +16,7 @@ class SettingsController extends AbstractController
     /**
      * @required
      */
-    public function setTranslator(TranslatorInterface $translator)
+    public function setTranslator(TranslatorInterface $translator): void
     {
         $this->translator = $translator;
     }
@@ -47,9 +47,9 @@ class SettingsController extends AbstractController
         $user->setShowFuture($request->request->get('show_future'));
         $user->setLocale(LocalizationHelper::normalizeLocale($request->request->get('locale')));
 
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($user);
-        $em->flush();
+        $objectManager = $this->getDoctrine()->getManager();
+        $objectManager->persist($user);
+        $objectManager->flush();
 
         // Adapt to new locale immediately
         $request->setLocale($user->getLocale());

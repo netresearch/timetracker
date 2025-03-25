@@ -6,7 +6,7 @@ use Tests\Base;
 
 class InterpretationControllerTest extends Base
 {
-    public function testGetLastEntriesAction()
+    public function testGetLastEntriesAction(): void
     {
         $parameter = [
             'user' => 1,    //req
@@ -55,7 +55,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testGroupByWorktimeAction()
+    public function testGroupByWorktimeAction(): void
     {
         $parameter = [
             'user' => 1,    //req
@@ -83,25 +83,25 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testGroupByActivityAction()
+    public function testGroupByActivityAction(): void
     {
         $parameter = [
             'user' => 3,    //req
         ];
-        $expectedJson = array(
-            0 => array(
+        $expectedJson = [
+            0 => [
                 'id' => 1,
                 'name' => 'Backen',
                 'hours' => 1.1666666666666667,
                 'quota' => '100.00%',
-            ),
-        );
+            ],
+        ];
         $this->client->request('GET', '/interpretation/activity', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testGetAllEntriesActionDevNotAllowed()
+    public function testGetAllEntriesActionDevNotAllowed(): void
     {
         $this->logInSession('developer');
         $this->client->request('POST', '/interpretation/allEntries', []);
@@ -109,7 +109,7 @@ class InterpretationControllerTest extends Base
         $this->assertMessage('You are not allowed to perform this action.');
     }
 
-    public function testGetAllEntriesActionWrongParameterDateAsString()
+    public function testGetAllEntriesActionWrongParameterDateAsString(): void
     {
         $parameter = [
             'datestart=not a date',
@@ -121,7 +121,7 @@ class InterpretationControllerTest extends Base
         ]);
     }
 
-    public function testGetAllEntriesActionWrongParameterDateAsInteger()
+    public function testGetAllEntriesActionWrongParameterDateAsInteger(): void
     {
         $parameter = [
             'dateend=1',
@@ -133,7 +133,7 @@ class InterpretationControllerTest extends Base
         ]);
     }
 
-    public function testGetAllEntriesActionReturnDataNoParameter()
+    public function testGetAllEntriesActionReturnDataNoParameter(): void
     {
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?page=0',
@@ -248,7 +248,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedData);
     }
 
-    public function testGetAllEntriesActionReturnDataWithParameter()
+    public function testGetAllEntriesActionReturnDataWithParameter(): void
     {
         // test for parameter
         $parameter = [
@@ -314,7 +314,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedData);
     }
 
-    public function testGetAllEntriesActionReturnLinksNegativePage()
+    public function testGetAllEntriesActionReturnLinksNegativePage(): void
     {
         $parameter = [
             'page=-1',
@@ -324,7 +324,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure(['message' => 'page can not be negative.',]);
     }
 
-    public function testGetAllEntriesActionReturnLinksNoParameter()
+    public function testGetAllEntriesActionReturnLinksNoParameter(): void
     {
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?page=0',
@@ -339,7 +339,7 @@ class InterpretationControllerTest extends Base
 
     }
 
-    public function testGetAllEntriesActionReturnLinksPageOne()
+    public function testGetAllEntriesActionReturnLinksPageOne(): void
     {
         $parameter = [
             'maxResults=2',
@@ -362,7 +362,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedData);
     }
 
-    public function testGetAllEntriesActionReturnLinksPageTwo()
+    public function testGetAllEntriesActionReturnLinksPageTwo(): void
     {
         $parameter = [
             'maxResults=2',
@@ -385,7 +385,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedData);
     }
 
-    public function testGetAllEntriesActionReturnLinksLastPage()
+    public function testGetAllEntriesActionReturnLinksLastPage(): void
     {
         $parameter = [
             'maxResults=2',
@@ -407,7 +407,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedData);
     }
 
-    public function testGetAllEntriesActionReturnLinksEmptyData()
+    public function testGetAllEntriesActionReturnLinksEmptyData(): void
     {
         $parameter = [
             'project_id=42',
@@ -424,7 +424,7 @@ class InterpretationControllerTest extends Base
         $this->assertJsonStructure($expectedLinks);
     }
 
-    public function testGetAllEntriesActionReturnLinksNonExistingPage()
+    public function testGetAllEntriesActionReturnLinksNonExistingPage(): void
     {
         $parameter = [
             'maxResults=2',

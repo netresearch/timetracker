@@ -15,7 +15,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  * Class Ticket
@@ -31,6 +31,8 @@ use App\Model\Base as Base;
  */
 class Ticket extends Base
 {
+
+    public $ticketId;
 
     /**
      * @var int
@@ -89,7 +91,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setEstimatedDuration($estimatedDuration)
+    public function setEstimatedDuration($estimatedDuration): static
     {
         $this->estimatedDuration = $estimatedDuration;
 
@@ -111,7 +113,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName($name): static
     {
         $this->name = $name;
 
@@ -131,7 +133,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setParentTicketNumber($parentTicketNumber)
+    public function setParentTicketNumber($parentTicketNumber): static
     {
         $this->parentTicketNumber = $parentTicketNumber;
 
@@ -151,7 +153,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setTicketId($ticketId)
+    public function setTicketId($ticketId): static
     {
         $this->ticketId = $ticketId;
 
@@ -171,7 +173,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setTicketNumber($ticketNumber)
+    public function setTicketNumber($ticketNumber): static
     {
         $this->ticketNumber = $ticketNumber;
 
@@ -191,7 +193,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setTicketSystemId($ticketSystemId)
+    public function setTicketSystemId($ticketSystemId): static
     {
         $this->ticketSystemId = $ticketSystemId;
 

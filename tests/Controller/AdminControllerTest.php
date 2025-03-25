@@ -7,7 +7,7 @@ use Tests\Base;
 class AdminControllerTest extends Base
 {
     //-------------- users routes ----------------------------------------
-    public function testSaveUserAction()
+    public function testSaveUserAction(): void
     {
         $parameter = [
             'username' => 'unittest',
@@ -26,7 +26,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testSaveUserActionDevNotAllowed()
+    public function testSaveUserActionDevNotAllowed(): void
     {
         $this->setInitialDbState('users');
         $this->logInSession('developer');
@@ -42,7 +42,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('users');
     }
 
-    public function testUpdateUser()
+    public function testUpdateUser(): void
     {
         $parameter = [
             'id' => 1,
@@ -54,11 +54,11 @@ class AdminControllerTest extends Base
         ];
         $this->client->request('POST', '/user/save', $parameter);
 
-        $expectedJson = array(
+        $expectedJson = [
             1 => 'unittestUpdate',
             2 => 'WAR',
             3 => 'DEV',
-        );
+        ];
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
 
@@ -67,20 +67,20 @@ class AdminControllerTest extends Base
             ->from('users')->where('id = ?')
             ->setParameter(0, 1);
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'id' => 1,
                 'username' => 'unittestUpdate',
                 'abbr' => 'WAR',
                 'type' => 'DEV',
                 'jira_token' => null,
                 'locale' => 'de',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testUpdateUserDevNotAllowed()
+    public function testUpdateUserDevNotAllowed(): void
     {
         $this->setInitialDbState('users');
         $this->logInSession('developer');
@@ -98,7 +98,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('users');
     }
 
-    public function testDeleteUserAction()
+    public function testDeleteUserAction(): void
     {
         //create user for deletion
         $this->queryBuilder
@@ -132,7 +132,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testDeleteUserActionDevNotAllowed()
+    public function testDeleteUserActionDevNotAllowed(): void
     {
         $this->setInitialDbState('users');
         $this->logInSession('developer');
@@ -148,30 +148,30 @@ class AdminControllerTest extends Base
      * unique feature = returns teams for user
      *
      */
-    public function testGetUsersAction()
+    public function testGetUsersAction(): void
     {
-        $expectedJson = array(
-            0 => array(
-                'user' => array(
+        $expectedJson = [
+            0 => [
+                'user' => [
                     'username' => 'developer',
                     'type' => 'DEV',
                     'abbr' => 'NPL',
                     'locale' => 'de',
-                    'teams' => array(),
-                ),
-            ),
-            1 => array(
-                'user' => array(
+                    'teams' => [],
+                ],
+            ],
+            1 => [
+                'user' => [
                     'username' => 'i.myself',
                     'type' => 'PL',
                     'abbr' => 'IMY',
                     'locale' => 'de',
-                    'teams' => array(
+                    'teams' => [
                         0 => 1,
-                    ),
-                ),
-            ),
-        );
+                    ],
+                ],
+            ],
+        ];
         $this->client->request('GET', '/getAllUsers');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -179,7 +179,7 @@ class AdminControllerTest extends Base
 
 
     //-------------- teams routes ----------------------------------------
-    public function testGetTeamsAction()
+    public function testGetTeamsAction(): void
     {
         $expectedJson = [
             [
@@ -200,7 +200,8 @@ class AdminControllerTest extends Base
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
-    public function testDeleteTeamAction()
+
+    public function testDeleteTeamAction(): void
     {
         $parameter = ['id' => 1,];
 
@@ -228,7 +229,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('You are not allowed to perform this action.');
     }
 
-    public function testSaveTeamAction()
+    public function testSaveTeamAction(): void
     {
         $parameter = [
             'name' => 'testSaveTeamAction', //opt
@@ -272,10 +273,8 @@ class AdminControllerTest extends Base
      * Test for updating a existing team
      * Uses the same route and method as SaveTeamAction
      * When sending a existing id, the team with that id gets updated
-     *
-     * @return void
      */
-    public function testUpdateTeam()
+    public function testUpdateTeam(): void
     {
         $parameter = [
             'lead_user_id' => 2, //req
@@ -305,7 +304,7 @@ class AdminControllerTest extends Base
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testUpdateTeamPermission()
+    public function testUpdateTeamPermission(): void
     {
         $this->setInitialDbState('teams');
         $this->logInSession('developer');
@@ -322,7 +321,7 @@ class AdminControllerTest extends Base
 
     //-------------- customer routes ----------------------------------------
 
-    public function testSaveCustomerAction()
+    public function testSaveCustomerAction(): void
     {
         $parameter = [
             'name' => 'testCustomer',
@@ -353,7 +352,7 @@ class AdminControllerTest extends Base
         $this->assertArraySubset($expectedDbEntry, $result1);
     }
 
-    public function testSaveCustomerActionDevNotAllowed()
+    public function testSaveCustomerActionDevNotAllowed(): void
     {
         $this->setInitialDbState('customers');
         $this->logInSession('developer');
@@ -367,7 +366,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('customers');
     }
 
-    public function testUpdateCustomer()
+    public function testUpdateCustomer(): void
     {
         $parameter = [
             'id' => 1,
@@ -398,7 +397,7 @@ class AdminControllerTest extends Base
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testUpdateCustomerDevNotAllowed()
+    public function testUpdateCustomerDevNotAllowed(): void
     {
         $this->setInitialDbState('customers');
         $this->logInSession('developer');
@@ -413,7 +412,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('customers');
     }
 
-    public function testDeleteCustomerAction()
+    public function testDeleteCustomerAction(): void
     {
         //create customer for deletion
         $this->queryBuilder
@@ -448,7 +447,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testDeleteCustomerActionDevNotAllowed()
+    public function testDeleteCustomerActionDevNotAllowed(): void
     {
         $this->setInitialDbState('customers');
         $this->logInSession('developer');
@@ -459,7 +458,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('customers');
     }
 
-    public function testGetCustomersAction()
+    public function testGetCustomersAction(): void
     {
         $expectedJson = [
             [
@@ -488,7 +487,7 @@ class AdminControllerTest extends Base
 
     //-------------- project routes ----------------------------------------
 
-    public function testSaveProjectAction()
+    public function testSaveProjectAction(): void
     {
         $parameter = [
             'name' => 'testProject', //req
@@ -519,7 +518,7 @@ class AdminControllerTest extends Base
 
     }
 
-    public function testSaveProjectActionDevNotAllowed()
+    public function testSaveProjectActionDevNotAllowed(): void
     {
         $this->setInitialDbState('projects');
         $this->logInSession('developer');
@@ -533,7 +532,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('projects');
     }
 
-    public function testUpdateProject()
+    public function testUpdateProject(): void
     {
         $parameter = [
             'id' => 1,
@@ -563,7 +562,7 @@ class AdminControllerTest extends Base
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testUpdateProjectDevNotAllowed()
+    public function testUpdateProjectDevNotAllowed(): void
     {
         $this->setInitialDbState('projects');
         $this->logInSession('developer');
@@ -578,7 +577,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('projects');
     }
 
-    public function testDeleteProjectAction()
+    public function testDeleteProjectAction(): void
     {
         $parameter = ['id' => 2,];
         $expectedJson1 = [
@@ -597,7 +596,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testDeleteProjectActionDevNotAllowed()
+    public function testDeleteProjectActionDevNotAllowed(): void
     {
         $this->setInitialDbState('projects');
         $this->logInSession('developer');
@@ -609,17 +608,17 @@ class AdminControllerTest extends Base
     }
 
     //-------------- activities routes ----------------------------------------
-    public function testSaveActivityAction()
+    public function testSaveActivityAction(): void
     {
         $parameter = [
             'name' => 'Lachen', //req
             'factor' => 2, //req
         ];
         $this->client->request('POST', '/activity/save', $parameter);
-        $expectedJson = array(
+        $expectedJson = [
             1 => 'Lachen',
             3 => '2',
-        );
+        ];
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         //assert that activity was saved
@@ -637,7 +636,7 @@ class AdminControllerTest extends Base
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveActivityActionDevNotAllowed()
+    public function testSaveActivityActionDevNotAllowed(): void
     {
         $this->setInitialDbState('activities');
         $this->logInSession('developer');
@@ -651,17 +650,17 @@ class AdminControllerTest extends Base
         $this->assertDbState('activities');
     }
 
-    public function testUpdateActivityAction()
+    public function testUpdateActivityAction(): void
     {
         $parameter = [
             'id' => 1,  //req
             'name' => 'update', //req
             'factor' => 2, //req
         ];
-        $expectedJson = array(
+        $expectedJson = [
             1 => 'update',
             3 => '2',
-        );
+        ];
         $this->client->request('POST', '/activity/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -670,16 +669,16 @@ class AdminControllerTest extends Base
             ->from('activities')->where('name = ?')
             ->setParameter(0, 'update');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'name' => 'update',
                 'factor' => 2,
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testUpdateActivityActionDevNotAllowed()
+    public function testUpdateActivityActionDevNotAllowed(): void
     {
         $this->setInitialDbState('activities');
         $this->logInSession('developer');
@@ -694,7 +693,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('activities');
     }
 
-    public function testDeleteActivityAction()
+    public function testDeleteActivityAction(): void
     {
         //create activity for deletion
         $this->queryBuilder
@@ -728,7 +727,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testDeleteActivityActionDevNotAllowed()
+    public function testDeleteActivityActionDevNotAllowed(): void
     {
         $this->setInitialDbState('activities');
         $this->logInSession('developer');
@@ -740,7 +739,7 @@ class AdminControllerTest extends Base
     }
 
     //-------------- contract routes ----------------------------------------
-    public function testSaveContractAction()
+    public function testSaveContractAction(): void
     {
         $parameter = [
             'user_id' => '1', //req
@@ -762,8 +761,8 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '2025-11-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 1,
                 'start' => '2025-11-01',
                 'hours_0' => 1.0,
@@ -773,8 +772,8 @@ class AdminControllerTest extends Base
                 'hours_4' => 5.0,
                 'hours_5' => 6.0,
                 'hours_6' => 7.0,
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
         // test old contract updated
         $this->queryBuilder
@@ -783,17 +782,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '2020-02-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 1,
                 'start' => '2020-02-01',
                 'end' => '2025-10-31'
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionStartNotFirstOfMonth()
+    public function testSaveContractActionStartNotFirstOfMonth(): void
     {
         $parameter = [
             'user_id' => '1', //req
@@ -815,8 +814,8 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '2025-11-11');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 1,
                 'start' => '2025-11-11',
                 'hours_0' => 1.0,
@@ -826,8 +825,8 @@ class AdminControllerTest extends Base
                 'hours_4' => 5.0,
                 'hours_5' => 6.0,
                 'hours_6' => 7.0,
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
         // test old contract updated
         $this->queryBuilder
@@ -836,17 +835,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '2020-02-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 1,
                 'start' => '2020-02-01',
                 'end' => '2025-11-10'
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionAlterExistingContract()
+    public function testSaveContractActionAlterExistingContract(): void
     {
         $parameter = [
             'user_id' => '3', //req
@@ -869,17 +868,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '0700-01-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 3,
                 'start' => '0700-01-01',
                 'end' => '0700-07-31',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionOldContractStartsDuringNewWithoutEnd()
+    public function testSaveContractActionOldContractStartsDuringNewWithoutEnd(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -912,7 +911,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
     }
 
-    public function testSaveContractActionOldContractStartsDuringNew()
+    public function testSaveContractActionOldContractStartsDuringNew(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -946,7 +945,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
     }
 
-    public function testSaveContractActionOldContractWithoutEndStartsDuringNew()
+    public function testSaveContractActionOldContractWithoutEndStartsDuringNew(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -979,7 +978,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
     }
 
-    public function testSaveContractActionOldContractWithoutEndStartsDuringNewWithoutEnd()
+    public function testSaveContractActionOldContractWithoutEndStartsDuringNewWithoutEnd(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -1011,7 +1010,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
     }
 
-    public function testSaveContractActionOldContractEndStartsDuringNewEndWithNewContractEndingAfterOld()
+    public function testSaveContractActionOldContractEndStartsDuringNewEndWithNewContractEndingAfterOld(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -1045,7 +1044,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
     }
 
-    public function testSaveContractActionNewContractStartsDuringOldWithEnd()
+    public function testSaveContractActionNewContractStartsDuringOldWithEnd(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -1078,7 +1077,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
     }
 
-    public function testSaveContractActionNewContractWithEndDuringOldStartsDuringOldWithEnd()
+    public function testSaveContractActionNewContractWithEndDuringOldStartsDuringOldWithEnd(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -1112,7 +1111,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
     }
 
-    public function testSaveContractActionNewContractWithEndAfterOldStartsDuringOldWithEnd()
+    public function testSaveContractActionNewContractWithEndAfterOldStartsDuringOldWithEnd(): void
     {
         $parameterContract1 = [
             'user_id' => '3', //req
@@ -1146,7 +1145,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
     }
 
-    public function testSaveContractActionOldContractStartsInFutureAfterNewEnds()
+    public function testSaveContractActionOldContractStartsInFutureAfterNewEnds(): void
     {
         $parameterContract = [
             'user_id' => '3', //req
@@ -1170,17 +1169,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '0700-01-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 3,
                 'start' => '0700-01-01',
                 'end' => NULL
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionOldContractWithEndStartsInFutureAfterNewEnds()
+    public function testSaveContractActionOldContractWithEndStartsInFutureAfterNewEnds(): void
     {
         $parameterContract = [
             'user_id' => '2', //req
@@ -1204,17 +1203,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '1020-01-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 2,
                 'start' => '1020-01-01',
                 'end' => '2020-01-01'
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionOldContractWithEndbeforeStartNewContract()
+    public function testSaveContractActionOldContractWithEndbeforeStartNewContract(): void
     {
         $parameterContract = [
             'user_id' => '2', //req
@@ -1238,17 +1237,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '1020-01-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 2,
                 'start' => '1020-01-01',
                 'end' => '2020-01-01'
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionUpdateOldContract()
+    public function testSaveContractActionUpdateOldContract(): void
     {
         $parameterContract = [
             'user_id' => '3', //req
@@ -1272,17 +1271,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '700-01-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 3,
                 'start' => '0700-01-01',
                 'end' => '4999-12-31',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionUpdateOldContractNewWithoutEnd()
+    public function testSaveContractActionUpdateOldContractNewWithoutEnd(): void
     {
         $parameterContract = [
             'user_id' => '3', //req
@@ -1305,17 +1304,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '700-01-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 3,
                 'start' => '0700-01-01',
                 'end' => '4999-12-31',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionOldContractWithEndbeforeStartNewContractOpenEnd()
+    public function testSaveContractActionOldContractWithEndbeforeStartNewContractOpenEnd(): void
     {
         $parameterContract = [
             'user_id' => '2', //req
@@ -1338,17 +1337,17 @@ class AdminControllerTest extends Base
             ->where('start = ?')
             ->setParameter(0, '1020-01-01');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'user_id' => 2,
                 'start' => '1020-01-01',
                 'end' => '2020-01-01'
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveContractActionMultipleOpenEndedContracts()
+    public function testSaveContractActionMultipleOpenEndedContracts(): void
     {
         $values = [
             'user_id' => '3',
@@ -1383,7 +1382,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Für den Nutzer besteht mehr als ein unbefristeter Vertrag.');
     }
 
-    public function testSaveContractActionDevNotAllowed()
+    public function testSaveContractActionDevNotAllowed(): void
     {
         $this->setInitialDbState('contracts');
         $this->logInSession('developer');
@@ -1404,7 +1403,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('contracts');
     }
 
-    public function testUpdateContract()
+    public function testUpdateContract(): void
     {
         $parameter = [
             'id' => 1,
@@ -1443,7 +1442,7 @@ class AdminControllerTest extends Base
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testCreateContractUserNotExist()
+    public function testCreateContractUserNotExist(): void
     {
         $parameter = [
             'user_id' => '42', //req
@@ -1461,7 +1460,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Bitte geben Sie einen gültigen Benutzer an.');
     }
 
-    public function testCreateContractNoEntry()
+    public function testCreateContractNoEntry(): void
     {
         $parameter = [
             'id' => '100',
@@ -1481,7 +1480,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testCreateContractInvalidStartDate()
+    public function testCreateContractInvalidStartDate(): void
     {
         $parameter = [
             'user_id' => '1', //req
@@ -1499,7 +1498,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Bitte geben Sie einen gültigen Vertragsbeginn an.');
     }
 
-    public function testCreateContractGreaterStartThenEnd()
+    public function testCreateContractGreaterStartThenEnd(): void
     {
         $parameter = [
             'user_id' => '1', //req
@@ -1518,7 +1517,7 @@ class AdminControllerTest extends Base
         $this->assertMessage('Das Vertragsende muss nach dem Vertragsbeginn liegen.');
     }
 
-    public function testUpdateContractDevNotAllowed()
+    public function testUpdateContractDevNotAllowed(): void
     {
         $this->setInitialDbState('contracts');
         $this->logInSession('developer');
@@ -1540,7 +1539,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('contracts');
     }
 
-    public function testDeleteContractAction()
+    public function testDeleteContractAction(): void
     {
         $parameter = ['id' => 1,];
         $expectedJson1 = [
@@ -1559,7 +1558,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testDeleteContractActionDevNotAllowed()
+    public function testDeleteContractActionDevNotAllowed(): void
     {
         $this->setInitialDbState('contracts');
         $this->logInSession('developer');
@@ -1570,7 +1569,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('contracts');
     }
 
-    public function testGetContractAction()
+    public function testGetContractAction(): void
     {
         $expectedJson = [
             [
@@ -1639,21 +1638,21 @@ class AdminControllerTest extends Base
     }
 
     //-------------- ticketSystems routes ----------------------------------------
-    public function testGetTicketSystemsAction()
+    public function testGetTicketSystemsAction(): void
     {
-        $expectedJson = array(
-            0 => array(
-                'ticketSystem' => array(
+        $expectedJson = [
+            0 => [
+                'ticketSystem' => [
                     'name' => 'testSystem',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
         $this->client->request('GET', '/getTicketSystems');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testSaveTicketSystemAction()
+    public function testSaveTicketSystemAction(): void
     {
         $parameter = [
             'name' => 'testSaveTicketSystem', //req
@@ -1665,9 +1664,9 @@ class AdminControllerTest extends Base
             'publicKey' => '',
             'privateKey' => '',
         ];
-        $expectedJson = array(
+        $expectedJson = [
             'name' => 'testSaveTicketSystem',
-        );
+        ];
         $this->client->request('POST', '/ticketsystem/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -1677,15 +1676,15 @@ class AdminControllerTest extends Base
             ->where('name = ?')
             ->setParameter(0, 'testSaveTicketSystem');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'name' => 'testSaveTicketSystem',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSaveTicketSystemActionDevNotAllowed()
+    public function testSaveTicketSystemActionDevNotAllowed(): void
     {
         $this->setInitialDbState('ticket_systems');
         $this->logInSession('developer');
@@ -1705,7 +1704,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('ticket_systems');
     }
 
-    public function testUpdateTicketSystem()
+    public function testUpdateTicketSystem(): void
     {
         $parameter = [
             'id' => 1,
@@ -1718,9 +1717,9 @@ class AdminControllerTest extends Base
             'publicKey' => '',
             'privateKey' => '',
         ];
-        $expectedJson = array(
+        $expectedJson = [
             'name' => 'testSaveTicketSystemUpdate',
-        );
+        ];
         $this->client->request('POST', '/ticketsystem/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -1730,15 +1729,15 @@ class AdminControllerTest extends Base
             ->where('name = ?')
             ->setParameter(0, 'testSaveTicketSystemUpdate');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'name' => 'testSaveTicketSystemUpdate',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testUpdateTicketSystemDevNotAllowed()
+    public function testUpdateTicketSystemDevNotAllowed(): void
     {
         $this->setInitialDbState('ticket_systems');
         $this->logInSession('developer');
@@ -1759,7 +1758,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('ticket_systems');
     }
 
-    public function testDeleteTicketSystemAction()
+    public function testDeleteTicketSystemAction(): void
     {
         $parameter = ['id' => 1,];
         $expectedJson1 = [
@@ -1778,7 +1777,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testDeleteTicketSystemActionDevNotAllowed()
+    public function testDeleteTicketSystemActionDevNotAllowed(): void
     {
         $this->setInitialDbState('ticket_systems');
         $this->logInSession('developer');
@@ -1790,26 +1789,26 @@ class AdminControllerTest extends Base
     }
 
     //-------------- presets routes ----------------------------------------
-    public function testGetPresetsAction()
+    public function testGetPresetsAction(): void
     {
-        $expectedJson = array(
-            0 => array(
-                'preset' => array(
+        $expectedJson = [
+            0 => [
+                'preset' => [
                     'id' => 1,
                     'name' => 'Urlaub',
                     'customer' => 1,
                     'project' => 1,
                     'activity' => 1,
                     'description' => 'Urlaub',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
         $this->client->request('GET', '/getAllPresets');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testSavePresetAction()
+    public function testSavePresetAction(): void
     {
         $parameter = [
             'name' => 'newPreset', //req
@@ -1818,13 +1817,13 @@ class AdminControllerTest extends Base
             'activity' => 1, //req
             'description' => '',    //req
         ];
-        $expectedJson = array(
+        $expectedJson = [
             'name' => 'newPreset',
             'customer' => 1,
             'project' => 1,
             'activity' => 1,
             'description' => '',
-        );
+        ];
         $this->client->request('POST', '/preset/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -1834,19 +1833,19 @@ class AdminControllerTest extends Base
             ->where('name = ?')
             ->setParameter(0, 'newPreset');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'name' => 'newPreset',
                 'customer_id' => 1,
                 'project_id' => 1,
                 'activity_id' => 1,
                 'description' => '',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testSavePresetActionDevNotAllowed()
+    public function testSavePresetActionDevNotAllowed(): void
     {
         $this->setInitialDbState('presets');
         $this->logInSession('developer');
@@ -1863,7 +1862,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('presets');
     }
 
-    public function testUpdatePreset()
+    public function testUpdatePreset(): void
     {
         $parameter = [
             'id' => 1,
@@ -1873,13 +1872,13 @@ class AdminControllerTest extends Base
             'activity' => 1, //req
             'description' => '',    //reg
         ];
-        $expectedJson = array(
+        $expectedJson = [
             'name' => 'newPresetUpdated',
             'customer' => 1,
             'project' => 1,
             'activity' => 1,
             'description' => '',
-        );
+        ];
         $this->client->request('POST', '/preset/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -1889,19 +1888,19 @@ class AdminControllerTest extends Base
             ->where('name = ?')
             ->setParameter(0, 'newPresetUpdated');
         $result = $this->queryBuilder->execute()->fetchAll();
-        $expectedDbEntry = array(
-            0 => array(
+        $expectedDbEntry = [
+            0 => [
                 'name' => 'newPresetUpdated',
                 'customer_id' => 1,
                 'project_id' => 1,
                 'activity_id' => 1,
                 'description' => '',
-            ),
-        );
+            ],
+        ];
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testUpdatePresetDevNotAllowed()
+    public function testUpdatePresetDevNotAllowed(): void
     {
         $this->setInitialDbState('presets');
         $this->logInSession('developer');
@@ -1919,7 +1918,7 @@ class AdminControllerTest extends Base
         $this->assertDbState('presets');
     }
 
-    public function testDeletePresetAction()
+    public function testDeletePresetAction(): void
     {
         $parameter = ['id' => 1,];
         $expectedJson1 = [
@@ -1938,7 +1937,7 @@ class AdminControllerTest extends Base
         $this->assertJsonStructure($expectedJson2);
     }
 
-    public function testDeletePresetActionDevNotAllowed()
+    public function testDeletePresetActionDevNotAllowed(): void
     {
         $this->setInitialDbState('presets');
         $this->logInSession('developer');

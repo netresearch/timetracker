@@ -54,7 +54,7 @@ class Team
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -77,7 +77,7 @@ class Team
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName($name): static
     {
         $this->name = $name;
         return $this;
@@ -96,11 +96,10 @@ class Team
     /**
      * Set lead user
      *
-     * @param User $leadUser
      *
      * @return $this
      */
-    public function setLeadUser(User $leadUser)
+    public function setLeadUser(User $leadUser): static
     {
         $this->leadUser = $leadUser;
         return $this;
@@ -126,24 +125,19 @@ class Team
 
     /**
      * Add customers
-     *
-     * @param Customer $customers
-     * @return Team
      */
-    public function addCustomer(Customer $customers)
+    public function addCustomer(Customer $customer): static
     {
-        $this->customers[] = $customers;
+        $this->customers[] = $customer;
         return $this;
     }
 
     /**
      * Remove customers
-     *
-     * @param Customer $customers
      */
-    public function removeCustomer(Customer $customers)
+    public function removeCustomer(Customer $customer): void
     {
-        $this->customers->removeElement($customers);
+        $this->customers->removeElement($customer);
     }
 
     /**

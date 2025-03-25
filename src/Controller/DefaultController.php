@@ -32,39 +32,36 @@ use Twig\Environment as TwigEnvironment;
 class DefaultController extends BaseController
 {
     public function __construct(
-        private LoggerInterface $logger,
-        private TwigEnvironment $twig,
+        private readonly TwigEnvironment $twigEnvironment,
     )
     {
     }
 
     /**
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
      * @throws \ReflectionException
      */
-    public function indexAction(Request $request)
+    public function indexAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
 
         $userId = (int) $this->getUserId($request);
-        $doctrine = $this->getDoctrine();
+        $managerRegistry = $this->getDoctrine();
 
-        $user = $doctrine->getRepository(User::class)->find($userId);
+        $user = $managerRegistry->getRepository(User::class)->find($userId);
         $settings = $user->getSettings();
 
-        /** @var \App\Repository\CustomerRepository $customerRepo */
-        $customerRepo = $doctrine->getRepository(Customer::class);
-        $customers = $customerRepo->getCustomersByUser($userId);
+        /** @var \App\Repository\CustomerRepository $objectRepository */
+        $objectRepository = $managerRegistry->getRepository(Customer::class);
+        $customers = $objectRepository->getCustomersByUser($userId);
 
         // Send the customer-projects-structure to the frontend for caching
         /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $doctrine->getRepository(Project::class);
+        $projectRepo = $managerRegistry->getRepository(Project::class);
         $projects = $projectRepo->getProjectStructure($userId, $customers);
 
-        return $this->render('index.html.twig', array(
+        return $this->render('index.html.twig', [
             'globalConfig'  => [
                 'logo_url'              => $this->params->get('app_logo_url'),
                 'monthly_overview_url'  => $this->params->get('app_monthly_overview_url'),
@@ -76,14 +73,13 @@ class DefaultController extends BaseController
             'projects'      => $projects,
             'settings'      => $settings,
             'locale'        => $settings['locale']
-        ));
+        ]);
     }
 
     /**
-     * @param Request $request
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
-    public function loginAction(Request $request)
+    public function loginAction(Request $request): \App\Model\Response
     {
         // Force rendering the template without any redirects
         $response = new Response();
@@ -98,10 +94,9 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
-    public function logoutAction(Request $request)
+    public function logoutAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         // This method should no longer be called directly since Symfony's security component handles the logout
         // Redirect to the logout route which is handled by Symfony's security logout handler
@@ -109,28 +104,26 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getTimeSummaryAction(Request $request)
+    public function getTimeSummaryAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
 
         $userId = (int) $this->getUserId($request);
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
-        $today = $entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
-        $week = $entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
-        $month = $entryRepo->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
+        $today = $objectRepository->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
+        $week = $objectRepository->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
+        $month = $objectRepository->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
 
-        $data = array(
+        $data = [
             'today' => $today,
             'week'  => $week,
             'month' => $month,
-        );
+        ];
 
         return new JsonResponse($data);
     }
@@ -138,11 +131,10 @@ class DefaultController extends BaseController
     /**
      * Retrieves a summary of an entry (project total/own, ticket total/own)
      *
-     * @param Request $request
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getSummaryAction(Request $request)
+    public function getSummaryAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -150,8 +142,8 @@ class DefaultController extends BaseController
 
         $userId = (int) $this->getUserId($request);
 
-        $data = array(
-            'customer' => array(
+        $data = [
+            'customer' => [
                 'scope'      => 'customer',
                 'name'       => '',
                 'entries'    => 0,
@@ -159,8 +151,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-            'project' => array(
+            ],
+            'project' => [
                 'scope'      => 'project',
                 'name'       => '',
                 'entries'    => 0,
@@ -168,8 +160,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-            'activity' => array(
+            ],
+            'activity' => [
                 'scope'      => 'activity',
                 'name'       => '',
                 'entries'    => 0,
@@ -177,8 +169,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-            'ticket' => array(
+            ],
+            'ticket' => [
                 'scope'      => 'ticket',
                 'name'       => '',
                 'entries'    => 0,
@@ -186,8 +178,8 @@ class DefaultController extends BaseController
                 'own'        => 0,
                 'estimation' => 0,
                 'quota'      => 0,
-            ),
-        );
+            ],
+        ];
 
         // early exit, if POST parameter for current entry is not given
         $entryId = $request->request->get('id');
@@ -195,14 +187,15 @@ class DefaultController extends BaseController
             return new JsonResponse($data);
         }
 
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
-        if (!$entryRepo->find($entryId)) {
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
+        if (!$objectRepository->find($entryId)) {
             $message = $this->translator->trans('No entry for id.');
             return new Error($message, 404);
         }
+
         // Collect all entries data
-        $data = $entryRepo->getEntrySummary($entryId, $userId, $data);
+        $data = $objectRepository->getEntrySummary($entryId, $userId, $data);
 
         if ($data['project']['estimation']) {
             $data['project']['quota'] =
@@ -218,11 +211,9 @@ class DefaultController extends BaseController
     /**
      * Retrieves all current entries of the user logged in.
      *
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getDataAction(Request $request)
+    public function getDataAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -235,28 +226,26 @@ class DefaultController extends BaseController
             ->find($userId);
 
         $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 3;
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
-        $data = $entryRepo->getEntriesByUser($userId, $days, $user->getShowFuture());
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
+        $data = $objectRepository->getEntriesByUser($userId, $days, $user->getShowFuture());
 
         return new JsonResponse($data);
     }
 
     /**
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getCustomersAction(Request $request)
+    public function getCustomersAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
 
         $userId = (int) $this->getUserId($request);
-        /** @var \App\Repository\CustomerRepository $customerRepo */
-        $customerRepo = $this->getDoctrine()->getRepository(Customer::class);
-        $data = $customerRepo->getCustomersByUser($userId);
+        /** @var \App\Repository\CustomerRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Customer::class);
+        $data = $objectRepository->getCustomersByUser($userId);
 
         return new JsonResponse($data);
     }
@@ -265,10 +254,9 @@ class DefaultController extends BaseController
      * Developers may see their own data only, CTL and PL may see everyone.
      * Used in Interpretation tab to get all users
      *
-     * @param Request $request
      * @return Response
      */
-    public function getUsersAction(Request $request)
+    public function getUsersAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -288,10 +276,9 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
-    public function getCustomerAction(Request $request)
+    public function getCustomerAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -302,18 +289,17 @@ class DefaultController extends BaseController
                 ->getRepository(Project::class)
                 ->find($request->get('project'));
 
-            return new JsonResponse(array('customer' => $project->getCustomer()->getId()));
+            return new JsonResponse(['customer' => $project->getCustomer()->getId()]);
         }
 
-        return new JsonResponse(array('customer' => 0));
+        return new JsonResponse(['customer' => 0]);
     }
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \ReflectionException
      */
-    public function getProjectsAction(Request $request)
+    public function getProjectsAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -322,34 +308,29 @@ class DefaultController extends BaseController
         $customerId = (int) $request->query->get('customer');
         $userId = (int) $this->getUserId($request);
 
-        /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $this->getDoctrine()->getRepository(Project::class);
-        $data = $projectRepo->getProjectsByUser($userId, $customerId);
+        /** @var \App\Repository\ProjectRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Project::class);
+        $data = $objectRepository->getProjectsByUser($userId, $customerId);
 
         return new JsonResponse($data);
     }
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \Doctrine\DBAL\DBALException
      * @throws \ReflectionException
      */
-    public function getAllProjectsAction(Request $request)
+    public function getAllProjectsAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
 
         $customerId = (int) $request->query->get('customer');
-        $doctrine = $this->getDoctrine();
-        /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $doctrine->getRepository(Project::class);
-        if ($customerId > 0) {
-            $result = $projectRepo->findByCustomer($customerId);
-        } else {
-            $result = $projectRepo->findAll();
-        }
+        $managerRegistry = $this->getDoctrine();
+        /** @var \App\Repository\ProjectRepository $objectRepository */
+        $objectRepository = $managerRegistry->getRepository(Project::class);
+        $result = $customerId > 0 ? $objectRepository->findByCustomer($customerId) : $objectRepository->findAll();
 
         $data = [];
         foreach ($result as $project) {
@@ -364,21 +345,21 @@ class DefaultController extends BaseController
      *
      * Needed for frontend tracking autocompletion.
      */
-    public function getProjectStructureAction(Request $request)
+    public function getProjectStructureAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
 
         $userId = (int) $this->getUserId($request);
-        $doctrine = $this->getDoctrine();
+        $managerRegistry = $this->getDoctrine();
 
-        /** @var \App\Repository\CustomerRepository $customerRepo */
-        $customerRepo = $doctrine->getRepository(Customer::class);
-        $customers = $customerRepo->getCustomersByUser($userId);
+        /** @var \App\Repository\CustomerRepository $objectRepository */
+        $objectRepository = $managerRegistry->getRepository(Customer::class);
+        $customers = $objectRepository->getCustomersByUser($userId);
 
         /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $doctrine->getRepository(Project::class);
+        $projectRepo = $managerRegistry->getRepository(Project::class);
         $projectStructure = $projectRepo->getProjectStructure($userId, $customers);
 
         return new JsonResponse($projectStructure);
@@ -387,15 +368,15 @@ class DefaultController extends BaseController
     /**
      * @return Response
      */
-    public function getActivitiesAction(Request $request)
+    public function getActivitiesAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
 
-        /** @var \App\Repository\ActivityRepository $activityRepo */
-        $activityRepo = $this->getDoctrine()->getRepository(Activity::class);
-        $data = $activityRepo->getActivities();
+        /** @var \App\Repository\ActivityRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Activity::class);
+        $data = $objectRepository->getActivities();
         return new JsonResponse($data);
     }
 
@@ -404,20 +385,18 @@ class DefaultController extends BaseController
      */
     public function getHolidaysAction()
     {
-        /** @var \App\Repository\HolidayRepository $holidayRepo */
-        $holidayRepo = $this->getDoctrine()
+        /** @var \App\Repository\HolidayRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()
             ->getRepository(Holiday::class);
-        $holidays = $holidayRepo->findByMonth(date("Y"), date("m"));
+        $holidays = $objectRepository->findByMonth(date("Y"), date("m"));
         return new JsonResponse($holidays);
     }
 
     /**
-     * @param Request $request
-     * @return Response
      * @throws \Twig\Error\Error
      * @throws \Exception
      */
-    public function exportAction(Request $request)
+    public function exportAction(Request $request): \App\Model\Response
     {
         $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 10000;
 
@@ -425,16 +404,16 @@ class DefaultController extends BaseController
             ->getRepository(User::class)
             ->find($this->getUserId($request));
 
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
-        $entries = $entryRepo->findByRecentDaysOfUser($user, $days);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
+        $entries = $objectRepository->findByRecentDaysOfUser($user, $days);
 
-        $content = $this->twig->render(
+        $content = $this->twigEnvironment->render(
             'export.csv.twig',
-            array(
+            [
                 'entries' => $entries,
                 'labels'  => null,
-            )
+            ]
         );
 
         $filename = strtolower(str_replace(' ', '-', $user->getUsername())) . '.csv';
@@ -451,11 +430,8 @@ class DefaultController extends BaseController
      * Handles returning user from OAuth service.
      *
      * User is redirected to app after accepting or declining granting access for this app.
-     *
-     * @param Request $request
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function jiraOAuthCallbackAction(Request $request)
+    public function jiraOAuthCallbackAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
         /** @var User $user */
         $user = $this->getDoctrine()
@@ -474,8 +450,8 @@ class DefaultController extends BaseController
             $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
             return $this->redirectToRoute('_start');
-        } catch (JiraApiException $e) {
-            return new Response($e->getMessage());
+        } catch (JiraApiException $jiraApiException) {
+            return new Response($jiraApiException->getMessage());
         }
     }
 
@@ -486,7 +462,7 @@ class DefaultController extends BaseController
      *
      * @return object JSON data with time information about activities, total time and users
      */
-    public function getTicketTimeSummaryAction(Request $request)
+    public function getTicketTimeSummaryAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
@@ -495,11 +471,11 @@ class DefaultController extends BaseController
         $attributes = $request->attributes;
         $name = $attributes->has('ticket') ? $attributes->get('ticket') : null;
 
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->getDoctrine()->getRepository(Entry::class);
-        $activities = $entryRepo->getActivitiesWithTime($name);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
+        $activities = $objectRepository->getActivitiesWithTime($name);
 
-        $users = $entryRepo->getUsersWithTime($name);
+        $users = $objectRepository->getUsersWithTime($name);
 
         if (is_null($name) || empty($users)) {
             return new Response(
@@ -529,7 +505,7 @@ class DefaultController extends BaseController
             );
         }
 
-        $time['total_time']['seconds'] = (int) $time['total_time']['time'] * 60;
+        $time['total_time']['seconds'] = $time['total_time']['time'] * 60;
         $time['total_time']['time'] = TimeHelper::minutes2readable(
             $time['total_time']['time']
         );

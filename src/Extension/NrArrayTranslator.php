@@ -30,22 +30,12 @@ class NrArrayTranslator
 {
 
     /**
-     * symfony translator
-     *
-     * @var TranslatorInterface
-     */
-    protected $translator;
-
-
-    /**
      * constructor
      *
      * @param TranslatorInterface $translator symfony translator
      */
-    public function __construct(TranslatorInterface $translator)
+    public function __construct(protected \Symfony\Contracts\Translation\TranslatorInterface $translator)
     {
-        $this->translator = $translator;
-
     }
 
     /**
@@ -53,7 +43,7 @@ class NrArrayTranslator
      *
      * @return string the extension name
      */
-    public function getName()
+    public function getName(): string
     {
         return 'nr_array_translator';
     }
@@ -66,7 +56,7 @@ class NrArrayTranslator
     public function getFilters()
     {
         return [
-            'nr_array_translator' => new \Twig\TwigFilter('nr_array_translator', array($this, 'filterArray')),
+            'nr_array_translator' => new \Twig\TwigFilter('nr_array_translator', $this->filterArray(...)),
         ];
     }
 
@@ -81,8 +71,8 @@ class NrArrayTranslator
      *
      * @return string
      */
-    public function filterArray($string, $arrayKey, $languageFile = 'messages',
-        array $keys = array('name')
+    public function filterArray($string, $arrayKey, ?string $languageFile = 'messages',
+        array $keys = ['name']
     ) {
         $data = json_decode($string, true);
         unset($string);
@@ -96,7 +86,7 @@ class NrArrayTranslator
                 if (in_array($key, $keys)) {
                     $data[$rowKey][$arrayKey][$key] = $this->translator->trans(
                         $value,
-                        array(),
+                        [],
                         $languageFile
                     );
                 }

@@ -75,7 +75,7 @@ class LdapClient
     /**
      * @return string[] LDAP options
      */
-    protected function getLdapOptions()
+    protected function getLdapOptions(): array
     {
         return [
             'useSsl'   => $this->_useSSL,
@@ -103,32 +103,33 @@ class LdapClient
 
         try {
             $ldap->bind();
-        } catch (LdapException $e) {
-            if ($this->logger) {
+        } catch (LdapException $ldapException) {
+            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
                 $this->logger->error('LDAP connection failed', [
-                    'error' => $e->getMessage(),
+                    'error' => $ldapException->getMessage(),
                     'host' => $this->_host,
                     'port' => $this->_port,
                     'useSSL' => $this->_useSSL,
                     'baseDn' => $this->_baseDn
                 ]);
             }
-            throw new \Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $e->getMessage() . '');
+
+            throw new \Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $ldapException->getMessage() . '', $ldapException->getCode(), $ldapException);
         }
 
-        /** @var \Laminas\Ldap\Collection $result */
-        $result = $ldap->search(
+        /** @var \Laminas\Ldap\Collection $collection */
+        $collection = $ldap->search(
             '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')',
-            $this->_baseDn, Ldap::SEARCH_SCOPE_SUB, array('cn', 'dn')
+            $this->_baseDn, Ldap::SEARCH_SCOPE_SUB, ['cn', 'dn']
         );
 
-        if (!is_object($result) || ($result->getFirst() == NULL)) {
+        if (!is_object($collection) || ($collection->getFirst() == NULL)) {
             throw new \Exception('Username unknown.');
         }
 
-        $this->setTeamsByLdapResponse($result->getFirst());
+        $this->setTeamsByLdapResponse($collection->getFirst());
 
-        return $result->getFirst();
+        return $collection->getFirst();
     }
 
 
@@ -136,11 +137,10 @@ class LdapClient
     /**
      * Verify password by logging in to ldap using the user's name and password.
      *
-     * @param array $ldapEntry
      * @throws \Exception
      * @return boolean true
      */
-    protected function verifyPassword(array $ldapEntry)
+    protected function verifyPassword(array $ldapEntry): bool
     {
         $ldapOptions = $this->getLdapOptions();
         $ldapOptions['username'] = $ldapEntry['dn'];
@@ -150,11 +150,12 @@ class LdapClient
 
         try {
             $ldap->bind();
-        } catch (LdapException $e) {
-            if ($this->logger) {
-                $this->logger->error($e->getMessage());
+        } catch (LdapException $ldapException) {
+            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+                $this->logger->error($ldapException->getMessage());
             }
-            throw new \Exception('Login data could not be validated: ' . $e->getMessage());
+
+            throw new \Exception('Login data could not be validated: ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
         }
 
         return true;
@@ -169,10 +170,10 @@ class LdapClient
      * @throws \Exception
      * @return $this
      */
-    public function setUserName($username)
+    public function setUserName($username): static
     {
         if (!$username) {
-            throw new \Exception("Invalid user name: '$username'");
+            throw new \Exception(sprintf("Invalid user name: '%s'", $username));
         }
 
         // enforce ldap-style login names
@@ -193,7 +194,7 @@ class LdapClient
      * @param string $password
      * @return $this
      */
-    public function setUserPass($password)
+    public function setUserPass($password): static
     {
         $this->_userPass = $password;
         return $this;
@@ -207,7 +208,7 @@ class LdapClient
      * @param string $host LDAP host name or IP.
      * @return $this
      */
-    public function setHost($host)
+    public function setHost($host): static
     {
         $this->_host = $host;
         return $this;
@@ -221,7 +222,7 @@ class LdapClient
      * @param integer $port LAP host port number
      * @return $this
      */
-    public function setPort($port)
+    public function setPort($port): static
     {
         $this->_port = (int) $port;
         return $this;
@@ -235,7 +236,7 @@ class LdapClient
      * @param string $readUser LDAP read user name
      * @return $this
      */
-    public function setReadUser($readUser)
+    public function setReadUser($readUser): static
     {
         $this->_readUser = $readUser;
         return $this;
@@ -249,7 +250,7 @@ class LdapClient
      * @param string $readPass LDAP read user password
      * @return $this
      */
-    public function setReadPass($readPass)
+    public function setReadPass($readPass): static
     {
         $this->_readPass = $readPass;
         return $this;
@@ -263,7 +264,7 @@ class LdapClient
      * @param string $base_dn LDAP base DN.
      * @return $this
      */
-    public function setBaseDn($base_dn)
+    public function setBaseDn($base_dn): static
     {
         $this->_baseDn = $base_dn;
         return $this;
@@ -277,7 +278,7 @@ class LdapClient
      * @param boolean $useSSL
      * @return $this
      */
-    public function setUseSSL($useSSL)
+    public function setUseSSL($useSSL): static
     {
         $this->_useSSL = (boolean) $useSSL;
         return $this;
@@ -291,7 +292,7 @@ class LdapClient
      * @param string $userNameField
      * @return $this
      */
-    public function setUserNameField($userNameField)
+    public function setUserNameField($userNameField): static
     {
         $this->_userNameField = $userNameField;
         return $this;
@@ -305,7 +306,7 @@ class LdapClient
      * @throws LdapException
      * @throws \Exception
      */
-    public function login()
+    public function login(): bool
     {
         return $this->verifyPassword(
             $this->verifyUsername()
@@ -320,10 +321,7 @@ class LdapClient
         return $this->teams;
     }
 
-    /**
-     * @param array $ldapRespsonse
-     */
-    protected function setTeamsByLdapResponse($ldapRespsonse)
+    protected function setTeamsByLdapResponse(array $ldapRespsonse)
     {
         $dn = $ldapRespsonse['dn'];
         $mappingFile = __DIR__ . '/../../../../app/config/ldap_ou_team_mapping.yml';
@@ -336,7 +334,7 @@ class LdapClient
             }
 
             foreach ($arMapping as $group => $teamName) {
-                if (strpos($dn, 'ou=' . $group)) {
+                if (strpos((string) $dn, 'ou=' . $group)) {
                     $this->teams[] = $teamName;
                 }
             }

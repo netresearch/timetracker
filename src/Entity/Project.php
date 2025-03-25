@@ -5,7 +5,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
 use App\Helper\TimeHelper;
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  *
@@ -16,8 +16,11 @@ class Project extends Base
 {
 
     const BILLING_NONE  = 0;
+
     const BILLING_TM    = 1;
+
     const BILLING_FP    = 2;
+
     const BILLING_MIXED = 3;
 
     /**
@@ -167,7 +170,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setAdditionalInformationFromExternal($additionalInformationFromExternal)
+    public function setAdditionalInformationFromExternal($additionalInformationFromExternal): static
     {
         $this->additionalInformationFromExternal = $additionalInformationFromExternal;
 
@@ -181,7 +184,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setInternalJiraProjectKey($strInternalJiraProjectKey)
+    public function setInternalJiraProjectKey($strInternalJiraProjectKey): static
     {
         $this->internalJiraProjectKey = $strInternalJiraProjectKey;
 
@@ -195,7 +198,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setInternalJiraTicketSystem($nInternalJiraTicketSystem)
+    public function setInternalJiraTicketSystem($nInternalJiraTicketSystem): static
     {
         $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
 
@@ -221,7 +224,7 @@ class Project extends Base
     /**
      * Convert to array and add additional properties.
      */
-    public function toArray()
+    public function toArray(): array
     {
         $data = parent::toArray();
         $data['estimationText'] = TimeHelper::minutes2readable($this->getEstimation(), false);
@@ -244,7 +247,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -257,7 +260,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName($name): static
     {
         $this->name = $name;
         return $this;
@@ -282,7 +285,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setActive($active)
+    public function setActive($active): static
     {
         $this->active = $active;
         return $this;
@@ -303,11 +306,10 @@ class Project extends Base
     /**
      * Set customer
      *
-     * @param Customer $customer
      *
      * @return $this
      */
-    public function setCustomer(Customer $customer)
+    public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
         return $this;
@@ -333,7 +335,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setGlobal($global)
+    public function setGlobal($global): static
     {
         $this->global = $global;
         return $this;
@@ -352,11 +354,8 @@ class Project extends Base
 
     /**
      * Add entries
-     *
-     * @param Entry $entry
-     * @return Project
      */
-    public function addEntries(Entry $entry)
+    public function addEntries(Entry $entry): static
     {
         $this->entries[] = $entry;
         return $this;
@@ -377,7 +376,7 @@ class Project extends Base
         return $this->jiraId;
     }
 
-    public function setJiraId($jiraId)
+    public function setJiraId($jiraId): static
     {
         $this->jiraId = $jiraId;
         return $this;
@@ -388,11 +387,12 @@ class Project extends Base
         return $this->jiraTicket;
     }
 
-    public function setJiraTicket($jiraTicket)
+    public function setJiraTicket($jiraTicket): static
     {
         if ($jiraTicket === '') {
             $jiraTicket = null;
         }
+
         $this->jiraTicket = $jiraTicket;
         return $this;
     }
@@ -402,14 +402,16 @@ class Project extends Base
         if ($this->subtickets == '') {
             return [];
         }
-        return explode(',', $this->subtickets);
+
+        return explode(',', (string) $this->subtickets);
     }
 
-    public function setSubtickets($subtickets)
+    public function setSubtickets($subtickets): static
     {
         if (is_array($subtickets)) {
             $subtickets = implode(',', $subtickets);
         }
+
         $this->subtickets = $subtickets;
         return $this;
     }
@@ -425,9 +427,8 @@ class Project extends Base
     /**
      * Set the id of the ticket system that is associated with this project
      * @param TicketSystem $ticketSystem
-     * @return Project
      */
-    public function setTicketSystem($ticketSystem)
+    public function setTicketSystem($ticketSystem): static
     {
         $this->ticketSystem = $ticketSystem;
         return $this;
@@ -439,7 +440,7 @@ class Project extends Base
         return $this->estimation;
     }
 
-    public function setEstimation($estimation)
+    public function setEstimation($estimation): static
     {
         $this->estimation = $estimation;
         return $this;
@@ -450,7 +451,7 @@ class Project extends Base
         return $this->offer;
     }
 
-    public function setOffer($offer)
+    public function setOffer($offer): static
     {
         $this->offer = $offer;
         return $this;
@@ -461,7 +462,7 @@ class Project extends Base
         return $this->billing;
     }
 
-    public function setBilling($billing)
+    public function setBilling($billing): static
     {
         $this->billing = $billing;
         return $this;
@@ -472,7 +473,7 @@ class Project extends Base
         return $this->costCenter;
     }
 
-    public function setCostCenter($costCenter)
+    public function setCostCenter($costCenter): static
     {
         $this->costCenter = $costCenter;
         return $this;
@@ -483,13 +484,13 @@ class Project extends Base
         return $this->invoice;
     }
 
-    public function setInvoice($invoice)
+    public function setInvoice($invoice): static
     {
         $this->invoice = $invoice;
         return $this;
     }
 
-    public function setProjectLead($projectLead)
+    public function setProjectLead($projectLead): static
     {
         $this->projectLead = $projectLead;
         return $this;
@@ -500,7 +501,7 @@ class Project extends Base
         return $this->projectLead;
     }
 
-    public function setTechnicalLead($technicalLead)
+    public function setTechnicalLead($technicalLead): static
     {
         $this->technicalLead = $technicalLead;
         return $this;
@@ -516,9 +517,8 @@ class Project extends Base
      * Set internalReference
      *
      * @param string $internalReference
-     * @return Project
      */
-    public function setInternalReference($internalReference)
+    public function setInternalReference($internalReference): static
     {
         $this->internalReference = $internalReference;
 
@@ -539,9 +539,8 @@ class Project extends Base
      * Set externalReference
      *
      * @param string $externalReference
-     * @return Project
      */
-    public function setExternalReference($externalReference)
+    public function setExternalReference($externalReference): static
     {
         $this->externalReference = $externalReference;
         return $this;
@@ -559,35 +558,27 @@ class Project extends Base
 
     /**
      * Add entries
-     *
-     * @param Entry $entries
-     * @return Project
      */
-    public function addEntry(Entry $entries)
+    public function addEntry(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
         return $this;
     }
 
     /**
      * Remove entries
-     *
-     * @param Entry $entries
      */
-    public function removeEntrie(Entry $entries)
+    public function removeEntrie(Entry $entry): void
     {
-        $this->entries->removeElement($entries);
+        $this->entries->removeElement($entry);
     }
 
     /**
      * Add entries
-     *
-     * @param Entry $entries
-     * @return Project
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
 
         return $this;
     }
@@ -604,10 +595,8 @@ class Project extends Base
 
     /**
      * Returns true, if a internJiraProjectKey is configured.
-     *
-     * @return bool
      */
-    public function hasInternalJiraProjectKey()
+    public function hasInternalJiraProjectKey(): bool
     {
         return !empty($this->internalJiraProjectKey);
     }
@@ -626,9 +615,8 @@ class Project extends Base
      * Returns true, if the passed project key matches the configured internal project key.
      *
      * @param string $projectKey
-     * @return bool
      */
-    public function matchesInternalJiraProject($projectKey)
+    public function matchesInternalJiraProject($projectKey): bool
     {
         return $projectKey === $this->getInternalJiraProjectKey();
     }
@@ -645,11 +633,8 @@ class Project extends Base
 
     /**
      * Add preset
-     *
-     * @param Preset $preset
-     * @return Project
      */
-    public function addPreset(Preset $preset)
+    public function addPreset(Preset $preset): static
     {
         $this->presets[] = $preset;
         return $this;
@@ -657,10 +642,8 @@ class Project extends Base
 
     /**
      * Remove preset
-     *
-     * @param Preset $preset
      */
-    public function removePreset(Preset $preset)
+    public function removePreset(Preset $preset): void
     {
         $this->presets->removeElement($preset);
     }

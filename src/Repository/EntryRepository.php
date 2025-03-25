@@ -35,16 +35,17 @@ use Doctrine\Persistence\ManagerRegistry;
 class EntryRepository extends ServiceEntityRepository
 {
     const PERIOD_DAY   = 1;
+
     const PERIOD_WEEK  = 2;
+
     const PERIOD_MONTH = 3;
 
     /**
      * EntryRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Entry::class);
+        parent::__construct($managerRegistry, Entry::class);
     }
 
     /**
@@ -54,15 +55,16 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return integer
      */
-    public static function getCalendarDaysByWorkDays($workingDays)
+    public static function getCalendarDaysByWorkDays($workingDays): int|float
     {
         $workingDays = (int) $workingDays;
-        if ($workingDays < 1)
+        if ($workingDays < 1) {
             return 0;
+        }
 
         // Calculate calendar days from given work days
-        $weeks = floor((int) $workingDays / 5);
-        $restDays = ((int) $workingDays) % 5;
+        $weeks = floor($workingDays / 5);
+        $restDays = ($workingDays) % 5;
 
         if ($restDays == 0) {
             return $weeks * 7;
@@ -78,14 +80,14 @@ class EntryRepository extends ServiceEntityRepository
             $restDays += 2;
             break;
         default:
-            if ($dayOfWeek <= $restDays)
+            if ($dayOfWeek <= $restDays) {
                 $restDays += 2;
+            }
+
             break;
         }
 
-        $calendarDays = ($weeks * 7) + $restDays;
-
-        return $calendarDays;
+        return ($weeks * 7) + $restDays;
     }
 
 
@@ -102,11 +104,12 @@ class EntryRepository extends ServiceEntityRepository
     {
         $fromDate = new \DateTime();
         $fromDate->setTime(0, 0);
+
         $calendarDays = self::getCalendarDaysByWorkDays($days);
         $fromDate->sub(new \DateInterval('P' . $calendarDays . 'D'));
 
-        $em = $this->getEntityManager();
-        $query = $em->createQuery(
+        $entityManager = $this->getEntityManager();
+        $query = $entityManager->createQuery(
             'SELECT e FROM App\Entity\Entry e'
             . ' WHERE e.user = :user_id AND e.day >= :fromDate'
             . ' ORDER BY e.day, e.start ASC'
@@ -138,37 +141,40 @@ class EntryRepository extends ServiceEntityRepository
             ];
         }
 
-        $qb = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
 
-        $qb->select('entry')
-            ->from('App\Entity\Entry', 'entry')
+        $queryBuilder->select('entry')
+            ->from(\App\Entity\Entry::class, 'entry')
             ->leftJoin('entry.user', 'user');
 
         foreach ($arSort as $strField => $bAsc) {
-            $qb->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
+            $queryBuilder->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
         }
 
 
         if (0 < (int) $userId) {
-            $qb->andWhere('entry.user = :user_id');
-            $qb->setParameter('user_id', $userId, \PDO::PARAM_INT);
-        }
-        if (0 < (int) $projectId) {
-            $qb->andWhere('entry.project = :project_id');
-            $qb->setParameter('project_id', $projectId, \PDO::PARAM_INT);
-        }
-        if (0 < (int) $customerId) {
-            $qb->andWhere('entry.customer = :customer_id');
-            $qb->setParameter('customer_id', $customerId, \PDO::PARAM_INT);
-        }
-        if (0 < (int) $year) {
-            $qb->andWhere(
-                $qb->expr()->like('entry.day', ':month')
-            );
-            $qb->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
+            $queryBuilder->andWhere('entry.user = :user_id');
+            $queryBuilder->setParameter('user_id', $userId, \PDO::PARAM_INT);
         }
 
-        return $qb->getQuery()->getResult();
+        if (0 < (int) $projectId) {
+            $queryBuilder->andWhere('entry.project = :project_id');
+            $queryBuilder->setParameter('project_id', $projectId, \PDO::PARAM_INT);
+        }
+
+        if (0 < (int) $customerId) {
+            $queryBuilder->andWhere('entry.customer = :customer_id');
+            $queryBuilder->setParameter('customer_id', $customerId, \PDO::PARAM_INT);
+        }
+
+        if (0 < (int) $year) {
+            $queryBuilder->andWhere(
+                $queryBuilder->expr()->like('entry.day', ':month')
+            );
+            $queryBuilder->setParameter('month', $this->getDatePattern($year, $month), \PDO::PARAM_STR);
+        }
+
+        return $queryBuilder->getQuery()->getResult();
     }
 
 
@@ -182,15 +188,14 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return string e.g. 2015-01-%, 2015-%, if no month is set
      */
-    protected function getDatePattern($year, $month = null)
+    protected function getDatePattern($year, $month = null): string
     {
         $pattern = $year . '-';
         if (0 < intval($month)) {
             $pattern .= str_pad($month, 2, '0', STR_PAD_LEFT) . '-';
         }
-        $pattern .= '%';
 
-        return $pattern;
+        return $pattern . '%';
     }
 
 
@@ -208,10 +213,10 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function findByMonthWithExternalInformation($userId, $year, $month, $projectId, $customerId)
     {
-        $em  = $this->getEntityManager();
-        $qb = $em->createQueryBuilder()
+        $entityManager  = $this->getEntityManager();
+        $queryBuilder = $entityManager->createQueryBuilder()
             ->select('distinct e.ticket, ts.id, ts.url, ts.login, ts.password')
-            ->from('App\Entity\Entry', 'e')
+            ->from(\App\Entity\Entry::class, 'e')
             ->innerJoin('e.project', 'p', 'e.projectId = p.id')
             ->innerJoin('p.ticketSystem', 'ts', 'p.ticketSystem = ts.id')
             ->where('p.additionalInformationFromExternal = 1')
@@ -220,27 +225,27 @@ class EntryRepository extends ServiceEntityRepository
 
 
         if (0 < $userId) {
-            $qb->andWhere('e.user = :user_id')
+            $queryBuilder->andWhere('e.user = :user_id')
                 ->setParameter(':user_id', $userId);
         }
+
         if (0 < $projectId) {
-            $qb->andWhere('e.project = :project_id')
+            $queryBuilder->andWhere('e.project = :project_id')
                 ->setParameter(':project_id', $projectId);
         }
+
         if (0 < $customerId) {
-            $qb->andWhere('e.customer = :customer_id')
+            $queryBuilder->andWhere('e.customer = :customer_id')
                 ->setParameter(':customer_id', $customerId);
         }
 
         if (0 < $year) {
             $pattern = $this->getDatePattern($year, $month);
-            $qb->andWhere('e.day LIKE :month')
+            $queryBuilder->andWhere('e.day LIKE :month')
                 ->setParameter(':month', $pattern);
         }
 
-        $result = $qb->getQuery()->getResult();
-
-        return $result;
+        return $queryBuilder->getQuery()->getResult();
     }
 
 
@@ -255,9 +260,9 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function findByDay($userId, $day)
     {
-        $em = $this->getEntityManager();
+        $entityManager = $this->getEntityManager();
 
-        $query = $em->createQuery(
+        $query = $entityManager->createQuery(
             'SELECT e FROM App\Entity\Entry e'
             . ' WHERE e.user = :user_id'
             . ' AND e.day = :day'
@@ -276,10 +281,9 @@ class EntryRepository extends ServiceEntityRepository
      * @param integer $days Filter by x days in past
      * @param boolean $showFuture Include work log entries from future
      *
-     * @return array
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getEntriesByUser($userId, $days = 3, $showFuture = true)
+    public function getEntriesByUser($userId, $days = 3, $showFuture = true): array
     {
         $calendarDays = self::getCalendarDaysByWorkDays($days);
         $connection = $this->getEntityManager()->getConnection();
@@ -306,7 +310,7 @@ class EntryRepository extends ServiceEntityRepository
             $sql['where_future'] = "AND day <= CURDATE()";
         }
 
-        $sql['where_user'] = "AND user_id = $userId";
+        $sql['where_user'] = 'AND user_id = ' . $userId;
         $sql['order'] = "ORDER BY day DESC, start DESC";
 
         $stmt = $connection->query(implode(" ", $sql));
@@ -314,14 +318,16 @@ class EntryRepository extends ServiceEntityRepository
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $data = [];
-        if (count($result)) foreach ($result as &$line) {
-            $line['user'] = (int) $line['user'];
-            $line['customer'] = (int) $line['customer'];
-            $line['project'] = (int) $line['project'];
-            $line['activity'] = (int) $line['activity'];
-            $line['duration'] = TimeHelper::formatDuration($line['duration']);
-            $line['class'] = (int) $line['class'];
-            $data[] = ['entry' => $line];
+        if (count($result)) {
+            foreach ($result as &$line) {
+                $line['user'] = (int) $line['user'];
+                $line['customer'] = (int) $line['customer'];
+                $line['project'] = (int) $line['project'];
+                $line['activity'] = (int) $line['activity'];
+                $line['duration'] = TimeHelper::formatDuration($line['duration']);
+                $line['class'] = (int) $line['class'];
+                $data[] = ['entry' => $line];
+            }
         }
 
         return $data;
@@ -339,11 +345,11 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function findByUserAndTicketSystemToSync($userId, $ticketSystemId, $maxResults = null)
     {
-        $qb = $this->getEntityManager()->createQueryBuilder();
-        $qb
+        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        $queryBuilder
             ->select('e')
-            ->from('App\Entity\Entry', 'e')
-            ->join('App\Entity\Project', 'p', Join::WITH, 'e.project = p.id')
+            ->from(\App\Entity\Entry::class, 'e')
+            ->join(\App\Entity\Project::class, 'p', Join::WITH, 'e.project = p.id')
             ->where('e.user = :user_id')
             ->andWhere('e.syncedToTicketsystem = false')
             ->andWhere('p.ticketSystem = :ticket_system_id')
@@ -353,10 +359,10 @@ class EntryRepository extends ServiceEntityRepository
             ->addOrderBy('e.start', 'DESC');
 
         if ((int) $maxResults > 0) {
-            $qb->setMaxResults((int) $maxResults);
+            $queryBuilder->setMaxResults((int) $maxResults);
         }
 
-        return $qb->getQuery()->getResult();
+        return $queryBuilder->getQuery()->getResult();
     }
 
 
@@ -368,10 +374,9 @@ class EntryRepository extends ServiceEntityRepository
      * @param integer $userId The current user's identifier
      * @param array $data The initial (default) summary
      *
-     * @return array
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getEntrySummary($entryId, $userId, $data)
+    public function getEntrySummary($entryId, $userId, array $data): array
     {
         $entry = $this->find($entryId);
 
@@ -384,7 +389,7 @@ class EntryRepository extends ServiceEntityRepository
             c.name AS name,
             COUNT(e.id) AS entries,
             SUM(e.duration) AS total,
-            SUM(IF(e.user_id = $userId , e.duration, 0)) AS own,
+            SUM(IF(e.user_id = {$userId} , e.duration, 0)) AS own,
             0 as estimation";
         $sql['customer']['from'] = "FROM entries e";
         $sql['customer']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
@@ -395,7 +400,7 @@ class EntryRepository extends ServiceEntityRepository
             CONCAT(p.name) AS name,
             COUNT(e.id) AS entries,
             SUM(e.duration) AS total,
-            SUM(IF(e.user_id = $userId , e.duration, 0)) AS own,
+            SUM(IF(e.user_id = {$userId} , e.duration, 0)) AS own,
             p.estimation AS estimation";
         $sql['project']['from'] = "FROM entries e";
         $sql['project']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
@@ -409,7 +414,7 @@ class EntryRepository extends ServiceEntityRepository
                 CONCAT(a.name) AS name,
                 COUNT(e.id) AS entries,
                 SUM(e.duration) AS total,
-                SUM(IF(e.user_id = $userId , e.duration, 0)) AS own,
+                SUM(IF(e.user_id = {$userId} , e.duration, 0)) AS own,
                 0 as estimation";
             $sql['activity']['from'] = "FROM entries e";
             $sql['activity']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
@@ -428,10 +433,10 @@ class EntryRepository extends ServiceEntityRepository
                 ticket AS name,
                 COUNT(id) AS entries,
                 SUM(duration) AS total,
-                SUM(IF(user_id = $userId, duration, 0)) AS own,
+                SUM(IF(user_id = {$userId}, duration, 0)) AS own,
                 0 as estimation";
             $sql['ticket']['from'] = "FROM entries";
-            $sql['ticket']['where'] = "WHERE ticket = '" . addslashes($entry->getTicket()) . "'";
+            $sql['ticket']['where'] = "WHERE ticket = '" . addslashes((string) $entry->getTicket()) . "'";
         } else {
             $sql['ticket']['select'] = "SELECT 'ticket' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own, 0 AS estimation";
         }
@@ -459,10 +464,9 @@ class EntryRepository extends ServiceEntityRepository
      * @param int $userId The current user's identifier
      * @param int $period The requested period (day / week / month)
      *
-     * @return array
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getWorkByUser($userId, $period = self::PERIOD_DAY)
+    public function getWorkByUser($userId, $period = self::PERIOD_DAY): array
     {
         $connection = $this->getEntityManager()->getConnection();
 
@@ -487,12 +491,10 @@ class EntryRepository extends ServiceEntityRepository
         $stmt   = $connection->query(implode(" ", $sql));
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $data = [
+        return [
             'duration' => $result[0]['duration'],
             'count'    => false,
         ];
-
-        return $data;
     }
 
     /**
@@ -515,7 +517,7 @@ class EntryRepository extends ServiceEntityRepository
      * @return \Doctrine\ORM\Query
      * @throws \Exception
      */
-    public function queryByFilterArray($arFilter = [])
+    public function queryByFilterArray(array $arFilter = [])
     {
         $queryBuilder = $this->createQueryBuilder('e');
 
@@ -616,7 +618,7 @@ class EntryRepository extends ServiceEntityRepository
      * @return array
      * @throws \Exception
      */
-    public function findByFilterArray($arFilter = [])
+    public function findByFilterArray(array $arFilter = [])
     {
         return $this->queryByFilterArray($arFilter)->getResult();
     }
@@ -628,7 +630,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array Names of the activities with their total time in seconds
      */
-    public function getActivitiesWithTime(string $ticketname)
+    public function getActivitiesWithTime(string $ticketname): array
     {
         $connection = $this->getEntityManager()->getConnection();
         $sql = "SELECT name, SUM(duration) AS total_time
@@ -638,10 +640,9 @@ class EntryRepository extends ServiceEntityRepository
                 WHERE entries.ticket = :ticketname
                 GROUP BY activity_id";
 
-        $stmt = $connection->prepare($sql);
-        $stmt->bindValue(':ticketname', $ticketname);
-        $result = $stmt->executeQuery()->fetchAllAssociative();
-        return $result;
+        $statement = $connection->prepare($sql);
+        $statement->bindValue(':ticketname', $ticketname);
+        return $statement->executeQuery()->fetchAllAssociative();
     }
 
     /**
@@ -651,7 +652,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array usernames with their total time in seconds
      */
-    public function getUsersWithTime(string $ticketname)
+    public function getUsersWithTime(string $ticketname): array
     {
         $connection = $this->getEntityManager()->getConnection();
         $sql = "SELECT username, SUM(duration) AS total_time
@@ -660,9 +661,8 @@ class EntryRepository extends ServiceEntityRepository
                 AND users.id = entries.user_id
                 GROUP BY username";
 
-        $stmt = $connection->prepare($sql);
-        $stmt->bindValue(':ticketname', $ticketname);
-        $result = $stmt->executeQuery()->fetchAllAssociative();
-        return $result;
+        $statement = $connection->prepare($sql);
+        $statement->bindValue(':ticketname', $ticketname);
+        return $statement->executeQuery()->fetchAllAssociative();
     }
 }

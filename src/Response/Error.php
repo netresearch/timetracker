@@ -21,33 +21,35 @@ class Error extends JsonResponse
      * @param string|null $forwardUrl
      */
     public function __construct(
-        $errorMessage, $statusCode, $forwardUrl = null, \Throwable $exception = null
+        $errorMessage, $statusCode, $forwardUrl = null, \Throwable $throwable = null
     ) {
         $message = ['message' => $errorMessage];
 
         if ($forwardUrl) {
             $message['forwardUrl'] = $forwardUrl;
         }
+
         if (ini_get('display_errors')) {
-            $message['exception'] = $this->getExceptionAsArray($exception);
+            $message['exception'] = $this->getExceptionAsArray($throwable);
         }
 
         parent::__construct($message, $statusCode > 0 ? $statusCode : 400);
     }
 
-    protected function getExceptionAsArray(\Throwable $exception = null)
+    protected function getExceptionAsArray(\Throwable $throwable = null): ?array
     {
-        if ($exception === null) {
+        if (!$throwable instanceof \Throwable) {
             return null;
         }
+
         return [
-            'message' => $exception->getMessage(),
-            'class'   => get_class($exception),
-            'code'    => $exception->getCode(),
-            'file'    => $exception->getFile(),
-            'line'    => $exception->getLine(),
-            'trace'   => $exception->getTrace(),
-            'previous' => $this->getExceptionAsArray($exception->getPrevious()),
+            'message' => $throwable->getMessage(),
+            'class'   => $throwable::class,
+            'code'    => $throwable->getCode(),
+            'file'    => $throwable->getFile(),
+            'line'    => $throwable->getLine(),
+            'trace'   => $throwable->getTrace(),
+            'previous' => $this->getExceptionAsArray($throwable->getPrevious()),
         ];
     }
 }

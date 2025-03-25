@@ -2,8 +2,8 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Model\Base as Base;
-use DateTime as DateTime;
+use App\Model\Base;
+use DateTime;
 
 /**
  *
@@ -13,8 +13,11 @@ use DateTime as DateTime;
 class Entry extends Base
 {
     const CLASS_PLAIN       = 1;
+
     const CLASS_DAYBREAK    = 2;
+
     const CLASS_PAUSE       = 4;
+
     const CLASS_OVERLAP     = 8;
 
 
@@ -113,7 +116,7 @@ class Entry extends Base
      *
      * @var array
      */
-    protected $externalLabels = array();
+    protected $externalLabels = [];
 
     /**
      * ID of the original booked external ticket.
@@ -121,19 +124,19 @@ class Entry extends Base
      *
      * @var string e.g. TYPO-1234
      */
-    protected $internalJiraTicketOriginalKey = null;
+    protected $internalJiraTicketOriginalKey;
 
     /**
      * Title in ticket system; no ORM mapping.
      *
      * @var string
      */
-    protected $ticketTitle = null;
+    protected $ticketTitle;
 
     /**
      * @param string $externalReporter
      */
-    public function setExternalReporter($externalReporter)
+    public function setExternalReporter($externalReporter): void
     {
         $this->externalReporter = $externalReporter;
     }
@@ -149,7 +152,7 @@ class Entry extends Base
     /**
      * @param string $externalSummary
      */
-    public function setExternalSummary($externalSummary)
+    public function setExternalSummary($externalSummary): void
     {
         $this->externalSummary = $externalSummary;
     }
@@ -166,13 +169,12 @@ class Entry extends Base
 
     /**
      * Sets the array of external labels.
-     *
-     * @param array $arExternalLabels
      */
-    public function setExternalLabels(array $arExternalLabels)
+    public function setExternalLabels(array $arExternalLabels): void
     {
         $this->externalLabels = $arExternalLabels;
     }
+
     /**
      * @return string
      */
@@ -192,7 +194,7 @@ class Entry extends Base
      * @return $this
      * @throws \Exception
      */
-    public function validateDuration()
+    public function validateDuration(): static
     {
         if (($this->getStart() instanceof DateTime)
             && ($this->getEnd() instanceof DateTime)
@@ -204,7 +206,7 @@ class Entry extends Base
         return $this;
     }
 
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -294,9 +296,8 @@ class Entry extends Base
      * Set ticket
      *
      * @param string $ticket
-     * @return Entry
      */
-    public function setTicket($ticket)
+    public function setTicket($ticket): static
     {
         $this->ticket = str_replace(' ', '', $ticket);
         return $this;
@@ -312,7 +313,7 @@ class Entry extends Base
         return $this->ticket;
     }
 
-    public function setTicketTitle($ticketTitle)
+    public function setTicketTitle($ticketTitle): static
     {
         $this->ticketTitle = $ticketTitle;
         return $this;
@@ -327,9 +328,8 @@ class Entry extends Base
      * Set Jira WorklogId
      *
      * @param int $worklog_id
-     * @return Entry
      */
-    public function setWorklogId($worklog_id)
+    public function setWorklogId($worklog_id): static
     {
         $this->worklog_id = $worklog_id;
         return $this;
@@ -349,9 +349,8 @@ class Entry extends Base
      * Set description
      *
      * @param string $description
-     * @return Entry
      */
-    public function setDescription($description)
+    public function setDescription($description): static
     {
         $this->description = $description;
         return $this;
@@ -371,9 +370,8 @@ class Entry extends Base
      * Set day
      *
      * @param string $day
-     * @return Entry
      */
-    public function setDay($day)
+    public function setDay($day): static
     {
         if (!$day instanceof DateTime) {
             $day = new DateTime($day);
@@ -397,13 +395,12 @@ class Entry extends Base
      * Set start
      *
      * @param string $start
-     * @return Entry
      */
-    public function setStart($start)
+    public function setStart($start): static
     {
         if (!$start instanceof DateTime) {
             $start = new DateTime($start);
-            list($year, $month, $day) = explode('-', $this->getDay()->format('Y-m-d'));
+            [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $start->setDate($year, $month, $day);
         }
 
@@ -426,13 +423,12 @@ class Entry extends Base
      * Set end
      *
      * @param string $end
-     * @return Entry
      */
-    public function setEnd($end)
+    public function setEnd($end): static
     {
         if (!$end instanceof DateTime) {
             $end = new DateTime($end);
-            list($year, $month, $day) = explode('-', $this->getDay()->format('Y-m-d'));
+            [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $end->setDate($year, $month, $day);
         }
 
@@ -445,7 +441,7 @@ class Entry extends Base
     /**
      *  Make sure end is greater or equal start
      */
-    protected function alignStartAndEnd()
+    protected function alignStartAndEnd(): static
     {
         if (! $this->start instanceof DateTime) {
             return $this;
@@ -476,9 +472,8 @@ class Entry extends Base
      * Set duration
      *
      * @param integer $duration
-     * @return Entry
      */
-    public function setDuration($duration)
+    public function setDuration($duration): static
     {
         $this->duration = $duration;
         return $this;
@@ -496,14 +491,12 @@ class Entry extends Base
 
     /**
      * Returns duration as formatted hours:minutes string.
-     *
-     * @return string
      */
-    public function getDurationString()
+    public function getDurationString(): string
     {
         $nMinutes = $this->getDuration();
         $nHours = floor($nMinutes / 60);
-        $nMinutes = $nMinutes % 60;
+        $nMinutes %= 60;
 
         return sprintf('%02d:%02d', $nHours, $nMinutes);
     }
@@ -511,11 +504,9 @@ class Entry extends Base
     /**
      * Set project
      *
-     * @param Project $project
      *
-     * @return Entry
      */
-    public function setProject(Project $project)
+    public function setProject(Project $project): static
     {
         $this->project = $project;
         return $this;
@@ -533,11 +524,8 @@ class Entry extends Base
 
     /**
      * Set user
-     *
-     * @param User $user
-     * @return Entry
      */
-    public function setUser(User $user)
+    public function setUser(User $user): static
     {
         $this->user = $user;
         return $this;
@@ -555,11 +543,8 @@ class Entry extends Base
 
     /**
      * Set account
-     *
-     * @param Account $account
-     * @return Entry
      */
-    public function setAccount(Account $account)
+    public function setAccount(Account $account): static
     {
         $this->account = $account;
         return $this;
@@ -577,11 +562,8 @@ class Entry extends Base
 
     /**
      * Set activity
-     *
-     * @param Activity $activity
-     * @return Entry
      */
-    public function setActivity(Activity $activity)
+    public function setActivity(Activity $activity): static
     {
         $this->activity = $activity;
         return $this;
@@ -602,19 +584,17 @@ class Entry extends Base
      *
      * @return mixed[]
      */
-    public function toArray()
+    public function toArray(): array
     {
         if (null !== $this->getCustomer()) {
             $customer = $this->getCustomer()->getId();
+        } elseif ($this->getProject() && $this->getProject()->getCustomer()) {
+            $customer = $this->getProject()->getCustomer()->getId();
         } else {
-            if ($this->getProject() && $this->getProject()->getCustomer()) {
-                $customer = $this->getProject()->getCustomer()->getId();
-            } else {
-                $customer = null;
-            }
+            $customer = null;
         }
 
-        return array(
+        return [
             'id'             => $this->getId(),
             'date'           => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
             'start'          => $this->getStart() ? $this->getStart()->format('H:i') : null,
@@ -630,17 +610,16 @@ class Entry extends Base
             'class'          => $this->getClass(),
             'worklog'        => $this->getWorklogId(),
             'extTicket'      => $this->getInternalJiraTicketOriginalKey(),
-        );
+        ];
     }
 
     /**
      * Calculate difference between start and end
      *
      * @param int $factor
-     * @return Entry
      * @throws \Exception
      */
-    public function calcDuration($factor = 1)
+    public function calcDuration($factor = 1): static
     {
         if ($this->getStart() && $this->getEnd()) {
             $start = new DateTime($this->getStart()->format('H:i'));
@@ -651,17 +630,15 @@ class Entry extends Base
         } else {
             $this->setDuration(0);
         }
+
         $this->validateDuration();
         return $this;
     }
 
     /**
      * Set customer
-     *
-     * @param Customer $customer
-     * @return Entry
      */
-    public function setCustomer(Customer $customer)
+    public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
         return $this;
@@ -682,9 +659,8 @@ class Entry extends Base
      * Set class
      *
      * @param integer class
-     * @return Entry
      */
-    public function setClass($class)
+    public function setClass($class): static
     {
         $this->class = (int) $class;
         return $this;
@@ -734,10 +710,8 @@ class Entry extends Base
 
      /**
      * Returns true, if a original ticket name.
-     *
-     * @return bool
      */
-    public function hasInternalJiraTicketOriginalKey()
+    public function hasInternalJiraTicketOriginalKey(): bool
     {
         return !empty($this->internalJiraTicketOriginalKey);
     }
@@ -748,7 +722,7 @@ class Entry extends Base
      * @param string $strTicket
      * @return $this
      */
-    public function setInternalJiraTicketOriginalKey($strTicket)
+    public function setInternalJiraTicketOriginalKey($strTicket): static
     {
         $this->internalJiraTicketOriginalKey = (string) $strTicket;
 
@@ -757,23 +731,21 @@ class Entry extends Base
 
     /**
      * Returns the post data for the internal JIRA ticket creation.
-     *
-     * @return array
      */
-    public function getPostDataForInternalJiraTicketCreation()
+    public function getPostDataForInternalJiraTicketCreation(): array
     {
-       return array(
-            'fields' => array (
-                'project'     =>  array(
+       return [
+            'fields' =>  [
+                'project'     =>  [
                     'key' => $this->getProject()->getInternalJiraProjectKey(),
-                ),
+                ],
                 'summary'     => $this->getTicket(),
                 'description' => $this->getTicketSystemIssueLink(),
-                'issuetype'   => array(
+                'issuetype'   => [
                     'name' => 'Task',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
 
     /**
@@ -789,7 +761,7 @@ class Entry extends Base
      *
      * @return $this
      */
-    public function setSyncedToTicketsystem($syncedToTicketsystem)
+    public function setSyncedToTicketsystem($syncedToTicketsystem): static
     {
         $this->syncedToTicketsystem = $syncedToTicketsystem;
         return $this;

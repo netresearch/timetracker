@@ -41,31 +41,10 @@ use Symfony\Component\Routing\RouterInterface;
 class Export
 {
     /**
-     * @var ManagerRegistry
-     */
-    private $doctrine;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var RouterInterface
-     */
-    private $router;
-
-    /**
      * Export constructor
      */
-    public function __construct(
-        ManagerRegistry $doctrine,
-        LoggerInterface $logger,
-        RouterInterface $router
-    ) {
-        $this->doctrine = $doctrine;
-        $this->logger = $logger;
-        $this->router = $router;
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly RouterInterface $router)
+    {
     }
 
     /**
@@ -101,7 +80,7 @@ class Export
         $username = 'all';
         if (0 < (int) $userId) {
             /** @var \App\Entity\User $user */
-            $user = $this->doctrine
+            $user = $this->managerRegistry
                 ->getRepository(\App\Entity\User::class)
                 ->find($userId);
             if ($user !== null) {
@@ -119,7 +98,7 @@ class Export
      */
     protected function getEntryRepository()
     {
-        return $this->doctrine->getRepository(\App\Entity\Entry::class);
+        return $this->managerRegistry->getRepository(\App\Entity\Entry::class);
     }
 
     /**
@@ -131,15 +110,13 @@ class Export
      * @param bool  $showBillableField Add the "billable" information field
      * @param bool  $removeNotBillable remove not billable entries
      * @param bool  $showTicketTitles  Add ticket title field
-     *
-     * @return array
      */
     public function enrichEntriesWithTicketInformation(
         $currentUserId, array $entries,
         $showBillableField, $removeNotBillable = false,
         $showTicketTitles = false
-    ) {
-        $doctrine = $this->doctrine;
+    ): array {
+        $doctrine = $this->managerRegistry;
         /** @var \App\Repository\UserRepository $userRepository */
         $userRepository = $doctrine->getRepository(\App\Entity\User::class);
         /** @var \App\Entity\User $currentUser */
@@ -190,30 +167,28 @@ class Export
             if ($showBillableField) {
                 $jiraFields[] = 'labels';
             }
+
             if ($showTicketTitles) {
                 $jiraFields[] = 'summary';
             }
 
-            if (is_array($ticketSystemIssuesTotalChunks)
-                && !empty($ticketSystemIssuesTotalChunks)
-            ) {
-                foreach ($ticketSystemIssuesTotalChunks as $arIssues) {
-                    $ret = $jiraApi->searchTicket(
-                        'IssueKey in (' . join(',', $arIssues) . ')',
-                        $jiraFields,
-                        '500'
-                    );
+            foreach ($ticketSystemIssuesTotalChunks as $ticketSystemIssueTotalChunk) {
+                $ret = $jiraApi->searchTicket(
+                    'IssueKey in (' . implode(',', $ticketSystemIssueTotalChunk) . ')',
+                    $jiraFields,
+                    '500'
+                );
 
-                    foreach ($ret->issues as $issue) {
-                        if ($showBillableField
-                            && isset($issue->fields->labels)
-                            && in_array('billable', $issue->fields->labels)
-                        ) {
-                            $arBillable[] = $issue->key;
-                        }
-                        if ($showTicketTitles) {
-                            $arTicketTitles[$issue->key] = $issue->fields->summary;
-                        }
+                foreach ($ret->issues as $issue) {
+                    if ($showBillableField
+                        && isset($issue->fields->labels)
+                        && in_array('billable', $issue->fields->labels)
+                    ) {
+                        $arBillable[] = $issue->key;
+                    }
+
+                    if ($showTicketTitles) {
+                        $arTicketTitles[$issue->key] = $issue->fields->summary;
                     }
                 }
             }
@@ -228,6 +203,7 @@ class Export
                     $entry->billable = $billable;
                 }
             }
+
             if ($showTicketTitles) {
                 $entry->setTicketTitle($arTicketTitles[$entry->getTicket()] ?? null);
             }

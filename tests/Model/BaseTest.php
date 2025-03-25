@@ -8,8 +8,11 @@ use App\Model\Base;
 class TestModel extends Base
 {
     protected $name         = 'Name';
+
     protected $id           = 500;
+
     protected $workspace    = 'internal';
+
     protected $active       = true;
 
     public function getName() {
@@ -31,7 +34,7 @@ class TestModel extends Base
 
 class BaseTest extends TestCase
 {
-    public function testBaseModelByTestModel()
+    public function testBaseModelByTestModel(): void
     {
         $testModel = new TestModel();
         $result = $testModel->toArray();

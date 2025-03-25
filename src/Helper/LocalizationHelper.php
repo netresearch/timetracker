@@ -11,10 +11,7 @@ namespace App\Helper;
 class LocalizationHelper
 {
 
-    /**
-     * @return array
-     */
-    public static function getAvailableLocales()
+    public static function getAvailableLocales(): array
     {
         return [
             'de' => 'German',
@@ -25,21 +22,17 @@ class LocalizationHelper
         ];
     }
 
-    /**
-     * @return string
-     */
-    public static function getPreferredLocale()
+    public static function getPreferredLocale(): string
     {
         return 'en';
     }
 
     /**
      * @param $locale
-     * @return string
      */
-    public static function normalizeLocale($locale)
+    public static function normalizeLocale($locale): string
     {
-        $locale = strtolower(trim($locale));
+        $locale = strtolower(trim((string) $locale));
         if (array_key_exists($locale, self::getAvailableLocales())) {
             return $locale;
         }

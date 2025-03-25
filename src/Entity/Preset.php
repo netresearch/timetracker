@@ -3,7 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  *
@@ -51,7 +51,7 @@ class Preset extends Base
 
 
 
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -75,7 +75,7 @@ class Preset extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName($name): static
     {
         $this->name = $name;
         return $this;
@@ -133,7 +133,7 @@ class Preset extends Base
      *
      * @return $this
      */
-    public function setDescription($description)
+    public function setDescription($description): static
     {
         $this->description = $description;
         return $this;
@@ -153,11 +153,10 @@ class Preset extends Base
     /**
      * Set customer
      *
-     * @param Customer $customer
      *
      * @return $this
      */
-    public function setCustomer(Customer $customer)
+    public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
         return $this;
@@ -177,11 +176,10 @@ class Preset extends Base
     /**
      * Set project
      *
-     * @param Project $project
      *
      * @return $this
      */
-    public function setProject(Project $project)
+    public function setProject(Project $project): static
     {
         $this->project = $project;
         return $this;
@@ -201,11 +199,10 @@ class Preset extends Base
     /**
      * Set activity
      *
-     * @param Activity $activity
      *
      * @return $this
      */
-    public function setActivity(Activity $activity)
+    public function setActivity(Activity $activity): static
     {
         $this->activity = $activity;
         return $this;
@@ -224,18 +221,16 @@ class Preset extends Base
 
     /**
      * Get array representation of a preset object
-     *
-     * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
-        return array(
+        return [
             'id'          => $this->getId(),
             'name'        => $this->getName(),
             'customer'    => $this->getCustomer() ? $this->getCustomer()->getId() : null,
             'project'     => $this->getProject() ? $this->getProject()->getId() : null,
             'activity'    => $this->getActivity() ? $this->getActivity()->getId() : null,
             'description' => $this->getDescription(),
-        );
+        ];
     }
 }

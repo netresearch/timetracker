@@ -14,10 +14,14 @@ abstract class Base extends WebTestCase
 {
     use ArraySubsetAsserts;
 
-    protected $client = null;
+    protected $client;
+
     protected $serviceContainer;
+
     protected $connection;
+
     protected $queryBuilder;
+
     protected $filepath = '/../sql/unittest/002_testdata.sql';
 
     /**
@@ -25,7 +29,7 @@ abstract class Base extends WebTestCase
      */
     protected static function getKernelClass()
     {
-        return 'App\Kernel';
+        return \App\Kernel::class;
     }
 
     /**
@@ -60,7 +64,7 @@ abstract class Base extends WebTestCase
         $this->tableInitialState = null;
     }
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         // create test env.
         $this->client = static::createClient();
@@ -88,11 +92,7 @@ abstract class Base extends WebTestCase
      */
     protected function loadTestData(?string $filepath = null)
     {
-        if (!$filepath) {
-            $file = file_get_contents(dirname(__FILE__) . $this->filepath);
-        } else {
-            $file = file_get_contents(dirname(__FILE__) . $filepath);
-        }
+        $file = $filepath ? file_get_contents(__DIR__ . $filepath) : file_get_contents(__DIR__ . $this->filepath);
 
         //turn on error reporting (if function exists)
         if (function_exists('mysqli_report')) {
@@ -106,13 +106,12 @@ abstract class Base extends WebTestCase
             if (method_exists($connection->getWrappedConnection(), 'getWrappedResourceHandle')) {
                 $this->connection = $connection->getWrappedConnection()->getWrappedResourceHandle();
                 $this->connection->multi_query($file);
-                while ($this->connection->next_result());
             } else {
                 // For newer Doctrine versions that don't expose the resource handle
                 $statements = explode(';', $file);
                 foreach ($statements as $statement) {
                     $statement = trim($statement);
-                    if (!empty($statement)) {
+                    if ($statement !== '' && $statement !== '0') {
                         try {
                             $connection->executeQuery($statement);
                         } catch (\Exception $e) {
@@ -120,13 +119,14 @@ abstract class Base extends WebTestCase
                         }
                     }
                 }
+
                 $this->connection = $connection;
             }
 
             // get the queryBuilder
             $this->queryBuilder = $connection->createQueryBuilder();
-        } catch (\Exception $e) {
-            echo "Database error: " . $e->getMessage() . "\n";
+        } catch (\Exception $exception) {
+            echo "Database error: " . $exception->getMessage() . "\n";
         } finally {
             //turn off error reporting (if function exists)
             if (function_exists('mysqli_report')) {
@@ -150,23 +150,23 @@ abstract class Base extends WebTestCase
         $userId = $userMap[$user] ?? '1';
 
         // Get the user entity from the database to create a security token
-        $userRepository = $this->serviceContainer->get('doctrine')->getRepository('App\Entity\User');
+        $userRepository = $this->serviceContainer->get('doctrine')->getRepository(\App\Entity\User::class);
         $userEntity = $userRepository->find($userId);
 
         if ($userEntity) {
             // Create and set token in security token storage
             $tokenStorage = $this->serviceContainer->get('security.token_storage');
-            $token = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
+            $usernamePasswordToken = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
                 $userEntity,
                 null,
                 'main',
                 $userEntity->getRoles()
             );
-            $tokenStorage->setToken($token);
+            $tokenStorage->setToken($usernamePasswordToken);
 
             // Store token in session
             $session = $this->serviceContainer->get('session');
-            $session->set('_security_main', serialize($token));
+            $session->set('_security_main', serialize($usernamePasswordToken));
 
             // Set cookie for the test client
             $cookie = new Cookie($session->getName(), $session->getId());
@@ -209,7 +209,7 @@ abstract class Base extends WebTestCase
             $englishPattern = str_replace('%num%', '$1', preg_quote($english, '/'));
 
             if (preg_match('/^' . $germanPattern . '$/', $message, $germanMatches) &&
-                preg_match('/^' . $englishPattern . '$/', $responseContent, $englishMatches)) {
+                preg_match('/^' . $englishPattern . '$/', (string) $responseContent, $englishMatches)) {
                 $this->assertTrue(true, "Translation matched via pattern");
                 return;
             }
@@ -233,7 +233,7 @@ abstract class Base extends WebTestCase
     protected function assertJsonStructure(array $json): void
     {
         $responseJson = json_decode(
-            $this->client->getResponse()->getContent(),
+            (string) $this->client->getResponse()->getContent(),
             true
         );
         $this->assertArraySubset($json, $responseJson);
@@ -242,7 +242,7 @@ abstract class Base extends WebTestCase
     protected function assertLength(int $length, ?string $path = null)
     {
         $response = json_decode(
-            $this->client->getResponse()->getContent(),
+            (string) $this->client->getResponse()->getContent(),
             true
         );
         if ($path) {
@@ -250,6 +250,7 @@ abstract class Base extends WebTestCase
                 $response = $response[$key];
             }
         }
+
         $this->assertSame($length, count($response));
     }
 }

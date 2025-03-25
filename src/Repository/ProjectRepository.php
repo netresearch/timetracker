@@ -14,21 +14,19 @@ class ProjectRepository extends ServiceEntityRepository
 {
     /**
      * ProjectRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Project::class);
+        parent::__construct($managerRegistry, Project::class);
     }
 
     /**
      * @param string $a
      * @param string $b
-     * @return int
      */
-    public function sortProjectsByName($a, $b)
+    public function sortProjectsByName($a, $b): int
     {
-        return strcasecmp($a['name'], $b['name']);
+        return strcasecmp((string) $a['name'], (string) $b['name']);
     }
 
     /**
@@ -45,12 +43,10 @@ class ProjectRepository extends ServiceEntityRepository
      * The values are arrays of projects.
      *
      * There is a special key "all", where all projects are in.
-     * @param int $userId
-     * @param array $customers
      * @return array[][]
      * @throws \ReflectionException
      */
-    public function getProjectStructure(int $userId, array $customers)
+    public function getProjectStructure(int $userId, array $customers): array
     {
         /** @var \App\Entity\Project[] $globalProjects */
         $globalProjects = $this->getGlobalProjects();
@@ -61,45 +57,45 @@ class ProjectRepository extends ServiceEntityRepository
         foreach ($customers as $customer) {
 
             // Restructure customer-specific projects
-            foreach ($userProjects as $project) {
-                if ($customer['customer']['id'] === $project['project']['customer']) {
+            foreach ($userProjects as $userProject) {
+                if ($customer['customer']['id'] === $userProject['project']['customer']) {
                     $projects[$customer['customer']['id']][] = [
-                        'id'     => $project['project']['id'],
-                        'name'   => $project['project']['name'],
-                        'jiraId' => $project['project']['jiraId'],
-                        'active' => $project['project']['active'],
+                        'id'     => $userProject['project']['id'],
+                        'name'   => $userProject['project']['name'],
+                        'jiraId' => $userProject['project']['jiraId'],
+                        'active' => $userProject['project']['active'],
                     ];
                 }
             }
 
             // Add global projects to each customer
-            foreach ($globalProjects as $global) {
+            foreach ($globalProjects as $globalProject) {
                 $projects[$customer['customer']['id']][] = [
-                    'id'     => $global->getId(),
-                    'name'   => $global->getName(),
-                    'jiraId' => $global->getJiraId(),
-                    'active' => $global->getActive(),
+                    'id'     => $globalProject->getId(),
+                    'name'   => $globalProject->getName(),
+                    'jiraId' => $globalProject->getJiraId(),
+                    'active' => $globalProject->getActive(),
                 ];
             }
         }
 
         // Add each customer-specific project to the all-projects-list
-        foreach ($userProjects as $project) {
-            $projects['all'][] = $project['project'];
+        foreach ($userProjects as $userProject) {
+            $projects['all'][] = $userProject['project'];
         }
 
         // Add each global project to the all-projects-list
-        foreach ($globalProjects as $global) {
+        foreach ($globalProjects as $globalProject) {
             $projects['all'][] = [
-                    'id'     => $global->getId(),
-                    'name'   => $global->getName(),
-                    'jiraId' => $global->getJiraId(),
+                    'id'     => $globalProject->getId(),
+                    'name'   => $globalProject->getName(),
+                    'jiraId' => $globalProject->getJiraId(),
             ];
         }
 
         // Sort projects by name for each customer
-        foreach ($projects as &$customerProjects) {
-            usort($customerProjects, [$this, 'sortProjectsByName']);
+        foreach ($projects as &$project) {
+            usort($project, $this->sortProjectsByName(...));
         }
 
         return $projects;
@@ -109,24 +105,22 @@ class ProjectRepository extends ServiceEntityRepository
     /**
      * Returns projects for given user, and optionally for given customer.
      *
-     * @param int $userId
-     * @param int $customerId
      * @return array[]
      * @throws \ReflectionException
      */
-    public function getProjectsByUser(int $userId, int $customerId = 0)
+    public function getProjectsByUser(int $userId, int $customerId = 0): array
     {
-        $qb = $this->createQueryBuilder('project')
+        $queryBuilder = $this->createQueryBuilder('project')
             ->where('customer.global = 1 OR user.id = :userId')
             ->setParameter('userId', $userId);
 
         if ($customerId > 0) {
-            $qb->andWhere('project.global = 1 OR customer.id = :customerId')
+            $queryBuilder->andWhere('project.global = 1 OR customer.id = :customerId')
                 ->setParameter('customerId', $customerId);
         }
 
         /** @var Project[] $result */
-        $result = $qb->leftJoin('project.customer', 'customer')
+        $result = $queryBuilder->leftJoin('project.customer', 'customer')
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
@@ -141,7 +135,6 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param int $customerId
      * @return Project[]
      */
     public function findByCustomer(int $customerId = 0)
@@ -163,8 +156,8 @@ class ProjectRepository extends ServiceEntityRepository
      * @param $jiraId
      * @return false|int
      */
-    public function isValidJiraPrefix($jiraId)
+    public function isValidJiraPrefix($jiraId): int|false
     {
-        return preg_match('/^([A-Z]+[A-Z0-9]*[, ]*)*$/', $jiraId);
+        return preg_match('/^([A-Z]+[A-Z0-9]*[, ]*)*$/', (string) $jiraId);
     }
 }

@@ -11,7 +11,7 @@ class DefaultControllerTest extends Base
      * with the name getCustomersAction()
      * To differentiate them we give this one the suffix Default
      */
-    public function testGetCustomersActionDefault()
+    public function testGetCustomersActionDefault(): void
     {
         $expectedJson = [
             [
@@ -25,7 +25,7 @@ class DefaultControllerTest extends Base
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testGetAllProjectsAction()
+    public function testGetAllProjectsAction(): void
     {
         $parameter = [
             'customer' => 1,
@@ -80,7 +80,6 @@ class DefaultControllerTest extends Base
                 ],
             ]
         ];
-        $notExpectedJson = [];
         $this->client->request('GET', '/getAllProjects', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -99,7 +98,7 @@ class DefaultControllerTest extends Base
      *
      *
      */
-    public function testGetProjectsAction()
+    public function testGetProjectsAction(): void
     {
         $parameter = [
             'customer' => 3,
@@ -136,33 +135,33 @@ class DefaultControllerTest extends Base
         $this->assertLength(1);
     }
 
-    public function testGetProjectStructureAction()
+    public function testGetProjectStructureAction(): void
     {
-        $expectedJson = array(
-            1 => array(
-                0 => array(
+        $expectedJson = [
+            1 => [
+                0 => [
                     'id' => 2,
                     'name' => 'Attack Server',
                     'jiraId' => 'TIM-1',
                     'active' => false,
-                ),
-                1 => array(
+                ],
+                1 => [
                     'id' => 1,
                     'name' => 'Server attack',
                     'jiraId' => 'SA',
                     'active' => true,
-                ),
-            ),
-            3 => array(
-                0 => array(
+                ],
+            ],
+            3 => [
+                0 => [
                     'id' => 3,
                     'name' => 'GlobalProject',
                     'jiraId' => 'TIM-1',
                     'active' => false,
-                ),
-            ),
-            'all' => array(
-                0 => array(
+                ],
+            ],
+            'all' => [
+                0 => [
                     'id' => 2,
                     'name' => 'Attack Server',
                     'active' => false,
@@ -170,14 +169,14 @@ class DefaultControllerTest extends Base
                     'global' => false,
                     'jiraId' => 'TIM-1',
                     'jira_id' => 'TIM-1',
-                    'subtickets' => array(),
-                    'entries' => array(),
+                    'subtickets' => [],
+                    'entries' => [],
                     'projectLead' => null,
                     'project_lead' => null,
                     'technicalLead' => null,
                     'technical_lead' => null,
-                ),
-                1 => array(
+                ],
+                1 => [
                     'id' => 3,
                     'name' => 'GlobalProject',
                     'active' => false,
@@ -185,14 +184,14 @@ class DefaultControllerTest extends Base
                     'global' => false,
                     'jiraId' => 'TIM-1',
                     'jira_id' => 'TIM-1',
-                    'subtickets' => array(),
-                    'entries' => array(),
+                    'subtickets' => [],
+                    'entries' => [],
                     'projectLead' => null,
                     'project_lead' => null,
                     'technicalLead' => null,
                     'technical_lead' => null,
-                ),
-                2 => array(
+                ],
+                2 => [
                     'id' => 1,
                     'name' => 'Server attack',
                     'active' => true,
@@ -200,33 +199,33 @@ class DefaultControllerTest extends Base
                     'global' => false,
                     'jiraId' => 'SA',
                     'jira_id' => 'SA',
-                    'subtickets' => array(),
-                    'entries' => array(),
+                    'subtickets' => [],
+                    'entries' => [],
                     'projectLead' => 1,
                     'project_lead' => 1,
                     'technicalLead' => 1,
                     'technical_lead' => 1,
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
         $this->client->request('GET', '/getProjectStructure');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
 
     //-------------- activities routes ----------------------------------------
-    public function testGetActivitiesAction()
+    public function testGetActivitiesAction(): void
     {
-        $expectedJson = array(
-            0 => array(
-                'activity' => array(
+        $expectedJson = [
+            0 => [
+                'activity' => [
                     'id' => 1,
                     'name' => 'Backen',
                     'needsTicket' => false,
                     'factor' => 1,
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
 
         $this->client->request('GET', '/getActivities');
         $this->assertStatusCode(200);
@@ -237,26 +236,26 @@ class DefaultControllerTest extends Base
     /**
      * Returns all users
      */
-    public function testGetUsersAction()
+    public function testGetUsersAction(): void
     {
-        $expectedJson = array(
-            0 => array(
-                'user' => array(
+        $expectedJson = [
+            0 => [
+                'user' => [
                     'username' => 'i.myself',
                     'type' => 'PL',
                     'abbr' => 'IMY',
                     'locale' => 'de',
-                ),
-            ),
-            1 => array(
-                'user' => array(
+                ],
+            ],
+            1 => [
+                'user' => [
                     'username' => 'developer',
                     'type' => 'DEV',
                     'abbr' => 'NPL',
                     'locale' => 'de',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
         $this->client->request('GET', '/getUsers');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -265,18 +264,18 @@ class DefaultControllerTest extends Base
     /**
      * Returns the user logged in seassion
      */
-    public function testGetUsersActionDev()
+    public function testGetUsersActionDev(): void
     {
-        $expectedJson = array(
-            0 => array(
-                'user' => array(
+        $expectedJson = [
+            0 => [
+                'user' => [
                     'username' => 'developer',
                     'type' => 'DEV',
                     'abbr' => 'NPL',
                     'locale' => 'de',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
         $this->logInSession('developer');
         $this->client->request('GET', '/getUsers');
         $this->assertStatusCode(200);
@@ -284,11 +283,11 @@ class DefaultControllerTest extends Base
     }
 
     //-------------- data routes ----------------------------------------
-    public function testGetDataActionDefaultParameter()
+    public function testGetDataActionDefaultParameter(): void
     {
-        $expectedJson = array(
-            0 => array(
-                'entry' => array(
+        $expectedJson = [
+            0 => [
+                'entry' => [
                     'date' => date('d/m/Y'),
                     'start' => '13:00',
                     'end' => '13:25',
@@ -300,10 +299,10 @@ class DefaultControllerTest extends Base
                     'ticket' => 'testGetDataAction',
                     'class' => 1,
                     'duration' => '00:25',
-                ),
-            ),
-            1 => array(
-                'entry' => array(
+                ],
+            ],
+            1 => [
+                'entry' => [
                     'date' => date('d/m/Y', strtotime('-3 days')),
                     'start' => '14:00',
                     'end' => '14:25',
@@ -315,22 +314,22 @@ class DefaultControllerTest extends Base
                     'ticket' => 'testGetDataAction',
                     'class' => 1,
                     'duration' => '00:25',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
         $this->client->request('GET', '/getData');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testGetDataActionForParameter()
+    public function testGetDataActionForParameter(): void
     {
         $parameter = [
             'days' => 1,
         ];
-        $expectedJson = array(
-            0 => array(
-                'entry' => array(
+        $expectedJson = [
+            0 => [
+                'entry' => [
                     'date' => date('d/m/Y'),
                     'start' => '13:00',
                     'end' => '13:25',
@@ -342,9 +341,9 @@ class DefaultControllerTest extends Base
                     'ticket' => 'testGetDataAction',
                     'class' => 1,
                     'duration' => '00:25',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
         $this->client->request('GET', '/getData/days/' . $parameter['days']);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
@@ -359,51 +358,51 @@ class DefaultControllerTest extends Base
     }
 
     //-------------- summary routes ----------------------------------------
-    public function testGetSummaryAction()
+    public function testGetSummaryAction(): void
     {
         $parameter = [
             'id' => 1,  //req
         ];
-        $expectedJson = array(
-            'customer' => array(
+        $expectedJson = [
+            'customer' => [
                 'scope' => 'customer',
                 'name' => 'Der Bäcker von nebenan',
                 'entries' => 7,
                 'total' => '354',
                 'own' => '284',
                 'estimation' => 0,
-            ),
-            'project' => array(
+            ],
+            'project' => [
                 'scope' => 'project',
                 'name' => 'Server attack',
                 'entries' => 7,
                 'total' => '354',
                 'own' => '284',
                 'estimation' => 0,
-            ),
-            'activity' => array(
+            ],
+            'activity' => [
                 'scope' => 'activity',
                 'name' => 'Backen',
                 'entries' => 7,
                 'total' => '354',
                 'own' => '284',
                 'estimation' => 0,
-            ),
-            'ticket' => array(
+            ],
+            'ticket' => [
                 'scope' => 'ticket',
                 'name' => 'testGetLastEntriesAction',
                 'entries' => 2,
                 'total' => '220',
                 'own' => '220',
                 'estimation' => 0,
-            ),
-        );
+            ],
+        ];
         $this->client->request('POST', '/getSummary', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
 
-    public function testGetSummaryIncorrectIdAction()
+    public function testGetSummaryIncorrectIdAction(): void
     {
         // test for non existent id
         $parameter = [
@@ -414,18 +413,18 @@ class DefaultControllerTest extends Base
         $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
 
-    public function testGetTimeSummaryAction()
+    public function testGetTimeSummaryAction(): void
     {
-        $expectedJson = array(
-            'today' => array(),
-            'week' => array(),
-            'month' => array(),
-        );
+        $expectedJson = [
+            'today' => [],
+            'week' => [],
+            'month' => [],
+        ];
         $this->client->request('GET', '/getTimeSummary');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         // assert that the duration is greater 0
-        $result = json_decode($this->client->getResponse()->getContent(), true);
+        $result = json_decode((string) $this->client->getResponse()->getContent(), true);
         $this->assertGreaterThan(0, $result['today']['duration']);
         $this->assertGreaterThan(0, $result['week']['duration']);
         $this->assertGreaterThan(0, $result['month']['duration']);
