@@ -23,9 +23,9 @@ services:
       - ./var/log:/var/www/html/var/log
       - /usr/local/share/ca-certificates/:/usr/local/share/ca-certificates/host
 
-  db:
-    volumes:
-      - ./tt_dump.sql:/docker-entrypoint-initdb.d/999_dump.sql
+  #db:
+  #  volumes:
+  #   #- ./tt_dump.sql:/docker-entrypoint-initdb.d/999_dump.sql
 
 
   db_unittest:
