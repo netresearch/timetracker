@@ -456,10 +456,7 @@ class AdminController extends BaseController
         $user->setUsername($name)
             ->setAbbr($abbr)
             ->setLocale($locale)
-            ->setType($type)
-            ->setShowEmptyLine(0)
-            ->setSuggestTime(1)
-            ->setShowFuture(1);
+            ->setType($type);
 
         $user->resetTeams();
 

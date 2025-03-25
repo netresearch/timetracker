@@ -83,9 +83,6 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
                 $user = new User();
                 $user->setUsername($credentials['username'])
                     ->setType('DEV')
-                    ->setShowEmptyLine('0')
-                    ->setSuggestTime('1')
-                    ->setShowFuture('1')
                     ->setLocale('de');
 
                 if (!empty($ldapClient->getTeams())) {

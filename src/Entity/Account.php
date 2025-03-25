@@ -35,44 +35,23 @@ class Account
         $this->entries = new ArrayCollection();
     }
 
-    /**
-     * Get id
-     *
-     * @return integer $id
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set id
-     * @param int $id
-     *
-     * @return $this
-     */
-    public function setId($id): static
+    public function setId(int $id): self
     {
         $this->id = $id;
         return $this;
     }
 
-    /**
-     * Set name
-     *
-     * @param string $name
-     */
-    public function setName($name): void
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
 
-    /**
-     * Get name
-     *
-     * @return string $name
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -87,18 +66,12 @@ class Account
         return $this->entries;
     }
 
-    /**
-     * Add entry
-     */
     public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
         return $this;
     }
 
-    /**
-     * Remove entry
-     */
     public function removeEntry(Entry $entry): void
     {
         $this->entries->removeElement($entry);

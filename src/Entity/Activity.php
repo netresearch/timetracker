@@ -21,22 +21,22 @@ class Activity
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-    protected $id;
+    protected ?int $id = null;
 
     /**
      * @ORM\Column(type="string", length=50)
      */
-    protected $name;
+    protected ?string $name = null;
 
     /**
      * @ORM\Column(name="needs_ticket", type="boolean")
      */
-    protected $needsTicket;
+    protected ?bool $needsTicket = null;
 
     /**
      * @ORM\Column(name="factor", type="float")
      */
-    protected $factor;
+    protected ?float $factor = null;
 
     /**
      * @ORM\OneToMany(targetEntity="Entry", mappedBy="activity")
@@ -54,95 +54,45 @@ class Activity
         $this->presets = new ArrayCollection();
     }
 
-
-    /**
-     * Set id
-     * @param integer $id
-     *
-     * @return $this
-     */
-    public function setId($id): static
+    public function setId(int $id): self
     {
         $this->id = $id;
         return $this;
     }
 
-    /**
-     * Get id
-     *
-     * @return integer $id
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName($name): static
+    public function setName(string $name): self
     {
         $this->name = $name;
 		return $this;
 	}
 
-    /**
-     * Get name
-     *
-     * @return string $name
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Set needsTicket
-     *
-     * @param boolean $needsTicket
-     *
-     * @return $this
-     */
-    public function setNeedsTickets($needsTicket): static
+    public function setNeedsTickets(bool $needsTicket): self
     {
         $this->needsTicket = $needsTicket;
 		return $this;
     }
 
-    /**
-     * Get needsTicket
-     *
-     * @return boolean $needsTicket
-     */
-    public function getNeedsTicket()
+    public function getNeedsTicket(): bool
     {
         return $this->needsTicket;
 	}
 
-
-    /**
-     * Get factor
-     *
-     * @return float $factor
-     */
-    public function getFactor()
+    public function getFactor(): float
     {
         return $this->factor;
 	}
 
-
-    /**
-     * Set factor
-     *
-     * @param float $factor
-     *
-     * @return $this
-     */
-    public function setFactor($factor): static
+    public function setFactor(float $factor): self
     {
         $this->factor = $factor;
 		return $this;
@@ -158,30 +108,19 @@ class Activity
         return $this->entries;
     }
 
-    /**
-     * Set needsTicket
-     *
-     * @param boolean $needsTicket
-     */
-    public function setNeedsTicket($needsTicket): static
+    public function setNeedsTicket(bool $needsTicket): self
     {
         $this->needsTicket = $needsTicket;
 
         return $this;
     }
 
-    /**
-     * Add entry
-     */
     public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
         return $this;
     }
 
-    /**
-     * Remove entry
-     */
     public function removeEntry(Entry $entry): void
     {
         $this->entries->removeElement($entry);
@@ -213,18 +152,12 @@ class Activity
         return $this->presets;
     }
 
-    /**
-     * Add preset
-     */
     public function addPreset(Preset $preset): static
     {
         $this->presets[] = $preset;
         return $this;
     }
 
-    /**
-     * Remove preset
-     */
     public function removePreset(Preset $preset): void
     {
         $this->presets->removeElement($preset);
