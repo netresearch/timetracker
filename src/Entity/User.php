@@ -228,18 +228,6 @@ class User implements UserInterface
 
 
     /**
-     * Add entries
-     *
-     *
-     * @return $this
-     */
-    public function addEntries(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-        return $this;
-    }
-
-    /**
      * Get entries
      *
      * @return \Doctrine\Common\Collections\Collection $entries
@@ -338,8 +326,6 @@ class User implements UserInterface
 
     /**
      * Add entry
-     *
-     * @return $this
      */
     public function addEntry(Entry $entry): static
     {
@@ -348,9 +334,9 @@ class User implements UserInterface
     }
 
     /**
-     * Remove entries
+     * Remove entry
      */
-    public function removeEntrie(Entry $entry): void
+    public function removeEntry(Entry $entry): void
     {
         $this->entries->removeElement($entry);
     }
@@ -361,18 +347,6 @@ class User implements UserInterface
     public function removeTeam(Team $team): void
     {
         $this->teams->removeElement($team);
-    }
-
-    /**
-     * Add entries
-     *
-     * @return $this
-     */
-    public function addEntrie(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-
-        return $this;
     }
 
     /**
