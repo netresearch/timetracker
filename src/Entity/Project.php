@@ -353,15 +353,6 @@ class Project extends Base
 
 
     /**
-     * Add entries
-     */
-    public function addEntries(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-        return $this;
-    }
-
-    /**
      * Get entries
      *
      * @return \Doctrine\Common\Collections\Collection $entries
@@ -557,7 +548,7 @@ class Project extends Base
     }
 
     /**
-     * Add entries
+     * Add entry
      */
     public function addEntry(Entry $entry): static
     {
@@ -566,21 +557,11 @@ class Project extends Base
     }
 
     /**
-     * Remove entries
+     * Remove entry
      */
-    public function removeEntrie(Entry $entry): void
+    public function removeEntry(Entry $entry): void
     {
         $this->entries->removeElement($entry);
-    }
-
-    /**
-     * Add entries
-     */
-    public function addEntrie(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-
-        return $this;
     }
 
     /**

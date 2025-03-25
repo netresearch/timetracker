@@ -185,18 +185,6 @@ class Customer extends Base
     }
 
     /**
-     * Add entries
-     *
-     *
-     * @return $this
-     */
-    public function addEntries(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-        return $this;
-    }
-
-    /**
      * Get entries
      *
      * @return \Doctrine\Common\Collections\Collection $entries
@@ -257,7 +245,7 @@ class Customer extends Base
     }
 
     /**
-     * Add entries
+     * Add entry
      */
     public function addEntry(Entry $entry): static
     {
@@ -268,7 +256,7 @@ class Customer extends Base
     /**
      * Remove entry
      */
-    public function removeEntrie(Entry $entry): void
+    public function removeEntry(Entry $entry): void
     {
         $this->entries->removeElement($entry);
     }
@@ -279,16 +267,6 @@ class Customer extends Base
     public function removeTeam(Team $team): void
     {
         $this->teams->removeElement($team);
-    }
-
-    /**
-     * Add entries
-     */
-    public function addEntrie(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-
-        return $this;
     }
 
     /**

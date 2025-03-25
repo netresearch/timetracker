@@ -78,14 +78,6 @@ class Account
     }
 
     /**
-     * Add entries
-     */
-    public function addEntries(Entry $entry): void
-    {
-        $this->entries[] = $entry;
-    }
-
-    /**
      * Get entries
      *
      * @return \Doctrine\Common\Collections\Collection $entries
@@ -107,18 +99,8 @@ class Account
     /**
      * Remove entry
      */
-    public function removeEntrie(Entry $entry): void
+    public function removeEntry(Entry $entry): void
     {
         $this->entries->removeElement($entry);
-    }
-
-    /**
-     * Add entries
-     */
-    public function addEntrie(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-
-        return $this;
     }
 }

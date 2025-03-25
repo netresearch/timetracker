@@ -149,18 +149,6 @@ class Activity
     }
 
     /**
-     * Add entries
-     *
-     *
-     * @return $this
-     */
-    public function addEntries(Entry $entry): static
-    {
-		$this->entries[] = $entry;
-		return $this;
-    }
-
-    /**
      * Get entries
      *
      * @return \Doctrine\Common\Collections\Collection $entries
@@ -183,19 +171,18 @@ class Activity
     }
 
     /**
-     * Add entries
+     * Add entry
      */
-    public function addEntrie(Entry $entry): static
+    public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
-
         return $this;
     }
 
     /**
-     * Remove entries
+     * Remove entry
      */
-    public function removeEntrie(Entry $entry): void
+    public function removeEntry(Entry $entry): void
     {
         $this->entries->removeElement($entry);
     }
