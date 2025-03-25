@@ -17,21 +17,20 @@ class TicketHelper
 
     /**
      * @param $ticket
-     * @return bool
      */
-    public static function checkFormat($ticket)
+    public static function checkFormat($ticket): bool
     {
-        return (bool) preg_match(self::TICKET_REGEXP, $ticket);
+        return (bool) preg_match(self::TICKET_REGEXP, (string) $ticket);
     }
 
     /**
      * @param $ticket
-     * @return null
      */
-    public static function getPrefix($ticket)
+    public static function getPrefix($ticket): ?string
     {
-        if (! preg_match(self::TICKET_REGEXP, $ticket, $matches))
+        if (! preg_match(self::TICKET_REGEXP, (string) $ticket, $matches)) {
             return null;
+        }
 
         return $matches[1];
     }

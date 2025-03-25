@@ -12,22 +12,18 @@ namespace App\Helper;
  */
 class JiraApiException extends \Exception
 {
-    /** @var String */
-    protected $redirectUrl;
-
     /**
      * JiraApiException constructor.
      * @param $message
      * @param $code
-     * @param null $redirectUrl
      */
-    public function __construct($message, $code, $redirectUrl = null, \Throwable $previous = null)
+    public function __construct($message, $code, protected $redirectUrl = null, \Throwable $throwable = null)
     {
-        $this->redirectUrl = $redirectUrl;
-        if (substr($message, 0, 5) != 'Jira:') {
+        if (!str_starts_with((string) $message, 'Jira:')) {
             $message = 'Jira: '. $message;
         }
-        parent::__construct($message, $code, $previous);
+
+        parent::__construct($message, $code, $throwable);
     }
 
     /**

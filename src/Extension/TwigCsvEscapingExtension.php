@@ -13,10 +13,7 @@ use \Twig\Extension\AbstractExtension;
  */
 class TwigCsvEscapingExtension extends AbstractExtension
 {
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return 'csv_escaper';
     }
@@ -26,9 +23,9 @@ class TwigCsvEscapingExtension extends AbstractExtension
      */
     public function getFilters()
     {
-        return array(
-            new \Twig\TwigFilter('csv_escape', array($this, 'csvEscape')),
-        );
+        return [
+            new \Twig\TwigFilter('csv_escape', $this->csvEscape(...)),
+        ];
     }
 
     /**

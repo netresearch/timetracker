@@ -13,6 +13,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 class Activity
 {
     const SICK    = 'Krank';
+
     const HOLIDAY = 'Urlaub';
 
 	/**
@@ -60,7 +61,7 @@ class Activity
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -83,7 +84,7 @@ class Activity
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName($name): static
     {
         $this->name = $name;
 		return $this;
@@ -106,7 +107,7 @@ class Activity
      *
      * @return $this
      */
-    public function setNeedsTickets($needsTicket)
+    public function setNeedsTickets($needsTicket): static
     {
         $this->needsTicket = $needsTicket;
 		return $this;
@@ -141,7 +142,7 @@ class Activity
      *
      * @return $this
      */
-    public function setFactor($factor)
+    public function setFactor($factor): static
     {
         $this->factor = $factor;
 		return $this;
@@ -150,13 +151,12 @@ class Activity
     /**
      * Add entries
      *
-     * @param Entry $entries
      *
      * @return $this
      */
-    public function addEntries(Entry $entries)
+    public function addEntries(Entry $entry): static
     {
-		$this->entries[] = $entries;
+		$this->entries[] = $entry;
 		return $this;
     }
 
@@ -174,9 +174,8 @@ class Activity
      * Set needsTicket
      *
      * @param boolean $needsTicket
-     * @return Activity
      */
-    public function setNeedsTicket($needsTicket)
+    public function setNeedsTicket($needsTicket): static
     {
         $this->needsTicket = $needsTicket;
 
@@ -185,53 +184,36 @@ class Activity
 
     /**
      * Add entries
-     *
-     * @param Entry $entries
-     * @return Activity
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
 
         return $this;
     }
 
     /**
      * Remove entries
-     *
-     * @param Entry $entries
      */
-    public function removeEntrie(Entry $entries)
+    public function removeEntrie(Entry $entry): void
     {
-        $this->entries->removeElement($entries);
+        $this->entries->removeElement($entry);
     }
 
     /**
      * Returns true if activity is a sick day.
-     *
-     * @return bool
      */
-    public function isSick()
+    public function isSick(): bool
     {
-        if ($this->getName() === self::SICK) {
-            return true;
-        }
-
-        return false;
+        return $this->getName() === self::SICK;
     }
 
     /**
      * Returns true if activity is holiday.
-     *
-     * @return bool
      */
-    public function isHoliday()
+    public function isHoliday(): bool
     {
-        if ($this->getName() === self::HOLIDAY) {
-            return true;
-        }
-
-        return false;
+        return $this->getName() === self::HOLIDAY;
     }
 
     /**
@@ -246,11 +228,8 @@ class Activity
 
     /**
      * Add preset
-     *
-     * @param Preset $preset
-     * @return Activity
      */
-    public function addPreset(Preset $preset)
+    public function addPreset(Preset $preset): static
     {
         $this->presets[] = $preset;
         return $this;
@@ -258,10 +237,8 @@ class Activity
 
     /**
      * Remove preset
-     *
-     * @param Preset $preset
      */
-    public function removePreset(Preset $preset)
+    public function removePreset(Preset $preset): void
     {
         $this->presets->removeElement($preset);
     }

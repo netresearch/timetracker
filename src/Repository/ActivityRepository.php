@@ -11,17 +11,16 @@ class ActivityRepository extends ServiceEntityRepository
 {
     /**
      * ActivityRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Activity::class);
+        parent::__construct($managerRegistry, Activity::class);
     }
 
     /**
      * @return array[] Activities sorted by name
      */
-    public function getActivities()
+    public function getActivities(): array
     {
         /** @var Activity[] $activities */
         $activities = $this->findBy([], ['name' => 'ASC']);

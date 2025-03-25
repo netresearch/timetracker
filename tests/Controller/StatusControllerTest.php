@@ -6,11 +6,11 @@ use Tests\Base;
 
 class StatusControllerTest extends Base
 {
-    public function testCheckAction()
+    public function testCheckAction(): void
     {
-        $expectedJson = array(
+        $expectedJson = [
             'loginStatus' => true,
-        );
+        ];
         $this->client->request('GET', '/status/check');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);

@@ -15,18 +15,14 @@ class UserRepository extends ServiceEntityRepository
 {
     /**
      * UserRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, User::class);
+        parent::__construct($managerRegistry, User::class);
     }
 
     /**
      * Find a user by username
-     *
-     * @param string $username
-     * @return User|null
      */
     public function findOneByUsername(string $username): ?User
     {
@@ -35,9 +31,8 @@ class UserRepository extends ServiceEntityRepository
 
     /**
      * @param integer $currentUserId
-     * @return array
      */
-    public function getUsers($currentUserId)
+    public function getUsers($currentUserId): array
     {
         /** @var User[] $users */
         $users = $this->findBy(
@@ -77,7 +72,7 @@ class UserRepository extends ServiceEntityRepository
     /**
      * @return array[]
      */
-    public function getAllUsers()
+    public function getAllUsers(): array
     {
         /** @var User[] $users */
         $users = $this->findBy(
@@ -90,6 +85,7 @@ class UserRepository extends ServiceEntityRepository
             foreach ($user->getTeams() as $team) {
                 $teams[] = $team->getId();
             }
+
             $data[] = ['user' => [
                 'id'       => $user->getId(),
                 'username' => $user->getUsername(),
@@ -105,9 +101,8 @@ class UserRepository extends ServiceEntityRepository
 
     /**
      * @param $currentUserId
-     * @return array
      */
-    public function getUserById($currentUserId)
+    public function getUserById($currentUserId): array
     {
         $user = $this->find($currentUserId);
 

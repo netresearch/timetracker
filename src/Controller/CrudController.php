@@ -6,7 +6,7 @@ use App\Entity\Activity;
 use App\Entity\Contract;
 use App\Entity\Customer;
 use App\Entity\Project;
-use App\Entity\Entry as Entry;
+use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Response\Error;
@@ -22,21 +22,17 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CrudController extends BaseController
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private \Psr\Log\LoggerInterface $logger;
 
     /**
      * @required
-     * @param LoggerInterface $trackingLogger
      */
-    public function setLogger(LoggerInterface $trackingLogger)
+    public function setLogger(LoggerInterface $trackingLogger): void
     {
         $this->logger = $trackingLogger;
     }
 
-    public function deleteAction(Request $request)
+    public function deleteAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -79,28 +75,26 @@ class CrudController extends BaseController
             $this->calculateClasses($this->getUserId($request), $day);
         }
 
-        return new JsonResponse(array('success' => true, 'alert' => $alert));
+        return new JsonResponse(['success' => true, 'alert' => $alert]);
     }
 
     /**
      * Deletes a work log entry in a remote JIRA installation.
      * JIRA instance is defined by ticket system in project.
      *
-     * @param Entry             $entry
      * @param TicketSystem|null $ticketSystem
-     * @return void
      * @throws JiraApiException
      */
     private function deleteJiraWorklog(
         Entry $entry,
         TicketSystem $ticketSystem = null
-    ) {
+    ): void {
         $project = $entry->getProject();
         if (! $project instanceof Project) {
             return;
         }
 
-        if (empty($ticketSystem)) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             $ticketSystem = $project->getTicketSystem();
         }
 
@@ -129,20 +123,19 @@ class CrudController extends BaseController
      *
      * @param integer $userId
      * @param string  $day
-     * @return void
      */
-    private function calculateClasses($userId, $day)
+    private function calculateClasses($userId, $day): void
     {
-        if (! (int) $userId) {
+        if ((int) $userId === 0) {
             return;
         }
 
-        $doctrine = $this->getDoctrine();
-        $manager = $doctrine->getManager();
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $doctrine->getRepository(\App\Entity\Entry::class);
+        $managerRegistry = $this->getDoctrine();
+        $objectManager = $managerRegistry->getManager();
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $managerRegistry->getRepository(\App\Entity\Entry::class);
         /** @var Entry[] $entries */
-        $entries = $entryRepo->findByDay((int) $userId, $day);
+        $entries = $objectRepository->findByDay((int) $userId, $day);
 
         if (!count($entries)) {
             return;
@@ -155,47 +148,48 @@ class CrudController extends BaseController
         $entry = $entries[0];
         if ($entry->getClass() != Entry::CLASS_DAYBREAK) {
             $entry->setClass(Entry::CLASS_DAYBREAK);
-            $manager->persist($entry);
-            $manager->flush();
+            $objectManager->persist($entry);
+            $objectManager->flush();
         }
 
-        for ($c = 1; $c < count($entries); $c++) {
+        $counter = count($entries);
+
+        for ($c = 1; $c < $counter; $c++) {
             $entry = $entries[$c];
             $previous = $entries[$c-1];
 
             if ($entry->getStart()->format("H:i") > $previous->getEnd()->format("H:i")) {
                 if ($entry->getClass() != Entry::CLASS_PAUSE) {
                     $entry->setClass(Entry::CLASS_PAUSE);
-                    $manager->persist($entry);
-                    $manager->flush();
+                    $objectManager->persist($entry);
+                    $objectManager->flush();
                 }
+
                 continue;
             }
 
             if ($entry->getStart()->format("H:i") < $previous->getEnd()->format("H:i")) {
                 if ($entry->getClass() != Entry::CLASS_OVERLAP) {
                     $entry->setClass(Entry::CLASS_OVERLAP);
-                    $manager->persist($entry);
-                    $manager->flush();
+                    $objectManager->persist($entry);
+                    $objectManager->flush();
                 }
+
                 continue;
             }
 
             if ($entry->getClass() != Entry::CLASS_PLAIN) {
                 $entry->setClass(Entry::CLASS_PLAIN);
-                $manager->persist($entry);
-                $manager->flush();
+                $objectManager->persist($entry);
+                $objectManager->flush();
             }
         }
     }
 
     /**
      * Save action handler.
-     *
-     * @param Request $request
-     * @return Error|Response
      */
-    public function saveAction(Request $request)
+    public function saveAction(Request $request): \App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -209,11 +203,7 @@ class CrudController extends BaseController
             /** @var \App\Repository\EntryRepository $entryRepo */
             $entryRepo = $doctrine->getRepository(\App\Entity\Entry::class);
 
-            if($request->get('id') != 0) {
-                $entry = $entryRepo->find($request->get('id'));
-            } else {
-                $entry = new Entry();
-            }
+            $entry = $request->get('id') != 0 ? $entryRepo->find($request->get('id')) : new Entry();
 
             // We make a copy to determine if we have to update JIRA
             $oldEntry = clone $entry;
@@ -226,6 +216,7 @@ class CrudController extends BaseController
                     $message = $this->translator->trans("This project is inactive and cannot be used for booking.");
                     throw new \Exception($message);
                 }
+
                 $entry->setProject($project);
             }
 
@@ -237,6 +228,7 @@ class CrudController extends BaseController
                     $message = $this->translator->trans("This customer is inactive and cannot be used for booking.");
                     throw new \Exception($message);
                 }
+
                 $entry->setCustomer($customer);
             }
 
@@ -264,16 +256,12 @@ class CrudController extends BaseController
                     $entry->getUser(), $ticketSystem, $doctrine, $this->router
                 );
 
-                if (! $project->hasInternalJiraProjectKey()) {
-                    // ticekts do not exist for external project tickets booked on internal ticket system
-                    // so no need to check for existence
-                    // they are created automatically
-                    if ($request->get('ticket') != ''
-                        && !$jiraOAuthApi->doesTicketExist($request->get('ticket'))
-                    ) {
-                        $message = $request->get('ticket') . ' existiert nicht';
-                        throw new \Exception($message);
-                    }
+                // ticekts do not exist for external project tickets booked on internal ticket system
+                // so no need to check for existence
+                // they are created automatically
+                if (!$project->hasInternalJiraProjectKey() && ($request->get('ticket') != '' && !$jiraOAuthApi->doesTicketExist($request->get('ticket')))) {
+                    $message = $request->get('ticket') . ' existiert nicht';
+                    throw new \Exception($message);
                 }
             }
 
@@ -282,12 +270,12 @@ class CrudController extends BaseController
                 $entry->setActivity($activity);
             }
 
-            $entry->setTicket(strtoupper(trim($request->get('ticket') ? $request->get('ticket') : '')))
-                ->setDescription($request->get('description') ? $request->get('description') : '')
-                ->setDay($request->get('date') ? $request->get('date') : null)
-                ->setStart($request->get('start') ? $request->get('start') : null)
-                ->setEnd($request->get('end') ? $request->get('end') : null)
-                ->setInternalJiraTicketOriginalKey($request->get('extTicket') ? $request->get('extTicket') : null)
+            $entry->setTicket(strtoupper(trim((string) ($request->get('ticket') ?: ''))))
+                ->setDescription($request->get('description') ?: '')
+                ->setDay($request->get('date') ?: null)
+                ->setStart($request->get('start') ?: null)
+                ->setEnd($request->get('end') ?: null)
+                ->setInternalJiraTicketOriginalKey($request->get('extTicket') ?: null)
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                 ->calcDuration()
                 ->setSyncedToTicketsystem(FALSE);
@@ -296,16 +284,14 @@ class CrudController extends BaseController
             $this->logData($entry->toArray());
 
             // Check if the activity needs a ticket
-            if (($user->getType() == 'DEV') && is_object($activity) && $activity->getNeedsTicket()) {
-                if (strlen($entry->getTicket()) < 1) {
-                    $message = $this->translator->trans(
-                        "For the activity '%activity%' you must specify a ticket.",
-                        array(
-                            '%activity%' => $activity->getName(),
-                        )
-                    );
-                    throw new \Exception($message);
-                }
+            if ($user->getType() == 'DEV' && is_object($activity) && $activity->getNeedsTicket() && strlen((string) $entry->getTicket()) < 1) {
+                $message = $this->translator->trans(
+                    "For the activity '%activity%' you must specify a ticket.",
+                    [
+                        '%activity%' => $activity->getName(),
+                    ]
+                );
+                throw new \Exception($message);
             }
 
             // check if ticket matches the project's ticket pattern
@@ -330,11 +316,10 @@ class CrudController extends BaseController
                     $user->getId(), $entry->getDay()->format("Y-m-d")
                 );
                 // and the previous day, if the entry was moved
-                if (is_object($oldEntry->getDay())) {
-                    if ($entry->getDay()->format("Y-m-d") != $oldEntry->getDay()->format("Y-m-d"))
-                        $this->calculateClasses(
-                            $user->getId(), $oldEntry->getDay()->format("Y-m-d")
-                        );
+                if (is_object($oldEntry->getDay()) && $entry->getDay()->format("Y-m-d") != $oldEntry->getDay()->format("Y-m-d")) {
+                    $this->calculateClasses(
+                        $user->getId(), $oldEntry->getDay()->format("Y-m-d")
+                    );
                 }
             }
 
@@ -348,14 +333,15 @@ class CrudController extends BaseController
                 if ($e instanceof JiraApiUnauthorizedException) {
                     throw $e;
                 }
+
                 $alert = $e->getMessage() . '<br />' .
                     $this->translator->trans("Dataset was modified in Timetracker anyway");
             }
 
-            $response = array(
+            $response = [
                 'result' => $entry->toArray(),
                 'alert'  => $alert
-            );
+            ];
 
             return new JsonResponse($response);
 
@@ -374,7 +360,6 @@ class CrudController extends BaseController
     /**
      * Inserts a series of same entries by preset
      *
-     * @param Request $request
      *
      * @return Response
      */
@@ -391,8 +376,9 @@ class CrudController extends BaseController
             $doctrine = $this->getDoctrine();
 
             $preset = $doctrine->getRepository(\App\Entity\Preset::class)->find((int) $request->get('preset'));
-            if (! is_object($preset))
+            if (! is_object($preset)) {
                 throw new \Exception('Preset not found');
+            }
 
             // Retrieve needed objects
             /** @var User $user */
@@ -449,20 +435,20 @@ class CrudController extends BaseController
             $c = 0;
 
             // define weekends
-            $weekend = array('0','6','7');
+            $weekend = ['0','6','7'];
 
             // define regular holidays
-            $regular_holidays = array(
+            $regular_holidays = [
                 "01-01",
                 "05-01",
                 "10-03",
                 "10-31",
                 "12-25",
                 "12-26"
-            );
+            ];
 
             // define irregular holidays
-            $irregular_holidays = array(
+            $irregular_holidays = [
                 "2012-04-06",
                 "2012-04-09",
                 "2012-05-17",
@@ -486,13 +472,15 @@ class CrudController extends BaseController
                 "2015-05-14",
                 "2015-05-25",
                 "2015-11-18",
-            );
+            ];
 
             $numAdded = 0;
             do {
                 // some loop security
                 $c++;
-                if ($c > 100) break;
+                if ($c > 100) {
+                    break;
+                }
 
                 // skip weekends
                 if (($request->get('skipweekend'))
@@ -518,12 +506,12 @@ class CrudController extends BaseController
                 }
 
                 if ($request->get('usecontract')) {
-                    foreach ($contractHoursArray as $contractHours) {
+                    foreach ($contractHoursArray as $contractHourArray) {
 
                         // we can have multiple contracts per user with different date intervals
                         $workTime = 0;
-                        if ($contractHours['start'] <= $date && $contractHours['stop'] >= $date) {
-                            $workTime = $contractHours[$date->format('N')];
+                        if ($contractHourArray['start'] <= $date && $contractHourArray['stop'] >= $date) {
+                            $workTime = $contractHourArray[$date->format('N')];
                             break;
                         }
                     }
@@ -540,8 +528,8 @@ class CrudController extends BaseController
                     $startTime = new \DateTime('08:00:00');
                     $endTime = (new \DateTime('08:00:00'))->add($hoursToAdd);
                 } else {
-                    $startTime = new \DateTime($request->get('starttime') ? $request->get('starttime') : null);
-                    $endTime = new \DateTime($request->get('endtime') ? $request->get('endtime') : null);
+                    $startTime = new \DateTime($request->get('starttime') ?: null);
+                    $endTime = new \DateTime($request->get('endtime') ?: null);
                 }
 
                 $entry = new Entry();
@@ -557,9 +545,11 @@ class CrudController extends BaseController
                 if ($project) {
                     $entry->setProject($project);
                 }
+
                 if ($activity) {
                     $entry->setActivity($activity);
                 }
+
                 if ($customer) {
                     $entry->setCustomer($customer);
                 }
@@ -591,6 +581,7 @@ class CrudController extends BaseController
                         ['%date%' => $contractHoursArray[0]['start']->format('d.m.Y')]
                     );
             }
+
             // Send Message when contract ends during bulkentry
             if (isset($contractHoursArray) && $endDate > end($contractHoursArray)['stop']) {
                 $responseContent .= '<br/>' .
@@ -604,8 +595,8 @@ class CrudController extends BaseController
             $response->setStatusCode(200);
             return $response;
 
-        } catch (\Exception $e) {
-            $response = new Response($this->translator->trans($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translator->trans($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
@@ -615,13 +606,12 @@ class CrudController extends BaseController
      * Ensures valid ticket number format.
      *
      * @param $ticket
-     * @return void
      * @throws \Exception
      */
-    private function requireValidTicketFormat($ticket)
+    private function requireValidTicketFormat($ticket): void
     {
         // do not check empty tickets
-        if (strlen($ticket) < 1) {
+        if (strlen((string) $ticket) < 1) {
             return;
         }
 
@@ -629,19 +619,15 @@ class CrudController extends BaseController
             $message = $this->translator->trans("The ticket's format is not recognized.");
             throw new \Exception($message);
         }
-
-        return;
     }
 
     /**
      * TTT-199: check if ticket prefix matches project's Jira id.
      *
-     * @param Project $project
      * @param string $ticket
      * @throws \Exception
-     * @return void
      */
-    private function requireValidTicketPrefix(Project $project, $ticket)
+    private function requireValidTicketPrefix(Project $project, $ticket): void
     {
         // do not check empty tickets
         if (strlen($ticket) < 1) {
@@ -649,7 +635,7 @@ class CrudController extends BaseController
         }
 
         // do not check empty jira-projects
-        if (strlen($project->getJiraId()) < 1) {
+        if (strlen((string) $project->getJiraId()) < 1) {
             return;
         }
 
@@ -659,17 +645,17 @@ class CrudController extends BaseController
         }
 
         $jiraId = TicketHelper::getPrefix($ticket);
-        $projectIds = explode(",", $project->getJiraId());
+        $projectIds = explode(",", (string) $project->getJiraId());
 
-        foreach ($projectIds as $pId) {
-            if (trim($pId) == $jiraId || $project->matchesInternalJiraProject($jiraId)) {
+        foreach ($projectIds as $projectId) {
+            if (trim($projectId) == $jiraId || $project->matchesInternalJiraProject($jiraId)) {
                 return;
             }
         }
 
         $message = $this->translator->trans(
             "The ticket's Jira ID '%ticket_jira_id%' does not match the project's Jira ID '%project_jira_id%'.",
-            array('%ticket_jira_id%' => $jiraId, '%project_jira_id%' => $project->getJiraId())
+            ['%ticket_jira_id%' => $jiraId, '%project_jira_id%' => $project->getJiraId()]
         );
 
         throw new \Exception($message);
@@ -681,7 +667,7 @@ class CrudController extends BaseController
      * @param array $data The data to log
      * @param bool  $raw  Whether this is raw input data
      */
-    private function logData(array $data, $raw = FALSE)
+    private function logData(array $data, bool $raw = FALSE): void
     {
         $context = [
             'type' => ($raw ? 'raw' : 'obj'),
@@ -694,11 +680,8 @@ class CrudController extends BaseController
     /**
      * Updates a JIRA work log entry.
      *
-     * @param Entry $entry
-     * @param Entry $oldEntry
      *
      * @param TicketSystem|null $ticketSystem
-     * @return void
      * @throws JiraApiException
      * @throws \App\Helper\JiraApiInvalidResourceException
      */
@@ -706,15 +689,16 @@ class CrudController extends BaseController
         Entry $entry,
         Entry $oldEntry,
         TicketSystem $ticketSystem = null
-    ){
+    ): void{
         $project = $entry->getProject();
         if (! $project instanceof Project) {
             return;
         }
 
-        if (empty($ticketSystem)) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             $ticketSystem = $project->getTicketSystem();
         }
+
         if (! $ticketSystem instanceof TicketSystem) {
             return;
         }
@@ -739,7 +723,6 @@ class CrudController extends BaseController
     /**
      * Creates an Ticket in the given ticketSystem
      *
-     * @param Entry $entry
      * @param TicketSystem|null $ticketSystem
      * @return string
      *
@@ -750,13 +733,12 @@ class CrudController extends BaseController
     protected function createTicket(
         Entry $entry,
         TicketSystem $ticketSystem = null
-    ) {
+    ): mixed {
         $jiraOAuthApi = new JiraOAuthApi(
             $entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->router
         );
-        $ticket = $jiraOAuthApi->createTicket($entry);
 
-        return $ticket;
+        return $jiraOAuthApi->createTicket($entry);
     }
 
     /**
@@ -823,7 +805,7 @@ class CrudController extends BaseController
         );
 
         //issue already exists in internal jira
-        if (count($searchResult->issues)) {
+        if (count($searchResult->issues) > 0) {
             $issue = reset($searchResult->issues);
         } else {
             //issue does not exists, create it.
@@ -850,12 +832,8 @@ class CrudController extends BaseController
 
     /**
      * Returns true, if the ticket should be deleted.
-     *
-     * @param Entry $entry
-     * @param Entry $oldEntry
-     * @return bool
      */
-    protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry)
+    protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry): bool
     {
         $bDifferentTickets
             = $oldEntry->getTicket() != $entry->getTicket();

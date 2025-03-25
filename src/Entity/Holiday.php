@@ -3,7 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  * App\Entity\Holiday
@@ -19,16 +19,13 @@ class Holiday extends Base
      */
     private $day;
 
+
     /**
-     * @var string $name
+     * @param string $name
      */
-    private $name;
-
-
-    public function __construct($day, $name)
+    public function __construct($day, private $name)
     {
         $this->setDay($day);
-        $this->name = $name;
     }
 
     /**
@@ -38,7 +35,7 @@ class Holiday extends Base
      *
      * @return $this
      */
-    public function setDay($day)
+    public function setDay($day): static
     {
         if (!$day instanceof \DateTime) {
             $day = new \DateTime($day);
@@ -63,7 +60,7 @@ class Holiday extends Base
      *
      * @param string $name
      */
-    public function setName($name)
+    public function setName($name): void
     {
         $this->name = $name;
     }
@@ -80,15 +77,13 @@ class Holiday extends Base
 
     /**
      * Get array representation of holiday object
-     *
-     * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
-        return array(
+        return [
             'day'         => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
             'description' => $this->getName()
-        );
+        ];
     }
 
 }

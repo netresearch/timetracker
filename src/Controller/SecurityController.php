@@ -25,7 +25,7 @@ class SecurityController extends AbstractController
     /**
      * This method can be empty - it will be intercepted by the logout key on your firewall
      */
-    public function logout()
+    public function logout(): never
     {
         // Symfony's security system handles the logout process
         throw new \LogicException('This method should never be reached!');

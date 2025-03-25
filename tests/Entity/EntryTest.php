@@ -13,7 +13,7 @@ use App\Entity\Activity;
 
 class EntryTest extends TestCase
 {
-    public function testGetterSetter()
+    public function testGetterSetter(): void
     {
         $entry = new Entry();
 
@@ -22,6 +22,7 @@ class EntryTest extends TestCase
         $this->assertEquals(null, $entry->getAccountId());
         $account = new Account();
         $account->setId(6);
+
         $entry->setAccount($account);
         $this->assertEquals($account, $entry->getAccount());
         $this->assertEquals(6, $entry->getAccountId());
@@ -43,6 +44,7 @@ class EntryTest extends TestCase
         $this->assertEquals(null, $entry->getUserId());
         $user = new User();
         $user->setId(14);
+
         $entry->setUser($user);
         $this->assertEquals($user, $entry->getUser());
         $this->assertEquals(14, $entry->getUserId());
@@ -52,6 +54,7 @@ class EntryTest extends TestCase
         $this->assertEquals(null, $entry->getProjectId());
         $project = new Project();
         $project->setId(33);
+
         $entry->setProject($project);
         $this->assertEquals($project, $entry->getProject());
         $this->assertEquals(33, $entry->getProjectId());
@@ -61,6 +64,7 @@ class EntryTest extends TestCase
         $this->assertEquals(null, $entry->getCustomerId());
         $customer = new Customer();
         $customer->setId(42);
+
         $entry->setCustomer($customer);
         $this->assertEquals($customer, $entry->getCustomer());
         $this->assertEquals(42, $entry->getCustomerId());
@@ -70,6 +74,7 @@ class EntryTest extends TestCase
         $this->assertEquals(null, $entry->getActivityId());
         $activity = new Activity();
         $activity->setId(51);
+
         $entry->setActivity($activity);
         $this->assertEquals($activity, $entry->getActivity());
         $this->assertEquals(51, $entry->getActivityId());
@@ -79,31 +84,33 @@ class EntryTest extends TestCase
         $this->assertEquals(27, $entry->getWorklogId());
     }
 
-    public function testSetStart()
+    public function testSetStart(): void
     {
         $day = '2011-11-11';
         $givenStart = '13:30';
         $entry = new Entry();
         $entry->setDay($day);
         $entry->setStart($givenStart);
+
         $expected = $day . ' ' . $givenStart;
         $start = $entry->getStart()->format('Y-m-d H:i');
         $this->assertEquals($expected, $start, 'Got start ' . $start);
     }
 
-    public function testSetEnd()
+    public function testSetEnd(): void
     {
         $day = '2011-11-11';
         $givenEnd = '13:30';
         $entry = new Entry();
         $entry->setDay($day);
         $entry->setEnd($givenEnd);
+
         $expected = $day . ' ' . $givenEnd;
         $end = $entry->getEnd()->format('Y-m-d H:i');
         $this->assertEquals($expected, $end, 'Got end ' . $end);
     }
 
-    public function testInvertedTimes()
+    public function testInvertedTimes(): void
     {
         $day   = '2011-11-11';
         $start = '11:11';
@@ -123,7 +130,7 @@ class EntryTest extends TestCase
 
     }
 
-    public function testCalcDuration()
+    public function testCalcDuration(): void
     {
         $day   = '2011-11-11';
         $start = '11:11';
@@ -144,7 +151,7 @@ class EntryTest extends TestCase
     /**
      * @expectedExceptionMessage Duration must be greater than 0!
      */
-    public function testNullDurationException()
+    public function testNullDurationException(): void
     {
         $day   = '2011-11-11';
         $start = '22:22';
@@ -155,14 +162,14 @@ class EntryTest extends TestCase
         $entry->setEnd($end);
         try {
             $entry->validateDuration();
-        } catch(\Exception $e) {
+        } catch(\Exception $exception) {
 
         }
 
-        $this->assertNotNull($e, 'An expected exception has not been raised.');
+        $this->assertNotNull($exception, 'An expected exception has not been raised.');
     }
 
-    public function testToArray()
+    public function testToArray(): void
     {
         $entry = new Entry();
 
@@ -175,6 +182,7 @@ class EntryTest extends TestCase
         // full case
         $customer = new Customer();
         $customer->setId(17);
+
         $project = new Project();
         $project->setId(21);
         $project->setCustomer($customer);

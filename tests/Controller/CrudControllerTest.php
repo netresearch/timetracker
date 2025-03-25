@@ -6,7 +6,7 @@ use Tests\Base;
 
 class CrudControllerTest extends Base
 {
-    public function testSaveAction()
+    public function testSaveAction(): void
     {
         $parameter = [
             'start' => '09:25:00',
@@ -56,7 +56,7 @@ class CrudControllerTest extends Base
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testDeleteAction()
+    public function testDeleteAction(): void
     {
         $parameter = ['id' => 1,];
 
@@ -71,7 +71,7 @@ class CrudControllerTest extends Base
 
     //-------------- Bulkentry routes ----------------------------------------
 
-    public function testBulkentryActionNonExistendPreset()
+    public function testBulkentryActionNonExistendPreset(): void
     {
         $parameter = [
             'preset' => 42,   //req
@@ -81,7 +81,7 @@ class CrudControllerTest extends Base
         $this->assertMessage('Preset not found');
     }
 
-    public function testBulkentryActionZeroTimeDiff()
+    public function testBulkentryActionZeroTimeDiff(): void
     {
         // test duration = 0
         $parameter = [
@@ -94,7 +94,7 @@ class CrudControllerTest extends Base
         $this->assertMessage('Die Aktivität muss mindestens eine Minute angedauert haben!');
     }
 
-    public function testBulkentryAction()
+    public function testBulkentryAction(): void
     {
         $parameter = [
             'startdate' => '2020-01-25',    //opt
@@ -138,14 +138,15 @@ class CrudControllerTest extends Base
             ['day' => '2020-02-05', 'end' => '11:18:00', 'duration' => '198'],
             ['day' => '2020-02-06', 'end' => '12:24:00', 'duration' => '264'],
         ];
+        $counter = count($results);
 
-        for ($i = 0; $i < count($results); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $this->assertArraySubset($staticExpected, $results[$i]);
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
-    public function testBulkentryActionCustomTime()
+    public function testBulkentryActionCustomTime(): void
     {
         $parameter = [
             'startdate' => '2024-01-01',    //opt
@@ -191,14 +192,15 @@ class CrudControllerTest extends Base
             ['day' => '2024-01-09',],
             ['day' => '2024-01-10',],
         ];
+        $counter = count($results);
 
-        for ($i = 0; $i < count($results); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $this->assertArraySubset($staticExpected, $results[$i]);
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
-    public function testBulkentryActionSkipWeekend()
+    public function testBulkentryActionSkipWeekend(): void
     {
         $parameter = [
             'startdate' => '2020-02-07',    //opt
@@ -234,14 +236,15 @@ class CrudControllerTest extends Base
             ['day' => '2020-02-07', 'end' => '13:30:00', 'duration' => '330'],
             ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
         ];
+        $counter = count($results);
 
-        for ($i = 0; $i < count($results); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $this->assertArraySubset($staticExpected, $results[$i]);
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
-    public function testBulkentryActionNoContractInDatabase()
+    public function testBulkentryActionNoContractInDatabase(): void
     {
         // login as user without contract
         $this->logInSession('noContract');
@@ -258,7 +261,7 @@ class CrudControllerTest extends Base
         $this->assertMessage('Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.');
     }
 
-    public function testBulkentryActionContractEnddateIsNull()
+    public function testBulkentryActionContractEnddateIsNull(): void
     {
         $parameter = [
             'startdate' => '2020-02-10',    //opt
@@ -302,14 +305,15 @@ class CrudControllerTest extends Base
             ['day' => '2020-02-19', 'end' => '11:18:00', 'duration' => '198'],
             ['day' => '2020-02-20', 'end' => '12:24:00', 'duration' => '264'],
         ];
+        $counter = count($results);
 
-        for ($i = 0; $i < count($results); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $this->assertArraySubset($staticExpected, $results[$i]);
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
-    public function testBulkentryActionContractEnded()
+    public function testBulkentryActionContractEnded(): void
     {
         $this->logInSession('developer');
 
@@ -334,7 +338,7 @@ class CrudControllerTest extends Base
         $this->assertSame(0, count($results));
     }
 
-    public function testBulkentryActionContractEndedDuringBulkentry()
+    public function testBulkentryActionContractEndedDuringBulkentry(): void
     {
         $this->logInSession('developer');
 
@@ -376,8 +380,9 @@ class CrudControllerTest extends Base
             ['day' => '2019-12-31'],
             ['day' => '2020-01-01'],
         ];
+        $counter = count($results);
 
-        for ($i = 0; $i < count($results); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $this->assertArraySubset($staticExpected, $results[$i]);
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }

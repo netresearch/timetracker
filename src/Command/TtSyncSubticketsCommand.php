@@ -15,14 +15,9 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class TtSyncSubticketsCommand extends Command
 {
-    private $subticketSyncService;
-    private $entityManager;
-
-    public function __construct(SubticketSyncService $subticketSyncService, EntityManagerInterface $entityManager)
+    public function __construct(private readonly SubticketSyncService $subticketSyncService, private readonly EntityManagerInterface $entityManager)
     {
         parent::__construct();
-        $this->subticketSyncService = $subticketSyncService;
-        $this->entityManager = $entityManager;
     }
 
     protected function configure()
@@ -36,21 +31,22 @@ class TtSyncSubticketsCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $io = new SymfonyStyle($input, $output);
+        $symfonyStyle = new SymfonyStyle($input, $output);
 
         $projectId = $input->getArgument('project');
 
-        $projectRepo = $this->entityManager
+        $entityRepository = $this->entityManager
             ->getRepository(\App\Entity\Project::class);
         if ($projectId) {
-            $project = $projectRepo->find($projectId);
+            $project = $entityRepository->find($projectId);
             if (!$project) {
-                $io->error('Project does not exist');
+                $symfonyStyle->error('Project does not exist');
                 return 1;
             }
+
             $projects = [$project];
         } else {
-            $projects = $projectRepo->createQueryBuilder('p')
+            $projects = $entityRepository->createQueryBuilder('p')
                 ->where('p.ticketSystem IS NOT NULL')
                 ->getQuery()
                 ->getResult();
@@ -80,7 +76,7 @@ class TtSyncSubticketsCommand extends Command
                 ' ' . count($subtickets) . ' subtickets found',
                 OutputInterface::VERBOSITY_VERBOSE
             );
-            if (count($subtickets)) {
+            if ($subtickets !== []) {
                 $output->writeln(
                     ' ' . implode(',', $subtickets),
                     OutputInterface::VERBOSITY_VERY_VERBOSE

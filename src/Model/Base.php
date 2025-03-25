@@ -6,8 +6,8 @@
 namespace App\Model;
 
 use Doctrine\ORM\Mapping\Entity;
-use ReflectionClass as ReflectionClass;
-use ReflectionProperty as ReflectionProperty;
+use ReflectionClass;
+use ReflectionProperty;
 
 /*
  * Base model
@@ -22,15 +22,14 @@ class Base
     /**
      * Returns array representation of call class properties (e.g. for json_encode)
      *
-     * @return array
      * @throws \ReflectionException
      */
-    public function toArray()
+    public function toArray(): array
     {
-        $r = new ReflectionClass($this);
+        $reflectionClass = new ReflectionClass($this);
 
-        $data = array();
-        foreach ($r->getProperties(ReflectionProperty::IS_PROTECTED) as $property) {
+        $data = [];
+        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $property) {
             $method = 'get' . ucwords($property->getName());
             $value = $this->$method();
             if (is_object($value) && method_exists($value, 'getId')) {
@@ -42,7 +41,7 @@ class Base
 
             // provide properties also in snake_case for BC
             // https://stackoverflow.com/questions/1993721/how-to-convert-camelcase-to-camel-case
-            $name = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
+            $name = strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
             $data[$name] = $value;
         }
 

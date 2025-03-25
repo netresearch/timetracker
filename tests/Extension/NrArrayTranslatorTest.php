@@ -35,19 +35,17 @@ class NrArrayTranslatorTest
     /**
      * @var Translator symfony translator
      */
-    protected $translator = null;
+    protected $translator;
 
     /**
      * @var NrArrayTranslator
      */
-    protected $nrArrayTranslator = null;
+    protected $nrArrayTranslator;
 
     /**
      * setup the symfony translator and the NrArrayTranslator for this test
-     *
-     * @return void
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         $this->translator = new Translator('de');
         $this->nrArrayTranslator = new NrArrayTranslator($this->translator);
@@ -55,10 +53,8 @@ class NrArrayTranslatorTest
 
     /**
      * check the name value of the extension
-     *
-     * @return void
      */
-    public function testGetName()
+    public function testGetName(): void
     {
         $this->assertEquals(
             $this->nrArrayTranslator->getName(),
@@ -69,7 +65,7 @@ class NrArrayTranslatorTest
     /**
      * checks the getFilters
      */
-    public function testGetFilters()
+    public function testGetFilters(): void
     {
         $filters = $this->nrArrayTranslator->getFilters();
         $this->assertTrue(is_array($filters));
@@ -82,24 +78,22 @@ class NrArrayTranslatorTest
 
     /**
      * check te filterArray() functionality
-     *
-     * @return void
      */
-    public function testFilterArray()
+    public function testFilterArray(): void
     {
-        $dataToTranslate = array();
-        $dataToTranslate[]['activity'] = array(
+        $dataToTranslate = [];
+        $dataToTranslate[]['activity'] = [
             'id' => 1, 'name' => 'Entwicklung'
-        );
-        $dataToTranslate[]['activity'] = array(
+        ];
+        $dataToTranslate[]['activity'] = [
             'id' => 2, 'name' => 'QA'
-        );
-        $dataToTranslate[]['activity'] = array(
+        ];
+        $dataToTranslate[]['activity'] = [
             'id' => 3, 'name' => 'Administration'
-        );
-        $dataToTranslate[]['ignoreMe'] = array(
+        ];
+        $dataToTranslate[]['ignoreMe'] = [
             'id' => 3, 'name' => 'Administration'
-        );
+        ];
 
         $dataToTranslateJson = json_encode($dataToTranslate);
 
@@ -108,7 +102,7 @@ class NrArrayTranslatorTest
                 $dataToTranslateJson,
                 'activity',
                 'activities',
-                array('name')
+                ['name']
             )
         );
 

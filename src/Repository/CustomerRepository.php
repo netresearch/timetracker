@@ -9,18 +9,17 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class CustomerRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Customer::class);
+        parent::__construct($managerRegistry, Customer::class);
     }
 
     /**
      * Returns an array of customers available for current user
      *
      * @param $userId
-     * @return array
      */
-    public function getCustomersByUser($userId)
+    public function getCustomersByUser($userId): array
     {
         /** @var Customer[] $result */
         $result = $this->createQueryBuilder('customer')
@@ -47,7 +46,10 @@ class CustomerRepository extends ServiceEntityRepository
     /*
      * Returns an array of all available customers
      */
-    public function getAllCustomers()
+    /**
+     * @return array{customer: array{id: mixed, name: mixed, active: mixed, global: mixed, teams: list}}[]
+     */
+    public function getAllCustomers(): array
     {
         /** @var Customer[] $customers */
         $customers = $this->findBy(
@@ -60,6 +62,7 @@ class CustomerRepository extends ServiceEntityRepository
             foreach ($customer->getTeams() as $team) {
                 $teams[] = $team->getId();
             }
+
             $data[] = ['customer' => [
                 'id'     => $customer->getId(),
                 'name'   => $customer->getName(),

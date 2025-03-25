@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  *
@@ -75,7 +75,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -98,7 +98,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName($name): static
     {
         $this->name = $name;
         return $this;
@@ -121,7 +121,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setActive($active)
+    public function setActive($active): static
     {
         $this->active = $active;
         return $this;
@@ -145,7 +145,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function setGlobal($global)
+    public function setGlobal($global): static
     {
         $this->global = $global;
         return $this;
@@ -165,13 +165,12 @@ class Customer extends Base
     /**
      * Add projects
      *
-     * @param Project $projects
      *
      * @return $this
      */
-    public function addProjects(Project $projects)
+    public function addProjects(Project $project): static
     {
-        $this->projects[] = $projects;
+        $this->projects[] = $project;
         return $this;
     }
 
@@ -188,13 +187,12 @@ class Customer extends Base
     /**
      * Add entries
      *
-     * @param Entry $entries
      *
      * @return $this
      */
-    public function addEntries(Entry $entries)
+    public function addEntries(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
         return $this;
     }
 
@@ -213,7 +211,7 @@ class Customer extends Base
      *
      * @return $this
      */
-    public function resetTeams()
+    public function resetTeams(): static
     {
         $this->teams = new ArrayCollection();
         return $this;
@@ -222,11 +220,10 @@ class Customer extends Base
     /**
      * Add team
      *
-     * @param Team $team
      *
      * @return $this
      */
-    public function addTeam(Team $team)
+    public function addTeam(Team $team): static
     {
         $this->teams[] = $team;
         return $this;
@@ -244,33 +241,25 @@ class Customer extends Base
 
     /**
      * Add projects
-     *
-     * @param Project $projects
-     * @return Customer
      */
-    public function addProject(Project $projects)
+    public function addProject(Project $project): static
     {
-        $this->projects[] = $projects;
+        $this->projects[] = $project;
         return $this;
     }
 
     /**
      * Remove projects
-     *
-     * @param Project $projects
      */
-    public function removeProject(Project $projects)
+    public function removeProject(Project $project): void
     {
-        $this->projects->removeElement($projects);
+        $this->projects->removeElement($project);
     }
 
     /**
      * Add entries
-     *
-     * @param Entry $entry
-     * @return Customer
      */
-    public function addEntry(Entry $entry)
+    public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
         return $this;
@@ -278,33 +267,26 @@ class Customer extends Base
 
     /**
      * Remove entry
-     *
-     * @param Entry $entry
      */
-    public function removeEntrie(Entry $entry)
+    public function removeEntrie(Entry $entry): void
     {
         $this->entries->removeElement($entry);
     }
 
     /**
      * Remove teams
-     *
-     * @param Team $teams
      */
-    public function removeTeam(Team $teams)
+    public function removeTeam(Team $team): void
     {
-        $this->teams->removeElement($teams);
+        $this->teams->removeElement($team);
     }
 
     /**
      * Add entries
-     *
-     * @param Entry $entries
-     * @return Customer
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
 
         return $this;
     }
@@ -321,11 +303,8 @@ class Customer extends Base
 
     /**
      * Add preset
-     *
-     * @param Preset $preset
-     * @return Customer
      */
-    public function addPreset(Preset $preset)
+    public function addPreset(Preset $preset): static
     {
         $this->presets[] = $preset;
         return $this;
@@ -333,10 +312,8 @@ class Customer extends Base
 
     /**
      * Remove preset
-     *
-     * @param Preset $preset
      */
-    public function removePreset(Preset $preset)
+    public function removePreset(Preset $preset): void
     {
         $this->presets->removeElement($preset);
     }

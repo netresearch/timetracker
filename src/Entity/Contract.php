@@ -88,7 +88,7 @@ class Contract
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -109,11 +109,10 @@ class Contract
     /**
      * Set user
      *
-     * @param User $user
      *
      * @return $this
      */
-    public function setUser(User $user)
+    public function setUser(User $user): static
     {
         $this->user = $user;
         return $this;
@@ -144,7 +143,7 @@ class Contract
      * @param mixed $start
      * @return $this
      */
-    public function setStart($start)
+    public function setStart($start): static
     {
         $this->start = $start;
         return $this;
@@ -164,7 +163,7 @@ class Contract
      * @param mixed $end
      * @return $this
      */
-    public function setEnd($end)
+    public function setEnd($end): static
     {
         $this->end = $end;
         return $this;
@@ -184,7 +183,7 @@ class Contract
      * @param float $hours_0
      * @return $this
      */
-    public function setHours0($hours_0)
+    public function setHours0($hours_0): static
     {
         $this->hours_0 = $hours_0;
         return $this;
@@ -204,7 +203,7 @@ class Contract
      * @param float $hours_1
      * @return $this
      */
-    public function setHours1($hours_1)
+    public function setHours1($hours_1): static
     {
         $this->hours_1 = $hours_1;
         return $this;
@@ -224,7 +223,7 @@ class Contract
      * @param float $hours_2
      * @return $this
      */
-    public function setHours2($hours_2)
+    public function setHours2($hours_2): static
     {
         $this->hours_2 = $hours_2;
         return $this;
@@ -244,7 +243,7 @@ class Contract
      * @param float $hours_3
      * @return $this
      */
-    public function setHours3($hours_3)
+    public function setHours3($hours_3): static
     {
         $this->hours_3 = $hours_3;
         return $this;
@@ -264,7 +263,7 @@ class Contract
      * @param float $hours_4
      * @return $this
      */
-    public function setHours4($hours_4)
+    public function setHours4($hours_4): static
     {
         $this->hours_4 = $hours_4;
         return $this;
@@ -284,7 +283,7 @@ class Contract
      * @param float $hours_5
      * @return $this
      */
-    public function setHours5($hours_5)
+    public function setHours5($hours_5): static
     {
         $this->hours_5 = $hours_5;
         return $this;
@@ -304,7 +303,7 @@ class Contract
      * @param float $hours_6
      * @return $this
      */
-    public function setHours6($hours_6)
+    public function setHours6($hours_6): static
     {
         $this->hours_6 = $hours_6;
         return $this;

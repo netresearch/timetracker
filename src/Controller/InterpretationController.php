@@ -16,14 +16,14 @@ class InterpretationController extends BaseController
     /**
      * @var Entry[]
      */
-    private $cache = null;
+    private $cache;
 
-    public function sortByName($a, $b)
+    public function sortByName(array $a, array $b): int
     {
-        return strcmp($b['name'], $a['name']);
+        return strcmp((string) $b['name'], (string) $a['name']);
     }
 
-    public function getLastEntriesAction(Request $request)
+    public function getLastEntriesAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -31,25 +31,25 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getEntries($request, 50);
-        } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
         $sum = $this->calculateSum($entries);
-        $entryList = array();
+        $entryList = [];
         foreach ($entries as $entry) {
             $flatEntry = $entry->toArray();
             $flatEntry['quota'] = TimeHelper::formatQuota($flatEntry['duration'], $sum);
             $flatEntry['duration'] = TimeHelper::formatDuration($flatEntry['duration']);
-            $entryList[] = array('entry' => $flatEntry);
+            $entryList[] = ['entry' => $flatEntry];
         }
+
         return new JsonResponse($entryList);
     }
 
     /**
-     * @param Request $request
      * @return array|null
      * @throws \Exception
      */
@@ -66,7 +66,7 @@ class InterpretationController extends BaseController
     /**
      * @return int
      */
-    private function getCachedSum()
+    private function getCachedSum(): int|float
     {
         if (null == $this->cache) {
             return 0;
@@ -80,7 +80,7 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    private function calculateSum(&$entries)
+    private function calculateSum(&$entries): int|float
     {
         if (!is_array($entries)) {
             return 0;
@@ -94,7 +94,7 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    public function groupByCustomerAction(Request $request)
+    public function groupByCustomerAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -102,26 +102,28 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $customers = array();
+        $customers = [];
 
         foreach($entries as $entry) {
-            if (! is_object($entry->getCustomer()))
+            if (! is_object($entry->getCustomer())) {
                 continue;
+            }
+
             $customer = $entry->getCustomer()->getId();
 
             if(!isset($customers[$customer])) {
-                $customers[$customer] = array(
+                $customers[$customer] = [
                     'id'  => $customer,
                     'name'  => $entry->getCustomer()->getName(),
                     'hours' => 0,
                     'quota' => 0,
-                );
+                ];
             }
 
             $customers[$customer]['hours'] += $entry->getDuration();
@@ -131,11 +133,11 @@ class InterpretationController extends BaseController
         foreach($customers AS &$customer)
             $customer['quota'] = TimeHelper::formatQuota($customer['hours'], $sum);
 
-        usort($customers, array($this, 'sortByName'));
+        usort($customers, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($customers));
     }
 
-    public function groupByProjectAction(Request $request)
+    public function groupByProjectAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -143,26 +145,28 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $projects = array();
+        $projects = [];
 
         foreach ($entries as $entry) {
-            if (! is_object($entry->getProject()))
+            if (! is_object($entry->getProject())) {
                 continue;
+            }
+
             $project = $entry->getProject()->getId();
 
             if(!isset($projects[$project])) {
-                $projects[$project] = array(
+                $projects[$project] = [
                     'id'  => $project,
                     'name'  => $entry->getProject()->getName(),
                     'hours' => 0,
                     'quota' => 0,
-                );
+                ];
             }
 
             $projects[$project]['hours'] += $entry->getDuration();
@@ -172,12 +176,12 @@ class InterpretationController extends BaseController
         foreach($projects AS &$project)
             $project['quota'] = TimeHelper::formatQuota($project['hours'], $sum);
 
-        usort($projects, array($this, 'sortByName'));
+        usort($projects, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($projects));
     }
 
 
-    public function groupByTicketAction(Request $request)
+    public function groupByTicketAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -185,25 +189,25 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $tickets = array();
+        $tickets = [];
 
         foreach($entries as $entry) {
             $ticket = $entry->getTicket();
 
             if(!empty($ticket) && $ticket != '-'){
                 if(!isset($tickets[$ticket])) {
-                    $tickets[$ticket] = array(
+                    $tickets[$ticket] = [
                         'id'  => $entry->getId(),
                         'name'  => $ticket,
                         'hours' => 0,
                         'quota' => 0,
-                    );
+                    ];
                 }
 
                 $tickets[$ticket]['hours'] += $entry->getDuration();
@@ -214,18 +218,15 @@ class InterpretationController extends BaseController
         foreach($tickets AS &$ticket)
             $ticket['quota'] = TimeHelper::formatQuota($ticket['hours'], $sum);
 
-        usort($tickets, array($this, 'sortByName'));
+        usort($tickets, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($tickets));
     }
 
 
     /**
      * Returns the data for the analysing chart "effort per employee".
-     *
-     * @param Request $request
-     * @return Response
      */
-    public function groupByUserAction(Request $request)
+    public function groupByUserAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
         $request->query->set('user', $this->getUserId($request));
@@ -236,24 +237,24 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $users = array();
+        $users = [];
 
         foreach ($entries as $entry) {
             $user = $entry->getUser()->getId();
 
             if (!isset($users[$user])) {
-                $users[$user] = array(
+                $users[$user] = [
                     'id'  => $user,
                     'name'  => $entry->getUser()->getUsername(),
                     'hours' => 0,
                     'quota' => 0,
-                );
+                ];
             }
 
             $users[$user]['hours'] += $entry->getDuration();
@@ -264,18 +265,15 @@ class InterpretationController extends BaseController
             $user['quota'] = TimeHelper::formatQuota($user['hours'], $sum);
         }
 
-        usort($users, array($this, 'sortByName'));
+        usort($users, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($users));
     }
 
 
     /**
      * Returns booked times grouped by day.
-     *
-     * @param Request $request
-     * @return Response
      */
-    public function groupByWorktimeAction(Request $request)
+    public function groupByWorktimeAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -283,24 +281,24 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $times = array();
+        $times = [];
 
         foreach ($entries as $entry) {
             $day_r = $entry->getDay()->format('y-m-d');
 
             if (!isset($times[$day_r])) {
-                $times[$day_r] = array(
+                $times[$day_r] = [
                     'name'  => $day_r,
                     'day'   => $entry->getDay()->format('d.m.'),
                     'hours' => 0,
                     'quota' => 0,
-                );
+                ];
             }
 
             $times[$day_r]['hours'] += $entry->getDuration();
@@ -311,11 +309,11 @@ class InterpretationController extends BaseController
             $time['quota'] = TimeHelper::formatQuota($time['hours'], $sum);
         }
 
-        usort($times, array($this, 'sortByName'));
+        usort($times, $this->sortByName(...));
         return new JsonResponse($this->normalizeData(array_reverse($times)));
     }
 
-    public function groupByActivityAction(Request $request)
+    public function groupByActivityAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -323,23 +321,23 @@ class InterpretationController extends BaseController
 
         try {
             $entries = $this->getCachedEntries($request);
-        } catch (\Exception $e) {
-            $response = new Response($this->translate($e->getMessage()));
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate($exception->getMessage()));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $activities = array();
+        $activities = [];
 
         foreach($entries as $entry) {
             $activityId = $entry->getActivity()->getId();
 
             if(!isset($activities[$activityId])) {
-                $activities[$activityId] = array(
+                $activities[$activityId] = [
                     'id'    => $activityId,
                     'name'  => $entry->getActivity()->getName(),
                     'hours' => 0,
-                );
+                ];
             }
 
             $activities[$activityId]['hours'] += $entry->getDuration();
@@ -349,7 +347,7 @@ class InterpretationController extends BaseController
         foreach($activities AS &$activity)
             $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $sum);
 
-        usort($activities, array($this, 'sortByName'));
+        usort($activities, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($activities));
     }
 
@@ -357,7 +355,6 @@ class InterpretationController extends BaseController
     /**
      * Get entries by request parameter
      *
-     * @param Request $request
      * @param integer $maxResults
      * @return Entry[]
      * @throws \Exception
@@ -417,26 +414,30 @@ class InterpretationController extends BaseController
             );
         }
 
-        /** @var \App\Repository\EntryRepository $repository*/
-        $repository = $this->getDoctrine()->getRepository(\App\Entity\Entry::class);
-        return $repository->findByFilterArray($arParams);
+        /** @var \App\Repository\EntryRepository $objectRepository*/
+        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\Entry::class);
+        return $objectRepository->findByFilterArray($arParams);
     }
 
-    private function evalParam(Request $request, $param)
+    private function evalParam(Request $request, string $param)
     {
         $param = $request->query->get($param);
         if ($param && !empty($param)) {
             return $param;
         }
+
         return null;
     }
 
-    private function normalizeData(array $data)
+    /**
+     * @return mixed[]
+     */
+    private function normalizeData(array $data): array
     {
-        $normalized = array();
+        $normalized = [];
 
         foreach($data as $d) {
-            $d['hours'] = $d['hours'] / 60;
+            $d['hours'] /= 60;
             $normalized[] = $d;
         }
 
@@ -447,11 +448,10 @@ class InterpretationController extends BaseController
      * Retrieves filtered time tracker entries based on request parameters.
      * Applies pagination.
      *
-     * @param Request $request
      * @return \App\Model\JsonResponse|Error
      * @throws \Exception
      */
-    public function getAllEntriesAction(Request $request)
+    public function getAllEntriesAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -470,30 +470,44 @@ class InterpretationController extends BaseController
             $message = $this->translator->trans('page can not be negative.');
             return new Error($message, 400);
         }
+
         $maxResults = $maxResults > 0 ? $maxResults : 50;    //cant be lower than 0
 
         $searchArray = [
             'maxResults' => $maxResults,   //default 50
             'page' => $page
         ];
-        // parameter has to exist in request and has to be different from null -> return true -> set array key
-        ($activity ?? null) ? $searchArray['activity'] = $activity : null;
-        ($project ?? null) ? $searchArray['project'] = $project : null;
-        ($datestart ?? null) ? $searchArray['datestart'] = $datestart : null;
-        ($dateend ?? null) ? $searchArray['dateend'] = $dateend : null;
-        ($customer ?? null) ? $searchArray['customer'] = $customer : null;
+        if (($activity ?? null) !== 0) {
+            $searchArray['activity'] = $activity;
+        }
 
-        /** @var \App\Repository\EntryRepository $repository*/
-        $repository = $this->getDoctrine()->getRepository(\App\Entity\Entry::class);
+        if (($project ?? null) !== 0) {
+            $searchArray['project'] = $project;
+        }
+
+        if ($datestart ?? null) {
+            $searchArray['datestart'] = $datestart;
+        }
+
+        if ($dateend ?? null) {
+            $searchArray['dateend'] = $dateend;
+        }
+
+        if (($customer ?? null) !== 0) {
+            $searchArray['customer'] = $customer;
+        }
+
+        /** @var \App\Repository\EntryRepository $objectRepository*/
+        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\Entry::class);
         try {
-            $paginator = new Paginator($repository->queryByFilterArray($searchArray));
-        } catch (\Exception $e) {
-            return new Error($this->translate($e->getMessage()), 406);
+            $paginator = new Paginator($objectRepository->queryByFilterArray($searchArray));
+        } catch (\Exception $exception) {
+            return new Error($this->translate($exception->getMessage()), 406);
         }
 
         // get data
         $entries = $paginator->getQuery()->getResult();
-        $entryList = array();
+        $entryList = [];
         foreach ($entries as $entry) {
             $flatEntry = $entry->toArray();
             unset($flatEntry['class']);

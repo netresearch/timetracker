@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  *
@@ -65,7 +65,7 @@ class UserTicketsystem extends Base
      * @param mixed $id
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -80,10 +80,9 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param TicketSystem $ticketSystem
      * @return $this
      */
-    public function setTicketSystem(TicketSystem $ticketSystem)
+    public function setTicketSystem(TicketSystem $ticketSystem): static
     {
         $this->ticketSystem = $ticketSystem;
         return $this;
@@ -98,10 +97,9 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param User $user
      * @return $this
      */
-    public function setUser(User $user)
+    public function setUser(User $user): static
     {
         $this->user = $user;
         return $this;
@@ -119,7 +117,7 @@ class UserTicketsystem extends Base
      * @param string $accessToken
      * @return $this
      */
-    public function setAccessToken($accessToken)
+    public function setAccessToken($accessToken): static
     {
         $this->accessToken = $accessToken;
         return $this;
@@ -137,16 +135,13 @@ class UserTicketsystem extends Base
      * @param string $tokenSecret
      * @return $this
      */
-    public function setTokenSecret($tokenSecret)
+    public function setTokenSecret($tokenSecret): static
     {
         $this->tokenSecret = $tokenSecret;
         return $this;
     }
 
-    /**
-     * @return boolean
-     */
-    public function getAvoidConnection()
+    public function getAvoidConnection(): bool
     {
         return ($this->avoidConnection == 1);
     }
@@ -155,7 +150,7 @@ class UserTicketsystem extends Base
      * @param boolean $avoidConnection
      * @return $this
      */
-    public function setAvoidConnection($avoidConnection)
+    public function setAvoidConnection($avoidConnection): static
     {
         $this->avoidConnection = ($avoidConnection? 1 : 0);
         return $this;

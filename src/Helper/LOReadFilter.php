@@ -27,10 +27,8 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
  */
 class LOReadFilter implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
 {
-    public function readCell($column, $row, $worksheetName = '') {
-        if (Coordinate::columnIndexFromString($column) > 1024) {
-            return false;
-        }
-        return true;
+    public function readCell($column, $row, $worksheetName = '')
+    {
+        return Coordinate::columnIndexFromString($column) <= 1024;
     }
 }

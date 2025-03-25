@@ -15,11 +15,10 @@ class ContractRepository extends ServiceEntityRepository
 {
     /**
      * ContractRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Contract::class);
+        parent::__construct($managerRegistry, Contract::class);
     }
 
     /**
@@ -27,7 +26,7 @@ class ContractRepository extends ServiceEntityRepository
      *
      * @return array Array with contract data
      */
-    public function getContracts()
+    public function getContracts(): array
     {
         /** @var \Doctrine\ORM\QueryBuilder $queryBuilder */
         $queryBuilder = $this->createQueryBuilder('contracts')

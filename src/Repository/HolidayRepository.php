@@ -11,11 +11,10 @@ class HolidayRepository extends ServiceEntityRepository
 {
     /**
      * HolidayRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Holiday::class);
+        parent::__construct($managerRegistry, Holiday::class);
     }
 
     /**
@@ -27,11 +26,11 @@ class HolidayRepository extends ServiceEntityRepository
      */
     public function findByMonth($year, $month)
     {
-        $em = $this->getEntityManager();
+        $entityManager = $this->getEntityManager();
 
         $pattern = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . '%';
 
-        $query = $em->createQuery(
+        $query = $entityManager->createQuery(
             'SELECT h FROM App\Entity\Holiday h'
             . ' WHERE h.day LIKE :month'
             . ' ORDER BY h.day ASC'

@@ -26,84 +26,66 @@ use App\Services\SubticketSyncService;
  */
 class AdminController extends BaseController
 {
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function getCustomersAction(Request $request)
+    public function getCustomersAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        /** @var \App\Repository\CustomerRepository $repo */
-        $repo = $this->doctrineRegistry->getRepository(Customer::class);
+        /** @var \App\Repository\CustomerRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
 
-        return new JsonResponse($repo->getAllCustomers());
+        return new JsonResponse($objectRepository->getAllCustomers());
     }
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function getUsersAction(Request $request)
+    public function getUsersAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        /** @var \App\Repository\UserRepository $repo */
-        $repo = $this->doctrineRegistry->getRepository(User::class);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(User::class);
 
-        return new JsonResponse($repo->getAllUsers());
+        return new JsonResponse($objectRepository->getAllUsers());
     }
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function getTeamsAction(Request $request)
+    public function getTeamsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        /** @var \App\Repository\TeamRepository $repo */
-        $repo = $this->doctrineRegistry->getRepository(Team::class);
+        /** @var \App\Repository\TeamRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
 
-        return new JsonResponse($repo->findAll());
+        return new JsonResponse($objectRepository->findAll());
     }
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function getPresetsAction(Request $request)
+    public function getPresetsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        /** @var \App\Repository\PresetRepository $repo */
-        $repo = $this->doctrineRegistry->getRepository(Preset::class);
+        /** @var \App\Repository\PresetRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Preset::class);
 
-        return new JsonResponse($repo->getAllPresets());
+        return new JsonResponse($objectRepository->getAllPresets());
     }
 
     /**
-     * @param Request $request
-     * @return Response
      * @throws \ReflectionException
      */
-    public function getTicketSystemsAction(Request $request)
+    public function getTicketSystemsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        /** @var \App\Repository\TicketSystemRepository $repo */
-        $repo = $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystems = $repo->getAllTicketSystems();
+        /** @var \App\Repository\TicketSystemRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
+        $ticketSystems = $objectRepository->getAllTicketSystems();
 
         if (false === $this->isPl($request)) {
             $c = count($ticketSystems);
@@ -120,11 +102,7 @@ class AdminController extends BaseController
         return new JsonResponse($ticketSystems);
     }
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function saveProjectAction(Request $request)
+    public function saveProjectAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -134,30 +112,30 @@ class AdminController extends BaseController
         $projectId  = (int) $request->get('id');
         $name       = $request->get('name');
 
-        /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
-        $ticketSystemRepo = $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystem = $request->get('ticket_system') ? $ticketSystemRepo->find($request->get('ticket_system')) : null;
+        /** @var \App\Repository\TicketSystemRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
+        $ticketSystem = $request->get('ticket_system') ? $objectRepository->find($request->get('ticket_system')) : null;
 
         /** @var \App\Repository\UserRepository $userRepo */
         $userRepo = $this->doctrineRegistry->getRepository(User::class);
         $projectLead = $request->get('project_lead') ? $userRepo->find($request->get('project_lead')) : null;
         $technicalLead = $request->get('technical_lead') ? $userRepo->find($request->get('technical_lead')) : null;
 
-        $jiraId       = $request->get('jiraId') ? strtoupper($request->get('jiraId')) : '';
-        $jiraTicket   = $request->get('jiraTicket') ? strtoupper($request->get('jiraTicket')) : '';
-        $active       = $request->get('active') ? $request->get('active') : 0;
-        $global       = $request->get('global') ? $request->get('global') : 0;
-        $estimation   = TimeHelper::readable2minutes($request->get('estimation') ? $request->get('estimation') : '0m');
-        $billing      = $request->get('billing') ? $request->get('billing') : 0;
-        $costCenter   = $request->get('cost_center') ? $request->get('cost_center') : NULL;
-        $offer        = $request->get('offer') ? $request->get('offer') : 0;
-        $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ? $request->get('additionalInformationFromExternal') : 0;
+        $jiraId       = $request->get('jiraId') ? strtoupper((string) $request->get('jiraId')) : '';
+        $jiraTicket   = $request->get('jiraTicket') ? strtoupper((string) $request->get('jiraTicket')) : '';
+        $active       = $request->get('active') ?: 0;
+        $global       = $request->get('global') ?: 0;
+        $estimation   = TimeHelper::readable2minutes($request->get('estimation') ?: '0m');
+        $billing      = $request->get('billing') ?: 0;
+        $costCenter   = $request->get('cost_center') ?: NULL;
+        $offer        = $request->get('offer') ?: 0;
+        $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ?: 0;
         /** @var \App\Repository\ProjectRepository $projectRepository */
         $projectRepository = $this->doctrineRegistry->getRepository(Project::class);
         $internalJiraTicketSystem = (int) $request->get('internalJiraTicketSystem', 0);
         $internalJiraProjectKey   = $request->get('internalJiraProjectKey', 0);
 
-        if ($projectId) {
+        if ($projectId !== 0) {
             $project = $projectRepository->find($projectId);
         } else {
             $project = new Project();
@@ -175,25 +153,23 @@ class AdminController extends BaseController
             $project->setCustomer($customer);
         }
 
-        if (strlen($name) < 3) {
+        if (strlen((string) $name) < 3) {
             $response = new Response($this->translate('Please provide a valid project name with at least 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
 
         $sameNamedProject = $projectRepository->findOneBy(
-            array('name' => $name, 'customer' => $project->getCustomer()->getId())
+            ['name' => $name, 'customer' => $project->getCustomer()->getId()]
         );
-        if ($sameNamedProject) {
-            if ($project->getId() != $sameNamedProject->getId()) {
-                $response = new Response($this->translate('The project name provided already exists.'));
-                $response->setStatusCode(406);
-                return $response;
-            }
+        if ($sameNamedProject && $project->getId() != $sameNamedProject->getId()) {
+            $response = new Response($this->translate('The project name provided already exists.'));
+            $response->setStatusCode(406);
+            return $response;
         }
 
         if ((1 < strlen($jiraId)) && ($project->getJiraId() !== $jiraId))  {
-            $search = array('jiraId' => $jiraId);
+            $search = ['jiraId' => $jiraId];
             if ($ticketSystem) {
                 $search['ticketSystem'] = $ticketSystem;
             }
@@ -222,16 +198,16 @@ class AdminController extends BaseController
             ->setInternalJiraProjectKey($internalJiraProjectKey)
             ->setInternalJiraTicketSystem($internalJiraTicketSystem);
 
-        $em = $this->doctrineRegistry->getManager();
-        $em->persist($project);
-        $em->flush();
+        $objectManager = $this->doctrineRegistry->getManager();
+        $objectManager->persist($project);
+        $objectManager->flush();
 
-        $data = array($project->getId(), $name, $project->getCustomer()->getId(), $jiraId);
+        $data = [$project->getId(), $name, $project->getCustomer()->getId(), $jiraId];
 
         if ($ticketSystem) {
             try {
-                $stss = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
-                $subtickets = $stss->syncProjectSubtickets($project->getId());
+                $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
+                $subtickets = $subticketSyncService->syncProjectSubtickets($project->getId());
             } catch (\Exception $e) {
                 //we do not let it fail because creating a new project
                 // would lead to inconsistencies in the frontend
@@ -243,11 +219,7 @@ class AdminController extends BaseController
         return new JsonResponse($data);
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteProjectAction(Request $request)
+    public function deleteProjectAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -263,39 +235,40 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($project);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
     /**
      * Update the subtickets for all projects.
      */
-    public function syncAllProjectSubticketsAction(Request $request)
+    public function syncAllProjectSubticketsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $this->doctrineRegistry->getRepository(Project::class);
-        $projects = $projectRepo->createQueryBuilder('p')
+        /** @var \App\Repository\ProjectRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
+        $projects = $objectRepository->createQueryBuilder('p')
             ->where('p.ticketSystem IS NOT NULL')
             ->getQuery()
             ->getResult();
 
         try {
-            $stss = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
+            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
 
             foreach ($projects as $project) {
-                $subtickets = $stss->syncProjectSubtickets($project->getId());
+                $subtickets = $subticketSyncService->syncProjectSubtickets($project->getId());
             }
 
             return new JsonResponse(
@@ -303,8 +276,8 @@ class AdminController extends BaseController
                     'success' => true
                 ]
             );
-        } catch (\Exception $e) {
-            return new Error($e->getMessage(), $e->getCode());
+        } catch (\Exception $exception) {
+            return new Error($exception->getMessage(), $exception->getCode());
         }
     }
 
@@ -313,7 +286,7 @@ class AdminController extends BaseController
      *
      * The project lead user's Jira tokens are used for access.
      */
-    public function syncProjectSubticketsAction(Request $request)
+    public function syncProjectSubticketsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -322,24 +295,23 @@ class AdminController extends BaseController
         $projectId = (int) $request->get('project');
 
         try {
-            $stss = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
-            $subtickets = $stss->syncProjectSubtickets($projectId);
+            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
+            $subtickets = $subticketSyncService->syncProjectSubtickets($projectId);
             return new JsonResponse(
                 [
                     'success'    => true,
                     'subtickets' => $subtickets
                 ]
             );
-        } catch (\Exception $e) {
-            return new Error($e->getMessage(), $e->getCode());
+        } catch (\Exception $exception) {
+            return new Error($exception->getMessage(), $exception->getCode());
         }
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
-    public function saveCustomerAction(Request $request)
+    public function saveCustomerAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -348,15 +320,15 @@ class AdminController extends BaseController
         $data = null;
         $customerId  = (int) $request->get('id');
         $name       = $request->get('name');
-        $active     = $request->get('active') ? $request->get('active') : 0;
-        $global     = $request->get('global') ? $request->get('global') : 0;
-        $teamIds    = $request->get('teams')  ? $request->get('teams')  : array();
+        $active     = $request->get('active') ?: 0;
+        $global     = $request->get('global') ?: 0;
+        $teamIds    = $request->get('teams') ?: [];
 
-        /** @var \App\Repository\CustomerRepository $customerRepository */
-        $customerRepository = $this->doctrineRegistry->getRepository(Customer::class);
+        /** @var \App\Repository\CustomerRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
 
-        if ($customerId) {
-            $customer = $customerRepository->find($customerId);
+        if ($customerId !== 0) {
+            $customer = $objectRepository->find($customerId);
             if (!$customer) {
                 $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
@@ -365,18 +337,16 @@ class AdminController extends BaseController
             $customer = new Customer();
         }
 
-        if (strlen($name) < 3) {
+        if (strlen((string) $name) < 3) {
             $response = new Response($this->translate('Please provide a valid customer name with at least 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
 
-        if ($sameNamedCustomer = $customerRepository->findOneByName($name)) {
-            if ($customer->getId() != $sameNamedCustomer->getId()) {
-                $response = new Response($this->translate('The customer name provided already exists.'));
-                $response->setStatusCode(406);
-                return $response;
-            }
+        if (($sameNamedCustomer = $objectRepository->findOneByName($name)) && $customer->getId() != $sameNamedCustomer->getId()) {
+            $response = new Response($this->translate('The customer name provided already exists.'));
+            $response->setStatusCode(406);
+            return $response;
         }
 
         $customer->setName($name)->setActive($active)->setGlobal($global);
@@ -387,6 +357,7 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
+
             if ($team = $this->doctrineRegistry->getRepository(Team::class)->find( (int) $teamId)) {
                 $customer->addTeam($team);
             } else {
@@ -402,20 +373,16 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->doctrineRegistry->getManager();
-        $em->persist($customer);
-        $em->flush();
+        $objectManager = $this->doctrineRegistry->getManager();
+        $objectManager->persist($customer);
+        $objectManager->flush();
 
-        $data = array($customer->getId(), $name, $active, $global, $teamIds);
+        $data = [$customer->getId(), $name, $active, $global, $teamIds];
 
         return new JsonResponse($data);
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteCustomerAction(Request $request)
+    public function deleteCustomerAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -431,23 +398,20 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($customer);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function saveUserAction(Request $request)
+    public function saveUserAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -458,43 +422,35 @@ class AdminController extends BaseController
         $abbr     = $request->get('abbr');
         $type     = $request->get('type');
         $locale   = $request->get('locale');
-        $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : array();
+        $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : [];
 
-        /** @var \App\Repository\UserRepository $userRepository */
-        $userRepository = $this->doctrineRegistry->getRepository(User::class);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(User::class);
 
-        if ($userId) {
-            $user = $userRepository->find($userId);
-        } else {
-            $user = new User();
-        }
+        $user = $userId !== 0 ? $objectRepository->find($userId) : new User();
 
-        if (strlen($name) < 3) {
+        if (strlen((string) $name) < 3) {
             $response = new Response($this->translate('Please provide a valid user name with at least 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
 
-        if (strlen($abbr) != 3) {
+        if (strlen((string) $abbr) != 3) {
             $response = new Response($this->translate('Please provide a valid user name abbreviation with 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
 
-        if ($sameNamedUser = $userRepository->findOneByUsername($name)) {
-            if ($user->getId() != $sameNamedUser->getId()) {
-                $response = new Response($this->translate('The user name provided already exists.'));
-                $response->setStatusCode(406);
-                return $response;
-            }
+        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) && $user->getId() != $sameNamedUser->getId()) {
+            $response = new Response($this->translate('The user name provided already exists.'));
+            $response->setStatusCode(406);
+            return $response;
         }
 
-        if ($sameAbbrUser = $userRepository->findOneByAbbr($abbr)) {
-            if ($user->getId() != $sameAbbrUser->getId()) {
-                $response = new Response($this->translate('The user name abreviation provided already exists.'));
-                $response->setStatusCode(406);
-                return $response;
-            }
+        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) && $user->getId() != $sameAbbrUser->getId()) {
+            $response = new Response($this->translate('The user name abreviation provided already exists.'));
+            $response->setStatusCode(406);
+            return $response;
         }
 
         $user->setUsername($name)
@@ -511,6 +467,7 @@ class AdminController extends BaseController
             if (!$teamId) {
                 continue;
             }
+
             if ($team = $this->doctrineRegistry->getRepository(Team::class)->find((int)$teamId)) {
                 $user->addTeam($team);
             } else {
@@ -526,19 +483,15 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $em = $this->doctrineRegistry->getManager();
-        $em->persist($user);
-        $em->flush();
+        $objectManager = $this->doctrineRegistry->getManager();
+        $objectManager->persist($user);
+        $objectManager->flush();
 
-        $data = array($user->getId(), $name, $abbr, $type);
+        $data = [$user->getId(), $name, $abbr, $type];
         return new JsonResponse($data);
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteUserAction(Request $request)
+    public function deleteUserAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -554,23 +507,20 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($user);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deletePresetAction(Request $request)
+    public function deletePresetAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -586,23 +536,23 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($preset);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
     /**
-     * @param Request $request
      * @return Response
      */
-    public function savePresetAction(Request $request)
+    public function savePresetAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -618,16 +568,16 @@ class AdminController extends BaseController
             ->find($request->get('activity'));
         $description = $request->get('description');
 
-        if (strlen($name) < 3) {
+        if (strlen((string) $name) < 3) {
             $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
 
-        $repository = $this->doctrineRegistry->getRepository(Preset::class);
+        $objectRepository = $this->doctrineRegistry->getRepository(Preset::class);
 
-        if ($id) {
-            $preset = $repository->find($id);
+        if ($id !== 0) {
+            $preset = $objectRepository->find($id);
             if (!$preset) {
                 $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
@@ -646,7 +596,7 @@ class AdminController extends BaseController
             $em = $this->doctrineRegistry->getManager();
             $em->persist($preset);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
             $response->setStatusCode(403);
             return $response;
@@ -657,18 +607,17 @@ class AdminController extends BaseController
 
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \ReflectionException
      */
-    public function saveTicketSystemAction(Request $request)
+    public function saveTicketSystemAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        /** @var \App\Repository\TicketSystemRepository $repository */
-        $repository = $this->doctrineRegistry->getRepository(TicketSystem::class);
+        /** @var \App\Repository\TicketSystemRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
         $id                  = (int) $request->get('id');
         $name                = $request->get('name');
@@ -683,8 +632,8 @@ class AdminController extends BaseController
         $oauthConsumerKey    = $request->get('oauthConsumerKey');
         $oauthConsumerSecret = $request->get('oauthConsumerSecret');
 
-        if ($id) {
-            $ticketSystem = $repository->find($id);
+        if ($id !== 0) {
+            $ticketSystem = $objectRepository->find($id);
             if (!$ticketSystem) {
                 $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
@@ -693,18 +642,16 @@ class AdminController extends BaseController
             $ticketSystem = new TicketSystem();
         }
 
-        if (strlen($name) < 3) {
+        if (strlen((string) $name) < 3) {
             $response = new Response($this->translate('Please provide a valid ticket system name with at least 3 letters.'));
             $response->setStatusCode(406);
             return $response;
         }
 
-        if ($sameNamedSystem = $repository->findOneByName($name)) {
-            if ($ticketSystem->getId() != $sameNamedSystem->getId()) {
-                $response = new Response($this->translate('The ticket system name provided already exists.'));
-                $response->setStatusCode(406);
-                return $response;
-            }
+        if (($sameNamedSystem = $objectRepository->findOneByName($name)) && $ticketSystem->getId() != $sameNamedSystem->getId()) {
+            $response = new Response($this->translate('The ticket system name provided already exists.'));
+            $response->setStatusCode(406);
+            return $response;
         }
 
         try {
@@ -724,8 +671,8 @@ class AdminController extends BaseController
             $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);
             $em->flush();
-        } catch (\Exception $e) {
-            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(403);
             return $response;
         }
@@ -734,11 +681,7 @@ class AdminController extends BaseController
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteTicketSystemAction(Request $request)
+    public function deleteTicketSystemAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -754,24 +697,24 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($ticketSystem);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
 
     /**
-     * @param Request $request
      * @return Response
      */
-    public function saveActivityAction(Request $request)
+    public function saveActivityAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -781,16 +724,16 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        /** @var \App\Repository\ActivityRepository $repository */
-        $repository = $this->doctrineRegistry->getRepository(Activity::class);
+        /** @var \App\Repository\ActivityRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
 
         $id             = (int) $request->get('id');
         $name           = $request->get('name');
         $needsTicket    = (boolean) $request->get('needsTicket');
         $factor         = str_replace(',', '.', $request->get('factor'));
 
-        if ($id) {
-            $activity = $repository->find($id);
+        if ($id !== 0) {
+            $activity = $objectRepository->find($id);
             if (!$activity) {
                 $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
@@ -799,12 +742,10 @@ class AdminController extends BaseController
             $activity = new Activity();
         }
 
-        if ($sameNamedActivity = $repository->findOneByName($name)) {
-            if ($activity->getId() != $sameNamedActivity->getId()) {
-                $response = new Response($this->translate('The activity name provided already exists.'));
-                $response->setStatusCode(406);
-                return $response;
-            }
+        if (($sameNamedActivity = $objectRepository->findOneByName($name)) && $activity->getId() != $sameNamedActivity->getId()) {
+            $response = new Response($this->translate('The activity name provided already exists.'));
+            $response->setStatusCode(406);
+            return $response;
         }
 
         try {
@@ -816,23 +757,19 @@ class AdminController extends BaseController
             $em = $this->doctrineRegistry->getManager();
             $em->persist($activity);
             $em->flush();
-        } catch (\Exception $e) {
-            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(403);
             return $response;
         }
 
-        $data = array($activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor());
+        $data = [$activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor()];
 
         return new JsonResponse($data);
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteActivityAction(Request $request)
+    public function deleteActivityAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -848,24 +785,24 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($activity);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
 
     /**
-     * @param Request $request
      * @return Response
      */
-    public function saveTeamAction(Request $request)
+    public function saveTeamAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -875,8 +812,8 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        /** @var \App\Repository\TeamRepository $repository */
-        $repository = $this->doctrineRegistry->getRepository(Team::class);
+        /** @var \App\Repository\TeamRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
 
         $id         = (int) $request->get('id');
         $name       = $request->get('name');
@@ -885,8 +822,8 @@ class AdminController extends BaseController
                 ->find($request->get('lead_user_id'))
             : null;
 
-        if ($id) {
-            $team = $repository->find($id);
+        if ($id !== 0) {
+            $team = $objectRepository->find($id);
             //abort for non existing id
             if (!$team) {
                 $message = $this->translator->trans('No entry for id.');
@@ -896,12 +833,10 @@ class AdminController extends BaseController
             $team = new Team();
         }
 
-        if ($sameNamedTeam = $repository->findOneByName($name)) {
-            if ($team->getId() != $sameNamedTeam->getId()) {
-                $response = new Response($this->translate('The team name provided already exists.'));
-                $response->setStatusCode(406);
-                return $response;
-            }
+        if (($sameNamedTeam = $objectRepository->findOneByName($name)) && $team->getId() != $sameNamedTeam->getId()) {
+            $response = new Response($this->translate('The team name provided already exists.'));
+            $response->setStatusCode(406);
+            return $response;
         }
 
         if (is_null($teamLead)) {
@@ -918,23 +853,19 @@ class AdminController extends BaseController
             $em = $this->doctrineRegistry->getManager();
             $em->persist($team);
             $em->flush();
-        } catch (\Exception $e) {
-            $response = new Response($this->translate('Error on save') . ': ' . $e->getMessage());
+        } catch (\Exception $exception) {
+            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(403);
             return $response;
         }
 
-        $data = array($team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : ''));
+        $data = [$team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : '')];
 
         return new JsonResponse($data);
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteTeamAction(Request $request)
+    public function deleteTeamAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -950,24 +881,21 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($team);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function jiraSyncEntriesAction(Request $request)
+    public function jiraSyncEntriesAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -1009,35 +937,29 @@ class AdminController extends BaseController
     }
 
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
-    public function getContractsAction(Request $request)
+    public function getContractsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        /** @var \App\Repository\ContractRepository $repo */
-        $repo = $this->doctrineRegistry->getRepository(Contract::class);
+        /** @var \App\Repository\ContractRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
-        return new JsonResponse($repo->getContracts());
+        return new JsonResponse($objectRepository->getContracts());
     }
 
 
     /**
-     * @param Request $request
      * @return Response
      * @throws \Exception
      */
-    public function saveContractAction(Request $request)
+    public function saveContractAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $data = null;
         $contractId = (int) $request->get('id');
         $start      = $request->get('start');
         $end        = $request->get('end');
@@ -1054,12 +976,12 @@ class AdminController extends BaseController
                 ->find($request->get('user_id'))
             : null;
 
-        /** @var \App\Repository\ContractRepository $contractRepository */
-        $contractRepository = $this->doctrineRegistry->getRepository(Contract::class);
+        /** @var \App\Repository\ContractRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         /** @var \App\Entity\Contract $contract */
-        if ($contractId) {
-            $contract = $contractRepository->find($contractId);
+        if ($contractId !== 0) {
+            $contract = $objectRepository->find($contractId);
             if (!$contract) {
                 $message = $this->translator->trans('No entry for id.');
                 return new Error($message, 404);
@@ -1080,6 +1002,7 @@ class AdminController extends BaseController
             $response->setStatusCode(406);
             return $response;
         }
+
         $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), $dateStart->format('d'));
         $dateStart->setTime(0, 0, 0);
 
@@ -1108,26 +1031,26 @@ class AdminController extends BaseController
             ->setHours5($hours_5)
             ->setHours6($hours_6);
 
-        $em = $this->doctrineRegistry->getManager();
-        $em->persist($contract);
+        $objectManager = $this->doctrineRegistry->getManager();
+        $objectManager->persist($contract);
 
         // when updating a existing contract don't look for other contracts for the user
-        if ($contractId) {
-            $em->flush();
-            return new JsonResponse(array($contract->getId()));
+        if ($contractId !== 0) {
+            $objectManager->flush();
+            return new JsonResponse([$contract->getId()]);
         }
 
         // update old contracts,
         $responseMessage = $this->updateOldContractAction($user, $dateStart, $dateEnd);
-        if($responseMessage) {
+        if($responseMessage !== '' && $responseMessage !== '0') {
             $response = new Response($responseMessage);
             $response->setStatusCode(406);
             return $response;
         }
 
         // save new contract
-        $em->flush();
-        return new JsonResponse(array($contract->getId()));
+        $objectManager->flush();
+        return new JsonResponse([$contract->getId()]);
     }
 
     /**
@@ -1136,11 +1059,11 @@ class AdminController extends BaseController
      */
     protected function updateOldContractAction(User $user, DateTime $newStartDate, ?DateTime $newEndDate): string
     {
-        $em = $this->doctrineRegistry->getManager();
-        $contractRepository = $this->doctrineRegistry->getRepository(Contract::class);
+        $objectManager = $this->doctrineRegistry->getManager();
+        $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         // get existing contracts for the user
-        $contractsOld = $contractRepository->findBy(['user' => $user]);
+        $contractsOld = $objectRepository->findBy(['user' => $user]);
 
         if (!$contractsOld) {
             return "";
@@ -1155,12 +1078,12 @@ class AdminController extends BaseController
         }
 
         // filter to get only open-ended contracts
-        $contractsOld = array_filter($contractsOld, fn($n) => ($n->getEnd() == null));
-        if (count((array) $contractsOld) > 1) {
+        $contractsOld = array_filter($contractsOld, fn($n): bool => ($n->getEnd() == null));
+        if (count($contractsOld) > 1) {
             return $this->translate('There is more than one open-ended contract for the user.');
         }
 
-        if(!$contractsOld) {
+        if($contractsOld === []) {
             return "";
         }
 
@@ -1172,9 +1095,10 @@ class AdminController extends BaseController
         if ($contractOld->getStart() <= $newStartDate) {
             $oldContractEndDate = clone $newStartDate;
             $contractOld->setEnd($oldContractEndDate->sub(new \DateInterval('P1D')));
-            $em->persist((object) $contractOld);
-            $em->flush();
+            $objectManager->persist((object) $contractOld);
+            $objectManager->flush();
         }
+
         //skip old contract edit for
         // |--new--| |--old--(|)-->
         // and
@@ -1192,12 +1116,13 @@ class AdminController extends BaseController
         $filteredContracts = [];
         foreach ($contracts as $contract) {
             $startsAfterOrOnNewStartDate = $contract->getStart() >= $newStartDate;
-            $startsBeforeOrOnNewEndDate = ($newEndDate !== null) ? ($contract->getStart() <= $newEndDate) : true;
+            $startsBeforeOrOnNewEndDate = ($newEndDate instanceof \DateTime) ? ($contract->getStart() <= $newEndDate) : true;
 
             if ($startsAfterOrOnNewStartDate && $startsBeforeOrOnNewEndDate) {
                 $filteredContracts[] = $contract;
             }
         }
+
         return (bool) $filteredContracts;
     }
 
@@ -1217,14 +1142,11 @@ class AdminController extends BaseController
                 $filteredContracts[] = $contract;
             }
         }
+
         return (bool) $filteredContracts;
     }
 
-    /**
-     * @param Request $request
-     * @return Response|Error
-     */
-    public function deleteContractAction(Request $request)
+    public function deleteContractAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -1240,16 +1162,17 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             $em->remove($contract);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $reason = '';
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
             }
+
             $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
             return new Error($msg, 422);
         }
 
-        return new JsonResponse(array('success' => true));
+        return new JsonResponse(['success' => true]);
     }
 
 }

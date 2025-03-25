@@ -105,7 +105,7 @@ class User implements UserInterface
      *
      * @return $this
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
         return $this;
@@ -128,7 +128,7 @@ class User implements UserInterface
      *
      * @return $this
      */
-    public function setUsername($username)
+    public function setUsername($username): static
     {
         $this->username = $username;
         return $this;
@@ -151,7 +151,7 @@ class User implements UserInterface
      *
      * @return $this
      */
-    public function setAbbr($abbr)
+    public function setAbbr($abbr): static
     {
         $this->abbr = $abbr;
         return $this;
@@ -174,7 +174,7 @@ class User implements UserInterface
      *
      * @return $this
      */
-    public function setType($type)
+    public function setType($type): static
     {
         $this->type = $type;
         return $this;
@@ -196,7 +196,7 @@ class User implements UserInterface
     }
 
 
-    public function setShowEmptyLine($value)
+    public function setShowEmptyLine($value): static
     {
         $this->showEmptyLine = $value;
         return $this;
@@ -208,7 +208,7 @@ class User implements UserInterface
     }
 
 
-    public function setSuggestTime($value)
+    public function setSuggestTime($value): static
     {
         $this->suggestTime = $value;
         return $this;
@@ -220,7 +220,7 @@ class User implements UserInterface
     }
 
 
-    public function setShowFuture($value)
+    public function setShowFuture($value): static
     {
         $this->showFuture = $value;
         return $this;
@@ -230,13 +230,12 @@ class User implements UserInterface
     /**
      * Add entries
      *
-     * @param Entry $entries
      *
      * @return $this
      */
-    public function addEntries(Entry $entries)
+    public function addEntries(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
         return $this;
     }
 
@@ -263,11 +262,10 @@ class User implements UserInterface
     /**
      * Add contract
      *
-     * @param Contract $contract
      *
      * @return $this
      */
-    public function addContract(Contract $contract)
+    public function addContract(Contract $contract): static
     {
         $this->contracts[] = $contract;
         return $this;
@@ -279,7 +277,7 @@ class User implements UserInterface
      *
      * @return $this
      */
-    public function resetTeams()
+    public function resetTeams(): static
     {
         $this->teams = new ArrayCollection();
         return $this;
@@ -288,11 +286,10 @@ class User implements UserInterface
     /**
      * Add team
      *
-     * @param Team $team
      *
      * @return $this
      */
-    public function addTeam(Team $team)
+    public function addTeam(Team $team): static
     {
         $this->teams[] = $team;
         return $this;
@@ -314,7 +311,7 @@ class User implements UserInterface
     }
 
 
-    public function setLocale($locale)
+    public function setLocale($locale): static
     {
         $this->locale = LocalizationHelper::normalizeLocale($locale);
         return $this;
@@ -323,9 +320,9 @@ class User implements UserInterface
     /**
      * return all relevant settings in an array
      */
-    public function getSettings()
+    public function getSettings(): array
     {
-        return array(
+        return [
             'show_empty_line'   => $this->getShowEmptyLine(),
             'suggest_time'      => $this->getSuggestTime(),
             'show_future'       => $this->getShowFuture(),
@@ -333,7 +330,7 @@ class User implements UserInterface
             'user_name'         => $this->getUsername(),
             'type'              => $this->getType(),
             'locale'            => LocalizationHelper::normalizeLocale($this->getLocale())
-        );
+        ];
     }
 
 
@@ -342,44 +339,38 @@ class User implements UserInterface
     /**
      * Add entry
      *
-     * @param Entry $entries
      * @return $this
      */
-    public function addEntry(Entry $entries)
+    public function addEntry(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
         return $this;
     }
 
     /**
      * Remove entries
-     *
-     * @param Entry $entries
      */
-    public function removeEntrie(Entry $entries)
+    public function removeEntrie(Entry $entry): void
     {
-        $this->entries->removeElement($entries);
+        $this->entries->removeElement($entry);
     }
 
     /**
      * Remove teams
-     *
-     * @param Team $teams
      */
-    public function removeTeam(Team $teams)
+    public function removeTeam(Team $team): void
     {
-        $this->teams->removeElement($teams);
+        $this->teams->removeElement($team);
     }
 
     /**
      * Add entries
      *
-     * @param Entry $entries
      * @return $this
      */
-    public function addEntrie(Entry $entries)
+    public function addEntrie(Entry $entry): static
     {
-        $this->entries[] = $entries;
+        $this->entries[] = $entry;
 
         return $this;
     }
@@ -396,7 +387,6 @@ class User implements UserInterface
     /**
      * Get Users accesstoken for a Ticketsystem
      *
-     * @param TicketSystem $ticketsystem
      * @return null|string
      */
     public function getTicketSystemAccessToken(TicketSystem $ticketsystem)
@@ -408,6 +398,7 @@ class User implements UserInterface
                 $return = $userTicketsystem->getAccessToken();
             }
         }
+
         return $return;
     }
 
@@ -415,7 +406,6 @@ class User implements UserInterface
     /**
      * Get Users tokensecret for a Ticketsystem
      *
-     * @param TicketSystem $ticketsystem
      * @return null|string
      */
     public function getTicketSystemAccessTokenSecret(TicketSystem $ticketsystem)
@@ -427,6 +417,7 @@ class User implements UserInterface
                 $return = $userTicketsystem->getTokenSecret();
             }
         }
+
         return $return;
     }
 
@@ -436,6 +427,7 @@ class User implements UserInterface
         if ($this->type === 'ADMIN') {
             $roles[] = 'ROLE_ADMIN';
         }
+
         return array_unique($roles);
     }
 
@@ -473,11 +465,8 @@ class User implements UserInterface
 
     /**
      * Add a team where this user is lead
-     *
-     * @param Team $team
-     * @return User
      */
-    public function addLeadTeam(Team $team)
+    public function addLeadTeam(Team $team): static
     {
         $this->leadTeams[] = $team;
         return $this;
@@ -485,10 +474,8 @@ class User implements UserInterface
 
     /**
      * Remove a team where this user is lead
-     *
-     * @param Team $team
      */
-    public function removeLeadTeam(Team $team)
+    public function removeLeadTeam(Team $team): void
     {
         $this->leadTeams->removeElement($team);
     }

@@ -3,7 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Model\Base as Base;
+use App\Model\Base;
 
 /**
  * App\Entity\TicketSystem
@@ -14,6 +14,7 @@ use App\Model\Base as Base;
 class TicketSystem extends Base
 {
     const TYPE_JIRA = 'JIRA';
+
     const TYPE_OTRS = 'OTRS';
 
     /**
@@ -111,7 +112,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setName($name)
+    public function setName($name): static
     {
         $this->name = $name;
         return $this;
@@ -135,7 +136,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setBookTime($bookTime)
+    public function setBookTime($bookTime): static
     {
         $this->bookTime = $bookTime;
         return $this;
@@ -159,7 +160,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setType($type)
+    public function setType($type): static
     {
         $this->type = $type;
         return $this;
@@ -183,7 +184,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setUrl($url)
+    public function setUrl($url): static
     {
         $this->url = $url;
         return $this;
@@ -206,7 +207,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setTicketUrl($ticketUrl)
+    public function setTicketUrl($ticketUrl): static
     {
         $this->ticketUrl = $ticketUrl;
         return $this;
@@ -229,7 +230,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setLogin($login)
+    public function setLogin($login): static
     {
         $this->login = $login;
         return $this;
@@ -253,7 +254,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setPassword($password)
+    public function setPassword($password): static
     {
         $this->password = $password;
         return $this;
@@ -277,7 +278,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setPublicKey($publicKey)
+    public function setPublicKey($publicKey): static
     {
         $this->publicKey = $publicKey;
         return $this;
@@ -301,7 +302,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setPrivateKey($privateKey)
+    public function setPrivateKey($privateKey): static
     {
         $this->privateKey = $privateKey;
         return $this;
@@ -329,7 +330,7 @@ class TicketSystem extends Base
      * @param string $oauthConsumerKey
      * @return $this
      */
-    public function setOauthConsumerKey($oauthConsumerKey)
+    public function setOauthConsumerKey($oauthConsumerKey): static
     {
         $this->oauthConsumerKey = $oauthConsumerKey;
         return $this;
@@ -347,7 +348,7 @@ class TicketSystem extends Base
      * @param string $oauthConsumerSecret
      * @return $this
      */
-    public function setOauthConsumerSecret($oauthConsumerSecret)
+    public function setOauthConsumerSecret($oauthConsumerSecret): static
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
         return $this;

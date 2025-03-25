@@ -11,7 +11,7 @@ use App\Entity\TicketSystem;
 
 class ProjectTest extends TestCase
 {
-    public function testFluentInterface()
+    public function testFluentInterface(): void
     {
         $project = new Project();
 
@@ -29,7 +29,7 @@ class ProjectTest extends TestCase
         );
     }
 
-    public function testGetterSetter()
+    public function testGetterSetter(): void
     {
         $project = new Project();
 

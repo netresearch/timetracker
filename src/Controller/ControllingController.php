@@ -34,23 +34,19 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ControllingController extends BaseController
 {
-    /**
-     * @var Export
-     */
-    private $exportService;
+    private \App\Services\Export $export;
 
     /**
      * @required
      */
-    public function setExportService(Export $exportService)
+    public function setExportService(Export $export): void
     {
-        $this->exportService = $exportService;
+        $this->export = $export;
     }
 
     /**
      * Exports a users timetable from one specific year and month
      *
-     * @param Request $request
      *
      * @return Response
      * @throws \PhpOffice\PhpSpreadsheet\Exception
@@ -71,7 +67,7 @@ class ControllingController extends BaseController
         $onlyBillable = (bool) $request->get('billable');
         $showTicketTitles = (bool) $request->get('tickettitles');
 
-        $service = $this->exportService;
+        $service = $this->export;
         /** @var \App\Entity\Entry[] $entries */
         $entries = $service->exportEntries(
             $userId, $year, $month, $projectId, $customerId, [
@@ -103,6 +99,7 @@ class ControllingController extends BaseController
         //$spreadsheet = new Spreadsheet();
         $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
         $reader->setReadFilter(new LOReadFilter());
+
         $spreadsheet = $reader->load(
             $this->kernel->getProjectDir() . '/public/template.xlsx'
         );
@@ -119,6 +116,7 @@ class ControllingController extends BaseController
             $sheet->setCellValue('N2', 'billable');
             $sheet->getStyle('N2')->applyFromArray($headingStyle);
         }
+
         if ($showTicketTitles) {
             $sheet->setCellValue('O2', 'Tickettitel');
             $sheet->getStyle('O2')->applyFromArray($headingStyle);
@@ -143,9 +141,11 @@ class ControllingController extends BaseController
                 if ($activity->isHoliday()) {
                     $stats[$entry->getUser()->getAbbr()]['holidays']++;
                 }
+
                 if ($activity->isSick()) {
                     $stats[$entry->getUser()->getAbbr()]['sickdays']++;
                 }
+
                 $activity = $activity->getName();
             } else {
                 $activity = ' ';
@@ -174,6 +174,7 @@ class ControllingController extends BaseController
             if ($showBillableField) {
                 $sheet->setCellValue('N' . $lineNumber, (int) $entry->billable);
             }
+
             if ($showTicketTitles) {
                 $sheet->setCellValue('O' . $lineNumber, $entry->getTicketTitle());
             }
@@ -216,8 +217,8 @@ class ControllingController extends BaseController
 
 
         $file = tempnam(sys_get_temp_dir(), 'ttt-export-');
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($file);
+        $xlsx = new Xlsx($spreadsheet);
+        $xlsx->save($file);
 
         $response = new Response();
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -232,7 +233,7 @@ class ControllingController extends BaseController
     /**
      * Set cell value to numeric date value and given display format.
      *
-     * @param  Worksheet $sheet  Spreadsheet
+     * @param Worksheet $worksheet Spreadsheet
      * @param  string    $column Spreadsheet column
      * @param  number    $row    Spreadsheet row
      * @param  string    $date   Date should be inserted
@@ -240,16 +241,16 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @return void
      */
-    protected static function setCellDate(Worksheet $sheet, $column, $row, $date, $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD2)
+    protected static function setCellDate(Worksheet $worksheet, string $column, $row, $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD2)
     {
         // Set date value
-        $sheet->setCellValue(
+        $worksheet->setCellValue(
             $column . $row,
             \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date)
         );
 
         // Set the number format mask so that the excel timestamp will be displayed as a human-readable date/time
-        $sheet->getStyle($column . $row)
+        $worksheet->getStyle($column . $row)
             ->getNumberFormat()
             ->setFormatCode($format);
     }
@@ -257,23 +258,23 @@ class ControllingController extends BaseController
     /**
      * Set cell value to a numeric time value and display format to HH::MM.
      *
-     * @param  Worksheet $sheet  Spreadsheet
+     * @param Worksheet $worksheet Spreadsheet
      * @param  string    $column Spreadsheet column
      * @param  number    $row    Spreadsheet row
      * @param  string    $date   Date with time which time value should be inserted
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @return void
      */
-    protected static function setCellHours(Worksheet $sheet, $column, $row, $date)
+    protected static function setCellHours(Worksheet $worksheet, string $column, $row, $date)
     {
         $dateValue = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
 
         // Set date value
-        $sheet->setCellValue($column . $row, $hourValue);
+        $worksheet->setCellValue($column . $row, $hourValue);
 
         // Set the number format mask so that the excel timestamp will be displayed as a human-readable date/time
-        $sheet->getStyle($column . $row)
+        $worksheet->getStyle($column . $row)
             ->getNumberFormat()
             ->setFormatCode('HH:MM');
     }

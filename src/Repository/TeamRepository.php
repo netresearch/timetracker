@@ -11,11 +11,10 @@ class TeamRepository extends ServiceEntityRepository
 {
     /**
      * TeamRepository constructor.
-     * @param ManagerRegistry $registry
      */
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Team::class);
+        parent::__construct($managerRegistry, Team::class);
     }
 
     /**

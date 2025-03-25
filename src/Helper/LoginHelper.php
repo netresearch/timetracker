@@ -18,7 +18,7 @@ class LoginHelper
     const COOKIE_NAME   = 'nr_timetracker';
 
 
-    public static function setCookie($userId, $userName, $secret)
+    public static function setCookie(string $userId, string $userName, string $secret): void
     {
         $token = bin2hex(random_bytes(32));
         setcookie(
@@ -26,18 +26,18 @@ class LoginHelper
             $userId
             . ':' . static::hash($userName, $secret, $token)
             . ':' . $token,
-            time() + (14*24*60*60)
+            ['expires' => time() + (14*24*60*60)]
         );
     }
 
-    public static function deleteCookie()
+    public static function deleteCookie(): void
     {
-        setcookie(self::COOKIE_NAME, '', time() - 7200);
+        setcookie(self::COOKIE_NAME, '', ['expires' => time() - 7200]);
     }
 
-    private static function getCookieData()
+    private static function getCookieData(): false|array
     {
-        if (!isset($_COOKIE) || !is_array($_COOKIE)) {
+        if (!is_array($_COOKIE)) {
             return false;
         }
 
@@ -45,15 +45,15 @@ class LoginHelper
             return false;
         }
 
-        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', $_COOKIE[self::COOKIE_NAME], $matches)) {
+        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', (string) $_COOKIE[self::COOKIE_NAME], $matches)) {
             return false;
         }
 
-        return array(
+        return [
             'userId' => (int)    $matches[1],
-            'hash'   => (string) $matches[2],
-            'token'  => (string) $matches[3],
-        );
+            'hash'   => $matches[2],
+            'token'  => $matches[3],
+        ];
     }
 
     public static function getCookieUserId()
@@ -66,7 +66,7 @@ class LoginHelper
         return $cookieData['userId'];
     }
 
-    public static function checkCookieUserName($expectedUserName, $secret)
+    public static function checkCookieUserName(string $expectedUserName, string $secret)
     {
         $cookieData = self::getCookieData();
         if (!is_array($cookieData)) {
@@ -77,7 +77,7 @@ class LoginHelper
         return $expectedHash == $cookieData['hash'];
     }
 
-    private static function hash($userName, $secret, $token)
+    private static function hash(string $userName, string $secret, string $token): string
     {
         return hash('sha256', $userName . $secret . $token);
     }

@@ -10,34 +10,8 @@ use Symfony\Component\Routing\RouterInterface;
 
 class SubticketSyncService
 {
-    /**
-     * @var ManagerRegistry
-     */
-    private $doctrine;
-
-    /**
-     * @var RouterInterface
-     */
-    private $router;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @param ManagerRegistry $doctrine
-     * @param RouterInterface $router
-     * @param LoggerInterface $logger
-     */
-    public function __construct(
-        ManagerRegistry $doctrine,
-        RouterInterface $router,
-        LoggerInterface $logger
-    ) {
-        $this->doctrine = $doctrine;
-        $this->router = $router;
-        $this->logger = $logger;
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly RouterInterface $router)
+    {
     }
 
     /**
@@ -50,15 +24,16 @@ class SubticketSyncService
      * @throws \Exception When something goes wrong.
      *                    Exception codes are sensible HTTP status codes
      */
-    public function syncProjectSubtickets($projectOrProjectId)
+    public function syncProjectSubtickets($projectOrProjectId): array
     {
         if ($projectOrProjectId instanceof Project) {
             $project = $projectOrProjectId;
         } else {
-            $project = $this->doctrine
+            $project = $this->managerRegistry
                 ->getRepository(\App\Entity\Project::class)
                 ->find($projectOrProjectId);
         }
+
         if (!$project) {
             throw new \Exception('Project does not exist', 404);
         }
@@ -73,10 +48,11 @@ class SubticketSyncService
             if ($project->getSubtickets() != '') {
                 $project->setSubtickets([]);
 
-                $em = $this->doctrine->getManager();
+                $em = $this->managerRegistry->getManager();
                 $em->persist($project);
                 $em->flush();
             }
+
             return [];
         }
 
@@ -87,6 +63,7 @@ class SubticketSyncService
                 400
             );
         }
+
         $token = $userWithJiraAccess->getTicketSystemAccessToken($ticketSystem);
         if (!$token) {
             throw new \Exception(
@@ -101,7 +78,7 @@ class SubticketSyncService
         $jiraOAuthApi = new JiraOAuthApi(
             $userWithJiraAccess,
             $ticketSystem,
-            $this->doctrine,
+            $this->managerRegistry,
             $this->router
         );
 
@@ -115,10 +92,11 @@ class SubticketSyncService
                 $allSubtickets, $jiraOAuthApi->getSubtickets($mainTicket)
             );
         }
+
         natcasesort($allSubtickets);
 
         $project->setSubtickets($allSubtickets);
-        $em = $this->doctrine->getManager();
+        $em = $this->managerRegistry->getManager();
         $em->persist($project);
         $em->flush();
 
