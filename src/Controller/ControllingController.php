@@ -247,7 +247,7 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @return void
      */
-    protected static function setCellDate(Worksheet $worksheet, string $column, $row, $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD2)
+    protected static function setCellDate(Worksheet $worksheet, string $column, $row, $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD)
     {
         // Set date value
         $worksheet->setCellValue(

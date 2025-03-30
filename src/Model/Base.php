@@ -5,7 +5,6 @@
 
 namespace App\Model;
 
-use Doctrine\ORM\Mapping\Entity;
 use ReflectionClass;
 use ReflectionProperty;
 

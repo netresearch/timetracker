@@ -246,12 +246,8 @@ class BaseController extends AbstractController
 
     /**
      * Checks if the user is logged in via Symfony Security
-     *
-     * @param Request $request The request object
-     *
-     * @return bool
      */
-    protected function checkLogin(Request $request)
+    protected function checkLogin(Request $request): bool
     {
         // Only use Symfony's security component to check authentication
         if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
@@ -289,7 +285,7 @@ class BaseController extends AbstractController
      * @param string $message Error message
      * @param int    $status  HTTP status code
      */
-    protected function getFailedResponse($message, int $status): \App\Model\Response
+    protected function getFailedResponse(string $message, int $status): \App\Model\Response
     {
         $response = new Response($message);
         $response->setStatusCode($status);

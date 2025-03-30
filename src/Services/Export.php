@@ -21,10 +21,8 @@ namespace App\Services;
 
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
-use App\Entity\User;
 use App\Helper\JiraOAuthApi;
 use Doctrine\Persistence\ManagerRegistry;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\RouterInterface;
 
 /**

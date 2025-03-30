@@ -11,7 +11,6 @@
 
 namespace App\Helper;
 
-use Doctrine\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
@@ -19,8 +18,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 
 use App\Entity\Entry;
-use App\Entity\TicketSystem;
-use App\Entity\User;
 use App\Entity\UserTicketsystem;
 
 use Psr\Http\Message\ResponseInterface;
@@ -291,6 +288,7 @@ class JiraOAuthApi
         }
 
         $objectManager = $this->managerRegistry->getManager();
+        /** @var EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
         $entries = $objectRepository->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
 
@@ -515,12 +513,10 @@ class JiraOAuthApi
     /**
      * Execute POST request and return response as simple object.
      *
-     * @param  array  $data
-     * @return string
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    protected function post(string $url, $data = []): mixed
+    protected function post(string $url, array $data = []): object
     {
         return $this->getResponse('POST', $url, $data);
     }
@@ -528,22 +524,19 @@ class JiraOAuthApi
     /**
      * Execute PUT request and return response as simple object.
      *
-     * @param  array  $data
-     * @return string
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    protected function put(string $url, $data = []): mixed
+    protected function put(string $url, array $data = []): object
     {
         return $this->getResponse('PUT', $url, $data);
     }
 
     /**
-     * @return string
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    protected function delete(string $url): mixed
+    protected function delete(string $url): object
     {
         return $this->getResponse('DELETE', $url);
     }
@@ -551,11 +544,10 @@ class JiraOAuthApi
     /**
      * Get Response of Jira-API request
      *
-     * @param array $data
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    protected function getResponse(string $method, string $url, $data = []): mixed
+    protected function getResponse(string $method, string $url, array $data = []): object
     {
         $additionalParameter = [];
         if (!empty($data)) {
@@ -585,7 +577,7 @@ class JiraOAuthApi
             }
         }
 
-        return json_decode($response->getBody());
+        return json_decode($response->getBody(), null, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -752,7 +744,7 @@ class JiraOAuthApi
      *
      * @throws JiraApiUnauthorizedException
      */
-    protected function throwUnauthorizedRedirect(\Exception $exception = null)
+    protected function throwUnauthorizedRedirect(\Throwable $exception = null)
     {
         try {
             $oauthAuthUrl = $this->fetchOAuthRequestToken();

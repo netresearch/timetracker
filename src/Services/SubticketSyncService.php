@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Entity\Project;
 use App\Helper\JiraOAuthApi;
 use Doctrine\Persistence\ManagerRegistry;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\RouterInterface;
 
 class SubticketSyncService
