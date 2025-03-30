@@ -1,0 +1,15 @@
+{
+    "recommendations": [
+        "junstyle.php-cs-fixer",
+        "bmewburn.vscode-intelephense-client",
+        "mehedidracula.php-namespace-resolver",
+        "neilbrayfield.php-docblocker",
+        "recca0120.vscode-phpunit",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "editorconfig.editorconfig",
+        "mikestead.dotenv",
+        "ikappas.phpcs",
+        "devsense.composer-php-vscode"
+    ]
+}
