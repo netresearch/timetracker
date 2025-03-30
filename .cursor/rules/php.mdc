@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+[rules.mdc](mdc:.cursor/rules/rules.mdc)
+
