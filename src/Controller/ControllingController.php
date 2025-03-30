@@ -70,7 +70,12 @@ class ControllingController extends BaseController
         $service = $this->export;
         /** @var \App\Entity\Entry[] $entries */
         $entries = $service->exportEntries(
-            $userId, $year, $month, $projectId, $customerId, [
+            $userId,
+            $year,
+            $month,
+            $projectId,
+            $customerId,
+            [
                 'user.username' => true,
                 'entry.day'     => true,
                 'entry.start'   => true,
@@ -81,8 +86,10 @@ class ControllingController extends BaseController
             && $this->params->get('app_show_billable_field_in_export');
         if ($showBillableField || $showTicketTitles) {
             $entries = $service->enrichEntriesWithTicketInformation(
-                $this->getUserId($request), $entries,
-                $showBillableField, $onlyBillable,
+                $this->getUserId($request),
+                $entries,
+                $showBillableField,
+                $onlyBillable,
                 $showTicketTitles
             );
         }
@@ -126,7 +133,6 @@ class ControllingController extends BaseController
         $lineNumber = 3;
         $stats = [];
         foreach ($entries as $entry) {
-
             if (! isset($stats[$entry->getUser()->getAbbr()])) {
                 $stats[$entry->getUser()->getAbbr()] = [
                     'holidays' => 0,
@@ -137,7 +143,6 @@ class ControllingController extends BaseController
             $activity = $entry->getActivity();
 
             if (!is_null($activity)) {
-
                 if ($activity->isHoliday()) {
                     $stats[$entry->getUser()->getAbbr()]['holidays']++;
                 }

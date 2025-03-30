@@ -15,7 +15,8 @@ class ProjectTest extends TestCase
     {
         $project = new Project();
 
-        $this->assertEquals($project,
+        $this->assertEquals(
+            $project,
             $project
                 ->setId(null)
                 ->setName(null)
@@ -106,4 +107,3 @@ class ProjectTest extends TestCase
         $this->assertEquals(null, $project->getTechnicalLead());
     }
 }
-

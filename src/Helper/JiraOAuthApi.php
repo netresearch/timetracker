@@ -103,14 +103,11 @@ class JiraOAuthApi
             if ($oAuthToken == '' && $oAuthTokenSecret == '') {
                 $this->throwUnauthorizedRedirect(null);
             }
-
         } elseif ($tokenMode === 'new') {
             $oAuthToken = '';
             $oAuthTokenSecret = '';
-
         } elseif ($tokenMode === 'request') {
             $oAuthTokenSecret = '';
-
         } else {
             throw new \UnexpectedValueException('Invalid token mode: ' . $tokenMode);
         }
@@ -302,7 +299,6 @@ class JiraOAuthApi
                 $this->updateEntryJiraWorkLog($entry);
                 $em->persist($entry);
             } catch (\Exception) {
-
             } finally {
                 $em->flush();
             }
@@ -357,7 +353,7 @@ class JiraOAuthApi
         }
 
         $entry->setWorklogId($workLog->id);
-        $entry->setSyncedToTicketsystem(TRUE);
+        $entry->setSyncedToTicketsystem(true);
     }
 
     /**
@@ -387,8 +383,9 @@ class JiraOAuthApi
                 $entry->getWorklogId()
             ));
 
-            $entry->setWorklogId(NULL);
-        } catch (JiraApiInvalidResourceException) {}
+            $entry->setWorklogId(null);
+        } catch (JiraApiInvalidResourceException) {
+        }
     }
 
     /**
@@ -575,14 +572,15 @@ class JiraOAuthApi
         } catch (GuzzleException $guzzleException) {
             if ($guzzleException->getCode() == 401) {
                 $this->throwUnauthorizedRedirect($guzzleException);
-
             } elseif ($guzzleException->getCode() === 404) {
                 $message = '404 - Resource is not available: (' . $url . ')';
                 throw new JiraApiInvalidResourceException($message, 404, $guzzleException);
-
             } else {
                 throw new JiraApiException(
-                    'Unknown Guzzle exception: ' . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException
+                    'Unknown Guzzle exception: ' . $guzzleException->getMessage(),
+                    $guzzleException->getCode(),
+                    null,
+                    $guzzleException
                 );
             }
         }
@@ -723,7 +721,8 @@ class JiraOAuthApi
         $startDate = $entry->getDay() ?: new \DateTime();
         if ($entry->getStart()) {
             $startDate->setTime(
-                $entry->getStart()->format('H'), $entry->getStart()->format('i')
+                $entry->getStart()->format('H'),
+                $entry->getStart()->format('i')
             );
         }
 
@@ -760,7 +759,9 @@ class JiraOAuthApi
         } catch (JiraApiException $jiraApiException) {
             throw new JiraApiException(
                 'Failed to fetch OAuth URL: ' . $jiraApiException->getPrevious()->getMessage(),
-                400, null, $jiraApiException
+                400,
+                null,
+                $jiraApiException
             );
         }
 

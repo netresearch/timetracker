@@ -16,7 +16,7 @@ class Activity
 
     const HOLIDAY = 'Urlaub';
 
-	/**
+    /**
      * @ORM\Id
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
@@ -50,7 +50,7 @@ class Activity
 
     public function __construct()
     {
-    	$this->entries = new ArrayCollection();
+        $this->entries = new ArrayCollection();
         $this->presets = new ArrayCollection();
     }
 
@@ -68,8 +68,8 @@ class Activity
     public function setName(string $name): self
     {
         $this->name = $name;
-		return $this;
-	}
+        return $this;
+    }
 
     public function getName(): string
     {
@@ -79,23 +79,23 @@ class Activity
     public function setNeedsTickets(bool $needsTicket): self
     {
         $this->needsTicket = $needsTicket;
-		return $this;
+        return $this;
     }
 
     public function getNeedsTicket(): bool
     {
         return $this->needsTicket;
-	}
+    }
 
     public function getFactor(): float
     {
         return $this->factor;
-	}
+    }
 
     public function setFactor(float $factor): self
     {
         $this->factor = $factor;
-		return $this;
+        return $this;
     }
 
     /**

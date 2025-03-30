@@ -39,4 +39,3 @@ class HolidayRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 }
-

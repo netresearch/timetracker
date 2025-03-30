@@ -18,7 +18,7 @@ class LdapClient
     /**
      * @var string LDAP host name or IP.
      */
-	protected $_host = '192.168.1.2';
+    protected $_host = '192.168.1.2';
 
     /**
      * @var integer LDAP host port.
@@ -38,12 +38,12 @@ class LdapClient
     /**
      * @var string LDAP base DN.
      */
-	protected $_baseDn = 'dc=netresearch,dc=nr';
+    protected $_baseDn = 'dc=netresearch,dc=nr';
 
     /**
      * @var string Accountname-Field in LDAP.
      */
-	protected $_userNameField = 'sAMAccountName';
+    protected $_userNameField = 'sAMAccountName';
 
     /**
      * @var string LDAP user auth name.
@@ -67,9 +67,7 @@ class LdapClient
 
     public function __construct(
         protected ?LoggerInterface $logger = null
-    )
-    {
-
+    ) {
     }
 
     /**
@@ -120,10 +118,12 @@ class LdapClient
         /** @var \Laminas\Ldap\Collection $collection */
         $collection = $ldap->search(
             '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')',
-            $this->_baseDn, Ldap::SEARCH_SCOPE_SUB, ['cn', 'dn']
+            $this->_baseDn,
+            Ldap::SEARCH_SCOPE_SUB,
+            ['cn', 'dn']
         );
 
-        if (!is_object($collection) || ($collection->getFirst() == NULL)) {
+        if (!is_object($collection) || ($collection->getFirst() == null)) {
             throw new \Exception('Username unknown.');
         }
 

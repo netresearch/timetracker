@@ -14,7 +14,6 @@ use App\Model\Base;
  */
 class Project extends Base
 {
-
     const BILLING_NONE  = 0;
 
     const BILLING_TM    = 1;
@@ -628,5 +627,4 @@ class Project extends Base
     {
         $this->presets->removeElement($preset);
     }
-
 }

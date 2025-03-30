@@ -110,14 +110,14 @@ class InterpretationController extends BaseController
 
         $customers = [];
 
-        foreach($entries as $entry) {
+        foreach ($entries as $entry) {
             if (! is_object($entry->getCustomer())) {
                 continue;
             }
 
             $customer = $entry->getCustomer()->getId();
 
-            if(!isset($customers[$customer])) {
+            if (!isset($customers[$customer])) {
                 $customers[$customer] = [
                     'id'  => $customer,
                     'name'  => $entry->getCustomer()->getName(),
@@ -130,8 +130,9 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach($customers AS &$customer)
+        foreach ($customers as &$customer) {
             $customer['quota'] = TimeHelper::formatQuota($customer['hours'], $sum);
+        }
 
         usort($customers, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($customers));
@@ -160,7 +161,7 @@ class InterpretationController extends BaseController
 
             $project = $entry->getProject()->getId();
 
-            if(!isset($projects[$project])) {
+            if (!isset($projects[$project])) {
                 $projects[$project] = [
                     'id'  => $project,
                     'name'  => $entry->getProject()->getName(),
@@ -173,8 +174,9 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach($projects AS &$project)
+        foreach ($projects as &$project) {
             $project['quota'] = TimeHelper::formatQuota($project['hours'], $sum);
+        }
 
         usort($projects, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($projects));
@@ -197,11 +199,11 @@ class InterpretationController extends BaseController
 
         $tickets = [];
 
-        foreach($entries as $entry) {
+        foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
 
-            if(!empty($ticket) && $ticket != '-'){
-                if(!isset($tickets[$ticket])) {
+            if (!empty($ticket) && $ticket != '-') {
+                if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = [
                         'id'  => $entry->getId(),
                         'name'  => $ticket,
@@ -215,8 +217,9 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach($tickets AS &$ticket)
+        foreach ($tickets as &$ticket) {
             $ticket['quota'] = TimeHelper::formatQuota($ticket['hours'], $sum);
+        }
 
         usort($tickets, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($tickets));
@@ -329,10 +332,10 @@ class InterpretationController extends BaseController
 
         $activities = [];
 
-        foreach($entries as $entry) {
+        foreach ($entries as $entry) {
             $activityId = $entry->getActivity()->getId();
 
-            if(!isset($activities[$activityId])) {
+            if (!isset($activities[$activityId])) {
                 $activities[$activityId] = [
                     'id'    => $activityId,
                     'name'  => $entry->getActivity()->getName(),
@@ -344,8 +347,9 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach($activities AS &$activity)
+        foreach ($activities as &$activity) {
             $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $sum);
+        }
 
         usort($activities, $this->sortByName(...));
         return new JsonResponse($this->normalizeData($activities));
@@ -436,7 +440,7 @@ class InterpretationController extends BaseController
     {
         $normalized = [];
 
-        foreach($data as $d) {
+        foreach ($data as $d) {
             $d['hours'] /= 60;
             $normalized[] = $d;
         }

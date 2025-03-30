@@ -28,8 +28,7 @@ use Symfony\Component\Translation\Translator;
  * @license  No license
  * @link     http://www.netresearch.de
  */
-class NrArrayTranslatorTest
-    extends TestCase
+class NrArrayTranslatorTest extends TestCase
 {
 
     /**
@@ -73,7 +72,6 @@ class NrArrayTranslatorTest
         $this->assertTrue(
             $filters['nr_array_translator'] instanceof \Twig\TwigFilter
         );
-
     }
 
     /**
@@ -98,7 +96,8 @@ class NrArrayTranslatorTest
         $dataToTranslateJson = json_encode($dataToTranslate);
 
         $this->assertEquals(
-            $dataToTranslateJson, $this->nrArrayTranslator->filterArray(
+            $dataToTranslateJson,
+            $this->nrArrayTranslator->filterArray(
                 $dataToTranslateJson,
                 'activity',
                 'activities',
@@ -107,7 +106,8 @@ class NrArrayTranslatorTest
         );
 
         $this->assertEquals(
-            $dataToTranslateJson, $this->nrArrayTranslator->filterArray(
+            $dataToTranslateJson,
+            $this->nrArrayTranslator->filterArray(
                 $dataToTranslateJson,
                 'activity',
                 'activities'
@@ -115,11 +115,11 @@ class NrArrayTranslatorTest
         );
 
         $this->assertEquals(
-            $dataToTranslateJson, $this->nrArrayTranslator->filterArray(
+            $dataToTranslateJson,
+            $this->nrArrayTranslator->filterArray(
                 $dataToTranslateJson,
                 'activity'
             )
         );
     }
-
 }

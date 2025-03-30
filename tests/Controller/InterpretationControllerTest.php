@@ -345,7 +345,6 @@ class InterpretationControllerTest extends Base
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedLinks);
         $this->assertLength(7, 'data');
-
     }
 
     public function testGetAllEntriesActionReturnLinksPageOne(): void

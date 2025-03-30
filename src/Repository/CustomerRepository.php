@@ -53,7 +53,8 @@ class CustomerRepository extends ServiceEntityRepository
     {
         /** @var Customer[] $customers */
         $customers = $this->findBy(
-            [], ['name' => 'ASC']
+            [],
+            ['name' => 'ASC']
         );
 
         $data = [];

@@ -112,8 +112,10 @@ class Export
      * @param bool  $showTicketTitles  Add ticket title field
      */
     public function enrichEntriesWithTicketInformation(
-        $currentUserId, array $entries,
-        $showBillableField, $removeNotBillable = false,
+        $currentUserId,
+        array $entries,
+        $showBillableField,
+        $removeNotBillable = false,
         $showTicketTitles = false
     ): array {
         $doctrine = $this->managerRegistry;
@@ -160,7 +162,8 @@ class Export
         foreach ($arApi as $idx => $jiraApi) {
             $ticketSystemIssuesTotal = array_unique($arTickets[$idx]);
             $ticketSystemIssuesTotalChunks = array_chunk(
-                $ticketSystemIssuesTotal, $maxRequestsElements
+                $ticketSystemIssuesTotal,
+                $maxRequestsElements
             );
 
             $jiraFields = [];

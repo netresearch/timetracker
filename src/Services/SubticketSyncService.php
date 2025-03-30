@@ -89,7 +89,8 @@ class SubticketSyncService
             // so we put the main ticket in the subticket list as well
             $allSubtickets[] = $mainTicket;
             $allSubtickets = array_merge(
-                $allSubtickets, $jiraOAuthApi->getSubtickets($mainTicket)
+                $allSubtickets,
+                $jiraOAuthApi->getSubtickets($mainTicket)
             );
         }
 

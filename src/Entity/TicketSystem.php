@@ -345,4 +345,3 @@ class TicketSystem extends Base
         return $this;
     }
 }
-

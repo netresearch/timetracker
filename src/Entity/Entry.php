@@ -708,9 +708,9 @@ class Entry extends Base
         return $this->internalJiraTicketOriginalKey;
     }
 
-     /**
-     * Returns true, if a original ticket name.
-     */
+    /**
+    * Returns true, if a original ticket name.
+    */
     public function hasInternalJiraTicketOriginalKey(): bool
     {
         return !empty($this->internalJiraTicketOriginalKey);
@@ -734,7 +734,7 @@ class Entry extends Base
      */
     public function getPostDataForInternalJiraTicketCreation(): array
     {
-       return [
+        return [
             'fields' =>  [
                 'project'     =>  [
                     'key' => $this->getProject()->getInternalJiraProjectKey(),

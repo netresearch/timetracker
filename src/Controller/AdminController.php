@@ -127,7 +127,7 @@ class AdminController extends BaseController
         $global       = $request->get('global') ?: 0;
         $estimation   = TimeHelper::readable2minutes($request->get('estimation') ?: '0m');
         $billing      = $request->get('billing') ?: 0;
-        $costCenter   = $request->get('cost_center') ?: NULL;
+        $costCenter   = $request->get('cost_center') ?: null;
         $offer        = $request->get('offer') ?: 0;
         $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ?: 0;
         /** @var \App\Repository\ProjectRepository $projectRepository */
@@ -168,7 +168,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if ((1 < strlen($jiraId)) && ($project->getJiraId() !== $jiraId))  {
+        if ((1 < strlen($jiraId)) && ($project->getJiraId() !== $jiraId)) {
             $search = ['jiraId' => $jiraId];
             if ($ticketSystem) {
                 $search['ticketSystem'] = $ticketSystem;
@@ -358,7 +358,7 @@ class AdminController extends BaseController
                 continue;
             }
 
-            if ($team = $this->doctrineRegistry->getRepository(Team::class)->find( (int) $teamId)) {
+            if ($team = $this->doctrineRegistry->getRepository(Team::class)->find((int) $teamId)) {
                 $customer->addTeam($team);
             } else {
                 $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
@@ -920,7 +920,10 @@ class AdminController extends BaseController
             foreach ($ticketSystems as $ticketSystem) {
                 try {
                     $jiraOauthApi = new JiraOAuthApi(
-                        $user, $ticketSystem, $doctrine, $this->router
+                        $user,
+                        $ticketSystem,
+                        $doctrine,
+                        $this->router
                     );
                     $jiraOauthApi->updateAllEntriesJiraWorkLogs();
                     $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'success';
@@ -1039,7 +1042,7 @@ class AdminController extends BaseController
 
         // update old contracts,
         $responseMessage = $this->updateOldContractAction($user, $dateStart, $dateEnd);
-        if($responseMessage !== '' && $responseMessage !== '0') {
+        if ($responseMessage !== '' && $responseMessage !== '0') {
             $response = new Response($responseMessage);
             $response->setStatusCode(406);
             return $response;
@@ -1075,12 +1078,12 @@ class AdminController extends BaseController
         }
 
         // filter to get only open-ended contracts
-        $contractsOld = array_filter($contractsOld, fn($n): bool => ($n->getEnd() == null));
+        $contractsOld = array_filter($contractsOld, fn ($n): bool => ($n->getEnd() == null));
         if (count($contractsOld) > 1) {
             return $this->translate('There is more than one open-ended contract for the user.');
         }
 
-        if($contractsOld === []) {
+        if ($contractsOld === []) {
             return "";
         }
 
@@ -1171,5 +1174,4 @@ class AdminController extends BaseController
 
         return new JsonResponse(['success' => true]);
     }
-
 }

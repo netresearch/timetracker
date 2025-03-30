@@ -15,19 +15,23 @@ class TestModel extends Base
 
     protected $active       = true;
 
-    public function getName() {
+    public function getName()
+    {
         return $this->name;
     }
 
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
-    public function getWorkspace() {
+    public function getWorkspace()
+    {
         return $this->workspace;
     }
 
-    public function getActive() {
+    public function getActive()
+    {
         return $this->active;
     }
 }

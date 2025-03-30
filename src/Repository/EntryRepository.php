@@ -473,15 +473,15 @@ class EntryRepository extends ServiceEntityRepository
         $sql['from'] = "FROM entries";
         $sql['where_user'] = "WHERE user_id = " . intval($userId);
 
-        switch($period) {
-        case self::PERIOD_DAY :
+        switch ($period) {
+        case self::PERIOD_DAY:
             $sql['where_day'] = "AND day = CURDATE()";
             break;
-        case self::PERIOD_WEEK :
+        case self::PERIOD_WEEK:
             $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
             $sql['where_week'] = "AND WEEK(day, 1) = WEEK(CURDATE(), 1)";
             break;
-        case self::PERIOD_MONTH :
+        case self::PERIOD_MONTH:
             $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
             $sql['where_month']= "AND MONTH(day) = MONTH(CURDATE())";
             break;

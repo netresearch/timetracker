@@ -5,7 +5,6 @@
 
 namespace App\Helper;
 
-
 /**
  * Class JiraApiException
  * @package App\Helper

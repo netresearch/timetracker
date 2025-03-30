@@ -5,12 +5,10 @@
 
 namespace App\Helper;
 
-
 /**
  * Class JiraApiInvalidResourceException
  * @package App\Helper
  */
 class JiraApiInvalidResourceException extends \Exception
 {
-
 }

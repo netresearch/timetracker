@@ -33,4 +33,3 @@ class PresetRepository extends ServiceEntityRepository
         return $data;
     }
 }
-

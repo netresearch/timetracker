@@ -23,7 +23,8 @@ class TimeHelper
     /**
      * @param $letter
      */
-    public static function getMinutesByLetter($letter): int {
+    public static function getMinutesByLetter($letter): int
+    {
         return match ($letter) {
             'w' => self::DAYS_PER_WEEK * self::HOURS_PER_DAY * 60,
             'd' => self::HOURS_PER_DAY * 60,
@@ -46,7 +47,7 @@ class TimeHelper
         $sum = 0;
         $c = count($matches[0]);
         for ($i = 0; $i < $c; $i++) {
-            $sum += (float) str_replace(',','.',$matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]);
+            $sum += (float) str_replace(',', '.', $matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]);
         }
 
         return $sum;
@@ -126,6 +127,4 @@ class TimeHelper
     {
         return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';
     }
-
 }
-

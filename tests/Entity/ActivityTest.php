@@ -13,7 +13,8 @@ class ActivityTest extends TestCase
     {
         $activity = new Activity();
 
-        $this->assertEquals($activity,
+        $this->assertEquals(
+            $activity,
             $activity
                 ->setId(1)
                 ->setName('Test Activity')
