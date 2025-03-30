@@ -290,17 +290,17 @@ class JiraOAuthApi
             return;
         }
 
-        $em = $this->managerRegistry->getManager();
-        $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
-        $entries = $repo->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
+        $objectManager = $this->managerRegistry->getManager();
+        $objectRepository = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
+        $entries = $objectRepository->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
 
         foreach ($entries as $entry) {
             try {
                 $this->updateEntryJiraWorkLog($entry);
-                $em->persist($entry);
+                $objectManager->persist($entry);
             } catch (\Exception) {
             } finally {
-                $em->flush();
+                $objectManager->flush();
             }
         }
     }
@@ -615,9 +615,9 @@ class JiraOAuthApi
             ->setAccessToken($accessToken)
             ->setAvoidConnection($avoidConnection);
 
-        $em = $this->managerRegistry->getManager();
-        $em->persist($userTicketSystem);
-        $em->flush();
+        $objectManager = $this->managerRegistry->getManager();
+        $objectManager->persist($userTicketSystem);
+        $objectManager->flush();
 
         return [
             'oauth_token_secret' => $userTicketSystem->getTokenSecret(),

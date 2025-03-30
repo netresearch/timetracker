@@ -32,7 +32,7 @@ class TwigCsvEscapingExtension extends AbstractExtension
      * @param $string
      * @return string
      */
-    public function csvEscape($string)
+    public function csvEscape($string): string|array
     {
         return str_replace('"', '""', $string);
     }

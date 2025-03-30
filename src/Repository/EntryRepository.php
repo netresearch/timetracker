@@ -67,7 +67,6 @@ class EntryRepository extends ServiceEntityRepository
      */
     public static function getCalendarDaysByWorkDays(int $workingDays): int|float
     {
-        $workingDays = (int) $workingDays;
         if ($workingDays < 1) {
             return 0;
         }
@@ -158,7 +157,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
 
-        if (0 < (int) $userId) {
+        if (0 < $userId) {
             $queryBuilder->andWhere('entry.user = :user_id');
             $queryBuilder->setParameter('user_id', $userId, \PDO::PARAM_INT);
         }
@@ -173,7 +172,7 @@ class EntryRepository extends ServiceEntityRepository
             $queryBuilder->setParameter('customer_id', $customerId, \PDO::PARAM_INT);
         }
 
-        if (0 < (int) $year) {
+        if (0 < $year) {
             $queryBuilder->andWhere(
                 $queryBuilder->expr()->like('entry.day', ':month')
             );
@@ -212,7 +211,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array
      */
-    public function findByMonthWithExternalInformation($userId, $year, $month, $projectId, $customerId)
+    public function findByMonthWithExternalInformation($userId, $year, ?int $month, $projectId, $customerId)
     {
         $entityManager  = $this->getEntityManager();
         $queryBuilder = $entityManager->createQueryBuilder()

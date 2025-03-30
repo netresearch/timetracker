@@ -427,6 +427,7 @@ class DefaultController extends BaseController
         $response = new Response();
         $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
         $response->headers->set('Content-disposition', 'attachment;filename=' . $filename);
+
         $response->setContent(chr(239) . chr(187) . chr(191) . $content);
 
         return $response;

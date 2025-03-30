@@ -228,6 +228,7 @@ class ControllingController extends BaseController
         $response = new Response();
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $response->headers->set('Content-disposition', 'attachment;filename=' . $filename . '.xlsx');
+
         $response->setContent(file_get_contents($file));
 
         unlink($file);

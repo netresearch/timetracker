@@ -190,7 +190,7 @@ class User implements UserInterface
         return $this->type;
     }
 
-    public function getShowEmptyLine()
+    public function getShowEmptyLine(): int
     {
         return $this->showEmptyLine;
     }
@@ -202,7 +202,7 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getSuggestTime()
+    public function getSuggestTime(): int
     {
         return $this->suggestTime;
     }
@@ -214,7 +214,7 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getShowFuture()
+    public function getShowFuture(): int
     {
         return $this->showFuture;
     }

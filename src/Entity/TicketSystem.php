@@ -75,19 +75,16 @@ class TicketSystem extends Base
     protected string $publicKey = '';
 
     /**
-     * @var string $privateKey
      * @ORM\Column(type="string", name="private_key")
      */
     protected string $privateKey = '';
 
     /**
-     * @var string $oauthConsumerKey
      * @ORM\Column(name="oauth_consumer_key", type="string", length=255, nullable=true)
      */
     protected ?string $oauthConsumerKey = null;
 
     /**
-     * @var string $oauthConsumerSecret
      * @ORM\Column(name="oauth_consumer_secret", type="string", length=255, nullable=true)
      */
     protected ?string $oauthConsumerSecret = null;
@@ -280,7 +277,7 @@ class TicketSystem extends Base
      *
      * @return string $publicKey
      */
-    public function getPublicKey()
+    public function getPublicKey(): string
     {
         return $this->publicKey;
     }
@@ -289,11 +286,10 @@ class TicketSystem extends Base
     /**
      * Set private key
      *
-     * @param string $privateKey
      *
      * @return $this
      */
-    public function setPrivateKey($privateKey): static
+    public function setPrivateKey(string $privateKey): static
     {
         $this->privateKey = $privateKey;
         return $this;
@@ -304,7 +300,7 @@ class TicketSystem extends Base
      *
      * @return string $privateKey
      */
-    public function getPrivateKey()
+    public function getPrivateKey(): string
     {
         return $this->privateKey;
     }
@@ -312,7 +308,7 @@ class TicketSystem extends Base
     /**
      * @return string
      */
-    public function getOauthConsumerKey()
+    public function getOauthConsumerKey(): ?string
     {
         return $this->oauthConsumerKey;
     }
@@ -321,7 +317,7 @@ class TicketSystem extends Base
      * @param string $oauthConsumerKey
      * @return $this
      */
-    public function setOauthConsumerKey($oauthConsumerKey): static
+    public function setOauthConsumerKey(?string $oauthConsumerKey): static
     {
         $this->oauthConsumerKey = $oauthConsumerKey;
         return $this;
@@ -330,7 +326,7 @@ class TicketSystem extends Base
     /**
      * @return string
      */
-    public function getOauthConsumerSecret()
+    public function getOauthConsumerSecret(): ?string
     {
         return $this->oauthConsumerSecret;
     }
@@ -339,7 +335,7 @@ class TicketSystem extends Base
      * @param string $oauthConsumerSecret
      * @return $this
      */
-    public function setOauthConsumerSecret($oauthConsumerSecret): static
+    public function setOauthConsumerSecret(?string $oauthConsumerSecret): static
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
         return $this;
