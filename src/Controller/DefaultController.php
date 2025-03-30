@@ -207,13 +207,19 @@ class DefaultController extends BaseController
         return new JsonResponse($data);
     }
 
-
     /**
-     * Retrieves all current entries of the user logged in.
+     * Returns entries for the current user for a specified number of working days.
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * This endpoint retrieves time entries filtered by:
+     * - The currently logged-in user
+     * - A number of working days (not calendar days) in the past
+     * - User preference for showing future entries
+     *
+     * Note: The underlying repository method converts working days to calendar days.
+     * This means that specifying "1 day" might return entries from more than one
+     * calendar day (e.g., on Monday, it will include Friday's entries as well).
      */
-    public function getDataAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
+    public function getDataAction(Request $request): \App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
