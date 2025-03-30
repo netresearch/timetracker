@@ -60,6 +60,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get install -y nodejs
 RUN npm install -g npm@latest
 
+RUN pecl install pcov \
+ && docker-php-ext-enable pcov
+
 
 FROM devbox AS app_builder
 
