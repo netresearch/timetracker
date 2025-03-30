@@ -49,13 +49,23 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Returns count of calendar days which include given amount of working days.
+     * Converts a number of working days to the equivalent number of calendar days.
      *
-     * @param int $workingDays Amount of working days.
+     * This method calculates how many calendar days are needed to cover the specified
+     * number of working days, taking into account weekends and the current day of the week.
      *
-     * @return integer
+     * The calculation logic:
+     * 1. First handles full weeks (5 working days = 7 calendar days)
+     * 2. Then handles remaining days, accounting for weekends
+     * 3. Adjusts based on the current day of the week to ensure correct counting
+     *
+     * For example:
+     * - 1 working day on Tuesday means 1 calendar day (just Tuesday)
+     * - 1 working day on Monday means 3 calendar days (includes Friday from previous week)
+     * - 5 working days means 7 calendar days (a full week)
+     * - 6 working days means 8 calendar days (a full week plus one day)
      */
-    public static function getCalendarDaysByWorkDays($workingDays): int|float
+    public static function getCalendarDaysByWorkDays(int $workingDays): int|float
     {
         $workingDays = (int) $workingDays;
         if ($workingDays < 1) {
@@ -94,13 +104,9 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Returns work log entries for user and recent days.
      *
-     * @param User $user Filter by user ID
-     * @param integer $days Filter by recent days
-     *
-     * @return array
      * @throws \Exception
      */
-    public function findByRecentDaysOfUser($user, $days = 3)
+    public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
         $fromDate = new \DateTime();
         $fromDate->setTime(0, 0);
@@ -132,7 +138,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return \App\Entity\Entry[]
      */
-    public function findByDate($userId, $year, $month = null, $projectId = null, $customerId = null, $arSort = null)
+    public function findByDate(int $userId, int $year, ?int $month = null, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null): array
     {
         if (null === $arSort) {
             $arSort = [
@@ -181,14 +187,9 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Returns the date pattern for the repository queries according to year
-     * an month
-     *
-     * @param int $year  the year, e.g. 2015
-     * @param int $month the month, e.g. 1 or null
-     *
-     * @return string e.g. 2015-01-%, 2015-%, if no month is set
+     * and month
      */
-    protected function getDatePattern($year, $month = null): string
+    protected function getDatePattern(int $year, ?int $month = null): string
     {
         $pattern = $year . '-';
         if (0 < intval($month)) {
@@ -275,15 +276,20 @@ class EntryRepository extends ServiceEntityRepository
 
 
     /**
-     * Get array of entries of given user.
+     * Returns work log entries for a specific user within a time range.
      *
-     * @param integer $userId Filter by user ID
-     * @param integer $days Filter by x days in past
-     * @param boolean $showFuture Include work log entries from future
+     * This method retrieves entries based on working days rather than calendar days.
+     * It converts the requested number of working days to calendar days using getCalendarDaysByWorkDays().
+     *
+     * Important behaviors to note:
+     * - When requesting entries for 1 working day and today is Monday, it will include entries
+     *   from Friday (the previous working day) as well.
+     * - Weekend days are skipped when counting back working days.
+     * - The query uses "day >= DATE_ADD(CURDATE(), INTERVAL -X DAY)" where X is the calculated calendar days.
      *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getEntriesByUser($userId, $days = 3, $showFuture = true): array
+    public function getEntriesByUser(int $userId, int $days = 3, bool $showFuture = true): array
     {
         $calendarDays = self::getCalendarDaysByWorkDays($days);
         $connection = $this->getEntityManager()->getConnection();
@@ -370,13 +376,9 @@ class EntryRepository extends ServiceEntityRepository
      * Query summary information regarding the current entry for the following
      * scopes: customer, project, activity, ticket
      *
-     * @param integer $entryId The current entry's identifier
-     * @param integer $userId The current user's identifier
-     * @param array $data The initial (default) summary
-     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getEntrySummary($entryId, $userId, array $data): array
+    public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
         $entry = $this->find($entryId);
 
@@ -461,12 +463,9 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Query the current user's work by given period
      *
-     * @param int $userId The current user's identifier
-     * @param int $period The requested period (day / week / month)
-     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getWorkByUser($userId, $period = self::PERIOD_DAY): array
+    public function getWorkByUser(int $userId, int $period = self::PERIOD_DAY): array
     {
         $connection = $this->getEntityManager()->getConnection();
 
@@ -625,10 +624,6 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Get a list of activities with the total time booked on the ticket
-     *
-     * @param string $ticketname Name of the ticket
-     *
-     * @return array Names of the activities with their total time in seconds
      */
     public function getActivitiesWithTime(string $ticketname): array
     {
@@ -647,10 +642,6 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Get a list of usernames that worked on the ticket and the total time they spent on it.
-     *
-     * @param string $ticketname Name of the ticket
-     *
-     * @return array usernames with their total time in seconds
      */
     public function getUsersWithTime(string $ticketname): array
     {
