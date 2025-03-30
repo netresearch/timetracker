@@ -5,6 +5,27 @@ alwaysApply: true
 ---
 # Cursor Rules
 
+# Command Execution
+- Always use Docker Compose to execute commands (e.g., `docker compose run --rm app <command>`)
+- Never run PHP commands directly on the host system
+- For Composer commands: `docker compose run --rm app composer <command>`
+- For Symfony Console: `docker compose run --rm app bin/console <command>`
+- For PHPUnit: `docker compose run --rm -e APP_ENV=test app bin/phpunit <command>`
+
+# Package Management
+- All dependencies must be managed through Composer
+- Production dependencies go in the "require" section of composer.json
+- Development tools go in the "require-dev" section of composer.json
+- Use Composer scripts for common development tasks
+- Available scripts:
+  - `composer cs-check` - Run PHP_CodeSniffer
+  - `composer cs-fix` - Run PHP-CS-Fixer
+  - `composer analyze` - Run PHPStan
+  - `composer psalm` - Run Psalm
+  - `composer test` - Run PHPUnit
+  - `composer security-check` - Run security check
+- To run these scripts, use Docker: `docker compose run --rm app composer cs-check`
+
 # Language and Framework
 - Use PHP 8.2 for all PHP development.
 - Use Symfony 4.4 as the primary framework.
@@ -64,7 +85,7 @@ alwaysApply: true
 # Additional Guidelines
 - Ensure all code is well-documented.
 - Maintain high test coverage for all new code.
-- Regularly update dependencies to their latest stable versions. 
+- Regularly update dependencies to their latest stable versions.
 - Use docker compose to execute commands.
 - Implement proper logging for debugging and monitoring purposes.
-- Follow the principle of least privilege for all operations. 
+- Follow the principle of least privilege for all operations.
