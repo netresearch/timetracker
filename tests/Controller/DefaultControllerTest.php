@@ -352,9 +352,9 @@ class DefaultControllerTest extends Base
         // The test data setup has 2 entries relevant to this test:
         // 1. Entry 4 - Current date
         // 2. Entry 5 - 3 days ago
-        // When days=1, the repository may include entries from previous days depending 
+        // When days=1, the repository may include entries from previous days depending
         // on the current day of the week to ensure working days are properly counted.
-        // This test is currently running with 2 entries because the repository logic 
+        // This test is currently running with 2 entries because the repository logic
         // includes both entries.
         $this->assertLength(2);
     }
