@@ -34,5 +34,4 @@ class TicketSystemRepository extends ServiceEntityRepository
 
         return $data;
     }
-
 }

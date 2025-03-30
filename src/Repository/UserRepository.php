@@ -36,7 +36,8 @@ class UserRepository extends ServiceEntityRepository
     {
         /** @var User[] $users */
         $users = $this->findBy(
-            [], ['username' => 'ASC']
+            [],
+            ['username' => 'ASC']
         );
 
         $data = [];
@@ -52,9 +53,7 @@ class UserRepository extends ServiceEntityRepository
                     'abbr'     => $user->getAbbr(),
                     'locale'   => $user->getLocale(),
                 ]]);
-
             } else {
-
                 $data[] = ['user' => [
                     'id'       => $user->getId(),
                     'username' => $user->getUsername(),
@@ -62,7 +61,6 @@ class UserRepository extends ServiceEntityRepository
                     'abbr'     => $user->getAbbr(),
                     'locale'   => $user->getLocale(),
                 ]];
-
             }
         }
 
@@ -76,7 +74,8 @@ class UserRepository extends ServiceEntityRepository
     {
         /** @var User[] $users */
         $users = $this->findBy(
-            [], ['username' => 'ASC']
+            [],
+            ['username' => 'ASC']
         );
 
         $data = [];

@@ -33,8 +33,7 @@ class DefaultController extends BaseController
 {
     public function __construct(
         private readonly TwigEnvironment $twigEnvironment,
-    )
-    {
+    ) {
     }
 
     /**
@@ -201,7 +200,8 @@ class DefaultController extends BaseController
             $data['project']['quota'] =
                 TimeHelper::formatQuota(
                     $data['project']['total'],
-                    $data['project']['estimation']);
+                    $data['project']['estimation']
+                );
         }
 
         return new JsonResponse($data);
@@ -451,7 +451,10 @@ class DefaultController extends BaseController
 
         try {
             $jiraOAuthApi = new JiraOAuthApi(
-                $user, $ticketSystem, $this->getDoctrine(), $this->router
+                $user,
+                $ticketSystem,
+                $this->getDoctrine(),
+                $this->router
             );
             $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
@@ -485,14 +488,14 @@ class DefaultController extends BaseController
 
         if (is_null($name) || empty($users)) {
             return new Response(
-                'There is no information available about this ticket.', 404
+                'There is no information available about this ticket.',
+                404
             );
         }
 
         $time['total_time']['time'] = 0;
 
         foreach ($activities as $activity) {
-
             $total = $activity['total_time'];
             $key = $activity['name'] ?? 'No activity';
 
@@ -527,7 +530,9 @@ class DefaultController extends BaseController
     public function getTicketTimeSummaryJsAction()
     {
         $ttUrl = $this->generateUrl(
-            '_start', [], UrlGeneratorInterface::ABSOLUTE_URL
+            '_start',
+            [],
+            UrlGeneratorInterface::ABSOLUTE_URL
         );
 
         $content = file_get_contents(

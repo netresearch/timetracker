@@ -25,8 +25,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * @license  No license
  * @link     http://www.netresearch.de
  */
-class NrArrayTranslator
-    extends \Twig\Extension\AbstractExtension
+class NrArrayTranslator extends \Twig\Extension\AbstractExtension
 {
 
     /**
@@ -71,7 +70,10 @@ class NrArrayTranslator
      *
      * @return string
      */
-    public function filterArray($string, $arrayKey, ?string $languageFile = 'messages',
+    public function filterArray(
+        $string,
+        $arrayKey,
+        ?string $languageFile = 'messages',
         array $keys = ['name']
     ) {
         $data = json_decode($string, true);
@@ -90,7 +92,6 @@ class NrArrayTranslator
                         $languageFile
                     );
                 }
-
             }
         }
 

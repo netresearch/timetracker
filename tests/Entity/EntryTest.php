@@ -127,7 +127,6 @@ class EntryTest extends TestCase
         $entry->setEnd($end);
         $this->assertEquals($start, $entry->getStart()->format('H:i'), 'End should be greater or equal start');
         $this->assertEquals($start, $entry->getEnd()->format('H:i'), 'End should be greater or equal start');
-
     }
 
     public function testCalcDuration(): void
@@ -162,8 +161,7 @@ class EntryTest extends TestCase
         $entry->setEnd($end);
         try {
             $entry->validateDuration();
-        } catch(\Exception $exception) {
-
+        } catch (\Exception $exception) {
         }
 
         $this->assertNotNull($exception, 'An expected exception has not been raised.');
@@ -214,7 +212,5 @@ class EntryTest extends TestCase
         $result = $entry->toArray();
         $this->assertEquals(17, $result['customer']);
         $this->assertEquals(21, $result['project']);
-
     }
-
 }

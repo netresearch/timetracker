@@ -37,10 +37,10 @@ class Preset extends Base
      */
     protected $customer;
 
-     /**
-     * @ORM\ManyToOne(targetEntity="Activity", inversedBy="presets")
-     * @ORM\JoinColumn(name="activity_id", referencedColumnName="id")
-     */
+    /**
+    * @ORM\ManyToOne(targetEntity="Activity", inversedBy="presets")
+    * @ORM\JoinColumn(name="activity_id", referencedColumnName="id")
+    */
     protected $activity;
 
 

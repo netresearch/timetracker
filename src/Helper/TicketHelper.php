@@ -35,4 +35,3 @@ class TicketHelper
         return $matches[1];
     }
 }
-

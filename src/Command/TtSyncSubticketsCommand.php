@@ -86,5 +86,4 @@ class TtSyncSubticketsCommand extends Command
 
         return 0;
     }
-
 }

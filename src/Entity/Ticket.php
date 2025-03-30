@@ -31,7 +31,6 @@ use App\Model\Base;
  */
 class Ticket extends Base
 {
-
     public $ticketId;
 
     /**
@@ -213,7 +212,7 @@ class Ticket extends Base
     /**
      * Get id
      *
-     * @return integer 
+     * @return integer
      */
     public function getId()
     {

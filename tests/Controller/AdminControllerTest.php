@@ -515,7 +515,6 @@ class AdminControllerTest extends Base
             ]
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
-
     }
 
     public function testSaveProjectActionDevNotAllowed(): void
@@ -1173,7 +1172,7 @@ class AdminControllerTest extends Base
             0 => [
                 'user_id' => 3,
                 'start' => '0700-01-01',
-                'end' => NULL
+                'end' => null
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);

@@ -32,5 +32,4 @@ class TicketHelperTest extends TestCase
             [true, 'OGN-1']
         ];
     }
-
 }

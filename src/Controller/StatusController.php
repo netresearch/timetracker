@@ -11,7 +11,8 @@ class StatusController extends BaseController
 {
     public function __construct(
         private readonly Security $security
-    ) { }
+    ) {
+    }
 
     private function getStatus(): array
     {

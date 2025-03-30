@@ -54,11 +54,9 @@ class CrudController extends BaseController
 
             try {
                 $this->deleteJiraWorklog($entry);
-
             } catch (JiraApiUnauthorizedException $e) {
                 // Invalid JIRA token
                 return new Error($e->getMessage(), 403, $e->getRedirectUrl());
-
             } catch (JiraApiException $e) {
                 $alert = $e->getMessage() . '<br />' .
                     $this->translator->trans("Dataset was modified in Timetracker anyway");
@@ -113,7 +111,10 @@ class CrudController extends BaseController
         }
 
         $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->router
+            $entry->getUser(),
+            $ticketSystem,
+            $this->getDoctrine(),
+            $this->router
         );
         $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
     }
@@ -197,7 +198,7 @@ class CrudController extends BaseController
 
         try {
             $alert = null;
-            $this->logData($_POST, TRUE);
+            $this->logData($_POST, true);
 
             $doctrine = $this->getDoctrine();
             /** @var \App\Repository\EntryRepository $entryRepo */
@@ -249,11 +250,14 @@ class CrudController extends BaseController
             if ($ticketSystem != null) {
                 if (!$ticketSystem instanceof TicketSystem) {
                     $message = 'Einstellungen für das Ticket System überprüfen';
-                    return $this->getFailedResponse($message ,400);
+                    return $this->getFailedResponse($message, 400);
                 }
 
                 $jiraOAuthApi = new JiraOAuthApi(
-                    $entry->getUser(), $ticketSystem, $doctrine, $this->router
+                    $entry->getUser(),
+                    $ticketSystem,
+                    $doctrine,
+                    $this->router
                 );
 
                 // ticekts do not exist for external project tickets booked on internal ticket system
@@ -278,7 +282,7 @@ class CrudController extends BaseController
                 ->setInternalJiraTicketOriginalKey($request->get('extTicket') ?: null)
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                 ->calcDuration()
-                ->setSyncedToTicketsystem(FALSE);
+                ->setSyncedToTicketsystem(false);
 
             // write log
             $this->logData($entry->toArray());
@@ -313,12 +317,14 @@ class CrudController extends BaseController
             // we may have to update the classes of the entry's day
             if (is_object($entry->getDay())) {
                 $this->calculateClasses(
-                    $user->getId(), $entry->getDay()->format("Y-m-d")
+                    $user->getId(),
+                    $entry->getDay()->format("Y-m-d")
                 );
                 // and the previous day, if the entry was moved
                 if (is_object($oldEntry->getDay()) && $entry->getDay()->format("Y-m-d") != $oldEntry->getDay()->format("Y-m-d")) {
                     $this->calculateClasses(
-                        $user->getId(), $oldEntry->getDay()->format("Y-m-d")
+                        $user->getId(),
+                        $oldEntry->getDay()->format("Y-m-d")
                     );
                 }
             }
@@ -344,14 +350,11 @@ class CrudController extends BaseController
             ];
 
             return new JsonResponse($response);
-
         } catch (JiraApiUnauthorizedException $e) {
             // Invalid JIRA token
             return new Error($e->getMessage(), 403, $e->getRedirectUrl(), $e);
-
         } catch (\Exception $e) {
             return new Error($this->translator->trans($e->getMessage()), 406, null, $e);
-
         } catch (\Throwable $e) {
             return new Error($e->getMessage(), 503, null, $e);
         }
@@ -371,7 +374,7 @@ class CrudController extends BaseController
 
         try {
             $alert = null;
-            $this->logData($_POST, TRUE);
+            $this->logData($_POST, true);
 
             $doctrine = $this->getDoctrine();
 
@@ -594,7 +597,6 @@ class CrudController extends BaseController
             $response = new Response($responseContent);
             $response->setStatusCode(200);
             return $response;
-
         } catch (\Exception $exception) {
             $response = new Response($this->translator->trans($exception->getMessage()));
             $response->setStatusCode(406);
@@ -667,7 +669,7 @@ class CrudController extends BaseController
      * @param array $data The data to log
      * @param bool  $raw  Whether this is raw input data
      */
-    private function logData(array $data, bool $raw = FALSE): void
+    private function logData(array $data, bool $raw = false): void
     {
         $context = [
             'type' => ($raw ? 'raw' : 'obj'),
@@ -689,7 +691,7 @@ class CrudController extends BaseController
         Entry $entry,
         Entry $oldEntry,
         TicketSystem $ticketSystem = null
-    ): void{
+    ): void {
         $project = $entry->getProject();
         if (! $project instanceof Project) {
             return;
@@ -711,11 +713,14 @@ class CrudController extends BaseController
             // ticket number changed
             // delete old work log - new one will be created later
             $this->deleteJiraWorklog($oldEntry, $ticketSystem);
-            $entry->setWorklogId(NULL);
+            $entry->setWorklogId(null);
         }
 
         $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->router
+            $entry->getUser(),
+            $ticketSystem,
+            $this->getDoctrine(),
+            $this->router
         );
         $jiraOAuthApi->updateEntryJiraWorkLog($entry);
     }
@@ -735,7 +740,10 @@ class CrudController extends BaseController
         TicketSystem $ticketSystem = null
     ): mixed {
         $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(), $ticketSystem, $this->getDoctrine(), $this->router
+            $entry->getUser(),
+            $ticketSystem,
+            $this->getDoctrine(),
+            $this->router
         );
 
         return $jiraOAuthApi->createTicket($entry);
@@ -753,7 +761,7 @@ class CrudController extends BaseController
      * @throws \App\Helper\JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-query-issues
      */
-    protected  function handleInternalJiraTicketSystem($entry, $oldEntry)
+    protected function handleInternalJiraTicketSystem($entry, $oldEntry)
     {
         $project = $entry->getProject();
 
@@ -792,7 +800,10 @@ class CrudController extends BaseController
 
         // check if issue exist
         $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(), $internalJiraTicketSystem, $this->getDoctrine(), $this->router
+            $entry->getUser(),
+            $internalJiraTicketSystem,
+            $this->getDoctrine(),
+            $this->router
         );
         $searchResult = $jiraOAuthApi->searchTicket(
             sprintf(

@@ -281,7 +281,6 @@ class BaseController extends AbstractController
         $response = new Response($message);
         $response->setStatusCode(403);
         return $response;
-
     }
 
     /**
@@ -308,7 +307,10 @@ class BaseController extends AbstractController
      * @return mixed
      */
     protected function translate(
-        string $id, array $parameters = [], ?string $domain = 'messages', ?string $locale = null
+        string $id,
+        array $parameters = [],
+        ?string $domain = 'messages',
+        ?string $locale = null
     ) {
         return $this->translator->trans($id, $parameters, $domain, $locale);
     }

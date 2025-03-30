@@ -85,5 +85,4 @@ class Holiday extends Base
             'description' => $this->getName()
         ];
     }
-
 }

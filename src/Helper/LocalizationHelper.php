@@ -10,7 +10,6 @@ namespace App\Helper;
  */
 class LocalizationHelper
 {
-
     public static function getAvailableLocales(): array
     {
         return [
@@ -39,6 +38,4 @@ class LocalizationHelper
 
         return self::getPreferredLocale();
     }
-
 }
-

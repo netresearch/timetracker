@@ -16,4 +16,3 @@ class StatusControllerTest extends Base
         $this->assertJsonStructure($expectedJson);
     }
 }
-
