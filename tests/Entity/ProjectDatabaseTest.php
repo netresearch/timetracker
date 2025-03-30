@@ -47,6 +47,7 @@ class ProjectDatabaseTest extends Base
 
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $project->getId();
+        $customerId = $customer->getId();
         $this->assertNotNull($id, 'Project ID should not be null after persist');
         $this->entityManager->clear();
 
@@ -68,9 +69,12 @@ class ProjectDatabaseTest extends Base
         $this->entityManager->remove($fetchedProject);
         $this->entityManager->flush();
 
-        $customer = $this->entityManager->find(Customer::class, $customer->getId());
-        $this->entityManager->remove($customer);
-        $this->entityManager->flush();
+        // Re-fetch customer to ensure it's managed
+        $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+        if ($fetchedCustomer) {
+            $this->entityManager->remove($fetchedCustomer);
+            $this->entityManager->flush();
+        }
     }
 
     public function testUpdate(): void
@@ -97,6 +101,7 @@ class ProjectDatabaseTest extends Base
         $this->entityManager->persist($project);
         $this->entityManager->flush();
         $id = $project->getId();
+        $customerId = $customer->getId();
 
         // Update project
         $project->setName('Updated Project');
@@ -121,9 +126,12 @@ class ProjectDatabaseTest extends Base
         $this->entityManager->remove($updatedProject);
         $this->entityManager->flush();
 
-        $customer = $this->entityManager->find(Customer::class, $customer->getId());
-        $this->entityManager->remove($customer);
-        $this->entityManager->flush();
+        // Re-fetch customer to ensure it's managed
+        $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+        if ($fetchedCustomer) {
+            $this->entityManager->remove($fetchedCustomer);
+            $this->entityManager->flush();
+        }
     }
 
     public function testDelete(): void
@@ -150,18 +158,29 @@ class ProjectDatabaseTest extends Base
         $this->entityManager->persist($project);
         $this->entityManager->flush();
         $id = $project->getId();
+        $customerId = $customer->getId();
+
+        // Clear EntityManager to simulate a fresh state
+        $this->entityManager->clear();
+
+        // Re-fetch the project to ensure it's managed
+        $projectToDelete = $this->entityManager->find(Project::class, $id);
+        $this->assertNotNull($projectToDelete, 'Project should exist before deletion');
 
         // Delete project
-        $this->entityManager->remove($project);
+        $this->entityManager->remove($projectToDelete);
         $this->entityManager->flush();
 
         // Verify project is deleted
         $deletedProject = $this->entityManager->getRepository(Project::class)->find($id);
         $this->assertNull($deletedProject, 'Project should be deleted from database');
 
-        // Clean up customer
-        $this->entityManager->remove($customer);
-        $this->entityManager->flush();
+        // Clean up customer - re-fetch to ensure it's managed
+        $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+        if ($fetchedCustomer) {
+            $this->entityManager->remove($fetchedCustomer);
+            $this->entityManager->flush();
+        }
     }
 
     public function testEntryRelationship(): void
@@ -270,6 +289,9 @@ class ProjectDatabaseTest extends Base
         $this->entityManager->persist($project);
         $this->entityManager->flush();
         $projectId = $project->getId();
+        $customerId = $customer->getId();
+        $projectLeadId = $projectLead->getId();
+        $technicalLeadId = $technicalLead->getId();
 
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
@@ -282,13 +304,24 @@ class ProjectDatabaseTest extends Base
         $this->assertNotNull($fetchedProject->getTechnicalLead());
         $this->assertEquals('technical_lead', $fetchedProject->getTechnicalLead()->getUsername());
 
-        // Clean up
+        // Clean up - remove the re-fetched project first
         $this->entityManager->remove($fetchedProject);
         $this->entityManager->flush();
 
-        $this->entityManager->remove($projectLead);
-        $this->entityManager->remove($technicalLead);
-        $this->entityManager->remove($customer);
+        // Re-fetch and remove the other entities
+        $fetchedProjectLead = $this->entityManager->find(User::class, $projectLeadId);
+        $fetchedTechnicalLead = $this->entityManager->find(User::class, $technicalLeadId);
+        $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+
+        if ($fetchedProjectLead) {
+            $this->entityManager->remove($fetchedProjectLead);
+        }
+        if ($fetchedTechnicalLead) {
+            $this->entityManager->remove($fetchedTechnicalLead);
+        }
+        if ($fetchedCustomer) {
+            $this->entityManager->remove($fetchedCustomer);
+        }
         $this->entityManager->flush();
     }
 
@@ -327,6 +360,8 @@ class ProjectDatabaseTest extends Base
         $this->entityManager->persist($project);
         $this->entityManager->flush();
         $projectId = $project->getId();
+        $customerId = $customer->getId();
+        $ticketSystemId = $ticketSystem->getId();
 
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
@@ -337,12 +372,20 @@ class ProjectDatabaseTest extends Base
         $this->assertEquals('Test Ticket System', $fetchedProject->getTicketSystem()->getName());
         $this->assertEquals('TEST', $fetchedProject->getJiraId());
 
-        // Clean up
+        // Clean up - remove the re-fetched project first
         $this->entityManager->remove($fetchedProject);
         $this->entityManager->flush();
 
-        $this->entityManager->remove($ticketSystem);
-        $this->entityManager->remove($customer);
+        // Re-fetch and remove ticket system and customer
+        $fetchedTicketSystem = $this->entityManager->find(TicketSystem::class, $ticketSystemId);
+        $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+
+        if ($fetchedTicketSystem) {
+            $this->entityManager->remove($fetchedTicketSystem);
+        }
+        if ($fetchedCustomer) {
+            $this->entityManager->remove($fetchedCustomer);
+        }
         $this->entityManager->flush();
     }
 
@@ -393,6 +436,8 @@ class ProjectDatabaseTest extends Base
         $this->entityManager->persist($preset2);
         $this->entityManager->flush();
         $projectId = $project->getId();
+        $customerId = $customer->getId();
+        $activityId = $activity->getId();
 
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
@@ -401,16 +446,26 @@ class ProjectDatabaseTest extends Base
         // Test presets relationship
         $this->assertCount(2, $fetchedProject->getPresets());
 
-        // Clean up
-        $presets = $fetchedProject->getPresets();
-        foreach ($presets as $preset) {
+        // Clean up presets first
+        foreach ($fetchedProject->getPresets() as $preset) {
             $this->entityManager->remove($preset);
         }
         $this->entityManager->flush();
 
+        // Clean up project
         $this->entityManager->remove($fetchedProject);
-        $this->entityManager->remove($activity);
-        $this->entityManager->remove($customer);
+        $this->entityManager->flush();
+
+        // Re-fetch and remove activity and customer
+        $fetchedActivity = $this->entityManager->find(\App\Entity\Activity::class, $activityId);
+        $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+
+        if ($fetchedActivity) {
+            $this->entityManager->remove($fetchedActivity);
+        }
+        if ($fetchedCustomer) {
+            $this->entityManager->remove($fetchedCustomer);
+        }
         $this->entityManager->flush();
     }
 }

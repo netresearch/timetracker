@@ -43,7 +43,7 @@ class PresetDatabaseTest extends Base
         $this->assertNotNull($id, 'Preset ID should not be null after persist');
         $this->entityManager->clear();
 
-        // Fetch from database and verify
+        // Re-fetch the preset to ensure it's managed
         $fetchedPreset = $this->entityManager->getRepository(Preset::class)->find($id);
         $this->assertNotNull($fetchedPreset, 'Preset was not found in database');
         $this->assertEquals('Test Database Preset', $fetchedPreset->getName());
@@ -59,11 +59,17 @@ class PresetDatabaseTest extends Base
         $this->assertNotNull($fetchedPreset->getActivity());
         $this->assertEquals($activity->getId(), $fetchedPreset->getActivityId());
 
-        // Clean up - remove the test entities
-        $this->entityManager->remove($fetchedPreset);
-        $this->entityManager->flush();
+        // Clean up - re-fetch related entities to ensure they are managed
+        $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
+        $fetchedProject = $this->entityManager->getRepository(Project::class)->find($project->getId());
+        $fetchedCustomer = $this->entityManager->getRepository(Customer::class)->find($customer->getId());
 
-        $this->cleanupEntities($activity, $project, $customer);
+        // Remove the test entities
+        $this->entityManager->remove($fetchedPreset);
+        $this->entityManager->remove($fetchedActivity);
+        $this->entityManager->remove($fetchedProject);
+        $this->entityManager->remove($fetchedCustomer);
+        $this->entityManager->flush();
     }
 
     public function testUpdate(): void
@@ -92,16 +98,22 @@ class PresetDatabaseTest extends Base
         $this->entityManager->flush();
         $this->entityManager->clear();
 
-        // Fetch and verify updates
+        // Re-fetch the preset to ensure it's managed
         $updatedPreset = $this->entityManager->getRepository(Preset::class)->find($id);
         $this->assertEquals('Updated Preset', $updatedPreset->getName());
         $this->assertEquals('Updated Description', $updatedPreset->getDescription());
 
-        // Clean up
-        $this->entityManager->remove($updatedPreset);
-        $this->entityManager->flush();
+        // Clean up - re-fetch related entities to ensure they are managed
+        $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
+        $fetchedProject = $this->entityManager->getRepository(Project::class)->find($project->getId());
+        $fetchedCustomer = $this->entityManager->getRepository(Customer::class)->find($customer->getId());
 
-        $this->cleanupEntities($activity, $project, $customer);
+        // Remove the test entities
+        $this->entityManager->remove($updatedPreset);
+        $this->entityManager->remove($fetchedActivity);
+        $this->entityManager->remove($fetchedProject);
+        $this->entityManager->remove($fetchedCustomer);
+        $this->entityManager->flush();
     }
 
     public function testDelete(): void
@@ -124,8 +136,15 @@ class PresetDatabaseTest extends Base
         $this->entityManager->flush();
         $id = $preset->getId();
 
-        // Delete preset
-        $this->entityManager->remove($preset);
+        // Clear the EntityManager to simulate a fresh state
+        $this->entityManager->clear();
+
+        // Re-fetch the preset to ensure it's managed
+        $presetToDelete = $this->entityManager->getRepository(Preset::class)->find($id);
+        $this->assertNotNull($presetToDelete, 'Preset should exist before deletion');
+
+        // Remove the test entities
+        $this->entityManager->remove($presetToDelete);
         $this->entityManager->flush();
 
         // Verify preset is deleted
@@ -133,7 +152,14 @@ class PresetDatabaseTest extends Base
         $this->assertNull($deletedPreset, 'Preset should be deleted from database');
 
         // Clean up remaining entities
-        $this->cleanupEntities($activity, $project, $customer);
+        $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
+        $fetchedProject = $this->entityManager->getRepository(Project::class)->find($project->getId());
+        $fetchedCustomer = $this->entityManager->getRepository(Customer::class)->find($customer->getId());
+
+        $this->entityManager->remove($fetchedActivity);
+        $this->entityManager->remove($fetchedProject);
+        $this->entityManager->remove($fetchedCustomer);
+        $this->entityManager->flush();
     }
 
     public function testToArray(): void
@@ -164,11 +190,21 @@ class PresetDatabaseTest extends Base
         $this->assertEquals($project->getId(), $array['project']);
         $this->assertEquals($activity->getId(), $array['activity']);
 
-        // Clean up
-        $this->entityManager->remove($preset);
-        $this->entityManager->flush();
+        // Clear the EntityManager to simulate a fresh state
+        $this->entityManager->clear();
 
-        $this->cleanupEntities($activity, $project, $customer);
+        // Re-fetch the entities to ensure they are managed
+        $fetchedPreset = $this->entityManager->getRepository(Preset::class)->find($preset->getId());
+        $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
+        $fetchedProject = $this->entityManager->getRepository(Project::class)->find($project->getId());
+        $fetchedCustomer = $this->entityManager->getRepository(Customer::class)->find($customer->getId());
+
+        // Clean up
+        $this->entityManager->remove($fetchedPreset);
+        $this->entityManager->remove($fetchedActivity);
+        $this->entityManager->remove($fetchedProject);
+        $this->entityManager->remove($fetchedCustomer);
+        $this->entityManager->flush();
     }
 
     // Helper methods to create required related entities
@@ -212,9 +248,20 @@ class PresetDatabaseTest extends Base
 
     private function cleanupEntities(Activity $activity, Project $project, Customer $customer): void
     {
-        $this->entityManager->remove($activity);
-        $this->entityManager->remove($project);
-        $this->entityManager->remove($customer);
+        // Re-fetch entities to ensure they are managed
+        $managedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
+        $managedProject = $this->entityManager->getRepository(Project::class)->find($project->getId());
+        $managedCustomer = $this->entityManager->getRepository(Customer::class)->find($customer->getId());
+
+        if ($managedActivity) {
+            $this->entityManager->remove($managedActivity);
+        }
+        if ($managedProject) {
+            $this->entityManager->remove($managedProject);
+        }
+        if ($managedCustomer) {
+            $this->entityManager->remove($managedCustomer);
+        }
         $this->entityManager->flush();
     }
 }
