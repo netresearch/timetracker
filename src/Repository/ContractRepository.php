@@ -1,7 +1,6 @@
 <?php
 namespace App\Repository;
 
-use Doctrine\ORM\EntityRepository;
 use App\Entity\Contract;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
