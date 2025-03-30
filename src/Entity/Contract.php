@@ -140,10 +140,9 @@ class Contract
 
 
     /**
-     * @param mixed $start
      * @return $this
      */
-    public function setStart($start): static
+    public function setStart(mixed $start): static
     {
         $this->start = $start;
         return $this;
@@ -160,10 +159,9 @@ class Contract
 
 
     /**
-     * @param mixed $end
      * @return $this
      */
-    public function setEnd($end): static
+    public function setEnd(mixed $end): static
     {
         $this->end = $end;
         return $this;

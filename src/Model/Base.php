@@ -29,14 +29,14 @@ class Base
         $reflectionClass = new ReflectionClass($this);
 
         $data = [];
-        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $property) {
-            $method = 'get' . ucwords($property->getName());
+        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $reflectionProperty) {
+            $method = 'get' . ucwords($reflectionProperty->getName());
             $value = $this->$method();
             if (is_object($value) && method_exists($value, 'getId')) {
                 $value = $value->getId();
             }
 
-            $name = $property->getName();
+            $name = $reflectionProperty->getName();
             $data[$name] = $value;
 
             // provide properties also in snake_case for BC

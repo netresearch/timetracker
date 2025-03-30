@@ -62,10 +62,9 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param mixed $id
      * @return $this
      */
-    public function setId($id): static
+    public function setId(mixed $id): static
     {
         $this->id = $id;
         return $this;

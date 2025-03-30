@@ -59,7 +59,7 @@ class Export
      *
      * @return mixed
      */
-    public function exportEntries($userId, $year, $month, $projectId, $customerId, array $arSort = null)
+    public function exportEntries(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, array $arSort = null)
     {
         /** @var \App\Entity\Entry[] $arEntries */
         $arEntries = $this->getEntryRepository()
@@ -119,10 +119,10 @@ class Export
         $showTicketTitles = false
     ): array {
         $doctrine = $this->managerRegistry;
-        /** @var \App\Repository\UserRepository $userRepository */
-        $userRepository = $doctrine->getRepository(\App\Entity\User::class);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $doctrine->getRepository(\App\Entity\User::class);
         /** @var \App\Entity\User $currentUser */
-        $currentUser = $userRepository->find($currentUserId);
+        $currentUser = $objectRepository->find($currentUserId);
 
         // Use the injected router
         $router = $this->router;

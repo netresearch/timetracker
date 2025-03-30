@@ -387,7 +387,7 @@ class Project extends Base
         return $this;
     }
 
-    public function getSubtickets()
+    public function getSubtickets(): array
     {
         if ($this->subtickets == '') {
             return [];

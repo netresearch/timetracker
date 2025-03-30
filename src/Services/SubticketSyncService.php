@@ -82,7 +82,7 @@ class SubticketSyncService
             $this->router
         );
 
-        $mainTickets = array_map('trim', explode(',', $mainTickets));
+        $mainTickets = array_map('trim', explode(',', (string) $mainTickets));
         $allSubtickets = [];
         foreach ($mainTickets as $mainTicket) {
             //we want to make it easy to find matching tickets,
