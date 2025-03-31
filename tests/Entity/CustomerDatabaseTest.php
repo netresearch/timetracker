@@ -2,7 +2,7 @@
 
 namespace Tests\Entity;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\Entry;
@@ -10,7 +10,7 @@ use App\Entity\Preset;
 use App\Entity\Team;
 use Doctrine\ORM\EntityManagerInterface;
 
-class CustomerDatabaseTest extends Base
+class CustomerDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 

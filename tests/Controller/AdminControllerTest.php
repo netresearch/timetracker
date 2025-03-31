@@ -2,9 +2,9 @@
 
 namespace Tests\Controller;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 
-class AdminControllerTest extends Base
+class AdminControllerTest extends AbstractWebTestCase
 {
     //-------------- users routes ----------------------------------------
     public function testSaveUserAction(): void

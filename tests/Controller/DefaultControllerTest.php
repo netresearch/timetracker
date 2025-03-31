@@ -2,9 +2,9 @@
 
 namespace Tests\Controller;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 
-class DefaultControllerTest extends Base
+class DefaultControllerTest extends AbstractWebTestCase
 {
     /**
      * AdminController and DefaultController both have a function

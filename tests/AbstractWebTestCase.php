@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
 use Symfony\Component\BrowserKit\Cookie;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase as SymfonyWebTestCase;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 
 /**
- * TODO: When updating to PHPUnit > 8.x a new dependency is needed:
- * https://github.com/rdohms/phpunit-arraysubset-asserts
+ * Abstract base test case that combines all test functionality.
+ * Consolidates the features from the previous Base and TestCase classes.
  */
-abstract class Base extends WebTestCase
+abstract class AbstractWebTestCase extends SymfonyWebTestCase
 {
     use ArraySubsetAsserts;
 
@@ -25,6 +27,12 @@ abstract class Base extends WebTestCase
     protected $filepath = '/../sql/unittest/002_testdata.sql';
 
     /**
+     * The initial state of a table
+     * used to assert integrity of table after a DEV test
+     */
+    protected $tableInitialState;
+
+    /**
      * Returns the kernel class to use for these tests
      */
     protected static function getKernelClass()
@@ -33,10 +41,41 @@ abstract class Base extends WebTestCase
     }
 
     /**
-     * The initial state of a table
-     * used to assert integrity of table after a DEV test
+     * Set up before each test.
      */
-    protected $tableInitialState;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // create test env.
+        $this->client = static::createClient();
+        $this->serviceContainer = $this->client->getContainer();
+
+        // authenticate user in session
+        $this->logInSession();
+
+        // load test data
+        $this->loadTestData();
+
+        // Force German locale for tests
+        $translator = $this->serviceContainer->get('translator');
+        $translator->setLocale('de');
+
+        // Also set the request locale if possible
+        if ($request = $this->serviceContainer->get('request_stack')->getCurrentRequest()) {
+            $request->setLocale('de');
+        }
+    }
+
+    /**
+     * Tear down after each test.
+     */
+    protected function tearDown(): void
+    {
+        // Add common teardown functionality
+
+        parent::tearDown();
+    }
 
     /**
      * Used in test for DEV users
@@ -62,26 +101,6 @@ abstract class Base extends WebTestCase
             ->fetchAllAssociative();
         $this->assertSame($this->tableInitialState, $newTableState);
         $this->tableInitialState = null;
-    }
-
-    protected function setUp(): void
-    {
-        // create test env.
-        $this->client = static::createClient();
-        $this->serviceContainer = $this->client->getContainer();
-        // authenticate user in session
-        $this->logInSession();
-        // load test data
-        $this->loadTestData();
-
-        // Force German locale for tests
-        $translator = $this->serviceContainer->get('translator');
-        $translator->setLocale('de');
-
-        // Also set the request locale if possible
-        if ($request = $this->serviceContainer->get('request_stack')->getCurrentRequest()) {
-            $request->setLocale('de');
-        }
     }
 
     /**
@@ -136,7 +155,7 @@ abstract class Base extends WebTestCase
     }
 
     /**
-     *  Authenticate the query with credentials from the set-up test project leader
+     * Authenticate the query with credentials from the set-up test project leader
      */
     protected function logInSession(string $user = 'unittest')
     {
@@ -176,6 +195,64 @@ abstract class Base extends WebTestCase
     }
 
     /**
+     * Helper method to login a user using form submission.
+     */
+    protected function loginAs(string $username, string $password): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/login');
+
+        $client->submitForm('Login', [
+            'username' => $username,
+            'password' => $password,
+        ]);
+
+        $this->assertResponseRedirects('/dashboard');
+    }
+
+    /**
+     * Create a client with a default Authorization header.
+     */
+    protected function createAuthenticatedClient(string $username = 'test', string $password = 'password'): \Symfony\Bundle\FrameworkBundle\KernelBrowser
+    {
+        $client = static::createClient();
+        $client->request(
+            'POST',
+            '/login',
+            ['username' => $username, 'password' => $password]
+        );
+
+        $this->assertResponseRedirects();
+
+        return $client;
+    }
+
+    /**
+     * Helper method to create JSON request.
+     */
+    protected function createJsonRequest(
+        string $method,
+        string $uri,
+        array $content = [],
+        array $headers = []
+    ): \Symfony\Bundle\FrameworkBundle\KernelBrowser {
+        $client = static::createClient();
+        $client->request(
+            $method,
+            $uri,
+            [],
+            [],
+            array_merge([
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_ACCEPT' => 'application/json',
+            ], $headers),
+            $content ? json_encode($content) : null
+        );
+
+        return $client;
+    }
+
+    /**
      * Tests $statusCode against response status code
      */
     protected function assertStatusCode(int $statusCode, string $message = ''): void
@@ -187,6 +264,9 @@ abstract class Base extends WebTestCase
         );
     }
 
+    /**
+     * Assert that a message matches the response content
+     */
     protected function assertMessage(string $message): void
     {
         $responseContent = $this->client->getResponse()->getContent();
@@ -219,6 +299,9 @@ abstract class Base extends WebTestCase
         $this->assertSame($message, $responseContent);
     }
 
+    /**
+     * Assert that the response has the expected content type
+     */
     protected function assertContentType(string $contentType): void
     {
         $this->assertStringContainsString(
@@ -239,6 +322,9 @@ abstract class Base extends WebTestCase
         $this->assertArraySubset($json, $responseJson);
     }
 
+    /**
+     * Assert the length of the response or a specific path in the response
+     */
     protected function assertLength(int $length, ?string $path = null)
     {
         $response = json_decode(

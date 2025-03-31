@@ -2,14 +2,14 @@
 
 namespace Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Entity\Customer;
 use App\Entity\TicketSystem;
 
-class ProjectTest extends TestCase
+class ProjectTest extends AbstractWebTestCase
 {
     public function testFluentInterface(): void
     {

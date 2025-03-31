@@ -2,12 +2,12 @@
 
 namespace Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\Preset;
 
-class ActivityTest extends TestCase
+class ActivityTest extends AbstractWebTestCase
 {
     public function testFluentInterface(): void
     {

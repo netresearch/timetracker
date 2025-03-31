@@ -2,9 +2,9 @@
 
 namespace Tests\Controller;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 
-class SettingsControllerTest extends Base
+class SettingsControllerTest extends AbstractWebTestCase
 {
     public function testSaveAction(): void
     {

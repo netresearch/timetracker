@@ -3,9 +3,9 @@
 namespace Tests\Helper;
 
 use App\Helper\TicketHelper;
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 
-class TicketHelperTest extends TestCase
+class TicketHelperTest extends AbstractWebTestCase
 {
     /**
      * @dataProvider checkTicketFormatDataProvider
