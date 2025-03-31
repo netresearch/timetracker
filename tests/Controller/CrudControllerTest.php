@@ -169,7 +169,7 @@ class CrudControllerTest extends AbstractWebTestCase
         $results = $this->connection->query($query)->fetchAllAssociative();
         $this->assertSame(8, count($results));
 
-        // assert days
+        // Assert days for the expected entries
         $staticExpected = [
             'start' => '08:00:00',
             'end' => '10:00:00',
@@ -182,6 +182,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'class' => '2',
         ];
 
+        // We'll just validate the first 8 entries since that's what's in the test
         $variableExpected = [
             ['day' => '2024-01-01',],
             ['day' => '2024-01-02',],
@@ -293,6 +294,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'class' => '2',
         ];
 
+        // We only check the first 10 expected entries as that was the original test
         $variableExpected = [
             ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-11', 'end' => '10:12:00', 'duration' => '132'],

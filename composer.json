@@ -60,7 +60,7 @@
     "twig/twig": "^2.12|^3.0"
   },
   "require-dev": {
-    "dbrekelmans/bdi": "^1.4",
+    "brianium/paratest": "*",
     "dms/phpunit-arraysubset-asserts": "^0.5.0",
     "friendsofphp/php-cs-fixer": "^2.19",
     "phpstan/phpstan": "^1.12",
@@ -70,7 +70,6 @@
     "psalm/plugin-symfony": "^4.0",
     "rector/rector": "^1.2",
     "squizlabs/php_codesniffer": "^3.7",
-    "symfony/browser-kit": "^4.4",
     "symfony/debug-bundle": "^4.4",
     "symfony/maker-bundle": "^1.39",
     "symfony/web-profiler-bundle": "^4.4",
@@ -93,9 +92,15 @@
     "analyze": "phpstan analyze",
     "psalm": "psalm",
     "test": "phpunit",
+    "test:unit": "phpunit --testsuite=unit",
+    "test:controller": "phpunit --testsuite=controller",
+    "test:parallel": "paratest --processes=$(nproc) --testsuite=unit",
+    "test:fast": "phpunit --do-not-cache-result",
+    "test:coverage": "php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
+    "test:coverage-text": "php -d memory_limit=512M bin/phpunit --coverage-text",
     "security-check": "echo 'Running security check with Local PHP Security Checker'; curl -o security-checker.phar -s https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 && chmod +x security-checker.phar && ./security-checker.phar && rm security-checker.phar",
     "check:all": "phpstan analyze && psalm && phpcs",
-    "test:all": "phpunit && phpunit --coverage-html coverage",
+    "test:all": "phpunit && php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
     "fix:all": "psalm --alter --issues=all && php-cs-fixer fix src && rector process src"
   },
   "extra": {
