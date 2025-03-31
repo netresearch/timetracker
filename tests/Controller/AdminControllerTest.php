@@ -21,7 +21,11 @@ class AdminControllerTest extends AbstractWebTestCase
             2 => 'WAS',
             3 => 'PL',
         ];
+
+        // Simple POST request should work with authentication from setUp
         $this->client->request('POST', '/user/save', $parameter);
+
+        // Assert successful response
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -150,6 +154,7 @@ class AdminControllerTest extends AbstractWebTestCase
      */
     public function testGetUsersAction(): void
     {
+        // Simple and direct approach that works
         $expectedJson = [
             0 => [
                 'user' => [
@@ -172,7 +177,11 @@ class AdminControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
+
+        // Make the request - should work with our authentication from setUp
         $this->client->request('GET', '/getAllUsers');
+
+        // Assert response status and expected JSON structure
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -196,7 +205,10 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
 
+        // Simple request should work with authentication from setUp
         $this->client->request('GET', '/getAllTeams');
+
+        // Assert successful response
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
