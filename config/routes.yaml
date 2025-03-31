@@ -6,6 +6,11 @@ _login:
     path: /login
     controller: App\Controller\SecurityController::login
 
+# Login check route for form_login
+login_check:
+    path: /login_check
+    methods: POST
+
 # Logout route (Symfony 4 convention)
 _logout:
     path: /logout

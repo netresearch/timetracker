@@ -2,9 +2,9 @@
 
 namespace Tests;
 
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 
-class Basic extends TestCase
+class Basic extends AbstractWebTestCase
 {
     public function testBasic(): void
     {

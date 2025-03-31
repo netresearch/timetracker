@@ -2,7 +2,7 @@
 
 namespace Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Entity\Entry;
 use App\Entity\User;
@@ -11,7 +11,7 @@ use App\Entity\Account;
 use App\Entity\Customer;
 use App\Entity\Activity;
 
-class EntryTest extends TestCase
+class EntryTest extends AbstractWebTestCase
 {
     public function testGetterSetter(): void
     {

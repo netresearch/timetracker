@@ -15,7 +15,7 @@
 namespace Tests\Extension;
 
 use App\Extension\NrArrayTranslator;
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 use PHPUnit_Framework_TestCase;
 use Symfony\Component\Translation\Translator;
 
@@ -28,7 +28,7 @@ use Symfony\Component\Translation\Translator;
  * @license  No license
  * @link     http://www.netresearch.de
  */
-class NrArrayTranslatorTest extends TestCase
+class NrArrayTranslatorTest extends AbstractWebTestCase
 {
 
     /**

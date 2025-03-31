@@ -8,18 +8,19 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
+    /**
+     * This is just a route target for the login form
+     * The actual rendering is now handled by Symfony's form_login system
+     */
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        // Force a direct response to avoid redirect loops
-        $response = new Response();
-        $content = $this->renderView('login.html.twig', [
+        // Render login form with error handling
+        return $this->render('login.html.twig', [
             'locale' => 'en',
-            'apptitle' => $this->getParameter('app_title'),
+            'apptitle' => 'Netresearch TimeTracker',
             'last_username' => $authenticationUtils->getLastUsername(),
             'error' => $authenticationUtils->getLastAuthenticationError(),
         ]);
-        $response->setContent($content);
-        return $response;
     }
 
     /**

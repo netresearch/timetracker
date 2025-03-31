@@ -3,9 +3,9 @@
 namespace Tests\Helper;
 
 use App\Helper\TimeHelper;
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 
-class TimeHelperTest extends TestCase
+class TimeHelperTest extends AbstractWebTestCase
 {
     /**
      * @dataProvider readable2MinutesDataProvider

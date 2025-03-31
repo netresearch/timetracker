@@ -2,9 +2,9 @@
 
 namespace Tests\Controller;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 
-class StatusControllerTest extends Base
+class StatusControllerTest extends AbstractWebTestCase
 {
     public function testCheckAction(): void
     {

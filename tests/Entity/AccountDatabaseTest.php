@@ -2,12 +2,12 @@
 
 namespace Tests\Entity;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 use App\Entity\Account;
 use App\Entity\Entry;
 use Doctrine\ORM\EntityManagerInterface;
 
-class AccountDatabaseTest extends Base
+class AccountDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 

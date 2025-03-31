@@ -2,7 +2,7 @@
 
 namespace Tests\Entity;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 use App\Entity\User;
 use App\Entity\Team;
 use App\Entity\Entry;
@@ -11,7 +11,7 @@ use App\Entity\TicketSystem;
 use App\Entity\UserTicketsystem;
 use Doctrine\ORM\EntityManagerInterface;
 
-class UserDatabaseTest extends Base
+class UserDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 

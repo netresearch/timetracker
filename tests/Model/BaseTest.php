@@ -2,7 +2,7 @@
 
 namespace Tests\Model;
 
-use PHPUnit\Framework\TestCase;
+use Tests\AbstractWebTestCase;
 use App\Model\Base;
 
 class TestModel extends Base
@@ -36,7 +36,7 @@ class TestModel extends Base
     }
 }
 
-class BaseTest extends TestCase
+class BaseTest extends AbstractWebTestCase
 {
     public function testBaseModelByTestModel(): void
     {

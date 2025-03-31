@@ -26,7 +26,7 @@
 					    Ext.create('Ext.form.Panel', {
 					    	bodyPadding: 5,
 					    	standardSubmit: true,
-					    	url: "{{ path('_login') }}",
+					    	url: "{{ path('login_check') }}",
 					    	items: [
                             {
                                 xtype: 'hiddenfield',
@@ -36,7 +36,7 @@
 					    		{
 					    			xtype: 'textfield',
 					    			fieldLabel: 'Benutzername',
-					    			name: 'username',
+					    			name: '_username',
 					    			allowBlank: false,
                                     {% if last_username is defined %}
                                         value: '{{ last_username }}',
@@ -61,7 +61,7 @@
 					    		}, {
 					    			xtype: 'textfield',
 					    			fieldLabel: 'Passwort',
-					    			name: 'password',
+					    			name: '_password',
 					    			inputType: 'password',
 					    			allowBlank: false,
 					    			listeners: {
@@ -76,7 +76,7 @@
 								{
 									xtype: 'checkbox',
 									fieldLabel: 'Angemeldet bleiben',
-									name: 'loginCookie',
+									name: '_remember_me',
 									allowBlank: true,
                                     checked: true
 								}

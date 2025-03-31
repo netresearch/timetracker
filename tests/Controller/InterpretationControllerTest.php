@@ -2,9 +2,9 @@
 
 namespace Tests\Controller;
 
-use Tests\Base;
+use Tests\AbstractWebTestCase;
 
-class InterpretationControllerTest extends Base
+class InterpretationControllerTest extends AbstractWebTestCase
 {
     public function testGetLastEntriesAction(): void
     {
