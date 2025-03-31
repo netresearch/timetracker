@@ -331,7 +331,7 @@ class DefaultControllerTest extends AbstractWebTestCase
             [
                 'entry' => [
                     'id' => 4,
-                    'date' => '30/03/2025',
+                    'date' => date('d/m/Y'),
                     'start' => '13:00',
                     'end' => '13:25',
                     'user' => 1,
