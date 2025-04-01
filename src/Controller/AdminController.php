@@ -1041,14 +1041,13 @@ class AdminController extends BaseController
         }
 
         // update old contracts,
-        $responseMessage = $this->updateOldContractAction($user, $dateStart, $dateEnd);
+        $responseMessage = $this->updateOldContract($user, $dateStart, $dateEnd);
         if ($responseMessage !== '' && $responseMessage !== '0') {
             $response = new Response($responseMessage);
             $response->setStatusCode(406);
             return $response;
         }
 
-        // save new contract
         $objectManager->flush();
         return new JsonResponse([$contract->getId()]);
     }
@@ -1057,7 +1056,7 @@ class AdminController extends BaseController
      * Look for existing contracts for user and update the latest if open-ended
      * When updating to PHP8 change return type to string|null
      */
-    protected function updateOldContractAction(User $user, DateTime $newStartDate, ?DateTime $newEndDate): string
+    protected function updateOldContract(User $user, DateTime $newStartDate, ?DateTime $newEndDate): string
     {
         $objectManager = $this->doctrineRegistry->getManager();
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
@@ -1095,7 +1094,7 @@ class AdminController extends BaseController
         if ($contractOld->getStart() <= $newStartDate) {
             $oldContractEndDate = clone $newStartDate;
             $contractOld->setEnd($oldContractEndDate->sub(new \DateInterval('P1D')));
-            $objectManager->persist((object) $contractOld);
+            $objectManager->persist($contractOld);
             $objectManager->flush();
         }
 
