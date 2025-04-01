@@ -352,11 +352,13 @@ class DefaultControllerTest extends AbstractWebTestCase
         // The test data setup has 2 entries relevant to this test:
         // 1. Entry 4 - Current date
         // 2. Entry 5 - 3 days ago
-        // When days=1, the repository may include entries from previous days depending
-        // on the current day of the week to ensure working days are properly counted.
-        // This test is currently running with 2 entries because the repository logic
-        // includes both entries.
-        $this->assertLength(2);
+        // When today (current date), yes, today, the day your executing this test, is Monday,
+        // the repository includes entries from previous working day (Friday)
+        if (date('N') == 1) {
+            $this->assertLength(2);
+        } else {
+            $this->assertLength(1);
+        }
     }
 
     //-------------- summary routes ----------------------------------------

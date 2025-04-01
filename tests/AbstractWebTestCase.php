@@ -33,6 +33,18 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     protected $tableInitialState;
 
     /**
+     * Flag to track if test data has been loaded
+     */
+    private static $dataLoaded = false;
+
+    /**
+     * Flag to track if database has been initialized
+     */
+    private static $databaseInitialized = false;
+
+    protected $useTransactions = true;
+
+    /**
      * Returns the kernel class to use for these tests
      */
     protected static function getKernelClass()
@@ -51,11 +63,28 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         $this->client = static::createClient();
         $this->serviceContainer = $this->client->getContainer();
 
+        // Reset database state if needed
+        $this->resetDatabase();
+
+        // Begin a transaction to isolate test database changes
+        if ($this->connection && $this->useTransactions) {
+            // For PDO connections
+            if (method_exists($this->connection, 'beginTransaction')) {
+                $this->connection->beginTransaction();
+            }
+            // For Doctrine DBAL connections
+            else if (method_exists($this->connection, 'getWrappedConnection')) {
+                try {
+                    $this->connection->getWrappedConnection()->beginTransaction();
+                } catch (\Exception $e) {
+                    // If transaction fails, log the error but continue
+                    error_log("Transaction begin failed: " . $e->getMessage());
+                }
+            }
+        }
+
         // authenticate user in session
         $this->logInSession();
-
-        // load test data
-        $this->loadTestData();
 
         // Force German locale for tests
         $translator = $this->serviceContainer->get('translator');
@@ -72,7 +101,38 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      */
     protected function tearDown(): void
     {
-        // Add common teardown functionality
+        // Roll back the transaction to restore the database to its original state
+        if ($this->connection && $this->useTransactions) {
+            // For PDO connections
+            if (method_exists($this->connection, 'rollBack')) {
+                // Check if a transaction is active before rolling back
+                if (method_exists($this->connection, 'inTransaction') && $this->connection->inTransaction()) {
+                    try {
+                        $this->connection->rollBack();
+                    } catch (\Exception $e) {
+                        // If rollback fails, log the error but continue
+                        error_log("Transaction rollback failed: " . $e->getMessage());
+                    }
+                }
+            }
+            // For Doctrine DBAL connections
+            else if (method_exists($this->connection, 'getWrappedConnection')) {
+                $wrappedConnection = $this->connection->getWrappedConnection();
+                if (method_exists($wrappedConnection, 'isTransactionActive') && $wrappedConnection->isTransactionActive()) {
+                    try {
+                        $wrappedConnection->rollBack();
+                    } catch (\Exception $e) {
+                        // If rollback fails, log the error but continue
+                        error_log("Transaction rollback failed: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        // Clear entity manager to prevent stale data between tests
+        if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
+            $this->serviceContainer->get('doctrine')->getManager()->clear();
+        }
 
         parent::tearDown();
     }
@@ -187,10 +247,14 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             $session = $this->serviceContainer->get('session');
             $session->set('_security_main', serialize($usernamePasswordToken));
 
-            // Set cookie for the test client
+            // Clear and set the cookies
+            $this->client->getCookieJar()->clear();
             $cookie = new Cookie($session->getName(), $session->getId());
             $this->client->getCookieJar()->set($cookie);
             $session->save();
+
+            // Ensure the client doesn't reboot between requests (maintains the session)
+            $this->client->disableReboot();
         }
     }
 
@@ -338,5 +402,80 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         }
 
         $this->assertSame($length, count($response));
+    }
+
+    /**
+     * Create a client with a shared kernel to improve performance
+     */
+    protected static function createClient(array $options = [], array $server = []): \Symfony\Bundle\FrameworkBundle\KernelBrowser
+    {
+        if (static::$kernel instanceof \Symfony\Component\HttpKernel\KernelInterface) {
+            static::$kernel->shutdown();
+        }
+
+        if (null === static::$kernel) {
+            static::$kernel = static::createKernel($options);
+        }
+
+        static::$kernel->boot();
+
+        $client = static::$kernel->getContainer()->get('test.client');
+        $client->setServerParameters($server);
+
+        return $client;
+    }
+
+    /**
+     * Reset database to initial state only when needed
+     */
+    protected function resetDatabase(?string $filepath = null): void
+    {
+        if (!self::$databaseInitialized || $filepath !== null) {
+            $this->loadTestData($filepath);
+            self::$databaseInitialized = true;
+        } else if ($this->queryBuilder === null || $this->connection === null) {
+            // Ensure queryBuilder and connection are available even if loadTestData wasn't called
+            $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
+            $this->queryBuilder = $connection->createQueryBuilder();
+
+            // Also make sure $this->connection is properly initialized
+            if (method_exists($connection->getWrappedConnection(), 'getWrappedResourceHandle')) {
+                $this->connection = $connection->getWrappedConnection()->getWrappedResourceHandle();
+            } else {
+                $this->connection = $connection;
+            }
+        }
+    }
+
+    /**
+     * For tests that need a completely fresh database state, call this method
+     * at the beginning of the test to force a complete database reset.
+     */
+    protected function forceReset(?string $filepath = null): void
+    {
+        // Temporarily disable transactions
+        $this->useTransactions = false;
+
+        // Force a complete database reset
+        self::$databaseInitialized = false;
+        $this->resetDatabase($filepath);
+
+        // Create a fresh client
+        $this->client = static::createClient();
+        $this->serviceContainer = $this->client->getContainer();
+
+        // Re-enable transactions for the next test
+        $this->useTransactions = true;
+    }
+
+    /**
+     * Clear static state between test runs (important for parallel testing)
+     * This helps ensure isolated test environments for parallel runs
+     */
+    public static function tearDownAfterClass(): void
+    {
+        self::$databaseInitialized = false;
+        self::$dataLoaded = false;
+        parent::tearDownAfterClass();
     }
 }
