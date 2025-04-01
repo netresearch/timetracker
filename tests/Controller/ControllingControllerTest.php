@@ -30,8 +30,53 @@ class ControllingControllerTest extends AbstractWebTestCase
 
     public function testExportActionWithLoggedInUser(): void
     {
-        // Skip this test due to environment variable issues
-        $this->markTestSkipped('Skipping test due to environment variable issues with APP_SHOW_BILLABLE_FIELD_IN_EXPORT');
+        // Load test data to ensure we have entries to export
+        $this->loadTestData('/../sql/unittest/002_testdata.sql');
+
+        // Make sure we're logged in as unittest user (ID 1)
+        $this->logInSession('unittest');
+
+        // Request the export URL with required parameters
+        $this->client->request(
+            'GET',
+            '/controlling/export',
+            [
+                'year' => 2023,
+                'month' => 6,
+                'userid' => 1,
+                'project' => 0,
+                'customer' => 0,
+                'billable' => 0,
+                'tickettitles' => 0
+            ]
+        );
+
+        // Check the response status code
+        $this->assertStatusCode(200);
+
+        // Get the response object for further tests
+        $response = $this->client->getResponse();
+
+        // Verify response is an Excel file with correct MIME type
+        $this->assertEquals(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            $response->headers->get('Content-Type')
+        );
+
+        // Verify content disposition header has attachment type and correct filename pattern
+        $contentDisposition = $response->headers->get('Content-disposition');
+        $this->assertStringStartsWith('attachment;', $contentDisposition);
+        $this->assertStringContainsString(
+            'attachment;filename=2023_06_',
+            $contentDisposition
+        );
+
+        // Verify response has content
+        $content = $response->getContent();
+        $this->assertNotEmpty($content);
+
+        // Verify the content is valid Excel data (starts with Excel file signature)
+        $this->assertStringStartsWith('PK', $content, 'Response content should be a valid Excel file (XLSX)');
     }
 
     public function testSetCellDateAndSetCellHours(): void
@@ -73,7 +118,6 @@ class ControllingControllerTest extends AbstractWebTestCase
 
     public function testExportActionWithBillableAndTicketTitles(): void
     {
-        // Skip this test due to environment variable issues
-        $this->markTestSkipped('Skipping test due to environment variable issues with APP_SHOW_BILLABLE_FIELD_IN_EXPORT');
+        $this->markTestSkipped('TODO');
     }
 }

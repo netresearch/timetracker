@@ -59,13 +59,13 @@ class ControllingController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        $projectId    = (int)  $request->get('project');
-        $userId       = (int)  $request->get('userid');
-        $year         = (int)  $request->get('year');
-        $month        = (int)  $request->get('month');
-        $customerId   = (int)  $request->get('customer');
-        $onlyBillable = (bool) $request->get('billable');
-        $showTicketTitles = (bool) $request->get('tickettitles');
+        $projectId    = (int)  $request->query->get('project');
+        $userId       = (int)  $request->query->get('userid');
+        $year         = (int)  $request->query->get('year');
+        $month        = (int)  $request->query->get('month');
+        $customerId   = (int)  $request->query->get('customer');
+        $onlyBillable = (bool) $request->query->get('billable');
+        $showTicketTitles = (bool) $request->query->get('tickettitles');
 
         $service = $this->export;
         /** @var \App\Entity\Entry[] $entries */
