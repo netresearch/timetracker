@@ -801,6 +801,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionStartNotFirstOfMonth(): void
@@ -854,6 +857,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionAlterExistingContract(): void
@@ -887,6 +893,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractStartsDuringNewWithoutEnd(): void
@@ -920,6 +929,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractStartsDuringNew(): void
@@ -954,6 +966,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractWithoutEndStartsDuringNew(): void
@@ -987,6 +1002,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractWithoutEndStartsDuringNewWithoutEnd(): void
@@ -1019,6 +1037,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractEndStartsDuringNewEndWithNewContractEndingAfterOld(): void
@@ -1053,6 +1074,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionNewContractStartsDuringOldWithEnd(): void
@@ -1086,6 +1110,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionNewContractWithEndDuringOldStartsDuringOldWithEnd(): void
@@ -1120,6 +1147,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionNewContractWithEndAfterOldStartsDuringOldWithEnd(): void
@@ -1154,6 +1184,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractStartsInFutureAfterNewEnds(): void
@@ -1188,6 +1221,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractWithEndStartsInFutureAfterNewEnds(): void
@@ -1222,6 +1258,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractWithEndbeforeStartNewContract(): void
@@ -1256,6 +1295,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionUpdateOldContract(): void
@@ -1290,6 +1332,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionUpdateOldContractNewWithoutEnd(): void
@@ -1323,6 +1368,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionOldContractWithEndbeforeStartNewContractOpenEnd(): void
@@ -1356,6 +1404,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionMultipleOpenEndedContracts(): void
@@ -1391,6 +1442,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request('POST', '/contract/save', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Für den Nutzer besteht mehr als ein unbefristeter Vertrag.');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testSaveContractActionDevNotAllowed(): void
@@ -1412,6 +1466,9 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('contracts');
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testUpdateContract(): void
@@ -1451,6 +1508,9 @@ class AdminControllerTest extends AbstractWebTestCase
             ]
         ];
         $this->assertArraySubset($expectedDbEntry, $result);
+
+        // for some unknown reason the transaction is not rolled back
+        $this->forceReset();
     }
 
     public function testCreateContractUserNotExist(): void
