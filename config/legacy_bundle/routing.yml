@@ -2,10 +2,6 @@ _start:
     path:  /
     defaults: { _controller: App\Controller\DefaultController::indexAction }
 
-user_add:
-    path: /user/add
-    defaults: { _controller: App\Controller\AdminController::saveUserAction }
-
 time_summary:
     path: /getTimeSummary
     defaults: { _controller: App\Controller\DefaultController::getTimeSummaryAction }
@@ -158,10 +154,6 @@ check_page:
     path: /status/page
     defaults: { _controller: App\Controller\StatusController::pageAction }
 
-status:
-    path: /status
-    defaults: { _controller: App\Controller\StatusController::pageAction }
-
 saveProject:
     path: /project/save
     defaults: { _controller: App\Controller\AdminController::saveProjectAction }
@@ -244,4 +236,6 @@ jiraOAuthCallback:
 
 syncEntriesToJira:
     path: /syncentries/jira
-    defaults: { _controller: App\Controller\DefaultController::syncEntriesToJiraAction }
+    defaults: { _controller: App\Controller\AdminController::jiraSyncEntriesAction }
+
+
