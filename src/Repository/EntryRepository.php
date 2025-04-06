@@ -18,6 +18,7 @@ use Doctrine\ORM\Query\Expr\Join;
 use App\Entity\Entry;
 use App\Entity\User;
 use App\Helper\TimeHelper;
+use App\Service\ClockInterface;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -40,12 +41,15 @@ class EntryRepository extends ServiceEntityRepository
 
     const PERIOD_MONTH = 3;
 
+    private ClockInterface $clock;
+
     /**
      * EntryRepository constructor.
      */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $managerRegistry, ClockInterface $clock)
     {
         parent::__construct($managerRegistry, Entry::class);
+        $this->clock = $clock;
     }
 
     /**
@@ -57,7 +61,8 @@ class EntryRepository extends ServiceEntityRepository
      * The calculation logic:
      * 1. First handles full weeks (5 working days = 7 calendar days)
      * 2. Then handles remaining days, accounting for weekends
-     * 3. Adjusts based on the current day of the week to ensure correct counting
+     * 3. Adjusts based on the current day of the week (determined by the injected clock)
+     *    to ensure correct counting
      *
      * For example:
      * - 1 working day on Tuesday means 1 calendar day (just Tuesday)
@@ -65,7 +70,7 @@ class EntryRepository extends ServiceEntityRepository
      * - 5 working days means 7 calendar days (a full week)
      * - 6 working days means 8 calendar days (a full week plus one day)
      */
-    public static function getCalendarDaysByWorkDays(int $workingDays): int|float
+    public function getCalendarDaysByWorkDays(int $workingDays): int
     {
         if ($workingDays < 1) {
             return 0;
@@ -76,49 +81,60 @@ class EntryRepository extends ServiceEntityRepository
         $restDays = ($workingDays) % 5;
 
         if ($restDays == 0) {
-            return $weeks * 7;
+            // No remaining days, just return full weeks * 7
+            return (int) ($weeks * 7);
         }
 
-        $dayOfWeek = date("w");
+        // Get day of week from clock (0=Sun, 1=Mon, ..., 6=Sat)
+        $dayOfWeek = (int) $this->clock->today()->format("w");
 
+        // Adjust restDays based on the current day of the week
         switch ($dayOfWeek) {
-        case 6:
-            $restDays++;
-            break;
-        case 7:
-            $restDays += 2;
-            break;
-        default:
-            if ($dayOfWeek <= $restDays) {
-                $restDays += 2;
-            }
-
-            break;
+            case 6: // Saturday
+                $restDays++; // Need to account for Saturday itself if counting back
+                break;
+            case 0: // Sunday (was 7 in original date('w') but format('w') is 0)
+                $restDays += 2; // Need to account for Sunday and Saturday
+                break;
+            default: // Monday to Friday
+                // If the span of restDays crosses the *previous* weekend when counting back from today
+                // (e.g., today is Tuesday (2) and restDays is 2, it includes Mon, Sun, Sat)
+                if ($dayOfWeek <= $restDays) { // Check if dayOfWeek index (0-6) is less than or equal to remaining days (1-4)
+                   $restDays += 2; // Add Saturday and Sunday
+                }
+                break;
         }
 
-        return ($weeks * 7) + $restDays;
+        return (int) (($weeks * 7) + $restDays);
     }
 
 
     /**
      * Returns work log entries for user and recent days.
+     * Uses DQL.
      *
      * @throws \Exception
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
-        $fromDate = new \DateTime();
-        $fromDate->setTime(0, 0);
+        $today = $this->clock->today();
+        $calendarDays = $this->getCalendarDaysByWorkDays($days);
 
-        $calendarDays = self::getCalendarDaysByWorkDays($days);
-        $fromDate->sub(new \DateInterval('P' . $calendarDays . 'D'));
+        if ($calendarDays <= 0) {
+             // Avoid creating invalid DateInterval P0D
+             $fromDate = $today;
+        } else {
+             $fromDate = $today->sub(new \DateInterval('P' . $calendarDays . 'D'));
+        }
+
 
         $entityManager = $this->getEntityManager();
         $query = $entityManager->createQuery(
             'SELECT e FROM App\Entity\Entry e'
             . ' WHERE e.user = :user_id AND e.day >= :fromDate'
             . ' ORDER BY e.day, e.start ASC'
-        )->setParameter('user_id', $user->getId())->setParameter('fromDate', $fromDate);
+        )->setParameter('user_id', $user->getId())
+         ->setParameter('fromDate', $fromDate);
 
         return $query->getResult();
     }
@@ -276,22 +292,24 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Returns work log entries for a specific user within a time range.
+     * Uses raw SQL for performance/legacy reasons? Refactored to use prepared statements.
      *
      * This method retrieves entries based on working days rather than calendar days.
      * It converts the requested number of working days to calendar days using getCalendarDaysByWorkDays().
      *
-     * Important behaviors to note:
-     * - When requesting entries for 1 working day and today is Monday, it will include entries
-     *   from Friday (the previous working day) as well.
-     * - Weekend days are skipped when counting back working days.
-     * - The query uses "day >= DATE_ADD(CURDATE(), INTERVAL -X DAY)" where X is the calculated calendar days.
-     *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception - If DBAL execution fails
      */
     public function getEntriesByUser(int $userId, int $days = 3, bool $showFuture = true): array
     {
-        $calendarDays = self::getCalendarDaysByWorkDays($days);
+        $today = $this->clock->today();
+        $calendarDays = $this->getCalendarDaysByWorkDays($days);
+
         $connection = $this->getEntityManager()->getConnection();
+        $params = [
+            'userId' => $userId,
+            // Format date for SQL parameter binding
+            'fromDate' => $today->sub(new \DateInterval('P' . $calendarDays . 'D'))->format('Y-m-d'),
+        ];
 
         $sql = [];
         $sql['select'] = "SELECT e.id,
@@ -309,18 +327,22 @@ class EntryRepository extends ServiceEntityRepository
             e.internal_jira_ticket_original_key as extTicket,
             REPLACE(t.ticketurl,'%s',e.internal_jira_ticket_original_key) as extTicketUrl";
         $sql['from'] = "FROM entries e LEFT JOIN projects p ON e.project_id = p.id LEFT JOIN ticket_systems t ON p.ticket_system = t.id";
-        $sql['where_day'] = "WHERE day >= DATE_ADD(CURDATE(), INTERVAL -" . $calendarDays . " DAY)";
+        // Modified: Use parameter binding for start date
+        $sql['where_day'] = "WHERE day >= :fromDate";
 
         if (! $showFuture) {
-            $sql['where_future'] = "AND day <= CURDATE()";
+             // Modified: Use parameter binding for today's date
+            $sql['where_future'] = "AND day <= :today";
+            $params['today'] = $today->format('Y-m-d');
         }
 
-        $sql['where_user'] = 'AND user_id = ' . $userId;
+        // Modified: Use parameter binding for user ID
+        $sql['where_user'] = 'AND user_id = :userId';
         $sql['order'] = "ORDER BY day DESC, start DESC";
 
-        $stmt = $connection->query(implode(" ", $sql));
-
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        // Modified: Use prepare and executeQuery with parameters
+        $stmt = $connection->prepare(implode(" ", $sql));
+        $result = $stmt->executeQuery($params)->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
 
         $data = [];
         if (count($result)) {
@@ -460,37 +482,52 @@ class EntryRepository extends ServiceEntityRepository
 
 
     /**
-     * Query the current user's work by given period
+     * Query the current user's work by given period.
+     * Uses raw SQL. Refactored to use prepared statements.
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function getWorkByUser(int $userId, int $period = self::PERIOD_DAY): array
     {
+        $today = $this->clock->today();
         $connection = $this->getEntityManager()->getConnection();
+        $params = ['userId' => $userId];
 
         $sql['select'] = "SELECT COUNT(id) AS count, SUM(duration) AS duration";
         $sql['from'] = "FROM entries";
-        $sql['where_user'] = "WHERE user_id = " . intval($userId);
+        // Modified: Use parameter binding for user ID
+        $sql['where_user'] = "WHERE user_id = :userId";
 
         switch ($period) {
         case self::PERIOD_DAY:
-            $sql['where_day'] = "AND day = CURDATE()";
+             // Modified: Use parameter binding for today's date
+            $sql['where_day'] = "AND day = :todayDate";
+            $params['todayDate'] = $today->format('Y-m-d');
             break;
         case self::PERIOD_WEEK:
-            $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
-            $sql['where_week'] = "AND WEEK(day, 1) = WEEK(CURDATE(), 1)";
+             // Modified: Use parameter binding for year and week
+            $sql['where_year'] = "AND YEAR(day) = :year";
+            // Assuming WEEK(day, 1) aligns with ISO-8601 week (starts Monday) like PHP 'W'
+            $sql['where_week'] = "AND WEEK(day, 1) = :week";
+            $params['year'] = $today->format('Y');
+            $params['week'] = $today->format('W');
             break;
         case self::PERIOD_MONTH:
-            $sql['where_year'] = "AND YEAR(day) = YEAR(CURDATE())";
-            $sql['where_month']= "AND MONTH(day) = MONTH(CURDATE())";
+             // Modified: Use parameter binding for year and month
+            $sql['where_year'] = "AND YEAR(day) = :year";
+            $sql['where_month']= "AND MONTH(day) = :month";
+            $params['year'] = $today->format('Y');
+            $params['month'] = $today->format('m');
             break;
         }
 
-        $stmt   = $connection->query(implode(" ", $sql));
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        // Modified: Use prepare and executeQuery with parameters
+        $stmt = $connection->prepare(implode(" ", $sql));
+        $result = $stmt->executeQuery($params)->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
 
+        // Original code returned false for count, keeping that behavior
         return [
-            'duration' => $result[0]['duration'],
+            'duration' => $result[0]['duration'] ?? 0, // Handle potential empty result
             'count'    => false,
         ];
     }

@@ -34,13 +34,8 @@ services:
     # Makes classes in src/ available to be used as services
     # This creates a service per class whose id is the fully-qualified class name
     App\:
-        resource: '../src/'
-        exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
-            - '../src/Migrations/'
-            - '../src/Tests/'
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
     # Controllers are tagged automatically
     App\Controller\:
@@ -66,3 +61,13 @@ services:
     App\Services\Export:
         public: true
         autowire: true
+
+    # Add this: Configure ClockInterface and SystemClock
+    App\\Service\\ClockInterface:
+        alias: App\\Service\\SystemClock
+
+    # Explicitly define EntryRepository if autowiring isn't picking up ClockInterface correctly (optional, usually not needed)
+    # App\\Repository\\EntryRepository:
+    #     arguments:
+    #         $managerRegistry: '@doctrine' # Adjust based on actual ManagerRegistry service ID if needed
+    #         $clock: '@App\\Service\\ClockInterface'
