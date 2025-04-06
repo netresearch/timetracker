@@ -23,19 +23,6 @@ security:
             anonymous: true
             provider: app_user_provider
 
-            # Add form_login configuration
-            form_login:
-                login_path: _login
-                check_path: login_check
-                default_target_path: /
-                username_parameter: _username
-                password_parameter: _password
-                csrf_token_generator: security.csrf.token_manager
-                # Specify the login form template
-                failure_path_parameter: _failure_path
-                # Use a post_only parameter to secure the login form
-                post_only: true
-
             # Custom authenticator for LDAP login
             guard:
                 authenticators:

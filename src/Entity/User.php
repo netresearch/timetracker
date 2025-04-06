@@ -410,11 +410,6 @@ class User implements UserInterface
         // If you store any temporary, sensitive data on the user, clear it here
     }
 
-    public function getUserIdentifier(): string
-    {
-        return $this->username;
-    }
-
     public function getSalt(): ?string
     {
         // Since we're using LDAP, we don't need a salt

@@ -95,41 +95,90 @@ class LdapClient
      */
     protected function verifyUsername()
     {
-        $ldap = new Ldap($this->getLdapOptions());
+        $ldapOptions = $this->getLdapOptions();
+        $ldap = new Ldap($ldapOptions);
 
-        putenv('LDAPTLS_REQCERT=never');
+        putenv('LDAPTLS_REQCERT=never'); // SECURITY WARNING: Disables TLS certificate verification
 
         try {
-            $ldap->bind();
-        } catch (LdapException $ldapException) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
-                $this->logger->error('LDAP connection failed', [
-                    'error' => $ldapException->getMessage(),
+            if ($this->logger) {
+                $this->logger->debug('LDAP: Attempting read-only bind', [
                     'host' => $this->_host,
                     'port' => $this->_port,
                     'useSSL' => $this->_useSSL,
+                    'bindDn' => $this->_readUser,
                     'baseDn' => $this->_baseDn
                 ]);
             }
-
+            $ldap->bind();
+            if ($this->logger) {
+                $this->logger->info('LDAP: Read-only bind successful.');
+            }
+        } catch (LdapException $ldapException) {
+            if ($this->logger) {
+                $this->logger->error('LDAP: Read-only bind failed', [
+                    'error' => $ldapException->getMessage(),
+                    'code' => $ldapException->getCode(),
+                    'host' => $this->_host,
+                    'port' => $this->_port,
+                    'useSSL' => $this->_useSSL,
+                    'bindDn' => $this->_readUser,
+                    'baseDn' => $this->_baseDn
+                ]);
+            }
+            // Re-throw original exception after logging
             throw new \Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $ldapException->getMessage() . '', $ldapException->getCode(), $ldapException);
+        }
+
+        $searchFilter = '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')';
+        if ($this->logger) {
+            $this->logger->debug('LDAP: Searching for user', [
+                'baseDn' => $this->_baseDn,
+                'filter' => $searchFilter,
+                'scope' => 'sub'
+            ]);
         }
 
         /** @var \Laminas\Ldap\Collection $collection */
         $collection = $ldap->search(
-            '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')',
+            $searchFilter,
             $this->_baseDn,
             Ldap::SEARCH_SCOPE_SUB,
-            ['cn', 'dn']
+            ['cn', 'distinguishedName', 'dn']
         );
 
-        if (!is_object($collection) || ($collection->getFirst() == null)) {
+        if (!is_object($collection) || ($collection->count() === 0)) {
+            if ($this->logger) {
+                $this->logger->warning('LDAP: User search failed or returned no results.', [
+                    'filter' => $searchFilter,
+                    'baseDn' => $this->_baseDn
+                ]);
+            }
             throw new \Exception('Username unknown.');
         }
 
-        $this->setTeamsByLdapResponse($collection->getFirst());
+        if ($collection->count() > 1) {
+             if ($this->logger) {
+                $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
+                    'filter' => $searchFilter,
+                    'baseDn' => $this->_baseDn,
+                    'count' => $collection->count()
+                ]);
+            }
+        }
 
-        return $collection->getFirst();
+        $ldapEntry = $collection->getFirst();
+        if ($this->logger) {
+            $returnedDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? 'N/A');
+            $this->logger->info('LDAP: User found.', [
+                'dn_returned' => $returnedDn,
+                'cn' => $ldapEntry['cn'][0] ?? 'N/A',
+            ]);
+        }
+
+        $this->setTeamsByLdapResponse($ldapEntry);
+
+        return $ldapEntry;
     }
 
 
@@ -142,19 +191,48 @@ class LdapClient
      */
     protected function verifyPassword(array $ldapEntry): bool
     {
+        $userDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? null);
+        if (!$userDn) {
+             if ($this->logger) {
+                $this->logger->error('LDAP: Could not extract DN or distinguishedName from user entry.', ['entry' => $ldapEntry]);
+             }
+             throw new \Exception('Could not determine user DN for authentication.');
+        }
+
         $ldapOptions = $this->getLdapOptions();
-        $ldapOptions['username'] = $ldapEntry['dn'];
+        // Override username/password for user bind attempt
+        $ldapOptions['username'] = $userDn;
         $ldapOptions['password'] = $this->_userPass;
 
         $ldap = new Ldap($ldapOptions);
 
         try {
-            $ldap->bind();
-        } catch (LdapException $ldapException) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
-                $this->logger->error($ldapException->getMessage());
+             if ($this->logger) {
+                $this->logger->debug('LDAP: Attempting user bind.', [
+                    'host' => $this->_host,
+                    'port' => $this->_port,
+                    'useSSL' => $this->_useSSL,
+                    'bindDn' => $userDn
+                ]);
             }
-
+            $ldap->bind();
+            if ($this->logger) {
+                $this->logger->info('LDAP: User bind successful.', ['bindDn' => $userDn]);
+            }
+        } catch (LdapException $ldapException) {
+            if ($this->logger) {
+                // Log level INFO or WARNING for failed login attempts might be appropriate
+                // depending on security policy, but ERROR is safer for diagnostics.
+                $this->logger->error('LDAP: User bind failed.', [
+                    'error' => $ldapException->getMessage(),
+                    'code' => $ldapException->getCode(), // Often contains LDAP-specific error codes
+                    'host' => $this->_host,
+                    'port' => $this->_port,
+                    'useSSL' => $this->_useSSL,
+                    'bindDn' => $userDn
+                ]);
+            }
+            // Re-throw original exception after logging
             throw new \Exception('Login data could not be validated: ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
         }
 
@@ -323,20 +401,61 @@ class LdapClient
 
     protected function setTeamsByLdapResponse(array $ldapRespsonse)
     {
-        $dn = $ldapRespsonse['dn'];
-        $mappingFile = __DIR__ . '/../../../../app/config/ldap_ou_team_mapping.yml';
+        $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
+        if (!$dn) {
+            if ($this->logger) {
+                $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
+            }
+            return;
+        }
+
+        // Construct path relative to the project root or use a kernel parameter for flexibility
+        // Assuming __DIR__ is src/Helper, adjust path accordingly.
+        // Example using Kernel parameter (more robust):
+        // $mappingFile = $this->projectDir . '/config/ldap_ou_team_mapping.yml';
+        $mappingFile = __DIR__ . '/../../config/ldap_ou_team_mapping.yml'; // Adjusted relative path
 
         $this->teams = [];
         if (file_exists($mappingFile)) {
-            $arMapping = Yaml::parse(file_get_contents($mappingFile));
-            if (!$arMapping) {
-                return;
-            }
-
-            foreach ($arMapping as $group => $teamName) {
-                if (strpos((string) $dn, 'ou=' . $group)) {
-                    $this->teams[] = $teamName;
+             if ($this->logger) {
+                 $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
+             }
+            try {
+                $arMapping = Yaml::parse(file_get_contents($mappingFile));
+                if (!$arMapping || !is_array($arMapping)) {
+                    if ($this->logger) {
+                         $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
+                     }
+                    return;
                 }
+
+                foreach ($arMapping as $group => $teamName) {
+                    // Check if the DN string contains the specific OU component
+                    // Using preg_match for potentially more robust OU checking (e.g., ensuring it's a whole component)
+                    // Simple str_contains might be sufficient if OU names are unique and simple.
+                    // Example using preg_match: if (preg_match('/,ou=' . preg_quote($group, '/') . '(,|$)/i', $dn)) {
+                    if (str_contains(strtolower($dn), 'ou=' . strtolower($group))) { // Case-insensitive check
+                        $this->teams[] = $teamName;
+                         if ($this->logger) {
+                             $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
+                         }
+                    }
+                }
+                 if (empty($this->teams) && $this->logger) {
+                     $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
+                 }
+
+            } catch (\Exception $e) {
+                if ($this->logger) {
+                    $this->logger->error('LDAP: Failed to parse team mapping file.', [
+                        'mappingFile' => $mappingFile,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        } else {
+            if ($this->logger) {
+                $this->logger->warning('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
             }
         }
     }
