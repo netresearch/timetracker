@@ -107,6 +107,14 @@ Setup - manual from from sources
    Also copy ``config/sentry.yml.dist`` to ``config/sentry.yml``,
    and fill the ``dsn`` key if necessary.
 
+#. Install Node.js dependencies and build frontend assets::
+
+   $ npm install --legacy-peer-deps
+   $ npm run build
+   # Or for development:
+   # npm run dev
+   # npm run watch
+
 #. Make cache and log directory writable::
 
    $ chmod -R og+w var/cache/ var/log/
