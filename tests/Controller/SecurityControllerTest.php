@@ -87,37 +87,4 @@ class SecurityControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(302);
         $this->assertStringContainsString('/login', $this->client->getResponse()->headers->get('Location'));
     }
-
-    /**
-     * @group auth
-     * @group remember_me
-     */
-    public function testRememberMeFunctionality(): void
-    {
-        // This test demonstrates how to test the remember_me functionality
-        // However, we'll skip it because accurately testing remember_me requires:
-        // 1. Creating a cookie with exact same format as Symfony's RememberMeServices
-        // 2. Access to the same encryption keys used in production
-        // These dependencies make this test difficult to run in isolation
-        $this->markTestSkipped(
-            'Remember me testing requires exact knowledge of Symfony\'s cookie format and encryption keys'
-        );
-
-        /* Here's how the cookie test would be structured:
-         *
-         * // Clear cookies and session
-         * $this->client->getCookieJar()->clear();
-         * $this->client->getContainer()->get('session')->clear();
-         *
-         * // Set a correct remember_me cookie (format depends on Symfony version and config)
-         * $rememberMeCookie = new Cookie(...);
-         * $this->client->getCookieJar()->set($rememberMeCookie);
-         *
-         * // Access a protected resource
-         * $this->client->request('GET', '/getUsers');
-         *
-         * // Verify authentication works via cookie
-         * $this->assertStatusCode(200);
-         */
-    }
 }
