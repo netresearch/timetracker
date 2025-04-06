@@ -41,11 +41,12 @@ class SecurityControllerTest extends AbstractWebTestCase
         self::ensureKernelShutdown();
 
         $client = static::createClient();
+        // Use the crawler provided by the client request
         $crawler = $client->request('GET', '/login');
 
         $this->assertResponseIsSuccessful(); // Asserts 2xx status code
 
-        // Check for login form elements in the response content from the correct client
+        // Check the JS config for the form URL
         $content = $client->getResponse()->getContent();
 
         // The form is created with ExtJS, so check for the right script elements

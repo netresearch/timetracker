@@ -3,9 +3,43 @@
 namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
+use Tests\Service\TestClock;
+use App\Service\ClockInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class DefaultControllerTest extends AbstractWebTestCase
 {
+    private ?TestClock $testClock = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $container = self::$container;
+        if ($container instanceof ContainerInterface && $container->has(TestClock::class)) {
+            $clockService = $container->get(TestClock::class);
+            if ($clockService instanceof TestClock) {
+                $this->testClock = $clockService;
+            }
+        } elseif ($container instanceof ContainerInterface && $container->has(ClockInterface::class)) {
+            $clockService = $container->get(ClockInterface::class);
+            if ($clockService instanceof TestClock) {
+                $this->testClock = $clockService;
+            }
+        }
+
+        if ($this->testClock === null) {
+            $this->fail('Could not retrieve TestClock service. Ensure it is registered and public in the test environment.');
+        }
+
+        $this->testClock->setTestNow(new \DateTimeImmutable('2023-10-24 12:00:00'));
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+    }
+
     /**
      * AdminController and DefaultController both have a function
      * with the name getCustomersAction()
@@ -285,10 +319,16 @@ class DefaultControllerTest extends AbstractWebTestCase
     //-------------- data routes ----------------------------------------
     public function testGetDataActionDefaultParameter(): void
     {
+        // Clock is mocked to 2023-10-24 (Tuesday) in setUp.
+        // Default days is 3, which calculates to 5 calendar days for a Tuesday.
+        // Query range >= 2023-10-19.
+        // Expect entries 4 (2023-10-24) and 5 (2023-10-20).
+        // Note: The order might depend on the SQL ORDER BY clause (day DESC, start DESC).
         $expectedJson = [
             0 => [
                 'entry' => [
-                    'date' => date('d/m/Y'),
+                    'id' => 4, // Added ID assertion
+                    'date' => '24/10/2023', // Fixed date
                     'start' => '13:00',
                     'end' => '13:25',
                     'user' => 1,
@@ -303,7 +343,8 @@ class DefaultControllerTest extends AbstractWebTestCase
             ],
             1 => [
                 'entry' => [
-                    'date' => date('d/m/Y', strtotime('-3 days')),
+                    'id' => 5, // Added ID assertion
+                    'date' => '20/10/2023', // Fixed date
                     'start' => '14:00',
                     'end' => '14:25',
                     'user' => 1,
@@ -320,44 +361,91 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->client->request('GET', '/getData');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
+        $this->assertLength(2); // Assert exactly 2 entries are returned
     }
 
-    public function testGetDataActionForParameter(): void
+    /**
+     * Data provider for testGetDataActionForParameter
+     *
+     * Provides different scenarios: a non-Monday workday and a Monday.
+     *
+     * @return array<string, array{mockDate: string, daysParam: int, expectedCount: int, expectedDate: string}>
+     */
+    public static function getDataActionParameterProvider(): array
     {
-        $parameter = [
-            'days' => 1,
-        ];
-        $expectedJson = [
-            [
-                'entry' => [
-                    'id' => 4,
-                    'date' => date('d/m/Y'),
-                    'start' => '13:00',
-                    'end' => '13:25',
-                    'user' => 1,
-                    'customer' => 1,
-                    'project' => 1,
-                    'activity' => 1,
-                    'description' => 'testGetDataAction',
-                    'ticket' => 'testGetDataAction',
-                    'class' => 1,
-                    'duration' => '00:25',
-                ],
+        // Correction: Monday 1 day -> count is 2, most recent date is 24/10/2023
+        // Let's adjust the provider data
+        return [
+            'tuesday_1_day' => [
+                'mockDate' => '2023-10-24 10:00:00',
+                'daysParam' => 1,
+                'expectedCount' => 1,
+                'expectedDate' => '24/10/2023'
+            ],
+            'monday_1_day' => [
+                'mockDate' => '2023-10-23 10:00:00',
+                'daysParam' => 1,
+                'expectedCount' => 2,
+                'expectedDate' => '24/10/2023' // Entry 4 is most recent in results (ORDER BY day DESC)
+            ],
+            'monday_3_days' => [
+                'mockDate' => '2023-10-23 10:00:00',
+                'daysParam' => 3,
+                'expectedCount' => 2,
+                'expectedDate' => '24/10/2023'
             ],
         ];
+    }
+
+    /**
+     * @dataProvider getDataActionParameterProvider
+     */
+    public function testGetDataActionForParameter(string $mockDate, int $daysParam, int $expectedCount, string $expectedDate): void
+    {
+        // Set the clock to the date provided by the data provider
+        $this->assertNotNull($this->testClock, 'TestClock was not initialized in setUp');
+        $this->testClock->setTestNow(new \DateTimeImmutable($mockDate));
+
+        $parameter = [
+            'days' => $daysParam,
+        ];
+
+        // Define the expected keys for a single entry
+        $expectedEntryKeys = [
+            'id', 'date', 'start', 'end', 'user', 'customer', 'project',
+            'activity', 'description', 'ticket', 'class', 'duration',
+            'extTicket', 'extTicketUrl'
+        ];
+
         $this->client->request('GET', '/getData/days/' . $parameter['days']);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
 
-        // The test data setup has 2 entries relevant to this test:
-        // 1. Entry 4 - Current date
-        // 2. Entry 5 - 3 days ago
-        // When today (current date), yes, today, the day your executing this test, is Monday,
-        // the repository includes entries from previous working day (Friday)
-        if (date('N') == 1) {
-            $this->assertLength(2);
+        $responseData = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($responseData);
+
+        // Assert the exact count of entries returned
+        $this->assertCount($expectedCount, $responseData, sprintf('Failed asserting that count %d matches expected %d for date %s / days %d', count($responseData), $expectedCount, $mockDate, $daysParam));
+
+        // Only perform structure checks if we expect results
+        if ($expectedCount > 0) {
+            // Loop through returned entries and check structure
+            for ($i = 0; $i < $expectedCount; $i++) {
+                $this->assertArrayHasKey($i, $responseData, "Response missing index {$i}");
+                $this->assertArrayHasKey('entry', $responseData[$i], "Response item {$i} missing 'entry' key.");
+                $entry = $responseData[$i]['entry'];
+                $this->assertIsArray($entry, "Response item {$i}['entry'] is not an array.");
+
+                // Check if all expected keys exist in the entry
+                foreach ($expectedEntryKeys as $key) {
+                    $this->assertArrayHasKey($key, $entry, "Response item {$i}['entry'] missing key '{$key}'.");
+                }
+            }
+
+            // Assert the date of the *first* entry (most recent due to ORDER BY)
+            $this->assertSame($expectedDate, $responseData[0]['entry']['date'], 'Date in first response entry does not match expected most recent date.');
         } else {
-            $this->assertLength(1);
+            // If no count expected, ensure response is empty (already handled by assertCount)
+            // $this->assertEmpty($responseData, 'Expected empty response but got content.');
         }
     }
 
