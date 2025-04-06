@@ -3,12 +3,9 @@
 namespace App\Controller;
 
 use App\Response\Error;
-use App\Entity\Team;
-use App\Repository\TeamRepository;
 use App\Entity\TicketSystem;
 use App\Helper\JiraApiException;
 use App\Helper\JiraOAuthApi;
-use App\Helper\LdapClient;
 use App\Helper\TimeHelper;
 use App\Repository\EntryRepository;
 use App\Entity\User;
@@ -22,7 +19,6 @@ use App\Model\JsonResponse;
 use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Psr\Log\LoggerInterface;
 use Twig\Environment as TwigEnvironment;
 
 /**
