@@ -7,6 +7,7 @@ namespace Tests;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase as SymfonyWebTestCase;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
 /**
  * Abstract base test case that combines all test functionality.
@@ -16,7 +17,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
 {
     use ArraySubsetAsserts;
 
-    protected $client;
+    protected KernelBrowser $client;
 
     protected $serviceContainer;
 
@@ -263,10 +264,10 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      */
     protected function loginAs(string $username, string $password): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/login');
+        // Use the client created in setUp()
+        $this->client->request('GET', '/login');
 
-        $client->submitForm('Login', [
+        $this->client->submitForm('Login', [
             'username' => $username,
             'password' => $password,
         ]);
@@ -279,6 +280,9 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      */
     protected function createAuthenticatedClient(string $username = 'test', string $password = 'password'): \Symfony\Bundle\FrameworkBundle\KernelBrowser
     {
+        // Ensure the kernel is shut down before creating a new client
+        static::ensureKernelShutdown();
+
         $client = static::createClient();
         $client->request(
             'POST',
@@ -300,8 +304,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         array $content = [],
         array $headers = []
     ): \Symfony\Bundle\FrameworkBundle\KernelBrowser {
-        $client = static::createClient();
-        $client->request(
+        // Use the client created in setUp()
+        $this->client->request(
             $method,
             $uri,
             [],
@@ -313,7 +317,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             $content ? json_encode($content) : null
         );
 
-        return $client;
+        // Return the same client instance used for the request
+        return $this->client;
     }
 
     /**
@@ -405,27 +410,6 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Create a client with a shared kernel to improve performance
-     */
-    protected static function createClient(array $options = [], array $server = []): \Symfony\Bundle\FrameworkBundle\KernelBrowser
-    {
-        if (static::$kernel instanceof \Symfony\Component\HttpKernel\KernelInterface) {
-            static::$kernel->shutdown();
-        }
-
-        if (null === static::$kernel) {
-            static::$kernel = static::createKernel($options);
-        }
-
-        static::$kernel->boot();
-
-        $client = static::$kernel->getContainer()->get('test.client');
-        $client->setServerParameters($server);
-
-        return $client;
-    }
-
-    /**
      * Reset database to initial state only when needed
      */
     protected function resetDatabase(?string $filepath = null): void
@@ -459,6 +443,9 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         // Force a complete database reset
         self::$databaseInitialized = false;
         $this->resetDatabase($filepath);
+
+        // Ensure kernel is shut down before creating a fresh client
+        static::ensureKernelShutdown();
 
         // Create a fresh client
         $this->client = static::createClient();
