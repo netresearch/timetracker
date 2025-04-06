@@ -39,7 +39,7 @@
 					    			name: '_username',
 					    			allowBlank: false,
                                     {% if last_username is defined %}
-                                        value: '{{ last_username }}',
+                                        value: '{{ last_username | e('js') }}',
                                     {% endif %}
                                     listeners: {
                                         specialkey: function (field, e) {

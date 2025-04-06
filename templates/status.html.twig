@@ -17,6 +17,6 @@
         {% endfor %}
     </head>
     <body class="status_page">
-        <div id="loginStatus" class="{{ loginClass }}">Login-Status</div>
+        <div id="loginStatus" class="{{ loginClass|e('html_attr') }}">Login-Status</div>
     </body>
 </html>
