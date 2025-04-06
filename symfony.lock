@@ -205,6 +205,21 @@
             "config/packages/test/monolog.yaml"
         ]
     },
+    "symfony/phpunit-bridge": {
+        "version": "7.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "5.1",
+            "ref": "2f91477d6efaed3fb857db87480f7d07d31cbb3e"
+        },
+        "files": [
+            ".env.test",
+            "bin/phpunit",
+            "phpunit.xml.dist",
+            "tests/bootstrap.php"
+        ]
+    },
     "symfony/routing": {
         "version": "4.4",
         "recipe": {
