@@ -89,7 +89,7 @@
     ],
     "cs-check": "phpcs",
     "cs-fix": "php-cs-fixer fix",
-    "analyze": "phpstan analyze",
+    "analyze": "phpstan analyze --memory-limit=512M",
     "psalm": "psalm",
     "test": "phpunit",
     "test:unit": "phpunit --testsuite=unit",
