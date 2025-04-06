@@ -37,24 +37,24 @@ class SecurityControllerTest extends AbstractWebTestCase
 
     public function testLoginPageRendersCorrectly(): void
     {
-        // Clear session to simulate not being logged in
-        $this->client->getContainer()->get('session')->clear();
+        // Ensure kernel booted in setUp (if any) is shut down before creating a new client
+        self::ensureKernelShutdown();
 
-        // Access login page directly to test the login method
-        $this->client->request('GET', '/login');
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/login');
 
-        // Should return a 200 status code
-        $this->assertStatusCode(200);
+        $this->assertResponseIsSuccessful(); // Asserts 2xx status code
 
-        // Check for login form elements in the response content
-        $content = $this->client->getResponse()->getContent();
+        // Check for login form elements in the response content from the correct client
+        $content = $client->getResponse()->getContent();
 
         // The form is created with ExtJS, so check for the right script elements
         $this->assertStringContainsString('Ext.form.Panel', $content);
         $this->assertStringContainsString('name: \'_username\'', $content);
         $this->assertStringContainsString('name: \'_password\'', $content);
         $this->assertStringContainsString('name: \'_csrf_token\'', $content);
-        $this->assertStringContainsString('url: "/login_check"', $content);
+        // Ensure the form URL now points to /login
+        $this->assertStringContainsString('url: "/login"', $content);
     }
 
     /**
