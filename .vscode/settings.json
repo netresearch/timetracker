@@ -7,16 +7,9 @@
   "[php]": {
     "editor.defaultFormatter": "junstyle.php-cs-fixer"
   },
-  "php-cs-fixer.executablePathMap": {
-    "php": "docker compose run --rm app php"
-  },
-  "php-cs-fixer.executablePath": "",
-  "php-cs-fixer.config": ".php-cs-fixer.dist.php",
-  "php-cs-fixer.onsave": true,
-  "php-cs-fixer.allowRisky": true,
-  "php.validate.enable": false,
-  "php.suggest.basic": false,
-  "intelephense.environment.phpVersion": "8.2.0",
+  "php.validate.enable": true,
+  "php.suggest.basic": true,
+  "intelephense.environment.phpVersion": "8.2",
   "php.executablePath": "docker compose run --rm app php",
   "extensions.recommendations": [
     "junstyle.php-cs-fixer",
@@ -95,5 +88,23 @@
     "xsl",
     "zip",
     "zlib"
-  ]
+  ],
+  "php.validate.executablePath": "/usr/bin/php8.2",
+  "phpcs.autoConfigSearch": true,
+  "phpcs.enable": true,
+  "phpcs.executablePath": "bin/phpcs",
+  "phpunit.php": "/usr/bin/php",
+  "phpunit.phpunit": "bin/phpunit",
+  "php-cs-fixer.ignorePHPVersion": true,
+  "php-cs-fixer.executablePath": "/home/cybot/projects/timetracker/bin/php-cs-fixer",
+  "php-cs-fixer.config": ".php-cs-fixer.php;.php-cs-fixer.dist.php;.php_cs;.php_cs.dist",
+  "php-cs-fixer.onsave": true,
+  "php-cs-fixer.allowRisky": true,
+  "php-cs-fixer.rules": "@PSR12",
+  "php-cs-fixer.pathMode": "override",
+  "php-cs-fixer.exclude": [],
+  "php-cs-fixer.autoFixByBracket": false,
+  "php-cs-fixer.autoFixBySemicolon": false,
+  "php-cs-fixer.formatHtml": false,
+  "php-cs-fixer.documentFormattingProvider": true
 }
