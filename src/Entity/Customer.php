@@ -22,19 +22,19 @@ class Customer extends Base
     protected $id;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=255)
      */
     protected $name;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column(type="boolean", options={"unsigned"=true, "default"=0})
      */
-    protected $active;
+    protected $active = false;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column(type="boolean", options={"unsigned"=true, "default"=0})
      */
-    protected $global;
+    protected $global = false;
 
     /**
      * @ORM\OneToMany(targetEntity="Project", mappedBy="customer")
