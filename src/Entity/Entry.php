@@ -100,7 +100,7 @@ class Entry extends Base
 
 
     /**
-     * @ORM\Column(name="class", type="integer", nullable=false)
+     * @ORM\Column(name="class", type="smallint", nullable=false, options={"unsigned"=true, "default"=0})
      */
     protected $class = self::CLASS_PLAIN;
 

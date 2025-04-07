@@ -28,25 +28,25 @@ class TicketSystem extends Base
 
     /**
      * @var string $name
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=31, unique=true)
      */
     protected $name;
 
     /**
      * @var boolean $bookTime;
-     * @ORM\Column(name="book_time", type="boolean", nullable=false)
+     * @ORM\Column(name="book_time", type="boolean", nullable=false, options={"default"=0})
      */
-    protected $bookTime;
+    protected $bookTime = false;
 
     /**
      * @var string $type;
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=15)
      */
     protected $type;
 
     /**
      * @var string $url
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=255)
      */
     protected $url;
 
@@ -57,25 +57,24 @@ class TicketSystem extends Base
     protected $ticketUrl;
 
     /**
-    /**
      * @var string $login
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=63)
      */
     protected $login;
 
     /**
      * @var string $password
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=63)
      */
     protected $password;
 
     /**
-     * @ORM\Column(type="string", name="public_key")
+     * @ORM\Column(type="text", name="public_key")
      */
     protected string $publicKey = '';
 
     /**
-     * @ORM\Column(type="string", name="private_key")
+     * @ORM\Column(type="text", name="private_key")
      */
     protected string $privateKey = '';
 

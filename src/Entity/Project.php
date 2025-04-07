@@ -30,7 +30,7 @@ class Project extends Base
     protected $id;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=127)
      */
     protected $name;
 
@@ -52,7 +52,7 @@ class Project extends Base
 
 
     /**
-     * @ORM\Column(type="string", name="jira_id", nullable=true)
+     * @ORM\Column(type="string", name="jira_id", length=63, nullable=true)
      */
     protected $jiraId;
 
@@ -88,21 +88,21 @@ class Project extends Base
 
     /**
      * Estimated project duration in minutes
-     * @ORM\Column(type="integer", name="estimation")
+     * @ORM\Column(type="integer", name="estimation", nullable=true)
      */
     protected $estimation;
 
     /**
      * Offer number
-     * @ORM\Column(name="offer", length=31)
+     * @ORM\Column(name="offer", length=31, nullable=true)
      */
     protected $offer;
 
     /**
      * Used billing method
-     * @ORM\Column(type="integer", name="billing")
+     * @ORM\Column(type="smallint", name="billing", options={"default"=0})
      */
-    protected $billing;
+    protected $billing = 0;
 
     /**
      * cost center (number or name)
@@ -138,7 +138,7 @@ class Project extends Base
 
     /**
      * invoice number, reserved for future use
-     * * @ORM\Column(name="invoice", length=31, nullable=true)
+     * @ORM\Column(name="invoice", length=31, nullable=true)
      */
     protected $invoice;
 

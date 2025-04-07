@@ -29,30 +29,35 @@ class User implements UserInterface
     protected $username;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=3, nullable=true)
      */
     protected $abbr;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=255)
      */
     protected $type;
 
     /**
-     * @ORM\Column(name="show_empty_line", type="integer", nullable=false)
+     * @ORM\Column(name="jira_token", type="string", length=64, nullable=true)
      */
-    protected int $showEmptyLine = 0;
+    protected $jiraToken;
 
     /**
-     * @ORM\Column(name="suggest_time", type="integer", nullable=false)
+     * @ORM\Column(name="show_empty_line", type="boolean", nullable=false, options={"default"=0})
      */
-    protected int $suggestTime = 1;
+    protected bool $showEmptyLine = false;
+
+    /**
+     * @ORM\Column(name="suggest_time", type="boolean", nullable=false, options={"default"=1})
+     */
+    protected bool $suggestTime = true;
 
 
     /**
-     * @ORM\Column(name="show_future", type="integer", nullable=false)
+     * @ORM\Column(name="show_future", type="boolean", nullable=false, options={"default"=1})
      */
-    protected int $showFuture = 1;
+    protected bool $showFuture = true;
 
 
     /**
@@ -81,9 +86,9 @@ class User implements UserInterface
     protected $leadTeams;
 
     /**
-     * @ORM\Column(name="locale", type="string", length=255, nullable=false)
+     * @ORM\Column(name="locale", type="string", length=2, nullable=false, options={"default"="de"})
      */
-    protected $locale;
+    protected $locale = 'de';
 
 
     /**
