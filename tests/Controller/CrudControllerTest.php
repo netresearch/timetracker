@@ -413,4 +413,61 @@ class CrudControllerTest extends AbstractWebTestCase
             $this->assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
+
+    public function testSaveActionWithTicket(): void
+    {
+        $parameter = [
+            'start' => '08:00:00',
+            'project' => 1,  // req
+            'customer' => 1, // req->must be given, but can be ''
+            'activity' => 1, // req->-||-
+            'end' => '09:00:00',
+            'date' => '2024-01-15',
+            'ticket' => 'TEST-123', // Adding a ticket
+            'description' => 'Test ticket entry'
+        ];
+
+        $this->client->request('POST', '/tracking/save', $parameter);
+
+        $expectedJson = [
+            'result' => [
+                'date' => '15/01/2024',
+                'start' => '08:00',
+                'end' => '09:00',
+                'user' => 1,
+                'customer' => 1,
+                'project' => 1,
+                'activity' => 1,
+                'duration' => 60,
+                'durationString' => '01:00',
+                'class' => 2,
+                'ticket' => 'TEST-123',
+                'description' => 'Test ticket entry'
+            ],
+        ];
+
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+
+        // Verify the database entry
+        $query = 'SELECT * FROM `entries` WHERE `day` = "2024-01-15" ORDER BY `id` DESC LIMIT 1';
+        $result = $this->connection->query($query)->fetchAllAssociative();
+
+        $expectedDbEntry = [
+            [
+                'day' => '2024-01-15',
+                'start' => '08:00:00',
+                'end' => '09:00:00',
+                'customer_id' => '1',
+                'project_id' => '1',
+                'activity_id' => '1',
+                'duration' => '60',
+                'user_id' => '1',
+                'class' => '2',
+                'ticket' => 'TEST-123',
+                'description' => 'Test ticket entry'
+            ]
+        ];
+        $this->assertArraySubset($expectedDbEntry, $result);
+    }
 }

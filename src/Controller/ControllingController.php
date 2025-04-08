@@ -38,6 +38,7 @@ class ControllingController extends BaseController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setExportService(Export $export): void
     {

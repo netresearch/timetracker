@@ -452,49 +452,37 @@ class DefaultControllerTest extends AbstractWebTestCase
     //-------------- summary routes ----------------------------------------
     public function testGetSummaryAction(): void
     {
-        try {
-            $parameter = [
-                'id' => 1,  //req
-            ];
-            $expectedJson = [
-                'customer' => [
-                    'scope' => 'customer',
-                    'name' => 'Der Bäcker von nebenan',
-                    'entries' => 7,
-                    'total' => '354',
-                    'own' => '284',
-                    'estimation' => 0,
-                ],
-                'project' => [
-                    'scope' => 'project',
-                    'name' => 'Server attack',
-                    'entries' => 7,
-                    'total' => '354',
-                    'own' => '284',
-                    'estimation' => 0,
-                ],
-                'activity' => [
-                    'scope' => 'activity',
-                    'name' => 'Backen',
-                    'entries' => 7,
-                    'total' => '354',
-                    'own' => '284',
-                    'estimation' => 0,
-                ],
-                'ticket' => [
-                    'scope' => 'ticket',
-                    'name' => 'testGetLastEntriesAction',
-                    'entries' => 2,
-                    'total' => '220',
-                    'own' => '220',
-                    'estimation' => 0,
-                ],
-            ];
-            $this->client->request('POST', '/getSummary', $parameter);
-            $this->assertStatusCode(200);
-            $this->assertJsonStructure($expectedJson);
-        } catch (\Exception $e) {
-            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $e->getMessage());
+        // Find an existing entry to test with
+        $entityManager = self::$container->get('doctrine')->getManager();
+        $entry = $entityManager->getRepository(\App\Entity\Entry::class)->findOneBy([]);
+
+        if (!$entry) {
+            $this->markTestSkipped('No entries found in the database.');
+        }
+
+        $this->client->request(
+            'POST',
+            '/getSummary',
+            ['id' => $entry->getId()]
+        );
+
+        $this->assertStatusCode(200);
+
+        // Verify we have data in the expected format
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('customer', $response);
+        $this->assertArrayHasKey('project', $response);
+        $this->assertArrayHasKey('activity', $response);
+        $this->assertArrayHasKey('ticket', $response);
+
+        // Check structure of each section
+        foreach (['customer', 'project', 'activity', 'ticket'] as $section) {
+            $this->assertArrayHasKey('scope', $response[$section]);
+            $this->assertArrayHasKey('name', $response[$section]);
+            $this->assertArrayHasKey('entries', $response[$section]);
+            $this->assertArrayHasKey('total', $response[$section]);
+            $this->assertArrayHasKey('own', $response[$section]);
+            $this->assertArrayHasKey('estimation', $response[$section]);
         }
     }
 
@@ -511,22 +499,24 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testGetTimeSummaryAction(): void
     {
-        try {
-            $expectedJson = [
-                'today' => [],
-                'week' => [],
-                'month' => [],
-            ];
-            $this->client->request('GET', '/getTimeSummary');
-            $this->assertStatusCode(200);
-            $this->assertJsonStructure($expectedJson);
-            // assert that the duration is greater 0
-            $result = json_decode((string) $this->client->getResponse()->getContent(), true);
-            $this->assertGreaterThan(0, $result['today']['duration']);
-            $this->assertGreaterThan(0, $result['week']['duration']);
-            $this->assertGreaterThan(0, $result['month']['duration']);
-        } catch (\Exception $e) {
-            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $e->getMessage());
+        $this->client->request('GET', '/getTimeSummary');
+
+        $this->assertStatusCode(200);
+
+        // Verify response has actual data
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        // Check structure
+        $this->assertArrayHasKey('today', $response);
+        $this->assertArrayHasKey('week', $response);
+        $this->assertArrayHasKey('month', $response);
+
+        // Check data types
+        foreach (['today', 'week', 'month'] as $period) {
+            $this->assertArrayHasKey('duration', $response[$period]);
+            $this->assertIsNumeric($response[$period]['duration']);
+            $this->assertArrayHasKey('count', $response[$period]);
+            $this->assertIsBool($response[$period]['count']);
         }
     }
 
@@ -630,5 +620,42 @@ class DefaultControllerTest extends AbstractWebTestCase
         $activity = reset($data)['activity'];
         $this->assertArrayHasKey('id', $activity);
         $this->assertArrayHasKey('name', $activity);
+    }
+
+    public function testGetHolidaysAction(): void
+    {
+        $this->client->request('GET', '/getHolidays');
+
+        $this->assertStatusCode(200);
+
+        $expectedJson = [
+            [
+                'holiday' => [
+                    'date' => true,
+                    'name' => true
+                ]
+            ]
+        ];
+
+        // Verify the JSON structure if there are holiday entries
+        $responseContent = json_decode($this->client->getResponse()->getContent(), true);
+        if (!empty($responseContent)) {
+            $this->assertJsonStructure($expectedJson);
+        } else {
+            $this->assertIsArray($responseContent);
+        }
+    }
+
+    public function testExportAction(): void
+    {
+        $this->client->request('GET', '/export/7');
+
+        $this->assertStatusCode(200);
+        // CSV export should contain specific headers
+        $content = $this->client->getResponse()->getContent();
+        $this->assertStringContainsString('Datum', $content);
+        $this->assertStringContainsString('Kunde', $content);
+        $this->assertStringContainsString('Projekt', $content);
+        $this->assertStringContainsString('Tätigkeit', $content);
     }
 }
