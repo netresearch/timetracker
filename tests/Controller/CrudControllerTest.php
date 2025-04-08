@@ -56,16 +56,40 @@ class CrudControllerTest extends AbstractWebTestCase
         $this->assertArraySubset($expectedDbEntry, $result);
     }
 
-    public function testDeleteAction(): void
+    public function testSaveAndDeleteWorkLog(): void
     {
-        $parameter = ['id' => 1,];
+        // Create a test entry first
+        $parameter = [
+            'start' => '09:25:00',
+            'project' => 1,
+            'customer' => 1,
+            'activity' => 1,
+            'end' => '09:55:00',
+            'date' => '2024-01-01',
+        ];
 
-        $this->client->request('POST', '/tracking/delete', $parameter);
-        $this->assertStatusCode(200, 'First delete did not return expected 200');
+        $this->client->request('POST', '/tracking/save', $parameter);
+        $this->assertStatusCode(200);
+
+        // Get the created entry ID
+        $query = 'SELECT id FROM `entries` WHERE `day` = "2024-01-01" ORDER BY `id` DESC LIMIT 1';
+        $result = $this->connection->query($query)->fetchAssociative();
+        $entryId = (int) $result['id'];
+
+        // Now perform the delete
+        $deleteParam = ['id' => $entryId];
+        $this->client->request('POST', '/tracking/delete', $deleteParam);
+        $this->assertStatusCode(200);
         $this->assertJsonStructure(['success' => true, 'alert' => null]);
-        //  second delete
-        $this->client->request('POST', '/tracking/delete', $parameter);
-        $this->assertStatusCode(404, 'Second delete did not return expected 404');
+
+        // Verify entry is deleted
+        $query = "SELECT COUNT(*) as count FROM `entries` WHERE `id` = $entryId";
+        $result = $this->connection->query($query)->fetchAssociative();
+        $this->assertEquals(0, (int) $result['count'], "Entry was not deleted from database");
+
+        // Try to delete again and expect 404
+        $this->client->request('POST', '/tracking/delete', $deleteParam);
+        $this->assertStatusCode(404);
         $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
 
