@@ -529,4 +529,106 @@ class DefaultControllerTest extends AbstractWebTestCase
             $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $e->getMessage());
         }
     }
+
+    public function testIndexActionWithAuthentication(): void
+    {
+        $this->client->request('GET', '/');
+
+        $response = $this->client->getResponse();
+        $this->assertStatusCode(200);
+
+        // Check that the page contains expected elements
+        $content = $response->getContent();
+        $this->assertStringContainsString('<title>', $content);
+        #$this->assertStringContainsString($this->getParameter('app_title'), $content);
+
+        // Check for the main application structure
+        $this->assertStringContainsString('let projectsData = ', $content);
+    }
+
+    public function testIndexActionWithoutAuthenticationRedirectsToLogin(): void
+    {
+        $this->ensureKernelShutdown();
+        $this->client = static::createClient();
+
+        $this->client->request('GET', '/');
+
+        // Should redirect to login
+        $this->assertStatusCode(302);
+
+        // Check for login form elements
+        $content = $this->client->getResponse()->getContent();
+        $this->assertResponseHasHeader('Location', '/login');
+    }
+
+    public function testGetDataAction(): void
+    {
+        // Default test with current date
+        $this->client->request('POST', '/getData');
+
+        $this->assertStatusCode(200);
+        $response = $this->client->getResponse();
+        $content = $response->getContent();
+
+        // Decode JSON response
+        $data = json_decode($content, true);
+
+        // Verify basic structure
+        $this->assertIsArray($data);
+
+        // Verify entries structure if there are any entries
+        if (count($data) > 0) {
+            $entry = reset($data)['entry'];
+            $this->assertArrayHasKey('id', $entry);
+            $this->assertArrayHasKey('customer', $entry);
+            $this->assertArrayHasKey('project', $entry);
+            $this->assertArrayHasKey('activity', $entry);
+        }
+    }
+
+    public function testGetCustomersAction(): void
+    {
+        $this->client->request('GET', '/getCustomers');
+
+        $this->assertStatusCode(200);
+        $response = $this->client->getResponse();
+        $content = $response->getContent();
+
+        // Decode JSON response
+        $data = json_decode($content, true);
+
+        // Verify structure
+        $this->assertIsArray($data);
+
+        // Check that at least one customer exists
+        $this->assertGreaterThan(0, count($data));
+
+        // Check structure of first customer
+        $customer = reset($data)['customer'];
+        $this->assertArrayHasKey('id', $customer);
+        $this->assertArrayHasKey('name', $customer);
+    }
+
+    public function testGetTrackingActivitiesAction(): void
+    {
+        $this->client->request('GET', '/getActivities');
+
+        $this->assertStatusCode(200);
+        $response = $this->client->getResponse();
+        $content = $response->getContent();
+
+        // Decode JSON response
+        $data = json_decode($content, true);
+
+        // Verify structure
+        $this->assertIsArray($data);
+
+        // Check that at least one activity exists
+        $this->assertGreaterThan(0, count($data));
+
+        // Check structure of first activity
+        $activity = reset($data)['activity'];
+        $this->assertArrayHasKey('id', $activity);
+        $this->assertArrayHasKey('name', $activity);
+    }
 }
