@@ -26,7 +26,7 @@ class StatusController extends BaseController
         return new JsonResponse($this->getStatus());
     }
 
-    public function pageAction(Request $request): \Symfony\Component\HttpFoundation\Response
+    public function pageAction(): \Symfony\Component\HttpFoundation\Response
     {
         $status = $this->getStatus();
 
