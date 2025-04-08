@@ -63,6 +63,7 @@ class BaseController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setParameters(ParameterBagInterface $parameterBag): void
     {
@@ -71,6 +72,7 @@ class BaseController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setEntityManager(EntityManagerInterface $entityManager): void
     {
@@ -79,6 +81,7 @@ class BaseController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setSession(SessionInterface $session): void
     {
@@ -87,6 +90,7 @@ class BaseController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setTranslator(TranslatorInterface $translator): void
     {
@@ -95,6 +99,7 @@ class BaseController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setRouter(RouterInterface $router): void
     {
@@ -103,6 +108,7 @@ class BaseController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setKernel(KernelInterface $kernel): void
     {
@@ -111,6 +117,7 @@ class BaseController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setDoctrineRegistry(ManagerRegistry $managerRegistry): void
     {

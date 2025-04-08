@@ -72,33 +72,6 @@ class DefaultController extends BaseController
     }
 
     /**
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
-     */
-    public function loginAction(Request $request): \App\Model\Response
-    {
-        // Force rendering the template without any redirects
-        $response = new Response();
-        $content = $this->renderView('login.html.twig', [
-            'locale'  => 'en',
-            'apptitle' => $this->params->get('app_title'),
-            'last_username' => $request->getSession()->get('_security.last_username'),
-            'error' => null,
-        ]);
-        $response->setContent($content);
-        return $response;
-    }
-
-    /**
-     * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
-     */
-    public function logoutAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse
-    {
-        // This method should no longer be called directly since Symfony's security component handles the logout
-        // Redirect to the logout route which is handled by Symfony's security logout handler
-        return $this->redirectToRoute('_logout');
-    }
-
-    /**
      * @throws \Doctrine\DBAL\DBALException
      */
     public function getTimeSummaryAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse

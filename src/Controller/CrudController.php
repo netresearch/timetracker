@@ -26,6 +26,7 @@ class CrudController extends BaseController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setLogger(LoggerInterface $trackingLogger): void
     {

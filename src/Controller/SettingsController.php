@@ -15,6 +15,7 @@ class SettingsController extends AbstractController
 
     /**
      * @required
+     * @codeCoverageIgnore
      */
     public function setTranslator(TranslatorInterface $translator): void
     {
