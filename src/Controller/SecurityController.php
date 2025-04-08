@@ -25,6 +25,8 @@ class SecurityController extends AbstractController
 
     /**
      * This method can be empty - it will be intercepted by the logout key on your firewall
+     *
+     * @codeCoverageIgnore
      */
     public function logout(): never
     {
