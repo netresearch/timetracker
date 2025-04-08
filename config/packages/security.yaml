@@ -56,6 +56,7 @@ security:
         - { path: ^/js, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/images, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/status/check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/status/page, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
 
