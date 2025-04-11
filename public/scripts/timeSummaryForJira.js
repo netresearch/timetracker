@@ -9,7 +9,7 @@
 
 
 var ticket = null || window.location.href.split('/').slice(-1)[0];
-var timetrackerUrl = 'https://timetracker/getTicketTimeSummary/' + ticket;
+var timetrackerUrl = 'https://timetracker/admin/ticket-time-summary/' + ticket;
 
 window.addEventListener('load', function () {
 
@@ -205,5 +205,5 @@ function getTimeSummary() {
             }
             console.log("Request failed: ", e);
         }
-    );
+        );
 }

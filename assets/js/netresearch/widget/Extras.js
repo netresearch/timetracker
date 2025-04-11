@@ -6,8 +6,8 @@
 Ext.define('Netresearch.widget.Extras', {
     extend: 'Ext.tab.Panel',
 
-	requires: [
-   	    'Netresearch.store.AdminPresets'
+    requires: [
+        'Netresearch.store.AdminPresets'
     ],
 
     presetStore: Ext.create('Netresearch.store.AdminPresets'),
@@ -38,7 +38,7 @@ Ext.define('Netresearch.widget.Extras', {
     _errorTitle: 'Error',
     _successTitle: 'Success',
 
-    initComponent: function() {
+    initComponent: function () {
         this.on('render', this.refreshStores, this);
 
         /* Little store for yes/no dropdown */
@@ -56,7 +56,7 @@ Ext.define('Netresearch.widget.Extras', {
         */
 
         var form = new Ext.form.FormPanel({
-            url: url + 'tracking/bulkentry',
+            url: url + 'crud/bulkentry',
             frame: true,
             title: this._bulkEntryTitle,
             bodyPadding: '20',
@@ -143,7 +143,7 @@ Ext.define('Netresearch.widget.Extras', {
             buttons: [{
                 text: 'Eintragen',
                 scope: this,
-                handler: function() {
+                handler: function () {
                     var date = new Date();
                     date.setMilliseconds(0);
                     date.setSeconds(0);
@@ -175,8 +175,8 @@ Ext.define('Netresearch.widget.Extras', {
                         return;
                     }
 
-                    if ((typeof(startdate) != 'object')
-                    || (typeof(enddate) != 'object')) {
+                    if ((typeof (startdate) != 'object')
+                        || (typeof (enddate) != 'object')) {
                         alert(this._invalidDatesTitle);
                         return;
                     }
@@ -203,12 +203,12 @@ Ext.define('Netresearch.widget.Extras', {
 
                     var panel = this;
                     Ext.Ajax.request({
-                        url: url + 'tracking/bulkentry',
+                        url: url + 'crud/bulkentry',
                         params: data,
-                        success: function(response) {
+                        success: function (response) {
                             showNotification(panel._successTitle, response.responseText, true);
                         },
-                        failure: function(response) {
+                        failure: function (response) {
                             showNotification(panel._errorTitle, response.responseText, false);
                         }
                     });
@@ -224,11 +224,11 @@ Ext.define('Netresearch.widget.Extras', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ form ]
+            items: [form]
         });
         var config = {
             title: this._tabTitle,
-            items: [ extrasPanel ]
+            items: [extrasPanel]
         };
 
         /* Apply settings */
@@ -236,7 +236,7 @@ Ext.define('Netresearch.widget.Extras', {
         this.callParent();
     },
 
-    refreshStores: function() {
+    refreshStores: function () {
         this.presetStore.load();
     }
 });

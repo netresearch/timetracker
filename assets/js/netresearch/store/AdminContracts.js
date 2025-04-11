@@ -1,5 +1,5 @@
 Ext.define('Netresearch.store.AdminContracts', {
-	extend: 'Ext.data.Store',
+    extend: 'Ext.data.Store',
 
     requires: [
         'Netresearch.model.Contract'
@@ -9,7 +9,7 @@ Ext.define('Netresearch.store.AdminContracts', {
     model: 'Netresearch.model.Contract',
     proxy: {
         type: 'ajax',
-        url: url + 'getContracts',
+        url: url + 'admin/contracts',
         reader: {
             type: 'json',
             record: 'contract'
