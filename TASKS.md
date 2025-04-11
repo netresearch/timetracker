@@ -25,6 +25,8 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     *   `[x]` **Refactor CrudController:** Split into domain-specific controllers. (Estimate: 4h)
         *   `[x]` Create `TimeEntryController` for time entry management.
         *   `[x]` Update routes and dependencies.
+        *   `[x]` Implement `deleteAction` and `saveAction` in the TimeEntryController.
+        *   `[ ]` Implement `bulkentryAction` in the TimeEntryController.
         *   `[ ]` Write functional tests for the new controller.
     *   `[ ]` **Refactor AdminController:** Split by entity domain. (Estimate: 5h)
         *   `[ ]` Create entity-specific controllers (ProjectController, CustomerController, etc).
