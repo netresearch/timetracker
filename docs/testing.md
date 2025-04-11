@@ -1,94 +1,77 @@
-# Testing Guide
+# Testing Guidelines
 
-## Overview
+This document outlines how to write and run tests for this application.
 
-This project uses Symfony's WebTestCase for functional testing, which provides an HTTP client to make requests to your application and inspect responses.
+## Testing Philosophy
+
+We aim for a high level of test coverage to ensure code quality, prevent regressions, and facilitate refactoring and upgrades. We primarily use PHPUnit for testing.
+
+Follow the testing pyramid principle:
+
+*   **Unit Tests (Many):** Test individual classes and methods in isolation. Mock dependencies.
+*   **Integration Tests (Fewer):** Test the interaction between several components (e.g., Service and Repository, Controller and Service).
+*   **Functional Tests (Fewest):** Test complete user workflows through HTTP requests, ensuring the application works end-to-end from the user's perspective.
 
 ## Running Tests
 
-```bash
-# Run all tests
-docker compose run --rm app bin/phpunit
+All test commands must be executed via Docker Compose to ensure the correct environment and dependencies.
 
-# Run a specific test
-docker compose run --rm app bin/phpunit tests/Browser/HomepageTest.php
+1.  **Ensure Test Environment is Ready:**
+    *   Make sure your Docker containers are running (`docker compose up -d`).
+    *   Set the `APP_ENV` to `test`. This is typically done via the command line when running PHPUnit.
+    *   Prepare the test database (if necessary, depends on test setup):
+        ```bash
+        # Drop and recreate the test database
+        docker compose run --rm -e APP_ENV=test app bin/console doctrine:database:drop --force --if-exists
+        docker compose run --rm -e APP_ENV=test app bin/console doctrine:database:create
+        docker compose run --rm -e APP_ENV=test app bin/console doctrine:migrations:migrate -n # -n for non-interactive
+        # Load test fixtures if you have them
+        # docker compose run --rm -e APP_ENV=test app bin/console doctrine:fixtures:load -n
+        ```
 
-# Run tests with specific configuration
-docker compose run --rm app bin/phpunit -c phpunit.xml.dist
-```
+2.  **Execute PHPUnit:**
+    *   **Run all tests:**
+        ```bash
+        docker compose run --rm -e APP_ENV=test app bin/phpunit
+        ```
+    *   **Run tests in a specific directory:**
+        ```bash
+        docker compose run --rm -e APP_ENV=test app bin/phpunit tests/Service/
+        ```
+    *   **Run a specific test file:**
+        ```bash
+        docker compose run --rm -e APP_ENV=test app bin/phpunit tests/Service/MyServiceTest.php
+        ```
+    *   **Run a specific test method:**
+        ```bash
+        docker compose run --rm -e APP_ENV=test app bin/phpunit --filter testMySpecificMethod tests/Service/MyServiceTest.php
+        ```
+    *   **Run tests with code coverage:**
+        ```bash
+        # Generate HTML report in var/coverage/
+        docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-html var/coverage
 
-## Types of Tests
+        # Generate Clover XML report (for CI)
+        docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-clover build/logs/clover.xml
+        ```
+        *Note: Ensure Xdebug or PCOV is enabled in your Docker PHP container for coverage generation. Check `Dockerfile` and `php.ini`.*
 
-### Functional Tests
+3.  **Using Composer Scripts:**
+    *   A convenient script might be available in `composer.json`:
+        ```bash
+        docker compose run --rm -e APP_ENV=test app composer test
+        ```
 
-Functional tests use Symfony's built-in `WebTestCase`. They simulate HTTP requests and let you test responses without a browser.
+## Writing Tests
 
-```php
-use Tests\WebTestCase;
-
-class HomepageTest extends WebTestCase
-{
-    public function testHomepageLoads(): void
-    {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('body');
-    }
-}
-```
-
-### Unit Tests
-
-Unit tests focus on testing individual components in isolation.
-
-```php
-use PHPUnit\Framework\TestCase;
-
-class CalculatorTest extends TestCase
-{
-    public function testAdd(): void
-    {
-        $calculator = new Calculator();
-        $this->assertEquals(4, $calculator->add(2, 2));
-    }
-}
-```
-
-## Common Assertions
-
-```php
-// Response assertions
-$this->assertResponseIsSuccessful();
-$this->assertResponseStatusCodeSame(200);
-$this->assertResponseRedirects('/expected-path');
-
-// Content assertions
-$this->assertSelectorExists('h1');
-$this->assertSelectorTextContains('h1', 'Expected Text');
-$this->assertPageTitleContains('Expected Title');
-
-// Form submission
-$client->submitForm('Submit', [
-    'form[name]' => 'John',
-    'form[email]' => 'john@example.com',
-]);
-```
-
-## Test Database
-
-Tests use a separate database defined in the Docker Compose configuration and the `.env.test` file.
-
-## Creating Tests
-
-1. Create a test class extending `Tests\WebTestCase` for functional tests or `PHPUnit\Framework\TestCase` for unit tests
-2. Add test methods prefixed with `test`
-3. Use assertions to verify expected behavior
-
-## Tips
-
-- Keep tests focused and test one thing at a time
-- Use descriptive method names: `testUserCanLoginWithValidCredentials()`
-- Use data providers for testing multiple scenarios: `@dataProvider provideValidCredentials`
-- Mock dependencies to isolate the code you're testing
+*   **Location:** Tests should reside in the `tests/` directory, mirroring the `src/` structure (e.g., `src/Service/MyService.php` -> `tests/Service/MyServiceTest.php`).
+*   **Naming:** Test classes should be named `ClassNameTest.php` and test methods should start with `test` (e.g., `testCalculateTotal`).
+*   **Base Classes:** Extend appropriate Symfony base test classes:
+    *   Unit Tests: `PHPUnit\Framework\TestCase`
+    *   Integration/Functional Tests: `Symfony\Bundle\FrameworkBundle\Test\WebTestCase` (provides access to the container, client, etc.)
+*   **Assertions:** Use PHPUnit's built-in assertions (`$this->assertEquals()`, `$this->assertTrue()`, etc.).
+*   **Mocking:** Use PHPUnit's mocking capabilities (`$this->createMock()`) to isolate units under test.
+*   **Data Providers:** Use data providers (`@dataProvider`) for testing methods with multiple input variations.
+*   **Fixtures:** Use `doctrine/data-fixtures` for setting up predictable database states for integration and functional tests.
+*   **Strict Types:** Add `declare(strict_types=1);` to all test files.
+*   **Type Hinting:** Use type hints for test method parameters and return types where applicable.

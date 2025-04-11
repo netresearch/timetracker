@@ -1,60 +1,43 @@
 # Technology Stack
 
-This document details the core technologies and libraries used in the Netresearch TimeTracker application.
+This document provides an overview of the technologies, frameworks, and tools used in this project.
 
 ## Backend
 
-*   **PHP 8.2:**
-    *   *Why:* The primary server-side language, utilizing modern features for improved type safety, readability, and performance. Adheres to project standards for using the latest stable PHP versions.
-*   **Symfony 4.4:**
-    *   *Why:* A robust and widely-used PHP framework providing a solid foundation with features like Dependency Injection, Routing, Templating (Twig), Forms, Security, and Console commands. Chosen for its structure, long-term support (LTS), and extensive ecosystem.
-*   **Doctrine ORM (~2.20):**
-    *   *Why:* Provides powerful object-relational mapping (ORM) and database abstraction (DBAL), simplifying database interactions and schema management through Entities and Migrations.
-*   **Doctrine Migrations Bundle (~3.0):**
-    *   *Why:* Manages incremental database schema changes in a structured and version-controlled way.
-*   **Twig (~2.12|^3.0):**
-    *   *Why:* The default template engine for Symfony. Secure, fast, and flexible for rendering HTML views.
-*   **Monolog Bundle (~3.1):**
-    *   *Why:* Integration for the Monolog logging library, providing flexible logging capabilities to various targets (files, services, etc.).
-*   **Laminas LDAP (~2.19):**
-    *   *Why:* A library for interacting with LDAP servers, used for the LDAP/Active Directory authentication feature.
-*   **PHPUnit (~9.5):**
-    *   *Why:* The standard testing framework for PHP, used for unit, integration, and controller tests.
-*   **PHPStan (~1.12) & Psalm (~4.30):**
-    *   *Why:* Static analysis tools used to detect potential errors and enforce code quality standards without running the code.
-*   **PHP_CodeSniffer (~3.7) & PHP-CS-Fixer (~2.19):**
-    *   *Why:* Tools to enforce PSR-12 coding standards automatically.
-*   **Composer:**
-    *   *Why:* The standard dependency manager for PHP projects.
+*   **PHP:** Version `~8.2` (as specified in `composer.json`). The application logic is primarily written in PHP.
+*   **Symfony:** Version `4.4.x` (as specified in `composer.json`). The core web framework used for structuring the application, handling requests, routing, dependency injection, security, and more.
+*   **Doctrine:**
+    *   **ORM:** (`doctrine/orm`, `doctrine/doctrine-bundle`) Used for database abstraction and object-relational mapping, managing entities and their relationships.
+    *   **Migrations:** (`doctrine/doctrine-migrations-bundle`) Used for managing database schema changes incrementally.
+    *   **Annotations:** (`doctrine/annotations`) Used for metadata (though the plan is to move towards PHP 8 attributes).
+*   **Twig:** (`twig/twig`, `symfony/twig-bundle`) The template engine used for rendering HTML views.
+*   **Monolog:** (`symfony/monolog-bundle`) Used for logging application events, errors, and debug information.
+*   **Guzzle:** (`guzzlehttp/guzzle`) A PHP HTTP client used for making external API requests.
+*   **Laminas LDAP:** (`laminas/laminas-ldap`) Used for interacting with LDAP directories (likely for authentication or user synchronization).
+*   **PHPSpreadsheet:** (`phpoffice/phpspreadsheet`) Used for reading and writing spreadsheet files (Excel, CSV, etc.).
+*   **Sentry:** (`sentry/sentry-symfony`) Used for real-time error tracking and monitoring.
 
 ## Frontend
 
-*   **JavaScript (ES6+):**
-    *   *Why:* Used for client-side interactivity and dynamic updates.
-*   **Webpack Encore Bundle (~1.0):**
-    *   *Why:* Symfony's integration with Webpack, simplifying the process of compiling and managing frontend assets (JavaScript, CSS, images).
-*   **NPM:**
-    *   *Why:* The standard package manager for Node.js and frontend dependencies.
-*   **CSS3:**
-    *   *Why:* Used for styling the user interface.
-*   **(Specific JS/CSS Libraries/Frameworks):** *(Add any major frontend libraries like Bootstrap, jQuery, Vue, React, etc., if used - Currently not obvious from composer.json/package.json)*
+*   **Webpack Encore:** (`@symfony/webpack-encore`, `symfony/webpack-encore-bundle`) Integrates Webpack into the Symfony application for compiling, bundling, and versioning frontend assets (JavaScript, CSS, images).
+*   **Stimulus:** (`@hotwired/stimulus`, `@symfony/stimulus-bridge`) A modest JavaScript framework for connecting JavaScript components (controllers) to HTML elements using data attributes.
+*   **Sass/SCSS:** (`sass-loader`, `node-sass`, `sass`) A CSS preprocessor used for writing more maintainable and organized stylesheets.
+*   **Babel:** (`@babel/core`, `@babel/preset-env`) A JavaScript compiler used to transpile modern JavaScript (ES6+) into backward-compatible versions for older browsers.
+*   **Core-js:** (`core-js`) Provides polyfills for modern JavaScript features.
 
-## Infrastructure & Environment
+## Development & Tooling
 
-*   **Docker & Docker Compose:**
-    *   *Why:* Used to create consistent, reproducible development, testing, and production environments through containerization. Simplifies setup and eliminates "works on my machine" issues. Aligns with project standards for command execution.
-*   **Nginx:**
-    *   *Why:* A high-performance web server used in the Docker setup to serve the application and handle incoming HTTP requests, proxying PHP requests to the `app` container (PHP-FPM).
-*   **MariaDB:**
-    *   *Why:* An open-source relational database, compatible with MySQL. Used as the primary data store for the application and tests.
-*   **Git:**
-    *   *Why:* The distributed version control system used for managing the codebase.
+*   **Docker & Docker Compose:** Used to create containerized, reproducible development and production environments.
+*   **Composer:** The dependency manager for PHP packages.
+*   **npm:** The dependency manager for Node.js packages (used for frontend build tools and libraries).
+*   **PHPUnit:** (`phpunit/phpunit`) The primary framework for writing and running unit, integration, and functional tests in PHP.
+*   **PHPStan:** (`phpstan/phpstan`) A static analysis tool for PHP, helping to find errors without running the code.
+*   **Psalm:** (`vimeo/psalm`) Another static analysis tool for PHP, focused on finding errors and improving code quality.
+*   **PHP_CodeSniffer:** (`squizlabs/php_codesniffer`) Checks PHP code against coding standards (e.g., PSR-12).
+*   **PHP-CS-Fixer:** (`php-cs-fixer/shim`) Automatically fixes PHP code style issues based on configured rules.
+*   **Rector:** (`rector/rector`) A tool for automated code refactoring and upgrades.
 
-## External Services (Integrations)
+## Infrastructure
 
-*   **Jira:**
-    *   *Why:* Integrated for work log synchronization via OAuth.
-*   **LDAP / Active Directory:**
-    *   *Why:* Integrated for user authentication.
-*   **Sentry (Optional):**
-    *   *Why:* Integrated for real-time error tracking and monitoring.
+*   **Nginx:** (`nginx:alpine` Docker image) Used as the web server and reverse proxy, serving static assets and forwarding PHP requests to the application container (PHP-FPM).
+*   **MariaDB:** (`mariadb` Docker image) The relational database used to store application data.
