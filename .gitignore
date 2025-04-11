@@ -10,6 +10,8 @@
 /README.html
 /compose.override.yml
 /tt_dump.sql
+/repomix-output.txt
+/coverage-report
 ###> symfony/webpack-encore-bundle ###
 /node_modules/
 /public/build/
