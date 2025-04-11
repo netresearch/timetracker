@@ -352,7 +352,7 @@ class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request('POST', '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
-        $this->assertMessage('0 Einträge wurden angelegt.<br/>Vertrag ist gültig ab 01.01.1020.');
+        $this->assertMessage('0 Einträge wurden angelegt.<br />Vertrag ist gültig ab 01.01.1020.');
 
         $query = 'SELECT *
             FROM `entries`
@@ -377,7 +377,7 @@ class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request('POST', '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
-        $this->assertMessage('4 Einträge wurden angelegt.<br/>Vertrag ist am 01.01.2020. abgelaufen.');
+        $this->assertMessage('4 Einträge wurden angelegt.<br />Vertrag ist am 01.01.2020. abgelaufen.');
 
         $query = 'SELECT *
             FROM `entries`

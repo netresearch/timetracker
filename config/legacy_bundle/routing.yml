@@ -48,7 +48,7 @@ timetracking_delete:
 
 timetracking_bulkentry:
     path: /tracking/bulkentry
-    defaults: { _controller: App\Controller\CrudController::bulkentryAction }
+    defaults: { _controller: App\Controller\TimeEntryController::bulkentryAction }
 
 _getSummary:
     path: /getSummary
@@ -70,7 +70,7 @@ _getCustomers:
 
 _getAllCustomers:
     path:  /getAllCustomers
-    defaults: { _controller: App\Controller\AdminController::getCustomersAction }
+    defaults: { _controller: App\Controller\CustomerController::getCustomersAction }
 
 _getCustomer:
     path:  /getCustomer
@@ -78,7 +78,7 @@ _getCustomer:
 
 _getAllTeams:
     path:  /getAllTeams
-    defaults: { _controller: App\Controller\AdminController::getTeamsAction }
+    defaults: { _controller: App\Controller\TeamController::getTeamsAction }
 
 _getUsers:
     path:  /getUsers
@@ -86,7 +86,7 @@ _getUsers:
 
 _getAllUsers:
     path:  /getAllUsers
-    defaults: { _controller: App\Controller\AdminController::getUsersAction }
+    defaults: { _controller: App\Controller\UserController::getUsersAction }
 
 _getProjects:
     path:  /getProjects
@@ -94,7 +94,7 @@ _getProjects:
 
 _getAllProjects:
     path:  /getAllProjects
-    defaults: { _controller: App\Controller\DefaultController::getAllProjectsAction }
+    defaults: { _controller: App\Controller\ProjectController::getAllProjectsAction }
 
 _getProjectStructure:
     path:  /getProjectStructure
@@ -156,35 +156,35 @@ check_page:
 
 saveProject:
     path: /project/save
-    defaults: { _controller: App\Controller\AdminController::saveProjectAction }
+    defaults: { _controller: App\Controller\ProjectController::saveProjectAction }
 
 deleteProject:
     path: /project/delete
-    defaults: { _controller: App\Controller\AdminController::deleteProjectAction }
+    defaults: { _controller: App\Controller\ProjectController::deleteProjectAction }
 
 syncAllProjectSubtickets:
     path: /projects/syncsubtickets
-    defaults: { _controller: App\Controller\AdminController::syncAllProjectSubticketsAction }
+    defaults: { _controller: App\Controller\ProjectController::syncAllProjectSubticketsAction }
 
 syncProjectSubtickets:
     path: /projects/{project}/syncsubtickets
-    defaults: { _controller: App\Controller\AdminController::syncProjectSubticketsAction }
+    defaults: { _controller: App\Controller\ProjectController::syncProjectSubticketsAction }
 
 saveCustomer:
     path: /customer/save
-    defaults: { _controller: App\Controller\AdminController::saveCustomerAction }
+    defaults: { _controller: App\Controller\CustomerController::saveCustomerAction }
 
 deleteCustomer:
     path: /customer/delete
-    defaults: { _controller: App\Controller\AdminController::deleteCustomerAction }
+    defaults: { _controller: App\Controller\CustomerController::deleteCustomerAction }
 
 saveUser:
     path: /user/save
-    defaults: { _controller: App\Controller\AdminController::saveUserAction }
+    defaults: { _controller: App\Controller\UserController::saveUserAction }
 
 deleteUser:
     path: /user/delete
-    defaults: { _controller: App\Controller\AdminController::deleteUserAction }
+    defaults: { _controller: App\Controller\UserController::deleteUserAction }
 
 savePreset:
     path: /preset/save
@@ -216,11 +216,11 @@ deleteActivity:
 
 saveTeam:
     path: /team/save
-    defaults: { _controller: App\Controller\AdminController::saveTeamAction }
+    defaults: { _controller: App\Controller\TeamController::saveTeamAction }
 
 deleteTeam:
     path: /team/delete
-    defaults: { _controller: App\Controller\AdminController::deleteTeamAction }
+    defaults: { _controller: App\Controller\TeamController::deleteTeamAction }
 
 saveContract:
     path: /contract/save

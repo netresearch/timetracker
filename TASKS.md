@@ -26,12 +26,17 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[x]` Create `TimeEntryController` for time entry management.
         *   `[x]` Update routes and dependencies.
         *   `[x]` Implement `deleteAction` and `saveAction` in the TimeEntryController.
-        *   `[ ]` Implement `bulkentryAction` in the TimeEntryController.
+        *   `[x]` Implement `bulkentryAction` in the TimeEntryController.
         *   `[ ]` Write functional tests for the new controller.
     *   `[ ]` **Refactor AdminController:** Split by entity domain. (Estimate: 5h)
-        *   `[ ]` Create entity-specific controllers (ProjectController, CustomerController, etc).
-        *   `[ ]` Extract business logic to services.
-        *   `[ ]` Update routes in `config/routes.yaml` or via annotations.
+        *   `[x]` Create entity-specific controllers (ProjectController, CustomerController, etc).
+            *   `[x]` Create ProjectController and ProjectService
+            *   `[x]` Create CustomerController and CustomerService
+            *   `[x]` Create UserController and UserService
+            *   `[x]` Create TeamController and TeamService
+            *   `[ ]` Create other entity controllers as needed
+        *   `[x]` Extract business logic to services.
+        *   `[x]` Update routes in `config/routes.yaml` or via annotations.
         *   `[ ]` Update templates to point to new controller actions.
         *   `[ ]` Write functional tests for each new controller.
     *   `[x]` **Update Routing Configuration:** Ensure all routes point to the new controllers. (Estimate: 2h)
