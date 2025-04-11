@@ -17,9 +17,9 @@ This document tracks the migration of routes from the original controllers to th
 | `/admin/contracts` | `AdminController::getContractsAction` | `/admin/contracts` | `ContractController::getContractsAction` | Completed ✅ |
 | `/admin/contract/save` | `AdminController::saveContractAction` | `/admin/contract/save` | `ContractController::saveContractAction` | Completed ✅ |
 | `/admin/contract/delete` | `AdminController::deleteContractAction` | `/admin/contract/delete` | `ContractController::deleteContractAction` | Completed ✅ |
-| `/crud/delete` | `CrudController::deleteAction` | `/crud/delete` | `TimeEntryController::deleteAction` | Ready to remove |
-| `/crud/save` | `CrudController::saveAction` | `/crud/save` | `TimeEntryController::saveAction` | Ready to remove |
-| `/crud/bulkentry` | `CrudController::bulkentryAction` | `/crud/bulkentry` | `TimeEntryController::bulkentryAction` | Ready to remove |
+| `/crud/delete` | `CrudController::deleteAction` | `/crud/delete` | `TimeEntryController::deleteAction` | Completed ✅ |
+| `/crud/save` | `CrudController::saveAction` | `/crud/save` | `TimeEntryController::saveAction` | Completed ✅ |
+| `/crud/bulkentry` | `CrudController::bulkentryAction` | `/crud/bulkentry` | `TimeEntryController::bulkentryAction` | Completed ✅ |
 
 ## Routes Still to Migrate
 
@@ -57,7 +57,7 @@ This document tracks the migration of routes from the original controllers to th
   - [x] Activities
   - [x] Presets
   - [x] Contracts
-- [ ] Remove duplicate code from CrudController
+- [x] Remove duplicate code from CrudController
 - [ ] Update frontend code
 - [ ] Test new endpoints
 - [ ] Add more tests
