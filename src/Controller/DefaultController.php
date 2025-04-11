@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Response\Error;
 use App\Entity\TicketSystem;
-use App\Helper\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiException;
 use App\Helper\JiraOAuthApi;
 use App\Helper\TimeHelper;
 use App\Repository\EntryRepository;
@@ -14,7 +14,6 @@ use App\Entity\Project;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\Holiday;
-
 use App\Model\JsonResponse;
 use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;

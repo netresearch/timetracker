@@ -19,6 +19,9 @@ use GuzzleHttp\Subscriber\Oauth\Oauth1;
 
 use App\Entity\Entry;
 use App\Entity\UserTicketsystem;
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;

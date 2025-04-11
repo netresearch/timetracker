@@ -10,11 +10,10 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Response\Error;
-use App\Helper\JiraApiException;
-use App\Helper\JiraApiUnauthorizedException;
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Helper\JiraOAuthApi;
 use App\Helper\TicketHelper;
-
 use App\Model\JsonResponse;
 use App\Model\Response;
 use Psr\Log\LoggerInterface;
@@ -158,7 +157,7 @@ class CrudController extends BaseController
 
         for ($c = 1; $c < $counter; $c++) {
             $entry = $entries[$c];
-            $previous = $entries[$c-1];
+            $previous = $entries[$c - 1];
 
             if ($entry->getStart()->format("H:i") > $previous->getEnd()->format("H:i")) {
                 if ($entry->getClass() != Entry::CLASS_PAUSE) {
