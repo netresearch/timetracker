@@ -685,7 +685,7 @@ class CrudController extends BaseController
      *
      * @param TicketSystem|null $ticketSystem
      * @throws JiraApiException
-     * @throws \App\Helper\JiraApiInvalidResourceException
+     * @throws \App\Exception\Integration\Jira\JiraApiInvalidResourceException
      */
     private function updateJiraWorklog(
         Entry $entry,
@@ -732,7 +732,7 @@ class CrudController extends BaseController
      * @return string
      *
      * @throws JiraApiException
-     * @throws \App\Helper\JiraApiInvalidResourceException
+     * @throws \App\Exception\Integration\Jira\JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-create-issue
      */
     protected function createTicket(
@@ -758,7 +758,7 @@ class CrudController extends BaseController
      * @return void
      *
      * @throws JiraApiException
-     * @throws \App\Helper\JiraApiInvalidResourceException
+     * @throws \App\Exception\Integration\Jira\JiraApiInvalidResourceException
      * @see https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-query-issues
      */
     protected function handleInternalJiraTicketSystem($entry, $oldEntry)
