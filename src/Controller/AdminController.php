@@ -74,34 +74,6 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->getAllPresets());
     }
 
-    /**
-     * @throws \ReflectionException
-     */
-    public function getTicketSystemsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystems = $objectRepository->getAllTicketSystems();
-
-        if (false === $this->isPl($request)) {
-            $c = count($ticketSystems);
-            for ($i = 0; $i < $c; $i++) {
-                unset($ticketSystems[$i]['ticketSystem']['login']);
-                unset($ticketSystems[$i]['ticketSystem']['password']);
-                unset($ticketSystems[$i]['ticketSystem']['publicKey']);
-                unset($ticketSystems[$i]['ticketSystem']['privateKey']);
-                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerSecret']);
-                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerKey']);
-            }
-        }
-
-        return new JsonResponse($ticketSystems);
-    }
-
     public function saveProjectAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -422,7 +394,7 @@ class AdminController extends BaseController
         $abbr     = $request->get('abbr');
         $type     = $request->get('type');
         $locale   = $request->get('locale');
-        $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : [];
+        $teamIds  = $request->get('teams') ? (array) $request->get('teams') : [];
 
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
@@ -602,265 +574,75 @@ class AdminController extends BaseController
         return new JsonResponse($preset->toArray());
     }
 
-
-    /**
-     * @return Response
-     * @throws \ReflectionException
-     */
-    public function saveTicketSystemAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
-
-        $id                  = (int) $request->get('id');
-        $name                = $request->get('name');
-        $type                = $request->get('type');
-        $bookTime            = $request->get('bookTime');
-        $url                 = $request->get('url');
-        $login               = $request->get('login');
-        $password            = $request->get('password');
-        $publicKey           = $request->get('publicKey');
-        $privateKey          = $request->get('privateKey');
-        $ticketUrl           = $request->get('ticketUrl');
-        $oauthConsumerKey    = $request->get('oauthConsumerKey');
-        $oauthConsumerSecret = $request->get('oauthConsumerSecret');
-
-        if ($id !== 0) {
-            $ticketSystem = $objectRepository->find($id);
-            if (!$ticketSystem) {
-                $message = $this->translator->trans('No entry for id.');
-                return new Error($message, 404);
-            }
-        } else {
-            $ticketSystem = new TicketSystem();
-        }
-
-        if (strlen((string) $name) < 3) {
-            $response = new Response($this->translate('Please provide a valid ticket system name with at least 3 letters.'));
-            $response->setStatusCode(406);
-            return $response;
-        }
-
-        if (($sameNamedSystem = $objectRepository->findOneByName($name)) && $ticketSystem->getId() != $sameNamedSystem->getId()) {
-            $response = new Response($this->translate('The ticket system name provided already exists.'));
-            $response->setStatusCode(406);
-            return $response;
-        }
-
-        try {
-            $ticketSystem
-                ->setName($name)
-                ->setType($type)
-                ->setBookTime((boolean) $bookTime)
-                ->setUrl($url)
-                ->setTicketUrl($ticketUrl)
-                ->setLogin($login)
-                ->setPassword($password)
-                ->setPublicKey($publicKey)
-                ->setPrivateKey($privateKey)
-                ->setOauthConsumerKey($oauthConsumerKey)
-                ->setOauthConsumerSecret($oauthConsumerSecret);
-
-            $em = $this->doctrineRegistry->getManager();
-            $em->persist($ticketSystem);
-            $em->flush();
-        } catch (\Exception $exception) {
-            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
-            $response->setStatusCode(403);
-            return $response;
-        }
-
-        return new JsonResponse($ticketSystem->toArray());
-    }
-
-
-    public function deleteTicketSystemAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->doctrineRegistry;
-
-            $ticketSystem = $doctrine->getRepository(TicketSystem::class)
-                ->find($id);
-
-            $em = $doctrine->getManager();
-            $em->remove($ticketSystem);
-            $em->flush();
-        } catch (\Exception $exception) {
-            $reason = '';
-            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
-            }
-
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
-            return new Error($msg, 422);
-        }
-
-        return new JsonResponse(['success' => true]);
-    }
-
-
-    /**
-     * @return Response
-     */
-    public function saveActivityAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        /** @var \App\Repository\ActivityRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
-
-        $id             = (int) $request->get('id');
-        $name           = $request->get('name');
-        $needsTicket    = (boolean) $request->get('needsTicket');
-        $factor         = str_replace(',', '.', $request->get('factor'));
-
-        if ($id !== 0) {
-            $activity = $objectRepository->find($id);
-            if (!$activity) {
-                $message = $this->translator->trans('No entry for id.');
-                return new Error($message, 404);
-            }
-        } else {
-            $activity = new Activity();
-        }
-
-        if (($sameNamedActivity = $objectRepository->findOneByName($name)) && $activity->getId() != $sameNamedActivity->getId()) {
-            $response = new Response($this->translate('The activity name provided already exists.'));
-            $response->setStatusCode(406);
-            return $response;
-        }
-
-        try {
-            $activity
-                ->setName($name)
-                ->setNeedsTicket($needsTicket)
-                ->setFactor($factor);
-
-            $em = $this->doctrineRegistry->getManager();
-            $em->persist($activity);
-            $em->flush();
-        } catch (\Exception $exception) {
-            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
-            $response->setStatusCode(403);
-            return $response;
-        }
-
-        $data = [$activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor()];
-
-        return new JsonResponse($data);
-    }
-
-
-    public function deleteActivityAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        try {
-            $id = (int) $request->get('id');
-            $doctrine = $this->doctrineRegistry;
-
-            $activity = $doctrine->getRepository(Activity::class)
-                ->find($id);
-
-            $em = $doctrine->getManager();
-            $em->remove($activity);
-            $em->flush();
-        } catch (\Exception $exception) {
-            $reason = '';
-            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
-            }
-
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
-            return new Error($msg, 422);
-        }
-
-        return new JsonResponse(['success' => true]);
-    }
-
-
     /**
      * @return Response
      */
     public function saveTeamAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        /** @var \App\Repository\TeamRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
+        $data = null;
+        $id     = (int) $request->get('id');
+        $name   = (string) $request->get('name');
+        $users  = (array) $request->get('users');
 
-        $id         = (int) $request->get('id');
-        $name       = $request->get('name');
-        $teamLead   = $request->get('lead_user_id') ?
-            $this->doctrineRegistry->getRepository(User::class)
-                ->find($request->get('lead_user_id'))
-            : null;
+        /** @var \App\Repository\TeamRepository $teamRepository */
+        $teamRepository = $this->doctrineRegistry->getRepository(Team::class);
 
         if ($id !== 0) {
-            $team = $objectRepository->find($id);
-            //abort for non existing id
-            if (!$team) {
-                $message = $this->translator->trans('No entry for id.');
-                return new Error($message, 404);
-            }
+            $team = $teamRepository->find($id);
         } else {
             $team = new Team();
         }
 
-        if (($sameNamedTeam = $objectRepository->findOneByName($name)) && $team->getId() != $sameNamedTeam->getId()) {
+        if (strlen($name) < 3) {
+            $response = new Response($this->translate('Please provide a valid team name with at least 3 letters.'));
+            $response->setStatusCode(406);
+            return $response;
+        }
+
+        $sameNamedTeam = $teamRepository->findOneBy(['name' => $name]);
+        if ($sameNamedTeam && $team->getId() != $sameNamedTeam->getId()) {
             $response = new Response($this->translate('The team name provided already exists.'));
             $response->setStatusCode(406);
             return $response;
         }
 
-        if (is_null($teamLead)) {
-            $response = new Response($this->translate('Please provide a valid user as team leader.'));
-            $response->setStatusCode(406);
-            return $response;
+        $em = $this->doctrineRegistry->getManager();
+
+        $team->clearUsers();
+
+        foreach ($users as $userId) {
+            $entityRepository = $this->doctrineRegistry->getRepository(User::class);
+            $user = $entityRepository->find($userId);
+            if ($user) {
+                $team->addUser($user);
+            }
         }
 
-        try {
-            $team
-                ->setName($name)
-                ->setLeadUser($teamLead);
+        $team->setName($name);
 
-            $em = $this->doctrineRegistry->getManager();
+        try {
             $em->persist($team);
             $em->flush();
-        } catch (\Exception $exception) {
+        } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $exception) {
             $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(403);
             return $response;
         }
 
-        $data = [$team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : '')];
+        $data = [];
+        $data['id'] = $team->getId();
+        $data['name'] = $team->getName();
+        $data['users'] = [];
+        foreach ($team->getUsers() as $user) {
+            $data['users'][] = ['id' => $user->getId(), 'name' => $user->getDisplayName()];
+        }
 
         return new JsonResponse($data);
     }
-
 
     public function deleteTeamAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
@@ -891,51 +673,75 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
-
     public function jiraSyncEntriesAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $doctrine = $this->doctrineRegistry;
-
-        $users = $doctrine
-            ->getRepository(User::class)
-            ->findAll();
-
-        $ticketSystems = $doctrine
-            ->getRepository(TicketSystem::class)
-            ->findAll();
-
-        $data = [];
-
-        /** @var User $user */
-        foreach ($users as $user) {
-            /** @var TicketSystem $ticketSystem */
-            foreach ($ticketSystems as $ticketSystem) {
-                try {
-                    $jiraOauthApi = new JiraOAuthApi(
-                        $user,
-                        $ticketSystem,
-                        $doctrine,
-                        $this->router
-                    );
-                    $jiraOauthApi->updateAllEntriesJiraWorkLogs();
-                    $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'success';
-                } catch (\Exception $e) {
-                    $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'error (' . $e->getMessage() . ')';
-                }
+        $syncSince = null;
+        if (!empty($request->get('sync_since'))) {
+            try {
+                $syncSince = new \DateTime($request->get('sync_since'));
+            } catch (\Exception $e) {
+                $this->logger->error('Invalid sync_since: ' . $e->getMessage());
             }
         }
 
+        $jiraFieldId = $request->get('jira_field_id');
+        $jiraTicketSystem = $request->get('jira_ticket_system');
+
+        // Check if we want to sync all entries ever or only entries since a certain date
+        if ($syncSince === null) {
+            // Sync all entries
+
+            $this->logger->info('Starting FULL sync of time entries with Jira');
+
+            // Sync all time entries with Jira
+            $syncPrepMsg = $this->translator->trans('Start synchronization of all time entries.');
+        } else {
+            $this->logger->info('Starting sync of time entries with Jira since ' . $syncSince->format('Y-m-d H:i:s'));
+
+            // Sync time entries since $syncSince with Jira
+            $syncPrepMsg = $this->translator->trans('Start synchronization of time entries since %date%.', [
+                '%date%' => $syncSince->format('Y-m-d H:i:s'),
+            ]);
+        }
+
+        try {
+            /** @var JiraOAuthApi */
+            $jiraApi = $this->get('jira_oauth_api');
+        } catch (\Throwable $t) {
+            // Translation not required, is only visible for PL
+            return new Error('Cannot authenticate. Maybe broken private key?', 422, 'javascript:history.back();');
+        }
+
+        $entriesPerProject = [];
+
+        /** @var \App\Repository\ProjectRepository $projectRepo */
+        $projectRepo = $this->doctrineRegistry->getRepository(Project::class);
+        $allProjects = $projectRepo->findAll();
+
+        /** @var \App\Repository\EntryRepository $entriesRepo */
+        $entriesRepo = $this->doctrineRegistry->getRepository(\App\Entity\Entry::class);
+
+        /** @var Project $project */
+        foreach ($allProjects as $project) {
+            if (!$project->getTicketSystem()) {
+                continue;
+            }
+
+            $entries = $entriesRepo->getEntriesWithTicketsForProject($project->getId());
+            $entriesPerProject[$project->getId()] = ['project' => $project, 'entries' => $entries];
+        }
+
+        $data = [
+            'status' => 'success',
+            'details' => $entriesPerProject,
+            'message' => $syncPrepMsg,
+        ];
         return new JsonResponse($data);
     }
-
 
     public function getContractsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
@@ -948,7 +754,6 @@ class AdminController extends BaseController
 
         return new JsonResponse($objectRepository->getContracts());
     }
-
 
     /**
      * @return Response
