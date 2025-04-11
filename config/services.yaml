@@ -66,6 +66,33 @@ services:
     App\\Service\\ClockInterface:
         alias: App\\Service\\SystemClock
 
+    # Time Entry services
+    App\Service\TimeEntry\TimeEntryService:
+        public: true
+        arguments:
+            $doctrine: '@doctrine'
+            $trackingLogger: '@logger'
+            $router: '@router'
+            $translator: '@translator'
+
+    App\Service\TimeEntry\ClassCalculationService:
+        public: true
+        arguments:
+            $doctrine: '@doctrine'
+
+    # Jira integration services
+    App\Service\Integration\Jira\WorklogService:
+        public: true
+        arguments:
+            $doctrine: '@doctrine'
+            $router: '@router'
+
+    # Ticket services
+    App\Service\Ticket\TicketValidationService:
+        public: true
+        arguments:
+            $translator: '@translator'
+
     # Explicitly define EntryRepository if autowiring isn't picking up ClockInterface correctly (optional, usually not needed)
     # App\\Repository\\EntryRepository:
     #     arguments:
