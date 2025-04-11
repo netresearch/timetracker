@@ -423,7 +423,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'activity' => 1, // req->-||-
             'end' => '09:00:00',
             'date' => '2024-01-15',
-            'ticket' => 'TEST-123', // Adding a ticket
+            'ticket' => 'SA-123', // Using a ticket that matches the project's Jira ID
             'description' => 'Test ticket entry'
         ];
 
@@ -441,7 +441,7 @@ class CrudControllerTest extends AbstractWebTestCase
                 'duration' => 60,
                 'durationString' => '01:00',
                 'class' => 2,
-                'ticket' => 'TEST-123',
+                'ticket' => 'SA-123',
                 'description' => 'Test ticket entry'
             ],
         ];
@@ -464,7 +464,7 @@ class CrudControllerTest extends AbstractWebTestCase
                 'duration' => '60',
                 'user_id' => '1',
                 'class' => '2',
-                'ticket' => 'TEST-123',
+                'ticket' => 'SA-123',
                 'description' => 'Test ticket entry'
             ]
         ];
