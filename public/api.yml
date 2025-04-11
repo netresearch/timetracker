@@ -691,11 +691,11 @@ paths:
                   month:
                     $ref: '#/components/schemas/TimeInfo'
 
-  /admin/ticket-time-summary/{ticket}:
-    get:
+  /getTicketTimeSummary/{ticket}:
+   get:
       summary: Get time summary for a ticket
       tags:
-        - Summary
+        - Data
       parameters:
       - in: path
         name: ticket
