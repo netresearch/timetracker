@@ -1,24 +1,28 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
  */
 
-namespace App\Helper;
+namespace App\Exception\Integration\Jira;
 
 /**
  * Class JiraApiException
- * @package App\Helper
  */
 class JiraApiException extends \Exception
 {
     /**
      * JiraApiException constructor.
-     * @param $message
-     * @param $code
      */
-    public function __construct($message, $code, protected $redirectUrl = null, \Throwable $throwable = null)
-    {
-        if (!str_starts_with((string) $message, 'Jira:')) {
+    public function __construct(
+        string $message,
+        int $code = 0,
+        protected ?string $redirectUrl = null,
+        ?\Throwable $throwable = null
+    ) {
+        if (!str_starts_with($message, 'Jira:')) {
             $message = 'Jira: '. $message;
         }
 
@@ -26,9 +30,9 @@ class JiraApiException extends \Exception
     }
 
     /**
-     * @return String
+     * Get the URL to redirect to for authentication if needed
      */
-    public function getRedirectUrl()
+    public function getRedirectUrl(): ?string
     {
         return $this->redirectUrl;
     }

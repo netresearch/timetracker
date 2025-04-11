@@ -71,10 +71,8 @@ This document breaks down the upgrade plan into specific, actionable tasks.
             *   `[ ]` Ensure registered as a service. (Estimate: 0.1h)
             *   `[ ]` Update usages via DI. (Estimate: 0.5h)
         *   `[ ]` **Handle remaining Helper files:** (`JiraApiException.php`, `JiraApiInvalidResourceException.php`, `JiraApiUnauthorizedException.php`, `LOReadFilter.php`)
-            *   `[ ]` Move Exception classes to `src/Exception/` subdirectories (e.g., `src/Exception/Integration/Jira/`). (Estimate: 0.25h)
-            *   `[x]` Analyze `LOReadFilter.php` usage and decide if it becomes a service or stays as a specific helper (possibly move to `src/Util/` or similar). (Estimate: 0.25h)
-                * Recommendation: Move to `src/Util/PhpSpreadsheet/LOReadFilter.php` as a utility class, not a service. This class implements `IReadFilter` interface as a workaround for a PhpSpreadsheet bug and is only used once in `ControllingController`. It doesn't need dependency injection or service configuration.
             *   `[x]` Move `LOReadFilter.php` to `src/Util/PhpSpreadsheet/LOReadFilter.php` and update reference in `ControllingController.php`.
+            *   `[x]` Move Exception classes to `src/Exception/` subdirectories (e.g., `src/Exception/Integration/Jira/`). (Estimate: 0.25h)
             *   `[ ]` Delete the `src/Helper` directory once empty. (Estimate: 0.1h)
     *   `[ ]` **(Renumbered Task 1.3.3) Use Annotations/Attributes for Routes:**
         *   `[ ]` Ensure `sensio/framework-extra-bundle` is installed (`docker compose run --rm app composer require sensio/framework-extra-bundle`). (Estimate: 0.25h)
