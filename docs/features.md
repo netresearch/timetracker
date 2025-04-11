@@ -1,56 +1,66 @@
-# Netresearch TimeTracker Features
+# Application Features
 
-This document outlines the key features of the Netresearch TimeTracker application.
+This document provides a comprehensive overview of the features available in the TimeTracker application.
 
 ## Core Time Tracking
 
-*   **Time Entry:** Add, edit, and delete work log entries easily.
-*   **Autocompletion:** Smart suggestions for project and task details during entry.
-*   **Bulk Entry:** Quickly log time for extended periods like sickness or vacation using presets (requires configuration by Project Leader).
-*   **Keyboard Shortcuts:** Efficient navigation and actions (e.g., 'a' to add, 'd' to delete, arrow keys to focus).
+*   **Time Entry:** Record work hours against specific projects, customers, and activities.
+*   **Autocompletion:** Suggestions for project, customer, and activity fields during entry.
+*   **Editing:** Modify existing time entries directly in the log view.
+*   **Deletion:** Remove time entries via context menu or keyboard shortcuts.
+*   **Bulk Entry:** Efficiently log time for common scenarios like sickness or vacation using pre-defined presets.
+*   **Keyboard Shortcuts:** Navigate and perform actions (add, delete, focus) using keyboard shortcuts for faster interaction.
 
-## Reporting & Statistics
+## Reporting & Analysis
 
-*   **Charts:** Visualize tracked time with bar charts available per user, per project, and company-wide in the "Interpretation" tab.
-*   **Controlling Export:** Export time tracking data to XLSX format for analysis and billing (available to Controller and Project Leader roles).
-*   **External Statistics:** Integration point for advanced statistics via external tools like [Timalytics](https://github.com/netresearch/timalytics) (requires separate setup and configuration via `APP_MONTHLY_OVERVIEW_URL`).
+*   **Visualizations:** View time data through various charts:
+    *   Per-user charts.
+    *   Per-project charts.
+    *   Company-wide overview charts.
+*   **Controlling Export:** Export time tracking data to XLSX format for analysis and controlling purposes.
+    *   Optionally include a "billable" field in the export (configurable via `.env`).
+*   **External Statistics:** Link to an external statistics tool (like Timalytics) for more advanced analysis (configurable via `.env`).
 
-## Administration
+## Administration & Management
 
-*(Requires Project Leader role)*
-
-*   **User Management:** Create, edit, and manage user accounts and roles.
-*   **Customer Management:** Define and manage clients.
-*   **Project Management:** Create projects, assign them to customers, and manage project details.
+*   **User Management:** Create, edit, and manage user accounts.
+*   **Customer Management:** Define and manage client or customer records.
+*   **Project Management:** Create and manage projects, associating them with customers and ticket systems.
 *   **Team Management:** Organize users into teams.
-*   **Presets:** Configure presets for bulk time entries (e.g., vacation, sickness).
-*   **Activity Management:** Define standard activities or task types.
-*   **Ticket System Configuration:** Set up integrations with external ticket systems like Jira.
-
-## Integrations
-
-*   **LDAP / Active Directory Authentication:** Authenticate users against an existing LDAP or Active Directory server.
-    *   **Automatic User Creation:** Optionally, automatically create TimeTracker user accounts (with DEV role) upon the first successful LDAP login (`LDAP_CREATE_USER` setting).
-*   **Jira Integration:**
-    *   **Work Log Synchronization:** Automatically create and update work log entries in linked Jira issues based on TimeTracker entries.
-    *   **OAuth Authentication:** Securely connect TimeTracker to Jira using OAuth 1.0a (requires setup in both Jira and TimeTracker).
+*   **Activity Management:** Define standard activities used for time tracking.
+*   **Preset Management:** Configure presets for bulk time entries (e.g., "Vacation", "Sick Day").
+*   **Ticket System Management:** Configure connections to external ticket systems (e.g., Jira).
 
 ## User Roles & Permissions
 
-The application defines several user roles with increasing levels of access:
+The application uses a role-based access control system:
 
-*   **DEV (Developer):**
-    *   Track time for assigned projects.
-    *   Use bulk entry presets.
-    *   View personal and project charts.
-*   **CTL (Controller):**
-    *   Includes all DEV permissions.
-    *   Export time data (XLSX) from the "Controlling" tab.
-*   **PL (Project Leader):**
-    *   Includes all CTL permissions.
-    *   Full access to the "Administration" tab (manage users, customers, projects, teams, presets, ticket systems, activities).
+*   **DEV (Developer):** Basic user role. Can track time, use bulk entry, and view standard reports.
+*   **CTL (Controller):** Includes DEV permissions. Can also export data via the Controlling tab.
+*   **PL (Project Leader):** Includes CTL permissions. Can also manage administrative entities (Customers, Projects, Users, Teams, Presets, Ticket Systems, Activities).
 
-## Service Users
+## Authentication & Security
 
-*   Specific users can be designated as "Service Users" (`SERVICE_USERS` setting).
-*   These users can make API calls on behalf of other users, useful for integrations or administrative tasks.
+*   **LDAP / Active Directory Authentication:** Authenticate users against an external LDAP or Active Directory server.
+    *   Optional automatic user creation in TimeTracker upon successful first LDAP login (configurable via `.env`).
+*   **Standard Login:** (Implied - fallback if LDAP is not used/configured).
+*   **CSRF Protection:** Standard Symfony security feature.
+
+## Integrations
+
+*   **Jira Integration:**
+    *   **Work Log Synchronization:** Automatically create and update work log entries in linked Jira issues based on TimeTracker entries (requires OAuth configuration).
+    *   **Internal Ticket Mapping:** Track time against external ticket numbers (e.g., from a client's Jira) and automatically create/link corresponding issues in an internal Jira project.
+    *   **(Optional) Jira Cloud Time Display:** Use a Greasemonkey script to fetch and display TimeTracker times directly within the Jira Cloud interface.
+*   **Sentry Integration:** Report application errors and exceptions to Sentry for monitoring (configurable via DSN in `.env` or `sentry.yaml`).
+
+## API
+
+*   **RESTful API:** Provides programmatic access to TimeTracker data and functionality.
+*   **OpenAPI Documentation:** API is documented using OpenAPI v3 specification (`public/api.yml`), viewable via Swagger UI at `/docs/swagger/index.html`.
+*   **Service User Impersonation:** Designated service users can perform API actions on behalf of other users (configured via `SERVICE_USERS` in `.env`).
+
+## User Interface
+
+*   **Web-Based Interface:** Accessible via a standard web browser.
+*   **Configurable Branding:** Application title and logo can be customized via `.env` variables.

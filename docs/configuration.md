@@ -1,96 +1,73 @@
 # Application Configuration
 
-The Netresearch TimeTracker application uses Symfony's standard environment variable configuration system. Configuration is primarily managed through `.env` files.
+This document describes how to configure the application.
 
-## Configuration Files
+## Environment Variables (`.env`, `.env.local`)
 
-Configuration is loaded from the following files in order of precedence (later files override earlier ones):
+The primary method for configuration is through environment variables, typically managed in `.env` files. See `docs/development.md` for setup instructions.
 
-1.  `.env`: Contains default configuration values. **Committed to the repository.**
-2.  `.env.local`: Contains local overrides for development. **NOT committed.** Create this file to set variables specific to your machine (e.g., different database credentials).
-3.  `.env.$APP_ENV`: Contains environment-specific defaults (e.g., `.env.test`, `.env.prod`). **Committed.**
-4.  `.env.$APP_ENV.local`: Contains environment-specific local overrides. **NOT committed.**
+Key variables include:
 
-Real system environment variables will always override values set in `.env` files.
+*   `APP_ENV`: (`dev`, `prod`, `test`) Controls the application environment (debugging, logging levels, etc.).
+*   `APP_SECRET`: A unique, random string crucial for security (CSRF protection, signed URLs).
+*   `DATABASE_URL`: Connection string for the primary database.
+    *   Example: `mysql://db_user:db_password@db_host:db_port/db_name?serverVersion=mariadb-10.5&charset=utf8mb4`
+*   `MAILER_DSN`: Connection string for sending emails.
+    *   Example (MailHog/Mailpit): `smtp://mailhog:1025`
+    *   Example (SendGrid): `sendgrid://KEY@default`
+*   `TRUSTED_PROXIES`: IP addresses of trusted reverse proxies (e.g., Nginx container, load balancer).
+*   `TRUSTED_HOSTS`: Allowed host headers.
 
-**Security Note:** Never store production secrets directly in committed `.env` files. Use `.env.local`, system environment variables, or Symfony's secrets management for sensitive production values.
+**Application-Specific Environment Variables:**
 
-## Key Configuration Variables (`.env`)
+*   `APP_TITLE`: The title displayed in the browser tab/window (Default: "Netresearch TimeTracker").
+*   `APP_LOCALE`: Default locale for the application (used for translations) (Default: "en").
+*   `APP_LOGO_URL`: URL path to the application logo image (Default: "/build/images/logo.png").
+*   `APP_MONTHLY_OVERVIEW_URL`: Base URL for linking to an external monthly overview/statistics tool (like Timalytics). The username is appended (Default: "https://stats.timetracker.nr/?user=").
+*   `APP_HEADER_URL`: Optional URL for a custom header link/image (Default: "").
+*   `APP_SHOW_BILLABLE_FIELD_IN_EXPORT`: If `true`, include the "billable" field in XLSX exports (Default: `false`).
+*   `SERVICE_USERS`: Comma-separated list of usernames who are allowed to act on behalf of other users via the API (Default: "").
+*   `LDAP_HOST`: Hostname or IP address of the LDAP server (Default: "127.0.0.1").
+*   `LDAP_PORT`: Port for the LDAP server. `0` uses default ports (389 for non-SSL, 636 for SSL) (Default: `0`).
+*   `LDAP_READUSER`: Distinguished Name (DN) of the user used to bind and search the LDAP directory (Default: "readuser").
+*   `LDAP_READPASS`: Password for the `LDAP_READUSER` (Default: "readuser").
+*   `LDAP_BASEDN`: The base DN for searching users in the LDAP directory (Default: "dc=company,dc=org").
+*   `LDAP_USERNAMEFIELD`: The LDAP attribute used as the username (e.g., `uid`, `sAMAccountName` for Active Directory) (Default: "uid").
+*   `LDAP_USESSL`: Whether to use SSL (ldaps://) for the connection (Default: `true`).
+*   `LDAP_CREATE_USER`: If `true`, automatically create a TimeTracker user (with DEV role) upon successful LDAP authentication if the user doesn't exist locally (Default: `true`).
+*   `SENTRY_DSN`: (Optional) The Data Source Name for reporting errors to Sentry.io (Default: ""). Check `config/packages/sentry.yaml` for more configuration.
 
-These are the main variables defined in the base `.env` file. You might override them in `.env.local` for your development setup.
+## Symfony Configuration Files (`config/`)
 
-### Symfony Core
+Symfony bundles and application services are configured via YAML files in the `config/` directory.
 
-*   `APP_ENV`: The application environment (`dev`, `prod`, `test`). Determines debugging settings, loaded configuration, etc.
-    *   Default: `dev`
-*   `APP_SECRET`: A secret key used for CSRF protection and other security features. Should be a long, random, unique string.
-    *   Default: `ThisTokenIsNotSoSecretChangeIt` ( **MUST be changed for production!**)
+*   **`config/packages/*.yaml`:** Configuration for installed bundles (Doctrine, Twig, Security, Monolog, etc.). These files are often environment-specific (e.g., `config/packages/dev/web_profiler.yaml`).
+*   **`config/services.yaml`:** Defines application services, parameters, and autowiring/autoconfiguration rules.
+*   **`config/routes.yaml` / `config/routes/*.yaml` / Controller Annotations:** Defines application routes.
+    *   *Note:* While most routes are defined via Annotations in `src/Controller/` (loaded via `config/routes/annotations.yaml`), some legacy routes are still imported from `config/legacy_bundle/routing.yml` within `config/routes.yaml`. These are planned for migration to annotations.
+*   **`config/secrets/`:** Manages deployment secrets (not typically committed to Git).
 
-### Database
+**(Add details about specific bundle configurations if they are complex or require explanation, e.g., security firewall setup, custom Doctrine types, complex routing)**
 
-*   `DATABASE_URL`: The Data Source Name (DSN) for connecting to the primary database.
-    *   Format: `driver://user:password@host:port/dbname?serverVersion=X.Y`
-    *   Default: `mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=8` (Connects to the `db` service defined in `compose.yml`)
-    *   *Note:* The test environment typically uses a different database, configured in `.env.test`.
+### Security (`config/packages/security.yaml`)
 
-### Mailer
+*   Describes firewalls (patterns, authentication methods like form login, LDAP, API tokens).
+*   Defines user providers (e.g., Doctrine entity provider, LDAP provider).
+*   Sets up password encoders/hashers.
+*   Configures access control rules (role hierarchy, path-based permissions).
 
-*   `MAILER_DSN`: Configuration for sending emails.
-    *   Format examples: `smtp://user:pass@smtp.example.com:port`, `sendmail://default`
-    *   Default: `smtp://localhost`
+### Doctrine (`config/packages/doctrine.yaml`)
 
-### Sentry (Error Tracking)
+*   Configures database connections (though `DATABASE_URL` is often preferred).
+*   Defines entity mappings (usually autodetected).
+*   Sets up caching (metadata, query, result caches).
 
-*   `SENTRY_DSN`: The Data Source Name for reporting errors to Sentry.io.
-    *   Default: `""` (Disabled by default. Get a DSN from your Sentry project.)
-    *   Configuration can also be managed in `config/packages/sentry.yaml` (or `config/sentry.yml` as mentioned in README).
+### Services (`config/services.yaml`)
 
-### LDAP Authentication
+*   Defines default autowiring/autoconfiguration settings.
+*   Explicitly defines services that cannot be autowired.
+*   Sets application parameters.
 
-*   `LDAP_HOST`: Hostname or IP address of the LDAP server.
-    *   Default: `"127.0.0.1"`
-*   `LDAP_PORT`: Port for the LDAP server. `0` uses default ports (389 for non-SSL, 636 for SSL).
-    *   Default: `0`
-*   `LDAP_READUSER`: Distinguished Name (DN) of the user used to bind and search the LDAP directory.
-    *   Default: `"readuser"`
-*   `LDAP_READPASS`: Password for the `LDAP_READUSER`.
-    *   Default: `"readuser"`
-*   `LDAP_BASEDN`: The base DN for searching users in the LDAP directory.
-    *   Default: `"dc=company,dc=org"`
-*   `LDAP_USERNAMEFIELD`: The LDAP attribute used as the username (e.g., `uid`, `sAMAccountName` for Active Directory).
-    *   Default: `"uid"`
-*   `LDAP_USESSL`: Whether to use SSL (ldaps://) for the connection.
-    *   Default: `true`
-*   `LDAP_CREATE_USER`: If `true`, automatically create a TimeTracker user (with DEV role) upon successful LDAP authentication if the user doesn't exist locally.
-    *   Default: `true`
+## Application-Specific Settings
 
-### Application Specific
-
-*   `APP_LOCALE`: Default locale for the application (used for translations).
-    *   Default: `"en"`
-*   `APP_LOGO_URL`: URL path to the application logo image.
-    *   Default: `"/build/images/logo.png"`
-*   `APP_MONTHLY_OVERVIEW_URL`: Base URL for linking to an external monthly overview/statistics tool (like timalytics). The username is appended.
-    *   Default: `"https://stats.timetracker.nr/?user="`
-*   `APP_TITLE`: The title displayed in the browser tab/window.
-    *   Default: `"Netresearch TimeTracker"`
-*   `APP_HEADER_URL`: Optional URL for a custom header link/image.
-    *   Default: `""`
-*   `APP_SHOW_BILLABLE_FIELD_IN_EXPORT`: If `true`, include the "billable" field in XLSX exports.
-    *   Default: `false`
-*   `SERVICE_USERS`: Comma-separated list of usernames who are allowed to act on behalf of other users via the API.
-    *   Default: `""`
-
-### Trusted Proxies (Symfony Framework)
-
-These variables control how Symfony handles requests coming through reverse proxies (like the Nginx container in the Docker setup).
-
-*   `TRUSTED_PROXIES`: Defines which proxy IP addresses are trusted. Can be specific IPs, ranges, or `*` for all. See [Symfony Docs](https://symfony.com/doc/4.4/deployment/proxies.html).
-    *   Example: `TRUSTED_PROXIES=192.0.0.1,10.0.0.0/8`
-    *   *Note:* The `README.rst` mentions `TRUSTED_PROXY_LIST` and `TRUSTED_PROXY_ALL`, which might be custom implementations. The standard Symfony variable is `TRUSTED_PROXIES`.
-*   `TRUSTED_HOSTS`: A regex pattern defining allowed host headers. Helps prevent host header injection attacks.
-    *   Example: `TRUSTED_HOSTS='^localhost|example\.com$'`
-
-## Environment-Specific Configuration
-
-Check files like `config/packages/dev/`, `config/packages/prod/`, and `config/packages/test/` for configuration that applies only to specific environments (e.g., enabling the web profiler bar only in `dev`).
+*(If the application stores configuration in the database or uses other custom mechanisms, describe them here.)*
