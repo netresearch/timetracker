@@ -12,6 +12,7 @@
 /tt_dump.sql
 /repomix-output.txt
 /coverage-report
+.php_cs.cache
 ###> symfony/webpack-encore-bundle ###
 /node_modules/
 /public/build/
