@@ -6,17 +6,17 @@ This document tracks the migration of routes from the original controllers to th
 
 | Original Route | Original Controller | New Route | New Controller | Status |
 |----------------|---------------------|-----------|---------------|--------|
-| `/admin/ticketsystems` | `AdminController::getTicketSystemsAction` | `/admin/ticketsystems` | `TicketSystemController::getTicketSystemsAction` | Ready to remove |
-| `/admin/ticketsystem/save` | `AdminController::saveTicketSystemAction` | `/admin/ticketsystem/save` | `TicketSystemController::saveTicketSystemAction` | Ready to remove |
-| `/admin/ticketsystem/delete` | `AdminController::deleteTicketSystemAction` | `/admin/ticketsystem/delete` | `TicketSystemController::deleteTicketSystemAction` | Ready to remove |
-| `/admin/activity/save` | `AdminController::saveActivityAction` | `/admin/activity/save` | `ActivityController::saveActivityAction` | Ready to remove |
-| `/admin/activity/delete` | `AdminController::deleteActivityAction` | `/admin/activity/delete` | `ActivityController::deleteActivityAction` | Ready to remove |
-| `/admin/presets` | `AdminController::getPresetsAction` | `/admin/presets` | `PresetController::getPresetsAction` | Ready to remove |
-| `/admin/preset/save` | `AdminController::savePresetAction` | `/admin/preset/save` | `PresetController::savePresetAction` | Ready to remove |
-| `/admin/preset/delete` | `AdminController::deletePresetAction` | `/admin/preset/delete` | `PresetController::deletePresetAction` | Ready to remove |
-| `/admin/contracts` | `AdminController::getContractsAction` | `/admin/contracts` | `ContractController::getContractsAction` | Ready to remove |
-| `/admin/contract/save` | `AdminController::saveContractAction` | `/admin/contract/save` | `ContractController::saveContractAction` | Ready to remove |
-| `/admin/contract/delete` | `AdminController::deleteContractAction` | `/admin/contract/delete` | `ContractController::deleteContractAction` | Ready to remove |
+| `/admin/ticketsystems` | `AdminController::getTicketSystemsAction` | `/admin/ticketsystems` | `TicketSystemController::getTicketSystemsAction` | Completed ✅ |
+| `/admin/ticketsystem/save` | `AdminController::saveTicketSystemAction` | `/admin/ticketsystem/save` | `TicketSystemController::saveTicketSystemAction` | Completed ✅ |
+| `/admin/ticketsystem/delete` | `AdminController::deleteTicketSystemAction` | `/admin/ticketsystem/delete` | `TicketSystemController::deleteTicketSystemAction` | Completed ✅ |
+| `/admin/activity/save` | `AdminController::saveActivityAction` | `/admin/activity/save` | `ActivityController::saveActivityAction` | Completed ✅ |
+| `/admin/activity/delete` | `AdminController::deleteActivityAction` | `/admin/activity/delete` | `ActivityController::deleteActivityAction` | Completed ✅ |
+| `/admin/presets` | `AdminController::getPresetsAction` | `/admin/presets` | `PresetController::getPresetsAction` | Completed ✅ |
+| `/admin/preset/save` | `AdminController::savePresetAction` | `/admin/preset/save` | `PresetController::savePresetAction` | Completed ✅ |
+| `/admin/preset/delete` | `AdminController::deletePresetAction` | `/admin/preset/delete` | `PresetController::deletePresetAction` | Completed ✅ |
+| `/admin/contracts` | `AdminController::getContractsAction` | `/admin/contracts` | `ContractController::getContractsAction` | Completed ✅ |
+| `/admin/contract/save` | `AdminController::saveContractAction` | `/admin/contract/save` | `ContractController::saveContractAction` | Completed ✅ |
+| `/admin/contract/delete` | `AdminController::deleteContractAction` | `/admin/contract/delete` | `ContractController::deleteContractAction` | Completed ✅ |
 | `/crud/delete` | `CrudController::deleteAction` | `/crud/delete` | `TimeEntryController::deleteAction` | Ready to remove |
 | `/crud/save` | `CrudController::saveAction` | `/crud/save` | `TimeEntryController::saveAction` | Ready to remove |
 | `/crud/bulkentry` | `CrudController::bulkentryAction` | `/crud/bulkentry` | `TimeEntryController::bulkentryAction` | Ready to remove |
@@ -52,7 +52,12 @@ This document tracks the migration of routes from the original controllers to th
 ## Progress
 
 - [x] Create controllers and services for entities
+- [x] Remove duplicate code from AdminController for:
+  - [x] Ticket systems
+  - [x] Activities
+  - [x] Presets
+  - [x] Contracts
+- [ ] Remove duplicate code from CrudController
 - [ ] Update frontend code
 - [ ] Test new endpoints
-- [ ] Remove duplicate code from original controllers
 - [ ] Add more tests
