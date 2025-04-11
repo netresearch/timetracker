@@ -4,6 +4,42 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 
 ## Phase 1: Prepare for Symfony 5.4 (Working on Symfony 4.4)
 
+### 1.0: Refactor Controllers (HIGH PRIORITY)
+*   **Goal:** Improve adherence to the Single Responsibility Principle by breaking down large controllers and extracting business logic into dedicated services.
+*   **Tasks:**
+    *   `[ ]` **Analyze Controllers:** Review existing controllers to identify responsibilities that should be extracted. (Estimate: 2h)
+        *   `[ ]` Create a mapping of controller methods to their responsibilities.
+        *   `[ ]` Identify business logic that should be moved to services.
+        *   `[ ]` Document dependencies between controller methods and external components.
+    *   `[ ]` **Create Service Layer for TimeEntry Operations:** Extract time entry operations from CrudController. (Estimate: 3h)
+        *   `[ ]` Create `src/Service/TimeEntry/TimeEntryService.php` for CRUD operations.
+        *   `[ ]` Create `src/Service/TimeEntry/ClassCalculationService.php` for class calculations.
+        *   `[ ]` Write unit tests for each new service.
+    *   `[ ]` **Create Service Layer for Jira Integration:** Extract Jira-related operations. (Estimate: 3h)
+        *   `[ ]` Create `src/Service/Integration/Jira/WorklogService.php` for worklog operations.
+        *   `[ ]` Refactor Jira API dependency injection.
+        *   `[ ]` Write unit tests for Jira integration services.
+    *   `[ ]` **Create Service Layer for Ticket Validation:** Extract ticket validation logic. (Estimate: 2h)
+        *   `[ ]` Create `src/Service/Ticket/TicketValidationService.php`.
+        *   `[ ]` Write unit tests for ticket validation.
+    *   `[ ]` **Refactor CrudController:** Split into domain-specific controllers. (Estimate: 4h)
+        *   `[ ]` Create `TimeEntryController` for time entry management.
+        *   `[ ]` Update routes and dependencies.
+        *   `[ ]` Write functional tests for the new controller.
+    *   `[ ]` **Refactor AdminController:** Split by entity domain. (Estimate: 5h)
+        *   `[ ]` Create entity-specific controllers (ProjectController, CustomerController, etc).
+        *   `[ ]` Extract business logic to services.
+        *   `[ ]` Update routes in `config/routes.yaml` or via annotations.
+        *   `[ ]` Update templates to point to new controller actions.
+        *   `[ ]` Write functional tests for each new controller.
+    *   `[ ]` **Update Routing Configuration:** Ensure all routes point to the new controllers. (Estimate: 2h)
+        *   `[ ]` Update route annotations or YAML configuration.
+        *   `[ ]` Test each route to ensure proper mapping.
+        *   `[ ]` Create route name aliases if needed for backward compatibility.
+    *   `[ ]` **Update Frontend Integration:** Ensure JS/Ajax calls work with new endpoints. (Estimate: 3h)
+        *   `[ ]` Update API endpoints in JavaScript files.
+        *   `[ ]` Test all form submissions and AJAX requests.
+
 ### 1.1: Improve Test Coverage
 *   **Goal:** Ensure critical parts of the application are covered by tests before refactoring and upgrading.
 *   **Tasks:**

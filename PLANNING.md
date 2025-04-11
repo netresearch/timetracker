@@ -15,6 +15,7 @@ The upgrade will proceed incrementally through major LTS (Long-Term Support) ver
 Each major version upgrade will follow a similar pattern:
 
 1.  **Preparation Phase (Current Version):**
+    *   **Refactor Controllers:** Break down large controllers and extract business logic to dedicated services following the Single Responsibility Principle (SRP). This is a top priority to improve maintainability.
     *   **Improve Test Coverage:** Add missing unit, integration, and functional tests.
     *   **Address Deprecations:** Identify and fix deprecations reported for the *next* major version using tools like the Symfony Deprecation Detector.
     *   **Refactor to Best Practices:** Ensure the codebase adheres to the best practices of the *current* Symfony version (e.g., directory structure, service configuration, annotations/attributes, removing legacy code).
