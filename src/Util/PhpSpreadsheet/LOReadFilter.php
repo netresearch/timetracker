@@ -1,18 +1,21 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Netresearch Timetracker
  *
- * PHP version 5
+ * PHP version 8
  *
  * @category   Netresearch
  * @package    Timetracker
- * @subpackage Controller
+ * @subpackage Util
  * @author     Various Artists <info@netresearch.de>
  * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
  * @link       http://www.netresearch.de
  */
 
-namespace App\Helper;
+namespace App\Util\PhpSpreadsheet;
 
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
@@ -27,7 +30,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
  */
 class LOReadFilter implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
 {
-    public function readCell($column, $row, $worksheetName = '')
+    public function readCell($column, $row, $worksheetName = ''): bool
     {
         return Coordinate::columnIndexFromString($column) <= 1024;
     }

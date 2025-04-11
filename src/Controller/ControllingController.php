@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Netresearch Timetracker
  *
@@ -14,10 +15,9 @@
 
 namespace App\Controller;
 
-use App\Helper\LOReadFilter;
+use App\Util\PhpSpreadsheet\LOReadFilter;
 use App\Model\Response;
 use App\Services\Export;
-
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
