@@ -74,6 +74,10 @@ services:
             $trackingLogger: '@logger'
             $router: '@router'
             $translator: '@translator'
+        calls:
+            - [setWorklogService, ['@App\Service\Integration\Jira\WorklogService']]
+            - [setTicketValidationService, ['@App\Service\Ticket\TicketValidationService']]
+            - [setClassCalculationService, ['@App\Service\TimeEntry\ClassCalculationService']]
 
     App\Service\TimeEntry\ClassCalculationService:
         public: true

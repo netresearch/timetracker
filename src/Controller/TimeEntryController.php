@@ -117,14 +117,34 @@ class TimeEntryController extends BaseController
         }
 
         try {
-            // Currently this is just a placeholder method
-            // We would extract the save functionality from the CrudController here
+            // Extract data from request into an array
+            $data = [
+                'id' => $request->request->get('id'),
+                'project' => $request->request->get('project'),
+                'customer' => $request->request->get('customer'),
+                'activity' => $request->request->get('activity'),
+                'ticket' => $request->request->get('ticket'),
+                'description' => $request->request->get('description'),
+                'date' => $request->request->get('date'),
+                'start' => $request->request->get('start'),
+                'end' => $request->request->get('end'),
+                'extTicket' => $request->request->get('extTicket')
+            ];
 
-            $message = "Save action not yet implemented in TimeEntryController";
-            return new JsonResponse(['message' => $message]);
+            // Get the user ID from the request
+            $userId = $this->getUserId($request);
+
+            // Pass the data to the service
+            $result = $this->timeEntryService->saveEntry($data, $userId);
+
+            return new JsonResponse($result);
+        } catch (JiraApiUnauthorizedException $e) {
+            // Invalid JIRA token
+            return new Error($e->getMessage(), 403, $e->getRedirectUrl(), $e);
         } catch (\Exception $e) {
-            $message = $this->translator->trans('An error occurred while saving the entry: %error%', ['%error%' => $e->getMessage()]);
-            return new Error($message, 500);
+            return new Error($this->translator->trans($e->getMessage()), 406, null, $e);
+        } catch (\Throwable $e) {
+            return new Error($e->getMessage(), 503, null, $e);
         }
     }
 
