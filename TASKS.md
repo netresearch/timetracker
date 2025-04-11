@@ -22,21 +22,27 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     *   `[x]` **Create Service Layer for Ticket Validation:** Extract ticket validation logic. (Estimate: 2h)
         *   `[x]` Create `src/Service/Ticket/TicketValidationService.php`.
         *   `[ ]` Write unit tests for ticket validation.
-    *   `[x]` **Refactor CrudController:** Split into domain-specific controllers. (Estimate: 4h)
+    *   `[x]` **Refactor CrudController:** Split by responsibility. (Estimate: 3h)
         *   `[x]` Create `TimeEntryController` for time entry management.
         *   `[x]` Update routes and dependencies.
         *   `[x]` Implement `deleteAction` and `saveAction` in the TimeEntryController.
         *   `[x]` Implement `bulkentryAction` in the TimeEntryController.
+        *   `[x]` Remove duplicate code from CrudController.
         *   `[ ]` Write functional tests for the new controller.
-    *   `[ ]` **Refactor AdminController:** Split by entity domain. (Estimate: 5h)
+    *   `[x]` **Refactor AdminController:** Split by entity domain. (Estimate: 5h)
         *   `[x]` Create entity-specific controllers (ProjectController, CustomerController, etc).
             *   `[x]` Create ProjectController and ProjectService
             *   `[x]` Create CustomerController and CustomerService
             *   `[x]` Create UserController and UserService
             *   `[x]` Create TeamController and TeamService
-            *   `[ ]` Create other entity controllers as needed
+            *   `[x]` Create TicketSystemController and TicketSystemService
+            *   `[x]` Create ActivityController and ActivityService
+            *   `[x]` Create PresetController and PresetService
+            *   `[x]` Create ContractController and ContractService
+            *   `[ ]` Create JiraSyncController and JiraSyncService
         *   `[x]` Extract business logic to services.
         *   `[x]` Update routes in `config/routes.yaml` or via annotations.
+        *   `[x]` Remove duplicate code from AdminController.
         *   `[ ]` Update templates to point to new controller actions.
         *   `[ ]` Write functional tests for each new controller.
     *   `[x]` **Update Routing Configuration:** Ensure all routes point to the new controllers. (Estimate: 2h)
@@ -87,7 +93,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Update any explicit references. (Estimate: 0.1h)
         *   `[ ]` Delete the `src/Services` directory once empty. (Estimate: 0.1h)
         *   `[ ]` Clear cache (`docker compose run --rm app bin/console cache:clear`). (Estimate: 0.1h)
-    *   `[ ]` **(Updated Task 1.3.2) Refactor `src/Helper` Classes to Services:**
+    *   `[ ]` **(Updated Task 1.3.2) Refactor Helper Classes to Services:**
         *   `[ ]` **Refactor `JiraOAuthApi.php`:**
             *   `[ ]` Move `src/Helper/JiraOAuthApi.php` to `src/Service/Integration/Jira/JiraOAuthApiService.php` (or similar). (Estimate: 0.1h)
             *   `[ ]` Update namespace. (Estimate: 0.1h)
@@ -124,13 +130,6 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` **Migrate routes** defined in `config/legacy_bundle/routing.yml` to annotations/attributes within the relevant Controller classes. (Estimate: 0.5-1h+ depending on complexity)
         *   `[ ]` Remove the import for `legacy_bundle/routing.yml` from `config/routes.yaml` once migration is complete. (Estimate: 0.1h)
         *   `[ ]` Prefer PHP 8 Attributes (`#[Route(...)]`) over annotations (`@Route(...)`) if possible within 4.4 constraints (requires PHP 8+). *Note: Full attribute support is better in later Symfony versions.*
-    *   `[ ]` **(Renumbered Task 1.3.4) Review Service Configuration:**
-        *   `[ ]` Examine `config/services.yaml`. (Estimate: 0.5h)
-        *   `[ ]` Ensure autowiring and autoconfiguration are enabled and used effectively (`_defaults`, `App\`). (Estimate: 0.5h)
-        *   `[ ]` Remove unnecessary explicit service definitions where autowiring suffices. (Estimate: 0.5h)
-    *   `[ ]` **(Renumbered Task 1.3.5) Ensure Strict Types and Type Hints:**
-        *   `[ ]` Add `declare(strict_types=1);` to all PHP files. (Estimate: 0.5h - Use automated tooling if possible)
-        *   `[ ]` Add parameter and return type hints wherever missing, replacing `@param`/`@return` phpdoc tags. (Estimate: 1h+ - Highly variable, do incrementally)
 
 ### 1.4: Static Analysis & Code Standards
 *   **Goal:** Ensure code quality meets defined standards.
