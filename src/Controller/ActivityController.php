@@ -32,6 +32,28 @@ class ActivityController extends BaseController
     }
 
     /**
+     * Get all activities.
+     *
+     * @Route("/activities", name="get_activities", methods={"GET"})
+     */
+    public function getActivitiesAction(Request $request): Response|JsonResponse
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        if (false === $this->isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
+        /** @var \App\Repository\ActivityRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
+        $data = $objectRepository->getActivities();
+
+        return new JsonResponse($data);
+    }
+
+    /**
      * Creates or updates an activity
      *
      * @Route("/admin/activity/save", name="admin_save_activity", methods={"POST"})
