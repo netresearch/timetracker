@@ -49,7 +49,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
             *   `[x]` Create PresetsControllerTest
             *   `[ ]` Create remaining controller tests
                 *   `[x]` Create ProjectControllerTest
-                *   `[ ]` Create CustomerControllerTest
+                *   `[x]` Create CustomerControllerTest
                 *   `[ ]` Create UserControllerTest
                 *   `[ ]` Create TeamControllerTest
                 *   `[ ]` Create TicketSystemControllerTest
