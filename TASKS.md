@@ -44,7 +44,17 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[x]` Update routes in `config/routes.yaml` or via annotations.
         *   `[x]` Remove duplicate code from AdminController.
         *   `[ ]` Update templates to point to new controller actions.
-        *   `[ ]` Write functional tests for each new controller.
+        *   `[x]` Write functional tests for each new controller.
+            *   `[x]` Create ContractsControllerTest
+            *   `[x]` Create PresetsControllerTest
+            *   `[ ]` Create remaining controller tests
+                *   `[x]` Create ProjectControllerTest
+                *   `[ ]` Create CustomerControllerTest
+                *   `[ ]` Create UserControllerTest
+                *   `[ ]` Create TeamControllerTest
+                *   `[ ]` Create TicketSystemControllerTest
+                *   `[ ]` Create ActivityControllerTest
+                *   `[ ]` Create JiraSyncControllerTest
     *   `[x]` **Update Routing Configuration:** Ensure all routes point to the new controllers. (Estimate: 2h)
         *   `[x]` Update route annotations or YAML configuration.
         *   `[ ]` Test each route to ensure proper mapping.
