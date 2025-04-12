@@ -102,7 +102,7 @@ _getProjectStructure:
 
 _getActivities:
     path:  /getActivities
-    defaults: { _controller: App\Controller\DefaultController::getActivitiesAction }
+    defaults: { _controller: App\Controller\ActivityController::getActivitiesAction }
 
 _getTicketSystems:
     path:  /getTicketSystems
@@ -208,11 +208,11 @@ saveSettings:
 
 saveActivity:
     path: /activity/save
-    defaults: { _controller: App\Controller\AdminController::saveActivityAction }
+    defaults: { _controller: App\Controller\ActivityController::saveActivityAction }
 
 deleteActivity:
     path: /activity/delete
-    defaults: { _controller: App\Controller\AdminController::deleteActivityAction }
+    defaults: { _controller: App\Controller\ActivityController::deleteActivityAction }
 
 saveTeam:
     path: /team/save

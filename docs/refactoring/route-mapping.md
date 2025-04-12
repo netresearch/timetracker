@@ -6,39 +6,27 @@ This document tracks the migration of routes from the original controllers to th
 
 | Original Route | Original Controller | New Route | New Controller | Status |
 |----------------|---------------------|-----------|---------------|--------|
-| `/admin/ticketsystems` | `AdminController::getTicketSystemsAction` | `/admin/ticketsystems` | `TicketSystemController::getTicketSystemsAction` | Completed ✅ |
-| `/admin/ticketsystem/save` | `AdminController::saveTicketSystemAction` | `/admin/ticketsystem/save` | `TicketSystemController::saveTicketSystemAction` | Completed ✅ |
-| `/admin/ticketsystem/delete` | `AdminController::deleteTicketSystemAction` | `/admin/ticketsystem/delete` | `TicketSystemController::deleteTicketSystemAction` | Completed ✅ |
-| `/admin/activity/save` | `AdminController::saveActivityAction` | `/admin/activity/save` | `ActivityController::saveActivityAction` | Completed ✅ |
-| `/admin/activity/delete` | `AdminController::deleteActivityAction` | `/admin/activity/delete` | `ActivityController::deleteActivityAction` | Completed ✅ |
-| `/admin/presets` | `AdminController::getPresetsAction` | `/admin/presets` | `PresetController::getPresetsAction` | Completed ✅ |
-| `/admin/preset/save` | `AdminController::savePresetAction` | `/admin/preset/save` | `PresetController::savePresetAction` | Completed ✅ |
-| `/admin/preset/delete` | `AdminController::deletePresetAction` | `/admin/preset/delete` | `PresetController::deletePresetAction` | Completed ✅ |
-| `/admin/contracts` | `AdminController::getContractsAction` | `/admin/contracts` | `ContractController::getContractsAction` | Completed ✅ |
-| `/admin/contract/save` | `AdminController::saveContractAction` | `/admin/contract/save` | `ContractController::saveContractAction` | Completed ✅ |
-| `/admin/contract/delete` | `AdminController::deleteContractAction` | `/admin/contract/delete` | `ContractController::deleteContractAction` | Completed ✅ |
-| `/crud/delete` | `CrudController::deleteAction` | `/crud/delete` | `TimeEntryController::deleteAction` | Completed ✅ |
-| `/crud/save` | `CrudController::saveAction` | `/crud/save` | `TimeEntryController::saveAction` | Completed ✅ |
-| `/crud/bulkentry` | `CrudController::bulkentryAction` | `/crud/bulkentry` | `TimeEntryController::bulkentryAction` | Completed ✅ |
+| `/getTicketSystems` | `AdminController::getTicketSystemsAction` | `/admin/ticketsystems` | `TicketSystemController::getTicketSystemsAction` | Completed ✅ |
+| `/ticketsystem/save` | `AdminController::saveTicketSystemAction` | `/admin/ticketsystem/save` | `TicketSystemController::saveTicketSystemAction` | Completed ✅ |
+| `/ticketsystem/delete` | `AdminController::deleteTicketSystemAction` | `/admin/ticketsystem/delete` | `TicketSystemController::deleteTicketSystemAction` | Completed ✅ |
+| `/getActivities` | `DefaultController::getActivitiesAction` | `/activities` | `ActivityController::getActivitiesAction` | Completed ✅ |
+| `/activity/save` | `AdminController::saveActivityAction` | `/admin/activity/save` | `ActivityController::saveActivityAction` | Completed ✅ |
+| `/activity/delete` | `AdminController::deleteActivityAction` | `/admin/activity/delete` | `ActivityController::deleteActivityAction` | Completed ✅ |
+| `/getAllPresets` | `AdminController::getPresetsAction` | `/admin/presets` | `PresetController::getPresetsAction` | Completed ✅ |
+| `/preset/save` | `AdminController::savePresetAction` | `/admin/preset/save` | `PresetController::savePresetAction` | Completed ✅ |
+| `/preset/delete` | `AdminController::deletePresetAction` | `/admin/preset/delete` | `PresetController::deletePresetAction` | Completed ✅ |
+| `/getContracts` | `AdminController::getContractsAction` | `/admin/contracts` | `ContractController::getContractsAction` | Completed ✅ |
+| `/contract/save` | `AdminController::saveContractAction` | `/admin/contract/save` | `ContractController::saveContractAction` | Completed ✅ |
+| `/contract/delete` | `AdminController::deleteContractAction` | `/admin/contract/delete` | `ContractController::deleteContractAction` | Completed ✅ |
+| `/tracking/delete` | `CrudController::deleteAction` | `/crud/delete` | `TimeEntryController::deleteAction` | Completed ✅ |
+| `/tracking/save` | `CrudController::saveAction` | `/crud/save` | `TimeEntryController::saveAction` | Completed ✅ |
+| `/tracking/bulkentry` | `CrudController::bulkentryAction` | `/crud/bulkentry` | `TimeEntryController::bulkentryAction` | Completed ✅ |
 
 ## Routes Still to Migrate
 
 | Route | Controller | Target Controller | Status |
 |-------|------------|------------------|--------|
-| `/admin/customers` | `AdminController::getCustomersAction` | `CustomerController` | Already implemented |
-| `/admin/users` | `AdminController::getUsersAction` | `UserController` | Already implemented |
-| `/admin/teams` | `AdminController::getTeamsAction` | `TeamController` | Already implemented |
-| `/admin/project/save` | `AdminController::saveProjectAction` | `ProjectController` | Already implemented |
-| `/admin/project/delete` | `AdminController::deleteProjectAction` | `ProjectController` | Already implemented |
-| `/admin/sync-all-subtasks` | `AdminController::syncAllProjectSubticketsAction` | `ProjectController` | To be migrated |
-| `/admin/sync-subtasks` | `AdminController::syncProjectSubticketsAction` | `ProjectController` | To be migrated |
-| `/admin/customer/save` | `AdminController::saveCustomerAction` | `CustomerController` | Already implemented |
-| `/admin/customer/delete` | `AdminController::deleteCustomerAction` | `CustomerController` | Already implemented |
-| `/admin/user/save` | `AdminController::saveUserAction` | `UserController` | Already implemented |
-| `/admin/user/delete` | `AdminController::deleteUserAction` | `UserController` | Already implemented |
-| `/admin/team/save` | `AdminController::saveTeamAction` | `TeamController` | Already implemented |
-| `/admin/team/delete` | `AdminController::deleteTeamAction` | `TeamController` | Already implemented |
-| `/admin/jirasync` | `AdminController::jiraSyncEntriesAction` | `JiraSyncController` | To be created |
+| `/syncentries/jira` | `AdminController::jiraSyncEntriesAction` | `JiraSyncController` | To be created |
 
 ## Safe Removal Plan
 
@@ -58,6 +46,7 @@ This document tracks the migration of routes from the original controllers to th
   - [x] Presets
   - [x] Contracts
 - [x] Remove duplicate code from CrudController
+- [ ] Create JiraSyncController for migrating `/syncentries/jira`
 - [ ] Update frontend code
 - [ ] Test new endpoints
 - [ ] Add more tests
