@@ -50,11 +50,11 @@ This document breaks down the upgrade plan into specific, actionable tasks.
             *   `[ ]` Create remaining controller tests
                 *   `[x]` Create ProjectControllerTest
                 *   `[x]` Create CustomerControllerTest
-                *   `[ ]` Create UserControllerTest
-                *   `[ ]` Create TeamControllerTest
-                *   `[ ]` Create TicketSystemControllerTest
-                *   `[ ]` Create ActivityControllerTest
-                *   `[ ]` Create JiraSyncControllerTest
+                *   `[x]` Create UserControllerTest
+                *   `[x]` Create TeamControllerTest
+                *   `[x]` Create TicketSystemControllerTest
+                *   `[x]` Create ActivityControllerTest
+                *   `[x]` Create JiraSyncControllerTest
     *   `[x]` **Update Routing Configuration:** Ensure all routes point to the new controllers. (Estimate: 2h)
         *   `[x]` Update route annotations or YAML configuration.
         *   `[ ]` Test each route to ensure proper mapping.
