@@ -23,6 +23,58 @@ class CrudController extends BaseController
 {
     const LOG_FILE = 'trackingsave.log';
 
+    public function getAction(Request $request)
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        // type and syntax check in routing.yml
+        $entryId = $request->get('id');
+
+        $doctrine = $this->getDoctrine();
+        /** @var Entry $entry */
+        $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')
+            ->find($entryId);
+
+        if (!$entry) {
+            $message = $this->get('translator')->trans('No entry for id.');
+            return new Error($message, 404);
+        }
+
+        // check for role, dev can only return their own tickets
+        $ticketUserId = $entry->getUser() ? $entry->getUser()->getId() : null;
+        $currentUserId = $this->getUserId($request);
+        if ($this->isDEV($request) && ($ticketUserId != $currentUserId)) {
+            $message = $this->get('translator')->trans('You are not allowed to view this entry.');
+            return new Error($message, 403);
+        }
+
+        // format output like /interpretation/allEntries
+        $date = $entry->getDay() ? $entry->getDay()->format('Y-m-d') : null;
+        $entry = $entry->toArray();
+
+        // unset unneded keys
+        unset($entry['class']);
+        $entry['date'] = $date;
+
+        // add id suffix to id parameter
+        $entry['user_id'] = $entry['user'];
+        $entry['project_id'] = $entry['project'];
+        $entry['customer_id'] = $entry['customer'];
+        $entry['activity_id'] = $entry['activity'];
+        $entry['worklog_id'] = $entry['worklog'];
+
+        // unset old keys
+        unset($entry['user']);
+        unset($entry['project']);
+        unset($entry['customer']);
+        unset($entry['activity']);
+        unset($entry['worklog']);
+
+        return new JsonResponse(array('data' => $entry));
+    }
+
     public function deleteAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
