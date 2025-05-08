@@ -7,6 +7,53 @@ use Illuminate\Support\Facades\DB;
 
 class CrudControllerTest extends BaseTest
 {
+    public function testGetAction()
+    {
+        $this->client->request('GET', '/tracking/entry/1');
+
+        $expectedJson = [
+            'data' => [
+                'date' => '1000-01-30',
+                'start' => '08:00',
+                'end' => '08:50',
+                'description' => '/interpretation/entries',
+                'ticket' => 'testGetLastEntriesAction',
+                'duration' => 50,
+                'durationString' => '00:50',
+                'extTicket' => "",
+                'user_id' => 1,
+                'project_id' => 1,
+                'customer_id' => 1,
+                'activity_id' => 1,
+                'worklog_id' => null,
+            ],
+        ];
+
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    public function testGetActionNoEntry()
+    {
+        $this->client->request('GET', '/tracking/entry/100');
+
+        $expectedJson = ['message' => 'Kein Eintrag für ID.'];
+
+        $this->assertStatusCode(404);
+        $this->assertJsonStructure($expectedJson);
+    }
+
+    public function testGetActionNotAllowed()
+    {
+        $this->logInSession('developer');
+        $this->client->request('GET', '/tracking/entry/1');
+
+        $expectedJson = ['message' => 'Sie sind nicht berechtigt, diesen Eintrag anzuzeigen.'];
+
+        $this->assertStatusCode(403);
+        $this->assertJsonStructure($expectedJson);
+    }
+
     public function testSaveAction()
     {
         $parameter = [
