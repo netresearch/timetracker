@@ -411,7 +411,7 @@ class DefaultControllerTest extends BaseTest
         ];
         $this->client->request('POST', '/getSummary', $parameter);
         $this->assertStatusCode(404, 'Second delete did not return expected 404');
-        $this->assertJsonStructure(['message' => 'No entry for id.']);
+        $this->assertJsonStructure(['message' => 'Kein Eintrag für ID.']);
     }
 
     public function testGetTimeSummaryAction()
