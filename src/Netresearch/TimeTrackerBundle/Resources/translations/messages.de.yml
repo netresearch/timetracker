@@ -49,3 +49,6 @@
 "There is already an ongoing contract with a closed end date in the future." : "Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft."
 "There is already an ongoing contract with a start date in the future that overlaps with the new contract." : "Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet."
 "There is more than one open-ended contract for the user." : "Für den Nutzer besteht mehr als ein unbefristeter Vertrag."
+"Id is required." : "ID ist erforderlich."
+"No entry for id." : "Kein Eintrag für ID."
+"You are not allowed to view this entry." : "Sie sind nicht berechtigt, diesen Eintrag anzuzeigen."
