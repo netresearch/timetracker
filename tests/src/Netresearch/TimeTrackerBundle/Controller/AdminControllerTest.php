@@ -1475,7 +1475,7 @@ class AdminControllerTest extends BaseTest
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        $expectedJson = ['message' => 'No entry for id.'];
+        $expectedJson = ['message' => 'Kein Eintrag für ID.'];
         $this->client->request('POST', '/contract/save', $parameter);
         $this->assertStatusCode(404);
         $this->assertJsonStructure($expectedJson);
