@@ -1203,6 +1203,10 @@ paths:
                           type: string
                           description: The duration in string format (hh:mm)
                           example: "02:40"
+                        extTicket:
+                          type: string
+                          description: String of the orginal jira key
+                          example: ""
                         user_id:
                           type: integer
                           example: 2
