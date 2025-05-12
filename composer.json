@@ -44,19 +44,19 @@
     "laminas/laminas-ldap": "^2.19",
     "phpoffice/phpspreadsheet": "^1.4",
     "sentry/sentry-symfony": "^4.2",
-    "symfony/asset": "^4.4",
-    "symfony/console": "^4.4",
-    "symfony/dotenv": "^4.4",
-    "symfony/flex": "^1.19",
-    "symfony/form": "^4.4",
-    "symfony/framework-bundle": "^4.4",
-    "symfony/mailer": "^4.4",
+    "symfony/asset": "^6.1",
+    "symfony/console": "^6.1",
+    "symfony/dotenv": "^6.1",
+    "symfony/flex": "^2",
+    "symfony/form": "^6.1",
+    "symfony/framework-bundle": "^6.1",
+    "symfony/mailer": "^6.1",
     "symfony/monolog-bundle": "^3.1.0",
-    "symfony/security-bundle": "^4.4",
-    "symfony/translation": "^4.4",
-    "symfony/twig-bundle": "^4.4",
-    "symfony/validator": "^4.4",
-    "symfony/yaml": "^4.4",
+    "symfony/security-bundle": "^6.1",
+    "symfony/translation": "^6.1",
+    "symfony/twig-bundle": "^6.1",
+    "symfony/validator": "^6.1",
+    "symfony/yaml": "^6.1",
     "twig/twig": "<3.9"
   },
   "require-dev": {
@@ -70,12 +70,12 @@
     "psalm/plugin-symfony": "^4.0",
     "rector/rector": "^1.2",
     "squizlabs/php_codesniffer": "^3.7",
-    "symfony/browser-kit": "4.4.*",
-    "symfony/css-selector": "4.4.*",
-    "symfony/debug-bundle": "^4.4",
+    "symfony/browser-kit": "6.1.*",
+    "symfony/css-selector": "6.1.*",
+    "symfony/debug-bundle": "6.1.*",
     "symfony/maker-bundle": "^1.39",
-    "symfony/phpunit-bridge": "^7.2",
-    "symfony/web-profiler-bundle": "^4.4",
+    "symfony/phpunit-bridge": "^6.0",
+    "symfony/web-profiler-bundle": "6.1.*",
     "symfony/webpack-encore-bundle": "^1.0",
     "vimeo/psalm": "^4.30"
   },
@@ -109,7 +109,7 @@
   "extra": {
     "symfony": {
       "allow-contrib": false,
-      "require": "4.4.*"
+      "require": "6.1.*"
     },
     "branch-alias": null
   }
