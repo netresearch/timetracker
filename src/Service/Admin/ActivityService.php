@@ -9,6 +9,7 @@ use App\Entity\Entry;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\ActivityRepository;
 use App\Repository\EntryRepository;
+use Doctrine\DBAL\Connection;
 
 /**
  * Service for activity management.
@@ -18,16 +19,19 @@ class ActivityService
     private ManagerRegistry $doctrine;
     private ActivityRepository $activityRepository;
     private EntryRepository $entryRepository;
+    private Connection $connection;
 
     /**
      * ActivityService constructor.
      */
     public function __construct(
-        ManagerRegistry $doctrine
+        ManagerRegistry $doctrine,
+        Connection $connection
     ) {
         $this->doctrine = $doctrine;
         $this->activityRepository = $doctrine->getRepository(Activity::class);
         $this->entryRepository = $doctrine->getRepository(Entry::class);
+        $this->connection = $connection;
     }
 
     /**
@@ -64,9 +68,16 @@ class ActivityService
 
         // Update activity fields
         $activity->setName($name);
-        $activity->setActive((bool)($data['active'] ?? false));
-        $activity->setBillable((bool)($data['billable'] ?? false));
-        $activity->setGlobal((bool)($data['global'] ?? false));
+
+        // Only set needs_ticket if provided
+        if (isset($data['needs_ticket'])) {
+            $activity->setNeedsTicket((bool)$data['needs_ticket']);
+        }
+
+        // Only set factor if provided
+        if (isset($data['factor'])) {
+            $activity->setFactor((float)$data['factor']);
+        }
 
         // Save to database
         $entityManager->persist($activity);

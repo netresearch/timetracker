@@ -6,18 +6,18 @@ This document tracks the migration of routes from the original controllers to th
 
 | Original Route | Original Controller | New Route | New Controller | Status |
 |----------------|---------------------|-----------|---------------|--------|
-| `/getTicketSystems` | `AdminController::getTicketSystemsAction` | `/admin/ticketsystems` | `TicketSystemController::getTicketSystemsAction` | Completed ✅ |
-| `/ticketsystem/save` | `AdminController::saveTicketSystemAction` | `/admin/ticketsystem/save` | `TicketSystemController::saveTicketSystemAction` | Completed ✅ |
-| `/ticketsystem/delete` | `AdminController::deleteTicketSystemAction` | `/admin/ticketsystem/delete` | `TicketSystemController::deleteTicketSystemAction` | Completed ✅ |
+| `/getTicketSystems` | `AdminController::getTicketSystemsAction` | `/ticketsystems` | `TicketSystemController::getTicketSystemsAction` | Completed ✅ |
+| `/ticketsystem/save` | `AdminController::saveTicketSystemAction` | `/ticketsystem/save` | `TicketSystemController::saveTicketSystemAction` | Completed ✅ |
+| `/ticketsystem/delete` | `AdminController::deleteTicketSystemAction` | `/ticketsystem/delete` | `TicketSystemController::deleteTicketSystemAction` | Completed ✅ |
 | `/getActivities` | `DefaultController::getActivitiesAction` | `/activities` | `ActivityController::getActivitiesAction` | Completed ✅ |
-| `/activity/save` | `AdminController::saveActivityAction` | `/admin/activity/save` | `ActivityController::saveActivityAction` | Completed ✅ |
-| `/activity/delete` | `AdminController::deleteActivityAction` | `/admin/activity/delete` | `ActivityController::deleteActivityAction` | Completed ✅ |
-| `/getAllPresets` | `AdminController::getPresetsAction` | `/admin/presets` | `PresetController::getPresetsAction` | Completed ✅ |
-| `/preset/save` | `AdminController::savePresetAction` | `/admin/preset/save` | `PresetController::savePresetAction` | Completed ✅ |
-| `/preset/delete` | `AdminController::deletePresetAction` | `/admin/preset/delete` | `PresetController::deletePresetAction` | Completed ✅ |
-| `/getContracts` | `AdminController::getContractsAction` | `/admin/contracts` | `ContractController::getContractsAction` | Completed ✅ |
-| `/contract/save` | `AdminController::saveContractAction` | `/admin/contract/save` | `ContractController::saveContractAction` | Completed ✅ |
-| `/contract/delete` | `AdminController::deleteContractAction` | `/admin/contract/delete` | `ContractController::deleteContractAction` | Completed ✅ |
+| `/activity/save` | `AdminController::saveActivityAction` | `/activity/save` | `ActivityController::saveActivityAction` | Completed ✅ |
+| `/activity/delete` | `AdminController::deleteActivityAction` | `/activity/delete` | `ActivityController::deleteActivityAction` | Completed ✅ |
+| `/getAllPresets` | `AdminController::getPresetsAction` | `/presets` | `PresetController::getPresetsAction` | Completed ✅ |
+| `/preset/save` | `AdminController::savePresetAction` | `/preset/save` | `PresetController::savePresetAction` | Completed ✅ |
+| `/preset/delete` | `AdminController::deletePresetAction` | `/preset/delete` | `PresetController::deletePresetAction` | Completed ✅ |
+| `/getContracts` | `AdminController::getContractsAction` | `/contracts` | `ContractController::getContractsAction` | Completed ✅ |
+| `/contract/save` | `AdminController::saveContractAction` | `/contract/save` | `ContractController::saveContractAction` | Completed ✅ |
+| `/contract/delete` | `AdminController::deleteContractAction` | `/contract/delete` | `ContractController::deleteContractAction` | Completed ✅ |
 | `/tracking/delete` | `CrudController::deleteAction` | `/crud/delete` | `TimeEntryController::deleteAction` | Completed ✅ |
 | `/tracking/save` | `CrudController::saveAction` | `/crud/save` | `TimeEntryController::saveAction` | Completed ✅ |
 | `/tracking/bulkentry` | `CrudController::bulkentryAction` | `/crud/bulkentry` | `TimeEntryController::bulkentryAction` | Completed ✅ |

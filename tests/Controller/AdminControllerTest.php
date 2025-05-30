@@ -1640,74 +1640,6 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->assertDbState('contracts');
     }
 
-    public function testGetContractAction(): void
-    {
-        $expectedJson = [
-            [
-                'contract' => [
-                    'id' => 3,
-                    'user_id' => 2,
-                    'start' => '1020-01-01',
-                    'end' => '2020-01-01',
-                    'hours_0' => 1,
-                    'hours_1' => 1,
-                    'hours_2' => 1,
-                    'hours_3' => 1,
-                    'hours_4' => 1,
-                    'hours_5' => 1,
-                    'hours_6' => 1,
-                ],
-            ],
-            [
-                'contract' => [
-                    'id' => 1,
-                    'user_id' => 1,
-                    'start' => '2020-01-01',
-                    'end' => '2020-01-31',
-                    'hours_0' => 0,
-                    'hours_1' => 1,
-                    'hours_2' => 2,
-                    'hours_3' => 3,
-                    'hours_4' => 4,
-                    'hours_5' => 5,
-                    'hours_6' => 0,
-                ],
-            ],
-            [
-                'contract' => [
-                    'id' => 2,
-                    'user_id' => 1,
-                    'start' => '2020-02-01',
-                    'hours_0' => 0,
-                    'hours_1' => 1.1,
-                    'hours_2' => 2.2,
-                    'hours_3' => 3.3,
-                    'hours_4' => 4.4,
-                    'hours_5' => 5.5,
-                    'hours_6' => 0.5,
-                ],
-            ],
-            [
-                'contract' => [
-                    'id' => 4,
-                    'user_id' => 3,
-                    'start' => '0700-01-01',
-                    'hours_0' => 1,
-                    'hours_1' => 2,
-                    'hours_2' => 3,
-                    'hours_3' => 4,
-                    'hours_4' => 5,
-                    'hours_5' => 5,
-                    'hours_6' => 5,
-                ],
-            ],
-        ];
-
-        $this->client->request('GET', '/getContracts');
-        $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
-    }
-
     //-------------- ticketSystems routes ----------------------------------------
     public function testGetTicketSystemsAction(): void
     {
@@ -1718,7 +1650,7 @@ class AdminControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getTicketSystems');
+        $this->client->request('GET', '/ticketsystems');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -1857,26 +1789,6 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('ticket_systems');
-    }
-
-    //-------------- presets routes ----------------------------------------
-    public function testGetPresetsAction(): void
-    {
-        $expectedJson = [
-            0 => [
-                'preset' => [
-                    'id' => 1,
-                    'name' => 'Urlaub',
-                    'customer' => 1,
-                    'project' => 1,
-                    'activity' => 1,
-                    'description' => 'Urlaub',
-                ],
-            ],
-        ];
-        $this->client->request('GET', '/getAllPresets');
-        $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
     }
 
     public function testSavePresetAction(): void

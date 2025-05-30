@@ -10,6 +10,7 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\ContractRepository;
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Result;
 
 /**
  * Service for contract management.
@@ -27,14 +28,14 @@ class ContractService
         ManagerRegistry $doctrine
     ) {
         $this->doctrine = $doctrine;
+        /** @var ContractRepository $contractRepository */
         $this->contractRepository = $doctrine->getRepository(Contract::class);
+        /** @var UserRepository $userRepository */
         $this->userRepository = $doctrine->getRepository(User::class);
     }
 
     /**
-     * Get all contracts.
-     *
-     * @return array List of contracts
+     * @return Contract[]
      */
     public function getAllContracts(): array
     {
@@ -53,10 +54,10 @@ class ContractService
         $id = (int)($data['id'] ?? 0);
 
         // Prepare dates
-        $startDate = null;
-        if (!empty($data['startDate'])) {
+        $start = null;
+        if (!empty($data['start'])) {
             try {
-                $startDate = new DateTime($data['startDate']);
+                $start = new DateTime($data['start']);
             } catch (\Exception $e) {
                 return ['error' => 'Invalid start date format'];
             }
@@ -64,17 +65,17 @@ class ContractService
             return ['error' => 'Start date is required'];
         }
 
-        $endDate = null;
-        if (!empty($data['endDate'])) {
+        $end = null;
+        if (!empty($data['end'])) {
             try {
-                $endDate = new DateTime($data['endDate']);
+                $end = new DateTime($data['end']);
             } catch (\Exception $e) {
                 return ['error' => 'Invalid end date format'];
             }
         }
 
         // Get user
-        $userId = (int)($data['userId'] ?? 0);
+        $userId = (int)($data['user_id'] ?? 0);
         if (!$userId) {
             return ['error' => 'User is required'];
         }
@@ -85,6 +86,7 @@ class ContractService
         }
 
         if ($id !== 0) {
+            /** @var Contract $contract */
             $contract = $this->contractRepository->find($id);
             if (!$contract) {
                 return ['error' => 'Contract not found'];
@@ -95,7 +97,7 @@ class ContractService
         }
 
         // Check for overlapping contracts
-        if ($id === 0 || $contract->getStartDate() != $startDate || $contract->getEndDate() != $endDate) {
+        if ($id === 0 || $contract->getStart() != $start || $contract->getEnd() != $end) {
             $existingContracts = $this->contractRepository->findBy(['user' => $user]);
 
             // Filter out the current contract
@@ -109,10 +111,10 @@ class ContractService
             foreach ($existingContracts as $existingContract) {
                 // Check if start date overlaps with any existing contract
                 if ($this->datesOverlap(
-                    $startDate,
-                    $endDate,
-                    $existingContract->getStartDate(),
-                    $existingContract->getEndDate()
+                    $start,
+                    $end,
+                    $existingContract->getStart(),
+                    $existingContract->getEnd()
                 )) {
                     return ['error' => 'Contract dates overlap with an existing contract for this user'];
                 }
@@ -120,14 +122,15 @@ class ContractService
         }
 
         // Update contract fields
-        $contract->setStartDate($startDate);
-        $contract->setEndDate($endDate);
-        $contract->setWeeklyHours((float)($data['weeklyHours'] ?? 0));
-        $contract->setWeeklyDays((int)($data['weeklyDays'] ?? 0));
-        $contract->setDailyStartTime($data['dailyStartTime'] ?? null);
-        $contract->setDailyEndTime($data['dailyEndTime'] ?? null);
-        $contract->setVacationDays((int)($data['vacationDays'] ?? 0));
-        $contract->setNotes($data['notes'] ?? null);
+        $contract->setStart($start);
+        $contract->setEnd($end);
+        $contract->setHours0((float)($data['hours_0'] ?? 0));
+        $contract->setHours1((float)($data['hours_1'] ?? 0));
+        $contract->setHours2((float)($data['hours_2'] ?? 0));
+        $contract->setHours3((float)($data['hours_3'] ?? 0));
+        $contract->setHours4((float)($data['hours_4'] ?? 0));
+        $contract->setHours5((float)($data['hours_5'] ?? 0));
+        $contract->setHours6((float)($data['hours_6'] ?? 0));
 
         // Save to database
         $entityManager->persist($contract);

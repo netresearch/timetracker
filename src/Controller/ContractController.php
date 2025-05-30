@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Contract;
-use App\Model\JsonResponse;
+use App\Model\JsonResponse as ModelJsonResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use App\Service\Admin\ContractService;
@@ -34,14 +34,13 @@ class ContractController extends BaseController
     /**
      * Returns the list of contracts
      *
-     * @Route("/admin/contracts", name="admin_get_contracts", methods={"GET"})
+     * @Route("/contracts", name="admin_get_contracts", methods={"GET"})
      */
     public function getContractsAction(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
-
         $contracts = $this->contractService->getAllContracts();
         return new JsonResponse($contracts);
     }
@@ -49,7 +48,7 @@ class ContractController extends BaseController
     /**
      * Creates or updates a contract
      *
-     * @Route("/admin/contract/save", name="admin_save_contract", methods={"POST"})
+     * @Route("/contract/save", name="admin_save_contract", methods={"POST"})
      */
     public function saveContractAction(Request $request): Response|Error|JsonResponse
     {
@@ -60,9 +59,9 @@ class ContractController extends BaseController
         try {
             $data = [
                 'id' => $request->get('id'),
-                'userId' => $request->get('user'),
-                'startDate' => $request->get('start_date'),
-                'endDate' => $request->get('end_date'),
+                'user_id' => $request->get('user_id'),
+                'start' => $request->get('start'),
+                'end' => $request->get('end'),
                 'weeklyHours' => $request->get('weekly_hours'),
                 'weeklyDays' => $request->get('weekly_days'),
                 'dailyStartTime' => $request->get('daily_start_time'),
@@ -88,7 +87,7 @@ class ContractController extends BaseController
     /**
      * Deletes a contract
      *
-     * @Route("/admin/contract/delete", name="admin_delete_contract", methods={"POST"})
+     * @Route("/contract/delete", name="admin_delete_contract", methods={"POST"})
      */
     public function deleteContractAction(Request $request): Response|Error|JsonResponse
     {
@@ -106,8 +105,14 @@ class ContractController extends BaseController
             }
 
             return new JsonResponse(['success' => true]);
-        } catch (\Exception $e) {
-            return new Error($e->getMessage(), 500);
+        } catch (\Exception $exception) {
+            $reason = '';
+            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
+                $reason = $this->translate('Other datasets refer to this one.');
+            }
+
+            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            return new Error($msg, 422);
         }
     }
 }

@@ -40,7 +40,7 @@ class JiraSyncControllerTest extends AbstractWebTestCase
     public function testSyncAllProjectsAsDevAction(): void
     {
         // Set user as developer
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         // Developers should be able to sync all projects if they have certain permissions
         $this->client->request('GET', '/projects/syncsubtickets');
@@ -48,15 +48,12 @@ class JiraSyncControllerTest extends AbstractWebTestCase
         // This might be allowed depending on your app's permissions
         // Adjust the assertion based on your application's actual behavior
         $this->assertStatusCode(200);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 
     public function testJiraSyncLogAction(): void
     {
         // Test accessing the sync log
-        $this->client->request('GET', '/admin/jirasync/log');
+        $this->client->request('GET', '/jirasync/log');
         $this->assertStatusCode(200);
 
         // Check structure of response
@@ -68,22 +65,19 @@ class JiraSyncControllerTest extends AbstractWebTestCase
     public function testJiraSyncLogActionAsDev(): void
     {
         // Set user as developer
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         // Check if developers can access logs (likely restricted)
-        $this->client->request('GET', '/admin/jirasync/log');
+        $this->client->request('GET', '/jirasync/log');
 
         // Typically devs would not have access to admin logs
         $this->assertStatusCode(401);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 
     public function testTriggerManualSyncAction(): void
     {
         // Test triggering a manual sync
-        $this->client->request('POST', '/admin/jirasync/trigger', [
+        $this->client->request('POST', '/jirasync/trigger', [
             'project_id' => 1
         ]);
         $this->assertStatusCode(200);
@@ -98,17 +92,14 @@ class JiraSyncControllerTest extends AbstractWebTestCase
     public function testTriggerManualSyncActionAsDev(): void
     {
         // Set user as developer
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         // Developers typically can't trigger admin actions
-        $this->client->request('POST', '/admin/jirasync/trigger', [
+        $this->client->request('POST', '/jirasync/trigger', [
             'project_id' => 1
         ]);
 
         // Check they are unauthorized
         $this->assertStatusCode(401);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 }

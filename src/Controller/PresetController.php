@@ -34,7 +34,7 @@ class PresetController extends BaseController
     /**
      * Returns the list of presets
      *
-     * @Route("/admin/presets", name="admin_get_presets", methods={"GET"})
+     * @Route("/presets", name="admin_get_presets", methods={"GET"})
      */
     public function getPresetsAction(Request $request): Response|JsonResponse
     {
@@ -49,7 +49,7 @@ class PresetController extends BaseController
     /**
      * Creates or updates a preset
      *
-     * @Route("/admin/preset/save", name="admin_save_preset", methods={"POST"})
+     * @Route("/preset/save", name="admin_save_preset", methods={"POST"})
      */
     public function savePresetAction(Request $request): Response|Error|JsonResponse
     {
@@ -88,7 +88,7 @@ class PresetController extends BaseController
     /**
      * Deletes a preset
      *
-     * @Route("/admin/preset/delete", name="admin_delete_preset", methods={"POST"})
+     * @Route("/preset/delete", name="admin_delete_preset", methods={"POST"})
      */
     public function deletePresetAction(Request $request): Response|Error|JsonResponse
     {

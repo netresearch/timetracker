@@ -91,8 +91,8 @@ class TicketSystemService
         $ticketSystem->setName($name);
         $ticketSystem->setType($data['type'] ?? '');
         $ticketSystem->setUrl($data['url'] ?? '');
+        $ticketSystem->setTicketUrl($data['ticketUrl'] ?? '');
         $ticketSystem->setLogin($data['login'] ?? '');
-        $ticketSystem->setActive((bool)($data['active'] ?? false));
 
         // Set password only if provided
         if (!empty($data['password'])) {
@@ -100,8 +100,6 @@ class TicketSystemService
         }
 
         // Set OAuth-related fields
-        $ticketSystem->setOauthEnabled((bool)($data['oauthEnabled'] ?? false));
-
         if (!empty($data['privateKey'])) {
             $ticketSystem->setPrivateKey($data['privateKey']);
         }
@@ -117,8 +115,6 @@ class TicketSystemService
         if (!empty($data['oauthConsumerSecret'])) {
             $ticketSystem->setOauthConsumerSecret($data['oauthConsumerSecret']);
         }
-
-        $ticketSystem->setProjectMappingField($data['projectMappingField'] ?? null);
 
         // Save to database
         $entityManager->persist($ticketSystem);

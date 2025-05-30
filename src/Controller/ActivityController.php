@@ -56,7 +56,7 @@ class ActivityController extends BaseController
     /**
      * Creates or updates an activity
      *
-     * @Route("/admin/activity/save", name="admin_save_activity", methods={"POST"})
+     * @Route("/activity/save", name="admin_save_activity", methods={"POST"})
      */
     public function saveActivityAction(Request $request): Response|Error|JsonResponse
     {
@@ -90,7 +90,7 @@ class ActivityController extends BaseController
     /**
      * Deletes an activity
      *
-     * @Route("/admin/activity/delete", name="admin_delete_activity", methods={"POST"})
+     * @Route("/activity/delete", name="admin_delete_activity", methods={"POST"})
      */
     public function deleteActivityAction(Request $request): Response|Error|JsonResponse
     {

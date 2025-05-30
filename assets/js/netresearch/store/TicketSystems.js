@@ -8,7 +8,7 @@ Ext.define('Netresearch.store.TicketSystems', {
     model: 'Netresearch.model.TicketSystem',
     proxy: {
         type: 'ajax',
-        url: url + 'admin/ticketsystems',
+        url: url + 'ticketsystems',
         reader: {
             type: 'json',
             record: 'ticketSystem'

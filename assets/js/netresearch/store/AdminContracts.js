@@ -9,7 +9,7 @@ Ext.define('Netresearch.store.AdminContracts', {
     model: 'Netresearch.model.Contract',
     proxy: {
         type: 'ajax',
-        url: url + 'admin/contracts',
+        url: url + 'contracts',
         reader: {
             type: 'json',
             record: 'contract'

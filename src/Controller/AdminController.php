@@ -3,10 +3,8 @@
 namespace App\Controller;
 
 use DateTime;
-use App\Repository\UserRepository;
 use App\Model\JsonResponse;
 use App\Model\Response;
-use App\Entity\Contract;
 use App\Entity\Team;
 use App\Helper\JiraOAuthApi;
 use App\Response\Error;
@@ -14,9 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use App\Entity\Project;
 use App\Entity\Customer;
 use App\Entity\User;
-use App\Entity\Preset;
 use App\Entity\TicketSystem;
-use App\Entity\Activity;
 use App\Helper\TimeHelper;
 use App\Services\SubticketSyncService;
 

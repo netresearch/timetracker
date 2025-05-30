@@ -216,6 +216,7 @@ class BaseController extends AbstractController
         $userId = $this->getUserId($request);
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\User::class);
+        /** @var \App\Entity\User $user */
         $user = $objectRepository->find($userId);
 
         return is_object($user) && 'PL' == $user->getType();

@@ -324,12 +324,12 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     /**
      * Tests $statusCode against response status code
      */
-    protected function assertStatusCode(int $statusCode, string $message = ''): void
+    protected function assertStatusCode(int $statusCode, ?string $message = null): void
     {
         $this->assertSame(
             $statusCode,
             $this->client->getResponse()->getStatusCode(),
-            $message
+            $message ?: $this->client->getResponse()->getContent()
         );
     }
 

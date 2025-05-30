@@ -9,7 +9,7 @@ Ext.define('Netresearch.store.Activities', {
     model: 'Netresearch.model.Activity',
     proxy: {
         type: 'ajax',
-        url: url + 'admin/activities',
+        url: url + 'activities',
         reader: {
             type: 'json',
             record: 'activity'

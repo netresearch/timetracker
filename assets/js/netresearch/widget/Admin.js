@@ -1413,7 +1413,7 @@ Ext.define('Netresearch.widget.Admin', {
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.data.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
-                            url: url + 'admin/preset/delete',
+                            url: url + 'preset/delete',
                             params: {
                                 id: id
                             },
@@ -1523,7 +1523,7 @@ Ext.define('Netresearch.widget.Admin', {
                                         var values = form.getValues();
 
                                         Ext.Ajax.request({
-                                            url: url + 'admin/preset/save',
+                                            url: url + 'preset/save',
                                             params: values,
                                             scope: this,
                                             success: function (response) {
@@ -1770,7 +1770,7 @@ Ext.define('Netresearch.widget.Admin', {
                                         var values = form.getValues();
 
                                         Ext.Ajax.request({
-                                            url: url + 'admin/ticketsystem/save',
+                                            url: url + 'ticketsystem/save',
                                             params: values,
                                             scope: this,
                                             success: function (response) {
@@ -1803,7 +1803,7 @@ Ext.define('Netresearch.widget.Admin', {
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
-                            url: url + 'admin/ticketsystem/delete',
+                            url: url + 'ticketsystem/delete',
                             params: {
                                 id: id
                             },
@@ -1952,7 +1952,7 @@ Ext.define('Netresearch.widget.Admin', {
                                         var values = form.getValues();
 
                                         Ext.Ajax.request({
-                                            url: url + 'admin/activity/save',
+                                            url: url + 'activity/save',
                                             params: values,
                                             scope: this,
                                             success: function (response) {
@@ -1985,7 +1985,7 @@ Ext.define('Netresearch.widget.Admin', {
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
-                            url: url + 'admin/activity/delete',
+                            url: url + 'activity/delete',
                             params: {
                                 id: id
                             },
@@ -2197,7 +2197,7 @@ Ext.define('Netresearch.widget.Admin', {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
                                         Ext.Ajax.request({
-                                            url: url + 'admin/contract/save',
+                                            url: url + 'contract/save',
                                             params: values,
                                             scope: this,
                                             success: function (response) {
@@ -2230,7 +2230,7 @@ Ext.define('Netresearch.widget.Admin', {
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
-                            url: url + 'admin/contract/delete',
+                            url: url + 'contract/delete',
                             params: {
                                 id: id
                             },

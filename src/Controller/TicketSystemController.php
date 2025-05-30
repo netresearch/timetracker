@@ -11,30 +11,23 @@ use App\Response\Error;
 use App\Service\Admin\TicketSystemService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-
+use Psr\Log\LoggerInterface;
 /**
  * Controller for ticket system management
  */
 class TicketSystemController extends BaseController
 {
-    /**
-     * @var TicketSystemService
-     */
-    private $ticketSystemService;
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setTicketSystemService(TicketSystemService $ticketSystemService): void
+    public function __construct(
+        private TicketSystemService $ticketSystemService,
+        private LoggerInterface $logger
+    )
     {
-        $this->ticketSystemService = $ticketSystemService;
     }
 
     /**
      * Returns the list of ticket systems
      *
-     * @Route("/admin/ticketsystems", name="admin_get_ticket_systems", methods={"GET"})
+     * @Route("/ticketsystems", name="admin_get_ticket_systems", methods={"GET"})
      */
     public function getTicketSystemsAction(Request $request): Response|JsonResponse
     {
@@ -51,7 +44,7 @@ class TicketSystemController extends BaseController
     /**
      * Creates or updates a ticket system
      *
-     * @Route("/admin/ticketsystem/save", name="admin_save_ticket_system", methods={"POST"})
+     * @Route("/ticketsystem/save", name="admin_save_ticket_system", methods={"POST"})
      */
     public function saveTicketSystemAction(Request $request): Response|Error|JsonResponse
     {
@@ -65,6 +58,7 @@ class TicketSystemController extends BaseController
                 'name' => $request->get('name'),
                 'type' => $request->get('type'),
                 'url' => $request->get('url'),
+                'ticketUrl' => $request->get('ticketUrl'),
                 'login' => $request->get('login'),
                 'password' => $request->get('password'),
                 'oauthEnabled' => $request->get('oauthEnabled'),
@@ -86,6 +80,7 @@ class TicketSystemController extends BaseController
 
             return new JsonResponse(['success' => true]);
         } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
             return new Error($e->getMessage(), 500);
         }
     }
@@ -93,7 +88,7 @@ class TicketSystemController extends BaseController
     /**
      * Deletes a ticket system
      *
-     * @Route("/admin/ticketsystem/delete", name="admin_delete_ticket_system", methods={"POST"})
+     * @Route("/ticketsystem/delete", name="admin_delete_ticket_system", methods={"POST"})
      */
     public function deleteTicketSystemAction(Request $request): Response|Error|JsonResponse
     {

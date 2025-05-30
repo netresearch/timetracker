@@ -12,9 +12,9 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class Activity
 {
-    const SICK    = 'Krank';
+    public const SICK    = 'Krank';
 
-    const HOLIDAY = 'Urlaub';
+    public const HOLIDAY = 'Urlaub';
 
     /**
      * @ORM\Id

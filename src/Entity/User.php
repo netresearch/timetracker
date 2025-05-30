@@ -13,7 +13,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  * @ORM\Table(name="users")
  */
-class User implements UserInterface
+class User implements UserInterface, \JsonSerializable
 {
 
     /**
@@ -453,4 +453,23 @@ class User implements UserInterface
     {
         $this->leadTeams->removeElement($team);
     }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'username' => $this->username,
+            'type' => $this->type,
+            'locale' => $this->locale,
+            'show_empty_line' => $this->showEmptyLine,
+            'suggest_time' => $this->suggestTime,
+            'show_future' => $this->showFuture,
+            #'entries' => $this->entries,
+            #'contracts' => $this->contracts,
+            #'teams' => $this->teams,
+            #'leadTeams' => $this->leadTeams,
+            #'userTicketsystems' => $this->userTicketsystems,
+        ];
+    }
+
 }

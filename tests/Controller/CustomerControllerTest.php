@@ -80,7 +80,7 @@ class CustomerControllerTest extends AbstractWebTestCase
     public function testSaveCustomerActionAsDev(): void
     {
         // Set user as developer (not admin)
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         $customerData = [
             'id' => '',
@@ -95,9 +95,6 @@ class CustomerControllerTest extends AbstractWebTestCase
 
         // Developers should not be able to create customers
         $this->assertStatusCode(401);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 
     public function testDeleteCustomerAction(): void
@@ -128,7 +125,7 @@ class CustomerControllerTest extends AbstractWebTestCase
         $customerId = $this->connection->lastInsertId();
 
         // Set user as developer
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         // Make delete request
         $this->client->request('POST', '/customer/delete', ['id' => $customerId]);
@@ -140,8 +137,5 @@ class CustomerControllerTest extends AbstractWebTestCase
         $query = "SELECT COUNT(*) as count FROM `customers` WHERE `id` = $customerId";
         $result = $this->connection->query($query)->fetchAssociative();
         $this->assertEquals(1, (int)$result['count']);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 }

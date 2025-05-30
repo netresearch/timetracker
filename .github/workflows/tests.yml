@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, v4 ]
+  pull_request:
+    branches: [ main, v4 ]
+
+jobs:
+  phpunit:
+    name: PHPUnit
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mariadb:latest
+        env:
+          MYSQL_ROOT_PASSWORD: global123
+          MYSQL_USER: unittest
+          MYSQL_PASSWORD: unittest
+          MYSQL_DATABASE: unittest
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, mbstring, pdo
+          coverage: pcov
+          tools: composer:v2, phpunit
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Setup test database
+        run: |
+          docker compose run --rm app bin/console doctrine:database:create --env=test --if-not-exists
+          docker compose run --rm app bin/console doctrine:schema:create --env=test
+
+      - name: Run tests
+        run: |
+          docker compose run --rm -e APP_ENV=test app composer test -- --coverage-clover=coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false

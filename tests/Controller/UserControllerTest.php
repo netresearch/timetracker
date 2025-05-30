@@ -84,7 +84,7 @@ class UserControllerTest extends AbstractWebTestCase
     public function testSaveUserActionAsDev(): void
     {
         // Set user as developer (not admin)
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         $userData = [
             'id' => '',
@@ -100,9 +100,6 @@ class UserControllerTest extends AbstractWebTestCase
 
         // Developers should not be able to create users
         $this->assertStatusCode(401);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 
     public function testDeleteUserAction(): void
@@ -133,7 +130,7 @@ class UserControllerTest extends AbstractWebTestCase
         $userId = $this->connection->lastInsertId();
 
         // Set user as developer
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         // Make delete request
         $this->client->request('POST', '/user/delete', ['id' => $userId]);
@@ -145,8 +142,5 @@ class UserControllerTest extends AbstractWebTestCase
         $query = "SELECT COUNT(*) as count FROM `users` WHERE `id` = $userId";
         $result = $this->connection->query($query)->fetchAssociative();
         $this->assertEquals(1, (int)$result['count']);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 }

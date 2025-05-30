@@ -18,7 +18,7 @@ tags:
 - name: "Setting"
 
 paths:
-  /admin/activity/delete:
+  /activity/delete:
     post:
       summary: Delete an activity
       tags:
@@ -57,7 +57,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
 
-  /admin/activity/save:
+  /activity/save:
     post:
       summary: Create an activity (id=empty value) or update a existing team by id
       tags:
@@ -120,7 +120,7 @@ paths:
                 description: id, name, needsTicket, factor
               example: [1,"Design",true,"1"]
 
-  /admin/contract/delete:
+  /contract/delete:
     post:
       summary: Delete a contract
       tags:
@@ -153,7 +153,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
 
-  /admin/contract/save:
+  /contract/save:
     post:
       summary: Create a contract (id=empty value) or update a existing team by id
       tags:
@@ -403,7 +403,7 @@ paths:
                       type: object
                       $ref: '#/components/schemas/Customer'
 
-  /getAllPresets:
+  /presets:
     get:
       summary: Returns a list of all presets
       tags:
@@ -494,7 +494,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Users'
 
-  /getContracts:
+  /contracts:
     get:
       summary: Returns a list of all contracts
       tags:
@@ -644,7 +644,7 @@ paths:
                     ticket:
                       $ref: '#/components/schemas/SummaryInfo'
 
-  /getTicketSystems:
+  /ticketsystems:
     get:
       summary: Returns information about the ticket system
       tags:
@@ -1302,7 +1302,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
 
-  /admin/ticketsystem/delete:
+  /ticketsystem/delete:
     post:
       summary: Delete the ticketsystem by its ID
       tags:
@@ -1450,7 +1450,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
 
-  /admin/preset/delete:
+  /preset/delete:
     post:
       summary: Delete a preset
       tags:
@@ -1483,7 +1483,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
 
-  /admin/preset/save:
+  /preset/save:
     post:
       summary: Create a preset (id=empty value) or update a existing preset by id
       tags:
@@ -1846,7 +1846,7 @@ paths:
                   description: id, name, lead_user_id
                 example: [1,"Backend",1]
 
-  /admin/ticketsystem/save:
+  /ticketsystem/save:
     post:
       summary: Create a ticketsystem
       tags:

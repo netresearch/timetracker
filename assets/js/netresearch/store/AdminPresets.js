@@ -10,7 +10,7 @@ Ext.define('Netresearch.store.AdminPresets', {
     model: 'Netresearch.model.Preset',
     proxy: {
         type: 'ajax',
-        url: url + 'admin/presets',
+        url: url + 'presets',
         reader: {
             type: 'json',
             record: 'preset'

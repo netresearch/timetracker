@@ -104,21 +104,9 @@ _getActivities:
     path:  /getActivities
     defaults: { _controller: App\Controller\ActivityController::getActivitiesAction }
 
-_getTicketSystems:
-    path:  /getTicketSystems
-    defaults: { _controller: App\Controller\AdminController::getTicketSystemsAction }
-
 _getHolidays:
     path:  /getHolidays
     defaults: { _controller: App\Controller\DefaultController::getHolidaysAction }
-
-_getAllPresets:
-    path:  /getAllPresets
-    defaults: { _controller: App\Controller\AdminController::getPresetsAction }
-
-_getContracts:
-    path:  /getContracts
-    defaults: { _controller: App\Controller\AdminController::getContractsAction }
 
 _getTicketTimeSummary:
     path: /getTicketTimeSummary/{ticket}

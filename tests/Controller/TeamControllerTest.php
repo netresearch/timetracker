@@ -74,7 +74,7 @@ class TeamControllerTest extends AbstractWebTestCase
     public function testSaveTeamActionAsDev(): void
     {
         // Set user as developer (not admin)
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         $teamData = [
             'id' => '',
@@ -87,9 +87,6 @@ class TeamControllerTest extends AbstractWebTestCase
 
         // Developers should not be able to create teams
         $this->assertStatusCode(401);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 
     public function testDeleteTeamAction(): void
@@ -120,7 +117,7 @@ class TeamControllerTest extends AbstractWebTestCase
         $teamId = $this->connection->lastInsertId();
 
         // Set user as developer
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_DEV" WHERE `id` = 1');
+        $this->logInSession('unittest');
 
         // Make delete request
         $this->client->request('POST', '/team/delete', ['id' => $teamId]);
@@ -132,8 +129,5 @@ class TeamControllerTest extends AbstractWebTestCase
         $query = "SELECT COUNT(*) as count FROM `teams` WHERE `id` = $teamId";
         $result = $this->connection->query($query)->fetchAssociative();
         $this->assertEquals(1, (int)$result['count']);
-
-        // Reset user role
-        $this->connection->query('UPDATE `users` SET `role` = "ROLE_ADMIN" WHERE `id` = 1');
     }
 }
