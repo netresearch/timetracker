@@ -11,6 +11,9 @@ Ext.define('Netresearch.widget.Tracking', {
         'Ext.ux.window.Notification'
     ],
 
+    debug: false,
+    autoRefreshInterval: false,
+
     /* Create stores */
     customerStore: Ext.create('Netresearch.store.Customers'),
     projectStore: Ext.create('Netresearch.store.Projects'),
@@ -72,6 +75,12 @@ Ext.define('Netresearch.widget.Tracking', {
         const entryStore = Ext.create('Netresearch.store.Entries');
         const grid = this;
         entryStore.on("load", function() { grid.selectRow(0); });
+
+        if (this.autoRefreshInterval === true) {
+            this.autoRefreshInterval = window.setInterval(
+                this.autoRefreshProjectData, 15 * 60 * 1000, this
+            );
+        }
 
         const config = {
             title: this._tabTitle,
@@ -194,6 +203,8 @@ Ext.define('Netresearch.widget.Tracking', {
                     field: {
                         xtype: 'timefield',
                         format: 'H:i',
+                        //we add "Gi" (1530) to the list of supported input formats
+                        altFormats: "g:ia|g:iA|g:i a|g:i A|h:i|g:i|H:i|ga|ha|gA|h a|g a|g A|gi|Gi|hi|gia|hia|g|H|gi a|hi a|giA|hiA|gi A|hi A",
                         increment: 1440,
                         hideTrigger: true,
                         selectOnTab: true,
@@ -208,6 +219,8 @@ Ext.define('Netresearch.widget.Tracking', {
                     field: {
                         xtype: 'timefield',
                         format: 'H:i',
+                        //we add "Gi" (1530) to the list of supported input formats
+                        altFormats: "g:ia|g:iA|g:i a|g:i A|h:i|g:i|H:i|ga|ha|gA|h a|g a|g A|gi|Gi|hi|gia|hia|g|H|gi a|hi a|giA|hiA|gi A|hi A",
                         increment: 1440,
                         hideTrigger: true,
                         selectOnTab: true,
@@ -458,7 +471,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     tooltip: 'Shortcut (Alt + r)',
                     scope: this,
                     handler: function() {
-                        this.refresh();
+                        this.refreshHard();
                     }
                 }, {
                     text: this._exportTitle,
@@ -593,10 +606,10 @@ Ext.define('Netresearch.widget.Tracking', {
     mapTicketToProject: function(ticket) {
         const validProjects = findProjects(null, ticket);
 
-        console.log("Mapping ticket " + ticket);
+        this.debug && console.log("Mapping ticket " + ticket);
 
         if ((!validProjects) || (!validProjects.length)) {
-            console.log("Mapped to no project");
+            this.debug && console.log("Mapped to no project");
             return false;
         }
 
@@ -605,7 +618,7 @@ Ext.define('Netresearch.widget.Tracking', {
         let sure = true;
 
         if (validProjects.length == 1) {
-            console.log("Mapped to customer " + customer + " and project " + " (sure, single)");
+            this.debug && console.log("Mapped to customer " + customer + " and project " + " (sure, single)");
             return { customer: parseInt(customer), id: parseInt(id), sure: sure };
         }
 
@@ -626,7 +639,7 @@ Ext.define('Netresearch.widget.Tracking', {
             }
         }
 
-        console.log("Mapped to customer " + customer + " and project " + id + (sure ? " (sure)" : " (unsure)"));
+        this.debug && console.log("Mapped to customer " + customer + " and project " + id + (sure ? " (sure)" : " (unsure)"));
         return { customer: parseInt(customer), id: parseInt(id), sure: sure };
     },
 
@@ -1095,18 +1108,46 @@ Ext.define('Netresearch.widget.Tracking', {
         window.location.href = 'export/' + this.days;
     },
 
+    /**
+     * Reload project data, then refresh
+     * Useful when project data/settings changed in the background,
+     * and we do not want to get them with a hard page reload.
+     */
+    refreshHard: function() {
+        tracking = this;
+        tracking.customerStore.reloadFromServer(function () {
+            tracking.projectStore.reloadFromServer(function () {
+                tracking.refresh();
+            });
+        });
+    },
+
+    /**
+     * Reload project data, then refresh store data.
+     * Used for automatic background refreshes to make subtickets available.
+     */
+    autoRefreshProjectData: function(tracking) {
+        tracking.customerStore.reloadFromServer(function () {
+            tracking.projectStore.reloadFromServer(function () {
+                tracking.refresh(false);
+            });
+        });
+    },
+
     /*
      * Refresh stores
      */
-    refresh: function() {
+    refresh: function(reloadView = true) {
         this.clearProjectStore();
         this.customerStore.load();
         this.activityStore.load();
         this.userStore.load();
         this.ticketSystemStore.load();
-        this.getStore().load();
 
-        this.getView().refresh();
+        if (reloadView) {
+            this.getStore().load();
+            this.getView().refresh();
+        }
         countTime();
     },
 
@@ -1348,102 +1389,51 @@ Ext.define('Netresearch.widget.Tracking', {
 
 });
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
-    Ext.apply(Netresearch.widget.Tracking.prototype, {
-        _tabTitle: 'Zeiterfassung',
-        _dateTitle: 'Datum',
-        _startTitle: 'Start',
-        _endTitle: 'Ende',
-        _ticketTitle: 'Fall',
-        _customerTitle: 'Kunde',
-        _projectTitle: 'Projekt',
-        _activityTitle: 'Tätigkeit',
-        _descriptionTitle: 'Beschreibung',
-        _durationTitle: 'Dauer',
-        _infoTitle: 'Info',
-        _continueTitle: 'Fortsetzen',
-        _deleteTitle: 'Löschen',
-        _addTitle : 'Neuer Eintrag',
-        _refreshTitle: 'Aktualisieren',
-        _exportTitle: 'Exportieren',
-        _daysTitle: 'Tage',
-        _ongoingSaveTitle: 'Ein vorheriger Speichervorgang ist noch nicht abgeschlossen.',
-        _attentionTitle: 'Achtung',
-        _confirmDeleteTitle: 'Wirklich löschen?',
-        _overviewTitle: 'Übersicht',
-        _entriesTitle: 'Einträge',
-        _totalDurationTitle: 'Gesamtzeit',
-        _ownDurationTitle: 'Meine Zeit',
-        _plannedTitle: 'Geplant',
-        _statusTitle: 'Stand',
-        _minDurationTitle: 'Eine Tätigkeit muss mind. 1 Minute gedauert haben.',
-        _customerProjectMismatchTitle: 'Projekt und Kunde passen nicht zusammen',
-        _chooseOtherCustomerOrProjectTitle: 'Bitte wähle ein anderes Projekt oder Kunden.',
-        _noActivityGivenTitle:  'Keine Tätigkeit angegeben',
-        _noTicketGivenTitle:  'Kein Ticket angegeben',
-        _informationRetrievalErrorTitle: 'Fehler beim Abrufen der Informationen',
-        _sessionExpiredTitle: 'Die Session ist abgelaufen - bitte neu anmelden.',
-        _saveErrorTitle: 'Fehler beim Speichern',
-        _possibleErrorsTitle: 'Mögliche Fehler',
-        _loginAgainTitle: 'Bitte melde dich am TimeTracker neu an (Logout + Login).',
-        _timesOverlapTitle: 'Zeiten überlappen sich.',
-        _checkTimesTitle: 'Bitte prüfe Start- und Endzeit deines Eintrags.',
-        _fieldsMissingTitle: 'Es fehlen Felder.',
-        _checkFieldsTitle: 'Bitte prüfe Kunde, Projekt und Tätigkeit.',
-        _errorTitle: 'Fehler',
-        _successTitle: 'Erfolg'
-    });
-}
-
-/**
- * @TODO: to be completed
- *
-if ((undefined != settingsData) && (settingsData['locale'] == 'ru')) {
-    Ext.apply(Netresearch.widget.Tracking.prototype, {
-        _tabTitle:  'Время слежения',
-        _dateTitle: 'день',
-        _userTitle: 'сотрудник',
-        _startTitle: 'начало',
-        _endTitle: 'конец',
-        _ticketTitle: 'билет',
-        _customerTitle: 'клиент',
-        _projectTitle: 'проект',
-        _activityTitle: 'деятельность',
-        _descriptionTitle: 'описание',
-        _durationTitle: 'срок',
-        _infoTitle: 'инфо',
-        _continueTitle: 'продолжать',
-        _deleteTitle: 'удалять',
-        _addTitle : 'добавлять',
-        _refreshTitle: 'перезагружать',
-        _exportTitle: 'экспорт',
-        _daysTitle: 'дней',
-        _ongoingSaveTitle: 'Ein vorheriger Speichervorgang ist noch nicht abgeschlossen.',
-        _attentionTitle: 'Achtung',
-        _confirmDeleteTitle: 'Wirklich löschen?',
-        _overviewTitle: 'Übersicht',
-        _entriesTitle: 'Einträge',
-        _totalDurationTitle: 'Gesamtzeit',
-        _ownDurationTitle: 'Meine Zeit',
-        _plannedTitle: 'Geplant',
-        _statusTitle: 'Stand',
-        _minDurationTitle: 'Eine Tätigkeit muss mind. 1 Minute gedauert haben.',
-        _customerProjectMismatchTitle: 'Projekt und Kunde passen nicht zusammen',
-        _chooseOtherCustomerOrProjectTitle: 'Bitte wähle ein anderes Projekt oder Kunden.',
-        _noActivityGivenTitle:  'Keine Tätigkeit angegeben',
-        _noTicketGivenTitle:  'Kein Ticket angegeben',
-        _informationRetrievalErrorTitle: 'Fehler beim Abrufen der Informationen',
-        _sessionExpiredTitle: 'Die Session ist abgelaufen - bitte neu anmelden.',
-        _saveErrorTitle: 'Fehler beim Speichern',
-        _possibleErrorsTitle: 'Mögliche Fehler',
-        _loginAgainTitle: 'Bitte melde dich am TimeTracker neu an (Logout + Login).',
-        _timesOverlapTitle: 'Zeiten überlappen sich.',
-        _checkTimesTitle: 'Bitte prüfe Start- und Endzeit deines Eintrags.',
-        _fieldsMissingTitle: 'Es fehlen Felder.',
-        _checkFieldsTitle: 'Bitte prüfe Kunde, Projekt und Tätigkeit.',
-        _errorTitle: 'Fehler',
-        _successTitle: 'Erfolg'
-    });
-}
-*/
-
+function NetresearchWidgetTrackingLoadSettings(settingsData) {
+    if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+        Ext.apply(Netresearch.widget.Tracking.prototype, {
+            _tabTitle: 'Zeiterfassung',
+            _dateTitle: 'Datum',
+            _startTitle: 'Start',
+            _endTitle: 'Ende',
+            _ticketTitle: 'Fall',
+            _customerTitle: 'Kunde',
+            _projectTitle: 'Projekt',
+            _activityTitle: 'Tätigkeit',
+            _descriptionTitle: 'Beschreibung',
+            _durationTitle: 'Dauer',
+            _infoTitle: 'Info',
+            _continueTitle: 'Fortsetzen',
+            _deleteTitle: 'Löschen',
+            _addTitle: 'Neuer Eintrag',
+            _refreshTitle: 'Aktualisieren',
+            _exportTitle: 'Exportieren',
+            _daysTitle: 'Tage',
+            _ongoingSaveTitle: 'Ein vorheriger Speichervorgang ist noch nicht abgeschlossen.',
+            _attentionTitle: 'Achtung',
+            _confirmDeleteTitle: 'Wirklich löschen?',
+            _overviewTitle: 'Übersicht',
+            _entriesTitle: 'Einträge',
+            _totalDurationTitle: 'Gesamtzeit',
+            _ownDurationTitle: 'Meine Zeit',
+            _plannedTitle: 'Geplant',
+            _statusTitle: 'Stand',
+            _minDurationTitle: 'Eine Tätigkeit muss mind. 1 Minute gedauert haben.',
+            _customerProjectMismatchTitle: 'Projekt und Kunde passen nicht zusammen',
+            _chooseOtherCustomerOrProjectTitle: 'Bitte wähle ein anderes Projekt oder Kunden.',
+            _noActivityGivenTitle: 'Keine Tätigkeit angegeben',
+            _noTicketGivenTitle: 'Kein Ticket angegeben',
+            _informationRetrievalErrorTitle: 'Fehler beim Abrufen der Informationen',
+            _sessionExpiredTitle: 'Die Session ist abgelaufen - bitte neu anmelden.',
+            _saveErrorTitle: 'Fehler beim Speichern',
+            _possibleErrorsTitle: 'Mögliche Fehler',
+            _loginAgainTitle: 'Bitte melde dich am TimeTracker neu an (Logout + Login).',
+            _timesOverlapTitle: 'Zeiten überlappen sich.',
+            _checkTimesTitle: 'Bitte prüfe Start- und Endzeit deines Eintrags.',
+            _fieldsMissingTitle: 'Es fehlen Felder.',
+            _checkFieldsTitle: 'Bitte prüfe Kunde, Projekt und Tätigkeit.',
+            _errorTitle: 'Fehler',
+            _successTitle: 'Erfolg'
+        });
+    }
+};

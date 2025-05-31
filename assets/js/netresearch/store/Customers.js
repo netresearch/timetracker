@@ -1,10 +1,10 @@
 Ext.define('Netresearch.store.Customers', {
 	extend: 'Ext.data.Store',
-	
+
 	requires: [
    	    'Netresearch.model.Customer'
    	],
-	
+
     autoLoad: false,
     model: 'Netresearch.model.Customer',
     proxy: {
@@ -14,6 +14,20 @@ Ext.define('Netresearch.store.Customers', {
             record: 'customer'
         }
     },
+
+    /* Update projectsData */
+    reloadFromServer: function(callback) {
+        Ext.Ajax.request({
+            url: url + 'getCustomers',
+            success: function(response) {
+                let data = Ext.decode(response.responseText);
+                //update the locally available customer data
+                consumersData = data;
+                callback();
+            }
+        });
+    },
+
     /* Read data from json var in html source code */
     load: function(onlyActive) {
         var newData = [], record;
@@ -37,7 +51,7 @@ Ext.define('Netresearch.store.Customers', {
             this.add(record);
             c++;
         }
-        console.log("Loaded " + c + " customers.");
+
         this.loadRecords(newData, {"append": false});
     }
 });

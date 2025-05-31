@@ -106,7 +106,6 @@ Ext.define('Netresearch.widget.Interpretation', {
     }),
 
     entryStore: Ext.create('Ext.data.JsonStore', {
-        fields: ['name', 'hours', 'quota'],
         requires: [
             'Netresearch.model.Entry'
         ],
@@ -572,7 +571,7 @@ Ext.define('Netresearch.widget.Interpretation', {
                     mode: 'local',
                     listeners: {
                         select: function(field, value) {
-                            widget.filterableProjectStore.load({ 
+                            widget.filterableProjectStore.load({
                                 params: {
                                     customer: value[0].data.id
                                 }
@@ -768,8 +767,8 @@ Ext.define('Netresearch.widget.Interpretation', {
 
     displayShortcuts: function() {
         var shortcuts = new Array(
-                'ALT-R: ' + this._refreshTitle + ' (<b>R</b>efresh)', 
-                '', 
+                'ALT-R: ' + this._refreshTitle + ' (<b>R</b>efresh)',
+                '',
                 '?: ' + this._showHelpTitle);
         var grid = this;
         Ext.MessageBox.alert(this._shortcutsTitle, shortcuts.join('<br/>'), function(btn) {
@@ -779,37 +778,39 @@ Ext.define('Netresearch.widget.Interpretation', {
 });
 
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
-    Ext.apply(Netresearch.widget.Interpretation.prototype, {
-        _tabTitle: 'Auswertung',
-        _monthTitle: 'Monat',
-        _yearTitle: 'Jahr',
-        _customerTitle: 'Kunde',
-        _datestartTitle: 'Datum von',
-        _dateendTitle: 'Datum bis',
-        _hoursTitle: 'Stunden',
-        _projectTitle: 'Projekt',
-        _userTitle: 'Mitarbeiter',
-        _teamTitle: 'Team',
-        _dayTitle: 'Tag',
-        _activityTitle: 'Tätigkeit',
-        _ticketTitle: 'Fall',
-        _descriptionTitle: 'Beschreibung',
-        _searchInDescriptionTitle: 'Suche in Beschreibung',
-        _effortByCustomerTitle: 'Aufwand nach Kunden',
-        _effortByProjectTitle: 'Aufwand nach Projekt',
-        _effortByUserTitle: 'Aufwand nach Mitarbeitern',
-        _effortByTeamTitle: 'Aufwand nach Teams',
-        _effortByActivityTitle: 'Aufwand nach Tätigkeiten',
-        _effortByDayTitle: 'Aufwand nach Tagen',
-        _effortByTicketTitle: 'Aufwand nach Fall',
-        _shortcutsTitle: 'Shortcuts',
-        _refreshTitle: 'Aktualisieren',
-        _resetTitle: 'Zurücksetzen',
-        _showHelpTitle: 'Hilfe anzeigen',
-        _noDataFoundTitle: 'Es konnten keine Daten gefunden werden.',
-        _lastEntriesTitle: 'Letzte Einträge',
-        _attentionTitle: 'Achtung',
-        _chooseCustomerProjectUserOrYearAndMonthTitle: 'Es muss mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat ausgewählt werden.'
-    });
+function NetresearchWidgetInterpretationLoadSettings(settingsData) {
+    if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+        Ext.apply(Netresearch.widget.Interpretation.prototype, {
+            _tabTitle: 'Auswertung',
+            _monthTitle: 'Monat',
+            _yearTitle: 'Jahr',
+            _customerTitle: 'Kunde',
+            _datestartTitle: 'Datum von',
+            _dateendTitle: 'Datum bis',
+            _hoursTitle: 'Stunden',
+            _projectTitle: 'Projekt',
+            _userTitle: 'Mitarbeiter',
+            _teamTitle: 'Team',
+            _dayTitle: 'Tag',
+            _activityTitle: 'Tätigkeit',
+            _ticketTitle: 'Fall',
+            _descriptionTitle: 'Beschreibung',
+            _searchInDescriptionTitle: 'Suche in Beschreibung',
+            _effortByCustomerTitle: 'Aufwand nach Kunden',
+            _effortByProjectTitle: 'Aufwand nach Projekt',
+            _effortByUserTitle: 'Aufwand nach Mitarbeitern',
+            _effortByTeamTitle: 'Aufwand nach Teams',
+            _effortByActivityTitle: 'Aufwand nach Tätigkeiten',
+            _effortByDayTitle: 'Aufwand nach Tagen',
+            _effortByTicketTitle: 'Aufwand nach Fall',
+            _shortcutsTitle: 'Shortcuts',
+            _refreshTitle: 'Aktualisieren',
+            _resetTitle: 'Zurücksetzen',
+            _showHelpTitle: 'Hilfe anzeigen',
+            _noDataFoundTitle: 'Es konnten keine Daten gefunden werden.',
+            _lastEntriesTitle: 'Letzte Einträge',
+            _attentionTitle: 'Achtung',
+            _chooseCustomerProjectUserOrYearAndMonthTitle: 'Es muss mindestens Kunde, Projekt, Mitarbeiter oder Jahr und Monat ausgewählt werden.'
+        });
+    }
 }

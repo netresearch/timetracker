@@ -36,11 +36,17 @@ Ext.define('Netresearch.widget.Admin', {
     _seriousErrorTitle: 'A serious error occurred. Find more details in Firebug or the Chrome Developer Tools.',
     _customerTitle: 'Customer',
     _ticketPrefixTitle: 'Ticket prefix',
+    _ticketPrefixTitleHelp: 'Multiple may be separated with commas',
+    _ticketNumberTitle: 'Ticket number',
+    _ticketNumberTitleHelp: 'Instead of the ticket prefix. Tasks in Epics and subtasks are taken into account. Separate multiple with a comma.',
     _ticketSystemTitle: 'Ticket system',
     _internalJiraTicketSystem: 'internal JIRA Ticket-System',
     _projectTitle: 'Project',
     _addProjectTitle: 'Add project',
     _editProjectTitle: 'Edit project',
+    _projectSubticketsTitle: 'Known subtickets',
+    _projectSubticketsSyncTitle: 'Sync subtickets',
+    _subticketSyncFinishedTitle: 'Subtickets have been synchronized from Jira.',
     _forAllCustomersTitle: 'for all customers',
     _userNameTitle: 'User name',
     _abbreviationTitle: 'Abbr',
@@ -81,6 +87,7 @@ Ext.define('Netresearch.widget.Admin', {
     _errorTitle: 'Error',
     _successTitle: 'Success',
     _estimationTitle: 'Estimated Duration',
+    _estimationTooltip: 'Example: 2w 3d 4h',
     _internalJiraProjectKey: 'internal JIRA Project Key',
     _offerTitle: 'Offer',
     _billingTitle: 'Billing',
@@ -390,9 +397,19 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function() {
-                this.store.load();
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
                 this.teamStore.load();
-                this.getView().refresh();
             }
         });
 
@@ -433,6 +450,14 @@ Ext.define('Netresearch.widget.Admin', {
                 {
                     header: this._ticketPrefixTitle,
                     dataIndex: 'jiraId',
+                    flex: 1,
+                    field: {
+                        xtype: 'textfield'
+                    }
+                },
+                {
+                    header: this._ticketNumberTitle,
+                    dataIndex: 'jiraTicket',
                     flex: 1,
                     field: {
                         xtype: 'textfield'
@@ -554,6 +579,13 @@ Ext.define('Netresearch.widget.Admin', {
                     handler: function() {
                         projectGrid.refresh();
                     }
+                }, {
+                    text: this._projectSubticketsSyncTitle,
+                    iconCls: 'icon-refresh',
+                    scope: this,
+                    handler: function() {
+                        projectGrid.syncAllProjectSubtickets();
+                    }
                 }
             ],
             listeners: {
@@ -570,12 +602,32 @@ Ext.define('Netresearch.widget.Admin', {
                                 handler: function() {
                                     this.editProject(record.data);
                                 }
-                            }, {
+                            },
+                            {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
                                 handler: function() {
                                     this.deleteProject(record.data);
+                                }
+                            },
+                            {
+                                xtype: 'menuseparator'
+                            },
+                            {
+                                text: panel._projectSubticketsTitle,
+                                iconCls: 'icon-info',
+                                scope: this,
+                                handler: function() {
+                                    this.showProjectSubtickets(record.data);
+                                }
+                            },
+                            {
+                                text: panel._projectSubticketsSyncTitle,
+                                iconCls: 'icon-refresh',
+                                scope: this,
+                                handler: function() {
+                                    this.syncProjectSubtickets(record.data);
                                 }
                             }
                         ]
@@ -666,9 +718,17 @@ Ext.define('Netresearch.widget.Admin', {
                                 }),
                                 {
                                     fieldLabel: panel._ticketPrefixTitle,
+                                    afterSubTpl: panel._ticketPrefixTitleHelp,
                                     name: 'jiraId',
                                     anchor: '100%',
                                     value: record.jiraId ? record.jiraId : ''
+                                },
+                                {
+                                    fieldLabel: panel._ticketNumberTitle,
+                                    afterSubTpl: panel._ticketNumberTitleHelp,
+                                    name: 'jiraTicket',
+                                    anchor: '100%',
+                                    value: record.jiraTicket ? record.jiraTicket : ''
                                 },
                                 new Ext.form.field.Checkbox({
                                     fieldLabel: panel._additionalInformationFromExternal,
@@ -745,7 +805,15 @@ Ext.define('Netresearch.widget.Admin', {
                                     fieldLabel: panel._estimationTitle,
                                     name: 'estimation',
                                     anchor: '100%',
-                                    value: record.estimationText ? record.estimationText : ''
+                                    value: record.estimationText ? record.estimationText : '',
+                                    listeners: {
+                                        render: function (field) {
+                                            new Ext.ToolTip({
+                                                target: field.getEl(),
+                                                html: panel._estimationTooltip
+                                            });
+                                        }
+                                    }
                                 },
                                 {
                                     fieldLabel: panel._internalJiraProjectKey,
@@ -778,6 +846,10 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function(response) {
+                                                let data = Ext.decode(response.responseText);
+                                                if (data.message) {
+                                                    showNotification(panel._errorTitle, data.message, false);
+                                                }
                                                 window.close();
                                             },
                                             failure: function(response) {
@@ -816,17 +888,68 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: function(response) {
                                 var data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
                 });
             },
+            showProjectSubtickets: function(project) {
+                Ext.Msg.alert(
+                    panel._projectSubticketsTitle + ': ' + project['name'],
+                    project['jiraTicket'] + "<br/>\n"
+                    + project['subtickets']
+                );
+            },
+            syncProjectSubtickets: function(project) {
+                var grid = this;
+                Ext.Ajax.request({
+                    method: 'POST',
+                    url: url + 'projects/' + project.id + '/syncsubtickets',
+                    scope: this,
+                    success: function(response) {
+                        var data = Ext.decode(response.responseText);
+                        project['subtickets'] = data.subtickets;
+                        grid.refresh();
+                        grid.showProjectSubtickets(project);
+                    },
+                    failure: function(response) {
+                        var data = Ext.decode(response.responseText);
+                        showNotification(panel._errorTitle, data.message, false);
+                    }
+                });
+            },
+            syncAllProjectSubtickets: function() {
+                var grid = this;
+                Ext.Ajax.request({
+                    method: 'POST',
+                    url: url + 'projects/syncsubtickets',
+                    scope: this,
+                    success: function(response) {
+                        grid.refresh();
+                        showNotification(panel._successTitle, panel._subticketSyncFinishedTitle, true);
+                    },
+                    failure: function(response) {
+                        var data = Ext.decode(response.responseText);
+                        showNotification(panel._errorTitle, data.message, false);
+                    }
+                });
+            },
             refresh: function() {
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
                 this.customerStore.load();
                 this.ticketSystemStore.load();
-                this.store.load();
-                this.getView().refresh();
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
             }
         });
 
@@ -1096,9 +1219,19 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function() {
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
                 this.teamStore.load();
-                this.store.load();
-                this.getView().refresh();
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
             }
         });
 
@@ -1281,9 +1414,19 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function() {
+                let grid = this;
+                let lastFocused = grid.getSelectionModel().getLastFocused();
+
                 this.userStore.load();
-                this.store.load();
-                this.getView().refresh();
+                this.store.load({
+                    //restore selection after refreshing
+                    callback: function () {
+                        if (lastFocused) {
+                            let record = grid.getStore().getById(lastFocused.getId());
+                            grid.getSelectionModel().setLastFocused(record);
+                        }
+                    }
+                });
             }
         });
 
@@ -2150,43 +2293,43 @@ Ext.define('Netresearch.widget.Admin', {
                                     id: 'hours_0',
                                     fieldLabel: panel._hours0Title,
                                     name: 'hours_0',
-                                    value: record.hours_0 ? record.hours_0 : 0
+                                    value: record.hours_0 !== undefined ? record.hours_0 : 0
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_1',
                                     fieldLabel: panel._hours1Title,
                                     name: 'hours_1',
-                                    value: record.hours_1 ? record.hours_1 : 8
+                                    value: record.hours_1 !== undefined ? record.hours_1 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_2',
                                     fieldLabel: panel._hours2Title,
                                     name: 'hours_2',
-                                    value: record.hours_2 ? record.hours_2 : 8
+                                    value: record.hours_2 !== undefined ? record.hours_2 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_3',
                                     fieldLabel: panel._hours3Title,
                                     name: 'hours_3',
-                                    value: record.hours_3 ? record.hours_3 : 8
+                                    value: record.hours_3 !== undefined ? record.hours_3 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_4',
                                     fieldLabel: panel._hours4Title,
                                     name: 'hours_4',
-                                    value: record.hours_4 ? record.hours_4 : 8
+                                    value: record.hours_4 !== undefined ? record.hours_4 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_5',
                                     fieldLabel: panel._hours5Title,
                                     name: 'hours_5',
-                                    value: record.hours_5 ? record.hours_5 : 8
+                                    value: record.hours_5 !== undefined ? record.hours_5 : 8
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_6',
                                     fieldLabel: panel._hours6Title,
                                     name: 'hours_6',
-                                    value: record.hours_6 ? record.hours_6 : 0
+                                    value: record.hours_6 !== undefined ? record.hours_6 : 0
                                 })
                             ],
                             buttons: [
@@ -2386,11 +2529,17 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _seriousErrorTitle: ' Ein schwerer Fehler ist aufgetreten. Mehr Details gibts im Firebug/in den Chrome Developer Tools.',
         _customerTitle: 'Kunde',
         _ticketPrefixTitle: 'Ticket-Präfix',
+        _ticketPrefixTitleHelp: 'Mehrere können kommasepariert angegeben werden',
+        _ticketNumberTitle: 'Ticketnummer',
+        _ticketNumberTitleHelp: 'Anstelle des Ticket-Präfix. Aufgaben in Epics und Unteraufgaben werden mit reingezählt. Mehrere mit Komma trennen.',
         _ticketSystemTitle: 'Ticket-System',
         _internalJiraTicketSystem: 'internal JIRA Ticket-System',
         _projectTitle: 'Projekt',
         _addProjectTitle: 'Neues Projekt',
         _editProjectTitle: 'Projekt bearbeiten',
+        _projectSubticketsTitle: 'Bekannte Untertickets',
+        _projectSubticketsSyncTitle: 'Untertickets synchronisieren',
+        _subticketSyncFinishedTitle: 'Untertickets wurden von Jira synchronisiert.',
         _forAllCustomersTitle: 'für alle Kunden',
         _userNameTitle: 'Username',
         _abbreviationTitle: 'Kürzel',
@@ -2429,8 +2578,9 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _privateKeyTitle: 'Private Key',
         _errorsTitle: 'Fehler',
         _errorTitle: 'Fehler',
-        _successTitle: 'Success',
+        _successTitle: 'Erfolg',
         _estimationTitle: 'Geschätzte Dauer',
+        _estimationTooltip: 'Beispiel: 2w 3d 4h',
         _internalJiraProjectKey: 'internal JIRA Projekt Key',
         _offerTitle: 'Angebot',
         _billingTitle: 'Abrechnung',

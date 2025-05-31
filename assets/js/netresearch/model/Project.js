@@ -6,6 +6,8 @@ Ext.define('Netresearch.model.Project', {
         {name: 'customer', type: 'integer'},
         {name: 'ticket_system', type: 'integer'},
         {name: 'jiraId', type: 'string'},
+        {name: 'jiraTicket', type: 'string'},
+        {name: 'subtickets', type: 'array'},
         {name: 'active', type: 'boolean'},
         {name: 'additionalInformationFromExternal', type: 'boolean'},
         {name: 'global', type: 'boolean'},
