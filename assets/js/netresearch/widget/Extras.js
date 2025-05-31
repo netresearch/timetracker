@@ -19,9 +19,12 @@ Ext.define('Netresearch.widget.Extras', {
     _startDateTitle: 'Start date',
     _endDateTitle: 'End date',
     _startTimeTitle: 'from',
+    _startTimeTitleHelp: 'only if contract periods are not used',
     _endTimeTitle: 'to',
+    _endTimeTitleHelp: 'only if contract periods are not used',
     _skipWeekendTitle: 'Skip weekends',
     _skipHolidaysTitle: 'Skip holidays',
+    _useContractTitle: 'Use time from contract',
     _choosePresetTitle: 'Please choose a preset.',
     _missingDatesTitlei: 'Please specify a start and end date.',
     _missingTimesTitle: 'Please specify a start and end time.',
@@ -95,10 +98,23 @@ Ext.define('Netresearch.widget.Extras', {
                 startDay: 1,
                 labelWidth: 100,
                 width: 260
+            },{
+                id: 'cnt-usecontract',
+                xtype: 'combo',
+                store: yesnoSourceModel,
+                mode: 'local',
+                fieldLabel: this._useContractTitle,
+                name: 'useContract',
+                labelWidth: 100,
+                width: 260,
+                displayField: 'displayname',
+                valueField: 'value',
+                value: 1
             }, {
                 id: 'cnt-starttime',
                 xtype: 'timefield',
                 fieldLabel: this._startTimeTitle,
+                afterSubTpl: this._startTimeTitleHelp,
                 name: 'startTime',
                 format: 'H:i',
                 increment: 5,
@@ -109,6 +125,7 @@ Ext.define('Netresearch.widget.Extras', {
                 id: 'cnt-endtime',
                 xtype: 'timefield',
                 fieldLabel: this._endTimeTitle,
+                afterSubTpl: this._endTimeTitleHelp,
                 name: 'endTime',
                 format: 'H:i',
                 increment: 5,
@@ -157,38 +174,42 @@ Ext.define('Netresearch.widget.Extras', {
                     var endtime = Ext.getCmp("cnt-endtime").value;
                     var skipweekend = Ext.getCmp("cnt-skipweekend").value;
                     var skipholidays = Ext.getCmp("cnt-skipholidays").value;
+                    var usecontract = Ext.getCmp("cnt-usecontract").value;
 
                     if ((undefined == preset) || ('' == preset)) {
                         alert(this._choosePresetTitle);
                         return;
                     }
-
                     if ((undefined == startdate) || (undefined == enddate)
                         || ('' == startdate) || ('' == enddate)) {
                         alert(this._missingDatesTitle);
                         return;
                     }
 
-                    if ((undefined == starttime) || (undefined == endtime)
-                        || ('' == starttime) || ('' == endtime)) {
-                        alert(this._missingTimesTitle);
-                        return;
-                    }
-
-                    if ((typeof(startdate) != 'object')
-                    || (typeof(enddate) != 'object')) {
+                    if ((typeof (startdate) != 'object')
+                        || (typeof (enddate) != 'object')) {
                         alert(this._invalidDatesTitle);
                         return;
                     }
-
                     if (startdate.getTime() > enddate.getTime()) {
-                        alert("Das End-Datum muss größer/gleich dem Start-Datum sein: " + startdate + " bis " + enddate);
+                        alert("Das Enddatum muss größer/gleich dem Startdatum sein: " + startdate + " bis " + enddate);
                         return;
                     }
 
-                    if (starttime.getTime() >= endtime.getTime()) {
-                        alert("Die End-Zeit muss größer der Startzeit sein: " + starttime + " bis " + endtime);
-                        return;
+                    if (!usecontract) {
+
+                        if ((undefined == starttime) || (undefined == endtime)
+                            || ('' == starttime) || ('' == endtime)) {
+                            alert(this._missingTimesTitle);
+                            return;
+                        }
+
+
+
+                        if (starttime.getTime() >= endtime.getTime()) {
+                            alert("Die Endzeit muss größer der Startzeit sein: " + starttime + " bis " + endtime);
+                            return;
+                        }
                     }
 
                     var data = {
@@ -198,7 +219,8 @@ Ext.define('Netresearch.widget.Extras', {
                         endtime: endtime,
                         skipweekend: skipweekend,
                         skipholidays: skipholidays,
-                        preset: preset
+                        preset: preset,
+                        usecontract: usecontract
                     };
 
                     var panel = this;
@@ -246,17 +268,20 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _tabTitle: 'Extras',
         _bulkEntryTitle: 'Massen-Eintragung',
         _presetTitle: 'Vorlage',
-        _startDateTitle: 'Start-Datum',
-        _endDateTitle: 'End-Datum',
+        _startDateTitle: 'Startdatum',
+        _endDateTitle: 'Enddatum',
         _startTimeTitle: 'von',
+        _startTimeTitleHelp: 'nur wenn Vertragszeiten  nicht verwendet werden',
         _endTimeTitle: 'bis',
+        _endTimeTitleHelp: 'nur wenn Vertragszeiten  nicht verwendet werden ',
         _skipWeekendTitle: 'Wochenende auslassen',
         _skipHolidaysTitle: 'Feiertage auslassen',
+        _useContractTitle: 'Vertragszeiten verwenden',
         _choosePresetTitle: 'Bitte wähle eine Vorlage.',
-        _missingDatesTitlei: 'Start-Datum und End-Datum müssen angeben werden.',
-        _missingTimesTitle: 'Start-Zeit und End-Zeit müssen angegeben werden.',
+        _missingDatesTitlei: 'Startdatum und Enddatum müssen angeben werden.',
+        _missingTimesTitle: 'Startzeit und Endzeit müssen angegeben werden.',
         _invalidDatesTitlei: 'Das Datum ist inkorrekt angegeben.',
-        _overlappingDatesTitle: 'Das End-Datum muss größer als das Start-Datum sein.',
+        _overlappingDatesTitle: 'Das Enddatum muss größer als das Startdatum sein.',
         _yesTitle: 'Ja',
         _noTitle: 'Nein',
         _nrHolidaysTitle: 'NR: Urlaub',
