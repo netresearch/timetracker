@@ -22,6 +22,7 @@ class CustomerRepository extends EntityRepository
             ->setParameter('userId', $userId)
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
+            ->orderBy('customer.name', 'ASC')
             ->getQuery()
             ->execute();
 
