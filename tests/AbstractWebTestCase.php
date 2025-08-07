@@ -67,20 +67,20 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         // Reset database state if needed
         $this->resetDatabase();
 
-        // Begin a transaction to isolate test database changes
-        if ($this->connection && $this->useTransactions) {
-            // For PDO connections
-            if (method_exists($this->connection, 'beginTransaction')) {
-                $this->connection->beginTransaction();
-            }
-            // For Doctrine DBAL connections
-            else if (method_exists($this->connection, 'getWrappedConnection')) {
-                try {
-                    $this->connection->getWrappedConnection()->beginTransaction();
-                } catch (\Exception $e) {
-                    // If transaction fails, log the error but continue
-                    error_log("Transaction begin failed: " . $e->getMessage());
+        // Ensure we have a Doctrine DBAL connection reference
+        $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        $this->queryBuilder = $dbal->createQueryBuilder();
+
+        // Begin a transaction to isolate test database changes (reliable via DBAL)
+        if ($this->useTransactions) {
+            try {
+                if (method_exists($dbal, 'beginTransaction')) {
+                    $dbal->beginTransaction();
+                } elseif (method_exists($dbal, 'getWrappedConnection')) {
+                    $dbal->getWrappedConnection()->beginTransaction();
                 }
+            } catch (\Exception $e) {
+                error_log('Transaction begin failed: ' . $e->getMessage());
             }
         }
 
@@ -102,31 +102,20 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      */
     protected function tearDown(): void
     {
-        // Roll back the transaction to restore the database to its original state
-        if ($this->connection && $this->useTransactions) {
-            // For PDO connections
-            if (method_exists($this->connection, 'rollBack')) {
-                // Check if a transaction is active before rolling back
-                if (method_exists($this->connection, 'inTransaction') && $this->connection->inTransaction()) {
-                    try {
-                        $this->connection->rollBack();
-                    } catch (\Exception $e) {
-                        // If rollback fails, log the error but continue
-                        error_log("Transaction rollback failed: " . $e->getMessage());
+        // Roll back the transaction to restore the database to its original state (via DBAL)
+        if ($this->useTransactions) {
+            try {
+                $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
+                if (method_exists($dbal, 'isTransactionActive') && $dbal->isTransactionActive()) {
+                    $dbal->rollBack();
+                } elseif (method_exists($dbal, 'getWrappedConnection')) {
+                    $wrapped = $dbal->getWrappedConnection();
+                    if (method_exists($wrapped, 'isTransactionActive') && $wrapped->isTransactionActive()) {
+                        $wrapped->rollBack();
                     }
                 }
-            }
-            // For Doctrine DBAL connections
-            else if (method_exists($this->connection, 'getWrappedConnection')) {
-                $wrappedConnection = $this->connection->getWrappedConnection();
-                if (method_exists($wrappedConnection, 'isTransactionActive') && $wrappedConnection->isTransactionActive()) {
-                    try {
-                        $wrappedConnection->rollBack();
-                    } catch (\Exception $e) {
-                        // If rollback fails, log the error but continue
-                        error_log("Transaction rollback failed: " . $e->getMessage());
-                    }
-                }
+            } catch (\Exception $e) {
+                error_log('Transaction rollback failed: ' . $e->getMessage());
             }
         }
 
