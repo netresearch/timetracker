@@ -26,6 +26,16 @@ use App\Service\SubticketSyncService;
  */
 class AdminController extends BaseController
 {
+    private SubticketSyncService $subticketSyncService;
+
+    /**
+     * @required
+     * @codeCoverageIgnore
+     */
+    public function setSubticketSyncService(SubticketSyncService $subticketSyncService): void
+    {
+        $this->subticketSyncService = $subticketSyncService;
+    }
     public function getCustomersAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -206,8 +216,7 @@ class AdminController extends BaseController
 
         if ($ticketSystem) {
             try {
-                $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router);
-                $subtickets = $subticketSyncService->syncProjectSubtickets($project->getId());
+                $subtickets = $this->subticketSyncService->syncProjectSubtickets($project->getId());
             } catch (\Exception $e) {
                 //we do not let it fail because creating a new project
                 // would lead to inconsistencies in the frontend
@@ -265,10 +274,8 @@ class AdminController extends BaseController
             ->getResult();
 
         try {
-            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router);
-
             foreach ($projects as $project) {
-                $subtickets = $subticketSyncService->syncProjectSubtickets($project->getId());
+                $subtickets = $this->subticketSyncService->syncProjectSubtickets($project->getId());
             }
 
             return new JsonResponse(
@@ -295,8 +302,7 @@ class AdminController extends BaseController
         $projectId = (int) $request->get('project');
 
         try {
-            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router);
-            $subtickets = $subticketSyncService->syncProjectSubtickets($projectId);
+            $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectId);
             return new JsonResponse(
                 [
                     'success'    => true,
