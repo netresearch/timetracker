@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Service;
 
 use App\Entity\Project;
 use App\Helper\JiraOAuthApi;
@@ -103,3 +103,5 @@ class SubticketSyncService
         return array_values($allSubtickets);
     }
 }
+
+

@@ -18,7 +18,7 @@ use App\Entity\Preset;
 use App\Entity\TicketSystem;
 use App\Entity\Activity;
 use App\Helper\TimeHelper;
-use App\Services\SubticketSyncService;
+use App\Service\SubticketSyncService;
 
 /**
  * Class AdminController
@@ -206,7 +206,7 @@ class AdminController extends BaseController
 
         if ($ticketSystem) {
             try {
-                $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
+                $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router);
                 $subtickets = $subticketSyncService->syncProjectSubtickets($project->getId());
             } catch (\Exception $e) {
                 //we do not let it fail because creating a new project
@@ -265,7 +265,7 @@ class AdminController extends BaseController
             ->getResult();
 
         try {
-            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
+            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router);
 
             foreach ($projects as $project) {
                 $subtickets = $subticketSyncService->syncProjectSubtickets($project->getId());
@@ -295,7 +295,7 @@ class AdminController extends BaseController
         $projectId = (int) $request->get('project');
 
         try {
-            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router, $this->container->get('logger'));
+            $subticketSyncService = new SubticketSyncService($this->doctrineRegistry, $this->router);
             $subtickets = $subticketSyncService->syncProjectSubtickets($projectId);
             return new JsonResponse(
                 [

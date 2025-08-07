@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
-use App\Services\SubticketSyncService;
+use App\Service\SubticketSyncService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
