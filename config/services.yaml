@@ -62,6 +62,11 @@ services:
         public: true
         autowire: true
 
+    # Jira API factory for easier mocking in tests
+    App\Service\Integration\Jira\JiraOAuthApiFactory:
+        public: true
+        autowire: true
+
     # Add this: Configure ClockInterface and SystemClock
     App\\Service\\ClockInterface:
         alias: App\\Service\\SystemClock
