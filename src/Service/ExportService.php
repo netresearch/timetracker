@@ -1,23 +1,6 @@
 <?php
-/**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
- */
 
-/**
- * Netresearch Timetracker
- *
- * PHP version 5
- *
- * @category   Netresearch
- * @package    Timetracker
- * @subpackage Service
- * @author     Michael Lühr <michael.luehr@netresearch.de>
- * @author     Various Artists <info@netresearch.de>
- * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
- * @link       http://www.netresearch.de
- */
-
-namespace App\Services;
+namespace App\Service;
 
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
@@ -25,41 +8,14 @@ use App\Helper\JiraOAuthApi;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\RouterInterface;
 
-/**
- * Class Export
- *
- * @category   Netresearch
- * @package    Timetracker
- * @subpackage Service
- * @author     Michael Lühr <michael.luehr@netresearch.de>
- * @author     Various Artists <info@netresearch.de>
- * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
- * @link       http://www.netresearch.de
- */
-if (!class_exists(\App\Service\ExportService::class)) {
-    class Export
-    {
-    }
-}
+class ExportService
 {
-    /**
-     * Export constructor
-     */
     public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly RouterInterface $router)
     {
     }
 
     /**
      * Returns entries filtered and ordered.
-     *
-     * @param integer $userId     Filter entries by user
-     * @param integer $year       Filter entries by year
-     * @param integer $month      Filter entries by month
-     * @param integer $projectId  Filter entries by project
-     * @param integer $customerId Filter entries by customer
-     * @param array   $arSort     Sort result by given fields
-     *
-     * @return mixed
      */
     public function exportEntries(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, array $arSort = null)
     {
@@ -72,10 +28,6 @@ if (!class_exists(\App\Service\ExportService::class)) {
 
     /**
      * Returns user name for given user ID.
-     *
-     * @param integer $userId User ID
-     *
-     * @return string $username - the name of the user or all if no valid user id is provided
      */
     public function getUsername($userId = null)
     {
@@ -93,25 +45,14 @@ if (!class_exists(\App\Service\ExportService::class)) {
         return $username;
     }
 
-    /**
-     * returns the entry repository
-     *
-     * @return \App\Repository\EntryRepository
-     */
     protected function getEntryRepository()
     {
         return $this->managerRegistry->getRepository(\App\Entity\Entry::class);
     }
 
     /**
-     * Adds billable (boolean) property to entries depending on the existence
-     * of a "billable" label in associated JIRA issues
-     *
-     * @param int   $currentUserId     logged in users id
-     * @param array $entries           entries to export
-     * @param bool  $showBillableField Add the "billable" information field
-     * @param bool  $removeNotBillable remove not billable entries
-     * @param bool  $showTicketTitles  Add ticket title field
+     * Adds billable (boolean) property to entries depending on the existence of a "billable" label
+     * in associated JIRA issues and optionally adds ticket titles.
      */
     public function enrichEntriesWithTicketInformation(
         $currentUserId,
@@ -126,7 +67,6 @@ if (!class_exists(\App\Service\ExportService::class)) {
         /** @var \App\Entity\User $currentUser */
         $currentUser = $objectRepository->find($currentUserId);
 
-        // Use the injected router
         $router = $this->router;
 
         $arTickets = [];
@@ -143,7 +83,6 @@ if (!class_exists(\App\Service\ExportService::class)) {
                 $ticketSystem = $entry->getProject()->getTicketSystem();
 
                 if (!isset($arApi[$ticketSystem->getId()])) {
-                    // Create JiraOAuthApi with our service dependencies
                     $arApi[$ticketSystem->getId()] = new JiraOAuthApi(
                         $currentUser,
                         $ticketSystem,
@@ -205,15 +144,23 @@ if (!class_exists(\App\Service\ExportService::class)) {
                 if (!$billable && $removeNotBillable) {
                     unset($entries[$key]);
                 } else {
-                    $entry->billable = $billable;
+                    if (method_exists($entry, 'setBillable')) {
+                        $entry->setBillable($billable);
+                    } else {
+                        $entry->billable = $billable; // legacy fallback
+                    }
                 }
             }
 
             if ($showTicketTitles) {
-                $entry->setTicketTitle($arTicketTitles[$entry->getTicket()] ?? null);
+                if (method_exists($entry, 'setTicketTitle')) {
+                    $entry->setTicketTitle($arTicketTitles[$entry->getTicket()] ?? null);
+                }
             }
         }
 
         return $entries;
     }
 }
+
+

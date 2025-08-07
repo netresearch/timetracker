@@ -17,7 +17,7 @@ namespace App\Controller;
 
 use App\Util\PhpSpreadsheet\LOReadFilter;
 use App\Model\Response;
-use App\Services\Export;
+use App\Service\ExportService as Export;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,7 +34,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ControllingController extends BaseController
 {
-    private \App\Services\Export $export;
+    private \App\Service\ExportService $export;
 
     /**
      * @required

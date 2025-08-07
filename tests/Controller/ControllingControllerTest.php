@@ -7,7 +7,7 @@ use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
-use App\Services\Export;
+use App\Service\ExportService as Export;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PHPUnit\Framework\MockObject\MockObject;
