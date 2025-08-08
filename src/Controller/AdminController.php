@@ -9,6 +9,7 @@ use App\Model\Response;
 use App\Entity\Contract;
 use App\Entity\Team;
 use App\Helper\JiraOAuthApi;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Response\Error;
 use Symfony\Component\HttpFoundation\Request;
 use App\Entity\Project;
@@ -27,6 +28,7 @@ use App\Service\SubticketSyncService;
 class AdminController extends BaseController
 {
     private SubticketSyncService $subticketSyncService;
+    private JiraOAuthApiFactory $jiraApiFactory;
 
     /**
      * @required
@@ -35,6 +37,15 @@ class AdminController extends BaseController
     public function setSubticketSyncService(SubticketSyncService $subticketSyncService): void
     {
         $this->subticketSyncService = $subticketSyncService;
+    }
+
+    /**
+     * @required
+     * @codeCoverageIgnore
+     */
+    public function setJiraApiFactory(JiraOAuthApiFactory $jiraApiFactory): void
+    {
+        $this->jiraApiFactory = $jiraApiFactory;
     }
     public function getCustomersAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
@@ -428,7 +439,7 @@ class AdminController extends BaseController
         $abbr     = $request->get('abbr');
         $type     = $request->get('type');
         $locale   = $request->get('locale');
-        $teamIds  = $request->get('teams')  ? (array) $request->get('teams')  : [];
+        $teamIds  = $request->get('teams') ? (array) $request->get('teams') : [];
 
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
@@ -661,7 +672,7 @@ class AdminController extends BaseController
             $ticketSystem
                 ->setName($name)
                 ->setType($type)
-                ->setBookTime((boolean) $bookTime)
+                ->setBookTime((bool) $bookTime)
                 ->setUrl($url)
                 ->setTicketUrl($ticketUrl)
                 ->setLogin($login)
@@ -732,7 +743,7 @@ class AdminController extends BaseController
 
         $id             = (int) $request->get('id');
         $name           = $request->get('name');
-        $needsTicket    = (boolean) $request->get('needsTicket');
+        $needsTicket    = (bool) $request->get('needsTicket');
         $factor         = str_replace(',', '.', $request->get('factor'));
 
         if ($id !== 0) {
@@ -862,7 +873,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $data = [$team->getId(), $team->getName(), ($team->getLeadUser()? $team->getLeadUser()->getId() : '')];
+        $data = [$team->getId(), $team->getName(), ($team->getLeadUser() ? $team->getLeadUser()->getId() : '')];
 
         return new JsonResponse($data);
     }
@@ -925,12 +936,7 @@ class AdminController extends BaseController
             /** @var TicketSystem $ticketSystem */
             foreach ($ticketSystems as $ticketSystem) {
                 try {
-                    $jiraOauthApi = new JiraOAuthApi(
-                        $user,
-                        $ticketSystem,
-                        $doctrine,
-                        $this->router
-                    );
+                    $jiraOauthApi = $this->jiraApiFactory->create($user, $ticketSystem);
                     $jiraOauthApi->updateAllEntriesJiraWorkLogs();
                     $data[$ticketSystem->getName() . ' | ' . $user->getUsername()] = 'success';
                 } catch (\Exception $e) {

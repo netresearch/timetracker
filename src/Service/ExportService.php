@@ -5,12 +5,13 @@ namespace App\Service;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Helper\JiraOAuthApi;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\RouterInterface;
 
 class ExportService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly RouterInterface $router)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly RouterInterface $router, private readonly JiraOAuthApiFactory $jiraApiFactory)
     {
     }
 
@@ -83,12 +84,7 @@ class ExportService
                 $ticketSystem = $entry->getProject()->getTicketSystem();
 
                 if (!isset($arApi[$ticketSystem->getId()])) {
-                    $arApi[$ticketSystem->getId()] = new JiraOAuthApi(
-                        $currentUser,
-                        $ticketSystem,
-                        $doctrine,
-                        $router
-                    );
+                    $arApi[$ticketSystem->getId()] = $this->jiraApiFactory->create($currentUser, $ticketSystem);
                 }
 
                 $arTickets[$ticketSystem->getId()][] = $entry->getTicket();
@@ -162,5 +158,3 @@ class ExportService
         return $entries;
     }
 }
-
-

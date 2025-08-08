@@ -4,7 +4,7 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Entity\Team;
-use App\Helper\LdapClient;
+use App\Service\Ldap\LdapClientService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -64,7 +64,7 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
 
         try {
             // --- Perform LDAP Authentication ---
-            $ldapClient = new LdapClient($this->logger);
+            $ldapClient = new LdapClientService($this->logger);
             $ldapClient->setHost($this->parameterBag->get('ldap_host'))
                 ->setPort($this->parameterBag->get('ldap_port'))
                 ->setReadUser($this->parameterBag->get('ldap_readuser'))
@@ -90,7 +90,7 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
 
             // Local user not found, check if creation is allowed
             $this->logger->info('Local user not found after successful LDAP auth, checking creation policy.', ['username' => $username]);
-            if (!(boolean) $this->parameterBag->get('ldap_create_user')) {
+            if (!(bool) $this->parameterBag->get('ldap_create_user')) {
                 $this->logger->warning('LDAP auth successful, but user does not exist locally and ldap_create_user is false.', ['username' => $username]);
                 // Throw the specific exception Guard expects when a user cannot be provided
                 $ex = new UsernameNotFoundException(sprintf('User "%s" authenticated via LDAP but not found locally and creation is disabled.', $username));
@@ -179,4 +179,3 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
         return true;
     }
 }
-

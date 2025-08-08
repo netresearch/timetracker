@@ -1,9 +1,12 @@
 <?php
+
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
  */
 
 namespace App\Helper;
+
+use App\Service\Util\LocalizationService;
 
 /**
  * Helper for anything related to localization
@@ -12,18 +15,12 @@ class LocalizationHelper
 {
     public static function getAvailableLocales(): array
     {
-        return [
-            'de' => 'German',
-            'en' => 'English',
-            'es' => 'Spanish',
-            'fr' => 'French',
-            'ru' => 'Russian',
-        ];
+        return (new LocalizationService())->getAvailableLocales();
     }
 
     public static function getPreferredLocale(): string
     {
-        return 'en';
+        return (new LocalizationService())->getPreferredLocale();
     }
 
     /**
@@ -31,11 +28,6 @@ class LocalizationHelper
      */
     public static function normalizeLocale($locale): string
     {
-        $locale = strtolower(trim((string) $locale));
-        if (array_key_exists($locale, self::getAvailableLocales())) {
-            return $locale;
-        }
-
-        return self::getPreferredLocale();
+        return (new LocalizationService())->normalizeLocale((string) $locale);
     }
 }

@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Routing\Annotation\Route;
 
 class StatusController extends BaseController
 {
@@ -21,11 +22,13 @@ class StatusController extends BaseController
         ];
     }
 
+    #[Route('/status/check', name: 'check_status', methods: ['GET'])]
     public function checkAction()
     {
         return new JsonResponse($this->getStatus());
     }
 
+    #[Route('/status/page', name: 'check_page', methods: ['GET'])]
     public function pageAction(): \Symfony\Component\HttpFoundation\Response
     {
         $status = $this->getStatus();
