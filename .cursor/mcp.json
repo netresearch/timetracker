@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "chunkhound": {
+      "command": "uv",
+      "args": ["run", "chunkhound", "mcp"]
+    }
+  }
+}
+
