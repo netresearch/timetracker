@@ -57,3 +57,7 @@ phpstan.neon
 .chunkhound.json
 *.chunkhound.json
 chunkhound.json
+
+# ChunkHound database
+.chunkhound.db
+.chunkhound/

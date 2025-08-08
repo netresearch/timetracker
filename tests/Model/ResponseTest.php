@@ -14,6 +14,7 @@ class ResponseTest extends TestCase
         $response = new Response('ok', 200);
         // call send() which sets headers then parent::send(); but sending output is okay in test
         // we assert headers are set before send() returns
+        $this->expectOutputString('ok');
         $response->send();
 
         $this->assertSame('*', $response->headers->get('Access-Control-Allow-Origin'));
