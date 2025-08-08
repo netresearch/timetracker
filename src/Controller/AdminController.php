@@ -20,6 +20,7 @@ use App\Entity\TicketSystem;
 use App\Entity\Activity;
 use App\Helper\TimeHelper;
 use App\Service\SubticketSyncService;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class AdminController
@@ -47,6 +48,7 @@ class AdminController extends BaseController
     {
         $this->jiraApiFactory = $jiraApiFactory;
     }
+    #[Route('/getAllCustomers', name: '_getAllCustomers_attr', methods: ['GET'])]
     public function getCustomersAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -59,6 +61,7 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->getAllCustomers());
     }
 
+    #[Route('/getAllUsers', name: '_getAllUsers_attr', methods: ['GET'])]
     public function getUsersAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -71,6 +74,7 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->getAllUsers());
     }
 
+    #[Route('/getAllTeams', name: '_getAllTeams_attr', methods: ['GET'])]
     public function getTeamsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -83,6 +87,7 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->findAll());
     }
 
+    #[Route('/getAllPresets', name: '_getAllPresets_attr', methods: ['GET'])]
     public function getPresetsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -98,6 +103,7 @@ class AdminController extends BaseController
     /**
      * @throws \ReflectionException
      */
+    #[Route('/getTicketSystems', name: '_getTicketSystems_attr', methods: ['GET'])]
     public function getTicketSystemsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -123,6 +129,7 @@ class AdminController extends BaseController
         return new JsonResponse($ticketSystems);
     }
 
+    #[Route('/project/save', name: 'saveProject_attr', methods: ['POST'])]
     public function saveProjectAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -239,6 +246,7 @@ class AdminController extends BaseController
         return new JsonResponse($data);
     }
 
+    #[Route('/project/delete', name: 'deleteProject_attr', methods: ['POST'])]
     public function deleteProjectAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -271,6 +279,7 @@ class AdminController extends BaseController
     /**
      * Update the subtickets for all projects.
      */
+    #[Route('/projects/syncsubtickets', name: 'syncAllProjectSubtickets_attr', methods: ['GET'])]
     public function syncAllProjectSubticketsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
@@ -304,6 +313,7 @@ class AdminController extends BaseController
      *
      * The project lead user's Jira tokens are used for access.
      */
+    #[Route('/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr', methods: ['GET'])]
     public function syncProjectSubticketsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
@@ -328,6 +338,7 @@ class AdminController extends BaseController
     /**
      * @return Response
      */
+    #[Route('/customer/save', name: 'saveCustomer_attr', methods: ['POST'])]
     public function saveCustomerAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -399,6 +410,7 @@ class AdminController extends BaseController
         return new JsonResponse($data);
     }
 
+    #[Route('/customer/delete', name: 'deleteCustomer_attr', methods: ['POST'])]
     public function deleteCustomerAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -566,6 +578,7 @@ class AdminController extends BaseController
     /**
      * @return Response
      */
+    #[Route('/preset/save', name: 'savePreset_attr', methods: ['POST'])]
     public function savePresetAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -624,6 +637,7 @@ class AdminController extends BaseController
      * @return Response
      * @throws \ReflectionException
      */
+    #[Route('/ticketsystem/save', name: 'saveTicketSystem_attr', methods: ['POST'])]
     public function saveTicketSystemAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -695,6 +709,7 @@ class AdminController extends BaseController
     }
 
 
+    #[Route('/ticketsystem/delete', name: 'deleteTicketSystem_attr', methods: ['POST'])]
     public function deleteTicketSystemAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -728,6 +743,7 @@ class AdminController extends BaseController
     /**
      * @return Response
      */
+    #[Route('/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
     public function saveActivityAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -783,6 +799,7 @@ class AdminController extends BaseController
     }
 
 
+    #[Route('/activity/delete', name: 'deleteActivity_attr', methods: ['POST'])]
     public function deleteActivityAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -816,6 +833,7 @@ class AdminController extends BaseController
     /**
      * @return Response
      */
+    #[Route('/team/save', name: 'saveTeam_attr', methods: ['POST'])]
     public function saveTeamAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -879,6 +897,7 @@ class AdminController extends BaseController
     }
 
 
+    #[Route('/team/delete', name: 'deleteTeam_attr', methods: ['POST'])]
     public function deleteTeamAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -909,6 +928,7 @@ class AdminController extends BaseController
     }
 
 
+    #[Route('/syncentries/jira', name: 'syncEntriesToJira_attr', methods: ['GET'])]
     public function jiraSyncEntriesAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -949,6 +969,7 @@ class AdminController extends BaseController
     }
 
 
+    #[Route('/getContracts', name: '_getContracts_attr', methods: ['GET'])]
     public function getContractsAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -966,6 +987,7 @@ class AdminController extends BaseController
      * @return Response
      * @throws \Exception
      */
+    #[Route('/contract/save', name: 'saveContract_attr', methods: ['POST'])]
     public function saveContractAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -1157,6 +1179,7 @@ class AdminController extends BaseController
         return (bool) $filteredContracts;
     }
 
+    #[Route('/contract/delete', name: 'deleteContract_attr', methods: ['POST'])]
     public function deleteContractAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {

@@ -19,6 +19,7 @@ use App\Model\JsonResponse;
 use App\Model\Response;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 class CrudController extends BaseController
 {
@@ -43,6 +44,7 @@ class CrudController extends BaseController
         $this->jiraApiFactory = $jiraApiFactory;
     }
 
+    #[Route('/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
     public function deleteAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -196,6 +198,7 @@ class CrudController extends BaseController
     /**
      * Save action handler.
      */
+    #[Route('/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
     public function saveAction(Request $request): \App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
@@ -372,6 +375,7 @@ class CrudController extends BaseController
      *
      * @return Response
      */
+    #[Route('/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
     public function bulkentryAction(Request $request)
     {
         if (!$this->checkLogin($request)) {

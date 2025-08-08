@@ -203,9 +203,7 @@ deletePreset:
     path: /preset/delete
     defaults: { _controller: App\Controller\AdminController::deletePresetAction }
 
-saveSettings:
-    path: /settings/save
-    defaults: { _controller: App\Controller\SettingsController::saveAction }
+## migrated to attribute route in SettingsController::saveAction
 
 saveActivity:
     path: /activity/save

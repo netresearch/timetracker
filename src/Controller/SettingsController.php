@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\Routing\Annotation\Route;
 
 class SettingsController extends AbstractController
 {
@@ -35,6 +36,9 @@ class SettingsController extends AbstractController
         $this->localizationService = $localizationService;
     }
 
+    /**
+     * @Route("/settings/save", name="saveSettings", methods={"POST"})
+     */
     public function saveAction(Request $request)
     {
         if ('POST' != $request->getMethod()) {
