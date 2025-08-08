@@ -56,10 +56,25 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
     #[Route('/controlling/export', name: '_controllingExport_attr', methods: ['GET'])]
+    #[Route(
+        '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}',
+        name: '_controllingExport_bc',
+        methods: ['GET'],
+        requirements: ['year' => '\\d+', 'userid' => '\\d+'],
+        defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0]
+    )]
     public function exportAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
+        }
+
+        // Map legacy path parameters to query parameters for backward compatibility
+        $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
+        foreach ($attributeKeysToMap as $key) {
+            if ($request->attributes->has($key) && !$request->query->has($key)) {
+                $request->query->set($key, (string) $request->attributes->get($key));
+            }
         }
 
         $projectId    = (int)  $request->query->get('project');
