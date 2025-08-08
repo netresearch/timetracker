@@ -79,5 +79,3 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->assertNotEmpty($content);
     }
 }
-
-
