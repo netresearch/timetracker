@@ -5,7 +5,8 @@
             "args": [
                 "run",
                 "chunkhound",
-                "mcp"
+                "mcp",
+                "/home/cybot/projects/timetracker"
             ]
         }
     }
