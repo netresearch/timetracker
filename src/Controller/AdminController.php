@@ -440,6 +440,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
+    #[Route('/user/save', name: 'saveUser_attr', methods: ['POST'])]
     public function saveUserAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -517,6 +518,7 @@ class AdminController extends BaseController
         return new JsonResponse($data);
     }
 
+    #[Route('/user/delete', name: 'deleteUser_attr', methods: ['POST'])]
     public function deleteUserAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -546,6 +548,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
+    #[Route('/preset/delete', name: 'deletePreset_attr', methods: ['POST'])]
     public function deletePresetAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
