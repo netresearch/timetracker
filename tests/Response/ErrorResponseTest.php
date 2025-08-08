@@ -27,5 +27,3 @@ class ErrorResponseTest extends TestCase
         $this->assertSame('/login', $data['forwardUrl'] ?? null);
     }
 }
-
-

@@ -33,5 +33,3 @@ class UserTicketsystemTest extends TestCase
         $this->assertSame($user, $uts->getUser());
     }
 }
-
-

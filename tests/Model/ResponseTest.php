@@ -21,5 +21,3 @@ class ResponseTest extends TestCase
         $this->assertSame('3600', $response->headers->get('Access-Control-Max-Age'));
     }
 }
-
-
