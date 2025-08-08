@@ -67,6 +67,16 @@ services:
         public: true
         autowire: true
 
+    # New Localization service (to replace Helper usage gradually)
+    App\Service\Util\LocalizationService:
+        public: true
+        autowire: true
+
+    # LDAP client service (wrapper around legacy helper for DI)
+    App\Service\Ldap\LdapClientService:
+        public: true
+        autowire: true
+
     # Add this: Configure ClockInterface and SystemClock
     App\\Service\\ClockInterface:
         alias: App\\Service\\SystemClock

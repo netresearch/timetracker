@@ -1,4 +1,5 @@
 <?php
+
 /**
  * basic controller to share some features with the child controllers
  *
@@ -16,6 +17,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Helper\LocalizationHelper;
+use App\Service\Util\LocalizationService;
 use App\Helper\LoginHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\Response;
@@ -60,6 +62,9 @@ class BaseController extends AbstractController
 
     /** @var ManagerRegistry */
     protected $doctrineRegistry;
+
+    /** @var LocalizationService */
+    protected $localizationService;
 
     /**
      * @required
@@ -125,6 +130,15 @@ class BaseController extends AbstractController
     }
 
     /**
+     * @required
+     * @codeCoverageIgnore
+     */
+    public function setLocalizationService(LocalizationService $localizationService): void
+    {
+        $this->localizationService = $localizationService;
+    }
+
+    /**
      * set up function before actions are dispatched
      *
      *
@@ -144,7 +158,7 @@ class BaseController extends AbstractController
             return;
         }
 
-        $locale = LocalizationHelper::normalizeLocale($user->getLocale());
+        $locale = ($this->localizationService?->normalizeLocale($user->getLocale())) ?? LocalizationHelper::normalizeLocale($user->getLocale());
 
         $request->setLocale($locale);
     }

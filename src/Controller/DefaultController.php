@@ -6,6 +6,7 @@ use App\Response\Error;
 use App\Entity\TicketSystem;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Helper\JiraOAuthApi;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Helper\TimeHelper;
 use App\Repository\EntryRepository;
 use App\Entity\User;
@@ -26,6 +27,16 @@ use Twig\Environment as TwigEnvironment;
  */
 class DefaultController extends BaseController
 {
+    private JiraOAuthApiFactory $jiraApiFactory;
+
+    /**
+     * @required
+     * @codeCoverageIgnore
+     */
+    public function setJiraApiFactory(JiraOAuthApiFactory $jiraApiFactory): void
+    {
+        $this->jiraApiFactory = $jiraApiFactory;
+    }
     public function __construct(
         private readonly TwigEnvironment $twigEnvironment,
     ) {
@@ -419,12 +430,7 @@ class DefaultController extends BaseController
             ->find($request->get('tsid'));
 
         try {
-            $jiraOAuthApi = new JiraOAuthApi(
-                $user,
-                $ticketSystem,
-                $this->getDoctrine(),
-                $this->router
-            );
+            $jiraOAuthApi = $this->jiraApiFactory->create($user, $ticketSystem);
             $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
             return $this->redirectToRoute('_start');

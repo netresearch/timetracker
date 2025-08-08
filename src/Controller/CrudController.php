@@ -13,6 +13,7 @@ use App\Response\Error;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Helper\JiraOAuthApi;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Helper\TicketHelper;
 use App\Model\JsonResponse;
 use App\Model\Response;
@@ -22,6 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 class CrudController extends BaseController
 {
     private \Psr\Log\LoggerInterface $logger;
+    private JiraOAuthApiFactory $jiraApiFactory;
 
     /**
      * @required
@@ -30,6 +32,15 @@ class CrudController extends BaseController
     public function setLogger(LoggerInterface $trackingLogger): void
     {
         $this->logger = $trackingLogger;
+    }
+
+    /**
+     * @required
+     * @codeCoverageIgnore
+     */
+    public function setJiraApiFactory(JiraOAuthApiFactory $jiraApiFactory): void
+    {
+        $this->jiraApiFactory = $jiraApiFactory;
     }
 
     public function deleteAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
@@ -110,12 +121,7 @@ class CrudController extends BaseController
             return;
         }
 
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $ticketSystem,
-            $this->getDoctrine(),
-            $this->router
-        );
+        $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
         $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
     }
 
@@ -716,12 +722,7 @@ class CrudController extends BaseController
             $entry->setWorklogId(null);
         }
 
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $ticketSystem,
-            $this->getDoctrine(),
-            $this->router
-        );
+        $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
         $jiraOAuthApi->updateEntryJiraWorkLog($entry);
     }
 
@@ -739,12 +740,7 @@ class CrudController extends BaseController
         Entry $entry,
         TicketSystem $ticketSystem = null
     ): mixed {
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $ticketSystem,
-            $this->getDoctrine(),
-            $this->router
-        );
+        $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
 
         return $jiraOAuthApi->createTicket($entry);
     }
@@ -799,12 +795,7 @@ class CrudController extends BaseController
                 ->find($internalJiraTicketSystem);
 
         // check if issue exist
-        $jiraOAuthApi = new JiraOAuthApi(
-            $entry->getUser(),
-            $internalJiraTicketSystem,
-            $this->getDoctrine(),
-            $this->router
-        );
+        $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $internalJiraTicketSystem);
         $searchResult = $jiraOAuthApi->searchTicket(
             sprintf(
                 'project = %s AND summary ~ %s',

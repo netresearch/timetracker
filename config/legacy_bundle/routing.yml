@@ -146,6 +146,7 @@ _controllingExport:
       billable: 0
     requirements: { year: \d+, userid: \d+}
 
+## migrated to attribute routes in StatusController
 check_status:
     path: /status/check
     defaults: { _controller: App\Controller\StatusController::checkAction }
