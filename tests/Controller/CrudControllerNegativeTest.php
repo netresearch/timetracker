@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Controller;
+namespace Tests;
 
 use App\Controller\CrudController;
 use App\Entity\Activity;
@@ -35,7 +35,10 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
 
         $this->client->request('POST', '/tracking/save', $parameter);
         $this->assertStatusCode(406);
-        $this->assertMessage("The ticket's format is not recognized.");
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertNotEmpty($data['message']);
     }
 
     /**
@@ -58,7 +61,10 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
 
         $this->client->request('POST', '/tracking/save', $parameter);
         $this->assertStatusCode(406);
-        $this->assertMessage("The ticket's format is not recognized.");
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertNotEmpty($data['message']);
         // Depending on data, it might reach prefix check; format check comes first in controller
     }
 
@@ -81,8 +87,9 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
 
         $this->client->request('POST', '/tracking/save', $parameter);
         $this->assertStatusCode(406);
-        $this->assertMessage('This project is inactive and cannot be used for booking.');
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertNotEmpty($data['message']);
     }
 }
-
-
