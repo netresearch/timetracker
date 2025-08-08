@@ -52,3 +52,8 @@ phpstan.neon
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
 ###< php-cs-fixer/shim ###
+
+# ChunkHound config files
+.chunkhound.json
+*.chunkhound.json
+chunkhound.json
