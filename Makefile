@@ -1,6 +1,6 @@
 # Netresearch TimeTracker — Makefile helpers
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test coverage stan psalm cs-check cs-fix check-all fix-all db-migrate cache-clear swagger
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel coverage stan psalm cs-check cs-fix check-all fix-all db-migrate cache-clear swagger
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -12,7 +12,8 @@ help:
 	@echo "make sh             # shell into app container"
 	@echo "make install        # composer install + npm install"
 	@echo "make test           # run test suite"
-	@echo "make coverage       # run tests with coverage"
+    @echo "make test-parallel  # run unit tests in parallel"
+    @echo "make coverage       # run tests with coverage"
 	@echo "make stan|psalm     # static analysis"
 	@echo "make cs-check|cs-fix# coding standards"
 	@echo "make check-all      # stan + psalm + phpcs"
@@ -57,6 +58,9 @@ npm-watch:
 
 test:
 	docker compose run --rm -e APP_ENV=test app bin/phpunit
+
+test-parallel:
+    docker compose run --rm -e APP_ENV=test app vendor/bin/paratest --processes=$$(nproc) --testsuite=unit
 
 coverage:
 	docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-html var/coverage
