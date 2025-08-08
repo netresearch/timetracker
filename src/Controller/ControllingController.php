@@ -21,6 +21,7 @@ use App\Service\ExportService as Export;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class ControllingController
@@ -54,6 +55,7 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
+    #[Route('/controlling/export', name: '_controllingExport_attr', methods: ['GET'])]
     public function exportAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
