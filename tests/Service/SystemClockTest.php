@@ -26,5 +26,3 @@ class SystemClockTest extends TestCase
         $this->assertSame('00:00:00', $today->format('H:i:s'));
     }
 }
-
-

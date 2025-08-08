@@ -27,5 +27,3 @@ class TicketTest extends TestCase
         $this->assertSame(99, $ticket->getTicketId());
     }
 }
-
-
