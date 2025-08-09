@@ -78,4 +78,109 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
     }
+    public function testSaveUserInvalidAbbrLength(): void
+    {
+        $this->logInSession('unittest');
+        $parameter = [
+            'username' => 'newuser1',
+            'abbr' => 'XY', // invalid length
+            'teams' => ['1'],
+            'locale' => 'de',
+            'type' => 'DEV'
+        ];
+        $this->client->request('POST', '/user/save', $parameter);
+        $this->assertStatusCode(406);
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+    }
+
+    public function testSaveUserDuplicateUsername(): void
+    {
+        $this->logInSession('unittest');
+        $parameter = [
+            'username' => 'developer', // already exists in fixtures
+            'abbr' => 'DEV',
+            'teams' => ['1'],
+            'locale' => 'de',
+            'type' => 'DEV'
+        ];
+        $this->client->request('POST', '/user/save', $parameter);
+        $this->assertStatusCode(406);
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+    }
+
+    public function testSaveUserNoTeams(): void
+    {
+        $this->logInSession('unittest');
+        $parameter = [
+            'username' => 'newuser2',
+            'abbr' => 'NU2',
+            'teams' => [], // no team
+            'locale' => 'de',
+            'type' => 'DEV'
+        ];
+        $this->client->request('POST', '/user/save', $parameter);
+        $this->assertStatusCode(406);
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+    }
+
+    public function testSaveCustomerNoTeamsNotGlobal(): void
+    {
+        $this->logInSession('unittest');
+        $parameter = [
+            'name' => 'NoTeamCustomer',
+            'global' => 0,
+            'teams' => [],
+        ];
+        $this->client->request('POST', '/customer/save', $parameter);
+        $this->assertStatusCode(406);
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+    }
+
+    public function testSaveTeamDuplicateName(): void
+    {
+        $this->logInSession('unittest');
+        $parameter = [
+            'name' => 'Hackerman', // exists in fixtures
+            'lead_user_id' => 1,
+        ];
+        $this->client->request('POST', '/team/save', $parameter);
+        $this->assertStatusCode(406);
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+    }
+
+    public function testSaveProjectInvalidJiraPrefix(): void
+    {
+        $this->logInSession('unittest');
+        $parameter = [
+            'name' => 'JiraPrefixInvalid',
+            'customer' => 1,
+            'jiraId' => 'foo-', // invalid character (hyphen) remains after strtoupper
+        ];
+        $this->client->request('POST', '/project/save', $parameter);
+        $this->assertStatusCode(406);
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+    }
+
+    public function testSaveTicketSystemShortName(): void
+    {
+        $this->logInSession('unittest');
+        $parameter = [
+            'name' => 'te', // too short
+            'type' => '',
+            'url' => '',
+            'ticketUrl' => '',
+        ];
+        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->assertStatusCode(406);
+        $content = (string) $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($content);
+    }
+
+    // Skipping a test for missing preset relations due to strict type setters causing TypeError
 }
