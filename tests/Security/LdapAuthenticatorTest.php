@@ -64,5 +64,3 @@ class LdapAuthenticatorTest extends TestCase
         $this->assertSame(302, $response->getStatusCode());
     }
 }
-
-
