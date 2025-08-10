@@ -10,117 +10,123 @@ class ApiSmokeTest extends AbstractWebTestCase
 {
     public function testGetActivities(): void
     {
-        ->client->request('GET', '/getActivities');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
-            ->assertArrayHasKey('activity', [0]);
+        $this->client->request('GET', '/getActivities');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        if (!empty($data)) {
+            $this->assertArrayHasKey('activity', $data[0]);
         }
     }
 
     public function testGetAllCustomers(): void
     {
-        ->client->request('GET', '/getAllCustomers');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
-            ->assertArrayHasKey('customer', [0]);
+        $this->client->request('GET', '/getAllCustomers');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        if (!empty($data)) {
+            $this->assertArrayHasKey('customer', $data[0]);
         }
     }
 
     public function testGetAllProjects(): void
     {
-        ->client->request('GET', '/getAllProjects');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
-            ->assertArrayHasKey('project', [0]);
+        $this->client->request('GET', '/getAllProjects');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        if (!empty($data)) {
+            $this->assertArrayHasKey('project', $data[0]);
         }
     }
 
     public function testGetAllTeams(): void
     {
-        ->client->request('GET', '/getAllTeams');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
-            ->assertArrayHasKey('team', [0]);
+        $this->client->request('GET', '/getAllTeams');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        if (!empty($data)) {
+            $this->assertArrayHasKey('team', $data[0]);
         }
     }
 
     public function testGetAllUsers(): void
     {
-        ->client->request('GET', '/getAllUsers');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
-            ->assertArrayHasKey('user', [0]);
+        $this->client->request('GET', '/getAllUsers');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        if (!empty($data)) {
+            $this->assertArrayHasKey('user', $data[0]);
         }
     }
 
     public function testGetContracts(): void
     {
-        ->client->request('GET', '/getContracts');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
-            ->assertArrayHasKey('contract', [0]);
+        $this->client->request('GET', '/getContracts');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        if (!empty($data)) {
+            $this->assertArrayHasKey('contract', $data[0]);
         }
     }
 
     public function testGetCustomers(): void
     {
-        ->client->request('GET', '/getCustomers');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
+        $this->client->request('GET', '/getCustomers');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
     }
 
     public function testGetData(): void
     {
-        ->client->request('GET', '/getData');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
+        $this->client->request('GET', '/getData');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
     }
 
     public function testGetDataDays(): void
     {
-        ->client->request('GET', '/getData/days/3');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
+        $this->client->request('GET', '/getData/days/3');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
     }
 
     public function testGetTicketSystems(): void
     {
-        ->client->request('GET', '/getTicketSystems');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
+        $this->client->request('GET', '/getTicketSystems');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
     }
 
     public function testGetTimeSummary(): void
     {
-        ->client->request('GET', '/getTimeSummary');
-        ->assertStatusCode(200);
-         = json_decode((string) ->client->getResponse()->getContent(), true);
-        ->assertIsArray();
-        ->assertArrayHasKey('today', );
-        ->assertArrayHasKey('week', );
-        ->assertArrayHasKey('month', );
+        $this->client->request('GET', '/getTimeSummary');
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('today', $data);
+        $this->assertArrayHasKey('week', $data);
+        $this->assertArrayHasKey('month', $data);
     }
 
     public function testGetTicketTimeSummary(): void
     {
-        ->client->request('GET', '/getTicketTimeSummary/TIM-1');
-         = ->client->getResponse()->getStatusCode();
-        ->assertContains(, [200, 404]);
+        $this->client->request('GET', '/getTicketTimeSummary/TIM-1');
+        $status = $this->client->getResponse()->getStatusCode();
+        $this->assertContains($status, [200, 404]);
     }
 
     public function testInterpretationEndpoints(): void
     {
-         = [
+        $paths = [
             '/interpretation/activity',
             '/interpretation/customer',
             '/interpretation/project',
@@ -129,18 +135,18 @@ class ApiSmokeTest extends AbstractWebTestCase
             '/interpretation/time',
             '/interpretation/entries',
         ];
-        foreach ( as ) {
-            ->client->request('GET', );
-             = ->client->getResponse()->getStatusCode();
-            ->assertContains(, [200, 406]);
+        foreach ($paths as $path) {
+            $this->client->request('GET', $path);
+            $status = $this->client->getResponse()->getStatusCode();
+            $this->assertContains($status, [200, 406]);
         }
     }
 
     public function testStatusCheckAndPage(): void
     {
-        ->client->request('GET', '/status/check');
-        ->assertStatusCode(200);
-        ->client->request('GET', '/status/page');
-        ->assertStatusCode(200);
+        $this->client->request('GET', '/status/check');
+        $this->assertStatusCode(200);
+        $this->client->request('GET', '/status/page');
+        $this->assertStatusCode(200);
     }
 }
