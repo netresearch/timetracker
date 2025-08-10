@@ -15,5 +15,3 @@ class LocalizationHelperTest extends TestCase
         $this->assertSame('de', LocalizationHelper::normalizeLocale('de'));
     }
 }
-
-

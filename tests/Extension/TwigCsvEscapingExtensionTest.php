@@ -17,5 +17,3 @@ class TwigCsvEscapingExtensionTest extends TestCase
         $this->assertSame('""Quoted""', $ext->csvEscape('"Quoted"'));
     }
 }
-
-
