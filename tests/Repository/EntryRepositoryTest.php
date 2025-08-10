@@ -13,9 +13,15 @@ class EntryRepositoryTest extends TestCase
 {
     public function testGetCalendarDaysByWorkDaysBasics(): void
     {
-        $clock = new class implements ClockInterface {
-            public function now(): \DateTimeImmutable { return new \DateTimeImmutable('2023-10-24 12:00:00'); }
-            public function today(): \DateTimeImmutable { return new \DateTimeImmutable('2023-10-24'); } // Tuesday
+        $clock = new class () implements ClockInterface {
+            public function now(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('2023-10-24 12:00:00');
+            }
+            public function today(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('2023-10-24');
+            } // Tuesday
         };
         /** @var ManagerRegistry&\PHPUnit\Framework\MockObject\MockObject $reg */
         $reg = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
@@ -33,9 +39,15 @@ class EntryRepositoryTest extends TestCase
 
     public function testGetCalendarDaysByWorkDaysMondayEdge(): void
     {
-        $clock = new class implements ClockInterface {
-            public function now(): \DateTimeImmutable { return new \DateTimeImmutable('2023-10-23 12:00:00'); }
-            public function today(): \DateTimeImmutable { return new \DateTimeImmutable('2023-10-23'); } // Monday
+        $clock = new class () implements ClockInterface {
+            public function now(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('2023-10-23 12:00:00');
+            }
+            public function today(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('2023-10-23');
+            } // Monday
         };
         /** @var ManagerRegistry&\PHPUnit\Framework\MockObject\MockObject $reg */
         $reg = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
@@ -47,5 +59,3 @@ class EntryRepositoryTest extends TestCase
         $this->assertSame(3, $repo->getCalendarDaysByWorkDays(1)); // Monday spans back to Friday
     }
 }
-
-
