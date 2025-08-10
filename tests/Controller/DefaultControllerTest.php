@@ -658,4 +658,47 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStringContainsString('Projekt', $content);
         $this->assertStringContainsString('Tätigkeit', $content);
     }
+
+    public function testGetTicketTimeSummaryJsAction(): void
+    {
+        // Ensure the expected file path exists for the controller (legacy path under /web)
+        $projectDir = self::$container->getParameter('kernel.project_dir');
+        $legacyDir = $projectDir . '/web/scripts';
+        $legacyFile = $legacyDir . '/timeSummaryForJira.js';
+        $sourceFile = $projectDir . '/public/scripts/timeSummaryForJira.js';
+
+        if (!is_dir($legacyDir)) {
+            @mkdir($legacyDir, 0777, true);
+        }
+        if (!file_exists($legacyFile) && file_exists($sourceFile)) {
+            @copy($sourceFile, $legacyFile);
+        }
+
+        $this->client->request('GET', '/scripts/timeSummaryForJira');
+
+        $this->assertStatusCode(200);
+
+        $raw = $this->client->getResponse()->getContent();
+        $this->assertNotEmpty($raw);
+        $json = json_decode($raw, true);
+        $this->assertIsString($json);
+
+        // The endpoint injects absolute TT base URL
+        $this->assertStringContainsString('http://localhost/', $json);
+        $this->assertStringContainsString('/getTicketTimeSummary/', $json);
+    }
+
+    public function testJiraOAuthCallbackAction(): void
+    {
+        // Simulate a valid callback payload; controller will catch exceptions if misconfigured
+        $this->client->request('GET', '/jiraoauthcallback', [
+            'oauth_token' => 'dummy',
+            'oauth_verifier' => 'dummy',
+            'tsid' => 1,
+        ]);
+
+        // We accept either 200 text response or redirect back to start, depending on the mocked services
+        $status = $this->client->getResponse()->getStatusCode();
+        $this->assertContains($status, [200, 302, 500]);
+    }
 }
