@@ -528,10 +528,17 @@ class DefaultController extends BaseController
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
-        $content = file_get_contents(
-            $this->params->get('kernel.root_dir')
-            . '/../web/scripts/timeSummaryForJira.js'
-        );
+        // Prefer modern public/ path; fall back to legacy web/ path for BC
+        $projectDir = $this->kernel->getProjectDir();
+        $publicPath = $projectDir . '/public/scripts/timeSummaryForJira.js';
+        $legacyPath = $this->params->get('kernel.root_dir') . '/../web/scripts/timeSummaryForJira.js';
+        $scriptPath = file_exists($publicPath) ? $publicPath : $legacyPath;
+
+        if (!is_readable($scriptPath)) {
+            return new JsonResponse('timeSummaryForJira.js not found', 404);
+        }
+
+        $content = file_get_contents($scriptPath);
         $content = str_replace('https://timetracker/', $ttUrl, $content);
 
         return new JsonResponse($content);

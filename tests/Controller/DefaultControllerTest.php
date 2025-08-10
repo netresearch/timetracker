@@ -661,19 +661,6 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testGetTicketTimeSummaryJsAction(): void
     {
-        // Ensure the expected file path exists for the controller (legacy path under /web)
-        $projectDir = self::$container->getParameter('kernel.project_dir');
-        $legacyDir = $projectDir . '/web/scripts';
-        $legacyFile = $legacyDir . '/timeSummaryForJira.js';
-        $sourceFile = $projectDir . '/public/scripts/timeSummaryForJira.js';
-
-        if (!is_dir($legacyDir)) {
-            @mkdir($legacyDir, 0777, true);
-        }
-        if (!file_exists($legacyFile) && file_exists($sourceFile)) {
-            @copy($sourceFile, $legacyFile);
-        }
-
         $this->client->request('GET', '/scripts/timeSummaryForJira');
 
         $this->assertStatusCode(200);
