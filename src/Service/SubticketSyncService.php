@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use App\Entity\Project;
-use App\Helper\JiraOAuthApi;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\RouterInterface;
@@ -74,7 +73,7 @@ class SubticketSyncService
             );
         }
 
-        // Create the JiraOAuthApi with our service's dependencies
+        // Create the Jira API service with our service's dependencies
         $jiraOAuthApi = $this->jiraApiFactory->create($userWithJiraAccess, $ticketSystem);
 
         $mainTickets = array_map('trim', explode(',', (string) $mainTickets));

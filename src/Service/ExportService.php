@@ -4,7 +4,6 @@ namespace App\Service;
 
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
-use App\Helper\JiraOAuthApi;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\RouterInterface;
@@ -95,7 +94,6 @@ class ExportService
         $arBillable = [];
         $arTicketTitles = [];
 
-        /** @var JiraOAuthApi $jiraApi */
         foreach ($arApi as $idx => $jiraApi) {
             $ticketSystemIssuesTotal = array_unique($arTickets[$idx]);
             $ticketSystemIssuesTotalChunks = array_chunk(
