@@ -9,7 +9,7 @@ namespace App\Helper;
 use App\Service\Util\LocalizationService;
 
 /**
- * Helper for anything related to localization
+ * Helper for anything related to localization (BC facade to LocalizationService)
  */
 class LocalizationHelper
 {
@@ -23,9 +23,6 @@ class LocalizationHelper
         return (new LocalizationService())->getPreferredLocale();
     }
 
-    /**
-     * @param $locale
-     */
     public static function normalizeLocale($locale): string
     {
         return (new LocalizationService())->normalizeLocale((string) $locale);

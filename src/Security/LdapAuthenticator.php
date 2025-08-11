@@ -23,7 +23,7 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
 {
     use TargetPathTrait;
 
-    public function __construct(private EntityManagerInterface $entityManager, private RouterInterface $router, private ParameterBagInterface $parameterBag, private LoggerInterface $logger)
+    public function __construct(private EntityManagerInterface $entityManager, private RouterInterface $router, private ParameterBagInterface $parameterBag, private LoggerInterface $logger, private LdapClientService $ldapClient)
     {
     }
 
@@ -64,7 +64,7 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
 
         try {
             // --- Perform LDAP Authentication ---
-            $ldapClient = new LdapClientService($this->logger);
+            $ldapClient = $this->ldapClient;
             $ldapClient->setHost($this->parameterBag->get('ldap_host'))
                 ->setPort($this->parameterBag->get('ldap_port'))
                 ->setReadUser($this->parameterBag->get('ldap_readuser'))

@@ -707,5 +707,3 @@ class JiraOAuthApiService
         throw new JiraApiUnauthorizedException($message, 401, $oauthAuthUrl, $exception);
     }
 }
-
-
