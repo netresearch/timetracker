@@ -57,13 +57,13 @@ npm-watch:
 	docker compose run --rm app npm run watch
 
 test:
-	docker compose run --rm -e APP_ENV=test app bin/phpunit
+	docker compose run --rm -e APP_ENV=test app php -d memory_limit=512M bin/phpunit
 
 test-parallel:
-    docker compose run --rm -e APP_ENV=test app vendor/bin/paratest --processes=$$(nproc) --testsuite=unit
+	    docker compose run --rm -e APP_ENV=test app vendor/bin/paratest --processes=$$(nproc) --testsuite=unit
 
 coverage:
-	docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-html var/coverage
+	docker compose run --rm -e APP_ENV=test app php -d memory_limit=512M bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:

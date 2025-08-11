@@ -24,7 +24,9 @@ class InterpretationController extends BaseController
         return strcmp((string) $b['name'], (string) $a['name']);
     }
 
-    #[Route('/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/entries", name="interpretation_entries_attr", methods={"GET"})
+     */
     public function getLastEntriesAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -96,7 +98,9 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    #[Route('/interpretation/customer', name: 'interpretation_customer_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/customer", name="interpretation_customer_attr", methods={"GET"})
+     */
     public function groupByCustomerAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -141,7 +145,9 @@ class InterpretationController extends BaseController
         return new JsonResponse($this->normalizeData($customers));
     }
 
-    #[Route('/interpretation/project', name: 'interpretation_project_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/project", name="interpretation_project_attr", methods={"GET"})
+     */
     public function groupByProjectAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -187,7 +193,9 @@ class InterpretationController extends BaseController
     }
 
 
-    #[Route('/interpretation/ticket', name: 'interpretation_ticket_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/ticket", name="interpretation_ticket_attr", methods={"GET"})
+     */
     public function groupByTicketAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -234,7 +242,9 @@ class InterpretationController extends BaseController
     /**
      * Returns the data for the analysing chart "effort per employee".
      */
-    #[Route('/interpretation/user', name: 'interpretation_user_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/user", name="interpretation_user_attr", methods={"GET"})
+     */
     public function groupByUserAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
@@ -282,7 +292,9 @@ class InterpretationController extends BaseController
     /**
      * Returns booked times grouped by day.
      */
-    #[Route('/interpretation/time', name: 'interpretation_time_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/time", name="interpretation_time_attr", methods={"GET"})
+     */
     public function groupByWorktimeAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -323,7 +335,9 @@ class InterpretationController extends BaseController
         return new JsonResponse($this->normalizeData(array_reverse($times)));
     }
 
-    #[Route('/interpretation/activity', name: 'interpretation_activity_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/activity", name="interpretation_activity_attr", methods={"GET"})
+     */
     public function groupByActivityAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -463,7 +477,9 @@ class InterpretationController extends BaseController
      * @return \App\Model\JsonResponse|Error
      * @throws \Exception
      */
-    #[Route('/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['GET'])]
+    /**
+     * @Route("/interpretation/allEntries", name="interpretation_all_entries_attr", methods={"POST"})
+     */
     public function getAllEntriesAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {

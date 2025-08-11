@@ -22,6 +22,8 @@ services:
             - ./var/cache:/var/www/html/var/cache
             - ./var/log:/var/www/html/var/log
             - /usr/local/share/ca-certificates/:/usr/local/share/ca-certificates/host
+        depends_on:
+            - db_unittest
 
     #db:
     #  volumes:
@@ -40,6 +42,12 @@ services:
             - ./sql/unittest/001_testtables.sql:/docker-entrypoint-initdb.d/001_testtables.sql
             - ./sql/unittest/002_testdata.sql:/docker-entrypoint-initdb.d/002_testdata.sql
         restart: always
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+            start_period: 5s
 
 volumes:
 
