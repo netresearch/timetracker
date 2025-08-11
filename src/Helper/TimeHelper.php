@@ -1,124 +1,38 @@
 <?php
-/**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
- */
+declare(strict_types=1);
 
 namespace App\Helper;
 
 /**
- * TimeHelper provides conversions between time formats
+ * Legacy static facade for time calculations; delegates to TimeCalculationService.
  */
 class TimeHelper
 {
-    /**
-     *
-     */
-    const DAYS_PER_WEEK = 5;
+    public const DAYS_PER_WEEK = 5;
+    public const HOURS_PER_DAY = 8;
 
-    /**
-     *
-     */
-    const HOURS_PER_DAY = 8;
-
-    /**
-     * @param $letter
-     */
     public static function getMinutesByLetter($letter): int
     {
-        return match ($letter) {
-            'w' => self::DAYS_PER_WEEK * self::HOURS_PER_DAY * 60,
-            'd' => self::HOURS_PER_DAY * 60,
-            'h' => 60,
-            'm' => 1,
-            '' => 1,
-            default => 0,
-        };
+        return (new \App\Service\Util\TimeCalculationService())->getMinutesByLetter((string) $letter);
     }
 
-    /**
-     * @param $readable
-     */
     public static function readable2minutes($readable): int|float
     {
-        if (!preg_match_all('/([0-9.,]+)([wdhm]|$)/iU', (string) $readable, $matches)) {
-            return 0;
-        }
-
-        $sum = 0;
-        $c = count($matches[0]);
-        for ($i = 0; $i < $c; $i++) {
-            $sum += (float) str_replace(',', '.', $matches[1][$i]) * self::getMinutesByLetter($matches[2][$i]);
-        }
-
-        return $sum;
+        return (new \App\Service\Util\TimeCalculationService())->readableToMinutes((string) $readable);
     }
 
-
-
-    /**
-     * @param integer $minutes
-     * @param bool    $useWeeks
-     */
     public static function minutes2readable($minutes, $useWeeks = true): string
     {
-        $minutes = (int) $minutes;
-
-        if (0 >= $minutes) {
-            return '0m';
-        }
-
-        $sizes = (bool) $useWeeks ? ['w', 'd', 'h'] : ['d', 'h'];
-
-        $out = '';
-        foreach ($sizes as $size) {
-            $div = self::getMinutesByLetter($size);
-            $factor = floor($minutes / $div);
-            if (0 < $factor) {
-                $out .= $factor . $size . ' ';
-                $minutes -= $factor * $div;
-            }
-        }
-
-        if (0  < $minutes) {
-            $out .= $minutes . 'm';
-        }
-
-        return trim($out);
+        return (new \App\Service\Util\TimeCalculationService())->minutesToReadable((int) $minutes, (bool) $useWeeks);
     }
 
-
-
-    /**
-     * Formats minutes in H:i format or days, if necessary
-     */
     public static function formatDuration(int|float $duration, bool $inDays = false): string
     {
-        $days = number_format($duration / (60*8), 2);
-        $hours = floor($duration / 60);
-        $minutes = floor($duration % 60);
-        if ($minutes < 10) {
-            $minutes = '0' . $minutes;
-        }
-
-        if ($hours < 10) {
-            $hours = '0' . $hours;
-        }
-
-        $text = $hours . ':' . $minutes;
-        if (($inDays)&&($days > 1.00)) {
-            $text .= ' (' . $days . ' PT)';
-        }
-
-        return $text;
+        return (new \App\Service\Util\TimeCalculationService())->formatDuration($duration, $inDays);
     }
 
-
-
-    /**
-     * Returns percent value of $amount from $sum.
-     */
     public static function formatQuota(int|float $amount, int|float $sum): string
     {
-        return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';
+        return (new \App\Service\Util\TimeCalculationService())->formatQuota($amount, $sum);
     }
 }

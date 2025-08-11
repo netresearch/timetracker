@@ -266,12 +266,7 @@ class CrudController extends BaseController
                     return $this->getFailedResponse($message, 400);
                 }
 
-                $jiraOAuthApi = new JiraOAuthApi(
-                    $entry->getUser(),
-                    $ticketSystem,
-                    $doctrine,
-                    $this->router
-                );
+                $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
 
                 // ticekts do not exist for external project tickets booked on internal ticket system
                 // so no need to check for existence

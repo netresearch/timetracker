@@ -35,7 +35,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Review major controllers (e.g., `EntryController`, `AdminController`, potentially others) for size and responsibilities. (Estimate: 1h)
         *   `[ ]` Identify methods or logic within controllers that could be extracted into dedicated services (e.g., complex data manipulation, external API calls, business rules). (Estimate: 1h)
         *   `[ ]` Document potential refactoring opportunities (create sub-tasks below or separate issues). (Estimate: 0.5h)
-    *   `[ ]` **(Updated Task 1.3.1) Move classes from `src/Services` to `src/Service`:**
+    *   `[x]` **(Updated Task 1.3.1) Move classes from `src/Services` to `src/Service`:**
         *   `[ ]` Move `src/Services/Export.php` to `src/Service/ExportService.php` (or similar appropriate name). (Estimate: 0.1h)
         *   `[ ]` Update namespace in the moved file (`App\Services` -> `App\Service`). (Estimate: 0.1h)
         *   `[ ]` Update any explicit references in `services.yaml` or elsewhere. (Estimate: 0.1h)
@@ -46,10 +46,9 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Clear cache (`docker compose run --rm app bin/console cache:clear`). (Estimate: 0.1h)
     *   `[ ]` **(Updated Task 1.3.2) Refactor `src/Helper` Classes to Services:**
         *   `[ ]` **Refactor `JiraOAuthApi.php`:**
-            *   `[ ]` Move `src/Helper/JiraOAuthApi.php` to `src/Service/Integration/Jira/JiraOAuthApiService.php` (or similar). (Estimate: 0.1h)
-            *   `[ ]` Update namespace. (Estimate: 0.1h)
-            *   `[ ]` Ensure it's registered as a service (autowiring likely). (Estimate: 0.1h)
-            *   `[ ]` Update usages to use Dependency Injection. (Estimate: 0.5-1h)
+            *   `[x]` Move `src/Helper/JiraOAuthApi.php` to `src/Service/Integration/Jira/JiraOAuthApiService.php` (or similar). (Implemented as BC shim delegating to new service)
+            *   `[x]` Update factory to create new service. Usages rely on factory DI.
+            *   `[x]` Update usages to use Dependency Injection where needed (removed direct instantiation in `CrudController`).
         *   `[ ]` **Refactor `LdapClient.php`:**
             *   `[ ]` Move `src/Helper/LdapClient.php` to `src/Service/Ldap/LdapClientService.php` (or similar). (Estimate: 0.1h)
             *   `[ ]` Update namespace. (Estimate: 0.1h)
@@ -61,19 +60,13 @@ This document breaks down the upgrade plan into specific, actionable tasks.
             *   `[ ]` Ensure registered as a service. (Estimate: 0.1h)
             *   `[ ]` Update usages via DI. (Estimate: 0.25h)
         *   `[ ]` **Refactor `TicketHelper.php`:**
-            *   `[ ]` Move `src/Helper/TicketHelper.php` to `src/Service/Util/TicketService.php` (or similar). (Estimate: 0.1h)
-            *   `[ ]` Update namespace. (Estimate: 0.1h)
-            *   `[ ]` Ensure registered as a service. (Estimate: 0.1h)
-            *   `[ ]` Update usages via DI. (Estimate: 0.25h)
+            *   `[x]` Introduce `src/Service/Util/TicketService.php` and keep `TicketHelper` as BC facade. No DI changes required.
         *   `[ ]` **Refactor `TimeHelper.php`:**
-            *   `[ ]` Move `src/Helper/TimeHelper.php` to `src/Service/Util/TimeCalculationService.php` (or similar). (Estimate: 0.1h)
-            *   `[ ]` Update namespace. (Estimate: 0.1h)
-            *   `[ ]` Ensure registered as a service. (Estimate: 0.1h)
-            *   `[ ]` Update usages via DI. (Estimate: 0.5h)
+            *   `[x]` Introduce `src/Service/Util/TimeCalculationService.php` and keep `TimeHelper` as BC facade. No DI changes required.
         *   `[ ]` **Handle remaining Helper files:** (`JiraApiException.php`, `JiraApiInvalidResourceException.php`, `JiraApiUnauthorizedException.php`, `LOReadFilter.php`)
             *   `[x]` Move `LOReadFilter.php` to `src/Util/PhpSpreadsheet/LOReadFilter.php` and update reference in `ControllingController.php`.
             *   `[x]` Move Exception classes to `src/Exception/` subdirectories (e.g., `src/Exception/Integration/Jira/`). (Estimate: 0.25h)
-            *   `[ ]` Delete the `src/Helper` directory once empty. (Estimate: 0.1h)
+            *   `[ ]` Delete the `src/Helper` directory once empty. (pending; still contains facades used for BC)
     *   `[ ]` **(Renumbered Task 1.3.3) Use Annotations/Attributes for Routes:**
         *   `[ ]` Ensure `sensio/framework-extra-bundle` is installed (`docker compose run --rm app composer require sensio/framework-extra-bundle`). (Estimate: 0.25h)
         *   `[ ]` Configure annotation routing if not already done (check `config/routes/annotations.yaml`). (Estimate: 0.25h)

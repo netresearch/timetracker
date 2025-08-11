@@ -1,37 +1,22 @@
 <?php
-/**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
- */
+declare(strict_types=1);
 
 namespace App\Helper;
 
 /**
- * TicketHelper provides common methods for all ticket systems
+ * Legacy static facade kept for BC. Internally delegates to TicketService.
  */
 class TicketHelper
 {
-    /**
-     *
-     */
-    const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
+    public const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
 
-    /**
-     * @param $ticket
-     */
     public static function checkFormat($ticket): bool
     {
-        return (bool) preg_match(self::TICKET_REGEXP, (string) $ticket);
+        return (new \App\Service\Util\TicketService())->checkFormat((string) $ticket);
     }
 
-    /**
-     * @param $ticket
-     */
     public static function getPrefix($ticket): ?string
     {
-        if (! preg_match(self::TICKET_REGEXP, (string) $ticket, $matches)) {
-            return null;
-        }
-
-        return $matches[1];
+        return (new \App\Service\Util\TicketService())->getPrefix((string) $ticket);
     }
 }
