@@ -46,7 +46,9 @@ class DefaultController extends BaseController
     /**
      * @throws \ReflectionException
      */
-    #[Route('/', name: '_start_attr', methods: ['GET'])]
+    /**
+     * @Route("/", name="_start", methods={"GET"})
+     */
     public function indexAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
         if (!$this->checkLogin($request)) {
@@ -86,7 +88,9 @@ class DefaultController extends BaseController
     /**
      * @throws \Doctrine\DBAL\DBALException
      */
-    #[Route('/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
+    /**
+     * @Route("/getTimeSummary", name="time_summary_attr", methods={"GET"})
+     */
     public function getTimeSummaryAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -115,7 +119,9 @@ class DefaultController extends BaseController
      * @return Response|\Symfony\Component\HttpFoundation\RedirectResponse
      * @throws \Doctrine\DBAL\DBALException
      */
-    #[Route('/getSummary', name: '_getSummary_attr', methods: ['POST'])]
+    /**
+     * @Route("/getSummary", name="_getSummary_attr", methods={"POST"})
+     */
     public function getSummaryAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
@@ -202,8 +208,10 @@ class DefaultController extends BaseController
      * This means that specifying "1 day" might return entries from more than one
      * calendar day (e.g., on Monday, it will include Friday's entries as well).
      */
-    #[Route('/getData', name: '_getData_attr', methods: ['GET','POST'])]
-    #[Route('/getData/days/{days}', name: '_getDataDays_attr', requirements: ['days' => '\\d+'], defaults: ['days' => 3], methods: ['GET'])]
+    /**
+     * @Route("/getData", name="_getData_attr", methods={"GET","POST"})
+     * @Route("/getData/days/{days}", name="_getDataDays_attr", requirements={"days"="\\\d+"}, defaults={"days"=3}, methods={"GET"})
+     */
     public function getDataAction(Request $request): \App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -227,7 +235,9 @@ class DefaultController extends BaseController
     /**
      * @throws \Doctrine\DBAL\DBALException
      */
-    #[Route('/getCustomers', name: '_getCustomers_attr', methods: ['GET'])]
+    /**
+     * @Route("/getCustomers", name="_getCustomers_attr", methods={"GET"})
+     */
     public function getCustomersAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -248,7 +258,9 @@ class DefaultController extends BaseController
      *
      * @return Response
      */
-    #[Route('/getUsers', name: '_getUsers_attr', methods: ['GET'])]
+    /**
+     * @Route("/getUsers", name="_getUsers_attr", methods={"GET"})
+     */
     public function getUsersAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -271,7 +283,9 @@ class DefaultController extends BaseController
     /**
      * @return Response
      */
-    #[Route('/getCustomer', name: '_getCustomer_attr', methods: ['GET'])]
+    /**
+     * @Route("/getCustomer", name="_getCustomer_attr", methods={"GET"})
+     */
     public function getCustomerAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -293,7 +307,9 @@ class DefaultController extends BaseController
      * @return Response
      * @throws \ReflectionException
      */
-    #[Route('/getProjects', name: '_getProjects_attr', methods: ['GET'])]
+    /**
+     * @Route("/getProjects", name="_getProjects_attr", methods={"GET"})
+     */
     public function getProjectsAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -315,7 +331,9 @@ class DefaultController extends BaseController
      * @throws \Doctrine\DBAL\DBALException
      * @throws \ReflectionException
      */
-    #[Route('/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
+    /**
+     * @Route("/getAllProjects", name="_getAllProjects_attr", methods={"GET"})
+     */
     public function getAllProjectsAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -341,7 +359,9 @@ class DefaultController extends BaseController
      *
      * Needed for frontend tracking autocompletion.
      */
-    #[Route('/getProjectStructure', name: '_getProjectStructure_attr', methods: ['GET'])]
+    /**
+     * @Route("/getProjectStructure", name="_getProjectStructure_attr", methods={"GET"})
+     */
     public function getProjectStructureAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -365,7 +385,9 @@ class DefaultController extends BaseController
     /**
      * @return Response
      */
-    #[Route('/getActivities', name: '_getActivities_attr', methods: ['GET'])]
+    /**
+     * @Route("/getActivities", name="_getActivities_attr", methods={"GET"})
+     */
     public function getActivitiesAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -381,7 +403,9 @@ class DefaultController extends BaseController
     /**
      * @return Response
      */
-    #[Route('/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
+    /**
+     * @Route("/getHolidays", name="_getHolidays_attr", methods={"GET"})
+     */
     public function getHolidaysAction()
     {
         /** @var \App\Repository\HolidayRepository $objectRepository */
@@ -395,7 +419,9 @@ class DefaultController extends BaseController
      * @throws \Twig\Error\Error
      * @throws \Exception
      */
-    #[Route('/export/{days}', name: '_export_attr', requirements: ['days' => '\\d+'], defaults: ['days' => 10000], methods: ['GET'])]
+    /**
+     * @Route("/export/{days}", name="_export_attr", requirements={"days"="\\\d+"}, defaults={"days"=10000}, methods={"GET"})
+     */
     public function exportAction(Request $request): \App\Model\Response
     {
         $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 10000;
@@ -432,7 +458,9 @@ class DefaultController extends BaseController
      *
      * User is redirected to app after accepting or declining granting access for this app.
      */
-    #[Route('/jiraoauthcallback', name: 'jiraOAuthCallback_attr', methods: ['GET'])]
+    /**
+     * @Route("/jiraoauthcallback", name="jiraOAuthCallback_attr", methods={"GET"})
+     */
     public function jiraOAuthCallbackAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
         /** @var User $user */
@@ -462,7 +490,9 @@ class DefaultController extends BaseController
      *
      * @return object JSON data with time information about activities, total time and users
      */
-    #[Route('/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
+    /**
+     * @Route("/getTicketTimeSummary/{ticket}", name="_getTicketTimeSummary_attr", defaults={"ticket"=null}, methods={"GET"})
+     */
     public function getTicketTimeSummaryAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -519,7 +549,9 @@ class DefaultController extends BaseController
      *
      * @return Response
      */
-    #[Route('/scripts/timeSummaryForJira', name: '_getTicketTimeSummaryJs_attr', methods: ['GET'])]
+    /**
+     * @Route("/scripts/timeSummaryForJira", name="_getTicketTimeSummaryJs_attr", methods={"GET"})
+     */
     public function getTicketTimeSummaryJsAction()
     {
         $ttUrl = $this->generateUrl(

@@ -16,11 +16,4 @@ _logout:
     path: /logout
     methods: GET
 
-# TimeTracker routes - Load from the legacy bundle config for backward compatibility
-timetracker:
-    resource: "./legacy_bundle/routing.yml"
-
-# Enable attribute routes for controllers
-controllers:
-    resource: '../src/Controller/'
-    type: annotation
+# Routes are provided via Doctrine annotations (@Route) in controllers on Symfony 4.4

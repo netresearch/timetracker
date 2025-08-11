@@ -22,13 +22,17 @@ class StatusController extends BaseController
         ];
     }
 
-    #[Route('/status/check', name: 'check_status', methods: ['GET'])]
+    /**
+     * @Route("/status/check", name="check_status", methods={"GET"})
+     */
     public function checkAction()
     {
         return new JsonResponse($this->getStatus());
     }
 
-    #[Route('/status/page', name: 'check_page', methods: ['GET'])]
+    /**
+     * @Route("/status/page", name="check_page", methods={"GET"})
+     */
     public function pageAction(): \Symfony\Component\HttpFoundation\Response
     {
         $status = $this->getStatus();

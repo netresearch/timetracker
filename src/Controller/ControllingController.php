@@ -55,14 +55,16 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-    #[Route('/controlling/export', name: '_controllingExport_attr', methods: ['GET'])]
-    #[Route(
-        '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}',
-        name: '_controllingExport_bc',
-        methods: ['GET'],
-        requirements: ['year' => '\\d+', 'userid' => '\\d+'],
-        defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0]
-    )]
+    /**
+     * @Route("/controlling/export", name="_controllingExport_attr", methods={"GET"})
+     * @Route(
+     *     "/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}",
+     *     name="_controllingExport_bc",
+     *     methods={"GET"},
+     *     requirements={"year"="\\\d+", "userid"="\\\d+"},
+     *     defaults={"userid"=0, "year"=0, "month"=0, "project"=0, "customer"=0, "billable"=0}
+     * )
+     */
     public function exportAction(Request $request)
     {
         if (!$this->checkLogin($request)) {
