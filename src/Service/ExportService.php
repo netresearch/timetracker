@@ -19,9 +19,10 @@ class ExportService
      */
     public function exportEntries(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, array $arSort = null)
     {
+        /** @var \App\Repository\EntryRepository $repo */
+        $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
         /** @var \App\Entity\Entry[] $arEntries */
-        $arEntries = $this->getEntryRepository()
-            ->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
+        $arEntries = $repo->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
 
         return $arEntries;
     }

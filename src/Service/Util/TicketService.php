@@ -22,5 +22,3 @@ class TicketService
         return $matches[1];
     }
 }
-
-

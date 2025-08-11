@@ -88,5 +88,3 @@ class TimeCalculationService
         return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';
     }
 }
-
-
