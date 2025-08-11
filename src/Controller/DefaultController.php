@@ -210,7 +210,7 @@ class DefaultController extends BaseController
      */
     /**
      * @Route("/getData", name="_getData_attr", methods={"GET","POST"})
-     * @Route("/getData/days/{days}", name="_getDataDays_attr", requirements={"days"="\\\d+"}, defaults={"days"=3}, methods={"GET"})
+     * @Route("/getData/days/{days}", name="_getDataDays_attr", defaults={"days"=3}, methods={"GET"})
      */
     public function getDataAction(Request $request): \App\Model\JsonResponse
     {
@@ -420,7 +420,7 @@ class DefaultController extends BaseController
      * @throws \Exception
      */
     /**
-     * @Route("/export/{days}", name="_export_attr", requirements={"days"="\\\d+"}, defaults={"days"=10000}, methods={"GET"})
+     * @Route("/export/{days}", name="_export_attr", defaults={"days"=10000}, methods={"GET"})
      */
     public function exportAction(Request $request): \App\Model\Response
     {
@@ -459,7 +459,7 @@ class DefaultController extends BaseController
      * User is redirected to app after accepting or declining granting access for this app.
      */
     /**
-     * @Route("/jiraoauthcallback", name="jiraOAuthCallback_attr", methods={"GET"})
+     * @Route("/jiraoauthcallback", name="jiraOAuthCallback", methods={"GET"})
      */
     public function jiraOAuthCallbackAction(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
