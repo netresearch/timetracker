@@ -34,4 +34,9 @@ class TeamRepository extends ServiceEntityRepository
 
         return $data;
     }
+
+    public function findOneByName(string $name): ?Team
+    {
+        return $this->findOneBy(['name' => $name]);
+    }
 }

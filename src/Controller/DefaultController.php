@@ -215,7 +215,8 @@ class DefaultController extends BaseController
     public function getDataAction(Request $request): \App\Model\JsonResponse
     {
         if (!$this->checkLogin($request)) {
-            return $this->login($request);
+            // Always respond with JsonResponse for API endpoint contract
+            return new \App\Model\JsonResponse(['error' => 'not authenticated'], 401);
         }
 
         $userId = (int) $this->getUserId($request);

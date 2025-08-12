@@ -147,10 +147,9 @@ class ExportService
                 }
             }
 
-            if ($showTicketTitles) {
-                if (method_exists($entry, 'setTicketTitle')) {
-                    $entry->setTicketTitle($arTicketTitles[$entry->getTicket()] ?? null);
-                }
+            if ($showTicketTitles && method_exists($entry, 'setTicketTitle')) {
+                $ticketKey = is_string($entry->getTicket()) ? $entry->getTicket() : '';
+                $entry->setTicketTitle($arTicketTitles[$ticketKey] ?? null);
             }
         }
 

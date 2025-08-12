@@ -57,7 +57,7 @@ class InterpretationController extends BaseController
      * @return array|null
      * @throws \Exception
      */
-    private function getCachedEntries(Request $request)
+    private function getCachedEntries(Request $request): array
     {
         if (null != $this->cache) {
             return $this->cache;
@@ -70,7 +70,7 @@ class InterpretationController extends BaseController
     /**
      * @return int
      */
-    private function getCachedSum(): int|float
+    private function getCachedSum(): int
     {
         if (null == $this->cache) {
             return 0;
