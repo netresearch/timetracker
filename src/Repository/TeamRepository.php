@@ -35,6 +35,17 @@ class TeamRepository extends ServiceEntityRepository
         return $data;
     }
 
+    /**
+     * Returns teams as Doctrine entities, sorted by name.
+     * Note: use this instead of overriding findAll() for type safety.
+     *
+     * @return Team[]
+     */
+    public function getAllTeams(): array
+    {
+        return parent::findBy([], ['name' => 'ASC']);
+    }
+
     public function findOneByName(string $name): ?Team
     {
         return $this->findOneBy(['name' => $name]);

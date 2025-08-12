@@ -639,7 +639,7 @@ class Entry extends Base
     /**
      * Set class
      *
-     * @param integer class
+     * @param integer $class
      */
     public function setClass($class): static
     {

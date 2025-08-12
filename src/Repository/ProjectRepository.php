@@ -128,7 +128,9 @@ class ProjectRepository extends ServiceEntityRepository
 
         $data = [];
         foreach ($result as $project) {
-            $data[] = ['project' => $project->toArray()];
+            if (is_object($project)) {
+                $data[] = ['project' => $project->toArray()];
+            }
         }
 
         return $data;
