@@ -158,7 +158,7 @@ class BaseController extends AbstractController
             return;
         }
 
-        $locale = ($this->localizationService?->normalizeLocale($user->getLocale())) ?? LocalizationHelper::normalizeLocale($user->getLocale());
+        $locale = ($this->localizationService ? $this->localizationService->normalizeLocale($user->getLocale()) : null) ?? LocalizationHelper::normalizeLocale($user->getLocale());
 
         $request->setLocale($locale);
     }

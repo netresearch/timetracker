@@ -536,9 +536,12 @@ class CrudController extends BaseController
                         continue;
                     }
 
-                    // Partial Worktime (e.g 0.5) Must be parsed, Fractional minutes are calculated into full minutes
-                    $workTime = sscanf($workTime, '%d.%d');
-                    $hoursToAdd = new \DateInterval('PT' . $workTime[0] . 'H' . (60 * ('0.' . $workTime[1] ?? 0)) . 'M');
+                    // Partial Worktime (e.g. 0.5) must be parsed; fractional part becomes minutes
+                    $parts = sscanf((string) $workTime, '%d.%d');
+                    $hoursPart = (int) ($parts[0] ?? 0);
+                    $fractionPart = (int) ($parts[1] ?? 0);
+                    $minutesPart = (int) round(60 * ((float) ('0.' . $fractionPart)));
+                    $hoursToAdd = new \DateInterval(sprintf('PT%dH%dM', $hoursPart, $minutesPart));
                     $startTime = new \DateTime('08:00:00');
                     $endTime = (new \DateTime('08:00:00'))->add($hoursToAdd);
                 } else {

@@ -13,6 +13,7 @@ use Symfony\Component\Routing\RouterInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use App\Service\Ldap\LdapClientService;
 
 class LdapAuthenticatorTest extends TestCase
 {
@@ -27,7 +28,8 @@ class LdapAuthenticatorTest extends TestCase
         $logger = $this->getMockBuilder(LoggerInterface::class)->disableOriginalConstructor()->getMock();
         /** @var ParameterBagInterface&\PHPUnit\Framework\MockObject\MockObject $params */
         $params = $params ?? $this->getMockBuilder(ParameterBagInterface::class)->disableOriginalConstructor()->getMock();
-        return new LdapAuthenticator($em, $router, $params, $logger);
+        $ldapClient = $this->getMockBuilder(LdapClientService::class)->disableOriginalConstructor()->getMock();
+        return new LdapAuthenticator($em, $router, $params, $logger, $ldapClient);
     }
 
     public function testSupportsOnlyPostLogin(): void
