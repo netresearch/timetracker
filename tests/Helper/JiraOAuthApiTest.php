@@ -30,20 +30,24 @@ class JiraOAuthApiTest extends TestCase
         $router->method('generate')->willReturn('http://localhost/jiraoauthcallback');
 
         // Fake client that invokes provided handler
-        $fakeClient = new class($requestHandler) {
-            public function __construct(private $handler) {}
-            public function request($method, $url, $options = []) {
-                $fn = $this->handler; return $fn($method, $url, $options);
+        $fakeClient = new class ($requestHandler) extends \GuzzleHttp\Client {
+            public function __construct(private $handler)
+            {
+            }
+            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+            {
+                $fn = $this->handler;
+                return $fn($method, $uri, $options);
             }
         };
 
         // Subclass to expose getResponse and return fake client
-        return new class($user, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi {
+        return new class ($user, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi {
             public function __construct($user, $ticketSystem, $registry, $router, private $client)
             {
                 parent::__construct($user, $ticketSystem, $registry, $router);
             }
-            protected function getClient($tokenMode = 'user', $oAuthToken = null)
+            protected function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): \GuzzleHttp\Client
             {
                 return $this->client;
             }
@@ -59,7 +63,7 @@ class JiraOAuthApiTest extends TestCase
         // Force getClient('user') to return a client that triggers 401 on request
         $request = new Request('GET', 'https://jira.example');
         $exception = new RequestException('Unauthorized', $request, new Response(401));
-        $subject = $this->makeSubject(function($method, $url, $opts) use ($exception) {
+        $subject = $this->makeSubject(function ($method, $url, $opts) use ($exception) {
             throw $exception;
         }, true);
 
@@ -77,7 +81,7 @@ class JiraOAuthApiTest extends TestCase
     {
         $request = new Request('GET', 'https://jira.example');
         $exception = new RequestException('Not found', $request, new Response(404));
-        $subject = $this->makeSubject(function() use ($exception) { throw $exception; });
+        $subject = $this->makeSubject(function () use ($exception) { throw $exception; });
         $this->expectException(JiraApiInvalidResourceException::class);
         $subject->callGetResponse('GET', 'https://jira.example/rest/api/unknown');
     }
@@ -86,10 +90,8 @@ class JiraOAuthApiTest extends TestCase
     {
         $request = new Request('GET', 'https://jira.example');
         $exception = new RequestException('Other error', $request);
-        $subject = $this->makeSubject(function() use ($exception) { throw $exception; });
+        $subject = $this->makeSubject(function () use ($exception) { throw $exception; });
         $this->expectException(JiraApiException::class);
         $subject->callGetResponse('GET', 'https://jira.example/rest/api');
     }
 }
-
-
