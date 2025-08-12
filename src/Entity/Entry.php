@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -12,13 +13,13 @@ use DateTime;
  */
 class Entry extends Base
 {
-    const CLASS_PLAIN       = 1;
+    public const CLASS_PLAIN       = 1;
 
-    const CLASS_DAYBREAK    = 2;
+    public const CLASS_DAYBREAK    = 2;
 
-    const CLASS_PAUSE       = 4;
+    public const CLASS_PAUSE       = 4;
 
-    const CLASS_OVERLAP     = 8;
+    public const CLASS_OVERLAP     = 8;
 
 
     /**
@@ -227,13 +228,9 @@ class Entry extends Base
      *
      * @return integer $userId
      */
-    public function getUserId()
+    public function getUserId(): int
     {
-        if (! is_object($this->getUser())) {
-            return null;
-        }
-
-        return $this->getUser()->getId();
+        return (int) (is_object($this->getUser()) ? $this->getUser()->getId() : 0);
     }
 
     /**
@@ -241,13 +238,9 @@ class Entry extends Base
      *
      * @return integer $projectId
      */
-    public function getProjectId()
+    public function getProjectId(): int
     {
-        if (! is_object($this->getProject())) {
-            return null;
-        }
-
-        return $this->getProject()->getId();
+        return (int) (is_object($this->getProject()) ? $this->getProject()->getId() : 0);
     }
 
     /**
@@ -255,13 +248,9 @@ class Entry extends Base
      *
      * @return integer $accountId
      */
-    public function getAccountId()
+    public function getAccountId(): int
     {
-        if (! is_object($this->getAccount())) {
-            return null;
-        }
-
-        return $this->getAccount()->getId();
+        return (int) (is_object($this->getAccount()) ? $this->getAccount()->getId() : 0);
     }
 
     /**
@@ -269,13 +258,9 @@ class Entry extends Base
      *
      * @return integer $customerId
      */
-    public function getCustomerId()
+    public function getCustomerId(): int
     {
-        if (! is_object($this->getCustomer())) {
-            return null;
-        }
-
-        return $this->getCustomer()->getId();
+        return (int) (is_object($this->getCustomer()) ? $this->getCustomer()->getId() : 0);
     }
 
     /**
@@ -283,13 +268,9 @@ class Entry extends Base
      *
      * @return integer $ActivityId
      */
-    public function getActivityId()
+    public function getActivityId(): int
     {
-        if (! is_object($this->getActivity())) {
-            return null;
-        }
-
-        return $this->getActivity()->getId();
+        return (int) (is_object($this->getActivity()) ? $this->getActivity()->getId() : 0);
     }
 
     /**

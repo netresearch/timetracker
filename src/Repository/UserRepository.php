@@ -97,6 +97,11 @@ class UserRepository extends ServiceEntityRepository
         return $data;
     }
 
+    public function findOneByAbbr(string $abbr): ?User
+    {
+        return $this->findOneBy(['abbr' => $abbr]);
+    }
+
     /**
      * @param $currentUserId
      */

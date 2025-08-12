@@ -36,4 +36,9 @@ class ActivityRepository extends ServiceEntityRepository
 
         return $data;
     }
+
+    public function findOneByName(string $name): ?Activity
+    {
+        return $this->findOneBy(['name' => $name]);
+    }
 }

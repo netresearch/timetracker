@@ -351,7 +351,7 @@ class EntryRepository extends ServiceEntityRepository
                 $line['customer'] = (int) $line['customer'];
                 $line['project'] = (int) $line['project'];
                 $line['activity'] = (int) $line['activity'];
-                $line['duration'] = TimeHelper::formatDuration($line['duration']);
+                $line['duration'] = TimeHelper::formatDuration((int) $line['duration']);
                 $line['class'] = (int) $line['class'];
                 $data[] = ['entry' => $line];
             }

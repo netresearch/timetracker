@@ -24,7 +24,7 @@ class LoginHelper
         setcookie(
             self::COOKIE_NAME,
             $userId
-            . ':' . static::hash($userName, $secret, $token)
+            . ':' . self::hash($userName, $secret, $token)
             . ':' . $token,
             ['expires' => time() + (14*24*60*60)]
         );
@@ -73,7 +73,7 @@ class LoginHelper
             return false;
         }
 
-        $expectedHash = static::hash($expectedUserName, $secret, $cookieData['token']);
+        $expectedHash = self::hash($expectedUserName, $secret, $cookieData['token']);
         return $expectedHash == $cookieData['hash'];
     }
 

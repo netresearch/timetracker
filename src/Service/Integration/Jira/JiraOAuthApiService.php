@@ -524,6 +524,7 @@ class JiraOAuthApiService
             ];
         }
 
+        $response = null;
         try {
             $response = $this->getClient()->request($method, $url, $additionalParameter);
         } catch (GuzzleException $guzzleException) {
