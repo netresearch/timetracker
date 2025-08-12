@@ -37,9 +37,10 @@ class JsonResponse extends Response
     /**
      * Add additional headers before sending an JSON reply to the client
      */
-    public function send(): void
+    public function send(): \App\Model\Response
     {
         $this->headers->set('Content-Type', 'application/json');
         parent::send();
+        return $this;
     }
 }
