@@ -90,7 +90,7 @@ class AdminController extends BaseController
         /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
 
-        return new JsonResponse($objectRepository->findAll());
+        return new JsonResponse($objectRepository->getAllTeamsAsArray());
     }
 
     /**
@@ -1064,7 +1064,6 @@ class AdminController extends BaseController
         /** @var \App\Repository\ContractRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
-        /** @var \App\Entity\Contract $contract */
         if ($contractId !== 0) {
             $contract = $objectRepository->find($contractId);
             if (!$contract) {

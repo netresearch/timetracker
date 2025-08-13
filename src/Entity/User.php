@@ -195,37 +195,37 @@ class User implements UserInterface
         return $this->type;
     }
 
-    public function getShowEmptyLine(): int
+    public function getShowEmptyLine(): bool
     {
         return $this->showEmptyLine;
     }
 
 
-    public function setShowEmptyLine(int $value): static
+    public function setShowEmptyLine(bool $value): static
     {
         $this->showEmptyLine = $value;
         return $this;
     }
 
-    public function getSuggestTime(): int
+    public function getSuggestTime(): bool
     {
         return $this->suggestTime;
     }
 
 
-    public function setSuggestTime(int $value): static
+    public function setSuggestTime(bool $value): static
     {
         $this->suggestTime = $value;
         return $this;
     }
 
-    public function getShowFuture(): int
+    public function getShowFuture(): bool
     {
         return $this->showFuture;
     }
 
 
-    public function setShowFuture(int $value): static
+    public function setShowFuture(bool $value): static
     {
         $this->showFuture = $value;
         return $this;

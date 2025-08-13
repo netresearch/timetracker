@@ -26,7 +26,9 @@ class ProjectRepository extends ServiceEntityRepository
      */
     public function sortProjectsByName($a, $b): int
     {
-        return strcasecmp((string) $a['name'], (string) $b['name']);
+        $aName = is_array($a) ? ($a['name'] ?? '') : (is_object($a) && property_exists($a, 'name') ? (string) $a->name : '');
+        $bName = is_array($b) ? ($b['name'] ?? '') : (is_object($b) && property_exists($b, 'name') ? (string) $b->name : '');
+        return strcasecmp((string) $aName, (string) $bName);
     }
 
     /**

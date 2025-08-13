@@ -54,6 +54,8 @@ class ExportService
     /**
      * Adds billable (boolean) property to entries depending on the existence of a "billable" label
      * in associated JIRA issues and optionally adds ticket titles.
+     *
+     * @param Entry[] $entries
      */
     public function enrichEntriesWithTicketInformation(
         $currentUserId,
@@ -118,32 +120,37 @@ class ExportService
                     '500'
                 );
 
-                foreach ($ret->issues as $issue) {
-                    if ($showBillableField
-                        && isset($issue->fields->labels)
-                        && in_array('billable', $issue->fields->labels)
-                    ) {
-                        $arBillable[] = $issue->key;
-                    }
+                if (isset($ret->issues) && is_iterable($ret->issues)) {
+                    foreach ($ret->issues as $issue) {
+                        $issueKey = is_object($issue) && isset($issue->key) ? (string) $issue->key : null;
+                        $issueFields = is_object($issue) && isset($issue->fields) ? $issue->fields : null;
 
-                    if ($showTicketTitles) {
-                        $arTicketTitles[$issue->key] = $issue->fields->summary;
+                        if ($issueKey !== null && $showBillableField && is_object($issueFields)) {
+                            $labels = $issueFields->labels ?? null;
+                            if (is_array($labels) && in_array('billable', $labels, true)) {
+                                $arBillable[] = $issueKey;
+                            }
+                        }
+
+                        if ($issueKey !== null && $showTicketTitles && is_object($issueFields)) {
+                            $summary = $issueFields->summary ?? null;
+                            if (is_string($summary)) {
+                                $arTicketTitles[$issueKey] = $summary;
+                            }
+                        }
                     }
                 }
             }
         }
 
         foreach ($entries as $key => $entry) {
+            /** @var Entry $entry */
             if ($showBillableField) {
                 $billable = in_array($entry->getTicket(), $arBillable);
                 if (!$billable && $removeNotBillable) {
                     unset($entries[$key]);
                 } else {
-                    if (method_exists($entry, 'setBillable')) {
-                        $entry->setBillable($billable);
-                    } else {
-                        $entry->billable = $billable; // legacy fallback
-                    }
+                    $entry->setBillable($billable);
                 }
             }
 

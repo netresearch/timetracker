@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Netresearch Timetracker
  *
@@ -19,7 +20,6 @@ use App\Entity\Entry;
 use App\Entity\User;
 use App\Helper\TimeHelper;
 use App\Service\ClockInterface;
-
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -35,11 +35,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class EntryRepository extends ServiceEntityRepository
 {
-    const PERIOD_DAY   = 1;
+    public const PERIOD_DAY   = 1;
 
-    const PERIOD_WEEK  = 2;
+    public const PERIOD_WEEK  = 2;
 
-    const PERIOD_MONTH = 3;
+    public const PERIOD_MONTH = 3;
 
     private ClockInterface $clock;
 
@@ -100,7 +100,7 @@ class EntryRepository extends ServiceEntityRepository
                 // If the span of restDays crosses the *previous* weekend when counting back from today
                 // (e.g., today is Tuesday (2) and restDays is 2, it includes Mon, Sun, Sat)
                 if ($dayOfWeek <= $restDays) { // Check if dayOfWeek index (0-6) is less than or equal to remaining days (1-4)
-                   $restDays += 2; // Add Saturday and Sunday
+                    $restDays += 2; // Add Saturday and Sunday
                 }
                 break;
         }
@@ -121,10 +121,10 @@ class EntryRepository extends ServiceEntityRepository
         $calendarDays = $this->getCalendarDaysByWorkDays($days);
 
         if ($calendarDays <= 0) {
-             // Avoid creating invalid DateInterval P0D
-             $fromDate = $today;
+            // Avoid creating invalid DateInterval P0D
+            $fromDate = $today;
         } else {
-             $fromDate = $today->sub(new \DateInterval('P' . $calendarDays . 'D'));
+            $fromDate = $today->sub(new \DateInterval('P' . $calendarDays . 'D'));
         }
 
 
@@ -331,7 +331,7 @@ class EntryRepository extends ServiceEntityRepository
         $sql['where_day'] = "WHERE day >= :fromDate";
 
         if (! $showFuture) {
-             // Modified: Use parameter binding for today's date
+            // Modified: Use parameter binding for today's date
             $sql['where_future'] = "AND day <= :today";
             $params['today'] = $today->format('Y-m-d');
         }
@@ -397,7 +397,7 @@ class EntryRepository extends ServiceEntityRepository
      * Query summary information regarding the current entry for the following
      * scopes: customer, project, activity, ticket
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
@@ -499,26 +499,26 @@ class EntryRepository extends ServiceEntityRepository
         $sql['where_user'] = "WHERE user_id = :userId";
 
         switch ($period) {
-        case self::PERIOD_DAY:
-             // Modified: Use parameter binding for today's date
-            $sql['where_day'] = "AND day = :todayDate";
-            $params['todayDate'] = $today->format('Y-m-d');
-            break;
-        case self::PERIOD_WEEK:
-             // Modified: Use parameter binding for year and week
-            $sql['where_year'] = "AND YEAR(day) = :year";
-            // Assuming WEEK(day, 1) aligns with ISO-8601 week (starts Monday) like PHP 'W'
-            $sql['where_week'] = "AND WEEK(day, 1) = :week";
-            $params['year'] = $today->format('Y');
-            $params['week'] = $today->format('W');
-            break;
-        case self::PERIOD_MONTH:
-             // Modified: Use parameter binding for year and month
-            $sql['where_year'] = "AND YEAR(day) = :year";
-            $sql['where_month']= "AND MONTH(day) = :month";
-            $params['year'] = $today->format('Y');
-            $params['month'] = $today->format('m');
-            break;
+            case self::PERIOD_DAY:
+                // Modified: Use parameter binding for today's date
+                $sql['where_day'] = "AND day = :todayDate";
+                $params['todayDate'] = $today->format('Y-m-d');
+                break;
+            case self::PERIOD_WEEK:
+                // Modified: Use parameter binding for year and week
+                $sql['where_year'] = "AND YEAR(day) = :year";
+                // Assuming WEEK(day, 1) aligns with ISO-8601 week (starts Monday) like PHP 'W'
+                $sql['where_week'] = "AND WEEK(day, 1) = :week";
+                $params['year'] = $today->format('Y');
+                $params['week'] = $today->format('W');
+                break;
+            case self::PERIOD_MONTH:
+                // Modified: Use parameter binding for year and month
+                $sql['where_year'] = "AND YEAR(day) = :year";
+                $sql['where_month'] = "AND MONTH(day) = :month";
+                $params['year'] = $today->format('Y');
+                $params['month'] = $today->format('m');
+                break;
         }
 
         // Modified: Use prepare and executeQuery with parameters
