@@ -8,7 +8,6 @@ use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Entity\Contract;
 use App\Entity\Team;
-use App\Helper\JiraOAuthApi;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Response\Error;
 use Symfony\Component\HttpFoundation\Request;
