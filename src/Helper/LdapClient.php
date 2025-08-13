@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
  */
@@ -158,7 +159,7 @@ class LdapClient
         }
 
         if ($collection->count() > 1) {
-             if ($this->logger) {
+            if ($this->logger) {
                 $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
                     'filter' => $searchFilter,
                     'baseDn' => $this->_baseDn,
@@ -193,10 +194,10 @@ class LdapClient
     {
         $userDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? null);
         if (!$userDn) {
-             if ($this->logger) {
+            if ($this->logger) {
                 $this->logger->error('LDAP: Could not extract DN or distinguishedName from user entry.', ['entry' => $ldapEntry]);
-             }
-             throw new \Exception('Could not determine user DN for authentication.');
+            }
+            throw new \Exception('Could not determine user DN for authentication.');
         }
 
         $ldapOptions = $this->getLdapOptions();
@@ -207,7 +208,7 @@ class LdapClient
         $ldap = new Ldap($ldapOptions);
 
         try {
-             if ($this->logger) {
+            if ($this->logger) {
                 $this->logger->debug('LDAP: Attempting user bind.', [
                     'host' => $this->_host,
                     'port' => $this->_port,
@@ -358,7 +359,7 @@ class LdapClient
      */
     public function setUseSSL($useSSL): static
     {
-        $this->_useSSL = (boolean) $useSSL;
+        $this->_useSSL = (bool) $useSSL;
         return $this;
     }
 
@@ -417,15 +418,15 @@ class LdapClient
 
         $this->teams = [];
         if (file_exists($mappingFile)) {
-             if ($this->logger) {
-                 $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
-             }
+            if ($this->logger) {
+                $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
+            }
             try {
                 $arMapping = Yaml::parse(file_get_contents($mappingFile));
                 if (!$arMapping || !is_array($arMapping)) {
                     if ($this->logger) {
-                         $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
-                     }
+                        $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
+                    }
                     return;
                 }
 
@@ -436,14 +437,14 @@ class LdapClient
                     // Example using preg_match: if (preg_match('/,ou=' . preg_quote($group, '/') . '(,|$)/i', $dn)) {
                     if (str_contains(strtolower($dn), 'ou=' . strtolower($group))) { // Case-insensitive check
                         $this->teams[] = $teamName;
-                         if ($this->logger) {
-                             $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
-                         }
+                        if ($this->logger) {
+                            $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
+                        }
                     }
                 }
-                 if (empty($this->teams) && $this->logger) {
-                     $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
-                 }
+                if (empty($this->teams) && $this->logger) {
+                    $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
+                }
 
             } catch (\Exception $e) {
                 if ($this->logger) {

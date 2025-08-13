@@ -394,7 +394,7 @@ class InterpretationController extends BaseController
             'team'              => $this->evalParam($request, 'team'),
             'ticket'            => $this->evalParam($request, 'ticket'),
             'description'       => $this->evalParam($request, 'description'),
-            'visibility_user'   => ($this->isDEV($request)? $this->getUserId($request) : null),
+            'visibility_user'   => ($this->isDEV($request) ? $this->getUserId($request) : null),
             'maxResults'        => $maxResults,
             'datestart'         => $this->evalParam($request, 'datestart'),
             'dateend'           => $this->evalParam($request, 'dateend'),
