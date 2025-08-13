@@ -141,7 +141,7 @@ class AdminController extends BaseController
     /**
      * @Route("/project/save", name="saveProject_attr", methods={"POST"})
      */
-    public function saveProjectAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    public function saveProjectAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
