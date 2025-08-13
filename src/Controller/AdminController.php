@@ -162,17 +162,17 @@ class AdminController extends BaseController
 
         $jiraId       = $request->get('jiraId') ? strtoupper((string) $request->get('jiraId')) : '';
         $jiraTicket   = $request->get('jiraTicket') ? strtoupper((string) $request->get('jiraTicket')) : '';
-        $active       = $request->get('active') ?: 0;
-        $global       = $request->get('global') ?: 0;
+        $active       = (bool) ($request->get('active') ?: 0);
+        $global       = (bool) ($request->get('global') ?: 0);
         $estimation   = TimeHelper::readable2minutes($request->get('estimation') ?: '0m');
         $billing      = $request->get('billing') ?: 0;
         $costCenter   = $request->get('cost_center') ?: null;
         $offer        = $request->get('offer') ?: 0;
-        $additionalInformationFromExternal = $request->get('additionalInformationFromExternal') ?: 0;
+        $additionalInformationFromExternal = (bool) ($request->get('additionalInformationFromExternal') ?: 0);
         /** @var \App\Repository\ProjectRepository $projectRepository */
         $projectRepository = $this->doctrineRegistry->getRepository(Project::class);
-        $internalJiraTicketSystem = (int) $request->get('internalJiraTicketSystem', 0);
-        $internalJiraProjectKey   = $request->get('internalJiraProjectKey', 0);
+        $internalJiraTicketSystem = (string) $request->get('internalJiraTicketSystem', '');
+        $internalJiraProjectKey   = (string) $request->get('internalJiraProjectKey', '');
 
         if ($projectId !== 0) {
             $project = $projectRepository->find($projectId);
@@ -232,7 +232,7 @@ class AdminController extends BaseController
 
         $project
             ->setName($name)
-            ->setTicketSystem($ticketSystem)
+            ->setTicketSystem($ticketSystem instanceof TicketSystem ? $ticketSystem : $project->getTicketSystem())
             ->setJiraId($jiraId)
             ->setJiraTicket($jiraTicket)
             ->setActive($active)
@@ -284,7 +284,9 @@ class AdminController extends BaseController
                 ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($project);
+            if ($project) {
+                $em->remove($project);
+            }
             $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
@@ -329,7 +331,7 @@ class AdminController extends BaseController
                 ]
             );
         } catch (\Exception $exception) {
-            return new Error($exception->getMessage(), $exception->getCode());
+            return new Error($exception->getMessage(), (int) ($exception->getCode() ?: 500));
         }
     }
 
@@ -358,7 +360,7 @@ class AdminController extends BaseController
                 ]
             );
         } catch (\Exception $exception) {
-            return new Error($exception->getMessage(), $exception->getCode());
+            return new Error($exception->getMessage(), (int) ($exception->getCode() ?: 500));
         }
     }
 
@@ -474,7 +476,7 @@ class AdminController extends BaseController
     /**
      * @Route("/user/save", name="saveUser_attr", methods={"POST"})
      */
-    public function saveUserAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    public function saveUserAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -504,16 +506,20 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) && $user->getId() != $sameNamedUser->getId()) {
+        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) && $user && $user->getId() != $sameNamedUser->getId()) {
             $response = new Response($this->translate('The user name provided already exists.'));
             $response->setStatusCode(406);
             return $response;
         }
 
-        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) && $user->getId() != $sameAbbrUser->getId()) {
+        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) && $user && $user->getId() != $sameAbbrUser->getId()) {
             $response = new Response($this->translate('The user name abreviation provided already exists.'));
             $response->setStatusCode(406);
             return $response;
+        }
+
+        if ($user === null) {
+            return new Error($this->translate('No entry for id.'), 404);
         }
 
         $user->setUsername($name)
@@ -568,7 +574,9 @@ class AdminController extends BaseController
                 ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($user);
+            if ($user) {
+                $em->remove($user);
+            }
             $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
@@ -600,7 +608,9 @@ class AdminController extends BaseController
                     ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($preset);
+            if ($preset) {
+                $em->remove($preset);
+            }
             $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
@@ -770,7 +780,9 @@ class AdminController extends BaseController
                 ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($ticketSystem);
+            if ($ticketSystem) {
+                $em->remove($ticketSystem);
+            }
             $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
@@ -864,7 +876,9 @@ class AdminController extends BaseController
                 ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($activity);
+            if ($activity) {
+                $em->remove($activity);
+            }
             $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
@@ -966,7 +980,9 @@ class AdminController extends BaseController
                 ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($team);
+            if ($team) {
+                $em->remove($team);
+            }
             $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
@@ -1096,12 +1112,12 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $dateStart->setDate($dateStart->format('Y'), $dateStart->format('m'), $dateStart->format('d'));
+        $dateStart->setDate((int) $dateStart->format('Y'), (int) $dateStart->format('m'), (int) $dateStart->format('d'));
         $dateStart->setTime(0, 0, 0);
 
         $dateEnd = \DateTime::createFromFormat('Y-m-d', $end ?: '');
         if ($dateEnd) {
-            $dateEnd->setDate($dateEnd->format('Y'), $dateEnd->format('m'), $dateEnd->format('d'));
+            $dateEnd->setDate((int) $dateEnd->format('Y'), (int) $dateEnd->format('m'), (int) $dateEnd->format('d'));
             $dateEnd->setTime(23, 59, 59);
 
             if ($dateEnd < $dateStart) {
@@ -1255,7 +1271,9 @@ class AdminController extends BaseController
                 ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($contract);
+            if ($contract) {
+                $em->remove($contract);
+            }
             $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
