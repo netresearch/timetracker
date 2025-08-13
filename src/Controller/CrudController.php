@@ -12,7 +12,6 @@ use App\Entity\User;
 use App\Response\Error;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
-use App\Helper\JiraOAuthApi;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Helper\TicketHelper;
 use App\Model\JsonResponse;

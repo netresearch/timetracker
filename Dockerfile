@@ -27,16 +27,7 @@ RUN set -ex \
    xml \
    gd \
    intl \
-   # clean up
-   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false \
-   libzip-dev \
-   libpng-dev \
-   libxml2-dev \
-   zlib1g-dev \
-   libldap2-dev \
-   libjpeg62-turbo-dev \
-   libfreetype6-dev \
-   libicu-dev \
+   # clean up (keep runtime libraries required by PHP extensions)
    && apt-get -y clean \
    && rm -rf /usr/src/* \
    && rm -rf /tmp/* \
