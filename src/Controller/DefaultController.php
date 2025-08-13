@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Response\Error;
 use App\Entity\TicketSystem;
 use App\Exception\Integration\Jira\JiraApiException;
-use App\Helper\JiraOAuthApi;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Helper\TimeHelper;
 use App\Repository\EntryRepository;

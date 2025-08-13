@@ -42,18 +42,17 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Move `src/Services/SubticketSyncService.php` to `src/Service/SubticketSyncService.php`. (Estimate: 0.1h)
         *   `[ ]` Update namespace in the moved file. (Estimate: 0.1h)
         *   `[ ]` Update any explicit references. (Estimate: 0.1h)
-        *   `[ ]` Delete the `src/Services` directory once empty. (Estimate: 0.1h)
+        *   `[x]` Delete the `src/Services` directory once empty. (Estimate: 0.1h)
         *   `[ ]` Clear cache (`docker compose run --rm app bin/console cache:clear`). (Estimate: 0.1h)
     *   `[ ]` **(Updated Task 1.3.2) Refactor `src/Helper` Classes to Services:**
         *   `[ ]` **Refactor `JiraOAuthApi.php`:**
             *   `[x]` Move `src/Helper/JiraOAuthApi.php` to `src/Service/Integration/Jira/JiraOAuthApiService.php` (or similar). (Implemented as BC shim delegating to new service)
             *   `[x]` Update factory to create new service. Usages rely on factory DI.
             *   `[x]` Update usages to use Dependency Injection where needed (removed direct instantiation in `CrudController`).
-        *   `[ ]` **Refactor `LdapClient.php`:**
-            *   `[ ]` Move `src/Helper/LdapClient.php` to `src/Service/Ldap/LdapClientService.php` (or similar). (Estimate: 0.1h)
-            *   `[ ]` Update namespace. (Estimate: 0.1h)
-            *   `[ ]` Ensure registered as a service. (Estimate: 0.1h)
-            *   `[ ]` Update usages (likely in Security component) via DI. (Estimate: 0.5h)
+        *   `[x]` **Refactor `LdapClient.php`:**
+            *   `[x]` Move `src/Helper/LdapClient.php` to `src/Service/Ldap/LdapClientService.php` with BC shim. (Estimate: 0.1h)
+            *   `[x]` Update namespace and register as a service. (Estimate: 0.1h)
+            *   `[x]` Update usages via DI in Security component. (Estimate: 0.5h)
         *   `[ ]` **Refactor `LocalizationHelper.php`:**
             *   `[ ]` Move `src/Helper/LocalizationHelper.php` to `src/Service/Util/LocalizationService.php` (or similar). (Estimate: 0.1h)
             *   `[ ]` Update namespace. (Estimate: 0.1h)
@@ -71,8 +70,8 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Ensure `sensio/framework-extra-bundle` is installed (`docker compose run --rm app composer require sensio/framework-extra-bundle`). (Estimate: 0.25h)
         *   `[ ]` Configure annotation routing if not already done (check `config/routes/annotations.yaml`). (Estimate: 0.25h)
         *   `[ ]` Review existing routes defined via annotations in `src/Controller/`. (Estimate: 0.5h)
-        *   `[ ]` **Migrate routes** defined in `config/legacy_bundle/routing.yml` to annotations/attributes within the relevant Controller classes. (Estimate: 0.5-1h+ depending on complexity)
-        *   `[ ]` Remove the import for `legacy_bundle/routing.yml` from `config/routes.yaml` once migration is complete. (Estimate: 0.1h)
+        *   `[x]` **Migrate routes** defined in `config/legacy_bundle/routing.yml` to annotations/attributes within the relevant Controller classes. (Estimate: 0.5-1h+ depending on complexity)
+        *   `[x]` Remove the import for `legacy_bundle/routing.yml` from `config/routes.yaml` once migration is complete. (Estimate: 0.1h)
         *   `[ ]` Prefer PHP 8 Attributes (`#[Route(...)]`) over annotations (`@Route(...)`) if possible within 4.4 constraints (requires PHP 8+). *Note: Full attribute support is better in later Symfony versions.*
     *   `[ ]` **(Renumbered Task 1.3.4) Review Service Configuration:**
         *   `[ ]` Examine `config/services.yaml`. (Estimate: 0.5h)
