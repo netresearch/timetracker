@@ -62,6 +62,9 @@ services:
         public: true
         autowire: true
 
+    # Alias legacy App\Services\Export to new service for BC
+    App\\Services\\Export: '@App\\Service\\ExportService'
+
     # Jira API factory for easier mocking in tests
     App\Service\Integration\Jira\JiraOAuthApiFactory:
         public: true
@@ -76,6 +79,8 @@ services:
     App\Service\Ldap\LdapClientService:
         public: true
         autowire: true
+        bind:
+            $projectDir: '%kernel.project_dir%'
 
     # Add this: Configure ClockInterface and SystemClock
     App\\Service\\ClockInterface:
