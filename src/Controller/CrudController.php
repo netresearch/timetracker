@@ -217,13 +217,17 @@ class CrudController extends BaseController
             $entryRepo = $doctrine->getRepository(\App\Entity\Entry::class);
 
             $entry = $request->get('id') != 0 ? $entryRepo->find($request->get('id')) : new Entry();
+            if (!$entry instanceof Entry) {
+                return new Error($this->translator->trans('No entry for id.'), 404);
+            }
 
             // We make a copy to determine if we have to update JIRA
             $oldEntry = clone $entry;
 
             /** @var \App\Repository\ProjectRepository $projectRepo */
             $projectRepo = $doctrine->getRepository(\App\Entity\Project::class);
-            if ($project = $projectRepo->find($request->get('project'))) {
+            if ($projectFound = $projectRepo->find($request->get('project'))) {
+                $project = $projectFound;
                 if (! $project->getActive()) {
                     $message = $this->translator->trans("This project is inactive and cannot be used for booking.");
                     throw new \Exception($message);
@@ -249,11 +253,13 @@ class CrudController extends BaseController
             $user = $userRepo->find($this->getUserId($request));
             $entry->setUser($user);
 
-            if ($project->hasInternalJiraProjectKey()) {
+            // Ensure $project variable is defined for downstream logic
+            $project = $entry->getProject();
+            if ($project instanceof Project && $project->hasInternalJiraProjectKey()) {
                 /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
                 $ticketSystemRepo = $doctrine->getRepository(\App\Entity\TicketSystem::class);
                 $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
-            } else {
+            } else if ($project instanceof Project) {
                 $ticketSystem = $project->getTicketSystem();
             }
 
@@ -306,7 +312,9 @@ class CrudController extends BaseController
             $this->requireValidTicketFormat($entry->getTicket());
 
             // check if ticket matches the project's ticket pattern
-            $this->requireValidTicketPrefix($entry->getProject(), $entry->getTicket());
+            if ($entry->getProject() instanceof Project) {
+                $this->requireValidTicketPrefix($entry->getProject(), $entry->getTicket());
+            }
 
             $em = $doctrine->getManager();
             $em->persist($entry);

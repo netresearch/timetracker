@@ -58,6 +58,9 @@ class DefaultController extends BaseController
         $managerRegistry = $this->getDoctrine();
 
         $user = $managerRegistry->getRepository(User::class)->find($userId);
+        if (!$user instanceof User) {
+            return $this->getFailedLoginResponse();
+        }
         $settings = $user->getSettings();
 
         /** @var \App\Repository\CustomerRepository $objectRepository */
@@ -411,7 +414,7 @@ class DefaultController extends BaseController
         /** @var \App\Repository\HolidayRepository $objectRepository */
         $objectRepository = $this->getDoctrine()
             ->getRepository(Holiday::class);
-        $holidays = $objectRepository->findByMonth(date("Y"), date("m"));
+        $holidays = $objectRepository->findByMonth((int) date("Y"), (int) date("m"));
         return new JsonResponse($holidays);
     }
 
@@ -429,6 +432,9 @@ class DefaultController extends BaseController
         $user = $this->getDoctrine()
             ->getRepository(User::class)
             ->find($this->getUserId($request));
+        if (!$user instanceof User) {
+            return $this->getFailedLoginResponse();
+        }
 
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
@@ -472,6 +478,9 @@ class DefaultController extends BaseController
         $ticketSystem = $this->getDoctrine()
             ->getRepository(TicketSystem::class)
             ->find($request->get('tsid'));
+        if (!$ticketSystem instanceof TicketSystem) {
+            return new Response('Ticket system not found', 404);
+        }
 
         try {
             $jiraOAuthApi = $this->jiraApiFactory->create($user, $ticketSystem);

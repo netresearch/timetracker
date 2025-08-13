@@ -30,10 +30,10 @@ class Kernel extends BaseKernel
         return \dirname(__DIR__);
     }
 
-    protected function configureContainer(ContainerBuilder $containerBuilder, LoaderInterface $loader): void
+    protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader): void
     {
-        $containerBuilder->addResource(new FileResource($this->getProjectDir().'/config/bundles.php'));
-        $containerBuilder->setParameter('container.dumper.inline_class_loader', true);
+        $container->addResource(new FileResource($this->getProjectDir().'/config/bundles.php'));
+        $container->setParameter('container.dumper.inline_class_loader', true);
 
         $confDir = $this->getProjectDir().'/config';
 
@@ -43,12 +43,12 @@ class Kernel extends BaseKernel
         $loader->load($confDir.'/{services}_'.$this->environment.self::CONFIG_EXTS, 'glob');
     }
 
-    protected function configureRoutes(RouteCollectionBuilder $routeCollectionBuilder): void
+    protected function configureRoutes(RouteCollectionBuilder $routes): void
     {
         $confDir = $this->getProjectDir().'/config';
 
-        $routeCollectionBuilder->import($confDir.'/{routes}/'.$this->environment.'/**/*'.self::CONFIG_EXTS, '/', 'glob');
-        $routeCollectionBuilder->import($confDir.'/{routes}/*'.self::CONFIG_EXTS, '/', 'glob');
-        $routeCollectionBuilder->import($confDir.'/{routes}'.self::CONFIG_EXTS, '/', 'glob');
+        $routes->import($confDir.'/{routes}/'.$this->environment.'/**/*'.self::CONFIG_EXTS, '/', 'glob');
+        $routes->import($confDir.'/{routes}/*'.self::CONFIG_EXTS, '/', 'glob');
+        $routes->import($confDir.'/{routes}'.self::CONFIG_EXTS, '/', 'glob');
     }
 }

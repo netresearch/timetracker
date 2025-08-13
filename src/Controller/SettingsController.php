@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Helper\LocalizationHelper;
 use App\Service\Util\LocalizationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\JsonResponse;
@@ -63,7 +62,7 @@ class SettingsController extends AbstractController
         $user->setShowEmptyLine($request->request->get('show_empty_line'));
         $user->setSuggestTime($request->request->get('suggest_time'));
         $user->setShowFuture($request->request->get('show_future'));
-        $normalized = ($this->localizationService ? $this->localizationService->normalizeLocale((string) $request->request->get('locale')) : null) ?? LocalizationHelper::normalizeLocale($request->request->get('locale'));
+        $normalized = $this->localizationService->normalizeLocale((string) $request->request->get('locale'));
         $user->setLocale($normalized);
 
         $objectManager = $this->getDoctrine()->getManager();

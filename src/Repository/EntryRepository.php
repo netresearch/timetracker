@@ -208,7 +208,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $pattern = $year . '-';
         if (0 < intval($month)) {
-            $pattern .= str_pad($month, 2, '0', STR_PAD_LEFT) . '-';
+            $pattern .= str_pad((string) $month, 2, '0', STR_PAD_LEFT) . '-';
         }
 
         return $pattern . '%';
@@ -233,8 +233,8 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder = $entityManager->createQueryBuilder()
             ->select('distinct e.ticket, ts.id, ts.url, ts.login, ts.password')
             ->from(\App\Entity\Entry::class, 'e')
-            ->innerJoin('e.project', 'p', 'e.projectId = p.id')
-            ->innerJoin('p.ticketSystem', 'ts', 'p.ticketSystem = ts.id')
+            ->innerJoin('e.project', 'p')
+            ->innerJoin('p.ticketSystem', 'ts')
             ->where('p.additionalInformationFromExternal = 1')
             ->andWhere('p.jiraId IS NOT NULL')
             ->orderBy('ts.id');

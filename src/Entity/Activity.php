@@ -12,9 +12,9 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class Activity
 {
-    const SICK    = 'Krank';
+    public const SICK    = 'Krank';
 
-    const HOLIDAY = 'Urlaub';
+    public const HOLIDAY = 'Urlaub';
 
     /**
      * @ORM\Id
@@ -73,7 +73,7 @@ class Activity
 
     public function getName(): string
     {
-        return $this->name;
+        return (string) $this->name;
     }
 
     public function setNeedsTickets(bool $needsTicket): self
@@ -84,12 +84,12 @@ class Activity
 
     public function getNeedsTicket(): bool
     {
-        return $this->needsTicket;
+        return (bool) $this->needsTicket;
     }
 
     public function getFactor(): float
     {
-        return $this->factor;
+        return (float) $this->factor;
     }
 
     public function setFactor(float $factor): self

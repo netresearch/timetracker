@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Helper\LocalizationHelper;
+use App\Service\Util\LocalizationService;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -304,7 +304,7 @@ class User implements UserInterface
 
     public function setLocale($locale): static
     {
-        $this->locale = LocalizationHelper::normalizeLocale($locale);
+        $this->locale = (new LocalizationService())->normalizeLocale((string) $locale);
         return $this;
     }
 
@@ -320,7 +320,7 @@ class User implements UserInterface
             'user_id'           => $this->getId(),
             'user_name'         => $this->getUsername(),
             'type'              => $this->getType(),
-            'locale'            => LocalizationHelper::normalizeLocale($this->getLocale())
+            'locale'            => (new LocalizationService())->normalizeLocale((string) $this->getLocale())
         ];
     }
 

@@ -197,7 +197,7 @@ class ControllingController extends BaseController
             $sheet->setCellValue('L' . $lineNumber, $entry->getExternalSummary());
             $sheet->setCellValue('M' . $lineNumber, implode(', ', $entry->getExternalLabels()));
             if ($showBillableField) {
-                $sheet->setCellValue('N' . $lineNumber, (int) $entry->billable);
+                $sheet->setCellValue('N' . $lineNumber, (int) ((bool) $entry->getBillable()));
             }
 
             if ($showTicketTitles) {
@@ -267,7 +267,7 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @return void
      */
-    protected static function setCellDate(Worksheet $worksheet, string $column, $row, $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD)
+    protected static function setCellDate(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD)
     {
         // Set date value
         $worksheet->setCellValue(
@@ -291,7 +291,7 @@ class ControllingController extends BaseController
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @return void
      */
-    protected static function setCellHours(Worksheet $worksheet, string $column, $row, $date)
+    protected static function setCellHours(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date)
     {
         $dateValue = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
