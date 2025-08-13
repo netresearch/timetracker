@@ -380,7 +380,7 @@ class LdapClient
     /**
      * Authenticate username and password at the LDAP server.
      *
-     * @return true
+     * @return bool
      * @throws LdapException
      * @throws \Exception
      */

@@ -16,10 +16,25 @@ class TeamRepository extends ServiceEntityRepository
         parent::__construct($managerRegistry, Team::class);
     }
 
+    // Do not override findAll(); it should return Team[] as in the parent
+
     /**
-     * @return array[]
+     * Returns teams as Doctrine entities, sorted by name.
+     * Note: use this instead of overriding findAll() for type safety.
+     *
+     * @return Team[]
      */
-    public function findAll()
+    public function getAllTeams(): array
+    {
+        return parent::findBy([], ['name' => 'ASC']);
+    }
+
+    /**
+     * Returns teams as array formatted for API responses.
+     *
+     * @return array<int, array{team: array{id: int, name: string, lead_user_id: int}}>
+     */
+    public function getAllTeamsAsArray(): array
     {
         /** @var Team[] $teams */
         $teams = parent::findBy([], ['name' => 'ASC']);
@@ -33,17 +48,6 @@ class TeamRepository extends ServiceEntityRepository
         }
 
         return $data;
-    }
-
-    /**
-     * Returns teams as Doctrine entities, sorted by name.
-     * Note: use this instead of overriding findAll() for type safety.
-     *
-     * @return Team[]
-     */
-    public function getAllTeams(): array
-    {
-        return parent::findBy([], ['name' => 'ASC']);
     }
 
     public function findOneByName(string $name): ?Team

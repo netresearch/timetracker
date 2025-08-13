@@ -23,6 +23,22 @@ class Entry extends Base
 
 
     /**
+     * Non-persisted runtime flag indicating if the entry is billable based on external labels.
+     */
+    protected ?bool $billable = null;
+
+    public function setBillable(bool $billable): static
+    {
+        $this->billable = $billable;
+        return $this;
+    }
+
+    public function getBillable(): ?bool
+    {
+        return $this->billable;
+    }
+
+    /**
      * @ORM\Id
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")

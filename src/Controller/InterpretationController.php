@@ -54,7 +54,6 @@ class InterpretationController extends BaseController
     }
 
     /**
-     * @return array|null
      * @throws \Exception
      */
     private function getCachedEntries(Request $request): array
@@ -84,7 +83,7 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    private function calculateSum(&$entries): int|float
+    private function calculateSum(&$entries): int
     {
         if (!is_array($entries)) {
             return 0;
@@ -448,7 +447,7 @@ class InterpretationController extends BaseController
     private function evalParam(Request $request, string $param)
     {
         $param = $request->query->get($param);
-        if ($param && !empty($param)) {
+        if ($param) {
             return $param;
         }
 
@@ -506,23 +505,23 @@ class InterpretationController extends BaseController
             'maxResults' => $maxResults,   //default 50
             'page' => $page
         ];
-        if (($activity ?? null) !== 0) {
+        if ($activity !== 0) {
             $searchArray['activity'] = $activity;
         }
 
-        if (($project ?? null) !== 0) {
+        if ($project !== 0) {
             $searchArray['project'] = $project;
         }
 
-        if ($datestart ?? null) {
+        if ($datestart) {
             $searchArray['datestart'] = $datestart;
         }
 
-        if ($dateend ?? null) {
+        if ($dateend) {
             $searchArray['dateend'] = $dateend;
         }
 
-        if (($customer ?? null) !== 0) {
+        if ($customer !== 0) {
             $searchArray['customer'] = $customer;
         }
 

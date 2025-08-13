@@ -224,7 +224,6 @@ class CrudController extends BaseController
 
             /** @var \App\Repository\ProjectRepository $projectRepo */
             $projectRepo = $doctrine->getRepository(\App\Entity\Project::class);
-            /** @var Project $project */
             if ($project = $projectRepo->find($request->get('project'))) {
                 if (! $project->getActive()) {
                     $message = $this->translator->trans("This project is inactive and cannot be used for booking.");
@@ -236,7 +235,6 @@ class CrudController extends BaseController
 
             /** @var \App\Repository\CustomerRepository $customerRepo */
             $customerRepo = $doctrine->getRepository(\App\Entity\Customer::class);
-            /** @var Customer $customer */
             if ($customer = $customerRepo->find($request->get('customer'))) {
                 if (! $customer->getActive()) {
                     $message = $this->translator->trans("This customer is inactive and cannot be used for booking.");
@@ -277,7 +275,6 @@ class CrudController extends BaseController
                 }
             }
 
-            /** @var Activity $activity */
             if ($activity = $doctrine->getRepository(\App\Entity\Activity::class)->find($request->get('activity'))) {
                 $entry->setActivity($activity);
             }
@@ -409,7 +406,6 @@ class CrudController extends BaseController
                 ->find($preset->getActivityId());
 
             if ($request->get('usecontract')) {
-                /** @var Contract $contract */
                 $contracts = $doctrine->getRepository(\App\Entity\Contract::class)
                     ->findBy(['user' => $this->getUserId($request)], ['start' => 'ASC']);
 
