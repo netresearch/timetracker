@@ -7,7 +7,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 ### 1.1: Improve Test Coverage
 *   **Goal:** Ensure critical parts of the application are covered by tests before refactoring and upgrading.
 *   **Tasks:**
-    *   `[ ]` **Analyze Test Coverage:** Run coverage reports (`docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-html var/coverage`) and identify key areas lacking tests (Controllers, Services, critical business logic). (Estimate: 0.5h)
+    *   `[x]` **Analyze Test Coverage:** Run coverage reports (`docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-html var/coverage`) and identify key areas lacking tests (Controllers, Services, critical business logic). (Estimate: 0.5h)
     *   `[ ]` **Write Unit Tests for Core Services:** Identify core services in `/src/Service` (formerly `/src/Services`) and `/src/Helper` (to be refactored) and add unit tests. (Estimate: Task per service, 0.5-1h each)
         *   `[ ]` Task: Test Service A
         *   `[ ]` Task: Test Service B
@@ -36,12 +36,12 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Identify methods or logic within controllers that could be extracted into dedicated services (e.g., complex data manipulation, external API calls, business rules). (Estimate: 1h)
         *   `[ ]` Document potential refactoring opportunities (create sub-tasks below or separate issues). (Estimate: 0.5h)
     *   `[x]` **(Updated Task 1.3.1) Move classes from `src/Services` to `src/Service`:**
-        *   `[ ]` Move `src/Services/Export.php` to `src/Service/ExportService.php` (or similar appropriate name). (Estimate: 0.1h)
-        *   `[ ]` Update namespace in the moved file (`App\Services` -> `App\Service`). (Estimate: 0.1h)
-        *   `[ ]` Update any explicit references in `services.yaml` or elsewhere. (Estimate: 0.1h)
-        *   `[ ]` Move `src/Services/SubticketSyncService.php` to `src/Service/SubticketSyncService.php`. (Estimate: 0.1h)
-        *   `[ ]` Update namespace in the moved file. (Estimate: 0.1h)
-        *   `[ ]` Update any explicit references. (Estimate: 0.1h)
+        *   `[x]` Move `src/Services/Export.php` to `src/Service/ExportService.php` (or similar appropriate name). (Estimate: 0.1h)
+        *   `[x]` Update namespace in the moved file (`App\Services` -> `App\Service`). (Estimate: 0.1h)
+        *   `[x]` Update any explicit references in `services.yaml` or elsewhere. (Estimate: 0.1h)
+        *   `[x]` Move `src/Services/SubticketSyncService.php` to `src/Service/SubticketSyncService.php`. (Estimate: 0.1h)
+        *   `[x]` Update namespace in the moved file. (Estimate: 0.1h)
+        *   `[x]` Update any explicit references. (Estimate: 0.1h)
         *   `[x]` Delete the `src/Services` directory once empty. (Estimate: 0.1h)
         *   `[ ]` Clear cache (`docker compose run --rm app bin/console cache:clear`). (Estimate: 0.1h)
     *   `[ ]` **(Updated Task 1.3.2) Refactor `src/Helper` Classes to Services:**
@@ -56,7 +56,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` **Refactor `LocalizationHelper.php`:**
             *   `[ ]` Move `src/Helper/LocalizationHelper.php` to `src/Service/Util/LocalizationService.php` (or similar). (Estimate: 0.1h)
             *   `[ ]` Update namespace. (Estimate: 0.1h)
-            *   `[ ]` Ensure registered as a service. (Estimate: 0.1h)
+            *   `[x]` Ensure registered as a service. (Estimate: 0.1h)
             *   `[ ]` Update usages via DI. (Estimate: 0.25h)
         *   `[ ]` **Refactor `TicketHelper.php`:**
             *   `[x]` Introduce `src/Service/Util/TicketService.php` and keep `TicketHelper` as BC facade. No DI changes required.
@@ -84,7 +84,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 ### 1.4: Static Analysis & Code Standards
 *   **Goal:** Ensure code quality meets defined standards.
 *   **Tasks:**
-    *   `[ ]` **Run PHPStan:** Execute `docker compose run --rm app composer analyze` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
+    *   `[x]` **Run PHPStan:** Execute `docker compose run --rm app composer analyze` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
     *   `[ ]` **Run Psalm:** Execute `docker compose run --rm app composer psalm` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
     *   `[ ]` **Run CS Check/Fix:** Execute `docker compose run --rm app composer cs-check` and `docker compose run --rm app composer cs-fix` to ensure PSR-12 compliance. (Estimate: 0.5h)
 
