@@ -78,10 +78,7 @@ Encore
     })
 
     // enables Sass/SCSS support
-    .enableSassLoader(options => {}, {
-        // Prefer dart-sass instead of deprecated node-sass
-        implementation: require('sass')
-    })
+    .enableSassLoader()
 
     // uncomment if you use TypeScript
     //.enableTypeScriptLoader()
@@ -92,6 +89,6 @@ Encore
 
     // uncomment if you're having problems with a jQuery plugin
     //.autoProvidejQuery()
-;
+    ;
 
 module.exports = Encore.getWebpackConfig();
