@@ -326,7 +326,7 @@ class Entry extends Base
      *
      * @param int $worklog_id
      */
-    public function setWorklogId($worklog_id): static
+    public function setWorklogId(?int $worklog_id): static
     {
         $this->worklog_id = $worklog_id;
         return $this;
@@ -337,7 +337,7 @@ class Entry extends Base
      *
      * @return int $worklog_id
      */
-    public function getWorklogId()
+    public function getWorklogId(): ?int
     {
         return $this->worklog_id;
     }

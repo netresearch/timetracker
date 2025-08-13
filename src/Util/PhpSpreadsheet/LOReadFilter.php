@@ -30,8 +30,8 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
  */
 class LOReadFilter implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
 {
-    public function readCell($column, $row, $worksheetName = ''): bool
+    public function readCell($columnAddress, $row, $worksheetName = ''): bool
     {
-        return Coordinate::columnIndexFromString($column) <= 1024;
+        return Coordinate::columnIndexFromString($columnAddress) <= 1024;
     }
 }

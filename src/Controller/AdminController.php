@@ -176,6 +176,10 @@ class AdminController extends BaseController
 
         if ($projectId !== 0) {
             $project = $projectRepository->find($projectId);
+            if (!$project instanceof Project) {
+                $message = $this->translator->trans('No entry for id.');
+                return new Error($message, 404);
+            }
         } else {
             $project = new Project();
 
@@ -198,8 +202,14 @@ class AdminController extends BaseController
             return $response;
         }
 
+        $projectCustomer = $project->getCustomer();
+        if (!$projectCustomer) {
+            $response = new Response($this->translate('Please choose a customer.'));
+            $response->setStatusCode(406);
+            return $response;
+        }
         $sameNamedProject = $projectRepository->findOneBy(
-            ['name' => $name, 'customer' => $project->getCustomer()->getId()]
+            ['name' => $name, 'customer' => $projectCustomer->getId()]
         );
         if ($sameNamedProject && $project->getId() != $sameNamedProject->getId()) {
             $response = new Response($this->translate('The project name provided already exists.'));
@@ -241,7 +251,7 @@ class AdminController extends BaseController
         $objectManager->persist($project);
         $objectManager->flush();
 
-        $data = [$project->getId(), $name, $project->getCustomer()->getId(), $jiraId];
+        $data = [$project->getId(), $name, $projectCustomer->getId(), $jiraId];
 
         if ($ticketSystem) {
             try {

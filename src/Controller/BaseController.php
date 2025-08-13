@@ -16,7 +16,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Helper\LocalizationHelper;
 use App\Service\Util\LocalizationService;
 use App\Helper\LoginHelper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -158,7 +157,7 @@ class BaseController extends AbstractController
             return;
         }
 
-        $locale = ($this->localizationService ? $this->localizationService->normalizeLocale($user->getLocale()) : null) ?? LocalizationHelper::normalizeLocale($user->getLocale());
+        $locale = $this->localizationService->normalizeLocale($user->getLocale());
 
         $request->setLocale($locale);
     }
@@ -194,6 +193,9 @@ class BaseController extends AbstractController
 
         // Get user from Symfony security context
         $user = $this->getUser();
+        if (!is_object($user)) {
+            throw new AccessDeniedException('No user logged in');
+        }
 
         // Handle impersonation through Symfony's built-in functionality
         return $user->getId();

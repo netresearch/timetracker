@@ -23,11 +23,11 @@ class HolidayRepository extends ServiceEntityRepository
      * @param int $month
      * @return array
      */
-    public function findByMonth($year, $month)
+    public function findByMonth(int $year, int $month)
     {
         $entityManager = $this->getEntityManager();
 
-        $pattern = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . '%';
+        $pattern = $year . '-' . str_pad((string) $month, 2, '0', STR_PAD_LEFT) . '-' . '%';
 
         $query = $entityManager->createQuery(
             'SELECT h FROM App\Entity\Holiday h'
