@@ -253,8 +253,9 @@ class CrudController extends BaseController
             $user = $userRepo->find($this->getUserId($request));
             $entry->setUser($user);
 
-            // Ensure $project variable is defined for downstream logic
+            // Ensure variables are defined for downstream logic
             $project = $entry->getProject();
+            $ticketSystem = null;
             if ($project instanceof Project && $project->hasInternalJiraProjectKey()) {
                 /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
                 $ticketSystemRepo = $doctrine->getRepository(\App\Entity\TicketSystem::class);

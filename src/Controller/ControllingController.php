@@ -259,11 +259,11 @@ class ControllingController extends BaseController
     /**
      * Set cell value to numeric date value and given display format.
      *
-     * @param Worksheet $worksheet Spreadsheet
-     * @param  string    $column Spreadsheet column
-     * @param  number    $row    Spreadsheet row
-     * @param  string    $date   Date should be inserted
-     * @param  string    $format Display date format
+     * @param Worksheet           $worksheet Spreadsheet
+     * @param  string             $column    Spreadsheet column
+     * @param  int                $row       Spreadsheet row
+     * @param  \DateTimeInterface $date      Date should be inserted
+     * @param  string             $format    Display date format
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @return void
      */
@@ -284,10 +284,10 @@ class ControllingController extends BaseController
     /**
      * Set cell value to a numeric time value and display format to HH::MM.
      *
-     * @param Worksheet $worksheet Spreadsheet
-     * @param  string    $column Spreadsheet column
-     * @param  number    $row    Spreadsheet row
-     * @param  string    $date   Date with time which time value should be inserted
+     * @param Worksheet           $worksheet Spreadsheet
+     * @param  string             $column    Spreadsheet column
+     * @param  int                $row       Spreadsheet row
+     * @param  \DateTimeInterface $date      Date with time which time value should be inserted
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @return void
      */
