@@ -11,6 +11,33 @@ use PHPUnit\Framework\TestCase;
 
 class EntryRepositoryTest extends TestCase
 {
+    public function testGetCalendarDaysByWorkDaysAcrossWeekend(): void
+    {
+        // Clock that says today is Monday (1)
+        $clock = new class () implements ClockInterface {
+            public function now(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('2025-08-11 12:00:00');
+            }
+            public function today(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('2025-08-11 00:00:00');
+            }
+        };
+
+        // Avoid touching Doctrine by creating a partial instance without constructor
+        $repo = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $prop = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $prop->setAccessible(true);
+        $prop->setValue($repo, $clock);
+
+        // 1 working day on Monday should include previous Fri,Sat,Sun => 3 calendar days
+        $this->assertSame(3, $repo->getCalendarDaysByWorkDays(1));
+
+        // 5 working days => 7 calendar days (full week)
+        $this->assertSame(7, $repo->getCalendarDaysByWorkDays(5));
+    }
+
     public function testGetCalendarDaysByWorkDaysBasics(): void
     {
         $clock = new class () implements ClockInterface {

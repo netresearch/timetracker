@@ -117,7 +117,7 @@ class ExportService
                 $ret = $jiraApi->searchTicket(
                     'IssueKey in (' . implode(',', $ticketSystemIssueTotalChunk) . ')',
                     $jiraFields,
-                    '500'
+                    500
                 );
 
                 if (isset($ret->issues) && is_iterable($ret->issues)) {
@@ -146,11 +146,15 @@ class ExportService
         foreach ($entries as $key => $entry) {
             /** @var Entry $entry */
             if ($showBillableField) {
-                $billable = in_array($entry->getTicket(), $arBillable);
-                if (!$billable && $removeNotBillable) {
-                    unset($entries[$key]);
+                $billable = in_array($entry->getTicket(), $arBillable, true);
+                if (!$billable) {
+                    if ($removeNotBillable) {
+                        unset($entries[$key]);
+                        continue;
+                    }
+                    // leave billable as-is (e.g., null) when not billable
                 } else {
-                    $entry->setBillable($billable);
+                    $entry->setBillable(true);
                 }
             }
 
