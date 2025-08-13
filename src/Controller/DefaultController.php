@@ -230,6 +230,9 @@ class DefaultController extends BaseController
         $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 3;
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
+        if (!$user) {
+            return new \App\Model\JsonResponse([]);
+        }
         $data = $objectRepository->getEntriesByUser($userId, $days, $user->getShowFuture());
 
         return new JsonResponse($data);
@@ -300,7 +303,10 @@ class DefaultController extends BaseController
                 ->getRepository(Project::class)
                 ->find($request->get('project'));
 
-            return new JsonResponse(['customer' => $project->getCustomer()->getId()]);
+            if ($project && $project->getCustomer()) {
+                return new JsonResponse(['customer' => $project->getCustomer()->getId()]);
+            }
+            return new JsonResponse(['customer' => null]);
         }
 
         return new JsonResponse(['customer' => 0]);
@@ -513,11 +519,11 @@ class DefaultController extends BaseController
 
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->getDoctrine()->getRepository(Entry::class);
-        $activities = $objectRepository->getActivitiesWithTime($name);
+        $activities = $objectRepository->getActivitiesWithTime($name ?? '');
 
-        $users = $objectRepository->getUsersWithTime($name);
+        $users = $objectRepository->getUsersWithTime($name ?? '');
 
-        if (is_null($name) || empty($users)) {
+        if (empty($users)) {
             return new Response(
                 'There is no information available about this ticket.',
                 404

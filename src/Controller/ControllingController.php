@@ -117,8 +117,8 @@ class ControllingController extends BaseController
         $username = $service->getUsername($userId);
 
         $filename = strtolower(
-            $year . '_'
-            . str_pad($month, 2, '0', STR_PAD_LEFT)
+            (string) $year . '_'
+            . str_pad((string) $month, 2, '0', STR_PAD_LEFT)
             . '_'
             . str_replace(' ', '-', $username)
         );
@@ -293,7 +293,7 @@ class ControllingController extends BaseController
      */
     protected static function setCellHours(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date)
     {
-        $dateValue = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
+        $dateValue = (float) \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
 
         // Set date value

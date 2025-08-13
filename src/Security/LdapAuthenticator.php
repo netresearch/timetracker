@@ -155,7 +155,11 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey): RedirectResponse
     {
         $user = $token->getUser();
-        $this->logger->info('LdapAuthenticator: onAuthenticationSuccess called.', ['username' => $user->getUsername()]);
+        if ($user instanceof UserInterface) {
+            $this->logger->info('LdapAuthenticator: onAuthenticationSuccess called.', ['username' => $user->getUsername()]);
+        } else {
+            $this->logger->info('LdapAuthenticator: onAuthenticationSuccess called.', ['username' => (string) $user]);
+        }
 
         if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
             $this->logger->debug('Redirecting to target path.', ['path' => $targetPath]);

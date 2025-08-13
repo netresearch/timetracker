@@ -303,7 +303,7 @@ class JiraOAuthApiService
             return;
         }
 
-        if ($entry->getWorklogId() && !$this->doesWorkLogExist($sTicket, $entry->getWorklogId())) {
+        if ($entry->getWorklogId() !== null && !$this->doesWorkLogExist($sTicket, (int) $entry->getWorklogId())) {
             $entry->setWorklogId(null);
         }
 
@@ -350,7 +350,7 @@ class JiraOAuthApiService
             $this->delete(sprintf(
                 'issue/%s/worklog/%d',
                 $sTicket,
-                $entry->getWorklogId()
+                (int) $entry->getWorklogId()
             ));
 
             $entry->setWorklogId(null);
@@ -543,7 +543,7 @@ class JiraOAuthApiService
             }
         }
 
-        return json_decode((string) $response->getBody(), null, 512, JSON_THROW_ON_ERROR);
+        return json_decode((string) ($response?->getBody() ?? ''), null, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -587,12 +587,12 @@ class JiraOAuthApiService
 
     protected function getTokenSecret(): string
     {
-        return $this->user->getTicketSystemAccessTokenSecret($this->ticketSystem);
+        return (string) ($this->user->getTicketSystemAccessTokenSecret($this->ticketSystem) ?? '');
     }
 
     protected function getToken(): string
     {
-        return $this->user->getTicketSystemAccessToken($this->ticketSystem);
+        return (string) ($this->user->getTicketSystemAccessToken($this->ticketSystem) ?? '');
     }
 
     protected function getJiraApiUrl(): string
@@ -627,12 +627,12 @@ class JiraOAuthApiService
 
     protected function getOAuthConsumerSecret(): string
     {
-        return $this->ticketSystem->getOauthConsumerSecret();
+        return (string) ($this->ticketSystem->getOauthConsumerSecret() ?? '');
     }
 
     protected function getOAuthConsumerKey(): string
     {
-        return $this->ticketSystem->getOauthConsumerKey();
+        return (string) ($this->ticketSystem->getOauthConsumerKey() ?? '');
     }
 
     /**

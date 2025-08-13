@@ -34,7 +34,7 @@ class ProjectRepository extends ServiceEntityRepository
     /**
      * @return Project[]
      */
-    public function getGlobalProjects()
+    public function getGlobalProjects(): array
     {
         return $this->findBy(['global' => 1]);
     }
@@ -96,8 +96,8 @@ class ProjectRepository extends ServiceEntityRepository
         }
 
         // Sort projects by name for each customer
-        foreach ($projects as &$project) {
-            usort($project, $this->sortProjectsByName(...));
+        foreach ($projects as &$projectList) {
+            usort($projectList, $this->sortProjectsByName(...));
         }
 
         return $projects;

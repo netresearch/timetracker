@@ -226,7 +226,7 @@ class CrudController extends BaseController
 
             /** @var \App\Repository\ProjectRepository $projectRepo */
             $projectRepo = $doctrine->getRepository(\App\Entity\Project::class);
-            if ($projectFound = $projectRepo->find($request->get('project'))) {
+            if (($projectFound = $projectRepo->find($request->get('project'))) instanceof Project) {
                 $project = $projectFound;
                 if (! $project->getActive()) {
                     $message = $this->translator->trans("This project is inactive and cannot be used for booking.");
@@ -238,7 +238,7 @@ class CrudController extends BaseController
 
             /** @var \App\Repository\CustomerRepository $customerRepo */
             $customerRepo = $doctrine->getRepository(\App\Entity\Customer::class);
-            if ($customer = $customerRepo->find($request->get('customer'))) {
+            if (($customer = $customerRepo->find($request->get('customer'))) instanceof Customer) {
                 if (! $customer->getActive()) {
                     $message = $this->translator->trans("This customer is inactive and cannot be used for booking.");
                     throw new \Exception($message);
@@ -260,7 +260,7 @@ class CrudController extends BaseController
                 /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
                 $ticketSystemRepo = $doctrine->getRepository(\App\Entity\TicketSystem::class);
                 $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
-            } else if ($project instanceof Project) {
+            } elseif ($project instanceof Project) {
                 $ticketSystem = $project->getTicketSystem();
             }
 
@@ -275,7 +275,7 @@ class CrudController extends BaseController
                 // ticekts do not exist for external project tickets booked on internal ticket system
                 // so no need to check for existence
                 // they are created automatically
-                if (!$project->hasInternalJiraProjectKey() && ($request->get('ticket') != '' && !$jiraOAuthApi->doesTicketExist($request->get('ticket')))) {
+                if (!$project->hasInternalJiraProjectKey() && ($request->get('ticket') !== '' && !$jiraOAuthApi->doesTicketExist((string) $request->get('ticket')))) {
                     $message = $request->get('ticket') . ' existiert nicht';
                     throw new \Exception($message);
                 }
@@ -287,10 +287,10 @@ class CrudController extends BaseController
 
             $entry->setTicket(strtoupper(trim((string) ($request->get('ticket') ?: ''))))
                 ->setDescription($request->get('description') ?: '')
-                ->setDay($request->get('date') ?: null)
-                ->setStart($request->get('start') ?: null)
-                ->setEnd($request->get('end') ?: null)
-                ->setInternalJiraTicketOriginalKey($request->get('extTicket') ?: null)
+                ->setDay($request->get('date') ?: date('Y-m-d'))
+                ->setStart($request->get('start') ?: '00:00:00')
+                ->setEnd($request->get('end') ?: '00:00:00')
+                ->setInternalJiraTicketOriginalKey((string) ($request->get('extTicket') ?: ''))
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                 ->calcDuration()
                 ->setSyncedToTicketsystem(false);
@@ -535,7 +535,7 @@ class CrudController extends BaseController
                     }
 
                     // We Skip days without worktime
-                    if (!$workTime) {
+                    if (!isset($workTime) || !$workTime) {
                         $date->add(new \DateInterval('P1D'));
                         continue;
                     }
@@ -549,15 +549,15 @@ class CrudController extends BaseController
                     $startTime = new \DateTime('08:00:00');
                     $endTime = (new \DateTime('08:00:00'))->add($hoursToAdd);
                 } else {
-                    $startTime = new \DateTime($request->get('starttime') ?: null);
-                    $endTime = new \DateTime($request->get('endtime') ?: null);
+                    $startTime = new \DateTime($request->get('starttime') ?: '00:00:00');
+                    $endTime = new \DateTime($request->get('endtime') ?: '00:00:00');
                 }
 
                 $entry = new Entry();
                 $entry->setUser($user)
                     ->setTicket('')
                     ->setDescription($preset->getDescription())
-                    ->setDay($date)
+                    ->setDay($date->format('Y-m-d'))
                     ->setStart($startTime->format('H:i:s'))
                     ->setEnd($endTime->format('H:i:s'))
                     //->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
