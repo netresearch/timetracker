@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
  */
@@ -15,6 +16,7 @@
  * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
  * @link       http://www.netresearch.de
  */
+
 namespace App\Model;
 
 /**

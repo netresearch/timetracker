@@ -297,7 +297,7 @@ class EntryRepository extends ServiceEntityRepository
      * This method retrieves entries based on working days rather than calendar days.
      * It converts the requested number of working days to calendar days using getCalendarDaysByWorkDays().
      *
-     * @throws \Doctrine\DBAL\Exception - If DBAL execution fails
+     * @throws \Doctrine\DBAL\Exception
      */
     public function getEntriesByUser(int $userId, int $days = 3, bool $showFuture = true): array
     {
