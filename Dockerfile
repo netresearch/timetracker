@@ -10,7 +10,7 @@ RUN set -ex \
    libzip-dev \
    libpng-dev \
    libxml2-dev \
-   
+
    libldap2-dev \
    libjpeg62-turbo-dev \
    libfreetype6-dev \
