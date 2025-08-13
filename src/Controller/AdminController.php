@@ -171,7 +171,12 @@ class AdminController extends BaseController
         $additionalInformationFromExternal = (bool) ($request->get('additionalInformationFromExternal') ?: 0);
         /** @var \App\Repository\ProjectRepository $projectRepository */
         $projectRepository = $this->doctrineRegistry->getRepository(Project::class);
-        $internalJiraTicketSystem = (string) $request->get('internalJiraTicketSystem', '');
+        $internalJiraTicketSystem = $request->get('internalJiraTicketSystem');
+        if ($internalJiraTicketSystem === '' || $internalJiraTicketSystem === null) {
+            $internalJiraTicketSystem = null;
+        } else {
+            $internalJiraTicketSystem = (string) $internalJiraTicketSystem;
+        }
         $internalJiraProjectKey   = (string) $request->get('internalJiraProjectKey', '');
 
         if ($projectId !== 0) {
@@ -286,8 +291,10 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             if ($project) {
                 $em->remove($project);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
             }
-            $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
@@ -576,8 +583,10 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             if ($user) {
                 $em->remove($user);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
             }
-            $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
@@ -610,8 +619,10 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             if ($preset) {
                 $em->remove($preset);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
             }
-            $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
@@ -782,8 +793,10 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             if ($ticketSystem) {
                 $em->remove($ticketSystem);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
             }
-            $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
@@ -878,8 +891,10 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             if ($activity) {
                 $em->remove($activity);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
             }
-            $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
@@ -982,8 +997,10 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             if ($team) {
                 $em->remove($team);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
             }
-            $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
@@ -1273,8 +1290,10 @@ class AdminController extends BaseController
             $em = $doctrine->getManager();
             if ($contract) {
                 $em->remove($contract);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
             }
-            $em->flush();
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
