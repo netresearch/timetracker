@@ -6,16 +6,19 @@ ENV APP_DEBUG=0
 RUN set -ex \
    && apt-get update -y \
    && apt-get upgrade -y \
-   && apt-get install -y \
-   libzip4 \
+   && apt-get install -y --no-install-recommends \
    libzip-dev \
-   libpng-tools \
-   libpng16-16 \
    libpng-dev \
    libxml2-dev \
+   
    libldap2-dev \
+   libjpeg62-turbo-dev \
+   libfreetype6-dev \
+   libicu-dev \
    unzip \
    zlib1g-dev \
+   && docker-php-ext-configure gd --with-jpeg --with-freetype \
+   && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ \
    && docker-php-ext-install \
    opcache \
    pdo_mysql \
@@ -31,6 +34,9 @@ RUN set -ex \
    libxml2-dev \
    zlib1g-dev \
    libldap2-dev \
+   libjpeg62-turbo-dev \
+   libfreetype6-dev \
+   libicu-dev \
    && apt-get -y clean \
    && rm -rf /usr/src/* \
    && rm -rf /tmp/* \

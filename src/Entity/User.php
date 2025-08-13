@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Helper\LocalizationHelper;
-
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -15,7 +14,6 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 class User implements UserInterface
 {
-
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
