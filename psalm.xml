@@ -12,10 +12,10 @@
         <directory name="src" />
         <directory name="bin" />
         <directory name="config" />
-        <directory name="tests" />
         <ignoreFiles>
             <directory name="vendor" />
             <directory name="var" />
+            <directory name="tests" />
         </ignoreFiles>
     </projectFiles>
 
