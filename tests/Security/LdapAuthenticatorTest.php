@@ -28,6 +28,7 @@ class LdapAuthenticatorTest extends TestCase
         $logger = $this->getMockBuilder(LoggerInterface::class)->disableOriginalConstructor()->getMock();
         /** @var ParameterBagInterface&\PHPUnit\Framework\MockObject\MockObject $params */
         $params = $params ?? $this->getMockBuilder(ParameterBagInterface::class)->disableOriginalConstructor()->getMock();
+        /** @var LdapClientService&\PHPUnit\Framework\MockObject\MockObject $ldapClient */
         $ldapClient = $this->getMockBuilder(LdapClientService::class)->disableOriginalConstructor()->getMock();
         return new LdapAuthenticator($em, $router, $params, $logger, $ldapClient);
     }
@@ -57,11 +58,9 @@ class LdapAuthenticatorTest extends TestCase
         // Provide a session to avoid null in TargetPathTrait
         $session = new \Symfony\Component\HttpFoundation\Session\Session(new \Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage());
         $request->setSession($session);
-        /** @var TokenInterface&\PHPUnit\Framework\MockObject\MockObject $token */
-        $token = $this->getMockBuilder(TokenInterface::class)->disableOriginalConstructor()->getMock();
         $user = $this->getMockBuilder(\App\Entity\User::class)->disableOriginalConstructor()->getMock();
         $user->method('getUsername')->willReturn('dev');
-        $token->method('getUser')->willReturn($user);
+        $token = new \Tests\Fixtures\TokenStub($user);
         $response = $auth->onAuthenticationSuccess($request, $token, 'main');
         $this->assertSame(302, $response->getStatusCode());
     }
