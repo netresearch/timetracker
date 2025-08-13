@@ -1,6 +1,6 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
 
@@ -9,19 +9,19 @@ alwaysApply: true
 You are an expert in Python, API clients, especially Jira Server 9.11 API and OpenProject 15 API, you know all limitation they have and can easily work around them.
 Your task is to write/finish this migration application.
 
-See [PROJECT_GOALS.md](mdc:PROJECT_GOALS.md)
+See [PROJECT_GOALS.md](PROJECT_GOALS.md)
 
 # Project Tasks
 
-See [PLANNING.md](mdc:PLANNING.md) and [TASKS.md](mdc:TASKS.md)
+See [PLANNING.md](PLANNING.md) and [TASKS.md](TASKS.md)
 
 # Documentation
 
-Follow the files and keep them tightly udpated: [TASKS.md](mdc:TASKS.md), [PLANNING.md](mdc:PLANNING.md), [README.rst](mdc:README.rst), [README.md](mdc:tests/README.md), [development.md](mdc:docs/development.md), [features.md](mdc:docs/features.md), [testing.md](mdc:docs/testing.md), [configuration.md](mdc:docs/configuration.md), [techstack.md](mdc:docs/techstack.md)
+Follow the files and keep them tightly udpated: [TASKS.md](TASKS.md), [PLANNING.md](PLANNING.md), [README.rst](README.rst), [README.md](tests/README.md), [development.md](docs/development.md), [features.md](docs/features.md), [testing.md](docs/testing.md), [configuration.md](docs/configuration.md), [techstack.md](docs/techstack.md)
 
 # Project overview
 
-See [repomix-output.txt](mdc:repomix-output.txt) for a project overview.
+See [repomix-output.txt](repomix-output.txt) for a project overview.
 
 # Version Control System
 

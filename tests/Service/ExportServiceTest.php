@@ -8,6 +8,7 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Repository\EntryRepository;
+use App\Helper\JiraOAuthApi;
 use App\Service\ExportService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
@@ -27,15 +28,43 @@ class ExportServiceTest extends TestCase
 
         /** @var ManagerRegistry&\PHPUnit\Framework\MockObject\MockObject $doctrine */
         $doctrine = $this->createMock(ManagerRegistry::class);
-        $doctrine->method('getRepository')->willReturn($repo);
+
+        // Provide appropriate repositories based on requested class
+        $currentUser = new User();
+        $userRepo = $this->getMockBuilder(\Doctrine\Persistence\ObjectRepository::class)->getMock();
+        $userRepo->method('find')->willReturn($currentUser);
+        $doctrine->method('getRepository')->willReturnCallback(function (string $class) use ($repo, $userRepo) {
+            if ($class === \App\Entity\Entry::class) {
+                return $repo;
+            }
+            if ($class === \App\Entity\User::class) {
+                return $userRepo;
+            }
+            return $repo;
+        });
         $doctrine->method('getManager');
 
         /** @var RouterInterface&\PHPUnit\Framework\MockObject\MockObject $router */
         $router = $this->createMock(RouterInterface::class);
 
-        $jiraApi = new class($searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) {
-            public function __construct(private array $keys, private array $labels, private array $summaries) {}
-            public function searchTicket(string $jql, array $fields, string $max): \stdClass {
+        // Create a lightweight stub that satisfies the JiraOAuthApi return type
+        $dummyUser = $currentUser;
+        $dummyTs = new TicketSystem();
+        $router->method('generate')->willReturn('/oauth-callback');
+        $jiraApi = new class ($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
+            public function __construct(
+                User $user,
+                TicketSystem $ticketSystem,
+                ManagerRegistry $managerRegistry,
+                \Symfony\Component\Routing\RouterInterface $router,
+                private array $keys,
+                private array $labels,
+                private array $summaries
+            ) {
+                parent::__construct($user, $ticketSystem, $managerRegistry, $router);
+            }
+            public function searchTicket(string $jql, array $fields, int $limit = 1): object
+            {
                 $issues = [];
                 foreach ($this->keys as $key) {
                     $issue = (object) [
@@ -91,5 +120,3 @@ class ExportServiceTest extends TestCase
         $this->assertNull($result[1]->getTicketTitle());
     }
 }
-
-
