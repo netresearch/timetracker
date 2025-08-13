@@ -78,7 +78,10 @@ Encore
     })
 
     // enables Sass/SCSS support
-    .enableSassLoader()
+    .enableSassLoader(options => {}, {
+        // Prefer dart-sass instead of deprecated node-sass
+        implementation: require('sass')
+    })
 
     // uncomment if you use TypeScript
     //.enableTypeScriptLoader()
