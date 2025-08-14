@@ -60,12 +60,13 @@ class ProjectRepository extends ServiceEntityRepository
 
             // Restructure customer-specific projects
             foreach ($userProjects as $userProject) {
-                if ($customer['customer']['id'] === $userProject['project']['customer']) {
+                $up = $userProject['project'];
+                if (is_array($up) && ($customer['customer']['id'] === ($up['customer'] ?? null))) {
                     $projects[$customer['customer']['id']][] = [
-                        'id'     => $userProject['project']['id'],
-                        'name'   => $userProject['project']['name'],
-                        'jiraId' => $userProject['project']['jiraId'],
-                        'active' => $userProject['project']['active'],
+                        'id'     => (int) ($up['id'] ?? 0),
+                        'name'   => (string) ($up['name'] ?? ''),
+                        'jiraId' => $up['jiraId'] ?? null,
+                        'active' => (bool) ($up['active'] ?? false),
                     ];
                 }
             }
@@ -83,7 +84,9 @@ class ProjectRepository extends ServiceEntityRepository
 
         // Add each customer-specific project to the all-projects-list
         foreach ($userProjects as $userProject) {
-            $projects['all'][] = $userProject['project'];
+            if (isset($userProject['project']) && is_array($userProject['project'])) {
+                $projects['all'][] = $userProject['project'];
+            }
         }
 
         // Add each global project to the all-projects-list
@@ -97,7 +100,6 @@ class ProjectRepository extends ServiceEntityRepository
 
         // Sort projects by name for each customer
         foreach ($projects as &$projectList) {
-            // Ensure we sort only lists of arrays
             if (is_array($projectList)) {
                 usort($projectList, $this->sortProjectsByName(...));
             }
