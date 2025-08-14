@@ -266,7 +266,7 @@ class Entry extends Base
      */
     public function getAccountId(): int
     {
-        return (int) (is_object($this->getAccount()) ? $this->getAccount()->getId() : 0);
+        return is_object($this->getAccount()) ? (int) $this->getAccount()->getId() : 0;
     }
 
     /**
