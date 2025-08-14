@@ -53,7 +53,7 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      * @return array
      */
     /**
-     * @return array<int, \Twig\TwigFilter>
+     * @return array<int, \Twig\TwigFilter>|array<string, \Twig\TwigFilter>
      */
     public function getFilters(): array
     {

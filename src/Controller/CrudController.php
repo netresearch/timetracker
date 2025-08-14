@@ -745,9 +745,6 @@ class CrudController extends BaseController
         if (!$ticketSystem instanceof TicketSystem) {
             return;
         }
-        if (!$ticketSystem instanceof TicketSystem) {
-            return null;
-        }
         $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
         $jiraOAuthApi->updateEntryJiraWorkLog($entry);
     }
