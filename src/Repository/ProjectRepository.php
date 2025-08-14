@@ -34,12 +34,12 @@ class ProjectRepository extends ServiceEntityRepository
 		return $list;
 	}
 
-	/**
-	 * Returns an array structure with keys of customer IDs and an "all" key.
-	 * Values are arrays of associative project arrays (id, name, jiraId, active).
-	 *
-	 * @return array<string|int, array<int, array{id:int,name:string,jiraId:mixed,active:bool}>>
-	 */
+    /**
+     * Returns an array structure with keys of customer IDs and an "all" key.
+     * Values are arrays of associative project arrays (id, name, jiraId, active).
+     *
+     * @return array
+     */
 	public function getProjectStructure(int $userId, array $customers): array
 	{
 		$globalProjects = $this->getGlobalProjects();
@@ -88,12 +88,12 @@ class ProjectRepository extends ServiceEntityRepository
 			usort($projectList, $this->sortProjectsByName(...));
 		}
 
-		return $projects;
+                return $projects;
 	}
 
-	/**
-	 * @return array<int, array{project: array{id:int,name:string,jiraId:mixed,active?:bool,customer?:int}}>
-	 */
+    /**
+     * @return array
+     */
 	public function getProjectsByUser(int $userId, int $customerId = 0): array
 	{
 		$queryBuilder = $this->createQueryBuilder('project')
