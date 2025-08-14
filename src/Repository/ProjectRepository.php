@@ -97,7 +97,10 @@ class ProjectRepository extends ServiceEntityRepository
 
         // Sort projects by name for each customer
         foreach ($projects as &$projectList) {
-            usort($projectList, $this->sortProjectsByName(...));
+            // Ensure we sort only lists of arrays
+            if (is_array($projectList)) {
+                usort($projectList, $this->sortProjectsByName(...));
+            }
         }
 
         return $projects;

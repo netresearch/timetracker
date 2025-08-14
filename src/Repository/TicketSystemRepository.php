@@ -36,6 +36,7 @@ class TicketSystemRepository extends ServiceEntityRepository
 
     public function findOneByName(string $name): ?TicketSystem
     {
-        return $this->findOneBy(['name' => $name]);
+        $result = $this->findOneBy(['name' => $name]);
+        return $result instanceof TicketSystem ? $result : null;
     }
 }

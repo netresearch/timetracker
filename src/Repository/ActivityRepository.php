@@ -39,6 +39,7 @@ class ActivityRepository extends ServiceEntityRepository
 
     public function findOneByName(string $name): ?Activity
     {
-        return $this->findOneBy(['name' => $name]);
+        $result = $this->findOneBy(['name' => $name]);
+        return $result instanceof Activity ? $result : null;
     }
 }

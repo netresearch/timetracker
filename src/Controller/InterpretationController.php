@@ -563,7 +563,7 @@ class InterpretationController extends BaseController
 
         $query_params = [];
         if ($request->getQueryString()) {
-            parse_str($request->getQueryString(), $query_params);
+            parse_str((string) $request->getQueryString(), $query_params);
             unset($query_params['page']);
         }
 

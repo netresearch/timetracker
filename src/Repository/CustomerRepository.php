@@ -77,6 +77,7 @@ class CustomerRepository extends ServiceEntityRepository
 
     public function findOneByName(string $name): ?Customer
     {
-        return $this->findOneBy(['name' => $name]);
+        $result = $this->findOneBy(['name' => $name]);
+        return $result instanceof Customer ? $result : null;
     }
 }

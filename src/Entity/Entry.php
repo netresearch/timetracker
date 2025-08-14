@@ -398,7 +398,7 @@ class Entry extends Base
         if (!$start instanceof DateTime) {
             $start = new DateTime($start);
             [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
-            $start->setDate($year, $month, $day);
+            $start->setDate((int) $year, (int) $month, (int) $day);
         }
 
         $this->start = $start;
@@ -426,7 +426,7 @@ class Entry extends Base
         if (!$end instanceof DateTime) {
             $end = new DateTime($end);
             [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
-            $end->setDate($year, $month, $day);
+            $end->setDate((int) $year, (int) $month, (int) $day);
         }
 
         $this->end = $end;
@@ -623,7 +623,7 @@ class Entry extends Base
             $end = new DateTime($this->getEnd()->format('H:i'));
 
             $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
-            $this->setDuration(round($difference));
+            $this->setDuration((int) round($difference));
         } else {
             $this->setDuration(0);
         }

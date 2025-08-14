@@ -193,13 +193,18 @@ class Project extends Base
     /**
      * Sets the id internal Jira ticket system.
      *
-     * @param string $nInternalJiraTicketSystem the id of internal jira ticketsystem
+     * @param string|null $nInternalJiraTicketSystem the id of internal jira ticketsystem
      *
      * @return $this
      */
     public function setInternalJiraTicketSystem($nInternalJiraTicketSystem): static
     {
-        $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
+        // Normalize empty string to null for nullable DB column
+        if ($nInternalJiraTicketSystem === '' || $nInternalJiraTicketSystem === null) {
+            $this->internalJiraTicketSystem = null;
+        } else {
+            $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
+        }
 
         return $this;
     }
