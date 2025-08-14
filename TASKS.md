@@ -12,6 +12,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Task: Test Service A
         *   `[ ]` Task: Test Service B
         *   `[ ]` ... (add specific services as identified)
+        *   `[x]` Task: Test `TicketService` (format/prefix)
     *   `[ ]` **Write Integration Tests:** Add integration tests for interactions between key components (e.g., Service + Repository). (Estimate: Task per interaction, 0.5-1h each)
     *   `[ ]` **Write Functional Tests for Critical Routes:** Identify critical user-facing routes and add functional tests to ensure basic functionality. (Estimate: Task per route/feature, 0.5-1h each)
         *   `[ ]` Task: Test Route X
@@ -86,7 +87,9 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 *   **Tasks:**
     *   `[x]` **Run PHPStan:** Execute `docker compose run --rm app composer analyze` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
     *   `[ ]` **Run Psalm:** Execute `docker compose run --rm app composer psalm` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
-    *   `[ ]` **Run CS Check/Fix:** Execute `docker compose run --rm app composer cs-check` and `docker compose run --rm app composer cs-fix` to ensure PSR-12 compliance. (Estimate: 0.5h)
+        *   `[x]` Reduce issues in controllers (admin/crud/default) and integration layer (JiraOAuthApiService)
+        *   `[ ]` Tidy repository return types and static signatures (remaining)
+    *   `[x]` **Run CS Check/Fix:** Execute `docker compose run --rm app composer cs-check` and `docker compose run --rm app composer cs-fix` to ensure PSR-12 compliance. (Estimate: 0.5h)
 
 ## Phase 2: Upgrade to Symfony 5.4
 

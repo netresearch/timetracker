@@ -34,4 +34,4 @@ Each major version upgrade will follow a similar pattern:
 
 ## Detailed Tasks
 
-Specific, actionable tasks for each phase are detailed in `TASK.md`.
+Specific, actionable tasks for each phase are detailed in `TASKS.md`.
