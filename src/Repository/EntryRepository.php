@@ -402,6 +402,9 @@ class EntryRepository extends ServiceEntityRepository
     public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
         $entry = $this->find($entryId);
+        if (!$entry instanceof Entry) {
+            return $data;
+        }
 
         $connection = $this->getEntityManager()->getConnection();
 
@@ -497,6 +500,7 @@ class EntryRepository extends ServiceEntityRepository
         $connection = $this->getEntityManager()->getConnection();
         $params = ['userId' => $userId];
 
+        $sql = [];
         $sql['select'] = "SELECT COUNT(id) AS count, SUM(duration) AS duration";
         $sql['from'] = "FROM entries";
         // Modified: Use parameter binding for user ID

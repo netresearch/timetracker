@@ -54,6 +54,7 @@ class TeamRepository extends ServiceEntityRepository
 
     public function findOneByName(string $name): ?Team
     {
-        return $this->findOneBy(['name' => $name]);
+        $result = $this->findOneBy(['name' => $name]);
+        return $result instanceof Team ? $result : null;
     }
 }
