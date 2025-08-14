@@ -52,7 +52,7 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      *
      * @return array
      */
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
             'nr_array_translator' => new \Twig\TwigFilter('nr_array_translator', $this->filterArray(...)),

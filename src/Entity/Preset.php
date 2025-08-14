@@ -119,9 +119,9 @@ class Preset extends Base
      *
      * @return integer $activityId
      */
-    public function getActivityId()
+    public function getActivityId(): int
     {
-        return $this->getActivity() ? $this->getActivity()->getId() : 0;
+        return $this->getActivity() ? (int) $this->getActivity()->getId() : 0;
     }
 
 
