@@ -124,6 +124,9 @@ class CrudController extends BaseController
             return;
         }
 
+        if (!$ticketSystem instanceof TicketSystem) {
+            return;
+        }
         $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
         $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
     }
@@ -524,6 +527,7 @@ class CrudController extends BaseController
                 }
 
                 if ($request->get('usecontract')) {
+                    $contractHoursArray = $contractHoursArray ?? [];
                     foreach ($contractHoursArray as $contractHourArray) {
 
                         // we can have multiple contracts per user with different date intervals
@@ -738,6 +742,9 @@ class CrudController extends BaseController
             $entry->setWorklogId(null);
         }
 
+        if (!$ticketSystem instanceof TicketSystem) {
+            return;
+        }
         $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
         $jiraOAuthApi->updateEntryJiraWorkLog($entry);
     }
