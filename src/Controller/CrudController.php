@@ -763,6 +763,17 @@ class CrudController extends BaseController
         Entry $entry,
         TicketSystem $ticketSystem = null
     ): mixed {
+        if (!$ticketSystem instanceof TicketSystem) {
+            $project = $entry->getProject();
+            if ($project instanceof Project) {
+                $ticketSystem = $project->getTicketSystem();
+            }
+        }
+
+        if (!$ticketSystem instanceof TicketSystem) {
+            throw new JiraApiException('No ticket system configured for project');
+        }
+
         $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $ticketSystem);
 
         return $jiraOAuthApi->createTicket($entry);
