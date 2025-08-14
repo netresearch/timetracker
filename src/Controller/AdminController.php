@@ -465,8 +465,12 @@ class AdminController extends BaseController
                 ->find($id);
 
             $em = $doctrine->getManager();
-            $em->remove($customer);
-            $em->flush();
+            if ($customer) {
+                $em->remove($customer);
+                $em->flush();
+            } else {
+                throw new \RuntimeException('Already deleted');
+            }
         } catch (\Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
@@ -677,6 +681,10 @@ class AdminController extends BaseController
         }
 
         try {
+            if (!$customer || !$project || !$activity) {
+                throw new \Exception('Please choose a customer, a project and an activity.');
+            }
+
             $preset->setName($name)
                 ->setCustomer($customer)
                 ->setProject($project)

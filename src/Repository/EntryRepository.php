@@ -416,7 +416,11 @@ class EntryRepository extends ServiceEntityRepository
             0 as estimation";
         $sql['customer']['from'] = "FROM entries e";
         $sql['customer']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
-        $sql['customer']['where_c'] = "WHERE e.customer_id = " . (int) $entry->getCustomer()->getId();
+        if ($entry->getCustomer()) {
+            $sql['customer']['where_c'] = "WHERE e.customer_id = " . (int) $entry->getCustomer()->getId();
+        } else {
+            $sql['customer']['where_c'] = '';
+        }
 
         // project total / project total by current user
         $sql['project']['select'] = "SELECT 'project' AS scope,
@@ -428,8 +432,8 @@ class EntryRepository extends ServiceEntityRepository
         $sql['project']['from'] = "FROM entries e";
         $sql['project']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
         $sql['project']['join_p'] = "LEFT JOIN projects p ON p.id=e.project_id";
-        $sql['project']['where_c'] = "WHERE e.customer_id = " . (int) $entry->getCustomer()->getId();
-        $sql['project']['where_p'] = "AND e.project_id = " . (int) $entry->getProject()->getId();
+        $sql['project']['where_c'] = $entry->getCustomer() ? ("WHERE e.customer_id = " . (int) $entry->getCustomer()->getId()) : '';
+        $sql['project']['where_p'] = $entry->getProject() ? ("AND e.project_id = " . (int) $entry->getProject()->getId()) : '';
 
         // activity total / activity total by current user
         if (is_object($entry->getActivity())) {
@@ -443,14 +447,14 @@ class EntryRepository extends ServiceEntityRepository
             $sql['activity']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
             $sql['activity']['join_p'] = "LEFT JOIN projects p ON p.id=e.project_id";
             $sql['activity']['join_a'] = "LEFT JOIN activities a ON a.id=e.activity_id";
-            $sql['activity']['where_c'] = "WHERE e.customer_id = " . (int) $entry->getCustomer()->getId();
-            $sql['activity']['where_p'] = "AND e.project_id = " . (int) $entry->getProject()->getId();
-            $sql['activity']['where_a'] = "AND e.activity_id = " . (int) $entry->getActivity()->getId();
+            $sql['activity']['where_c'] = $entry->getCustomer() ? ("WHERE e.customer_id = " . (int) $entry->getCustomer()->getId()) : '';
+            $sql['activity']['where_p'] = $entry->getProject() ? ("AND e.project_id = " . (int) $entry->getProject()->getId()) : '';
+            $sql['activity']['where_a'] = $entry->getActivity() ? ("AND e.activity_id = " . (int) $entry->getActivity()->getId()) : '';
         } else {
             $sql['activity']['select'] = "SELECT 'activity' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own";
         }
 
-        if ('' != $entry->getTicket()) {
+        if ($entry->getTicket() !== null && $entry->getTicket() !== '') {
             // ticket total / ticket total by current user
             $sql['ticket']['select'] = "SELECT 'ticket' AS scope,
                 ticket AS name,

@@ -665,6 +665,10 @@ class CrudController extends BaseController
         }
 
         $jiraId = TicketHelper::getPrefix($ticket);
+        if ($jiraId === null) {
+            $message = $this->translator->trans("The ticket's format is not recognized.");
+            throw new \Exception($message);
+        }
         $projectIds = explode(",", (string) $project->getJiraId());
 
         foreach ($projectIds as $projectId) {
@@ -801,10 +805,14 @@ class CrudController extends BaseController
 
 
         // get ticket system for internal work log
-        /** @var TicketSystem $internalJiraTicketSystem */
+        /** @var TicketSystem|null $internalJiraTicketSystem */
         $internalJiraTicketSystem = $this->getDoctrine()
                 ->getRepository(\App\Entity\TicketSystem::class)
                 ->find($internalJiraTicketSystem);
+
+        if (!$internalJiraTicketSystem instanceof TicketSystem) {
+            return;
+        }
 
         // check if issue exist
         $jiraOAuthApi = $this->jiraApiFactory->create($entry->getUser(), $internalJiraTicketSystem);
@@ -829,6 +837,9 @@ class CrudController extends BaseController
         $entry->setInternalJiraTicketOriginalKey(
             $strTicket
         );
+        if (!is_object($issue) || !property_exists($issue, 'key')) {
+            throw new \RuntimeException('Invalid issue response');
+        }
         $entry->setTicket($issue->key);
 
         $oldEntry->setTicket($issue->key);

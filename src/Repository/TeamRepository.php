@@ -26,7 +26,9 @@ class TeamRepository extends ServiceEntityRepository
      */
     public function getAllTeams(): array
     {
-        return parent::findBy([], ['name' => 'ASC']);
+        /** @var array $result */
+        $result = parent::findBy([], ['name' => 'ASC']);
+        return $result;
     }
 
     /**
