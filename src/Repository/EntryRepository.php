@@ -77,8 +77,8 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Calculate calendar days from given work days
-        $weeks = floor($workingDays / 5);
-        $restDays = ($workingDays) % 5;
+        $weeks = (int) floor($workingDays / 5);
+        $restDays = $workingDays % 5;
 
         if ($restDays == 0) {
             // No remaining days, just return full weeks * 7
@@ -99,13 +99,13 @@ class EntryRepository extends ServiceEntityRepository
             default: // Monday to Friday
                 // If the span of restDays crosses the *previous* weekend when counting back from today
                 // (e.g., today is Tuesday (2) and restDays is 2, it includes Mon, Sun, Sat)
-                if ($dayOfWeek <= $restDays) { // Check if dayOfWeek index (0-6) is less than or equal to remaining days (1-4)
+                if ($dayOfWeek <= $restDays) { // Ensure crossing the weekend
                     $restDays += 2; // Add Saturday and Sunday
                 }
                 break;
         }
 
-        return (int) (($weeks * 7) + $restDays);
+        return ($weeks * 7) + $restDays;
     }
 
 
@@ -419,7 +419,7 @@ class EntryRepository extends ServiceEntityRepository
             0 as estimation";
         $sql['customer']['from'] = "FROM entries e";
         $sql['customer']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
-        if ($entry->getCustomer()) {
+        if (null !== $entry->getCustomer()) {
             $sql['customer']['where_c'] = "WHERE e.customer_id = " . (int) $entry->getCustomer()->getId();
         } else {
             $sql['customer']['where_c'] = '';
@@ -435,11 +435,11 @@ class EntryRepository extends ServiceEntityRepository
         $sql['project']['from'] = "FROM entries e";
         $sql['project']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
         $sql['project']['join_p'] = "LEFT JOIN projects p ON p.id=e.project_id";
-        $sql['project']['where_c'] = $entry->getCustomer() ? ("WHERE e.customer_id = " . (int) $entry->getCustomer()->getId()) : '';
-        $sql['project']['where_p'] = $entry->getProject() ? ("AND e.project_id = " . (int) $entry->getProject()->getId()) : '';
+        $sql['project']['where_c'] = null !== $entry->getCustomer() ? ("WHERE e.customer_id = " . (int) $entry->getCustomer()->getId()) : '';
+        $sql['project']['where_p'] = null !== $entry->getProject() ? ("AND e.project_id = " . (int) $entry->getProject()->getId()) : '';
 
         // activity total / activity total by current user
-        if (is_object($entry->getActivity())) {
+        if (null !== $entry->getActivity()) {
             $sql['activity']['select'] = "SELECT 'activity' AS scope,
                 CONCAT(a.name) AS name,
                 COUNT(e.id) AS entries,
@@ -450,9 +450,9 @@ class EntryRepository extends ServiceEntityRepository
             $sql['activity']['join_c'] = "LEFT JOIN customers c ON c.id = e.customer_id";
             $sql['activity']['join_p'] = "LEFT JOIN projects p ON p.id=e.project_id";
             $sql['activity']['join_a'] = "LEFT JOIN activities a ON a.id=e.activity_id";
-            $sql['activity']['where_c'] = $entry->getCustomer() ? ("WHERE e.customer_id = " . (int) $entry->getCustomer()->getId()) : '';
-            $sql['activity']['where_p'] = $entry->getProject() ? ("AND e.project_id = " . (int) $entry->getProject()->getId()) : '';
-            $sql['activity']['where_a'] = $entry->getActivity() ? ("AND e.activity_id = " . (int) $entry->getActivity()->getId()) : '';
+            $sql['activity']['where_c'] = null !== $entry->getCustomer() ? ("WHERE e.customer_id = " . (int) $entry->getCustomer()->getId()) : '';
+            $sql['activity']['where_p'] = null !== $entry->getProject() ? ("AND e.project_id = " . (int) $entry->getProject()->getId()) : '';
+            $sql['activity']['where_a'] = null !== $entry->getActivity() ? ("AND e.activity_id = " . (int) $entry->getActivity()->getId()) : '';
         } else {
             $sql['activity']['select'] = "SELECT 'activity' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own";
         }

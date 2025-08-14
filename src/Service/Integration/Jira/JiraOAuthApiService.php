@@ -314,7 +314,7 @@ class JiraOAuthApiService
         ];
 
         if ($entry->getWorklogId()) {
-            $workLogId = $entry->getWorklogId() ?? 0;
+            $workLogId = (int) $entry->getWorklogId();
             $workLog = $this->put(
                 sprintf('issue/%s/worklog/%d', $sTicket, $workLogId),
                 $arData
@@ -526,7 +526,6 @@ class JiraOAuthApiService
             ];
         }
 
-        $response = null;
         try {
             $response = $this->getClient()->request($method, $url, $additionalParameter);
         } catch (GuzzleException $guzzleException) {
@@ -545,7 +544,14 @@ class JiraOAuthApiService
             }
         }
 
-        return json_decode((string) ($response?->getBody() ?? ''), null, 512, JSON_THROW_ON_ERROR);
+        if (!isset($response)) {
+            throw new JiraApiException('No response from Jira API', 500);
+        }
+        $decoded = json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
+        if (!is_object($decoded)) {
+            throw new JiraApiException('Unexpected non-object response from Jira API', 500);
+        }
+        return $decoded;
     }
 
     /**
