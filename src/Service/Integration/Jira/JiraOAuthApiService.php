@@ -627,12 +627,12 @@ class JiraOAuthApiService
 
     protected function getOAuthConsumerSecret(): string
     {
-        return (string) ($this->ticketSystem->getOauthConsumerSecret() ?? '');
+        return $this->ticketSystem->getOauthConsumerSecret() ?? '';
     }
 
     protected function getOAuthConsumerKey(): string
     {
-        return (string) ($this->ticketSystem->getOauthConsumerKey() ?? '');
+        return $this->ticketSystem->getOauthConsumerKey() ?? '';
     }
 
     /**

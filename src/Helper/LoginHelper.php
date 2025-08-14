@@ -37,10 +37,7 @@ class LoginHelper
 
     private static function getCookieData(): false|array
     {
-        // $_COOKIE is always an array in PHP, but keep the guard for safety in tests/mocks
-        if (!is_array($_COOKIE)) {
-            return false;
-        }
+        // $_COOKIE is always an array in PHP; keep as-is for BC with older code/tests
 
         if (!array_key_exists(self::COOKIE_NAME, $_COOKIE)) {
             return false;
