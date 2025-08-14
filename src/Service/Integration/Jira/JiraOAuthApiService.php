@@ -350,7 +350,7 @@ class JiraOAuthApiService
             $this->delete(sprintf(
                 'issue/%s/worklog/%d',
                 $sTicket,
-                $entry->getWorklogId() ?? 0
+                (int) ($entry->getWorklogId() ?? 0)
             ));
 
             $entry->setWorklogId(null);
