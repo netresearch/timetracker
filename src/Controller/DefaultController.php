@@ -530,7 +530,7 @@ class DefaultController extends BaseController
             );
         }
 
-        $time['total_time']['time'] = 0;
+        $time = ['total_time' => ['time' => 0]];
 
         foreach ($activities as $activity) {
             $total = $activity['total_time'];
