@@ -314,7 +314,7 @@ class JiraOAuthApiService
         ];
 
         if ($entry->getWorklogId()) {
-            $workLogId = (int) ($entry->getWorklogId() ?? 0);
+            $workLogId = $entry->getWorklogId() ?? 0;
             $workLog = $this->put(
                 sprintf('issue/%s/worklog/%d', $sTicket, $workLogId),
                 $arData
@@ -348,7 +348,7 @@ class JiraOAuthApiService
         }
 
         try {
-            $workLogId = (int) ($entry->getWorklogId() ?? 0);
+            $workLogId = $entry->getWorklogId() ?? 0;
             $this->delete(sprintf(
                 'issue/%s/worklog/%d',
                 $sTicket,
