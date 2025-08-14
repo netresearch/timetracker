@@ -110,7 +110,7 @@ class LdapAuthenticator extends AbstractFormLoginAuthenticator
                 $teamRepo = $this->entityManager->getRepository(Team::class);
                 foreach ($ldapClient->getTeams() as $teamname) {
                     $team = $teamRepo->findOneBy(['name' => $teamname]);
-                    if ($team) {
+                    if ($team instanceof Team) {
                         $newUser->addTeam($team);
                         $this->logger->debug('Assigning team to new user.', ['username' => $username, 'team' => $teamname]);
                     } else {
