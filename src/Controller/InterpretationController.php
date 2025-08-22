@@ -341,15 +341,18 @@ class InterpretationController extends BaseController
 
         $prepared = array_map(
             static function (array $t): array {
-                return [
+                $row = [
                     'id' => $t['id'] ?? null,
                     'name' => $t['name'],
-                    'day' => $t['day'] ?? null,
                     'hours' => (int) $t['hours'],
                     'quota' => $t['quota'] ?? 0,
                 ];
+                if (isset($t['day']) && $t['day'] !== null) {
+                    $row['day'] = (string) $t['day'];
+                }
+                return $row;
             },
-            array_values($times)
+            $times
         );
 
         return new JsonResponse($this->normalizeData(array_reverse($prepared)));

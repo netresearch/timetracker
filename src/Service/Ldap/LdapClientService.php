@@ -387,8 +387,9 @@ class LdapClientService
                     return;
                 }
 
+                /** @var array<string, string> $arMapping */
                 foreach ($arMapping as $group => $teamName) {
-                    if (str_contains(strtolower((string) $dn), 'ou=' . strtolower((string) $group))) {
+                    if (str_contains(strtolower($dn), 'ou=' . strtolower($group))) {
                         $this->teams[] = (string) $teamName;
                         if ($this->logger instanceof \Psr\Log\LoggerInterface) {
                             $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
