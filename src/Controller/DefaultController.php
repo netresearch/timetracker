@@ -124,7 +124,6 @@ class DefaultController extends BaseController
                 'total' => 0,
                 'own' => 0,
                 'estimation' => 0,
-                'quota' => 0,
             ],
             'project' => [
                 'scope' => 'project',
@@ -133,7 +132,6 @@ class DefaultController extends BaseController
                 'total' => 0,
                 'own' => 0,
                 'estimation' => 0,
-                'quota' => 0,
             ],
             'activity' => [
                 'scope' => 'activity',
@@ -142,7 +140,6 @@ class DefaultController extends BaseController
                 'total' => 0,
                 'own' => 0,
                 'estimation' => 0,
-                'quota' => 0,
             ],
             'ticket' => [
                 'scope' => 'ticket',
@@ -151,7 +148,6 @@ class DefaultController extends BaseController
                 'total' => 0,
                 'own' => 0,
                 'estimation' => 0,
-                'quota' => 0,
             ],
         ];
 
@@ -205,7 +201,7 @@ class DefaultController extends BaseController
             return new JsonResponse([]);
         }
 
-        $data = $objectRepository->getEntriesByUser($userId, $days, (bool) $user->getShowFuture());
+        $data = $objectRepository->getEntriesByUser($userId, $days, $user->getShowFuture());
 
         return new JsonResponse($data);
     }

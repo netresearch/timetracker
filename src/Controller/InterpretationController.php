@@ -332,13 +332,27 @@ class InterpretationController extends BaseController
         foreach ($times as &$time) {
             $minutes = (int) ($time['minutes']);
             $time['hours'] = (int) ($minutes / 60);
+            unset($time['minutes']);
             $time['quota'] = TimeHelper::formatQuota($minutes, $totalMinutes);
         }
 
         /* @var array<int, array{name:string,day:string,hours:int,quota?:string}> $times */
         usort($times, $this->sortByName(...));
 
-        return new JsonResponse($this->normalizeData(array_reverse($times)));
+        $prepared = array_map(
+            static function (array $t): array {
+                return [
+                    'id' => $t['id'] ?? null,
+                    'name' => $t['name'],
+                    'day' => $t['day'] ?? null,
+                    'hours' => (int) $t['hours'],
+                    'quota' => $t['quota'] ?? 0,
+                ];
+            },
+            array_values($times)
+        );
+
+        return new JsonResponse($this->normalizeData(array_reverse($prepared)));
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/activity', name: 'interpretation_activity_attr', methods: ['GET'])]

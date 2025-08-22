@@ -69,7 +69,7 @@ class SubticketSyncService
         // Create the Jira API service with our service's dependencies
         $jiraOAuthApi = $this->jiraOAuthApiFactory->create($userWithJiraAccess, $ticketSystem);
 
-        $mainTickets = array_map('trim', explode(',', (string) $mainTickets));
+        $mainTickets = array_map('trim', explode(',', $mainTickets));
         $allSubtickets = [];
         foreach ($mainTickets as $mainTicket) {
             // we want to make it easy to find matching tickets,

@@ -316,7 +316,7 @@ class JiraOAuthApiService
             $workLog = $this->post(sprintf('issue/%s/worklog', $sTicket), $arData);
         }
 
-        if (!is_object($workLog) || !isset($workLog->id)) {
+        if (!isset($workLog->id)) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
         $entry->setWorklogId((int) $workLog->id);
@@ -539,9 +539,9 @@ class JiraOAuthApiService
         try {
             $response = $this->getClient()->request($method, $url, $additionalParameter);
         } catch (GuzzleException $guzzleException) {
-            if (401 === (int) $guzzleException->getCode()) {
+            if (401 === $guzzleException->getCode()) {
                 $this->throwUnauthorizedRedirect(null);
-            } elseif (404 === (int) $guzzleException->getCode()) {
+            } elseif (404 === $guzzleException->getCode()) {
                 $message = '404 - Resource is not available: ('.$url.')';
                 throw new JiraApiInvalidResourceException($message, 404, null, $guzzleException);
             } else {
