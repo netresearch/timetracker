@@ -131,43 +131,43 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $projectId = (int) $request->get('id');
-        $name = $request->get('name');
+        $projectId = (int) $request->request->get('id');
+        $name = $request->request->get('name');
 
         /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystem = $request->get('ticket_system') ? $objectRepository->find($request->get('ticket_system')) : null;
+        $ticketSystem = $request->request->get('ticket_system') ? $objectRepository->find($request->request->get('ticket_system')) : null;
 
         /** @var UserRepository $userRepo */
         $userRepo = $this->doctrineRegistry->getRepository(User::class);
-        $projectLead = $request->get('project_lead') ? $userRepo->find($request->get('project_lead')) : null;
+        $projectLead = $request->request->get('project_lead') ? $userRepo->find($request->request->get('project_lead')) : null;
         if (null !== $projectLead && !$projectLead instanceof User) {
             $projectLead = null;
         }
-        $technicalLead = $request->get('technical_lead') ? $userRepo->find($request->get('technical_lead')) : null;
+        $technicalLead = $request->request->get('technical_lead') ? $userRepo->find($request->request->get('technical_lead')) : null;
         if (null !== $technicalLead && !$technicalLead instanceof User) {
             $technicalLead = null;
         }
 
-        $jiraId = $request->get('jiraId') ? strtoupper((string) $request->get('jiraId')) : '';
-        $jiraTicket = $request->get('jiraTicket') ? strtoupper((string) $request->get('jiraTicket')) : '';
-        $active = (bool) ($request->get('active') ?: 0);
-        $global = (bool) ($request->get('global') ?: 0);
-        $estimation = TimeHelper::readable2minutes($request->get('estimation') ?: '0m');
-        $billing = $request->get('billing') ?: 0;
-        $costCenter = $request->get('cost_center') ?: null;
-        $offer = $request->get('offer') ?: 0;
-        $additionalInformationFromExternal = (bool) ($request->get('additionalInformationFromExternal') ?: 0);
+        $jiraId = $request->request->get('jiraId') ? strtoupper((string) $request->request->get('jiraId')) : '';
+        $jiraTicket = $request->request->get('jiraTicket') ? strtoupper((string) $request->request->get('jiraTicket')) : '';
+        $active = (bool) ($request->request->get('active') ?: 0);
+        $global = (bool) ($request->request->get('global') ?: 0);
+        $estimation = TimeHelper::readable2minutes($request->request->get('estimation') ?: '0m');
+        $billing = $request->request->get('billing') ?: 0;
+        $costCenter = $request->request->get('cost_center') ?: null;
+        $offer = $request->request->get('offer') ?: 0;
+        $additionalInformationFromExternal = (bool) ($request->request->get('additionalInformationFromExternal') ?: 0);
         /** @var \App\Repository\ProjectRepository $projectRepository */
         $projectRepository = $this->doctrineRegistry->getRepository(Project::class);
-        $internalJiraTicketSystem = $request->get('internalJiraTicketSystem');
+        $internalJiraTicketSystem = $request->request->get('internalJiraTicketSystem');
         if ('' === $internalJiraTicketSystem || null === $internalJiraTicketSystem) {
             $internalJiraTicketSystem = null;
         } else {
             $internalJiraTicketSystem = (string) $internalJiraTicketSystem;
         }
 
-        $internalJiraProjectKey = (string) $request->get('internalJiraProjectKey', '');
+        $internalJiraProjectKey = (string) $request->request->get('internalJiraProjectKey', '');
 
         if (0 !== $projectId) {
             $project = $projectRepository->find($projectId);
@@ -181,7 +181,7 @@ class AdminController extends BaseController
 
             /** @var Customer $customer */
             $customer = $this->doctrineRegistry->getRepository(Customer::class)
-                ->find($request->get('customer'));
+                ->find($request->request->get('customer'));
             if (!$customer instanceof Customer) {
                 $response = new Response($this->translate('Please choose a customer.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -273,7 +273,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $project = $doctrine->getRepository(Project::class)
@@ -340,7 +340,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        $projectId = (int) $request->get('project');
+        $projectId = (int) $request->query->get('project');
 
         try {
             $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectId);
@@ -363,11 +363,11 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $customerId = (int) $request->get('id');
-        $name = $request->get('name');
-        $active = $request->get('active') ?: 0;
-        $global = $request->get('global') ?: 0;
-        $teamIds = $request->get('teams') ?: [];
+        $customerId = (int) $request->request->get('id');
+        $name = $request->request->get('name');
+        $active = $request->request->get('active') ?: 0;
+        $global = $request->request->get('global') ?: 0;
+        $teamIds = $request->request->get('teams') ?: [];
 
         /** @var \App\Repository\CustomerRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
@@ -446,7 +446,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $customer = $doctrine->getRepository(Customer::class)
@@ -480,12 +480,12 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $userId = (int) $request->get('id');
-        $name = $request->get('username');
-        $abbr = $request->get('abbr');
-        $type = $request->get('type');
-        $locale = $request->get('locale');
-        $teamIds = $request->get('teams') ? (array) $request->get('teams') : [];
+        $userId = (int) $request->request->get('id');
+        $name = $request->request->get('username');
+        $abbr = $request->request->get('abbr');
+        $type = $request->request->get('type');
+        $locale = $request->request->get('locale');
+        $teamIds = $request->request->get('teams') ? (array) $request->request->get('teams') : [];
 
         /** @var UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
@@ -572,7 +572,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $user = $doctrine->getRepository(User::class)
@@ -607,7 +607,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $preset = $doctrine->getRepository(Preset::class)
@@ -641,15 +641,15 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id = (int) $request->get('id');
-        $name = $request->get('name');
+        $id = (int) $request->request->get('id');
+        $name = $request->request->get('name');
         $customer = $this->doctrineRegistry->getRepository(Customer::class)
-            ->find($request->get('customer'));
+            ->find($request->request->get('customer'));
         $project = $this->doctrineRegistry->getRepository(Project::class)
-            ->find($request->get('project'));
+            ->find($request->request->get('project'));
         $activity = $this->doctrineRegistry->getRepository(Activity::class)
-            ->find($request->get('activity'));
-        $description = $request->get('description');
+            ->find($request->request->get('activity'));
+        $description = $request->request->get('description');
 
         if (strlen((string) $name) < 3) {
             $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
@@ -708,18 +708,18 @@ class AdminController extends BaseController
         /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
-        $id = (int) $request->get('id');
-        $name = $request->get('name');
-        $type = $request->get('type');
-        $bookTime = $request->get('bookTime');
-        $url = $request->get('url');
-        $login = $request->get('login');
-        $password = $request->get('password');
-        $publicKey = $request->get('publicKey');
-        $privateKey = $request->get('privateKey');
-        $ticketUrl = $request->get('ticketUrl');
-        $oauthConsumerKey = $request->get('oauthConsumerKey');
-        $oauthConsumerSecret = $request->get('oauthConsumerSecret');
+        $id = (int) $request->request->get('id');
+        $name = $request->request->get('name');
+        $type = $request->request->get('type');
+        $bookTime = $request->request->get('bookTime');
+        $url = $request->request->get('url');
+        $login = $request->request->get('login');
+        $password = $request->request->get('password');
+        $publicKey = $request->request->get('publicKey');
+        $privateKey = $request->request->get('privateKey');
+        $ticketUrl = $request->request->get('ticketUrl');
+        $oauthConsumerKey = $request->request->get('oauthConsumerKey');
+        $oauthConsumerSecret = $request->request->get('oauthConsumerSecret');
 
         if (0 !== $id) {
             $ticketSystem = $objectRepository->find($id);
@@ -787,7 +787,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $ticketSystem = $doctrine->getRepository(TicketSystem::class)
@@ -828,10 +828,10 @@ class AdminController extends BaseController
         /** @var \App\Repository\ActivityRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
 
-        $id = (int) $request->get('id');
-        $name = $request->get('name');
-        $needsTicket = (bool) $request->get('needsTicket');
-        $factorRaw = $request->get('factor');
+        $id = (int) $request->request->get('id');
+        $name = $request->request->get('name');
+        $needsTicket = (bool) $request->request->get('needsTicket');
+        $factorRaw = $request->request->get('factor');
         $factor = (float) str_replace(',', '.', (string) ($factorRaw ?? '0'));
 
         if (0 !== $id) {
@@ -885,7 +885,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $activity = $doctrine->getRepository(Activity::class)
@@ -926,11 +926,11 @@ class AdminController extends BaseController
         /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
 
-        $id = (int) $request->get('id');
-        $name = $request->get('name');
-        $teamLead = $request->get('lead_user_id') ?
+        $id = (int) $request->request->get('id');
+        $name = $request->request->get('name');
+        $teamLead = $request->request->get('lead_user_id') ?
             $this->doctrineRegistry->getRepository(User::class)
-                ->find($request->get('lead_user_id'))
+                ->find($request->request->get('lead_user_id'))
             : null;
 
         if (0 !== $id) {
@@ -991,7 +991,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $team = $doctrine->getRepository(Team::class)
@@ -1083,20 +1083,20 @@ class AdminController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $contractId = (int) $request->get('id');
-        $start = $request->get('start');
-        $end = $request->get('end');
-        $hours_0 = (float) str_replace(',', '.', (string) ($request->get('hours_0') ?? '0'));
-        $hours_1 = (float) str_replace(',', '.', (string) ($request->get('hours_1') ?? '0'));
-        $hours_2 = (float) str_replace(',', '.', (string) ($request->get('hours_2') ?? '0'));
-        $hours_3 = (float) str_replace(',', '.', (string) ($request->get('hours_3') ?? '0'));
-        $hours_4 = (float) str_replace(',', '.', (string) ($request->get('hours_4') ?? '0'));
-        $hours_5 = (float) str_replace(',', '.', (string) ($request->get('hours_5') ?? '0'));
-        $hours_6 = (float) str_replace(',', '.', (string) ($request->get('hours_6') ?? '0'));
+        $contractId = (int) $request->request->get('id');
+        $start = $request->request->get('start');
+        $end = $request->request->get('end');
+        $hours_0 = (float) str_replace(',', '.', (string) ($request->request->get('hours_0') ?? '0'));
+        $hours_1 = (float) str_replace(',', '.', (string) ($request->request->get('hours_1') ?? '0'));
+        $hours_2 = (float) str_replace(',', '.', (string) ($request->request->get('hours_2') ?? '0'));
+        $hours_3 = (float) str_replace(',', '.', (string) ($request->request->get('hours_3') ?? '0'));
+        $hours_4 = (float) str_replace(',', '.', (string) ($request->request->get('hours_4') ?? '0'));
+        $hours_5 = (float) str_replace(',', '.', (string) ($request->request->get('hours_5') ?? '0'));
+        $hours_6 = (float) str_replace(',', '.', (string) ($request->request->get('hours_6') ?? '0'));
         /** @var User|object|null $user */
-        $user = $request->get('user_id') ?
+        $user = $request->request->get('user_id') ?
             $this->doctrineRegistry->getRepository(User::class)
-                ->find($request->get('user_id'))
+                ->find($request->request->get('user_id'))
             : null;
 
         /** @var \App\Repository\ContractRepository $objectRepository */
@@ -1295,7 +1295,7 @@ class AdminController extends BaseController
         }
 
         try {
-            $id = (int) $request->get('id');
+            $id = (int) $request->request->get('id');
             $doctrine = $this->doctrineRegistry;
 
             $contract = $doctrine->getRepository(Contract::class)

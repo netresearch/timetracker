@@ -499,13 +499,13 @@ class InterpretationController extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $project = (int) $request->get('project_id');
-        $datestart = $request->get('datestart');
-        $dateend = $request->get('dateend');
-        $customer = (int) $request->get('customer_id');
-        $activity = (int) $request->get('activity_id');
-        $maxResults = (int) $request->get('maxResults');
-        $page = (int) $request->get('page');
+        $project = (int) $request->query->get('project_id');
+        $datestart = $request->query->get('datestart');
+        $dateend = $request->query->get('dateend');
+        $customer = (int) $request->query->get('customer_id');
+        $activity = (int) $request->query->get('activity_id');
+        $maxResults = (int) $request->query->get('maxResults');
+        $page = (int) $request->query->get('page');
 
         // prepare data
         if ($page < 0) {

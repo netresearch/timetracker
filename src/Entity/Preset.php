@@ -103,10 +103,8 @@ class Preset extends Base
 
     /**
      * Get customerId
-     *
-     * @return integer $customerId
      */
-    public function getCustomerId(): int
+    public function getCustomerId(): ?int
     {
         return $this->getCustomer()->getId();
     }
@@ -114,10 +112,8 @@ class Preset extends Base
 
     /**
      * Get projectId
-     *
-     * @return integer $projectId
      */
-    public function getProjectId(): int
+    public function getProjectId(): ?int
     {
         return $this->getProject()->getId();
     }

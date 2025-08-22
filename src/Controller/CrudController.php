@@ -225,7 +225,7 @@ class CrudController extends BaseController
 
             /** @var \App\Repository\ProjectRepository $projectRepo */
             $projectRepo = $doctrine->getRepository(Project::class);
-            $projectFound = $projectRepo->find($request->get('project'));
+            $projectFound = $projectRepo->find($request->request->get('project'));
             if ($projectFound instanceof Project) {
                 $project = $projectFound;
                 if (!$project->getActive()) {
@@ -238,7 +238,7 @@ class CrudController extends BaseController
 
             /** @var \App\Repository\CustomerRepository $customerRepo */
             $customerRepo = $doctrine->getRepository(Customer::class);
-            $customer = $customerRepo->find($request->get('customer'));
+            $customer = $customerRepo->find($request->request->get('customer'));
             if ($customer instanceof Customer) {
                 if (!$customer->getActive()) {
                     $message = $this->translator->trans('This customer is inactive and cannot be used for booking.');
@@ -278,25 +278,25 @@ class CrudController extends BaseController
 
                     // tickets do not exist for external project tickets booked on internal ticket system
                     // so no need to check for existence; they are created automatically
-                    $reqTicket = (string) ($request->get('ticket') ?? '');
-                    if (!$project->hasInternalJiraProjectKey() && $reqTicket !== '' && !$jiraOAuthApi->doesTicketExist($reqTicket)) {
-                        $message = $request->get('ticket').' existiert nicht';
+                    $reqTicket = (string) ($request->request->get('ticket') ?? '');
+                    if (!$project->hasInternalJiraProjectKey() && '' !== $reqTicket && !$jiraOAuthApi->doesTicketExist($reqTicket)) {
+                        $message = (string) $request->request->get('ticket').' existiert nicht';
                         throw new \Exception($message);
                     }
                 }
             }
 
-            $activity = $doctrine->getRepository(Activity::class)->find($request->get('activity'));
+            $activity = $doctrine->getRepository(Activity::class)->find($request->request->get('activity'));
             if ($activity instanceof Activity) {
                 $entry->setActivity($activity);
             }
 
-            $entry->setTicket(strtoupper(trim((string) ($request->get('ticket') ?: ''))))
-                ->setDescription($request->get('description') ?: '')
-                ->setDay($request->get('date') ?: date('Y-m-d'))
-                ->setStart($request->get('start') ?: '00:00:00')
-                ->setEnd($request->get('end') ?: '00:00:00')
-                ->setInternalJiraTicketOriginalKey((string) ($request->get('extTicket') ?: ''))
+            $entry->setTicket(strtoupper(trim((string) ($request->request->get('ticket') ?: ''))))
+                ->setDescription($request->request->get('description') ?: '')
+                ->setDay($request->request->get('date') ?: date('Y-m-d'))
+                ->setStart($request->request->get('start') ?: '00:00:00')
+                ->setEnd($request->request->get('end') ?: '00:00:00')
+                ->setInternalJiraTicketOriginalKey((string) ($request->request->get('extTicket') ?: ''))
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                 ->calcDuration()
                 ->setSyncedToTicketsystem(false);
@@ -376,6 +376,7 @@ class CrudController extends BaseController
                 'result' => $entry->toArray(),
                 'alert' => $e->getMessage(),
             ];
+
             return new JsonResponse($response);
         } catch (\Exception $e) {
             return new Error($this->translator->trans($e->getMessage()), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE, null, $e);
@@ -385,6 +386,7 @@ class CrudController extends BaseController
                 'result' => $entry->toArray(),
                 'alert' => $e->getMessage(),
             ];
+
             return new JsonResponse($response);
         }
     }
@@ -401,7 +403,7 @@ class CrudController extends BaseController
 
             $doctrine = $this->managerRegistry;
 
-            $preset = $doctrine->getRepository(\App\Entity\Preset::class)->find((int) $request->get('preset'));
+            $preset = $doctrine->getRepository(\App\Entity\Preset::class)->find((int) $request->request->get('preset'));
             if (!$preset instanceof \App\Entity\Preset) {
                 throw new \Exception('Preset not found');
             }
@@ -420,7 +422,7 @@ class CrudController extends BaseController
             $activity = $doctrine->getRepository(Activity::class)
                 ->find($preset->getActivityId());
 
-            if ($request->get('usecontract')) {
+            if ($request->request->get('usecontract')) {
                 $contracts = $doctrine->getRepository(Contract::class)
                     ->findBy(['user' => $this->getUserId($request)], ['start' => 'ASC']);
 
@@ -432,7 +434,7 @@ class CrudController extends BaseController
                     $contractHoursArray[] = [
                         'start' => $contract->getStart(),
                         // when user contract has no stop date, take the end date of bulkentry
-                        'stop' => $contract->getEnd() ?? new \DateTime((string) $request->get('enddate')),
+                        'stop' => $contract->getEnd() ?? new \DateTime((string) $request->request->get('enddate')),
                         7 => $contract->getHours0(), // So
                         1 => $contract->getHours1(), // mo
                         2 => $contract->getHours2(), // di
@@ -458,8 +460,8 @@ class CrudController extends BaseController
 
             $em = $doctrine->getManager();
 
-            $date = new \DateTime($request->get('startdate') ?: '');
-            $endDate = new \DateTime($request->get('enddate') ?: '');
+            $date = new \DateTime($request->request->get('startdate') ?: '');
+            $endDate = new \DateTime($request->request->get('enddate') ?: '');
 
             $c = 0;
 
@@ -512,7 +514,7 @@ class CrudController extends BaseController
                 }
 
                 // skip weekends
-                if ($request->get('skipweekend')
+                if ($request->request->get('skipweekend')
                     && in_array($date->format('w'), $weekend)
                 ) {
                     $date->add(new \DateInterval('P1D'));
@@ -520,7 +522,7 @@ class CrudController extends BaseController
                 }
 
                 // skip holidays
-                if ($request->get('skipholidays')) {
+                if ($request->request->get('skipholidays')) {
                     // skip regular holidays
                     if (in_array($date->format('m-d'), $regular_holidays)) {
                         $date->add(new \DateInterval('P1D'));
@@ -534,7 +536,7 @@ class CrudController extends BaseController
                     }
                 }
 
-                if ($request->get('usecontract')) {
+                if ($request->request->get('usecontract')) {
                     $contractHoursArray ??= [];
                     foreach ($contractHoursArray as $contractHourArray) {
                         // we can have multiple contracts per user with different date intervals
@@ -560,8 +562,8 @@ class CrudController extends BaseController
                     $startTime = new \DateTime('08:00:00');
                     $endTime = (new \DateTime('08:00:00'))->add($hoursToAdd);
                 } else {
-                    $startTime = new \DateTime($request->get('starttime') ?: '00:00:00');
-                    $endTime = new \DateTime($request->get('endtime') ?: '00:00:00');
+                    $startTime = new \DateTime($request->request->get('starttime') ?: '00:00:00');
+                    $endTime = new \DateTime($request->request->get('endtime') ?: '00:00:00');
                 }
 
                 $entry = new Entry();
@@ -609,7 +611,7 @@ class CrudController extends BaseController
             if (!empty($contractHoursArray)
                 && isset($contractHoursArray[0]['start'])
                 && ($contractHoursArray[0]['start'] instanceof \DateTime)
-                && (new \DateTime($request->get('startdate') ?: '')) < $contractHoursArray[0]['start']
+                && (new \DateTime($request->request->get('startdate') ?: '')) < $contractHoursArray[0]['start']
             ) {
                 $responseContent .= '<br/>'.
                     $this->translator->trans(
@@ -626,7 +628,7 @@ class CrudController extends BaseController
                     && ($lastContract['stop'] instanceof \DateTime)
                     && $endDate > $lastContract['stop']
                 ) {
-                    $responseContent .= '<br/>' .
+                    $responseContent .= '<br/>'.
                         $this->translator->trans(
                             'Contract expired at %date%.',
                             ['%date%' => $lastContract['stop']->format('d.m.Y')]

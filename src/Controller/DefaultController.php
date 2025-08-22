@@ -252,10 +252,10 @@ class DefaultController extends BaseController
             return $this->login($request);
         }
 
-        if ($request->get('project')) {
+        if ($request->query->get('project')) {
             $project = $this->managerRegistry
                 ->getRepository(Project::class)
-                ->find($request->get('project'));
+                ->find($request->query->get('project'));
 
             if ($project instanceof Project && $project->getCustomer() instanceof Customer) {
                 return new JsonResponse(['customer' => $project->getCustomer()->getId()]);
@@ -400,14 +400,14 @@ class DefaultController extends BaseController
         /** @var TicketSystem $ticketSystem */
         $ticketSystem = $this->managerRegistry
             ->getRepository(TicketSystem::class)
-            ->find($request->get('tsid'));
+            ->find($request->query->get('tsid'));
         if (!$ticketSystem instanceof TicketSystem) {
             return new Response('Ticket system not found', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 
         try {
             $jiraOAuthApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-            $jiraOAuthApi->fetchOAuthAccessToken($request->get('oauth_token'), $request->get('oauth_verifier'));
+            $jiraOAuthApi->fetchOAuthAccessToken($request->query->get('oauth_token'), $request->query->get('oauth_verifier'));
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
 
             return $this->redirectToRoute('_start');
