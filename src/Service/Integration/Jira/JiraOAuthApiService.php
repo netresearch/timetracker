@@ -545,7 +545,7 @@ class JiraOAuthApiService
                 $message = '404 - Resource is not available: ('.$url.')';
                 throw new JiraApiInvalidResourceException($message, 404, null, $guzzleException);
             } else {
-                throw new JiraApiException('Unknown Guzzle exception: '.$guzzleException->getMessage(), (int) $guzzleException->getCode(), null, $guzzleException);
+                throw new JiraApiException('Unknown Guzzle exception: '.$guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
             }
         }
 
