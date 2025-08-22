@@ -124,9 +124,9 @@ class Preset extends Base
      *
      * @return integer $activityId
      */
-    public function getActivityId(): int
+    public function getActivityId(): ?int
     {
-        return (int) $this->getActivity()->getId();
+        return $this->getActivity()->getId();
     }
 
 
@@ -234,7 +234,7 @@ class Preset extends Base
     public function toArray(): array
     {
         return [
-            'id'          => (int) ($this->getId() ?? 0),
+            'id'          => $this->getId() ?? 0,
             'name'        => $this->getName(),
             'customer'    => $this->getCustomer()->getId(),
             'project'     => $this->getProject()->getId(),

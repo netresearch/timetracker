@@ -365,8 +365,8 @@ class AdminController extends BaseController
 
         $customerId = (int) $request->request->get('id');
         $name = $request->request->get('name');
-        $active = $request->request->get('active') ?: 0;
-        $global = $request->request->get('global') ?: 0;
+        $active = (bool) ($request->request->get('active') ?: 0);
+        $global = (bool) ($request->request->get('global') ?: 0);
         $teamIds = $request->request->get('teams') ?: [];
 
         /** @var \App\Repository\CustomerRepository $objectRepository */
@@ -395,7 +395,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (($sameNamedCustomer = $objectRepository->findOneByName($name)) && $customer instanceof Customer && $sameNamedCustomer instanceof Customer && $customer->getId() != $sameNamedCustomer->getId()) {
+        if (($sameNamedCustomer = $objectRepository->findOneByName($name)) instanceof Customer && $customer->getId() != $sameNamedCustomer->getId()) {
             $response = new Response($this->translate('The customer name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -422,7 +422,7 @@ class AdminController extends BaseController
             }
         }
 
-        if ($customer instanceof Customer && 0 == $customer->getTeams()->count() && false == $global) {
+        if (0 == $customer->getTeams()->count() && $global === false) {
             $response = new Response($this->translate('Every customer must belong to at least one team if it is not global.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -509,14 +509,14 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) && $user instanceof User && $sameNamedUser instanceof User && $user->getId() != $sameNamedUser->getId()) {
+        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) instanceof User && $user->getId() != $sameNamedUser->getId()) {
             $response = new Response($this->translate('The user name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) && $user instanceof User && $sameAbbrUser instanceof User && $user->getId() != $sameAbbrUser->getId()) {
+        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) instanceof User && $user->getId() != $sameAbbrUser->getId()) {
             $response = new Response($this->translate('The user name abreviation provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -751,20 +751,18 @@ class AdminController extends BaseController
         }
 
         try {
-            if ($ticketSystem instanceof TicketSystem) {
-                $ticketSystem
-                    ->setName($name)
-                    ->setType($type)
-                    ->setBookTime((bool) $bookTime)
-                    ->setUrl($url)
-                    ->setTicketUrl($ticketUrl)
-                    ->setLogin($login)
-                    ->setPassword($password)
-                    ->setPublicKey($publicKey)
-                    ->setPrivateKey($privateKey)
-                    ->setOauthConsumerKey($oauthConsumerKey)
-                    ->setOauthConsumerSecret($oauthConsumerSecret);
-            }
+            $ticketSystem
+                ->setName($name)
+                ->setType($type)
+                ->setBookTime((bool) $bookTime)
+                ->setUrl($url)
+                ->setTicketUrl($ticketUrl)
+                ->setLogin($login)
+                ->setPassword($password)
+                ->setPublicKey($publicKey)
+                ->setPrivateKey($privateKey)
+                ->setOauthConsumerKey($oauthConsumerKey)
+                ->setOauthConsumerSecret($oauthConsumerSecret);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);

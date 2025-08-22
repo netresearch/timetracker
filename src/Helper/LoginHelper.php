@@ -48,7 +48,7 @@ class LoginHelper
             return false;
         }
 
-        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', (string) $_COOKIE[self::COOKIE_NAME], $matches)) {
+        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', $_COOKIE[self::COOKIE_NAME], $matches)) {
             return false;
         }
 

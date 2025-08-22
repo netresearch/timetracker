@@ -327,9 +327,9 @@ class User implements UserInterface
             'show_empty_line'   => $this->getShowEmptyLine(),
             'suggest_time'      => $this->getSuggestTime(),
             'show_future'       => $this->getShowFuture(),
-            'user_id'           => (int) ($this->getId() ?? 0),
-            'user_name'         => (string) ($this->getUsername() ?? ''),
-            'type'              => (string) ($this->getType() ?? ''),
+            'user_id'           => $this->getId() ?? 0,
+            'user_name'         => $this->getUsername() ?? '',
+            'type'              => $this->getType() ?? '',
             'locale'            => (new LocalizationService())->normalizeLocale($this->getLocale())
         ];
     }

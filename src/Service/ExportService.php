@@ -155,7 +155,7 @@ class ExportService
             }
 
             if ($showTicketTitles && method_exists($entry, 'setTicketTitle')) {
-                $ticketKey = is_string($entry->getTicket()) ? $entry->getTicket() : '';
+                $ticketKey = $entry->getTicket();
                 $entry->setTicketTitle($arTicketTitles[$ticketKey] ?? null);
             }
         }
