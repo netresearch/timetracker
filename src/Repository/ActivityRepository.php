@@ -8,16 +8,12 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class ActivityRepository extends ServiceEntityRepository
 {
-    /**
-     * ActivityRepository constructor.
-     */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, Activity::class);
+        parent::__construct($registry, Activity::class);
     }
-
     /**
-     * @return array[] Activities sorted by name
+     * @return array<int, array{activity: array{id:int, name:string, needsTicket:bool, factor:float|string}}>
      */
     public function getActivities(): array
     {
@@ -27,9 +23,9 @@ class ActivityRepository extends ServiceEntityRepository
         $data = [];
         foreach ($activities as $activity) {
             $data[] = ['activity' => [
-                'id'          => $activity->getId(),
-                'name'        => $activity->getName(),
-                'needsTicket' => $activity->getNeedsTicket(),
+                'id'          => (int) $activity->getId(),
+                'name'        => (string) $activity->getName(),
+                'needsTicket' => (bool) $activity->getNeedsTicket(),
                 'factor'      => $activity->getFactor(),
             ]];
         }

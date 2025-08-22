@@ -8,28 +8,11 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class TeamRepository extends ServiceEntityRepository
 {
-    /**
-     * TeamRepository constructor.
-     */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, Team::class);
+        parent::__construct($registry, Team::class);
     }
-
     // Do not override findAll(); it should return Team[] as in the parent
-
-    /**
-     * Returns teams as Doctrine entities, sorted by name.
-     * Note: use this instead of overriding findAll() for type safety.
-     *
-     * @return Team[]
-     */
-    public function getAllTeams(): array
-    {
-        /** @var array $result */
-        $result = parent::findBy([], ['name' => 'ASC']);
-        return $result;
-    }
 
     /**
      * Returns teams as array formatted for API responses.
@@ -43,9 +26,9 @@ class TeamRepository extends ServiceEntityRepository
         $data = [];
         foreach ($teams as $team) {
             $data[] = ['team' => [
-                'id'           => $team->getId(),
-                'name'         => $team->getName(),
-                'lead_user_id' => $team->getLeadUser()->getId(),
+                'id'           => (int) ($team->getId() ?? 0),
+                'name'         => (string) ($team->getName() ?? ''),
+                'lead_user_id' => (int) ($team->getLeadUser() ? $team->getLeadUser()->getId() : 0),
             ]];
         }
 

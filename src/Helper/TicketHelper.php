@@ -11,13 +11,13 @@ class TicketHelper
 {
     public const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
 
-    public static function checkFormat($ticket): bool
+    public static function checkFormat(string $ticket): bool
     {
-        return (new \App\Service\Util\TicketService())->checkFormat((string) $ticket);
+        return (new \App\Service\Util\TicketService())->checkFormat($ticket);
     }
 
-    public static function getPrefix($ticket): ?string
+    public static function getPrefix(string $ticket): ?string
     {
-        return (new \App\Service\Util\TicketService())->getPrefix((string) $ticket);
+        return (new \App\Service\Util\TicketService())->getPrefix($ticket);
     }
 }

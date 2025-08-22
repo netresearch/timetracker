@@ -93,11 +93,11 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 
 ## Phase 2: Upgrade to Symfony 5.4
 
-*   `[ ]` **Update `composer.json`:** Change Symfony dependencies to `^5.4`.
-*   `[ ]` **Run `composer update`:** Resolve dependency conflicts.
-*   `[ ]` **Address Compatibility Issues:** Fix errors based on Symfony 5 upgrade guides.
-*   `[ ]` **Update Configuration Files:** Adapt `services.yaml`, `routes.yaml`, etc.
-*   ...
+*   `[x]` **Update `composer.json`:** Change Symfony dependencies to `^5.4`.
+*   `[x]` **Run `composer update`:** Resolve dependency conflicts.
+*   `[x]` **Address Compatibility Issues:** Fix errors based on Symfony 5 upgrade guides.
+*   `[x]` **Update Configuration Files:** Adapt `services.yaml`, `routes.yaml`, etc.
+*   `[x]` **Adjust Tests for Kernel Boot/Shutdown Changes:** Ensure `createClient()` usage and container access patterns are 5.4-compatible.
 
 ## Phase 3: Post-Upgrade (Symfony 5.4)
 

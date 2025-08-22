@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -11,88 +12,94 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Contract
 {
-
+    /**
+     * @var \App\Entity\User
+     */
+    /**
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
+     */
+    public User $user;
     /**
      * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @ORM\Column (type="integer")
+     *
+     * @ORM\GeneratedValue (strategy="AUTO")
+     *
+     * @var int
      */
     protected $id;
 
 
-    /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="contracts")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true)
-     */
-    protected $user;
-
 
     /**
      * @ORM\Column(type="date", nullable=false)
      */
-    protected $start;
+    protected \DateTime $start;
 
 
     /**
-     * @ORM\Column(type="date", nullable=false)
+     * @ORM\Column (type="date", nullable=true)
      */
-    protected $end;
+    protected ?\DateTime $end = null;
 
 
     /**
-     * @ORM\Column(type="float", nullable=false)
+     * @ORM\Column (type="float", nullable=false)
+     *
+     * @var float
      */
     protected $hours_0;
 
 
     /**
-     * @ORM\Column(type="float", nullable=false)
+     * @ORM\Column (type="float", nullable=false)
+     *
+     * @var float
      */
     protected $hours_1;
 
 
     /**
-     * @ORM\Column(type="float", nullable=false)
+     * @ORM\Column (type="float", nullable=false)
+     *
+     * @var float
      */
     protected $hours_2;
 
 
     /**
-     * @ORM\Column(type="float", nullable=false)
+     * @ORM\Column (type="float", nullable=false)
+     *
+     * @var float
      */
     protected $hours_3;
 
 
     /**
-     * @ORM\Column(type="float", nullable=false)
+     * @ORM\Column (type="float", nullable=false)
+     *
+     * @var float
      */
     protected $hours_4;
 
 
     /**
-     * @ORM\Column(type="float", nullable=false)
+     * @ORM\Column (type="float", nullable=false)
+     *
+     * @var float
      */
     protected $hours_5;
 
 
     /**
-     * @ORM\Column(type="float", nullable=false)
+     * @ORM\Column (type="float", nullable=false)
+     *
+     * @var float
      */
     protected $hours_6;
 
-
-    /**
-     * Set id
-     *
-     * @param integer $id
-     *
-     * @return $this
-     */
-    public function setId($id): static
-    {
-        $this->id = $id;
-        return $this;
-    }
 
 
     /**
@@ -118,22 +125,14 @@ class Contract
         return $this;
     }
 
-
-    /**
-     * Get user
-     *
-     * @return User $user
-     */
-    public function getUser()
+    public function getUser(): User
     {
         return $this->user;
     }
 
 
-    /**
-     * @return mixed
-     */
-    public function getStart()
+
+    public function getStart(): \DateTime
     {
         return $this->start;
     }
@@ -142,17 +141,14 @@ class Contract
     /**
      * @return $this
      */
-    public function setStart(mixed $start): static
+    public function setStart(\DateTime $start): static
     {
         $this->start = $start;
         return $this;
     }
 
 
-    /**
-     * @return mixed
-     */
-    public function getEnd()
+    public function getEnd(): ?\DateTime
     {
         return $this->end;
     }
@@ -161,9 +157,9 @@ class Contract
     /**
      * @return $this
      */
-    public function setEnd(mixed $end): static
+    public function setEnd(?\DateTime $dateTimed): static
     {
-        $this->end = $end;
+        $this->end = $dateTimed;
         return $this;
     }
 

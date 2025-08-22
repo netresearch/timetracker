@@ -11,17 +11,17 @@ class LocalizationServiceTest extends TestCase
 {
     public function testNormalizeLocalePassThrough(): void
     {
-        $svc = new LocalizationService();
-        $this->assertSame('de', $svc->normalizeLocale('de'));
-        $this->assertSame('en', $svc->normalizeLocale('EN'));
-        $this->assertSame('fr', $svc->normalizeLocale(' fr '));
+        $localizationService = new LocalizationService();
+        $this->assertSame('de', $localizationService->normalizeLocale('de'));
+        $this->assertSame('en', $localizationService->normalizeLocale('EN'));
+        $this->assertSame('fr', $localizationService->normalizeLocale(' fr '));
     }
 
     public function testNormalizeLocaleFallsBackToPreferred(): void
     {
-        $svc = new LocalizationService();
-        $this->assertSame('en', $svc->normalizeLocale('pt'));
-        $this->assertSame('en', $svc->normalizeLocale(''));
+        $localizationService = new LocalizationService();
+        $this->assertSame('en', $localizationService->normalizeLocale('pt'));
+        $this->assertSame('en', $localizationService->normalizeLocale(''));
     }
 }
 

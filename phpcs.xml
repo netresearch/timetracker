@@ -12,6 +12,8 @@
   <exclude-pattern>.js$</exclude-pattern>
   <exclude-pattern>*/vendor/*</exclude-pattern>
   <exclude-pattern>*/var/*</exclude-pattern>
+  <exclude-pattern>*/var/cache/*</exclude-pattern>
+  <exclude-pattern>*/var/phpstan/*</exclude-pattern>
 
   <arg name="basepath" value="."/>
   <arg name="colors"/>
@@ -19,4 +21,6 @@
   <arg name="parallel" value="8"/>
 
   <rule ref="PSR12"/>
+  <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint"/>
+  <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHint"/>
 </ruleset>

@@ -19,11 +19,12 @@ use Symfony\Component\Routing\RouterInterface;
 class SubticketSyncServiceTest extends TestCase
 {
     private function createService(
-        ManagerRegistry $registry,
+        ManagerRegistry $managerRegistry,
         RouterInterface $router,
-        JiraOAuthApiFactory $factory
+        JiraOAuthApiFactory $jiraOAuthApiFactory
     ): SubticketSyncService {
-        return new SubticketSyncService($registry, $router, $factory);
+        // SubticketSyncService signature changed to (ManagerRegistry, JiraOAuthApiFactory)
+        return new SubticketSyncService($managerRegistry, $jiraOAuthApiFactory);
     }
 
     public function testProjectNotFoundThrows404(): void
@@ -36,11 +37,11 @@ class SubticketSyncServiceTest extends TestCase
         $router = $this->createMock(RouterInterface::class);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
 
-        $service = $this->createService($registry, $router, $factory);
+        $subticketSyncService = $this->createService($registry, $router, $factory);
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Project does not exist');
         $this->expectExceptionCode(404);
-        $service->syncProjectSubtickets(123);
+        $subticketSyncService->syncProjectSubtickets(123);
     }
 
     public function testNoTicketSystemConfigured(): void
@@ -57,11 +58,11 @@ class SubticketSyncServiceTest extends TestCase
         $router = $this->createMock(RouterInterface::class);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
 
-        $service = $this->createService($registry, $router, $factory);
+        $subticketSyncService = $this->createService($registry, $router, $factory);
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('No ticket system configured for project');
         $this->expectExceptionCode(400);
-        $service->syncProjectSubtickets(1);
+        $subticketSyncService->syncProjectSubtickets(1);
     }
 
     public function testNullMainTicketsClearsSubticketsIfPresent(): void
@@ -86,8 +87,8 @@ class SubticketSyncServiceTest extends TestCase
         $router = $this->createMock(RouterInterface::class);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
 
-        $service = $this->createService($registry, $router, $factory);
-        $result = $service->syncProjectSubtickets(1);
+        $subticketSyncService = $this->createService($registry, $router, $factory);
+        $result = $subticketSyncService->syncProjectSubtickets(1);
         $this->assertSame([], $result);
     }
 
@@ -107,11 +108,11 @@ class SubticketSyncServiceTest extends TestCase
         $router = $this->createMock(RouterInterface::class);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
 
-        $service = $this->createService($registry, $router, $factory);
+        $subticketSyncService = $this->createService($registry, $router, $factory);
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Project has no lead user');
         $this->expectExceptionCode(400);
-        $service->syncProjectSubtickets(1);
+        $subticketSyncService->syncProjectSubtickets(1);
     }
 
     public function testNoTokenForTicketSystemThrows(): void
@@ -135,11 +136,11 @@ class SubticketSyncServiceTest extends TestCase
         $router = $this->createMock(RouterInterface::class);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
 
-        $service = $this->createService($registry, $router, $factory);
+        $subticketSyncService = $this->createService($registry, $router, $factory);
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Project user has no token for ticket system');
         $this->expectExceptionCode(400);
-        $service->syncProjectSubtickets(1);
+        $subticketSyncService->syncProjectSubtickets(1);
     }
 
     public function testHappyPathMergesAndSortsSubtickets(): void
@@ -149,13 +150,13 @@ class SubticketSyncServiceTest extends TestCase
         $user->method('getTicketSystemAccessToken')->with($ticketSystem)->willReturn('tok');
         $user->method('getUsername')->willReturn('dev');
 
-        $project = $this->getMockBuilder(Project::class)
+        $mock = $this->getMockBuilder(Project::class)
             ->onlyMethods(['getTicketSystem', 'getJiraTicket', 'getProjectLead', 'setSubtickets'])
             ->getMock();
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-        $project->method('getJiraTicket')->willReturn('DEF-2, ABC-1');
-        $project->method('getProjectLead')->willReturn($user);
-        $project->expects($this->once())->method('setSubtickets')->with($this->callback(function (array $arg): bool {
+        $mock->method('getTicketSystem')->willReturn($ticketSystem);
+        $mock->method('getJiraTicket')->willReturn('DEF-2, ABC-1');
+        $mock->method('getProjectLead')->willReturn($user);
+        $mock->expects($this->once())->method('setSubtickets')->with($this->callback(function (array $arg): bool {
             $expected = ['ABC-1', 'ABC-2', 'DEF-2'];
             sort($expected);
             $copy = $arg;
@@ -164,10 +165,10 @@ class SubticketSyncServiceTest extends TestCase
         }));
 
         $repo = $this->createMock(ObjectRepository::class);
-        $repo->method('find')->willReturn($project);
+        $repo->method('find')->willReturn($mock);
 
         $om = $this->createMock(ObjectManager::class);
-        $om->expects($this->once())->method('persist')->with($project);
+        $om->expects($this->once())->method('persist')->with($mock);
         $om->expects($this->once())->method('flush');
 
         $registry = $this->createMock(ManagerRegistry::class);
@@ -179,19 +180,15 @@ class SubticketSyncServiceTest extends TestCase
         $jiraApi = $this->createMock(\App\Helper\JiraOAuthApi::class);
         $jiraApi->expects($this->exactly(2))
             ->method('getSubtickets')
-            ->willReturnCallback(function (string $main) {
-                return $main === 'ABC-1' ? ['ABC-2'] : [];
-            });
+            ->willReturnCallback(fn (string $main): array => $main === 'ABC-1' ? ['ABC-2'] : []);
 
         /** @var JiraOAuthApiFactory|MockObject $factory */
         $factory = $this->createMock(JiraOAuthApiFactory::class);
         $factory->method('create')->willReturn($jiraApi);
 
-        $service = $this->createService($registry, $router, $factory);
-        $result = $service->syncProjectSubtickets(1);
+        $subticketSyncService = $this->createService($registry, $router, $factory);
+        $result = $subticketSyncService->syncProjectSubtickets(1);
 
         $this->assertSame(['ABC-1', 'ABC-2', 'DEF-2'], $result);
     }
 }
-
-

@@ -17,7 +17,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'date' => '2024-01-01',
         ];
 
-        $this->client->request('POST', '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
 
         $expectedJson = [
             'result' => [
@@ -68,7 +68,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'date' => '2024-01-01',
         ];
 
-        $this->client->request('POST', '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
         $this->assertStatusCode(200);
 
         // Get the created entry ID
@@ -78,17 +78,17 @@ class CrudControllerTest extends AbstractWebTestCase
 
         // Now perform the delete
         $deleteParam = ['id' => $entryId];
-        $this->client->request('POST', '/tracking/delete', $deleteParam);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
         $this->assertStatusCode(200);
         $this->assertJsonStructure(['success' => true, 'alert' => null]);
 
         // Verify entry is deleted
-        $query = "SELECT COUNT(*) as count FROM `entries` WHERE `id` = $entryId";
+        $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
         $result = $this->connection->query($query)->fetchAssociative();
         $this->assertEquals(0, (int) $result['count'], "Entry was not deleted from database");
 
         // Try to delete again and expect 404
-        $this->client->request('POST', '/tracking/delete', $deleteParam);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
         $this->assertStatusCode(404);
         $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
@@ -100,7 +100,7 @@ class CrudControllerTest extends AbstractWebTestCase
         $parameter = [
             'preset' => 42,   //req
         ];
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Preset not found');
     }
@@ -113,7 +113,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'starttime' => '08:00:00',    //req
             'endtime' => '08:00:00',    //opt
         ];
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Die Aktivität muss mindestens eine Minute angedauert haben!');
     }
@@ -127,7 +127,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'usecontract' => 1,   //opt
         ];
 
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
         $this->assertMessage('10 Einträge wurden angelegt.');
 
@@ -181,7 +181,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'skipweekend' => 1,   //opt
         ];
 
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
         $this->assertMessage('8 Einträge wurden angelegt.');
 
@@ -235,7 +235,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'skipweekend' => 1,   //opt
         ];
 
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
         $this->assertMessage('2 Einträge wurden angelegt.');
 
@@ -281,7 +281,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'usecontract' => 1,   //opt
         ];
 
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.');
     }
@@ -295,7 +295,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'usecontract' => 1,   //opt
         ];
 
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
         $this->assertMessage('10 Einträge wurden angelegt.');
 
@@ -350,7 +350,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'usecontract' => 1,   //opt
         ];
 
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
         $this->assertMessage('0 Einträge wurden angelegt.<br/>Vertrag ist gültig ab 01.01.1020.');
 
@@ -375,7 +375,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'usecontract' => 1,   //opt
         ];
 
-        $this->client->request('POST', '/tracking/bulkentry', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
         $this->assertStatusCode(200);
         $this->assertMessage('4 Einträge wurden angelegt.<br/>Vertrag ist am 01.01.2020. abgelaufen.');
 
@@ -427,7 +427,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'description' => 'Test ticket entry'
         ];
 
-        $this->client->request('POST', '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
 
         $expectedJson = [
             'result' => [

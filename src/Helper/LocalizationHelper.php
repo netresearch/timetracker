@@ -13,6 +13,11 @@ use App\Service\Util\LocalizationService;
  */
 class LocalizationHelper
 {
+    /**
+     * @return string[]
+     *
+     * @psalm-return array{de: 'German', en: 'English', es: 'Spanish', fr: 'French', ru: 'Russian'}
+     */
     public static function getAvailableLocales(): array
     {
         return (new LocalizationService())->getAvailableLocales();
@@ -23,8 +28,8 @@ class LocalizationHelper
         return (new LocalizationService())->getPreferredLocale();
     }
 
-    public static function normalizeLocale($locale): string
+    public static function normalizeLocale(string $locale): string
     {
-        return (new LocalizationService())->normalizeLocale((string) $locale);
+        return (new LocalizationService())->normalizeLocale($locale);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Json array translator for twig-templates
  *
@@ -27,7 +28,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class NrArrayTranslator extends \Twig\Extension\AbstractExtension
 {
-
     /**
      * constructor
      *
@@ -41,6 +41,8 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      * Returns the name of the extension.
      *
      * @return string the extension name
+     *
+     * @psalm-return 'nr_array_translator'
      */
     public function getName(): string
     {
@@ -53,7 +55,9 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      * @return array
      */
     /**
-     * @return array<int, \Twig\TwigFilter>|array<string, \Twig\TwigFilter>
+     * @return \Twig\TwigFilter[]
+     *
+     * @psalm-return array{nr_array_translator: \Twig\TwigFilter}
      */
     public function getFilters(): array
     {
@@ -73,14 +77,21 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      *
      * @return string
      */
+    /**
+     * @param array<int, string> $keys
+     */
     public function filterArray(
-        $string,
-        $arrayKey,
+        string $string,
+        string $arrayKey,
         ?string $languageFile = 'messages',
         array $keys = ['name']
-    ) {
+    ): string {
         $data = json_decode($string, true);
         unset($string);
+
+        if (!is_array($data)) {
+            return (string) json_encode([]);
+        }
 
         foreach ($data as $rowKey => $row) {
             if (!array_key_exists($arrayKey, $row)) {
@@ -98,6 +109,6 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
             }
         }
 
-        return json_encode($data);
+        return (string) json_encode($data);
     }
 }

@@ -4,6 +4,11 @@ namespace App\Service\Util;
 
 class LocalizationService
 {
+    /**
+     * @return string[]
+     *
+     * @psalm-return array{de: 'German', en: 'English', es: 'Spanish', fr: 'French', ru: 'Russian'}
+     */
     public function getAvailableLocales(): array
     {
         return [

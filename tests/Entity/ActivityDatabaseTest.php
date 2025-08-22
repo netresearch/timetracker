@@ -60,12 +60,14 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($activity);
         $this->entityManager->flush();
+
         $id = $activity->getId();
 
         // Update activity
         $activity->setName('Updated Activity');
         $activity->setNeedsTicket(true);
         $activity->setFactor(2.0);
+
         $this->entityManager->flush();
         $this->entityManager->clear();
 
@@ -91,6 +93,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($activity);
         $this->entityManager->flush();
+
         $id = $activity->getId();
 
         // Delete activity
@@ -121,9 +124,9 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Find activities by name
-        $repo = $this->entityManager->getRepository(Activity::class);
-        $foundSick = $repo->findOneBy(['name' => Activity::SICK]);
-        $foundHoliday = $repo->findOneBy(['name' => Activity::HOLIDAY]);
+        $entityRepository = $this->entityManager->getRepository(Activity::class);
+        $foundSick = $entityRepository->findOneBy(['name' => Activity::SICK]);
+        $foundHoliday = $entityRepository->findOneBy(['name' => Activity::HOLIDAY]);
 
         // Verify activities found
         $this->assertNotNull($foundSick, 'Sick activity should be found');
@@ -144,6 +147,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $activity->setName('Activity With Entries');
         $activity->setNeedsTicket(true);
         $activity->setFactor(1.0);
+
         $this->entityManager->persist($activity);
 
         // Create and add entries
@@ -170,6 +174,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($entry1);
         $this->entityManager->persist($entry2);
         $this->entityManager->flush();
+
         $activityId = $activity->getId();
 
         // Clear entity manager and fetch from database
@@ -188,6 +193,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         foreach ($entries as $entry) {
             $this->entityManager->remove($entry);
         }
+
         $this->entityManager->flush();
         $this->entityManager->remove($fetchedActivity);
         $this->entityManager->flush();
@@ -200,6 +206,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $activity->setName('Activity With Presets');
         $activity->setNeedsTicket(true);
         $activity->setFactor(1.0);
+
         $this->entityManager->persist($activity);
 
         // We need a customer for the preset
@@ -207,6 +214,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // We need a project for the preset
@@ -219,6 +227,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $project->setBilling(0);
         $project->setEstimation(0);
         $project->setAdditionalInformationFromExternal(false);
+
         $this->entityManager->persist($project);
 
         // Create and add presets
@@ -239,6 +248,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($preset1);
         $this->entityManager->persist($preset2);
         $this->entityManager->flush();
+
         $activityId = $activity->getId();
 
         // Clear entity manager and fetch from database
@@ -257,6 +267,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         foreach ($presets as $preset) {
             $this->entityManager->remove($preset);
         }
+
         $this->entityManager->flush();
         $this->entityManager->remove($fetchedActivity);
 
@@ -269,6 +280,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
             $this->entityManager->remove($project);
             $this->entityManager->flush();
         }
+
         if ($customer) {
             $this->entityManager->remove($customer);
             $this->entityManager->flush();
@@ -294,14 +306,14 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Test repository methods
-        $repository = $this->entityManager->getRepository(Activity::class);
+        $entityRepository = $this->entityManager->getRepository(Activity::class);
 
         // Test findAll
-        $allActivities = $repository->findAll();
+        $allActivities = $entityRepository->findAll();
         $this->assertGreaterThanOrEqual(2, count($allActivities));
 
         // Test findBy with criteria
-        $ticketActivities = $repository->findBy(['needsTicket' => true]);
+        $ticketActivities = $entityRepository->findBy(['needsTicket' => true]);
         $this->assertGreaterThanOrEqual(1, count($ticketActivities));
 
         // Clean up

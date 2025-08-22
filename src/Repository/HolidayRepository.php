@@ -8,33 +8,28 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class HolidayRepository extends ServiceEntityRepository
 {
-    /**
-     * HolidayRepository constructor.
-     */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, Holiday::class);
+        parent::__construct($registry, Holiday::class);
     }
 
     /**
-     * get all holidays in a given year and month
+     * get all holidays in a given year and month.
      *
-     * @param int $year
-     * @param int $month
-     * @return array
+     * @return array<int, Holiday>
      */
-    public function findByMonth(int $year, int $month)
+    public function findByMonth(int $year, int $month): array
     {
-        $entityManager = $this->getEntityManager();
+        $from = new \DateTime(sprintf('%04d-%02d-01', $year, $month));
+        $to = (clone $from)->modify('first day of next month');
 
-        $pattern = $year . '-' . str_pad((string) $month, 2, '0', STR_PAD_LEFT) . '-' . '%';
-
-        $query = $entityManager->createQuery(
-            'SELECT h FROM App\Entity\Holiday h'
-            . ' WHERE h.day LIKE :month'
-            . ' ORDER BY h.day ASC'
-        )->setParameter('month', $pattern);
-
-        return $query->getResult();
+        return $this->createQueryBuilder('h')
+            ->where('h.day >= :from')
+            ->andWhere('h.day < :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('h.day', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 }

@@ -8,17 +8,19 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class CustomerRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, Customer::class);
+        parent::__construct($registry, Customer::class);
     }
-
     /**
      * Returns an array of customers available for current user
      *
      * @param $userId
      */
-    public function getCustomersByUser($userId): array
+    /**
+     * @return array<int, array{customer: array{id:int, name:string, active:bool}}>
+     */
+    public function getCustomersByUser(int $userId): array
     {
         /** @var Customer[] $result */
         $result = $this->createQueryBuilder('customer')
@@ -33,9 +35,9 @@ class CustomerRepository extends ServiceEntityRepository
         $data = [];
         foreach ($result as $customer) {
             $data[] = ['customer' => [
-                'id'     => $customer->getId(),
-                'name'   => $customer->getName(),
-                'active' => $customer->getActive(),
+                'id'     => (int) $customer->getId(),
+                'name'   => (string) $customer->getName(),
+                'active' => (bool) $customer->getActive(),
             ]];
         }
 
@@ -46,7 +48,7 @@ class CustomerRepository extends ServiceEntityRepository
      * Returns an array of all available customers
      */
     /**
-     * @return array{customer: array{id: mixed, name: mixed, active: mixed, global: mixed, teams: list}}[]
+     * @return array<int, array{customer: array{id:int, name:string, active:bool, global:bool, teams: array<int, int>}}>
      */
     public function getAllCustomers(): array
     {
@@ -60,14 +62,14 @@ class CustomerRepository extends ServiceEntityRepository
         foreach ($customers as $customer) {
             $teams = [];
             foreach ($customer->getTeams() as $team) {
-                $teams[] = $team->getId();
+                $teams[] = (int) $team->getId();
             }
 
             $data[] = ['customer' => [
-                'id'     => $customer->getId(),
-                'name'   => $customer->getName(),
-                'active' => $customer->getActive(),
-                'global' => $customer->getGlobal(),
+                'id'     => (int) $customer->getId(),
+                'name'   => (string) $customer->getName(),
+                'active' => (bool) $customer->getActive(),
+                'global' => (bool) $customer->getGlobal(),
                 'teams'  => $teams,
             ]];
         }

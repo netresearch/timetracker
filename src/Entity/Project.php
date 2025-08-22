@@ -1,9 +1,9 @@
 <?php
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
-
 use App\Helper\TimeHelper;
 use App\Model\Base;
 
@@ -14,50 +14,67 @@ use App\Model\Base;
  */
 class Project extends Base
 {
-    const BILLING_NONE  = 0;
+    public const BILLING_NONE  = 0;
 
-    const BILLING_TM    = 1;
+    public const BILLING_TM    = 1;
 
-    const BILLING_FP    = 2;
+    public const BILLING_FP    = 2;
 
-    const BILLING_MIXED = 3;
+    public const BILLING_MIXED = 3;
 
     /**
      * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @ORM\Column (type="integer")
+     *
+     * @ORM\GeneratedValue (strategy="AUTO")
+     *
+     * @var int|null
      */
     protected $id;
 
     /**
-     * @ORM\Column(type="string", length=127)
+     * @ORM\Column (type="string", length=127)
+     *
+     * @var null|string
      */
     protected $name;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column (type="boolean")
+     *
+     * @var bool|null
      */
     protected $active;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="projects")
-     * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="Customer", inversedBy="projects")
+     *
+     * @ORM\JoinColumn (name="customer_id", referencedColumnName="id")
+     *
+     * @var Customer|null
      */
     protected $customer;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column (type="boolean")
+     *
+     * @var bool|null
      */
     protected $global;
 
 
     /**
-     * @ORM\Column(type="string", name="jira_id", length=63, nullable=true)
+     * @ORM\Column (type="string", name="jira_id", length=63, nullable=true)
+     *
+     * @var null|string
      */
     protected $jiraId;
 
     /**
-     * @ORM\Column(type="string", name="jira_ticket", length=255, nullable=true)
+     * @ORM\Column (type="string", name="jira_ticket", length=255, nullable=true)
+     *
+     * @var null|string
      */
     protected $jiraTicket;
 
@@ -66,29 +83,39 @@ class Project extends Base
      * Gets calculated automatically.
      * Comma-separated string.
      *
-     * @ORM\Column(type="string", name="subtickets", length=255, nullable=true)
+     * @ORM\Column (type="string", name="subtickets", length=255, nullable=true)
+     *
+     * @var null|string
      */
     protected $subtickets;
 
     /**
-     * @ORM\ManyToOne(targetEntity="TicketSystem")
-     * @ORM\JoinColumn(name="ticket_system", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="TicketSystem")
+     *
+     * @ORM\JoinColumn (name="ticket_system", referencedColumnName="id")
+     *
+     * @var TicketSystem|null
      */
     protected $ticketSystem;
 
     /**
      * @ORM\OneToMany(targetEntity="Entry", mappedBy="project")
+     * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
     protected $entries;
 
     /**
      * @ORM\OneToMany(targetEntity="Preset", mappedBy="project")
+     * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
     protected $presets;
 
     /**
      * Estimated project duration in minutes
-     * @ORM\Column(type="integer", name="estimation", nullable=true)
+     *
+     * @ORM\Column (type="integer", name="estimation", nullable=true)
+     *
+     * @var float|int|null
      */
     protected $estimation;
 
@@ -96,43 +123,57 @@ class Project extends Base
      * Offer number
      * @ORM\Column(name="offer", length=31, nullable=true)
      */
-    protected $offer;
+    protected ?string $offer = null;
 
     /**
      * Used billing method
-     * @ORM\Column(type="smallint", name="billing", options={"default"=0})
+     * @ORM\Column(type="smallint", name="billing", nullable=true, options={"default"=0})
      */
-    protected $billing = 0;
+    protected ?int $billing = 0;
 
     /**
      * cost center (number or name)
      * @ORM\Column(name="cost_center", length=31, nullable=true)
      */
-    protected $costCenter;
+    protected ?string $costCenter = null;
 
     /**
      * internal reference number
-     * @ORM\Column(name="internal_ref", length=31, nullable=true)
+     *
+     * @ORM\Column (name="internal_ref", length=31, nullable=true)
+     *
+     * @var null|string
      */
     protected $internalReference;
 
     /**
      * external (clients) reference number
-     * @ORM\Column(name="external_ref", length=31, nullable=true)
+     *
+     * @ORM\Column (name="external_ref", length=31, nullable=true)
+     *
+     * @var null|string
      */
     protected $externalReference;
 
     /**
      * project manager user
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumn(name="project_lead_id", referencedColumnName="id", nullable=true)
+     *
+     * @ORM\ManyToOne (targetEntity="User")
+     *
+     * @ORM\JoinColumn (name="project_lead_id", referencedColumnName="id", nullable=true)
+     *
+     * @var null|object
      */
     protected $projectLead;
 
     /**
      * lead developer
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumn(name="technical_lead_id", referencedColumnName="id", nullable=true)
+     *
+     * @ORM\ManyToOne (targetEntity="User")
+     *
+     * @ORM\JoinColumn (name="technical_lead_id", referencedColumnName="id", nullable=true)
+     *
+     * @var null|object
      */
     protected $technicalLead;
 
@@ -140,17 +181,21 @@ class Project extends Base
      * invoice number, reserved for future use
      * @ORM\Column(name="invoice", length=31, nullable=true)
      */
-    protected $invoice;
+    protected ?string $invoice = null;
 
     /**
-     * @ORM\Column(name="additional_information_from_external", type="boolean")
+     * @ORM\Column (name="additional_information_from_external", type="boolean")
+     *
+     * @var bool|null
      */
     protected $additionalInformationFromExternal;
 
     /**
      * the internal key of the project the current ticket should be booked to.
      *
-     * @ORM\Column(name="internal_jira_project_key", type="string", length=255, nullable=true)
+     * @ORM\Column (name="internal_jira_project_key", type="string", length=255, nullable=true)
+     *
+     * @var null|string
      */
     protected $internalJiraProjectKey;
 
@@ -158,7 +203,9 @@ class Project extends Base
     /**
      * the id of the internal jira ticket system
      *
-     * @ORM\Column(name="internal_jira_ticket_system", type="string", length=255, nullable=true)
+     * @ORM\Column (name="internal_jira_ticket_system", type="string", length=255, nullable=true)
+     *
+     * @var null|string
      */
     protected $internalJiraTicketSystem;
 
@@ -210,10 +257,7 @@ class Project extends Base
     }
 
 
-    /**
-     * @return boolean
-     */
-    public function getAdditionalInformationFromExternal()
+    public function getAdditionalInformationFromExternal(): bool|null
     {
         return $this->additionalInformationFromExternal;
     }
@@ -227,20 +271,22 @@ class Project extends Base
 
     /**
      * Convert to array and add additional properties.
+     *
+     * @psalm-return array<string, mixed>
      */
     public function toArray(): array
     {
         $data = parent::toArray();
-        $data['estimationText'] = TimeHelper::minutes2readable($this->getEstimation(), false);
+        $data['estimationText'] = TimeHelper::minutes2readable((int) ($this->getEstimation() ?? 0), false);
         return $data;
     }
 
     /**
      * Get id
      *
-     * @return integer $id
+     * @return int|null $id
      */
-    public function getId()
+    public function getId(): int|null
     {
         return $this->id;
     }
@@ -273,9 +319,9 @@ class Project extends Base
     /**
      * Get name
      *
-     * @return string $name
+     * @return null|string $name
      */
-    public function getName()
+    public function getName(): string|null
     {
         return $this->name;
     }
@@ -298,9 +344,9 @@ class Project extends Base
     /**
      * Get active
      *
-     * @return boolean $active
+     * @return bool|null $active
      */
-    public function getActive()
+    public function getActive(): bool|null
     {
         return $this->active;
     }
@@ -322,9 +368,9 @@ class Project extends Base
     /**
      * Get customer
      *
-     * @return Customer $customer
+     * @return Customer|null $customer
      */
-    public function getCustomer()
+    public function getCustomer(): Customer|null
     {
         return $this->customer;
     }
@@ -348,9 +394,9 @@ class Project extends Base
     /**
      * Get global
      *
-     * @return boolean $global
+     * @return bool|null $global
      */
-    public function getGlobal()
+    public function getGlobal(): bool|null
     {
         return $this->global;
     }
@@ -361,28 +407,28 @@ class Project extends Base
      *
      * @return \Doctrine\Common\Collections\Collection $entries
      */
-    public function getEntries()
+    public function getEntries(): \Doctrine\Common\Collections\Collection
     {
         return $this->entries;
     }
 
-    public function getJiraId()
+    public function getJiraId(): string|null
     {
         return $this->jiraId;
     }
 
-    public function setJiraId($jiraId): static
+    public function setJiraId(?string $jiraId): static
     {
         $this->jiraId = $jiraId;
         return $this;
     }
 
-    public function getJiraTicket()
+    public function getJiraTicket(): string|null
     {
         return $this->jiraTicket;
     }
 
-    public function setJiraTicket($jiraTicket): static
+    public function setJiraTicket(string $jiraTicket): static
     {
         if ($jiraTicket === '') {
             $jiraTicket = null;
@@ -392,6 +438,11 @@ class Project extends Base
         return $this;
     }
 
+    /**
+     * @return string[]
+     *
+     * @psalm-return list<string>
+     */
     public function getSubtickets(): array
     {
         if ($this->subtickets == '') {
@@ -401,20 +452,23 @@ class Project extends Base
         return explode(',', (string) $this->subtickets);
     }
 
-    public function setSubtickets($subtickets): static
+    /**
+     * @param (mixed|string)[] $subtickets
+     *
+     * @psalm-param array<mixed|string> $subtickets
+     */
+    public function setSubtickets(array $subtickets): static
     {
-        if (is_array($subtickets)) {
-            $subtickets = implode(',', $subtickets);
-        }
+        $subtickets = implode(',', $subtickets);
 
         $this->subtickets = $subtickets;
         return $this;
     }
 
     /**
-     * @return TicketSystem $ticketSystem
+     * @return TicketSystem|null $ticketSystem
      */
-    public function getTicketSystem()
+    public function getTicketSystem(): TicketSystem|null
     {
         return $this->ticketSystem;
     }
@@ -430,79 +484,79 @@ class Project extends Base
     }
 
 
-    public function getEstimation()
+    public function getEstimation(): float|int|null
     {
         return $this->estimation;
     }
 
-    public function setEstimation($estimation): static
+    public function setEstimation(float|int|null $estimation): static
     {
         $this->estimation = $estimation;
         return $this;
     }
 
-    public function getOffer()
+    public function getOffer(): ?string
     {
         return $this->offer;
     }
 
-    public function setOffer($offer): static
+    public function setOffer(?string $offer): static
     {
         $this->offer = $offer;
         return $this;
     }
 
-    public function getBilling()
+    public function getBilling(): ?int
     {
         return $this->billing;
     }
 
-    public function setBilling($billing): static
+    public function setBilling(?int $billing): static
     {
         $this->billing = $billing;
         return $this;
     }
 
-    public function getCostCenter()
+    public function getCostCenter(): ?string
     {
         return $this->costCenter;
     }
 
-    public function setCostCenter($costCenter): static
+    public function setCostCenter(?string $costCenter): static
     {
         $this->costCenter = $costCenter;
         return $this;
     }
 
-    public function getInvoice()
+    public function getInvoice(): ?string
     {
         return $this->invoice;
     }
 
-    public function setInvoice($invoice): static
+    public function setInvoice(?string $invoice): static
     {
         $this->invoice = $invoice;
         return $this;
     }
 
-    public function setProjectLead($projectLead): static
+    public function setProjectLead(object|null $projectLead): static
     {
         $this->projectLead = $projectLead;
         return $this;
     }
 
-    public function getProjectLead()
+    public function getProjectLead(): object|null
     {
         return $this->projectLead;
     }
 
-    public function setTechnicalLead($technicalLead): static
+    public function setTechnicalLead(object|null $technicalLead): static
     {
         $this->technicalLead = $technicalLead;
         return $this;
     }
 
-    public function getTechnicalLead()
+    public function getTechnicalLead(): object|null
     {
         return $this->technicalLead;
     }
@@ -522,10 +576,8 @@ class Project extends Base
 
     /**
      * Get internalReference
-     *
-     * @return string
      */
-    public function getInternalReference()
+    public function getInternalReference(): string|null
     {
         return $this->internalReference;
     }
@@ -543,10 +595,8 @@ class Project extends Base
 
     /**
      * Get externalReference
-     *
-     * @return string
      */
-    public function getExternalReference()
+    public function getExternalReference(): string|null
     {
         return $this->externalReference;
     }
@@ -611,7 +661,7 @@ class Project extends Base
      *
      * @return \Doctrine\Common\Collections\Collection
      */
-    public function getPresets()
+    public function getPresets(): \Doctrine\Common\Collections\Collection
     {
         return $this->presets;
     }

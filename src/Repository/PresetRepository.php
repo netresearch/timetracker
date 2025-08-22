@@ -8,16 +8,13 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class PresetRepository extends ServiceEntityRepository
 {
-    /**
-     * PresetRepository constructor.
-     */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, Preset::class);
+        parent::__construct($registry, Preset::class);
     }
 
     /**
-     * get all presets
+     * @return array<int, array{preset: array<string, mixed>}>
      */
     public function getAllPresets(): array
     {

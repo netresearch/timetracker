@@ -31,15 +31,17 @@ class ExportServiceTest extends TestCase
 
         // Provide appropriate repositories based on requested class
         $currentUser = new User();
-        $userRepo = $this->getMockBuilder(\Doctrine\Persistence\ObjectRepository::class)->getMock();
-        $userRepo->method('find')->willReturn($currentUser);
-        $doctrine->method('getRepository')->willReturnCallback(function (string $class) use ($repo, $userRepo) {
+        $mock = $this->getMockBuilder(\Doctrine\Persistence\ObjectRepository::class)->getMock();
+        $mock->method('find')->willReturn($currentUser);
+        $doctrine->method('getRepository')->willReturnCallback(function (string $class) use ($repo, $mock): \PHPUnit\Framework\MockObject\MockObject {
             if ($class === \App\Entity\Entry::class) {
                 return $repo;
             }
+
             if ($class === \App\Entity\User::class) {
-                return $userRepo;
+                return $mock;
             }
+
             return $repo;
         });
         $doctrine->method('getManager');
@@ -57,12 +59,13 @@ class ExportServiceTest extends TestCase
                 TicketSystem $ticketSystem,
                 ManagerRegistry $managerRegistry,
                 \Symfony\Component\Routing\RouterInterface $router,
-                private array $keys,
+                private readonly array $keys,
                 private array $labels,
                 private array $summaries
             ) {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
             }
+
             public function searchTicket(string $jql, array $fields, int $limit = 1): object
             {
                 $issues = [];
@@ -76,6 +79,7 @@ class ExportServiceTest extends TestCase
                     ];
                     $issues[] = $issue;
                 }
+
                 return (object) ['issues' => $issues];
             }
         };
@@ -83,14 +87,15 @@ class ExportServiceTest extends TestCase
         $jiraFactory = $this->createMock(JiraOAuthApiFactory::class);
         $jiraFactory->method('create')->willReturn($jiraApi);
 
-        return new ExportService($doctrine, $router, $jiraFactory);
+        // ExportService signature changed to (ManagerRegistry, JiraOAuthApiFactory)
+        return new ExportService($doctrine, $jiraFactory);
     }
 
     public function testExportEntriesReturnsRepositoryResults(): void
     {
         $entries = [new Entry(), new Entry()];
-        $service = $this->makeSubject($entries);
-        $result = $service->exportEntries(1, 2025, 8, null, null, null);
+        $exportService = $this->makeSubject($entries);
+        $result = $exportService->exportEntries(1, 2025, 8, null, null, null);
         $this->assertSame($entries, $result);
     }
 
@@ -110,9 +115,9 @@ class ExportServiceTest extends TestCase
             ->setProject((new \App\Entity\Project())->setTicketSystem($ticketSystem))
             ->setTicket('TT-999');
 
-        $service = $this->makeSubject([$entry1, $entry2], ['TT-123', 'TT-999'], ['TT-123' => ['billable']], ['TT-123' => 'Summary 1']);
+        $exportService = $this->makeSubject([$entry1, $entry2], ['TT-123', 'TT-999'], ['TT-123' => ['billable']], ['TT-123' => 'Summary 1']);
 
-        $result = $service->enrichEntriesWithTicketInformation(1, [$entry1, $entry2], true, false, true);
+        $result = $exportService->enrichEntriesWithTicketInformation(1, [$entry1, $entry2], true, false, true);
 
         $this->assertTrue($result[0]->getBillable());
         $this->assertSame('Summary 1', $result[0]->getTicketTitle());

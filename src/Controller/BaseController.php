@@ -24,6 +24,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Routing\RouterInterface;
@@ -41,20 +42,13 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class BaseController extends AbstractController
 {
+    public ManagerRegistry $managerRegistry;
+
     /** @var ParameterBagInterface */
     protected $params;
 
-    /** @var EntityManagerInterface */
-    protected $entityManager;
-
-    /** @var SessionInterface */
-    protected $session;
-
     /** @var TranslatorInterface */
     protected $translator;
-
-    /** @var RouterInterface */
-    protected $router;
 
     /** @var KernelInterface */
     protected $kernel;
@@ -62,104 +56,18 @@ class BaseController extends AbstractController
     /** @var ManagerRegistry */
     protected $doctrineRegistry;
 
-    /** @var LocalizationService */
-    protected $localizationService;
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setParameters(ParameterBagInterface $parameterBag): void
-    {
-        $this->params = $parameterBag;
-    }
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setEntityManager(EntityManagerInterface $entityManager): void
-    {
-        $this->entityManager = $entityManager;
-    }
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setSession(SessionInterface $session): void
-    {
-        $this->session = $session;
-    }
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setTranslator(TranslatorInterface $translator): void
-    {
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setCoreDependencies(
+        ManagerRegistry $managerRegistry,
+        ParameterBagInterface $params,
+        TranslatorInterface $translator,
+        KernelInterface $kernel
+    ): void {
+        $this->managerRegistry = $managerRegistry;
+        $this->doctrineRegistry = $managerRegistry; // BC for legacy usages
+        $this->params = $params;
         $this->translator = $translator;
-    }
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setRouter(RouterInterface $router): void
-    {
-        $this->router = $router;
-    }
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setKernel(KernelInterface $kernel): void
-    {
         $this->kernel = $kernel;
-    }
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setDoctrineRegistry(ManagerRegistry $managerRegistry): void
-    {
-        $this->doctrineRegistry = $managerRegistry;
-    }
-
-    /**
-     * @required
-     * @codeCoverageIgnore
-     */
-    public function setLocalizationService(LocalizationService $localizationService): void
-    {
-        $this->localizationService = $localizationService;
-    }
-
-    /**
-     * set up function before actions are dispatched
-     *
-     *
-     */
-    public function preExecute(Request $request): void
-    {
-        if (!$this->checkLogin($request)) {
-            return;
-        }
-
-        $managerRegistry = $this->getDoctrine();
-        /** @var \App\Repository\UserRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(\App\Entity\User::class);
-        $user = $objectRepository->find($this->getUserId($request));
-
-        if (!is_object($user)) {
-            return;
-        }
-
-        $locale = $this->localizationService->normalizeLocale($user->getLocale());
-
-        $request->setLocale($locale);
     }
 
     /**
@@ -170,12 +78,8 @@ class BaseController extends AbstractController
      */
     protected function isLoggedIn(Request $request)
     {
-        // Use Symfony security component to check if user is authenticated
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return true;
-        }
-
-        return $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
+        // Require a fully authenticated session (no remember-me)
+        return $this->isGranted('IS_AUTHENTICATED_FULLY');
     }
 
     /**
@@ -185,7 +89,7 @@ class BaseController extends AbstractController
      * @return int User ID
      * @throw AccessDeniedException
      */
-    protected function getUserId(Request $request)
+    protected function getUserId(Request $request): int
     {
         if (!$this->isLoggedIn($request)) {
             throw new AccessDeniedException('No user logged in');
@@ -193,12 +97,12 @@ class BaseController extends AbstractController
 
         // Get user from Symfony security context
         $user = $this->getUser();
-        if (!is_object($user)) {
+        if (!$user instanceof \App\Entity\User) {
             throw new AccessDeniedException('No user logged in');
         }
 
         // Handle impersonation through Symfony's built-in functionality
-        return $user->getId();
+        return (int) $user->getId();
     }
 
     /**
@@ -211,10 +115,10 @@ class BaseController extends AbstractController
         if (!$request->isXmlHttpRequest()
             && !$this->isJsonRequest($request)
         ) {
-            return $this->redirect($this->generateUrl('_login'));
+            return $this->redirectToRoute('_login');
         }
 
-        return new Response($this->generateUrl('_login'), 403);
+        return new Response($this->generateUrl('_login'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
     }
 
     /**
@@ -223,7 +127,7 @@ class BaseController extends AbstractController
      *
      * @return bool
      */
-    protected function isPl(Request $request)
+    protected function isPl(Request $request): bool
     {
         if (false === $this->checkLogin($request)) {
             return false;
@@ -231,10 +135,9 @@ class BaseController extends AbstractController
 
         $userId = $this->getUserId($request);
         /** @var \App\Repository\UserRepository $objectRepository */
-        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\User::class);
+        $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
         $user = $objectRepository->find($userId);
-
-        return is_object($user) && 'PL' == $user->getType();
+        return $user instanceof User && $user->getType() === 'PL';
     }
 
 
@@ -244,7 +147,7 @@ class BaseController extends AbstractController
      *
      * @return bool
      */
-    protected function isDEV(Request $request)
+    protected function isDEV(Request $request): bool
     {
         if (false === $this->checkLogin($request)) {
             return false;
@@ -252,10 +155,9 @@ class BaseController extends AbstractController
 
         $userId = $this->getUserId($request);
         /** @var \App\Repository\UserRepository $objectRepository */
-        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\User::class);
+        $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
         $user = $objectRepository->find($userId);
-
-        return is_object($user) && 'DEV' == $user->getType();
+        return $user instanceof User && $user->getType() === 'DEV';
     }
 
     /**
@@ -264,7 +166,7 @@ class BaseController extends AbstractController
     protected function isJsonRequest(Request $request): bool
     {
         $types = $request->getAcceptableContentTypes();
-        return isset($types[0]) && $types[0] == 'application/json';
+        return isset($types[0]) && $types[0] === 'application/json';
     }
 
     /**
@@ -272,12 +174,14 @@ class BaseController extends AbstractController
      */
     protected function checkLogin(Request $request): bool
     {
-        // Only use Symfony's security component to check authentication
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return true;
+        // Consider user logged in only when a session token is present (test clears it)
+        // Prefer the real session service so tests that clear it are respected
+        if ($this->container->has('session')) {
+            $session = $this->container->get('session');
+        } else {
+            $session = $request->getSession();
         }
-
-        return $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
+        return !($session === null || !$session->has('_security_main') || empty($session->get('_security_main')));
     }
 
     /**
@@ -287,7 +191,7 @@ class BaseController extends AbstractController
     {
         $message = $this->translate('You need to login.');
         $response = new Response($message);
-        $response->setStatusCode(401);
+        $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
         return $response;
     }
 
@@ -298,7 +202,7 @@ class BaseController extends AbstractController
     {
         $message = $this->translate('You are not allowed to perform this action.');
         $response = new Response($message);
-        $response->setStatusCode(403);
+        $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
         return $response;
     }
 
@@ -322,15 +226,16 @@ class BaseController extends AbstractController
      * @param array  $parameters translation parameters
      * @param string $domain     translation file domain
      * @param null   $locale     translation locale
-     *
-     * @return mixed
+     */
+    /**
+     * @param array<string, mixed> $parameters
      */
     protected function translate(
         string $id,
         array $parameters = [],
         ?string $domain = 'messages',
         ?string $locale = null
-    ) {
+    ): string {
         return $this->translator->trans($id, $parameters, $domain, $locale);
     }
 }

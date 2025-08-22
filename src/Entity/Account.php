@@ -12,35 +12,36 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class Account
 {
-
     /**
      * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @ORM\Column (type="integer")
+     *
+     * @ORM\GeneratedValue (strategy="AUTO")
+     *
+     * @var int|null
      */
     protected $id;
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column (type="string", length=50)
+     *
+     * @var null|string
      */
     protected $name;
 
     /**
      * @ORM\OneToMany(targetEntity="Entry", mappedBy="account")
+     * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
     protected $entries;
 
-    public function __construct()
-    {
-        $this->entries = new ArrayCollection();
-    }
-
-    public function getId(): int
+    public function getId(): int|null
     {
         return $this->id;
     }
 
-    public function setId(int $id): self
+    public function setId(int $id): static
     {
         $this->id = $id;
         return $this;
@@ -51,29 +52,16 @@ class Account
         $this->name = $name;
     }
 
-    public function getName(): string
+    public function getName(): string|null
     {
         return $this->name;
     }
 
     /**
-     * Get entries
-     *
-     * @return \Doctrine\Common\Collections\Collection $entries
+     * @return \Doctrine\Common\Collections\Collection<int, Entry>
      */
     public function getEntries()
     {
         return $this->entries;
-    }
-
-    public function addEntry(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-        return $this;
-    }
-
-    public function removeEntry(Entry $entry): void
-    {
-        $this->entries->removeElement($entry);
     }
 }

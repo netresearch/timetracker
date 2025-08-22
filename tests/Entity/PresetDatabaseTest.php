@@ -90,11 +90,13 @@ class PresetDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($preset);
         $this->entityManager->flush();
+
         $id = $preset->getId();
 
         // Update preset
         $preset->setName('Updated Preset');
         $preset->setDescription('Updated Description');
+
         $this->entityManager->flush();
         $this->entityManager->clear();
 
@@ -134,6 +136,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($preset);
         $this->entityManager->flush();
+
         $id = $preset->getId();
 
         // Clear the EntityManager to simulate a fresh state
@@ -214,6 +217,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
         $customer->setName('Preset Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
         $this->entityManager->flush();
         return $customer;
@@ -230,6 +234,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
         $project->setBilling(Project::BILLING_TM);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
+
         $this->entityManager->persist($project);
         $this->entityManager->flush();
         return $project;
@@ -241,27 +246,9 @@ class PresetDatabaseTest extends AbstractWebTestCase
         $activity->setName('Preset Test Activity');
         $activity->setNeedsTicket(true);
         $activity->setFactor(1.0);
+
         $this->entityManager->persist($activity);
         $this->entityManager->flush();
         return $activity;
-    }
-
-    private function cleanupEntities(Activity $activity, Project $project, Customer $customer): void
-    {
-        // Re-fetch entities to ensure they are managed
-        $managedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
-        $managedProject = $this->entityManager->getRepository(Project::class)->find($project->getId());
-        $managedCustomer = $this->entityManager->getRepository(Customer::class)->find($customer->getId());
-
-        if ($managedActivity) {
-            $this->entityManager->remove($managedActivity);
-        }
-        if ($managedProject) {
-            $this->entityManager->remove($managedProject);
-        }
-        if ($managedCustomer) {
-            $this->entityManager->remove($managedCustomer);
-        }
-        $this->entityManager->flush();
     }
 }

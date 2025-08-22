@@ -11,28 +11,28 @@ class LdapClientServiceTest extends TestCase
 {
     public function testSettersChainAndUsernameNormalization(): void
     {
-        $svc = new LdapClientService();
-        $svc->setHost('ldap.example')->setPort(636)->setReadUser('reader')->setReadPass('secret')
+        $ldapClientService = new LdapClientService();
+        $ldapClientService->setHost('ldap.example')->setPort(636)->setReadUser('reader')->setReadPass('secret')
             ->setBaseDn('dc=example,dc=com')->setUseSSL(true)->setUserNameField('uid');
 
-        $svc->setUserName(' Jürgen Müller');
-        $svc->setUserPass('pass');
+        $ldapClientService->setUserName(' Jürgen Müller');
+        $ldapClientService->setUserPass('pass');
 
         // Indirectly verify normalization via reflection
-        $ref = new \ReflectionClass($svc);
-        $prop = $ref->getProperty('_userName');
-        $prop->setAccessible(true);
-        $this->assertSame('juergen.mueller', trim($prop->getValue($svc), '.'));
+        $reflectionClass = new \ReflectionClass($ldapClientService);
+        $reflectionProperty = $reflectionClass->getProperty('_userName');
+        $reflectionProperty->setAccessible(true);
+        $this->assertSame('juergen.mueller', trim((string) $reflectionProperty->getValue($ldapClientService), '.'));
     }
 
     public function testSetTeamsByLdapResponseHandlesMissingDn(): void
     {
-        $svc = new LdapClientService();
-        $ref = new \ReflectionClass($svc);
-        $method = $ref->getMethod('setTeamsByLdapResponse');
-        $method->setAccessible(true);
-        $method->invoke($svc, [['cn' => ['No DN']]]);
-        $this->assertSame([], $svc->getTeams());
+        $ldapClientService = new LdapClientService();
+        $reflectionClass = new \ReflectionClass($ldapClientService);
+        $reflectionMethod = $reflectionClass->getMethod('setTeamsByLdapResponse');
+        $reflectionMethod->setAccessible(true);
+        $reflectionMethod->invoke($ldapClientService, [['cn' => ['No DN']]]);
+        $this->assertSame([], $ldapClientService->getTeams());
     }
 }
 

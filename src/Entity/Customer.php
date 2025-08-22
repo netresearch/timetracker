@@ -13,41 +13,53 @@ use App\Model\Base;
  */
 class Customer extends Base
 {
-
     /**
      * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @ORM\Column (type="integer")
+     *
+     * @ORM\GeneratedValue (strategy="AUTO")
+     *
+     * @var int|null
      */
     protected $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column (type="string", length=255)
+     *
+     * @var null|string
      */
     protected $name;
 
     /**
-     * @ORM\Column(type="boolean", options={"unsigned"=true, "default"=0})
+     * @ORM\Column (type="boolean", options={"unsigned"=true, "default"=0})
+     *
+     * @var bool
      */
     protected $active = false;
 
     /**
-     * @ORM\Column(type="boolean", options={"unsigned"=true, "default"=0})
+     * @ORM\Column (type="boolean", options={"unsigned"=true, "default"=0})
+     *
+     * @var bool
      */
     protected $global = false;
 
     /**
      * @ORM\OneToMany(targetEntity="Project", mappedBy="customer")
+     * @var \Doctrine\Common\Collections\Collection<int, Project>
      */
     protected $projects;
 
     /**
      * @ORM\OneToMany(targetEntity="Entry", mappedBy="customer")
+     * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
     protected $entries;
 
     /**
      * @ORM\OneToMany(targetEntity="Preset", mappedBy="customer")
+     * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
     protected $presets;
 
@@ -57,6 +69,7 @@ class Customer extends Base
      *     joinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")},
      *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")}
      * )
+     * @var \Doctrine\Common\Collections\Collection<int, Team>
      */
     protected $teams;
 
@@ -84,9 +97,9 @@ class Customer extends Base
     /**
      * Get id
      *
-     * @return integer $id
+     * @return int|null $id
      */
-    public function getId()
+    public function getId(): int|null
     {
         return $this->id;
     }
@@ -107,9 +120,9 @@ class Customer extends Base
     /**
      * Get name
      *
-     * @return string $name
+     * @return null|string $name
      */
-    public function getName()
+    public function getName(): string|null
     {
         return $this->name;
     }
@@ -179,6 +192,9 @@ class Customer extends Base
      *
      * @return \Doctrine\Common\Collections\Collection $projects
      */
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Project>
+     */
     public function getProjects()
     {
         return $this->projects;
@@ -188,6 +204,9 @@ class Customer extends Base
      * Get entries
      *
      * @return \Doctrine\Common\Collections\Collection $entries
+     */
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Entry>
      */
     public function getEntries()
     {
@@ -221,6 +240,9 @@ class Customer extends Base
      * Get teams
      *
      * @return \Doctrine\Common\Collections\Collection $teams
+     */
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Team>
      */
     public function getTeams()
     {
@@ -273,6 +295,9 @@ class Customer extends Base
      * Get presets
      *
      * @return \Doctrine\Common\Collections\Collection
+     */
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Preset>
      */
     public function getPresets()
     {

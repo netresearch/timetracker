@@ -12,6 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Doctrine\ORM\EntityManagerInterface;
 
+#[\Symfony\Component\Console\Attribute\AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
 class TtSyncSubticketsCommand extends Command
 {
     public function __construct(private readonly SubticketSyncService $subticketSyncService, private readonly EntityManagerInterface $entityManager)
@@ -22,13 +23,14 @@ class TtSyncSubticketsCommand extends Command
     protected function configure()
     {
         $this
-            ->setName('tt:sync-subtickets')
-            ->setDescription('Update project subtickets from Jira')
             ->addArgument('project', InputArgument::OPTIONAL, 'Single project ID to update')
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    /**
+     * @psalm-return 0|1
+     */
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $symfonyStyle = new SymfonyStyle($input, $output);
 

@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Response;
@@ -8,8 +9,7 @@ namespace App\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
- * Class Error
- * @package App\Response
+ * Class Error.
  */
 class Error extends JsonResponse
 {
@@ -17,14 +17,14 @@ class Error extends JsonResponse
      * Error constructor.
      *
      * @param string      $errorMessage
-     * @param integer     $statusCode
+     * @param int         $statusCode
      * @param string|null $forwardUrl
      */
     public function __construct(
         $errorMessage,
         $statusCode,
         $forwardUrl = null,
-        \Throwable $throwable = null
+        ?\Throwable $throwable = null,
     ) {
         $message = ['message' => $errorMessage];
 
@@ -39,7 +39,10 @@ class Error extends JsonResponse
         parent::__construct($message, $statusCode > 0 ? $statusCode : 400);
     }
 
-    protected function getExceptionAsArray(\Throwable $throwable = null): ?array
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function getExceptionAsArray(?\Throwable $throwable = null): ?array
     {
         if (!$throwable instanceof \Throwable) {
             return null;
@@ -47,11 +50,11 @@ class Error extends JsonResponse
 
         return [
             'message' => $throwable->getMessage(),
-            'class'   => $throwable::class,
-            'code'    => $throwable->getCode(),
-            'file'    => $throwable->getFile(),
-            'line'    => $throwable->getLine(),
-            'trace'   => $throwable->getTrace(),
+            'class' => $throwable::class,
+            'code' => $throwable->getCode(),
+            'file' => $throwable->getFile(),
+            'line' => $throwable->getLine(),
+            'trace' => $throwable->getTrace(),
             'previous' => $this->getExceptionAsArray($throwable->getPrevious()),
         ];
     }

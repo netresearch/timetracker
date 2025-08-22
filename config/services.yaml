@@ -52,10 +52,23 @@ services:
 
     # Alias TranslatorInterface to the translator service
     Symfony\Component\Translation\TranslatorInterface: '@translator'
+    Symfony\Component\HttpFoundation\Session\SessionInterface: '@session'
 
-    # Make core services public if needed for direct access
-    Psr\Log\LoggerInterface:
+    # Logger alias for PSR-3
+    Psr\Log\LoggerInterface: '@logger'
+
+    # Ensure a concrete 'session' service exists for prod/dev; overridden in test env below
+    session:
+        class: Symfony\Component\HttpFoundation\Session\Session
+        factory: ['@session.factory', 'createSession']
         public: true
+
+    # Provide our own Doctrine Annotations reader (avoid deprecated FrameworkBundle service)
+    annotations.reader:
+        class: Doctrine\Common\Annotations\AnnotationReader
+        public: true
+    # Optional alias used by some libraries
+    annotation_reader: '@annotations.reader'
 
     # Export service with alias (migrated from App\Services\Export)
     App\Service\ExportService:
@@ -91,3 +104,4 @@ services:
     #     arguments:
     #         $managerRegistry: '@doctrine' # Adjust based on actual ManagerRegistry service ID if needed
     #         $clock: '@App\\Service\\ClockInterface'
+

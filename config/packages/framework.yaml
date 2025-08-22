@@ -3,7 +3,9 @@ framework:
     secret: '%env(APP_SECRET)%'
     default_locale: '%locale%'
     csrf_protection: ~
-    #http_method_override: true
+    http_method_override: true
+    annotations:
+        enabled: false
 
     # Enables session support. Note that the session will ONLY be started if you read or write from it.
     # Remove or comment this section to explicitly disable session support.
@@ -11,6 +13,7 @@ framework:
         handler_id: ~
         cookie_secure: auto
         cookie_samesite: lax
+        storage_factory_id: session.storage.factory.native
 
     #esi: true
     #fragments: true
@@ -20,7 +23,10 @@ framework:
         log: true
         throw: false # don't throw exceptions for deprecations
 
+
+
     error_controller: null
+    handle_all_throwables: false
 
     # Removed templating engines as it's deprecated
     # Use Twig directly instead

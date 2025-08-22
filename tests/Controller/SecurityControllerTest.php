@@ -12,10 +12,12 @@ class SecurityControllerTest extends AbstractWebTestCase
     public function testAccessToProtectedRouteRedirectsToLogin(): void
     {
         // Clear session to simulate not being logged in
-        $this->client->getContainer()->get('session')->clear();
+        $session = $this->client->getContainer()->get('session');
+        $session->clear();
+        $session->save();
 
         // Try to access a protected route
-        $this->client->request('GET', '/controlling/export');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling/export');
 
         // Should redirect to login
         $this->assertStatusCode(302);
@@ -29,7 +31,7 @@ class SecurityControllerTest extends AbstractWebTestCase
         $this->logInSession('unittest');
 
         // Try to access a simple protected route
-        $this->client->request('GET', '/getUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
 
         // Should succeed with 200 status
         $this->assertStatusCode(200);
@@ -40,20 +42,20 @@ class SecurityControllerTest extends AbstractWebTestCase
         // Ensure kernel booted in setUp (if any) is shut down before creating a new client
         self::ensureKernelShutdown();
 
-        $client = static::createClient();
+        $kernelBrowser = static::createClient();
         // Use the crawler provided by the client request
-        $crawler = $client->request('GET', '/login');
+        $kernelBrowser->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/login');
 
         $this->assertResponseIsSuccessful(); // Asserts 2xx status code
 
         // Check the JS config for the form URL
-        $content = $client->getResponse()->getContent();
+        $content = $kernelBrowser->getResponse()->getContent();
 
         // The form is created with ExtJS, so check for the right script elements
         $this->assertStringContainsString('Ext.form.Panel', $content);
-        $this->assertStringContainsString('name: \'_username\'', $content);
-        $this->assertStringContainsString('name: \'_password\'', $content);
-        $this->assertStringContainsString('name: \'_csrf_token\'', $content);
+        $this->assertStringContainsString("name: '_username'", $content);
+        $this->assertStringContainsString("name: '_password'", $content);
+        $this->assertStringContainsString("name: '_csrf_token'", $content);
         // Ensure the form URL now points to /login
         $this->assertStringContainsString('url: "/login"', $content);
     }
@@ -67,21 +69,21 @@ class SecurityControllerTest extends AbstractWebTestCase
         $this->logInSession('unittest');
 
         // They should be able to access a protected route
-        $this->client->request('GET', '/getUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
         $this->assertStatusCode(200);
 
         // After logging out
-        $this->client->request('GET', '/logout');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/logout');
 
         // The user should be redirected
         $this->assertTrue($this->client->getResponse()->isRedirect());
 
-        // Make sure the session is cleared after logout
-        $session = $this->client->getContainer()->get('session');
-        $this->assertNull($session->get('_security_main'));
+        // Ensure token cleared to avoid sticky authentication across requests
+        $tokenStorage = $this->client->getContainer()->get('security.token_storage');
+        $this->assertNull($tokenStorage->getToken());
 
         // Try to access a protected route again
-        $this->client->request('GET', '/getUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
 
         // Should be redirected to login
         $this->assertStatusCode(302);

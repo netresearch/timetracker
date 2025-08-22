@@ -21,18 +21,18 @@ class BasicAccessTest extends AbstractWebTestCase
         $this->client->getCookieJar()->clear();
 
         // Try to access protected route - should fail
-        $this->client->request('GET', '/getAllUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
         $this->assertStatusCode(302); // Should redirect to login
 
         // Use the Base class login functionality to authenticate
         $this->logInSession('unittest');
 
         // Check authentication is working with a simple endpoint
-        $this->client->request('GET', '/getUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
         $this->assertStatusCode(200);
 
         // Now try the AdminController endpoint
-        $this->client->request('GET', '/getAllUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
 
         // Assert we get a successful response, not a redirect
         $this->assertStatusCode(200);

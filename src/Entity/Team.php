@@ -8,64 +8,59 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @ORM\Entity(repositoryClass="App\Repository\TeamRepository")
  * @ORM\Table(name="teams")
+ * @ORM\HasLifecycleCallbacks
  */
 class Team
 {
     /**
+     * @var \Doctrine\Common\Collections\ArrayCollection
+     */
+    public $customers;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="Customer", mappedBy="teams")
+     * @var \Doctrine\Common\Collections\Collection<int, Customer>
+     */
+    protected $customersRelation;
+    /**
      * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @ORM\Column (type="integer")
+     *
+     * @ORM\GeneratedValue (strategy="AUTO")
+     *
+     * @var null|string
      */
     protected $id;
 
     /**
-     * @ORM\Column(type="string", length=31)
+     * @ORM\Column (type="string", length=31)
+     *
+     * @var null|string
      */
     protected $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="leadTeams")
-     * @ORM\JoinColumn(name="lead_user_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="User", inversedBy="leadTeams")
+     *
+     * @ORM\JoinColumn (name="lead_user_id", referencedColumnName="id")
+     *
+     * @var User|null
      */
     protected $leadUser;
 
     /**
-     * @ORM\ManyToMany(targetEntity="Customer", mappedBy="teams")
-     * @ORM\JoinTable(name="teams_customers",
-     *     joinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")}
-     * )
-     */
-    protected $customers;
-
-    /**
      * @ORM\ManyToMany(targetEntity="User", mappedBy="teams")
-     * @ORM\JoinTable(name="teams_users",
-     *     joinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")}
-     * )
+     * @var \Doctrine\Common\Collections\Collection<int, User>
      */
     protected $users;
 
     /**
-     * Set id
-     *
-     * @param string $id
-     *
-     * @return $this
-     */
-    public function setId($id): static
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
      * Get id
      *
-     * @return integer $id
+     * @return null|string $id
      */
-    public function getId()
+    public function getId(): string|null
     {
         return $this->id;
     }
@@ -86,9 +81,9 @@ class Team
     /**
      * Get name
      *
-     * @return string $name
+     * @return null|string $name
      */
-    public function getName()
+    public function getName(): string|null
     {
         return $this->name;
     }
@@ -108,9 +103,9 @@ class Team
     /**
      * Get lead user
      *
-     * @return User $leadUser
+     * @return User|null $leadUser
      */
-    public function getLeadUser()
+    public function getLeadUser(): User|null
     {
         return $this->leadUser;
     }
@@ -121,32 +116,43 @@ class Team
     public function __construct()
     {
         $this->customers = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->customersRelation = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->users = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     /**
-     * Add customers
+     * @return \Doctrine\Common\Collections\Collection<int, User>
      */
+    public function getUsers()
+    {
+        return $this->users;
+    }
+
+    /**
+     * Detach ManyToMany relations so the join rows are removed before deleting team
+     *
+     * @ORM\PreRemove
+     */
+    public function preRemove(): void
+    {
+        if ($this->users) {
+            foreach ($this->users as $user) {
+                $user->getTeams()->removeElement($this);
+            }
+        }
+    }
+
     public function addCustomer(Customer $customer): static
     {
-        $this->customers[] = $customer;
+        $this->customersRelation[] = $customer;
         return $this;
     }
 
     /**
-     * Remove customers
-     */
-    public function removeCustomer(Customer $customer): void
-    {
-        $this->customers->removeElement($customer);
-    }
-
-    /**
-     * Get customers
-     *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Customer>
      */
     public function getCustomers()
     {
-        return $this->customers;
+        return $this->customersRelation;
     }
 }

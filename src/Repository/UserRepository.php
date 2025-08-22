@@ -12,12 +12,9 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class UserRepository extends ServiceEntityRepository
 {
-    /**
-     * UserRepository constructor.
-     */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, User::class);
+        parent::__construct($registry, User::class);
     }
 
     /**
@@ -31,6 +28,7 @@ class UserRepository extends ServiceEntityRepository
 
     /**
      * @param integer $currentUserId
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string}}>
      */
     public function getUsers($currentUserId): array
     {
@@ -43,23 +41,26 @@ class UserRepository extends ServiceEntityRepository
         $data = [];
 
         foreach ($users as $user) {
+            if (!$user instanceof User) {
+                continue;
+            }
             if ($currentUserId == $user->getId()) {
 
                 // Set current user on top
                 array_unshift($data, ['user' => [
-                    'id'       => $user->getId(),
-                    'username' => $user->getUsername(),
-                    'type'     => $user->getType(),
-                    'abbr'     => $user->getAbbr(),
-                    'locale'   => $user->getLocale(),
+                    'id'       => (int) $user->getId(),
+                    'username' => (string) $user->getUsername(),
+                    'type'     => (string) $user->getType(),
+                    'abbr'     => (string) $user->getAbbr(),
+                    'locale'   => (string) $user->getLocale(),
                 ]]);
             } else {
                 $data[] = ['user' => [
-                    'id'       => $user->getId(),
-                    'username' => $user->getUsername(),
-                    'type'     => $user->getType(),
-                    'abbr'     => $user->getAbbr(),
-                    'locale'   => $user->getLocale(),
+                    'id'       => (int) $user->getId(),
+                    'username' => (string) $user->getUsername(),
+                    'type'     => (string) $user->getType(),
+                    'abbr'     => (string) $user->getAbbr(),
+                    'locale'   => (string) $user->getLocale(),
                 ]];
             }
         }
@@ -68,7 +69,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array[]
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>}}>
      */
     public function getAllUsers(): array
     {
@@ -80,17 +81,20 @@ class UserRepository extends ServiceEntityRepository
 
         $data = [];
         foreach ($users as $user) {
+            if (!$user instanceof User) {
+                continue;
+            }
             $teams = [];
             foreach ($user->getTeams() as $team) {
-                $teams[] = $team->getId();
+                $teams[] = (int) $team->getId();
             }
 
             $data[] = ['user' => [
-                'id'       => $user->getId(),
-                'username' => $user->getUsername(),
-                'type'     => $user->getType(),
-                'abbr'     => $user->getAbbr(),
-                'locale'   => $user->getLocale(),
+                'id'       => (int) $user->getId(),
+                'username' => (string) $user->getUsername(),
+                'type'     => (string) $user->getType(),
+                'abbr'     => (string) $user->getAbbr(),
+                'locale'   => (string) $user->getLocale(),
                 'teams'    => $teams,
             ]];
         }
@@ -105,21 +109,21 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param $currentUserId
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string}}>
      */
-    public function getUserById($currentUserId): array
+    public function getUserById(int $currentUserId): array
     {
         $user = $this->find($currentUserId);
 
         $data = [];
 
-        if (! empty($user)) {
+        if ($user instanceof User) {
             $data[] = ['user' => [
-                'id'       => $user->getId(),
-                'username' => $user->getUsername(),
-                'type'     => $user->getType(),
-                'abbr'     => $user->getAbbr(),
-                'locale'   => $user->getLocale(),
+                'id'       => (int) $user->getId(),
+                'username' => (string) $user->getUsername(),
+                'type'     => (string) $user->getType(),
+                'abbr'     => (string) $user->getAbbr(),
+                'locale'   => (string) $user->getLocale(),
             ]];
         }
 

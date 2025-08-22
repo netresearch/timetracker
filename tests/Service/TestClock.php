@@ -11,22 +11,22 @@ use App\Service\ClockInterface;
  */
 class TestClock implements ClockInterface
 {
-    private \DateTimeImmutable $currentTime;
+    private \DateTimeImmutable $dateTimeImmutable;
 
     public function __construct(\DateTimeImmutable $startTime = null)
     {
-        $this->currentTime = $startTime ?? new \DateTimeImmutable('2023-10-24 12:00:00'); // Default fixed time
+        $this->dateTimeImmutable = $startTime ?? new \DateTimeImmutable('2023-10-24 12:00:00'); // Default fixed time
     }
 
     public function now(): \DateTimeImmutable
     {
-        return $this->currentTime;
+        return $this->dateTimeImmutable;
     }
 
     public function today(): \DateTimeImmutable
     {
         // Return the date part at midnight
-        return $this->currentTime->setTime(0, 0, 0);
+        return $this->dateTimeImmutable->setTime(0, 0, 0);
     }
 
     /**
@@ -34,6 +34,6 @@ class TestClock implements ClockInterface
      */
     public function setTestNow(\DateTimeImmutable $testTime): void
     {
-        $this->currentTime = $testTime;
+        $this->dateTimeImmutable = $testTime;
     }
 }

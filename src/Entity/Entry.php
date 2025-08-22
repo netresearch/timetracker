@@ -42,82 +42,97 @@ class Entry extends Base
      * @ORM\Id
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @var int|null
      */
     protected $id;
 
     /**
-     * @ORM\Column(type="string", length=32)
+     * @ORM\Column (type="string", length=32)
      */
-    protected $ticket;
+    protected string $ticket = '';
 
     /**
-     * @ORM\Column(name="worklog_id", type="integer", nullable=true)
+     * @ORM\Column (name="worklog_id", type="integer", nullable=true)
      */
-    protected $worklog_id;
+    protected int|null $worklog_id = null;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column (type="string")
+     *
+     * @var string
      */
     protected $description;
 
     /**
-     * @ORM\Column(type="date")
+     * @ORM\Column (type="date")
      */
-    protected $day;
+    protected ?DateTime $day = null;
 
     /**
-     * @ORM\Column(type="time")
+     * @ORM\Column (type="time")
      */
-    protected $start;
+    protected ?DateTime $start = null;
 
     /**
-     * @ORM\Column(type="time")
+     * @ORM\Column (type="time")
      */
-    protected $end;
+    protected ?DateTime $end = null;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column (type="integer")
+     *
+     * @var int
      */
     protected $duration;
 
     /**
-     * @ORM\Column(name="synced_to_ticketsystem", type="boolean", nullable=true)
+     * @ORM\Column (name="synced_to_ticketsystem", type="boolean", nullable=true)
+     *
+     * @var bool
      */
     protected $syncedToTicketsystem;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Project", inversedBy="entries")
-     * @ORM\JoinColumn(name="project_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="Project", inversedBy="entries")
+     *
+     * @ORM\JoinColumn (name="project_id", referencedColumnName="id")
      */
-    protected $project;
+    protected ?Project $project = null;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="entries")
-     * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="Customer", inversedBy="entries")
+     *
+     * @ORM\JoinColumn (name="customer_id", referencedColumnName="id")
      */
-    protected $customer;
+    protected ?Customer $customer = null;
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="entries")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="User", inversedBy="entries")
+     *
+     * @ORM\JoinColumn (name="user_id", referencedColumnName="id")
      */
-    protected $user;
+    protected ?User $user = null;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Account", inversedBy="entries")
-     * @ORM\JoinColumn(name="account_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="Account", inversedBy="entries")
+     *
+     * @ORM\JoinColumn (name="account_id", referencedColumnName="id")
      */
-    protected $account;
+    protected ?Account $account = null;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Activity", inversedBy="entries")
-     * @ORM\JoinColumn(name="activity_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="Activity", inversedBy="entries")
+     *
+     * @ORM\JoinColumn (name="activity_id", referencedColumnName="id")
      */
-    protected $activity;
+    protected ?Activity $activity = null;
 
 
     /**
-     * @ORM\Column(name="class", type="smallint", nullable=false, options={"unsigned"=true, "default"=0})
+     * @ORM\Column (name="class", type="smallint", nullable=false, options={"unsigned"=true, "default"=0})
+     *
+     * @var int
      */
     protected $class = self::CLASS_PLAIN;
 
@@ -133,6 +148,7 @@ class Entry extends Base
      *
      * @var array
      */
+    /** @var array<int, string> */
     protected $externalLabels = [];
 
     /**
@@ -179,6 +195,9 @@ class Entry extends Base
      *
      * @return array
      */
+    /**
+     * @return array<int, string>
+     */
     public function getExternalLabels()
     {
         return $this->externalLabels;
@@ -186,6 +205,9 @@ class Entry extends Base
 
     /**
      * Sets the array of external labels.
+     */
+    /**
+     * @param array<int, string> $arExternalLabels
      */
     public function setExternalLabels(array $arExternalLabels): void
     {
@@ -213,17 +235,14 @@ class Entry extends Base
      */
     public function validateDuration(): static
     {
-        if (($this->getStart() instanceof DateTime)
-            && ($this->getEnd() instanceof DateTime)
-            && ($this->getEnd()->getTimestamp() <= $this->getStart()->getTimestamp())
-        ) {
+        if ($this->end instanceof \DateTime && $this->start instanceof \DateTime && $this->end->getTimestamp() <= $this->start->getTimestamp()) {
             throw new \Exception('Duration must be greater than 0!');
         }
 
         return $this;
     }
 
-    public function setId($id): static
+    public function setId(int $id): static
     {
         $this->id = $id;
         return $this;
@@ -242,29 +261,29 @@ class Entry extends Base
     /**
      * Get userId
      *
-     * @return integer $userId
+     * @return int|null $userId
      */
-    public function getUserId(): int
+    public function getUserId(): int|null
     {
-        return (int) (is_object($this->getUser()) ? $this->getUser()->getId() : 0);
+        return is_object($this->getUser()) ? $this->getUser()->getId() : 0;
     }
 
     /**
      * Get projectId
      *
-     * @return integer $projectId
+     * @return int|null $projectId
      */
-    public function getProjectId(): int
+    public function getProjectId(): int|null
     {
-        return (int) (is_object($this->getProject()) ? $this->getProject()->getId() : 0);
+        return is_object($this->getProject()) ? $this->getProject()->getId() : 0;
     }
 
     /**
      * Get accountId
      *
-     * @return integer $accountId
+     * @return int|null $accountId
      */
-    public function getAccountId(): int
+    public function getAccountId(): int|null
     {
         return is_object($this->getAccount()) ? $this->getAccount()->getId() : 0;
     }
@@ -272,11 +291,11 @@ class Entry extends Base
     /**
      * Get customerId
      *
-     * @return integer $customerId
+     * @return int|null $customerId
      */
-    public function getCustomerId(): int
+    public function getCustomerId(): int|null
     {
-        return (int) (is_object($this->getCustomer()) ? $this->getCustomer()->getId() : 0);
+        return is_object($this->getCustomer()) ? $this->getCustomer()->getId() : 0;
     }
 
     /**
@@ -305,18 +324,18 @@ class Entry extends Base
      *
      * @return string $ticket
      */
-    public function getTicket()
+    public function getTicket(): string
     {
         return $this->ticket;
     }
 
-    public function setTicketTitle($ticketTitle): static
+    public function setTicketTitle(?string $ticketTitle): static
     {
         $this->ticketTitle = $ticketTitle;
         return $this;
     }
 
-    public function getTicketTitle()
+    public function getTicketTitle(): ?string
     {
         return $this->ticketTitle;
     }
@@ -383,7 +402,7 @@ class Entry extends Base
      *
      * @return DateTime $day
      */
-    public function getDay()
+    public function getDay(): ?\DateTime
     {
         return $this->day;
     }
@@ -411,7 +430,7 @@ class Entry extends Base
      *
      * @return DateTime $start
      */
-    public function getStart()
+    public function getStart(): ?\DateTime
     {
         return $this->start;
     }
@@ -440,15 +459,7 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
-        if (! $this->start instanceof DateTime) {
-            return $this;
-        }
-
-        if (! $this->end instanceof DateTime) {
-            return $this;
-        }
-
-        if ($this->end->format('H:i') < $this->start->format('H:i')) {
+        if ($this->end !== null && $this->start !== null && $this->end->format('H:i') < $this->start->format('H:i')) {
             $this->end = clone $this->start;
         }
 
@@ -460,7 +471,7 @@ class Entry extends Base
      *
      * @return \DateTime $end
      */
-    public function getEnd()
+    public function getEnd(): ?\DateTime
     {
         return $this->end;
     }
@@ -514,7 +525,7 @@ class Entry extends Base
      *
      * @return Project $project
      */
-    public function getProject()
+    public function getProject(): ?\App\Entity\Project
     {
         return $this->project;
     }
@@ -533,7 +544,7 @@ class Entry extends Base
      *
      * @return User $user
      */
-    public function getUser()
+    public function getUser(): ?\App\Entity\User
     {
         return $this->user;
     }
@@ -552,7 +563,7 @@ class Entry extends Base
      *
      * @return Account $account
      */
-    public function getAccount()
+    public function getAccount(): ?\App\Entity\Account
     {
         return $this->account;
     }
@@ -571,7 +582,7 @@ class Entry extends Base
      *
      * @return Activity $activity
      */
-    public function getActivity()
+    public function getActivity(): ?\App\Entity\Activity
     {
         return $this->activity;
     }
@@ -579,11 +590,13 @@ class Entry extends Base
     /**
      * Get array representation of entry object
      *
-     * @return mixed[]
+     * @return (int|null|string)[]
+     *
+     * @psalm-return array{id: int, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string}
      */
     public function toArray(): array
     {
-        if (null !== $this->getCustomer()) {
+        if ($this->getCustomer() instanceof \App\Entity\Customer) {
             $customer = $this->getCustomer()->getId();
         } elseif ($this->getProject() && $this->getProject()->getCustomer()) {
             $customer = $this->getProject()->getCustomer()->getId();
@@ -643,10 +656,8 @@ class Entry extends Base
 
     /**
      * Get customer
-     *
-     * @return Customer
      */
-    public function getCustomer()
+    public function getCustomer(): ?\App\Entity\Customer
     {
         return $this->customer;
     }
@@ -659,7 +670,7 @@ class Entry extends Base
      */
     public function setClass($class): static
     {
-        $this->class = (int) $class;
+        $this->class = $class;
         return $this;
     }
 
@@ -675,14 +686,12 @@ class Entry extends Base
 
     /**
      * Returns the issue link for the configured ticket system.
-     *
-     * @return string
      */
-    public function getTicketSystemIssueLink()
+    public function getTicketSystemIssueLink(): string
     {
         $ticketSystem = $this->getProject()->getTicketSystem();
 
-        if (empty($ticketSystem)) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             return $this->getTicket();
         }
 
@@ -721,13 +730,17 @@ class Entry extends Base
      */
     public function setInternalJiraTicketOriginalKey($strTicket): static
     {
-        $this->internalJiraTicketOriginalKey = (string) $strTicket;
+        $this->internalJiraTicketOriginalKey = $strTicket;
 
         return $this;
     }
 
     /**
      * Returns the post data for the internal JIRA ticket creation.
+     *
+     * @return ((mixed|string)[]|string)[][]
+     *
+     * @psalm-return array{fields: array{project: array{key: mixed}, summary: string, description: string, issuetype: array{name: 'Task'}}}
      */
     public function getPostDataForInternalJiraTicketCreation(): array
     {

@@ -1,42 +1,11 @@
 monolog:
-    channels: ['deprecation', 'ldap']
     handlers:
         main:
-            type: stream
-            path: "%kernel.logs_dir%/%kernel.environment%.log"
-            level: debug
-            channels: ["!event", "!ldap", "!deprecation"]
-            formatter: monolog.formatter.json
-
-        # Dedicated handler for LDAP logs
-        ldap:
-            type: rotating_file
-            path: "%kernel.logs_dir%/%kernel.environment%.ldap.log"
-            level: debug
-            channels: ["ldap"]
-            max_files: 10
-            formatter: monolog.formatter.json
-
-        # Dedicated handler for deprecations
-        deprecation:
-            type: rotating_file
-            path: "%kernel.logs_dir%/%kernel.environment%.deprecations.log"
-            level: debug
-            channels: ["deprecation"]
-            max_files: 10
-            formatter: monolog.formatter.json
-
-        # Filter to only capture deprecation messages
-        deprecation_filter:
-            type: filter
-            handler: deprecation
-            max_level: info
-            channels: ["php", "doctrine"]
-
+            type: "null"
         console:
-            type: console
-            process_psr_3_messages: false
-            channels: ["!event", "!console"]
+            type: "null"
+        php:
+            type: "null"
 
         # Uncomment to get logging in your browser
         # you may have to allow bigger header sizes in your Web server configuration

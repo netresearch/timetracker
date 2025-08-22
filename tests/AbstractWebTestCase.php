@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use Symfony\Component\BrowserKit\Cookie;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase as SymfonyWebTestCase;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase as SymfonyWebTestCase;
+use Symfony\Component\BrowserKit\Cookie;
 
 /**
  * Abstract base test case that combines all test functionality.
@@ -29,26 +29,26 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
 
     /**
      * The initial state of a table
-     * used to assert integrity of table after a DEV test
+     * used to assert integrity of table after a DEV test.
      */
     protected $tableInitialState;
 
     /**
-     * Flag to track if test data has been loaded
+     * Flag to track if test data has been loaded.
      */
-    private static $dataLoaded = false;
+    private static bool $dataLoaded = false;
 
     /**
-     * Flag to track if database has been initialized
+     * Flag to track if database has been initialized.
      */
-    private static $databaseInitialized = false;
+    private static bool $databaseInitialized = false;
 
     protected $useTransactions = true;
 
     /**
-     * Returns the kernel class to use for these tests
+     * Returns the kernel class to use for these tests.
      */
-    protected static function getKernelClass()
+    protected static function getKernelClass(): string
     {
         return \App\Kernel::class;
     }
@@ -60,45 +60,36 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     {
         parent::setUp();
 
-        // create test env.
+        // Reuse kernel between tests for performance; client reboot disabled below
         $this->client = static::createClient();
-        $this->serviceContainer = $this->client->getContainer();
+        // Use the test container to access private services like test.session
+        $this->serviceContainer = static::getContainer();
 
-        // Reset database state if needed
+        // Reset database state if needed (only once per process)
         $this->resetDatabase();
 
         // Ensure we have a Doctrine DBAL connection reference
         $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        // Enable savepoints to speed nested transactions
+        if (method_exists($dbal, 'setNestTransactionsWithSavepoints')) {
+            $dbal->setNestTransactionsWithSavepoints(true);
+        }
         $this->queryBuilder = $dbal->createQueryBuilder();
 
         // Begin a transaction to isolate test database changes (reliable via DBAL)
         if ($this->useTransactions) {
             try {
-                if (method_exists($dbal, 'beginTransaction')) {
-                    $dbal->beginTransaction();
-                } elseif (method_exists($dbal, 'getWrappedConnection')) {
-                    $dbal->getWrappedConnection()->beginTransaction();
-                }
+                $dbal->beginTransaction();
             } catch (\Exception $e) {
-                error_log('Transaction begin failed: ' . $e->getMessage());
+                error_log('Transaction begin failed: '.$e->getMessage());
             }
         }
 
         // authenticate user in session, only if security services are available
         $this->logInSession();
 
-        // Force German locale for tests when translator service exists
-        if ($this->serviceContainer && $this->serviceContainer->has('translator')) {
-            $translator = $this->serviceContainer->get('translator');
-            $translator->setLocale('de');
-        }
-
-        // Also set the request locale if possible
-        if ($this->serviceContainer && $this->serviceContainer->has('request_stack')) {
-            if ($request = $this->serviceContainer->get('request_stack')->getCurrentRequest()) {
-                $request->setLocale('de');
-            }
-        }
+        // Avoid repeatedly setting translator/request locale to reduce overhead
+        // Keep defaults from framework config; individual tests can override if needed
     }
 
     /**
@@ -113,56 +104,49 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                     $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
                     // Be tolerant: attempt rollback but ignore if not active
                     try {
-                        if (method_exists($dbal, 'rollBack')) {
-                            $dbal->rollBack();
-                        }
+                        $dbal->rollBack();
                     } catch (\Throwable) {
                     }
-                    if (method_exists($dbal, 'getWrappedConnection')) {
-                        $wrapped = $dbal->getWrappedConnection();
-                        try {
-                            if (method_exists($wrapped, 'rollBack')) {
-                                $wrapped->rollBack();
-                            }
-                        } catch (\Throwable) {
-                        }
-                    }
                 }
-            } catch (\Exception $e) {
+            } catch (\Exception) {
                 // ignore
             }
         }
 
-        // Clear entity manager to prevent stale data between tests
-        if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
-            $this->serviceContainer->get('doctrine')->getManager()->clear();
+        // Clear entity manager to prevent stale data between tests, tolerate shut down kernel
+        try {
+            if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
+                $this->serviceContainer->get('doctrine')->getManager()->clear();
+            }
+        } catch (\Throwable) {
+            // Ignore if kernel has been shut down during the test
         }
 
         parent::tearDown();
     }
 
     /**
-     * Used in test for DEV users
+     * Used in test for DEV users.
      */
     protected function setInitialDbState(string $tableName)
     {
-        $this->tableInitialState = $this->queryBuilder
+        $qb = $this->queryBuilder
             ->select('*')
-            ->from($tableName)
-            ->execute()
-            ->fetchAllAssociative();
+            ->from($tableName);
+        $result = $qb->executeQuery();
+        $this->tableInitialState = $result->fetchAllAssociative();
     }
 
     /**
-     * Only Call in test where setInitialDbState was called before
+     * Only Call in test where setInitialDbState was called before.
      */
     protected function assertDbState(string $tableName)
     {
-        $newTableState = $this->queryBuilder
+        $qb = $this->queryBuilder
             ->select('*')
-            ->from($tableName)
-            ->execute()
-            ->fetchAllAssociative();
+            ->from($tableName);
+        $result = $qb->executeQuery();
+        $newTableState = $result->fetchAllAssociative();
         $this->assertSame($this->tableInitialState, $newTableState);
         $this->tableInitialState = null;
     }
@@ -175,9 +159,9 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      */
     protected function loadTestData(?string $filepath = null)
     {
-        $file = $filepath ? file_get_contents(__DIR__ . $filepath) : file_get_contents(__DIR__ . $this->filepath);
+        $file = $filepath ? file_get_contents(__DIR__.$filepath) : file_get_contents(__DIR__.$this->filepath);
 
-        //turn on error reporting (if function exists)
+        // turn on error reporting (if function exists)
         if (function_exists('mysqli_report')) {
             \mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         }
@@ -185,33 +169,31 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         try {
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
 
-            // For newer Doctrine DBAL versions
-            if (method_exists($connection->getWrappedConnection(), 'getWrappedResourceHandle')) {
-                $this->connection = $connection->getWrappedConnection()->getWrappedResourceHandle();
-                $this->connection->multi_query($file);
-            } else {
-                // For newer Doctrine versions that don't expose the resource handle
-                $statements = explode(';', $file);
-                foreach ($statements as $statement) {
-                    $statement = trim($statement);
-                    if ($statement !== '' && $statement !== '0') {
-                        try {
+            // Execute SQL file statements using DBAL (avoid native connection handling)
+            $statements = explode(';', $file);
+            foreach ($statements as $statement) {
+                $statement = trim($statement);
+                if ('' !== $statement && '0' !== $statement) {
+                    try {
+                        if (method_exists($connection, 'executeStatement')) {
+                            $connection->executeStatement($statement);
+                        } else {
                             $connection->executeQuery($statement);
-                        } catch (\Exception $e) {
-                            echo "Database error: " . $e->getMessage() . "\n" . "For query: " . $statement . "\n";
                         }
+                    } catch (\Exception $e) {
+                        echo 'Database error: '.$e->getMessage()."\n".'For query: '.$statement."\n";
                     }
                 }
-
-                $this->connection = $connection;
             }
+
+            $this->connection = $connection;
 
             // get the queryBuilder
             $this->queryBuilder = $connection->createQueryBuilder();
         } catch (\Exception $exception) {
-            echo "Database error: " . $exception->getMessage() . "\n";
+            echo 'Database error: '.$exception->getMessage()."\n";
         } finally {
-            //turn off error reporting (if function exists)
+            // turn off error reporting (if function exists)
             if (function_exists('mysqli_report')) {
                 \mysqli_report(MYSQLI_REPORT_OFF);
             }
@@ -219,7 +201,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Authenticate the query with credentials from the set-up test project leader
+     * Authenticate the query with credentials from the set-up test project leader.
      */
     protected function logInSession(string $user = 'unittest')
     {
@@ -227,7 +209,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         $userMap = [
             'unittest' => '1',
             'developer' => '2',
-            'noContract' => '4'
+            'noContract' => '4',
         ];
 
         $userId = $userMap[$user] ?? '1';
@@ -237,27 +219,42 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         $userEntity = $userRepository->find($userId);
 
         if ($userEntity) {
-            // Create and set token in security token storage
-            $tokenStorage = $this->serviceContainer->get('security.token_storage');
+            // Create the token for session storage only (let the firewall load it on next request)
             $usernamePasswordToken = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
                 $userEntity,
-                null,
                 'main',
                 $userEntity->getRoles()
             );
-            $tokenStorage->setToken($usernamePasswordToken);
 
-            // Store token in session
-            $session = $this->serviceContainer->get('session');
+            // Obtain a session instance in Symfony 6 test environment
+            // Prefer the real 'session' service so tests that clear it work reliably
+            if ($this->serviceContainer->has('session')) {
+                $session = $this->serviceContainer->get('session');
+            } elseif ($this->serviceContainer->has('test.session')) {
+                $session = $this->serviceContainer->get('test.session');
+            } elseif ($this->serviceContainer->has('session.factory')) {
+                $sessionFactory = $this->serviceContainer->get('session.factory');
+                $session = $sessionFactory->createSession();
+            } else {
+                $session = new \Symfony\Component\HttpFoundation\Session\Session(
+                    new \Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage()
+                );
+            }
+
+            // Ensure session is started, then store token in session for firewall "main"
+            if (method_exists($session, 'isStarted') && !$session->isStarted()) {
+                $session->start();
+            }
             $session->set('_security_main', serialize($usernamePasswordToken));
+            $session->save();
 
             // Clear and set the cookies
             $this->client->getCookieJar()->clear();
             $cookie = new Cookie($session->getName(), $session->getId());
             $this->client->getCookieJar()->set($cookie);
-            $session->save();
 
-            // Ensure the client doesn't reboot between requests (maintains the session)
+            // Avoid kernel reboot to keep the same DB connection within a test method
+            // This ensures transactional visibility across multiple requests
             $this->client->disableReboot();
         }
     }
@@ -268,7 +265,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     protected function loginAs(string $username, string $password): void
     {
         // Use the client created in setUp()
-        $this->client->request('GET', '/login');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/login');
 
         $this->client->submitForm('Login', [
             'username' => $username,
@@ -281,21 +278,21 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     /**
      * Create a client with a default Authorization header.
      */
-    protected function createAuthenticatedClient(string $username = 'test', string $password = 'password'): \Symfony\Bundle\FrameworkBundle\KernelBrowser
+    protected function createAuthenticatedClient(string $username = 'test', string $password = 'password'): KernelBrowser
     {
         // Ensure the kernel is shut down before creating a new client
         static::ensureKernelShutdown();
 
-        $client = static::createClient();
-        $client->request(
-            'POST',
+        $kernelBrowser = static::createClient();
+        $kernelBrowser->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
             '/login',
             ['username' => $username, 'password' => $password]
         );
 
         $this->assertResponseRedirects();
 
-        return $client;
+        return $kernelBrowser;
     }
 
     /**
@@ -305,8 +302,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         string $method,
         string $uri,
         array $content = [],
-        array $headers = []
-    ): \Symfony\Bundle\FrameworkBundle\KernelBrowser {
+        array $headers = [],
+    ): KernelBrowser {
         // Use the client created in setUp()
         $this->client->request(
             $method,
@@ -317,7 +314,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                 'CONTENT_TYPE' => 'application/json',
                 'HTTP_ACCEPT' => 'application/json',
             ], $headers),
-            $content ? json_encode($content) : null
+            [] !== $content ? json_encode($content) : null
         );
 
         // Return the same client instance used for the request
@@ -325,7 +322,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Tests $statusCode against response status code
+     * Tests $statusCode against response status code.
      */
     protected function assertStatusCode(int $statusCode, string $message = ''): void
     {
@@ -337,7 +334,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Assert that a message matches the response content
+     * Assert that a message matches the response content.
      */
     protected function assertMessage(string $message): void
     {
@@ -346,13 +343,14 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         // Try direct comparison first
         if ($message === $responseContent) {
             $this->assertTrue(true);
+
             return;
         }
 
         // Handle specific translation issues based on the messages.de.yml
         $translationMap = [
             '%num% Einträge wurden angelegt.' => '%num% entries have been added',
-            'Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.' => 'No contract for user found. Please use custome time.'
+            'Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.' => 'No contract for user found. Please use custome time.',
         ];
 
         foreach ($translationMap as $german => $english) {
@@ -360,9 +358,10 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             $germanPattern = str_replace('%num%', '(\d+)', preg_quote($german, '/'));
             $englishPattern = str_replace('%num%', '$1', preg_quote($english, '/'));
 
-            if (preg_match('/^' . $germanPattern . '$/', $message, $germanMatches) &&
-                preg_match('/^' . $englishPattern . '$/', (string) $responseContent, $englishMatches)) {
-                $this->assertTrue(true, "Translation matched via pattern");
+            if (preg_match('/^'.$germanPattern.'$/', $message, $germanMatches)
+                && preg_match('/^'.$englishPattern.'$/', (string) $responseContent, $englishMatches)) {
+                $this->assertTrue(true, 'Translation matched via pattern');
+
                 return;
             }
         }
@@ -372,7 +371,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Assert that the response has the expected content type
+     * Assert that the response has the expected content type.
      */
     protected function assertContentType(string $contentType): void
     {
@@ -383,7 +382,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Takes a JSON in array and compares it against the response content
+     * Takes a JSON in array and compares it against the response content.
      */
     protected function assertJsonStructure(array $json): void
     {
@@ -395,7 +394,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Assert the length of the response or a specific path in the response
+     * Assert the length of the response or a specific path in the response.
      */
     protected function assertLength(int $length, ?string $path = null)
     {
@@ -413,24 +412,20 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     }
 
     /**
-     * Reset database to initial state only when needed
+     * Reset database to initial state only when needed.
      */
     protected function resetDatabase(?string $filepath = null): void
     {
-        if (!self::$databaseInitialized || $filepath !== null) {
+        if (!self::$databaseInitialized || null !== $filepath) {
             $this->loadTestData($filepath);
             self::$databaseInitialized = true;
-        } elseif ($this->queryBuilder === null || $this->connection === null) {
+        } elseif (null === $this->queryBuilder || null === $this->connection) {
             // Ensure queryBuilder and connection are available even if loadTestData wasn't called
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
             $this->queryBuilder = $connection->createQueryBuilder();
 
             // Also make sure $this->connection is properly initialized
-            if (method_exists($connection->getWrappedConnection(), 'getWrappedResourceHandle')) {
-                $this->connection = $connection->getWrappedConnection()->getWrappedResourceHandle();
-            } else {
-                $this->connection = $connection;
-            }
+            $this->connection = $connection;
         }
     }
 
@@ -443,7 +438,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         // Temporarily disable transactions
         $this->useTransactions = false;
 
-        // Force a complete database reset
+        // Force a complete database reset only when explicitly requested by tests that need it
         self::$databaseInitialized = false;
         $this->resetDatabase($filepath);
 
@@ -460,7 +455,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
 
     /**
      * Clear static state between test runs (important for parallel testing)
-     * This helps ensure isolated test environments for parallel runs
+     * This helps ensure isolated test environments for parallel runs.
      */
     public static function tearDownAfterClass(): void
     {

@@ -33,7 +33,7 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
             'ticket' => 'invalid-ticket',
         ];
 
-        $this->client->request('POST', '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
         $this->assertStatusCode(406);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         $this->assertIsArray($data);
@@ -59,7 +59,7 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
             'ticket' => 'WRONG-123',
         ];
 
-        $this->client->request('POST', '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
         $this->assertStatusCode(406);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         $this->assertIsArray($data);
@@ -85,7 +85,7 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
             'activity' => 1,
         ];
 
-        $this->client->request('POST', '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
         $this->assertStatusCode(406);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         $this->assertIsArray($data);

@@ -11,9 +11,9 @@ class TwigCsvEscapingExtensionTest extends TestCase
 {
     public function testCsvEscape(): void
     {
-        $ext = new TwigCsvEscapingExtension();
-        $this->assertSame('Hello', $ext->csvEscape('Hello'));
-        $this->assertSame('He said ""Hi""', $ext->csvEscape('He said "Hi"'));
-        $this->assertSame('""Quoted""', $ext->csvEscape('"Quoted"'));
+        $twigCsvEscapingExtension = new TwigCsvEscapingExtension();
+        $this->assertSame('Hello', $twigCsvEscapingExtension->csvEscape('Hello'));
+        $this->assertSame('He said ""Hi""', $twigCsvEscapingExtension->csvEscape('He said "Hi"'));
+        $this->assertSame('""Quoted""', $twigCsvEscapingExtension->csvEscape('"Quoted"'));
     }
 }

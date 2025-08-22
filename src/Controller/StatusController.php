@@ -6,34 +6,37 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Security;
-use Symfony\Component\Routing\Annotation\Route;
 
 class StatusController extends BaseController
 {
-    public function __construct(
-        private readonly Security $security
-    ) {
-    }
+    private \Symfony\Bundle\SecurityBundle\Security $security;
 
-    private function getStatus(): array
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setSecurity(\Symfony\Bundle\SecurityBundle\Security $security): void
     {
-        return [
-            'loginStatus' => $this->security->isGranted('IS_AUTHENTICATED_REMEMBERED')
-        ];
+        $this->security = $security;
     }
 
     /**
-     * @Route("/status/check", name="check_status", methods={"GET"})
+     * @return bool[]
+     *
+     * @psalm-return array{loginStatus: bool}
      */
-    public function checkAction()
+    private function getStatus(): array
+    {
+        return [
+            'loginStatus' => $this->security->isGranted('IS_AUTHENTICATED')
+        ];
+    }
+
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/status/check', name: 'check_status', methods: ['GET'])]
+    public function check(): \App\Model\JsonResponse
     {
         return new JsonResponse($this->getStatus());
     }
 
-    /**
-     * @Route("/status/page", name="check_page", methods={"GET"})
-     */
-    public function pageAction(): \Symfony\Component\HttpFoundation\Response
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/status/page', name: 'check_page', methods: ['GET'])]
+    public function page(): \Symfony\Component\HttpFoundation\Response
     {
         $status = $this->getStatus();
 

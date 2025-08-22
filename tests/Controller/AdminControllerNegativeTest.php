@@ -16,7 +16,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Der Bäcker von nebenan',
             'teams' => [1],
         ];
-        $this->client->request('POST', '/customer/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -30,7 +30,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Server attack',
             'customer' => 1,
         ];
-        $this->client->request('POST', '/project/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -43,7 +43,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Team ohne Lead',
             // missing lead_user_id
         ];
-        $this->client->request('POST', '/team/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -57,7 +57,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Backen',
             'factor' => 1,
         ];
-        $this->client->request('POST', '/activity/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -73,11 +73,12 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'url' => '',
             'ticketUrl' => '',
         ];
-        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
     }
+
     public function testSaveUserInvalidAbbrLength(): void
     {
         $this->logInSession('unittest');
@@ -88,7 +89,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'locale' => 'de',
             'type' => 'DEV'
         ];
-        $this->client->request('POST', '/user/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -104,7 +105,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'locale' => 'de',
             'type' => 'DEV'
         ];
-        $this->client->request('POST', '/user/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -120,7 +121,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'locale' => 'de',
             'type' => 'DEV'
         ];
-        $this->client->request('POST', '/user/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -134,7 +135,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'global' => 0,
             'teams' => [],
         ];
-        $this->client->request('POST', '/customer/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -147,7 +148,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Hackerman', // exists in fixtures
             'lead_user_id' => 1,
         ];
-        $this->client->request('POST', '/team/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -161,7 +162,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'customer' => 1,
             'jiraId' => 'foo-', // invalid character (hyphen) remains after strtoupper
         ];
-        $this->client->request('POST', '/project/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
@@ -176,7 +177,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'url' => '',
             'ticketUrl' => '',
         ];
-        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
         $this->assertStatusCode(406);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);

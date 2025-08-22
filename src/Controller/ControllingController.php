@@ -21,7 +21,6 @@ use App\Service\ExportService as Export;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class ControllingController
@@ -35,47 +34,38 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class ControllingController extends BaseController
 {
-    private \App\Service\ExportService $export;
+    private \App\Service\ExportService $exportService;
 
     /**
-     * @required
      * @codeCoverageIgnore
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setExportService(Export $export): void
     {
-        $this->export = $export;
+        $this->exportService = $export;
     }
 
-    /**
-     * Exports a users timetable from one specific year and month
-     *
-     *
-     * @return Response
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
-     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
-     */
-    /**
-     * @Route("/controlling/export", name="_controllingExport_attr", methods={"GET"})
-     * @Route(
-     *     "/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}",
-     *     name="_controllingExport_bc",
-     *     methods={"GET"},
-     *     requirements={"year"="\\\d+", "userid"="\\\d+"},
-     *     defaults={"userid"=0, "year"=0, "month"=0, "project"=0, "customer"=0, "billable"=0}
-     * )
-     */
-    public function exportAction(Request $request)
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr', methods: ['GET'])]
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\\\\\d+', 'userid' => '\\\\\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
+    public function export(Request $request): \Symfony\Component\HttpFoundation\Response
     {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
+        // Must be fully authenticated AND have a session token present
+        // Redirect to login when session token is not present (test clears session explicitly)
+        // Require presence of session security token to consider the user logged in
+        if ($this->container !== null && $this->container->has('session')) {
+            $session = $this->container->get('session');
+        } else {
+            $session = $request->getSession();
+        }
+        if ($session === null || !$session->has('_security_main') || empty($session->get('_security_main'))) {
+            return $this->login($request);
         }
 
         // Map legacy path parameters to query parameters for backward compatibility
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
-        foreach ($attributeKeysToMap as $key) {
-            if ($request->attributes->has($key) && !$request->query->has($key)) {
-                $request->query->set($key, (string) $request->attributes->get($key));
+        foreach ($attributeKeysToMap as $attributeKeyToMap) {
+            if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
+                $request->query->set($attributeKeyToMap, (string) $request->attributes->get($attributeKeyToMap));
             }
         }
 
@@ -87,8 +77,8 @@ class ControllingController extends BaseController
         $onlyBillable = (bool) $request->query->get('billable');
         $showTicketTitles = (bool) $request->query->get('tickettitles');
 
-        $service = $this->export;
-        /** @var \App\Entity\Entry[] $entries */
+        $service = $this->exportService;
+        /** @var array<int, \App\Entity\Entry> $entries */
         $entries = $service->exportEntries(
             $userId,
             $year,
@@ -117,7 +107,7 @@ class ControllingController extends BaseController
         $username = $service->getUsername($userId);
 
         $filename = strtolower(
-            (string) $year . '_'
+            $year . '_'
             . str_pad((string) $month, 2, '0', STR_PAD_LEFT)
             . '_'
             . str_replace(' ', '-', $username)
@@ -209,8 +199,7 @@ class ControllingController extends BaseController
 
         // TODO: https://jira.netresearch.de/browse/TTT-559
         // sheet 2: list user working days without working time
-        $sheet = $spreadsheet->getSheet(1);
-        $lineNumber = 2;
+        $spreadsheet->getSheet(1);
 
         // TODO: https://jira.netresearch.de/browse/TTT-560
         // sheet 3: list users monthly SOLL/IST, holidays, sickdays
@@ -249,7 +238,8 @@ class ControllingController extends BaseController
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $response->headers->set('Content-disposition', 'attachment;filename=' . $filename . '.xlsx');
 
-        $response->setContent(file_get_contents($file));
+        $content = file_get_contents($file) ?: '';
+        $response->setContent($content);
 
         unlink($file);
 

@@ -11,8 +11,8 @@ class ErrorResponseTest extends TestCase
 {
     public function testConstructSetsMessageAndStatus(): void
     {
-        $error = new Error('Not found', 404);
-        $this->assertSame(404, $error->getStatusCode());
+        $error = new Error('Not found', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND, $error->getStatusCode(), $error->getContent());
 
         $data = json_decode((string) $error->getContent(), true);
         $this->assertIsArray($data);
@@ -22,7 +22,7 @@ class ErrorResponseTest extends TestCase
 
     public function testConstructAddsForwardUrlWhenProvided(): void
     {
-        $error = new Error('Forbidden', 403, '/login');
+        $error = new Error('Forbidden', \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN, '/login');
         $data = json_decode((string) $error->getContent(), true);
         $this->assertSame('/login', $data['forwardUrl'] ?? null);
     }

@@ -73,6 +73,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($user);
         $this->entityManager->flush();
+
         $id = $user->getId();
 
         // Update user
@@ -83,12 +84,13 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setShowEmptyLine(1);
         $user->setSuggestTime(0);
         $user->setShowFuture(0);
+
         $this->entityManager->flush();
         $this->entityManager->clear();
 
         // Fetch and verify updates
         $updatedUser = $this->entityManager->getRepository(User::class)->find($id);
-        $this->assertEquals('updated_user', $updatedUser->getUsername());
+        $this->assertEquals('updated_user', $updatedUser->getUserIdentifier());
         $this->assertEquals('UPU', $updatedUser->getAbbr());
         $this->assertEquals('PL', $updatedUser->getType());
         $this->assertEquals('en', $updatedUser->getLocale());
@@ -117,6 +119,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($user);
         $this->entityManager->flush();
+
         $id = $user->getId();
 
         // Delete user
@@ -139,15 +142,18 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
         $user->setShowFuture(true);
+
         $this->entityManager->persist($user);
 
         // Create teams and add the user to them
         $team1 = new Team();
         $team1->setName('Team 1');
+
         $this->entityManager->persist($team1);
 
         $team2 = new Team();
         $team2->setName('Team 2');
+
         $this->entityManager->persist($team2);
 
         // Add teams to user (user owns the relationship)
@@ -172,6 +178,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         foreach ($teams as $team) {
             $this->entityManager->remove($team);
         }
+
         $this->entityManager->flush();
     }
 
@@ -186,6 +193,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
         $user->setShowFuture(true);
+
         $this->entityManager->persist($user);
 
         // Create contracts
@@ -216,6 +224,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($contract1);
         $this->entityManager->persist($contract2);
         $this->entityManager->flush();
+
         $userId = $user->getId();
 
         // Clear entity manager and fetch from database
@@ -230,6 +239,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         foreach ($contracts as $contract) {
             $this->entityManager->remove($contract);
         }
+
         $this->entityManager->flush();
 
         $this->entityManager->remove($fetchedUser);
@@ -247,6 +257,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
         $user->setShowFuture(true);
+
         $this->entityManager->persist($user);
 
         // Create entries
@@ -273,6 +284,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($entry1);
         $this->entityManager->persist($entry2);
         $this->entityManager->flush();
+
         $userId = $user->getId();
 
         // Clear entity manager and fetch from database
@@ -287,6 +299,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         foreach ($entries as $entry) {
             $this->entityManager->remove($entry);
         }
+
         $this->entityManager->flush();
 
         $this->entityManager->remove($fetchedUser);
@@ -295,11 +308,7 @@ class UserDatabaseTest extends AbstractWebTestCase
 
     public function testTicketSystemRelationship(): void
     {
-        // Skip this test due to database schema mismatch between entity and actual DB
-        $this->markTestSkipped('This test is skipped due to database schema mismatch between entity and actual database.');
-
-        // Original test code below:
-        /*
+        // Create prerequisites
         // Create prerequisites
         $user = new User();
         $user->setUsername('ticketsystem_user');
@@ -318,7 +327,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $ticketSystem->setUrl('https://jira.example.com');
         $ticketSystem->setLogin('test_login');
         $ticketSystem->setPassword('test_password');
-        $ticketSystem->setTicketurl('https://jira.example.com/ticket/{ticket}');
+        $ticketSystem->setTicketUrl('https://jira.example.com/ticket/{ticket}');
         $ticketSystem->setPublicKey('test-public-key');
         $ticketSystem->setPrivateKey('test-private-key');
         $ticketSystem->setOauthConsumerKey('test-consumer-key');
@@ -336,10 +345,12 @@ class UserDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($userTicketSystem);
         $this->entityManager->flush();
         $userId = $user->getId();
+        $ticketSystemId = $ticketSystem->getId();
 
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedUser = $this->entityManager->find(User::class, $userId);
+        $fetchedTicketSystem = $this->entityManager->find(TicketSystem::class, $ticketSystemId);
 
         // Test ticket system relationship
         $this->assertCount(1, $fetchedUser->getUserTicketsystems());
@@ -352,9 +363,10 @@ class UserDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         $this->entityManager->remove($fetchedUser);
-        $this->entityManager->remove($ticketSystem);
+        if ($fetchedTicketSystem) {
+            $this->entityManager->remove($fetchedTicketSystem);
+        }
         $this->entityManager->flush();
-        */
     }
 
     public function testRoles(): void
@@ -364,6 +376,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $devUser->setUsername('dev_user');
         $devUser->setType('DEV');
         $devUser->setLocale('de');
+
         $this->entityManager->persist($devUser);
 
         // Create a new User with PL type
@@ -371,6 +384,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $plUser->setUsername('pl_user');
         $plUser->setType('PL');
         $plUser->setLocale('de');
+
         $this->entityManager->persist($plUser);
 
         // Create a new User with ADMIN type
@@ -378,6 +392,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $adminUser->setUsername('admin_user');
         $adminUser->setType('ADMIN');
         $adminUser->setLocale('de');
+
         $this->entityManager->persist($adminUser);
 
         $this->entityManager->flush();

@@ -3,14 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Entry;
-use App\Response\Error;
 use App\Entity\User;
 use App\Helper\TimeHelper;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Response\Error;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
 
 class InterpretationController extends BaseController
 {
@@ -19,15 +18,17 @@ class InterpretationController extends BaseController
      */
     private $cache;
 
+    /**
+ * @param array<string, mixed> $a
+     * @param array<string, mixed> $b
+     */
     public function sortByName(array $a, array $b): int
     {
         return strcmp((string) $b['name'], (string) $a['name']);
     }
 
-    /**
-     * @Route("/interpretation/entries", name="interpretation_entries_attr", methods={"GET"})
-     */
-    public function getLastEntriesAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
+    public function getLastEntries(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -37,7 +38,8 @@ class InterpretationController extends BaseController
             $entries = $this->getEntries($request, 50);
         } catch (\Exception $exception) {
             $response = new Response($this->translate($exception->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
@@ -55,6 +57,10 @@ class InterpretationController extends BaseController
 
     /**
      * @throws \Exception
+     *
+     * @return Entry[]
+     *
+     * @psalm-return array<Entry>
      */
     private function getCachedEntries(Request $request): array
     {
@@ -63,12 +69,10 @@ class InterpretationController extends BaseController
         }
 
         $this->cache = $this->getEntries($request);
+
         return $this->cache;
     }
 
-    /**
-     * @return int
-     */
     private function getCachedSum(): int
     {
         if (null == $this->cache) {
@@ -83,12 +87,13 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    private function calculateSum(&$entries): int
+    /**
+     * @param Entry[] $entries
+     *
+     * @psalm-param array<Entry> $entries
+     */
+    private function calculateSum(array &$entries): int
     {
-        if (!is_array($entries)) {
-            return 0;
-        }
-
         $sum = 0;
         foreach ($entries as $entry) {
             $sum += $entry->getDuration();
@@ -97,10 +102,8 @@ class InterpretationController extends BaseController
         return $sum;
     }
 
-    /**
-     * @Route("/interpretation/customer", name="interpretation_customer_attr", methods={"GET"})
-     */
-    public function groupByCustomerAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/customer', name: 'interpretation_customer_attr', methods: ['GET'])]
+    public function groupByCustomer(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -110,14 +113,15 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $exception) {
             $response = new Response($this->translate($exception->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
         $customers = [];
 
         foreach ($entries as $entry) {
-            if (! is_object($entry->getCustomer())) {
+            if (!is_object($entry->getCustomer())) {
                 continue;
             }
 
@@ -125,14 +129,14 @@ class InterpretationController extends BaseController
 
             if (!isset($customers[$customer])) {
                 $customers[$customer] = [
-                    'id'  => $customer,
-                    'name'  => $entry->getCustomer()->getName(),
+                    'id' => $customer,
+                    'name' => $entry->getCustomer()->getName(),
                     'hours' => 0,
                     'quota' => 0,
                 ];
             }
 
-            $customers[$customer]['hours'] += $entry->getDuration();
+            $customers[$customer]['hours'] += $entry->getDuration() / 60;
         }
 
         $sum = $this->getCachedSum();
@@ -140,14 +144,14 @@ class InterpretationController extends BaseController
             $customer['quota'] = TimeHelper::formatQuota($customer['hours'], $sum);
         }
 
+        /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $customers */
         usort($customers, $this->sortByName(...));
+
         return new JsonResponse($this->normalizeData($customers));
     }
 
-    /**
-     * @Route("/interpretation/project", name="interpretation_project_attr", methods={"GET"})
-     */
-    public function groupByProjectAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/project', name: 'interpretation_project_attr', methods: ['GET'])]
+    public function groupByProject(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -157,14 +161,15 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $exception) {
             $response = new Response($this->translate($exception->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
         $projects = [];
 
         foreach ($entries as $entry) {
-            if (! is_object($entry->getProject())) {
+            if (!is_object($entry->getProject())) {
                 continue;
             }
 
@@ -172,14 +177,14 @@ class InterpretationController extends BaseController
 
             if (!isset($projects[$project])) {
                 $projects[$project] = [
-                    'id'  => $project,
-                    'name'  => $entry->getProject()->getName(),
+                    'id' => $project,
+                    'name' => $entry->getProject()->getName(),
                     'hours' => 0,
                     'quota' => 0,
                 ];
             }
 
-            $projects[$project]['hours'] += $entry->getDuration();
+            $projects[$project]['hours'] += $entry->getDuration() / 60;
         }
 
         $sum = $this->getCachedSum();
@@ -187,15 +192,14 @@ class InterpretationController extends BaseController
             $project['quota'] = TimeHelper::formatQuota($project['hours'], $sum);
         }
 
+        /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $projects */
         usort($projects, $this->sortByName(...));
+
         return new JsonResponse($this->normalizeData($projects));
     }
 
-
-    /**
-     * @Route("/interpretation/ticket", name="interpretation_ticket_attr", methods={"GET"})
-     */
-    public function groupByTicketAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/ticket', name: 'interpretation_ticket_attr', methods: ['GET'])]
+    public function groupByTicket(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -205,7 +209,8 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $exception) {
             $response = new Response($this->translate($exception->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
@@ -214,17 +219,17 @@ class InterpretationController extends BaseController
         foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
 
-            if (!empty($ticket) && $ticket != '-') {
+            if (!empty($ticket) && '-' != $ticket) {
                 if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = [
-                        'id'  => $entry->getId(),
-                        'name'  => $ticket,
+                        'id' => $entry->getId(),
+                        'name' => $ticket,
                         'hours' => 0,
                         'quota' => 0,
                     ];
                 }
 
-                $tickets[$ticket]['hours'] += $entry->getDuration();
+                $tickets[$ticket]['hours'] += $entry->getDuration() / 60;
             }
         }
 
@@ -233,20 +238,16 @@ class InterpretationController extends BaseController
             $ticket['quota'] = TimeHelper::formatQuota($ticket['hours'], $sum);
         }
 
+        /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $tickets */
         usort($tickets, $this->sortByName(...));
+
         return new JsonResponse($this->normalizeData($tickets));
     }
 
-
-    /**
-     * Returns the data for the analysing chart "effort per employee".
-     */
-    /**
-     * @Route("/interpretation/user", name="interpretation_user_attr", methods={"GET"})
-     */
-    public function groupByUserAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/user', name: 'interpretation_user_attr', methods: ['GET'])]
+    public function groupByUser(Request $request): Response|JsonResponse
     {
-        #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
+        // NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
         $request->query->set('user', $this->getUserId($request));
 
         if (!$this->checkLogin($request)) {
@@ -257,7 +258,8 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $exception) {
             $response = new Response($this->translate($exception->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
@@ -268,14 +270,14 @@ class InterpretationController extends BaseController
 
             if (!isset($users[$user])) {
                 $users[$user] = [
-                    'id'  => $user,
-                    'name'  => $entry->getUser()->getUsername(),
+                    'id' => $user,
+                    'name' => $entry->getUser()->getUsername(),
                     'hours' => 0,
                     'quota' => 0,
                 ];
             }
 
-            $users[$user]['hours'] += $entry->getDuration();
+            $users[$user]['hours'] += $entry->getDuration() / 60;
         }
 
         $sum = $this->getCachedSum();
@@ -283,18 +285,14 @@ class InterpretationController extends BaseController
             $user['quota'] = TimeHelper::formatQuota($user['hours'], $sum);
         }
 
+        /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $users */
         usort($users, $this->sortByName(...));
+
         return new JsonResponse($this->normalizeData($users));
     }
 
-
-    /**
-     * Returns booked times grouped by day.
-     */
-    /**
-     * @Route("/interpretation/time", name="interpretation_time_attr", methods={"GET"})
-     */
-    public function groupByWorktimeAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/time', name: 'interpretation_time_attr', methods: ['GET'])]
+    public function groupByWorktime(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -304,7 +302,8 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $exception) {
             $response = new Response($this->translate($exception->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
@@ -315,29 +314,35 @@ class InterpretationController extends BaseController
 
             if (!isset($times[$day_r])) {
                 $times[$day_r] = [
-                    'name'  => $day_r,
-                    'day'   => $entry->getDay()->format('d.m.'),
+                    'id' => null,
+                    'name' => $day_r,
+                    'day' => $entry->getDay()->format('d.m.'),
                     'hours' => 0,
+                    'minutes' => 0,
                     'quota' => 0,
                 ];
             }
 
-            $times[$day_r]['hours'] += $entry->getDuration();
+            $times[$day_r]['minutes'] += $entry->getDuration();
         }
 
-        $sum = $this->getCachedSum();
+        // convert minutes to hours with exact integer division to avoid precision drift
+        $totalMinutes = 0;
+        foreach ($times as $t) { $totalMinutes += (int) ($t['minutes']); }
         foreach ($times as &$time) {
-            $time['quota'] = TimeHelper::formatQuota($time['hours'], $sum);
+            $minutes = (int) ($time['minutes']);
+            $time['hours'] = (int) ($minutes / 60);
+            $time['quota'] = TimeHelper::formatQuota($minutes, $totalMinutes);
         }
 
+        /* @var array<int, array{name:string,day:string,hours:int,quota?:string}> $times */
         usort($times, $this->sortByName(...));
+
         return new JsonResponse($this->normalizeData(array_reverse($times)));
     }
 
-    /**
-     * @Route("/interpretation/activity", name="interpretation_activity_attr", methods={"GET"})
-     */
-    public function groupByActivityAction(Request $request): \App\Model\Response|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/activity', name: 'interpretation_activity_attr', methods: ['GET'])]
+    public function groupByActivity(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -347,7 +352,8 @@ class InterpretationController extends BaseController
             $entries = $this->getCachedEntries($request);
         } catch (\Exception $exception) {
             $response = new Response($this->translate($exception->getMessage()));
-            $response->setStatusCode(406);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
@@ -358,46 +364,48 @@ class InterpretationController extends BaseController
 
             if (!isset($activities[$activityId])) {
                 $activities[$activityId] = [
-                    'id'    => $activityId,
-                    'name'  => $entry->getActivity()->getName(),
+                    'id' => $activityId,
+                    'name' => $entry->getActivity()->getName(),
                     'hours' => 0,
                 ];
             }
 
-            $activities[$activityId]['hours'] += $entry->getDuration();
+            $activities[$activityId]['hours'] += $entry->getDuration() / 60;
         }
 
-        $sum = $this->getCachedSum();
+        $activitiesTotalHours = 0.0;
+        foreach ($activities as $a) { $activitiesTotalHours += (float) $a['hours']; }
         foreach ($activities as &$activity) {
-            $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $sum);
+            $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $activitiesTotalHours);
         }
 
+        /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $activities */
         usort($activities, $this->sortByName(...));
+
         return new JsonResponse($this->normalizeData($activities));
     }
 
-
     /**
-     * Get entries by request parameter
+     * Get entries by request parameter.
      *
-     * @param integer $maxResults
-     * @return Entry[]
      * @throws \Exception
+     *
+     * @return Entry[]
      */
-    private function getEntries(Request $request, $maxResults = null)
+    private function getEntries(Request $request, ?int $maxResults = null): array
     {
         $arParams = [
-            'customer'          => $this->evalParam($request, 'customer'),
-            'project'           => $this->evalParam($request, 'project'),
-            'user'              => $this->evalParam($request, 'user'),
-            'activity'          => $this->evalParam($request, 'activity'),
-            'team'              => $this->evalParam($request, 'team'),
-            'ticket'            => $this->evalParam($request, 'ticket'),
-            'description'       => $this->evalParam($request, 'description'),
-            'visibility_user'   => ($this->isDEV($request) ? $this->getUserId($request) : null),
-            'maxResults'        => $maxResults,
-            'datestart'         => $this->evalParam($request, 'datestart'),
-            'dateend'           => $this->evalParam($request, 'dateend'),
+            'customer' => $this->evalParam($request, 'customer'),
+            'project' => $this->evalParam($request, 'project'),
+            'user' => $this->evalParam($request, 'user'),
+            'activity' => $this->evalParam($request, 'activity'),
+            'team' => $this->evalParam($request, 'team'),
+            'ticket' => $this->evalParam($request, 'ticket'),
+            'description' => $this->evalParam($request, 'description'),
+            'visibility_user' => ($this->isDEV($request) ? $this->getUserId($request) : null),
+            'maxResults' => $maxResults,
+            'datestart' => $this->evalParam($request, 'datestart'),
+            'dateend' => $this->evalParam($request, 'dateend'),
         ];
 
         $year = $this->evalParam($request, 'year');
@@ -405,20 +413,26 @@ class InterpretationController extends BaseController
             $month = $this->evalParam($request, 'month');
             if (null !== $month) {
                 // first day of month
-                $datestart = $year . '-' . $month . '-01';
+                $datestart = $year.'-'.$month.'-01';
 
                 // last day of month
                 $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
+                if ($dateend === false) {
+                    throw new \Exception('Invalid date');
+                }
                 $dateend->add(new \DateInterval('P1M'));
                 // go back 1 day, to set date from first day of next month back to last day of last month
                 // e.g. 2019-05-01 -> 2019-04-30
                 $dateend->sub(new \DateInterval('P1D'));
             } else {
                 // first day of year
-                $datestart = $year . '-01-01';
+                $datestart = $year.'-01-01';
 
                 // last day of year
                 $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
+                if ($dateend === false) {
+                    throw new \Exception('Invalid date');
+                }
                 $dateend->add(new \DateInterval('P1Y'));
                 // go back 1 day, to set date from first day of next year back to last day of last year
                 // e.g. 2019-01-01 -> 2018-12-31
@@ -434,17 +448,18 @@ class InterpretationController extends BaseController
             && !$arParams['user']
             && !$arParams['ticket']
         ) {
-            throw new \Exception(
-                $this->translate('You need to specify at least customer, project, ticket, user or month and year.')
-            );
+            throw new \Exception($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
-        /** @var \App\Repository\EntryRepository $objectRepository*/
-        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\Entry::class);
-        return $objectRepository->findByFilterArray($arParams);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        /** @var array<int, Entry> $result */
+        $result = $objectRepository->findByFilterArray($arParams);
+
+        return $result;
     }
 
-    private function evalParam(Request $request, string $param)
+    private function evalParam(Request $request, string $param): ?string
     {
         $param = $request->query->get($param);
         if ($param) {
@@ -455,31 +470,30 @@ class InterpretationController extends BaseController
     }
 
     /**
-     * @return mixed[]
+     * @param array<int, array{id:int|null, name:string|null, day?:string, hours:int, quota?:int|string}> $data
+     *
+     * @return array<int, array{id:int|null, name:string, day:string|null, hours:int, quota:string}>
      */
     private function normalizeData(array $data): array
     {
         $normalized = [];
 
         foreach ($data as $d) {
-            $d['hours'] /= 60;
-            $normalized[] = $d;
+            $hours = (int) $d['hours'];
+            $normalized[] = [
+                'id' => $d['id'] ?? null,
+                'name' => isset($d['name']) ? (string) $d['name'] : '',
+                'day' => $d['day'] ?? null,
+                'hours' => $hours,
+                'quota' => isset($d['quota']) ? (string) $d['quota'] : '0%',
+            ];
         }
 
         return $normalized;
     }
 
-    /**
-     * Retrieves filtered time tracker entries based on request parameters.
-     * Applies pagination.
-     *
-     * @return \App\Model\JsonResponse|Error
-     * @throws \Exception
-     */
-    /**
-     * @Route("/interpretation/allEntries", name="interpretation_all_entries_attr", methods={"POST"})
-     */
-    public function getAllEntriesAction(Request $request): \App\Model\Response|\App\Response\Error|\App\Model\JsonResponse
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
+    public function getAllEntries(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -493,23 +507,24 @@ class InterpretationController extends BaseController
         $maxResults = (int) $request->get('maxResults');
         $page = (int) $request->get('page');
 
-        //prepare data
+        // prepare data
         if ($page < 0) {
             $message = $this->translator->trans('page can not be negative.');
-            return new Error($message, 400);
+
+            return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
         }
 
-        $maxResults = $maxResults > 0 ? $maxResults : 50;    //cant be lower than 0
+        $maxResults = $maxResults > 0 ? $maxResults : 50;    // cant be lower than 0
 
         $searchArray = [
-            'maxResults' => $maxResults,   //default 50
-            'page' => $page
+            'maxResults' => $maxResults,   // default 50
+            'page' => $page,
         ];
-        if ($activity !== 0) {
+        if (0 !== $activity) {
             $searchArray['activity'] = $activity;
         }
 
-        if ($project !== 0) {
+        if (0 !== $project) {
             $searchArray['project'] = $project;
         }
 
@@ -521,16 +536,16 @@ class InterpretationController extends BaseController
             $searchArray['dateend'] = $dateend;
         }
 
-        if ($customer !== 0) {
+        if (0 !== $customer) {
             $searchArray['customer'] = $customer;
         }
 
-        /** @var \App\Repository\EntryRepository $objectRepository*/
-        $objectRepository = $this->getDoctrine()->getRepository(\App\Entity\Entry::class);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         try {
             $paginator = new Paginator($objectRepository->queryByFilterArray($searchArray));
         } catch (\Exception $exception) {
-            return new Error($this->translate($exception->getMessage()), 406);
+            return new Error($this->translate($exception->getMessage()), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
         }
 
         // get data
@@ -559,38 +574,38 @@ class InterpretationController extends BaseController
         }
 
         // build url
-        $route = $request->getUriForPath($request->getPathInfo()) . '?';
+        $route = $request->getUriForPath($request->getPathInfo()).'?';
 
         $query_params = [];
         if ($request->getQueryString()) {
-            parse_str((string) $request->getQueryString(), $query_params);
+            parse_str($request->getQueryString(), $query_params);
             unset($query_params['page']);
         }
 
         // negative firstResult are interpreted as 0
         $total = $paginator->count();
 
-        //self
+        // self
         $query_params['page'] = $page;
-        $self = $route . http_build_query($query_params);
+        $self = $route.http_build_query($query_params);
 
         // returns null for empty Paginator, else returns last page for given $maxResults
         $lastPage = ceil($total / $maxResults) - 1;
         $query_params['page'] = $lastPage;
         $last = $total
-            ? $route . http_build_query($query_params)
+            ? $route.http_build_query($query_params)
             : null;
 
         // returns the last previous page with data, or null if you are on page 0 or there is no data
         $query_params['page'] = min($page - 1, $lastPage);
         $prev = $page && $total
-            ? $route . http_build_query($query_params)
+            ? $route.http_build_query($query_params)
             : null;
 
-        //null when query would return empty data
+        // null when query would return empty data
         $query_params['page'] = $page + 1;
         $next = $page < $lastPage
-            ? $route . http_build_query($query_params)
+            ? $route.http_build_query($query_params)
             : null;
 
         $links = [
@@ -602,6 +617,7 @@ class InterpretationController extends BaseController
             ],
         ];
         $entryList = array_merge($links, ['data' => $entryList]);
+
         return new JsonResponse($entryList);
     }
 }
