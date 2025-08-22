@@ -21,25 +21,29 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
         self::bootKernel();
 
         /** @var SubticketSyncService&MockObject $syncService */
-        /** @var SubticketSyncService&MockObject $syncService */
-        $syncService = $this->getMockBuilder(SubticketSyncService::class)
+        /** @var SubticketSyncService&MockObject $mock */
+        $mock = $this->getMockBuilder(SubticketSyncService::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $syncService->expects($this->exactly(2))
+        $mock->expects($this->exactly(2))
             ->method('syncProjectSubtickets')
             ->willReturnOnConsecutiveCalls(['X-1','X-2'], []);
 
         // Repository stub with createQueryBuilder available
-        $p1 = (new Project())->setId(1)->setName('Alpha');
+        $project = (new Project())->setId(1)->setName('Alpha');
         $p2 = (new Project())->setId(2)->setName('Beta');
-        $projectRepo = new class($p1, $p2) {
-            public function __construct(private Project $a, private Project $b) {}
-            public function createQueryBuilder(string $alias) {
+        $projectRepo = new class($project, $p2) {
+            public function __construct(private readonly Project $a, private readonly Project $b) {}
+
+            public function createQueryBuilder(string $alias): object {
                 return new class($this->a, $this->b) {
-                    public function __construct(private Project $a, private Project $b) {}
-                    public function where($expr) { return $this; }
-                    public function getQuery() { return $this; }
-                    public function getResult() { return [$this->a, $this->b]; }
+                    public function __construct(private readonly Project $a, private readonly Project $b) {}
+
+                    public function where($expr): self { return $this; }
+
+                    public function getQuery(): self { return $this; }
+
+                    public function getResult(): array { return [$this->a, $this->b]; }
                 };
             }
         };
@@ -51,9 +55,9 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
             ->getMock();
         $em->method('getRepository')->willReturn($projectRepo);
 
-        $command = new TtSyncSubticketsCommand($syncService, $em);
+        $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);
         $application = new Application();
-        $application->add($command);
+        $application->add($ttSyncSubticketsCommand);
 
         $commandTester = new CommandTester($application->find('tt:sync-subtickets'));
         $exitCode = $commandTester->execute([]);
@@ -65,14 +69,14 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
     {
         self::bootKernel();
 
-        /** @var SubticketSyncService&MockObject $syncService */
-        $syncService = $this->getMockBuilder(SubticketSyncService::class)
+        /** @var SubticketSyncService&MockObject $mock */
+        $mock = $this->getMockBuilder(SubticketSyncService::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         // Repository stub with find() returning null
         $projectRepo = new class {
-            public function find($id) { return null; }
+            public function find($id): null { return null; }
         };
 
         /** @var EntityManagerInterface&MockObject $em */
@@ -81,9 +85,9 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
             ->getMock();
         $em->method('getRepository')->willReturn($projectRepo);
 
-        $command = new TtSyncSubticketsCommand($syncService, $em);
+        $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);
         $application = new Application();
-        $application->add($command);
+        $application->add($ttSyncSubticketsCommand);
 
         $commandTester = new CommandTester($application->find('tt:sync-subtickets'));
         $exitCode = $commandTester->execute(['project' => 999]);

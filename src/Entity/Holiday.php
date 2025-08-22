@@ -15,27 +15,18 @@ class Holiday extends Base
 {
     /**
      * @ORM\Id
-     * @ORM\Column(type="date")
+     * @ORM\Column (name="day", type="date")
+     * @var \DateTime|null
      */
     private $day;
 
 
-    /**
-     * @param string $name
-     */
-    public function __construct($day, private $name)
+    public function __construct(string|\DateTime $day, private string $name)
     {
         $this->setDay($day);
     }
 
-    /**
-     * Set day
-     *
-     * @param string $day
-     *
-     * @return $this
-     */
-    public function setDay($day): static
+    public function setDay(string|\DateTime $day): static
     {
         if (!$day instanceof \DateTime) {
             $day = new \DateTime($day);
@@ -47,10 +38,8 @@ class Holiday extends Base
 
     /**
      * Get day
-     *
-     * @return \DateTime
      */
-    public function getDay()
+    public function getDay(): \DateTime|null
     {
         return $this->day;
     }
@@ -77,11 +66,15 @@ class Holiday extends Base
 
     /**
      * Get array representation of holiday object
+     *
+     * @return (null|string)[]
+     *
+     * @psalm-return array{day: null|string, description: string}
      */
     public function toArray(): array
     {
         return [
-            'day'         => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
+            'day'         => $this->getDay() instanceof \DateTime ? $this->getDay()->format('d/m/Y') : null,
             'description' => $this->getName()
         ];
     }

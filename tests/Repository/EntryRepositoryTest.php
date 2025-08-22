@@ -19,6 +19,7 @@ class EntryRepositoryTest extends TestCase
             {
                 return new \DateTimeImmutable('2025-08-11 12:00:00');
             }
+
             public function today(): \DateTimeImmutable
             {
                 return new \DateTimeImmutable('2025-08-11 00:00:00');
@@ -26,16 +27,16 @@ class EntryRepositoryTest extends TestCase
         };
 
         // Avoid touching Doctrine by creating a partial instance without constructor
-        $repo = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
-        $prop = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
-        $prop->setAccessible(true);
-        $prop->setValue($repo, $clock);
+        $entryRepository = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $reflectionProperty = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($entryRepository, $clock);
 
         // 1 working day on Monday should include previous Fri,Sat,Sun => 3 calendar days
-        $this->assertSame(3, $repo->getCalendarDaysByWorkDays(1));
+        $this->assertSame(3, $entryRepository->getCalendarDaysByWorkDays(1));
 
         // 5 working days => 7 calendar days (full week)
-        $this->assertSame(7, $repo->getCalendarDaysByWorkDays(5));
+        $this->assertSame(7, $entryRepository->getCalendarDaysByWorkDays(5));
     }
 
     public function testGetCalendarDaysByWorkDaysBasics(): void
@@ -45,23 +46,23 @@ class EntryRepositoryTest extends TestCase
             {
                 return new \DateTimeImmutable('2023-10-24 12:00:00');
             }
+
             public function today(): \DateTimeImmutable
             {
                 return new \DateTimeImmutable('2023-10-24');
             } // Tuesday
         };
-        /** @var ManagerRegistry&\PHPUnit\Framework\MockObject\MockObject $reg */
-        $reg = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
+        $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
         // Avoid touching Doctrine by creating a partial mock that bypasses parent constructor
-        $repo = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $entryRepository = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
         // Inject clock via reflection
-        $prop = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
-        $prop->setAccessible(true);
-        $prop->setValue($repo, $clock);
+        $reflectionProperty = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($entryRepository, $clock);
 
-        $this->assertSame(0, $repo->getCalendarDaysByWorkDays(0));
-        $this->assertSame(1, $repo->getCalendarDaysByWorkDays(1)); // Tuesday -> 1
-        $this->assertSame(7, $repo->getCalendarDaysByWorkDays(5));
+        $this->assertSame(0, $entryRepository->getCalendarDaysByWorkDays(0));
+        $this->assertSame(1, $entryRepository->getCalendarDaysByWorkDays(1)); // Tuesday -> 1
+        $this->assertSame(7, $entryRepository->getCalendarDaysByWorkDays(5));
     }
 
     public function testGetCalendarDaysByWorkDaysMondayEdge(): void
@@ -71,18 +72,18 @@ class EntryRepositoryTest extends TestCase
             {
                 return new \DateTimeImmutable('2023-10-23 12:00:00');
             }
+
             public function today(): \DateTimeImmutable
             {
                 return new \DateTimeImmutable('2023-10-23');
             } // Monday
         };
-        /** @var ManagerRegistry&\PHPUnit\Framework\MockObject\MockObject $reg */
-        $reg = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
-        $repo = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
-        $prop = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
-        $prop->setAccessible(true);
-        $prop->setValue($repo, $clock);
+        $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
+        $entryRepository = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $reflectionProperty = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($entryRepository, $clock);
 
-        $this->assertSame(3, $repo->getCalendarDaysByWorkDays(1)); // Monday spans back to Friday
+        $this->assertSame(3, $entryRepository->getCalendarDaysByWorkDays(1)); // Monday spans back to Friday
     }
 }

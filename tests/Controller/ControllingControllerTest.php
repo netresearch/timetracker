@@ -17,9 +17,15 @@ class ControllingControllerTest extends AbstractWebTestCase
 {
     public function testExportActionRequiresLogin(): void
     {
-        // Clear session to simulate not being logged in
-        $this->client->getContainer()->get('session')->clear();
-        $this->client->request('GET', '/controlling/export');
+        // Clear session to simulate not being logged in and persist the change
+        $session = $this->client->getContainer()->get('session');
+        $session->clear();
+        if (method_exists($session, 'save')) {
+            $session->save();
+        }
+        // Clear cookies so no previous session id is reused
+        $this->client->getCookieJar()->clear();
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling/export');
 
         // The test environment redirects to login (302) rather than returning 401
         $this->assertStatusCode(302);
@@ -39,7 +45,7 @@ class ControllingControllerTest extends AbstractWebTestCase
 
         // Request the export URL with required parameters
         $this->client->request(
-            'GET',
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/controlling/export',
             [
                 'year' => 2023,
@@ -82,38 +88,38 @@ class ControllingControllerTest extends AbstractWebTestCase
 
     public function testSetCellDateAndSetCellHours(): void
     {
-        $controller = new ControllingController();
+        new ControllingController();
 
         // Create a spreadsheet to test the helper methods
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $worksheet = $spreadsheet->getActiveSheet();
 
         // Get the reflection class to access protected methods
-        $reflection = new \ReflectionClass(ControllingController::class);
+        $reflectionClass = new \ReflectionClass(ControllingController::class);
 
         // Test setCellDate method
-        $setCellDateMethod = $reflection->getMethod('setCellDate');
-        $setCellDateMethod->setAccessible(true);
+        $reflectionMethod = $reflectionClass->getMethod('setCellDate');
+        $reflectionMethod->setAccessible(true);
 
         $testDate = new \DateTime('2025-03-30');
-        $setCellDateMethod->invokeArgs(null, [$sheet, 'A', 1, $testDate]);
+        $reflectionMethod->invokeArgs(null, [$worksheet, 'A', 1, $testDate]);
 
         // Test setCellHours method
-        $setCellHoursMethod = $reflection->getMethod('setCellHours');
+        $setCellHoursMethod = $reflectionClass->getMethod('setCellHours');
         $setCellHoursMethod->setAccessible(true);
 
         $testTime = new \DateTime('2025-03-30 14:30:00');
-        $setCellHoursMethod->invokeArgs(null, [$sheet, 'B', 1, $testTime]);
+        $setCellHoursMethod->invokeArgs(null, [$worksheet, 'B', 1, $testTime]);
 
         // Verify cell formats
         $this->assertEquals(
             \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD,
-            $sheet->getStyle('A1')->getNumberFormat()->getFormatCode()
+            $worksheet->getStyle('A1')->getNumberFormat()->getFormatCode()
         );
 
         $this->assertEquals(
             'HH:MM',
-            $sheet->getStyle('B1')->getNumberFormat()->getFormatCode()
+            $worksheet->getStyle('B1')->getNumberFormat()->getFormatCode()
         );
     }
 
@@ -139,7 +145,7 @@ class ControllingControllerTest extends AbstractWebTestCase
             ->setProject($project)
             ->setTicket('TKT-1')
             ->setDescription('Real Desc 1');
-            // ->setActivity(null) // Assuming default is fine or set if needed
+        // ->setActivity(null) // Assuming default is fine or set if needed
 
         $entry2 = (new Entry())
             ->setId(5)
@@ -161,16 +167,18 @@ class ControllingControllerTest extends AbstractWebTestCase
         // Mock enrichEntries - expect it called, use callback to call setters on REAL entries
         $exportServiceMock->expects($this->once())
             ->method('enrichEntriesWithTicketInformation')
-            ->willReturnCallback(function ($userId, array $entries, $showBillable, $onlyBillable, $showTicketTitles) {
+            ->willReturnCallback(function ($userId, array $entries, $showBillable, $onlyBillable, $showTicketTitles): array {
                 foreach ($entries as $entry) {
                     // Use setters ON THE REAL Entry objects
                     if ($showBillable && method_exists($entry, 'setBillable')) {
                         $entry->setBillable(true);
                     }
+
                     if ($showTicketTitles && method_exists($entry, 'setTicketTitle')) {
                         $entry->setTicketTitle('Mocked Title for ' . $entry->getTicket());
                     }
                 }
+
                 return $entries;
             });
 
@@ -186,6 +194,8 @@ class ControllingControllerTest extends AbstractWebTestCase
         $client = static::createClient();
         $this->client = $client;
 
+        $this->serviceContainer = $this->client->getContainer();
+
         // 3. Replace service in the container obtained from the client
         $testContainer = $this->client->getContainer(); // Get container from client
         $testContainer->set(Export::class, $exportServiceMock); // Replace service
@@ -196,7 +206,7 @@ class ControllingControllerTest extends AbstractWebTestCase
         $this->logInSession('unittest');
 
         $this->client->request(
-            'GET',
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/controlling/export',
             [
                 'year' => 2023,
@@ -233,6 +243,8 @@ class ControllingControllerTest extends AbstractWebTestCase
         $client = static::createClient(); // Create client AFTER setting $_ENV
         $this->client = $client;
 
+        $this->serviceContainer = $this->client->getContainer();
+
         // Load test data
         $this->loadTestData('/../sql/unittest/002_testdata.sql');
         $this->logInSession('unittest');
@@ -240,7 +252,7 @@ class ControllingControllerTest extends AbstractWebTestCase
         // Request export without billable/tickettitles parameters explicitly enabled
         // The controller should not add the billable column based on env config
         $this->client->request(
-            'GET',
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/controlling/export',
             [
                 'year' => 2023,
@@ -293,7 +305,7 @@ class ControllingControllerTest extends AbstractWebTestCase
 
         // Request export with tickettitles=0
         $this->client->request(
-            'GET',
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/controlling/export',
             [
                 'year' => 2023,

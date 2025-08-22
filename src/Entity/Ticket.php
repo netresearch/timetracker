@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class for ticket entities in the timetracker
  *
@@ -31,6 +32,9 @@ use App\Model\Base;
  */
 class Ticket extends Base
 {
+    /**
+     * @var int
+     */
     public $ticketId;
 
     /**

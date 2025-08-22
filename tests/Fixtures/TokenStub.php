@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 class TokenStub implements TokenInterface
 {
     private array $attributes = [];
-    private bool $authenticated = true;
-    private $user;
 
-    public function __construct($user = null)
+    private bool $authenticated = true;
+
+    public function __construct(private ?UserInterface $user = null)
     {
-        $this->user = $user;
     }
 
     public function __toString(): string
@@ -27,24 +27,44 @@ class TokenStub implements TokenInterface
         return [];
     }
 
+    public function getRoleNames(): array
+    {
+        return [];
+    }
+
     public function getCredentials(): mixed
     {
         return null;
     }
 
-    public function getUser(): mixed
+    public function getUser(): ?UserInterface
     {
         return $this->user;
     }
 
-    public function setUser($user): void
+    public function setUser(UserInterface|string $user): void
     {
-        $this->user = $user;
+        $this->user = $user instanceof UserInterface ? $user : null;
     }
 
     public function getUsername(): string
     {
-        return method_exists($this->user, 'getUsername') ? (string) $this->user->getUsername() : '';
+        return method_exists($this->user, 'getUsername') ? $this->user->getUserIdentifier() : '';
+    }
+
+    public function getUserIdentifier(): string
+    {
+        if ($this->user instanceof UserInterface) {
+            if (method_exists($this->user, 'getUserIdentifier')) {
+                return $this->user->getUserIdentifier();
+            }
+
+            if (method_exists($this->user, 'getUsername')) {
+                return $this->user->getUserIdentifier();
+            }
+        }
+
+        return '';
     }
 
     public function isAuthenticated(): bool

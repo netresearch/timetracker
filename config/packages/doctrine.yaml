@@ -4,7 +4,8 @@ doctrine:
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
+        # Be explicit to avoid version detection deprecations in DBAL 4
+        server_version: '10.11'
 
         # only needed for MySQL
         charset: utf8mb4
@@ -19,11 +20,16 @@ doctrine:
         #profiling_collect_backtrace: '%kernel.debug%'
     orm:
         auto_generate_proxy_classes: true
-        naming_strategy: doctrine.orm.naming_strategy.underscore
+        # Disable deprecated controller resolver automapping
+        controller_resolver:
+            auto_mapping: false
+        enable_lazy_ghost_objects: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
         mappings:
             App:
                 is_bundle: false
+                # Use Doctrine annotations for entity mapping (entities use @ORM\...)
                 type: annotation
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'

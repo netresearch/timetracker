@@ -28,6 +28,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // Create a new Project
@@ -84,6 +85,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // Create a new Project
@@ -100,6 +102,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($project);
         $this->entityManager->flush();
+
         $id = $project->getId();
         $customerId = $customer->getId();
 
@@ -110,6 +113,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setOffer('OFFER-UPDATED');
         $project->setBilling(Project::BILLING_FP);
         $project->setEstimation(200);
+
         $this->entityManager->flush();
         $this->entityManager->clear();
 
@@ -141,6 +145,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // Create a new Project
@@ -157,6 +162,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($project);
         $this->entityManager->flush();
+
         $id = $project->getId();
         $customerId = $customer->getId();
 
@@ -190,6 +196,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // Create and persist project
@@ -202,6 +209,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setBilling(Project::BILLING_TM);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
+
         $this->entityManager->persist($project);
 
         // Create and add entries
@@ -228,6 +236,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($entry1);
         $this->entityManager->persist($entry2);
         $this->entityManager->flush();
+
         $projectId = $project->getId();
 
         // Clear entity manager and fetch from database
@@ -242,6 +251,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         foreach ($entries as $entry) {
             $this->entityManager->remove($entry);
         }
+
         $this->entityManager->flush();
 
         $this->entityManager->remove($fetchedProject);
@@ -259,18 +269,21 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         $projectLead = new User();
         $projectLead->setUsername('project_lead');
         $projectLead->setType('PL');
         $projectLead->setLocale('de');
+
         $this->entityManager->persist($projectLead);
 
         $technicalLead = new User();
         $technicalLead->setUsername('technical_lead');
         $technicalLead->setType('DEV');
         $technicalLead->setLocale('de');
+
         $this->entityManager->persist($technicalLead);
 
         // Create project with leads
@@ -288,6 +301,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->persist($project);
         $this->entityManager->flush();
+
         $projectId = $project->getId();
         $customerId = $customer->getId();
         $projectLeadId = $projectLead->getId();
@@ -316,12 +330,15 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         if ($fetchedProjectLead) {
             $this->entityManager->remove($fetchedProjectLead);
         }
+
         if ($fetchedTechnicalLead) {
             $this->entityManager->remove($fetchedTechnicalLead);
         }
+
         if ($fetchedCustomer) {
             $this->entityManager->remove($fetchedCustomer);
         }
+
         $this->entityManager->flush();
     }
 
@@ -332,6 +349,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         $ticketSystem = new TicketSystem();
@@ -342,6 +360,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $ticketSystem->setLogin('test_login');
         $ticketSystem->setPassword('test_password');
         $ticketSystem->setTicketurl('https://jira.example.com/ticket/{ticket}');
+
         $this->entityManager->persist($ticketSystem);
 
         // Create project with ticket system
@@ -359,6 +378,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->persist($project);
         $this->entityManager->flush();
+
         $projectId = $project->getId();
         $customerId = $customer->getId();
         $ticketSystemId = $ticketSystem->getId();
@@ -383,9 +403,11 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         if ($fetchedTicketSystem) {
             $this->entityManager->remove($fetchedTicketSystem);
         }
+
         if ($fetchedCustomer) {
             $this->entityManager->remove($fetchedCustomer);
         }
+
         $this->entityManager->flush();
     }
 
@@ -396,6 +418,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // Create activity for presets
@@ -403,6 +426,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $activity->setName('Test Activity');
         $activity->setNeedsTicket(true);
         $activity->setFactor(1.0);
+
         $this->entityManager->persist($activity);
 
         // Create project
@@ -415,6 +439,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setBilling(Project::BILLING_TM);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
+
         $this->entityManager->persist($project);
 
         // Create presets
@@ -435,6 +460,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($preset1);
         $this->entityManager->persist($preset2);
         $this->entityManager->flush();
+
         $projectId = $project->getId();
         $customerId = $customer->getId();
         $activityId = $activity->getId();
@@ -450,6 +476,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         foreach ($fetchedProject->getPresets() as $preset) {
             $this->entityManager->remove($preset);
         }
+
         $this->entityManager->flush();
 
         // Clean up project
@@ -463,9 +490,11 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         if ($fetchedActivity) {
             $this->entityManager->remove($fetchedActivity);
         }
+
         if ($fetchedCustomer) {
             $this->entityManager->remove($fetchedCustomer);
         }
+
         $this->entityManager->flush();
     }
 }

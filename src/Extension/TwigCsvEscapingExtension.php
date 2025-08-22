@@ -1,11 +1,12 @@
 <?php
+
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
  */
 
 namespace App\Extension;
 
-use \Twig\Extension\AbstractExtension;
+use Twig\Extension\AbstractExtension;
 
 /**
  * Class TwigCsvEscapingExtension
@@ -20,6 +21,8 @@ class TwigCsvEscapingExtension extends AbstractExtension
 
     /**
      * @return \Twig\TwigFilter[]
+     *
+     * @psalm-return array{0: \Twig\TwigFilter}
      */
     public function getFilters()
     {
@@ -29,10 +32,10 @@ class TwigCsvEscapingExtension extends AbstractExtension
     }
 
     /**
-     * @param $string
+     * @param string $string
      * @return string
      */
-    public function csvEscape($string): string|array
+    public function csvEscape(string $string): string
     {
         return str_replace('"', '""', $string);
     }

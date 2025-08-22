@@ -15,7 +15,7 @@ namespace App\Helper;
  */
 class LoginHelper
 {
-    const COOKIE_NAME   = 'nr_timetracker';
+    public const COOKIE_NAME   = 'nr_timetracker';
 
 
     public static function setCookie(string $userId, string $userName, string $secret): void
@@ -26,7 +26,7 @@ class LoginHelper
             $userId
             . ':' . self::hash($userName, $secret, $token)
             . ':' . $token,
-            ['expires' => time() + (14*24*60*60)]
+            ['expires' => time() + (14 * 24 * 60 * 60)]
         );
     }
 
@@ -35,7 +35,12 @@ class LoginHelper
         setcookie(self::COOKIE_NAME, '', ['expires' => time() - 7200]);
     }
 
-    private static function getCookieData(): false|array
+    /**
+     * @return (int|string)[]|false
+     *
+     * @psalm-return array{userId: int, hash: string, token: string}|false
+     */
+    private static function getCookieData(): array|false
     {
         // $_COOKIE is always an array in PHP; keep as-is for BC with older code/tests
 
@@ -43,7 +48,7 @@ class LoginHelper
             return false;
         }
 
-        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', $_COOKIE[self::COOKIE_NAME], $matches)) {
+        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', (string) $_COOKIE[self::COOKIE_NAME], $matches)) {
             return false;
         }
 
@@ -54,7 +59,10 @@ class LoginHelper
         ];
     }
 
-    public static function getCookieUserId()
+    /**
+     * @return false|int
+     */
+    public static function getCookieUserId(): int|false
     {
         $cookieData = self::getCookieData();
         if (!is_array($cookieData)) {
@@ -64,7 +72,7 @@ class LoginHelper
         return $cookieData['userId'];
     }
 
-    public static function checkCookieUserName(string $expectedUserName, string $secret)
+    public static function checkCookieUserName(string $expectedUserName, string $secret): bool
     {
         $cookieData = self::getCookieData();
         if (!is_array($cookieData)) {

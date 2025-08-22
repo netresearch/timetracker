@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
  */
@@ -22,6 +23,9 @@ class Base
      * Returns array representation of call class properties (e.g. for json_encode)
      *
      * @throws \ReflectionException
+     *
+     *
+     * @psalm-return array<string, mixed>
      */
     public function toArray(): array
     {

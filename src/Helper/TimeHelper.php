@@ -9,22 +9,29 @@ namespace App\Helper;
  */
 class TimeHelper
 {
+    public static function getMinutesByLetter(string $unit): int
+    {
+        return match (strtolower($unit)) {
+            '' => 1,
+            'm' => 1,
+            'h' => 60,
+            'd' => 480,
+            'w' => 2400,
+            default => 0,
+        };
+    }
     public const DAYS_PER_WEEK = 5;
+
     public const HOURS_PER_DAY = 8;
 
-    public static function getMinutesByLetter($letter): int
+    public static function readable2minutes(string $readable): int|float
     {
-        return (new \App\Service\Util\TimeCalculationService())->getMinutesByLetter((string) $letter);
+        return (new \App\Service\Util\TimeCalculationService())->readableToMinutes($readable);
     }
 
-    public static function readable2minutes($readable): int|float
+    public static function minutes2readable(int $minutes, bool $useWeeks = true): string
     {
-        return (new \App\Service\Util\TimeCalculationService())->readableToMinutes((string) $readable);
-    }
-
-    public static function minutes2readable($minutes, $useWeeks = true): string
-    {
-        return (new \App\Service\Util\TimeCalculationService())->minutesToReadable((int) $minutes, (bool) $useWeeks);
+        return (new \App\Service\Util\TimeCalculationService())->minutesToReadable($minutes, $useWeeks);
     }
 
     public static function formatDuration(int|float $duration, bool $inDays = false): string

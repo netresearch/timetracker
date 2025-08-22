@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-
 use App\Model\Base;
 
 /**
@@ -17,46 +16,57 @@ class UserTicketsystem extends Base
      * @ORM\Id
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @var int|null
      */
     protected $id;
 
 
     /**
-     * @ORM\ManyToOne(targetEntity="TicketSystem")
-     * @ORM\JoinColumn(name="ticket_system_id", referencedColumnName="id", nullable=true)
+     * @ORM\ManyToOne (targetEntity="TicketSystem")
+     *
+     * @ORM\JoinColumn (name="ticket_system_id", referencedColumnName="id", nullable=true)
      */
-    protected $ticketSystem;
+    protected TicketSystem $ticketSystem;
 
 
     /**
-     * @ORM\ManyToOne(targetEntity="User", inversedBy="userTicketsystems")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=true)
+     * @ORM\ManyToOne (targetEntity="User", inversedBy="userTicketsystems")
+     *
+     * @ORM\JoinColumn (name="user_id", referencedColumnName="id", nullable=true)
      */
-    protected $user;
+    protected User $user;
 
 
     /**
-     * @ORM\Column(name="access_token", type="string", length=50)
+     * @ORM\Column (name="accesstoken", type="string", length=50)
+     *
+     * @var string
      */
     protected $accessToken;
 
 
     /**
-     * @ORM\Column(name="token_secret", type="string", length=50)
+     * @ORM\Column (name="tokensecret", type="string", length=50)
+     *
+     * @var string
      */
     protected $tokenSecret;
 
 
     /**
-     * @ORM\Column(name="avoid_connection", type="boolean", options={"default"=false})
+     * @ORM\Column (name="avoidconnection", type="boolean", options={"default"=false})
+     *
+     *
+     * @psalm-var 0|1
      */
-    protected $avoidConnection;
+    protected int $avoidConnection;
 
 
     /**
-     * @return mixed
+     * @return int|null
      */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -64,16 +74,13 @@ class UserTicketsystem extends Base
     /**
      * @return $this
      */
-    public function setId(mixed $id): static
+    public function setId(int $id): static
     {
         $this->id = $id;
         return $this;
     }
 
-    /**
-     * @return TicketSystem
-     */
-    public function getTicketSystem()
+    public function getTicketSystem(): \App\Entity\TicketSystem
     {
         return $this->ticketSystem;
     }
@@ -87,10 +94,7 @@ class UserTicketsystem extends Base
         return $this;
     }
 
-    /**
-     * @return User
-     */
-    public function getUser()
+    public function getUser(): \App\Entity\User
     {
         return $this->user;
     }
@@ -107,7 +111,7 @@ class UserTicketsystem extends Base
     /**
      * @return string
      */
-    public function getAccessToken()
+    public function getAccessToken(): string
     {
         return $this->accessToken;
     }
@@ -118,14 +122,14 @@ class UserTicketsystem extends Base
      */
     public function setAccessToken($accessToken): static
     {
-        $this->accessToken = $accessToken;
+        $this->accessToken = (string) $accessToken;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getTokenSecret()
+    public function getTokenSecret(): string
     {
         return $this->tokenSecret;
     }
@@ -136,7 +140,7 @@ class UserTicketsystem extends Base
      */
     public function setTokenSecret($tokenSecret): static
     {
-        $this->tokenSecret = $tokenSecret;
+        $this->tokenSecret = (string) $tokenSecret;
         return $this;
     }
 
@@ -151,7 +155,7 @@ class UserTicketsystem extends Base
      */
     public function setAvoidConnection($avoidConnection): static
     {
-        $this->avoidConnection = ($avoidConnection? 1 : 0);
+        $this->avoidConnection = ($avoidConnection ? 1 : 0);
         return $this;
     }
 }

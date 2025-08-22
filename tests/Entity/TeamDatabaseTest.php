@@ -52,6 +52,7 @@ class TeamDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($team);
         $this->entityManager->flush();
+
         $id = $team->getId();
 
         // Update team
@@ -77,6 +78,7 @@ class TeamDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($team);
         $this->entityManager->flush();
+
         $id = $team->getId();
 
         // Delete team
@@ -95,14 +97,17 @@ class TeamDatabaseTest extends AbstractWebTestCase
         $leadUser->setUsername('lead_user');
         $leadUser->setType('PL');
         $leadUser->setLocale('de');
+
         $this->entityManager->persist($leadUser);
 
         // Create team with lead
         $team = new Team();
         $team->setName('Team With Lead');
         $team->setLeadUser($leadUser);
+
         $this->entityManager->persist($team);
         $this->entityManager->flush();
+
         $teamId = $team->getId();
 
         // Clear entity manager and fetch from database
@@ -129,17 +134,20 @@ class TeamDatabaseTest extends AbstractWebTestCase
         $user1->setUsername('team_user1');
         $user1->setType('DEV');
         $user1->setLocale('de');
+
         $this->entityManager->persist($user1);
 
         $user2 = new User();
         $user2->setUsername('team_user2');
         $user2->setType('DEV');
         $user2->setLocale('de');
+
         $this->entityManager->persist($user2);
 
         // Create team
         $team = new Team();
         $team->setName('Team With Users');
+
         $this->entityManager->persist($team);
 
         // Add team to users (User owns the relationship)
@@ -179,17 +187,20 @@ class TeamDatabaseTest extends AbstractWebTestCase
         $customer1->setName('Team Customer 1');
         $customer1->setActive(true);
         $customer1->setGlobal(false);
+
         $this->entityManager->persist($customer1);
 
         $customer2 = new Customer();
         $customer2->setName('Team Customer 2');
         $customer2->setActive(true);
         $customer2->setGlobal(false);
+
         $this->entityManager->persist($customer2);
 
         // Create team
         $team = new Team();
         $team->setName('Team With Customers');
+
         $this->entityManager->persist($team);
 
         // Add team to customers (Customer owns the relationship)
@@ -211,6 +222,7 @@ class TeamDatabaseTest extends AbstractWebTestCase
         foreach ($customers as $customer) {
             $this->entityManager->remove($customer);
         }
+
         $this->entityManager->flush();
 
         $this->entityManager->remove($fetchedTeam);

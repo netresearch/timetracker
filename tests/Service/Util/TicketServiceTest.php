@@ -14,8 +14,8 @@ class TicketServiceTest extends TestCase
      */
     public function testCheckTicketFormat(bool $expected, string $ticket): void
     {
-        $svc = new TicketService();
-        $this->assertSame($expected, $svc->checkFormat($ticket));
+        $ticketService = new TicketService();
+        $this->assertSame($expected, $ticketService->checkFormat($ticket));
     }
 
     public function checkTicketFormatDataProvider(): array
@@ -41,8 +41,8 @@ class TicketServiceTest extends TestCase
      */
     public function testGetPrefix(?string $expectedPrefix, string $ticket): void
     {
-        $svc = new TicketService();
-        $this->assertSame($expectedPrefix, $svc->getPrefix($ticket));
+        $ticketService = new TicketService();
+        $this->assertSame($expectedPrefix, $ticketService->getPrefix($ticket));
     }
 
     public function prefixDataProvider(): array

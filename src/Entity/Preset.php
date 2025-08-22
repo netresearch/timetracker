@@ -16,42 +16,51 @@ class Preset extends Base
      * @ORM\Id
      * @ORM\Column(type="integer")
      * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @var int|null
      */
     protected $id;
 
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column (type="string")
+     *
+     * @var string
      */
     protected $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Project", inversedBy="presets")
-     * @ORM\JoinColumn(name="project_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="Project", inversedBy="presets")
+     *
+     * @ORM\JoinColumn (name="project_id", referencedColumnName="id")
      */
-    protected $project;
+    protected Project $project;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="presets")
-     * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
+     * @ORM\ManyToOne (targetEntity="Customer", inversedBy="presets")
+     *
+     * @ORM\JoinColumn (name="customer_id", referencedColumnName="id")
      */
-    protected $customer;
+    protected Customer $customer;
 
     /**
-    * @ORM\ManyToOne(targetEntity="Activity", inversedBy="presets")
-    * @ORM\JoinColumn(name="activity_id", referencedColumnName="id")
-    */
-    protected $activity;
+     * @ORM\ManyToOne (targetEntity="Activity", inversedBy="presets")
+     *
+     * @ORM\JoinColumn (name="activity_id", referencedColumnName="id")
+     */
+    protected Activity $activity;
 
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column (type="string")
+     *
+     * @var string
      */
     protected $description;
 
 
 
-    public function setId($id): static
+    public function setId(int $id): static
     {
         $this->id = $id;
         return $this;
@@ -62,7 +71,7 @@ class Preset extends Base
      *
      * @return integer $id
      */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -86,7 +95,7 @@ class Preset extends Base
      *
      * @return string $name
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -97,9 +106,9 @@ class Preset extends Base
      *
      * @return integer $customerId
      */
-    public function getCustomerId()
+    public function getCustomerId(): int
     {
-        return $this->getCustomer() ? $this->getCustomer()->getId() : 0;
+        return $this->getCustomer()->getId();
     }
 
 
@@ -108,9 +117,9 @@ class Preset extends Base
      *
      * @return integer $projectId
      */
-    public function getProjectId()
+    public function getProjectId(): int
     {
-        return $this->getProject() ? $this->getProject()->getId() : 0;
+        return $this->getProject()->getId();
     }
 
 
@@ -121,7 +130,7 @@ class Preset extends Base
      */
     public function getActivityId(): int
     {
-        return $this->getActivity() ? (int) $this->getActivity()->getId() : 0;
+        return (int) $this->getActivity()->getId();
     }
 
 
@@ -144,7 +153,7 @@ class Preset extends Base
      *
      * @return string $description
      */
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -167,7 +176,7 @@ class Preset extends Base
      *
      * @return Customer $customer
      */
-    public function getCustomer()
+    public function getCustomer(): \App\Entity\Customer
     {
         return $this->customer;
     }
@@ -190,7 +199,7 @@ class Preset extends Base
      *
      * @return Project $project
      */
-    public function getProject()
+    public function getProject(): \App\Entity\Project
     {
         return $this->project;
     }
@@ -213,7 +222,7 @@ class Preset extends Base
      *
      * @return Activity $activity
      */
-    public function getActivity()
+    public function getActivity(): \App\Entity\Activity
     {
         return $this->activity;
     }
@@ -221,15 +230,19 @@ class Preset extends Base
 
     /**
      * Get array representation of a preset object
+     *
+     * @return (int|null|string)[]
+     *
+     * @psalm-return array{id: int, name: string, customer: int|null, project: int|null, activity: int|null, description: string}
      */
     public function toArray(): array
     {
         return [
-            'id'          => $this->getId(),
+            'id'          => (int) ($this->getId() ?? 0),
             'name'        => $this->getName(),
-            'customer'    => $this->getCustomer() ? $this->getCustomer()->getId() : null,
-            'project'     => $this->getProject() ? $this->getProject()->getId() : null,
-            'activity'    => $this->getActivity() ? $this->getActivity()->getId() : null,
+            'customer'    => $this->getCustomer()->getId(),
+            'project'     => $this->getProject()->getId(),
+            'activity'    => $this->getActivity()->getId(),
             'description' => $this->getDescription(),
         ];
     }

@@ -1,7 +1,7 @@
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
-    encoders:
-        App\Entity\User: plaintext
+    password_hashers:
+        App\Entity\User: 'plaintext'
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
@@ -20,14 +20,11 @@ security:
             security: false
 
         main:
-            anonymous: true
             provider: app_user_provider
-
-            # Custom authenticator for LDAP login
-            guard:
-                authenticators:
-                    - App\Security\LdapAuthenticator
-                entry_point: App\Security\LdapAuthenticator
+            lazy: true
+            # Use the new authenticator manager in Symfony 5.4+
+            custom_authenticators:
+                - App\Security\LdapAuthenticator
 
             # Standard logout configuration
             logout:
@@ -50,15 +47,15 @@ security:
 
     # Access control settings
     access_control:
-        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/login_check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/css, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/js, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/images, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/status/check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/status/page, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/css, roles: PUBLIC_ACCESS }
+        - { path: ^/js, roles: PUBLIC_ACCESS }
+        - { path: ^/images, roles: PUBLIC_ACCESS }
+        - { path: ^/status/check, roles: PUBLIC_ACCESS }
+        - { path: ^/status/page, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
         # Uncomment to restrict access to paths starting with /_internal to only localhost
         # - { path: ^/_internal/secure, roles: IS_AUTHENTICATED_ANONYMOUSLY, ip: 127.0.0.1 }

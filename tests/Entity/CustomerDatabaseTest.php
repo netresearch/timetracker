@@ -60,12 +60,14 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($customer);
         $this->entityManager->flush();
+
         $id = $customer->getId();
 
         // Update customer
         $customer->setName('Updated Customer');
         $customer->setActive(false);
         $customer->setGlobal(true);
+
         $this->entityManager->flush();
         $this->entityManager->clear();
 
@@ -91,6 +93,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($customer);
         $this->entityManager->flush();
+
         $id = $customer->getId();
 
         // Delete customer
@@ -109,6 +112,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         $customer->setName('Customer With Projects');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // Create and add projects
@@ -135,6 +139,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($project1);
         $this->entityManager->persist($project2);
         $this->entityManager->flush();
+
         $customerId = $customer->getId();
 
         // Clear entity manager and fetch from database
@@ -149,6 +154,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         foreach ($projects as $project) {
             $this->entityManager->remove($project);
         }
+
         $this->entityManager->flush();
         $this->entityManager->remove($fetchedCustomer);
         $this->entityManager->flush();
@@ -161,20 +167,24 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         $customer->setName('Customer With Teams');
         $customer->setActive(true);
         $customer->setGlobal(false);
+
         $this->entityManager->persist($customer);
 
         // Create and add teams
         $team1 = new Team();
         $team1->setName('Team 1');
+
         $this->entityManager->persist($team1);
 
         $team2 = new Team();
         $team2->setName('Team 2');
+
         $this->entityManager->persist($team2);
 
         // Establish the bidirectional relationship
         $customer->addTeam($team1);
         $customer->addTeam($team2);
+
         $team1->addCustomer($customer);
         $team2->addCustomer($customer);
 
@@ -196,6 +206,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         foreach ($teams as $team) {
             $this->entityManager->remove($team);
         }
+
         $this->entityManager->flush();
     }
 
@@ -218,17 +229,17 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Test repository methods
-        $repository = $this->entityManager->getRepository(Customer::class);
+        $entityRepository = $this->entityManager->getRepository(Customer::class);
 
         // Test findAll
-        $allCustomers = $repository->findAll();
+        $allCustomers = $entityRepository->findAll();
         $this->assertGreaterThanOrEqual(2, count($allCustomers));
 
         // Test findBy with criteria
-        $activeCustomers = $repository->findBy(['active' => true]);
+        $activeCustomers = $entityRepository->findBy(['active' => true]);
         $this->assertGreaterThanOrEqual(1, count($activeCustomers));
 
-        $globalCustomers = $repository->findBy(['global' => true]);
+        $globalCustomers = $entityRepository->findBy(['global' => true]);
         $this->assertGreaterThanOrEqual(1, count($globalCustomers));
 
         // Clean up

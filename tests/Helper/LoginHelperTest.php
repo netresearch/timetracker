@@ -33,10 +33,11 @@ class LoginHelperTest extends TestCase
         $secret = 's3cr3t';
         $token = bin2hex(random_bytes(8));
 
-        $ref = new \ReflectionClass(LoginHelper::class);
-        $hashMethod = $ref->getMethod('hash');
-        $hashMethod->setAccessible(true);
-        $hash = $hashMethod->invoke(null, $userName, $secret, $token);
+        $reflectionClass = new \ReflectionClass(LoginHelper::class);
+        $reflectionMethod = $reflectionClass->getMethod('hash');
+        $reflectionMethod->setAccessible(true);
+
+        $hash = $reflectionMethod->invoke(null, $userName, $secret, $token);
 
         $_COOKIE[LoginHelper::COOKIE_NAME] = $userId . ':' . $hash . ':' . $token;
 

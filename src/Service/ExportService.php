@@ -3,34 +3,35 @@
 namespace App\Service;
 
 use App\Entity\Entry;
-use App\Entity\TicketSystem;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Routing\RouterInterface;
 
 class ExportService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly RouterInterface $router, private readonly JiraOAuthApiFactory $jiraApiFactory)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
     {
     }
 
     /**
      * Returns entries filtered and ordered.
+     *
+     * @param array<string, bool>|null $arSort
+     * @return Entry[]
+     *
+     * @psalm-return array<Entry>
      */
-    public function exportEntries(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, array $arSort = null)
+    public function exportEntries(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, ?array $arSort = null): array
     {
-        /** @var \App\Repository\EntryRepository $repo */
-        $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
-        /** @var \App\Entity\Entry[] $arEntries */
-        $arEntries = $repo->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
 
-        return $arEntries;
+        return $objectRepository->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
     }
 
     /**
      * Returns user name for given user ID.
      */
-    public function getUsername($userId = null)
+    public function getUsername(?int $userId = null): ?string
     {
         $username = 'all';
         if (0 < (int) $userId) {
@@ -38,7 +39,7 @@ class ExportService
             $user = $this->managerRegistry
                 ->getRepository(\App\Entity\User::class)
                 ->find($userId);
-            if ($user !== null) {
+            if (null !== $user) {
                 $username = $user->getUsername();
             }
         }
@@ -46,23 +47,22 @@ class ExportService
         return $username;
     }
 
-    protected function getEntryRepository()
-    {
-        return $this->managerRegistry->getRepository(\App\Entity\Entry::class);
-    }
-
     /**
      * Adds billable (boolean) property to entries depending on the existence of a "billable" label
      * in associated JIRA issues and optionally adds ticket titles.
      *
      * @param Entry[] $entries
+     *
+     * @return Entry[]
+     *
+     * @psalm-return array<Entry>
      */
     public function enrichEntriesWithTicketInformation(
-        $currentUserId,
+        int $currentUserId,
         array $entries,
-        $showBillableField,
-        $removeNotBillable = false,
-        $showTicketTitles = false
+        bool $showBillableField,
+        bool $removeNotBillable = false,
+        bool $showTicketTitles = false,
     ): array {
         $doctrine = $this->managerRegistry;
         /** @var \App\Repository\UserRepository $objectRepository */
@@ -70,23 +70,19 @@ class ExportService
         /** @var \App\Entity\User $currentUser */
         $currentUser = $objectRepository->find($currentUserId);
 
-        $router = $this->router;
-
         $arTickets = [];
         $arApi = [];
-        /** @var Entry $entry */
         foreach ($entries as $entry) {
             if (strlen($entry->getTicket()) > 0
                 && $entry->getProject()
                 && $entry->getProject()->getTicketSystem()
                 && $entry->getProject()->getTicketSystem()->getBookTime()
-                && $entry->getProject()->getTicketSystem()->getType() == 'JIRA'
+                && 'JIRA' == $entry->getProject()->getTicketSystem()->getType()
             ) {
-                /** @var TicketSystem $ticketSystem */
                 $ticketSystem = $entry->getProject()->getTicketSystem();
 
                 if (!isset($arApi[$ticketSystem->getId()])) {
-                    $arApi[$ticketSystem->getId()] = $this->jiraApiFactory->create($currentUser, $ticketSystem);
+                    $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
                 }
 
                 $arTickets[$ticketSystem->getId()][] = $entry->getTicket();
@@ -115,7 +111,7 @@ class ExportService
 
             foreach ($ticketSystemIssuesTotalChunks as $ticketSystemIssueTotalChunk) {
                 $ret = $jiraApi->searchTicket(
-                    'IssueKey in (' . implode(',', $ticketSystemIssueTotalChunk) . ')',
+                    'IssueKey in ('.implode(',', $ticketSystemIssueTotalChunk).')',
                     $jiraFields,
                     500
                 );
@@ -125,14 +121,14 @@ class ExportService
                         $issueKey = is_object($issue) && isset($issue->key) ? (string) $issue->key : null;
                         $issueFields = is_object($issue) && isset($issue->fields) ? $issue->fields : null;
 
-                        if ($issueKey !== null && $showBillableField && is_object($issueFields)) {
+                        if (null !== $issueKey && $showBillableField && is_object($issueFields)) {
                             $labels = $issueFields->labels ?? null;
                             if (is_array($labels) && in_array('billable', $labels, true)) {
                                 $arBillable[] = $issueKey;
                             }
                         }
 
-                        if ($issueKey !== null && $showTicketTitles && is_object($issueFields)) {
+                        if (null !== $issueKey && $showTicketTitles && is_object($issueFields)) {
                             $summary = $issueFields->summary ?? null;
                             if (is_string($summary)) {
                                 $arTicketTitles[$issueKey] = $summary;
@@ -144,7 +140,6 @@ class ExportService
         }
 
         foreach ($entries as $key => $entry) {
-            /** @var Entry $entry */
             if ($showBillableField) {
                 $billable = in_array($entry->getTicket(), $arBillable, true);
                 if (!$billable) {
@@ -152,7 +147,8 @@ class ExportService
                         unset($entries[$key]);
                         continue;
                     }
-                    // leave billable as-is (e.g., null) when not billable
+
+                // leave billable as-is (e.g., null) when not billable
                 } else {
                     $entry->setBillable(true);
                 }

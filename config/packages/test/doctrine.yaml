@@ -1,0 +1,6 @@
+doctrine:
+    dbal:
+        logging: false
+        profiling: false
+        profiling_collect_backtrace: false
+

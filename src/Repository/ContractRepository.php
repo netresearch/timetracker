@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repository;
 
 use App\Entity\Contract;
@@ -6,24 +7,21 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * Database with all contracts
+ * Database with all contracts.
  *
  * @author Tony Kreissl <kreissl@mogic.com>
  */
 class ContractRepository extends ServiceEntityRepository
 {
-    /**
-     * ContractRepository constructor.
-     */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, Contract::class);
+        parent::__construct($registry, Contract::class);
     }
 
     /**
-     * Find all contracts, sorted by start ascending
+     * Find all contracts, sorted by start ascending.
      *
-     * @return array Array with contract data
+     * @return array<int, array{contract: array{id:int, user_id:int, start:string|null, end:string|null, hours_0:float, hours_1:float, hours_2:float, hours_3:float, hours_4:float, hours_5:float, hours_6:float}}>
      */
     public function getContracts(): array
     {
@@ -35,28 +33,28 @@ class ContractRepository extends ServiceEntityRepository
 
         /** @var \Doctrine\ORM\Query $query */
         $query = $queryBuilder->getQuery();
-        /** @var \App\Entity\Contract[] $contracts */
+        /** @var Contract[] $contracts */
         $contracts = $query->getResult();
         $data = [];
 
-        /** @var \App\Entity\Contract $contract */
+        /** @var Contract $contract */
         foreach ($contracts as $contract) {
             $data[] = ['contract' => [
-                'id'      => $contract->getId(),
-                'user_id' => $contract->getUser()->getId(),
-                'start'   => $contract->getStart()
+                'id' => (int) $contract->getId(),
+                'user_id' => (int) $contract->getUser()->getId(),
+                'start' => $contract->getStart()
                     ? $contract->getStart()->format('Y-m-d')
                     : null,
-                'end'     => $contract->getEnd()
+                'end' => $contract->getEnd()
                     ? $contract->getEnd()->format('Y-m-d')
                     : null,
-                'hours_0' => $contract->getHours0(),
-                'hours_1' => $contract->getHours1(),
-                'hours_2' => $contract->getHours2(),
-                'hours_3' => $contract->getHours3(),
-                'hours_4' => $contract->getHours4(),
-                'hours_5' => $contract->getHours5(),
-                'hours_6' => $contract->getHours6(),
+                'hours_0' => (float) $contract->getHours0(),
+                'hours_1' => (float) $contract->getHours1(),
+                'hours_2' => (float) $contract->getHours2(),
+                'hours_3' => (float) $contract->getHours3(),
+                'hours_4' => (float) $contract->getHours4(),
+                'hours_5' => (float) $contract->getHours5(),
+                'hours_6' => (float) $contract->getHours6(),
             ]];
         }
 

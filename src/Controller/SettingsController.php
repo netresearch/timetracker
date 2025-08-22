@@ -2,14 +2,12 @@
 
 namespace App\Controller;
 
-use App\Service\Util\LocalizationService;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Model\JsonResponse;
+use App\Service\Util\LocalizationService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Symfony\Component\Routing\Annotation\Route;
 
-class SettingsController extends AbstractController
+class SettingsController extends BaseController
 {
     /** @var TranslatorInterface */
     protected $translator;
@@ -18,54 +16,55 @@ class SettingsController extends AbstractController
     protected $localizationService;
 
     /**
-     * @required
      * @codeCoverageIgnore
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTranslator(TranslatorInterface $translator): void
     {
         $this->translator = $translator;
     }
 
     /**
-     * @required
      * @codeCoverageIgnore
      */
+    #[\Symfony\Contracts\Service\Attribute\Required]
     public function setLocalizationService(LocalizationService $localizationService): void
     {
         $this->localizationService = $localizationService;
     }
 
-    /**
-     * @Route("/settings/save", name="saveSettings", methods={"POST"})
-     */
-    public function saveAction(Request $request)
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/settings/save', name: 'saveSettings', methods: ['POST'])]
+    public function save(Request $request): JsonResponse
     {
-        if ('POST' != $request->getMethod()) {
+        if ('POST' !== $request->getMethod()) {
             $response = new JsonResponse([
                 'success' => false,
-                'message' => $this->translator->trans('The configuration could not be saved.')
+                'message' => $this->translator->trans('The configuration could not be saved.'),
             ]);
-            $response->setStatusCode(503);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_SERVICE_UNAVAILABLE);
+
             return $response;
         }
 
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof \App\Entity\User) {
             $response = new JsonResponse([
                 'success' => false,
-                'message' => $this->translator->trans('User not found.')
+                'message' => $this->translator->trans('User not found.'),
             ]);
-            $response->setStatusCode(404);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+
             return $response;
         }
 
-        $user->setShowEmptyLine($request->request->get('show_empty_line'));
-        $user->setSuggestTime($request->request->get('suggest_time'));
-        $user->setShowFuture($request->request->get('show_future'));
+        $user->setShowEmptyLine((bool) $request->request->get('show_empty_line'));
+        $user->setSuggestTime((bool) $request->request->get('suggest_time'));
+        $user->setShowFuture((bool) $request->request->get('show_future'));
+
         $normalized = $this->localizationService->normalizeLocale((string) $request->request->get('locale'));
         $user->setLocale($normalized);
 
-        $objectManager = $this->getDoctrine()->getManager();
+        $objectManager = $this->managerRegistry->getManager();
         $objectManager->persist($user);
         $objectManager->flush();
 
@@ -76,7 +75,7 @@ class SettingsController extends AbstractController
             'success' => true,
             'settings' => $user->getSettings(),
             'locale' => $user->getLocale(),
-            'message' => $this->translator->trans('The configuration has been successfully saved.')
+            'message' => $this->translator->trans('The configuration has been successfully saved.'),
         ]);
     }
 }

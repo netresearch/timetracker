@@ -51,6 +51,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($account);
         $this->entityManager->flush();
+
         $id = $account->getId();
 
         // Update account
@@ -76,6 +77,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
         // Persist to database
         $this->entityManager->persist($account);
         $this->entityManager->flush();
+
         $id = $account->getId();
 
         // Delete account
@@ -92,6 +94,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
         // Create and persist account
         $account = new Account();
         $account->setName('Account With Entries');
+
         $this->entityManager->persist($account);
 
         // Create and add entries
@@ -118,6 +121,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
         $this->entityManager->persist($entry1);
         $this->entityManager->persist($entry2);
         $this->entityManager->flush();
+
         $accountId = $account->getId();
 
         // Clear entity manager and fetch from database
@@ -136,6 +140,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
         foreach ($entries as $entry) {
             $this->entityManager->remove($entry);
         }
+
         $this->entityManager->flush();
         $this->entityManager->remove($fetchedAccount);
         $this->entityManager->flush();
@@ -156,14 +161,14 @@ class AccountDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Test repository methods
-        $repository = $this->entityManager->getRepository(Account::class);
+        $entityRepository = $this->entityManager->getRepository(Account::class);
 
         // Test findAll
-        $allAccounts = $repository->findAll();
+        $allAccounts = $entityRepository->findAll();
         $this->assertGreaterThanOrEqual(2, count($allAccounts));
 
         // Test findBy with criteria
-        $matchingAccounts = $repository->findBy(['name' => 'Account1']);
+        $matchingAccounts = $entityRepository->findBy(['name' => 'Account1']);
         $this->assertCount(1, $matchingAccounts);
 
         // Clean up

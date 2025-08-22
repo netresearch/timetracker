@@ -15,8 +15,8 @@ class DefaultControllerTest extends AbstractWebTestCase
     {
         parent::setUp();
 
-        $container = self::$container;
-        if ($container instanceof ContainerInterface && $container->has(TestClock::class)) {
+        $container = $this->client->getContainer();
+        if ($container->has(TestClock::class)) {
             $clockService = $container->get(TestClock::class);
             if ($clockService instanceof TestClock) {
                 $this->testClock = $clockService;
@@ -28,7 +28,7 @@ class DefaultControllerTest extends AbstractWebTestCase
             }
         }
 
-        if ($this->testClock === null) {
+        if (!$this->testClock instanceof \Tests\Service\TestClock) {
             $this->fail('Could not retrieve TestClock service. Ensure it is registered and public in the test environment.');
         }
 
@@ -54,7 +54,7 @@ class DefaultControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getCustomers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getCustomers');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -114,7 +114,7 @@ class DefaultControllerTest extends AbstractWebTestCase
                 ],
             ]
         ];
-        $this->client->request('GET', '/getAllProjects', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllProjects', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->assertLength(2); //2 Projects for customer 1 in Database
@@ -163,7 +163,7 @@ class DefaultControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getProjects', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getProjects', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->assertLength(1);
@@ -242,7 +242,7 @@ class DefaultControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getProjectStructure');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getProjectStructure');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -261,7 +261,7 @@ class DefaultControllerTest extends AbstractWebTestCase
             ],
         ];
 
-        $this->client->request('GET', '/getActivities');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getActivities');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -290,7 +290,7 @@ class DefaultControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -311,7 +311,7 @@ class DefaultControllerTest extends AbstractWebTestCase
             ],
         ];
         $this->logInSession('developer');
-        $this->client->request('GET', '/getUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -358,7 +358,7 @@ class DefaultControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getData');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getData');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->assertLength(2); // Assert exactly 2 entries are returned
@@ -417,7 +417,7 @@ class DefaultControllerTest extends AbstractWebTestCase
             'extTicket', 'extTicketUrl'
         ];
 
-        $this->client->request('GET', '/getData/days/' . $parameter['days']);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getData/days/' . $parameter['days']);
         $this->assertStatusCode(200);
 
         $responseData = json_decode((string) $this->client->getResponse()->getContent(), true);
@@ -430,14 +430,14 @@ class DefaultControllerTest extends AbstractWebTestCase
         if ($expectedCount > 0) {
             // Loop through returned entries and check structure
             for ($i = 0; $i < $expectedCount; $i++) {
-                $this->assertArrayHasKey($i, $responseData, "Response missing index {$i}");
-                $this->assertArrayHasKey('entry', $responseData[$i], "Response item {$i} missing 'entry' key.");
+                $this->assertArrayHasKey($i, $responseData, 'Response missing index ' . $i);
+                $this->assertArrayHasKey('entry', $responseData[$i], sprintf("Response item %d missing 'entry' key.", $i));
                 $entry = $responseData[$i]['entry'];
-                $this->assertIsArray($entry, "Response item {$i}['entry'] is not an array.");
+                $this->assertIsArray($entry, sprintf("Response item %d['entry'] is not an array.", $i));
 
                 // Check if all expected keys exist in the entry
-                foreach ($expectedEntryKeys as $key) {
-                    $this->assertArrayHasKey($key, $entry, "Response item {$i}['entry'] missing key '{$key}'.");
+                foreach ($expectedEntryKeys as $expectedEntryKey) {
+                    $this->assertArrayHasKey($expectedEntryKey, $entry, sprintf("Response item %d['entry'] missing key '%s'.", $i, $expectedEntryKey));
                 }
             }
 
@@ -453,7 +453,7 @@ class DefaultControllerTest extends AbstractWebTestCase
     public function testGetSummaryAction(): void
     {
         // Find an existing entry to test with
-        $entityManager = self::$container->get('doctrine')->getManager();
+        $entityManager = static::getContainer()->get('doctrine')->getManager();
         $entry = $entityManager->getRepository(\App\Entity\Entry::class)->findOneBy([]);
 
         if (!$entry) {
@@ -461,7 +461,7 @@ class DefaultControllerTest extends AbstractWebTestCase
         }
 
         $this->client->request(
-            'POST',
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
             '/getSummary',
             ['id' => $entry->getId()]
         );
@@ -492,14 +492,14 @@ class DefaultControllerTest extends AbstractWebTestCase
         $parameter = [
             'id' => 999,  //req
         ];
-        $this->client->request('POST', '/getSummary', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/getSummary', $parameter);
         $this->assertStatusCode(404, 'Second delete did not return expected 404');
         $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
 
     public function testGetTimeSummaryAction(): void
     {
-        $this->client->request('GET', '/getTimeSummary');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getTimeSummary');
 
         $this->assertStatusCode(200);
 
@@ -522,7 +522,7 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testIndexActionWithAuthentication(): void
     {
-        $this->client->request('GET', '/');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $response = $this->client->getResponse();
         $this->assertStatusCode(200);
@@ -541,20 +541,20 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->ensureKernelShutdown();
         $this->client = static::createClient();
 
-        $this->client->request('GET', '/');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         // Should redirect to login
         $this->assertStatusCode(302);
 
         // Check for login form elements
-        $content = $this->client->getResponse()->getContent();
+        $this->client->getResponse()->getContent();
         $this->assertResponseHasHeader('Location', '/login');
     }
 
     public function testGetDataAction(): void
     {
         // Default test with current date
-        $this->client->request('POST', '/getData');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/getData');
 
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
@@ -567,7 +567,7 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertIsArray($data);
 
         // Verify entries structure if there are any entries
-        if (count($data) > 0) {
+        if ($data !== []) {
             $entry = reset($data)['entry'];
             $this->assertArrayHasKey('id', $entry);
             $this->assertArrayHasKey('customer', $entry);
@@ -578,7 +578,7 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testGetCustomersAction(): void
     {
-        $this->client->request('GET', '/getCustomers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getCustomers');
 
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
@@ -601,7 +601,7 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testGetTrackingActivitiesAction(): void
     {
-        $this->client->request('GET', '/getActivities');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getActivities');
 
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
@@ -624,7 +624,7 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testGetHolidaysAction(): void
     {
-        $this->client->request('GET', '/getHolidays');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getHolidays');
 
         $this->assertStatusCode(200);
 
@@ -648,7 +648,7 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testExportAction(): void
     {
-        $this->client->request('GET', '/export/7');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/export/7');
 
         $this->assertStatusCode(200);
         // CSV export should contain specific headers
@@ -661,7 +661,7 @@ class DefaultControllerTest extends AbstractWebTestCase
 
     public function testGetTicketTimeSummaryJsAction(): void
     {
-        $this->client->request('GET', '/scripts/timeSummaryForJira');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/scripts/timeSummaryForJira');
 
         $this->assertStatusCode(200);
 
@@ -678,7 +678,7 @@ class DefaultControllerTest extends AbstractWebTestCase
     public function testJiraOAuthCallbackAction(): void
     {
         // Simulate a valid callback payload; controller will catch exceptions if misconfigured
-        $this->client->request('GET', '/jiraoauthcallback', [
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/jiraoauthcallback', [
             'oauth_token' => 'dummy',
             'oauth_verifier' => 'dummy',
             'tsid' => 1,

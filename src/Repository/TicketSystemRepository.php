@@ -8,18 +8,18 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class TicketSystemRepository extends ServiceEntityRepository
 {
-    /**
-     * TicketSystemRepository constructor.
-     */
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($managerRegistry, TicketSystem::class);
+        parent::__construct($registry, TicketSystem::class);
     }
 
     /**
-     * get all ticket systems
+     * get all ticket systems.
      *
      * @throws \ReflectionException
+     */
+    /**
+     * @return array<int, array{ticketSystem: array<string, mixed>}>
      */
     public function getAllTicketSystems(): array
     {
@@ -37,6 +37,7 @@ class TicketSystemRepository extends ServiceEntityRepository
     public function findOneByName(string $name): ?TicketSystem
     {
         $result = $this->findOneBy(['name' => $name]);
+
         return $result instanceof TicketSystem ? $result : null;
     }
 }

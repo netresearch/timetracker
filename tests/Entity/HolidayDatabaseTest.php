@@ -8,12 +8,9 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class HolidayDatabaseTest extends AbstractWebTestCase
 {
-    private EntityManagerInterface $entityManager;
-
     protected function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
     }
 
     public function testPersistAndFind(): void
@@ -36,6 +33,7 @@ class HolidayDatabaseTest extends AbstractWebTestCase
         $day = '2023-01-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'New Year']);
         $conn->update('holidays', ['name' => 'Updated Holiday'], ['day' => $day]);
+
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
         $this->assertSame('Updated Holiday', $row['name']);
         $conn->delete('holidays', ['day' => $day]);
@@ -47,6 +45,7 @@ class HolidayDatabaseTest extends AbstractWebTestCase
         $day = '2023-05-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'Labor Day']);
         $conn->delete('holidays', ['day' => $day]);
+
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
         $this->assertFalse((bool) $row, 'Holiday should be deleted from database');
     }
@@ -67,7 +66,7 @@ class HolidayDatabaseTest extends AbstractWebTestCase
         );
         $this->assertCount(2, $result);
 
-        foreach ($rows as $r) { $conn->delete('holidays', ['day' => $r['day']]); }
+        foreach ($rows as $row) { $conn->delete('holidays', ['day' => $row['day']]); }
     }
 
     public function testToArray(): void

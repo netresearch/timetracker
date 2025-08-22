@@ -5,15 +5,11 @@ namespace App\Service;
 use App\Entity\Project;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Routing\RouterInterface;
 
 class SubticketSyncService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly RouterInterface $router, private readonly JiraOAuthApiFactory $jiraApiFactory)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
     {
-        // Access router to avoid "written-only" property report for static analysis
-        // by calling a benign method. The route name is irrelevant; this ensures usage.
-        $this->router->getContext();
     }
 
     /**
@@ -21,22 +17,24 @@ class SubticketSyncService
      *
      * The project lead user's Jira tokens are used for access.
      *
-     * @return array Array of subticket keys
-     *
      * @throws \Exception When something goes wrong.
      *                    Exception codes are sensible HTTP status codes
+     *
+     * @return (mixed|string)[] Array of subticket keys
+     *
+     * @psalm-return list<mixed|string>
      */
-    public function syncProjectSubtickets($projectOrProjectId): array
+    public function syncProjectSubtickets(int|Project $projectOrProjectId): array
     {
         if ($projectOrProjectId instanceof Project) {
             $project = $projectOrProjectId;
         } else {
             $project = $this->managerRegistry
-                ->getRepository(\App\Entity\Project::class)
+                ->getRepository(Project::class)
                 ->find($projectOrProjectId);
         }
 
-        if (!$project) {
+        if (!$project instanceof Project) {
             throw new \Exception('Project does not exist', 404);
         }
 
@@ -46,8 +44,8 @@ class SubticketSyncService
         }
 
         $mainTickets = $project->getJiraTicket();
-        if ($mainTickets === null) {
-            if ($project->getSubtickets() != '') {
+        if (null === $mainTickets) {
+            if ('' != $project->getSubtickets()) {
                 $project->setSubtickets([]);
 
                 $em = $this->managerRegistry->getManager();
@@ -59,30 +57,22 @@ class SubticketSyncService
         }
 
         $userWithJiraAccess = $project->getProjectLead();
-        if (!$userWithJiraAccess) {
-            throw new \Exception(
-                'Project has no lead user: ' . $project->getName(),
-                400
-            );
+        if (!$userWithJiraAccess instanceof \App\Entity\User) {
+            throw new \Exception('Project has no lead user: '.$project->getName(), 400);
         }
 
         $token = $userWithJiraAccess->getTicketSystemAccessToken($ticketSystem);
         if (!$token) {
-            throw new \Exception(
-                'Project user has no token for ticket system: '
-                . $userWithJiraAccess->getUsername()
-                . '@' . $project->getName(),
-                400
-            );
+            throw new \Exception('Project user has no token for ticket system: '.$userWithJiraAccess->getUsername().'@'.$project->getName(), 400);
         }
 
         // Create the Jira API service with our service's dependencies
-        $jiraOAuthApi = $this->jiraApiFactory->create($userWithJiraAccess, $ticketSystem);
+        $jiraOAuthApi = $this->jiraOAuthApiFactory->create($userWithJiraAccess, $ticketSystem);
 
         $mainTickets = array_map('trim', explode(',', (string) $mainTickets));
         $allSubtickets = [];
         foreach ($mainTickets as $mainTicket) {
-            //we want to make it easy to find matching tickets,
+            // we want to make it easy to find matching tickets,
             // so we put the main ticket in the subticket list as well
             $allSubtickets[] = $mainTicket;
             $allSubtickets = array_merge(

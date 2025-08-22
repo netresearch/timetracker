@@ -15,31 +15,44 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class User implements UserInterface
 {
     /**
+     * @var \Doctrine\Common\Collections\ArrayCollection
+     */
+    public $entries;
+    /**
+     * @var \Doctrine\Common\Collections\ArrayCollection
+     */
+    public $leadTeams;
+    /**
      * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     *
+     * @ORM\Column (type="integer")
+     *
+     * @ORM\GeneratedValue (strategy="AUTO")
+     *
+     * @var int|null
      */
     protected $id;
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column (type="string", length=50)
+     *
+     * @var null|string
      */
     protected $username;
 
     /**
-     * @ORM\Column(type="string", length=3, nullable=true)
+     * @ORM\Column (type="string", length=3, nullable=true)
+     *
+     * @var null|string
      */
     protected $abbr;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column (type="string", length=255)
+     *
+     * @var null|string
      */
     protected $type;
-
-    /**
-     * @ORM\Column(name="jira_token", type="string", length=64, nullable=true)
-     */
-    protected $jiraToken;
 
     /**
      * @ORM\Column(name="show_empty_line", type="boolean", nullable=false, options={"default"=0})
@@ -58,41 +71,34 @@ class User implements UserInterface
     protected bool $showFuture = true;
 
 
-    /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="user")
-     */
-    protected $entries;
-
-
-    /**
-     * @ORM\OneToMany(targetEntity="Contract", mappedBy="user")
-     */
-    protected $contracts;
 
     /**
      * @ORM\ManyToMany(targetEntity="Team", inversedBy="users")
      * @ORM\JoinTable(name="teams_users",
-     *     joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")}
+     *     joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id", onDelete="CASCADE")}
      * )
+     * @var \Doctrine\Common\Collections\Collection<int, Team>
      */
     protected $teams;
 
     /**
-     * @ORM\OneToMany(targetEntity="Team", mappedBy="leadUser")
+     * @ORM\Column (name="locale", type="string", length=2, nullable=false, options={"default"="de"})
      */
-    protected $leadTeams;
-
-    /**
-     * @ORM\Column(name="locale", type="string", length=2, nullable=false, options={"default"="de"})
-     */
-    protected $locale = 'de';
+    protected string $locale = 'de';
 
 
     /**
      * @ORM\OneToMany(targetEntity="UserTicketsystem", mappedBy="user")
+     * @var \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
      */
     protected $userTicketsystems;
+
+    /**
+     * @ORM\OneToMany(targetEntity="Entry", mappedBy="user")
+     * @var \Doctrine\Common\Collections\Collection<int, Entry>
+     */
+    protected $entriesRelation;
 
 
 
@@ -100,28 +106,24 @@ class User implements UserInterface
     {
         $this->entries = new ArrayCollection();
         $this->leadTeams = new ArrayCollection();
-    }
-
-    /**
-     * Set id
-     * @param integer $id
-     *
-     * @return $this
-     */
-    public function setId($id): static
-    {
-        $this->id = $id;
-        return $this;
+        $this->entriesRelation = new ArrayCollection();
+        $this->userTicketsystems = new ArrayCollection();
     }
 
     /**
      * Get id
      *
-     * @return integer $id
+     * @return int|null $id
      */
-    public function getId()
+    public function getId(): int|null
     {
         return $this->id;
+    }
+
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+        return $this;
     }
 
     /**
@@ -140,9 +142,9 @@ class User implements UserInterface
     /**
      * Get username
      *
-     * @return string $username
+     * @return null|string $username
      */
-    public function getUsername()
+    public function getUsername(): string|null
     {
         return $this->username;
     }
@@ -163,9 +165,9 @@ class User implements UserInterface
     /**
      * Get abbr
      *
-     * @return string $abbr
+     * @return null|string $abbr
      */
-    public function getAbbr()
+    public function getAbbr(): string|null
     {
         return $this->abbr;
     }
@@ -186,9 +188,9 @@ class User implements UserInterface
     /**
      * Get type
      *
-     * @return string $type
+     * @return null|string $type
      */
-    public function getType()
+    public function getType(): string|null
     {
         return $this->type;
     }
@@ -198,69 +200,37 @@ class User implements UserInterface
         return $this->showEmptyLine;
     }
 
-
-    public function setShowEmptyLine(bool $value): static
+    public function setShowEmptyLine(bool $showEmptyLine): static
     {
-        $this->showEmptyLine = $value;
+        $this->showEmptyLine = $showEmptyLine;
         return $this;
     }
+
 
     public function getSuggestTime(): bool
     {
         return $this->suggestTime;
     }
 
-
-    public function setSuggestTime(bool $value): static
+    public function setSuggestTime(bool $suggestTime): static
     {
-        $this->suggestTime = $value;
+        $this->suggestTime = $suggestTime;
         return $this;
     }
+
 
     public function getShowFuture(): bool
     {
         return $this->showFuture;
     }
 
-
-    public function setShowFuture(bool $value): static
+    public function setShowFuture(bool $showFuture): static
     {
-        $this->showFuture = $value;
+        $this->showFuture = $showFuture;
         return $this;
     }
 
 
-    /**
-     * Get entries
-     *
-     * @return \Doctrine\Common\Collections\Collection $entries
-     */
-    public function getEntries()
-    {
-        return $this->entries;
-    }
-
-    /**
-     * Get contracts
-     *
-     * @return \Doctrine\Common\Collections\Collection $contracts
-     */
-    public function getContracts()
-    {
-        return $this->contracts;
-    }
-
-    /**
-     * Add contract
-     *
-     *
-     * @return $this
-     */
-    public function addContract(Contract $contract): static
-    {
-        $this->contracts[] = $contract;
-        return $this;
-    }
 
 
     /**
@@ -287,29 +257,69 @@ class User implements UserInterface
     }
 
     /**
+     * @ORM\OneToMany(targetEntity="Contract", mappedBy="user")
+     * @var \Doctrine\Common\Collections\Collection<int, Contract>
+     */
+    protected $contracts;
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Contract>
+     */
+    public function getContracts()
+    {
+        return $this->contracts;
+    }
+
+    /**
      * Get teams
      *
      * @return \Doctrine\Common\Collections\Collection $teams
+     */
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Team>
      */
     public function getTeams()
     {
         return $this->teams;
     }
 
-    public function getLocale()
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     */
+    public function getEntries()
+    {
+        return $this->entriesRelation;
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
+     */
+    public function getUserTicketsystems()
+    {
+        return $this->userTicketsystems;
+    }
+
+    public function getLocale(): string
     {
         return $this->locale;
     }
 
 
-    public function setLocale($locale): static
+    public function setLocale(string $locale): static
     {
-        $this->locale = (new LocalizationService())->normalizeLocale((string) $locale);
+        $this->locale = (new LocalizationService())->normalizeLocale($locale);
         return $this;
     }
 
     /**
      * return all relevant settings in an array
+     *
+     * @return (bool|int|string)[]
+     *
+     * @psalm-return array{show_empty_line: bool, suggest_time: bool, show_future: bool, user_id: int, user_name: string, type: string, locale: string}
+     */
+    /**
+     * @return array{show_empty_line: bool, suggest_time: bool, show_future: bool, user_id: int, user_name: string, type: string, locale: string}
      */
     public function getSettings(): array
     {
@@ -317,48 +327,15 @@ class User implements UserInterface
             'show_empty_line'   => $this->getShowEmptyLine(),
             'suggest_time'      => $this->getSuggestTime(),
             'show_future'       => $this->getShowFuture(),
-            'user_id'           => $this->getId(),
-            'user_name'         => $this->getUsername(),
-            'type'              => $this->getType(),
-            'locale'            => (new LocalizationService())->normalizeLocale((string) $this->getLocale())
+            'user_id'           => (int) ($this->getId() ?? 0),
+            'user_name'         => (string) ($this->getUsername() ?? ''),
+            'type'              => (string) ($this->getType() ?? ''),
+            'locale'            => (new LocalizationService())->normalizeLocale($this->getLocale())
         ];
     }
 
 
 
-
-    /**
-     * Add entry
-     */
-    public function addEntry(Entry $entry): static
-    {
-        $this->entries[] = $entry;
-        return $this;
-    }
-
-    /**
-     * Remove entry
-     */
-    public function removeEntry(Entry $entry): void
-    {
-        $this->entries->removeElement($entry);
-    }
-
-    /**
-     * Remove teams
-     */
-    public function removeTeam(Team $team): void
-    {
-        $this->teams->removeElement($team);
-    }
-
-    /**
-     * @return \Doctrine\Common\Collections\Collection $userTicketSystems
-     */
-    public function getUserTicketsystems()
-    {
-        return $this->userTicketsystems;
-    }
 
 
     /**
@@ -398,6 +375,11 @@ class User implements UserInterface
         return $return;
     }
 
+    /**
+     * @return string[]
+     *
+     * @psalm-return array<0|1, 'ROLE_ADMIN'|'ROLE_USER'>
+     */
     public function getRoles(): array
     {
         $roles = ['ROLE_USER'];
@@ -408,47 +390,13 @@ class User implements UserInterface
         return array_unique($roles);
     }
 
+    public function getUserIdentifier(): string
+    {
+        return $this->username ?? '';
+    }
+
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
-    }
-
-    public function getSalt(): ?string
-    {
-        // Since we're using LDAP, we don't need a salt
-        return null;
-    }
-
-    public function getPassword(): string
-    {
-        // Since we're using LDAP, we don't store passwords
-        return '';
-    }
-
-    /**
-     * Get the teams where this user is a lead
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getLeadTeams()
-    {
-        return $this->leadTeams;
-    }
-
-    /**
-     * Add a team where this user is lead
-     */
-    public function addLeadTeam(Team $team): static
-    {
-        $this->leadTeams[] = $team;
-        return $this;
-    }
-
-    /**
-     * Remove a team where this user is lead
-     */
-    public function removeLeadTeam(Team $team): void
-    {
-        $this->leadTeams->removeElement($team);
     }
 }

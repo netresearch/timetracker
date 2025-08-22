@@ -23,7 +23,7 @@ class AdminControllerTest extends AbstractWebTestCase
         ];
 
         // Simple POST request should work with authentication from setUp
-        $this->client->request('POST', '/user/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
 
         // Assert successful response
         $this->assertStatusCode(200);
@@ -40,7 +40,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'teams' => [1], //req
             'locale' => 'en',   //req
         ];
-        $this->client->request('POST', '/user/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('users');
@@ -56,7 +56,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'locale' => 'de',   //req
             'type' => 'DEV'    //req
         ];
-        $this->client->request('POST', '/user/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
 
         $expectedJson = [
             1 => 'unittestUpdate',
@@ -70,7 +70,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->queryBuilder->select('*')
             ->from('users')->where('id = ?')
             ->setParameter(0, 1);
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'id' => 1,
@@ -96,7 +96,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'locale' => 'de',   //req
             'type' => 'DEV'    //req
         ];
-        $this->client->request('POST', '/user/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('users');
@@ -117,20 +117,20 @@ class AdminControllerTest extends AbstractWebTestCase
             ->setParameter(0, 42)
             ->setParameter(1, 'userForDeletetion')
             ->setParameter(2, 'DEV')
-            ->execute();
+            ->executeStatement();
         //Use ID of 42 to avoid problems when adding a new user for testing
         $parameter = ['id' => 42,];
         $expectedJson1 = [
             'success' => true,
         ];
-        $this->client->request('POST', '/user/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/delete', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/user/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
@@ -141,7 +141,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->setInitialDbState('users');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
-        $this->client->request('POST', '/user/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('users');
@@ -179,7 +179,7 @@ class AdminControllerTest extends AbstractWebTestCase
         ];
 
         // Make the request - should work with our authentication from setUp
-        $this->client->request('GET', '/getAllUsers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
 
         // Assert response status and expected JSON structure
         $this->assertStatusCode(200);
@@ -206,7 +206,7 @@ class AdminControllerTest extends AbstractWebTestCase
         ];
 
         // Simple request should work with authentication from setUp
-        $this->client->request('GET', '/getAllTeams');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllTeams');
 
         // Assert successful response
         $this->assertStatusCode(200);
@@ -221,7 +221,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'success' => true,
         ];
-        $this->client->request('POST', '/team/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/delete', $parameter);
         $this->assertStatusCode(200, 'First delete did not return expected 200');
         $this->assertJsonStructure($expectedJson);
 
@@ -229,14 +229,14 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/team/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
 
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
-        $this->client->request('POST', '/team/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -248,7 +248,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'lead_user_id' => 1, //req
         ];
 
-        $this->client->request('POST', '/team/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
 
         $expectedJson = [
             1 => 'testSaveTeamAction',
@@ -261,7 +261,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->queryBuilder->select('name', 'lead_user_id')
             ->from('teams')->where('name = ?')
             ->setParameter(0, 'testSaveTeamAction');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
 
         $expectedDbEntry = [
             [
@@ -276,7 +276,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'testSaveTeamActionFromNotPL', //opt
             'lead_user_id' => 1, //req
         ];
-        $this->client->request('POST', '/team/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -293,7 +293,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'updatedKuchenbäcker', //opt
             'id' => 1,  //for update req
         ];
-        $this->client->request('POST', '/team/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
         $expectedJson = [
             0 => 1,
             1 => 'updatedKuchenbäcker',
@@ -306,7 +306,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->queryBuilder->select('name', 'lead_user_id')
             ->from('teams')->where('id = ?')
             ->setParameter(0, 1);
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             [
                 'name' => 'updatedKuchenbäcker',
@@ -325,7 +325,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'testSaveTeamActionFromNotPL', //opt
             'lead_user_id' => 1, //req
         ];
-        $this->client->request('POST', '/team/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('teams');
@@ -339,7 +339,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'testCustomer',
             'teams' => [2],
         ];
-        $this->client->request('POST', '/customer/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
         $expectedJson = [
             1 => 'testCustomer',
             4 => [2],
@@ -354,7 +354,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->leftJoin('c', 'teams_customers', 'tc', 'c.id = tc.customer_id')
             ->where('c.name = ?')
             ->setParameter(0, 'testCustomer');
-        $result1 = $this->queryBuilder->execute()->fetchAll();
+        $result1 = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             [
                 'name' => 'testCustomer',
@@ -372,7 +372,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'testCustomer',
             'teams' => [2],
         ];
-        $this->client->request('POST', '/customer/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('customers');
@@ -385,7 +385,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'updatedTestCustomer',
             'teams' => [2],
         ];
-        $this->client->request('POST', '/customer/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
         $expectedJson = [
             1 => 'updatedTestCustomer',
             4 => [2],
@@ -399,7 +399,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->leftJoin('c', 'teams_customers', 'tc', 'c.id = tc.customer_id')
             ->where('c.id = ?')
             ->setParameter(0, 1);
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             [
                 'name' => 'updatedTestCustomer',
@@ -418,7 +418,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'updatedTestCustomer',
             'teams' => [2],
         ];
-        $this->client->request('POST', '/customer/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('customers');
@@ -437,7 +437,7 @@ class AdminControllerTest extends AbstractWebTestCase
             )
             ->setParameter(0, 42)
             ->setParameter(1, 'customerForDeletion')
-            ->execute();
+            ->executeStatement();
         //Use ID of 42 to avoid problems when adding a new customer for testing
         $parameter = ['id' => 42,];
 
@@ -445,7 +445,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'success' => true,
         ];
-        $this->client->request('POST', '/customer/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/delete', $parameter);
         $this->assertStatusCode(200, 'First delete did not return expected 200');
         $this->assertJsonStructure($expectedJson);
 
@@ -453,7 +453,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/customer/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
@@ -464,7 +464,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->setInitialDbState('customers');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
-        $this->client->request('POST', '/customer/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('customers');
@@ -492,7 +492,7 @@ class AdminControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getAllCustomers');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllCustomers');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -506,7 +506,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'customer' => 1, //req
         ];
 
-        $this->client->request('POST', '/project/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
 
         $expectedJson = [
             1 => 'testProject',
@@ -518,7 +518,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->queryBuilder->select('name', 'customer_id')
             ->from('projects')->where('name = ?')
             ->setParameter(0, 'testProject');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
 
         $expectedDbEntry = [
             [
@@ -537,7 +537,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'testProject', //req
             'customer' => 1, //req
         ];
-        $this->client->request('POST', '/project/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('projects');
@@ -550,7 +550,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'updatedTestProject', //req
             'customer' => 2, //req
         ];
-        $this->client->request('POST', '/project/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
         $expectedJson = [
             0 => 1,
             1 => 'updatedTestProject',
@@ -563,7 +563,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->queryBuilder->select('name', 'customer_id')
             ->from('projects')->where('id = ?')
             ->setParameter(0, 1);
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             [
                 'name' => 'updatedTestProject',
@@ -582,7 +582,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'updatedTestProject', //req
             'customer' => 2, //req
         ];
-        $this->client->request('POST', '/project/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('projects');
@@ -594,14 +594,14 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson1 = [
             'success' => true,
         ];
-        $this->client->request('POST', '/project/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/delete', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/project/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
@@ -612,7 +612,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->setInitialDbState('projects');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
-        $this->client->request('POST', '/project/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('projects');
@@ -625,7 +625,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'Lachen', //req
             'factor' => 2, //req
         ];
-        $this->client->request('POST', '/activity/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter);
         $expectedJson = [
             1 => 'Lachen',
             3 => '2',
@@ -636,7 +636,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->queryBuilder->select('name', 'factor')
             ->from('activities')->where('name = ?')
             ->setParameter(0, 'Lachen');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
 
         $expectedDbEntry = [
             [
@@ -655,7 +655,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'testActivities', //req
             'factor' => 2, //req
         ];
-        $this->client->request('POST', '/activity/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('activities');
@@ -672,14 +672,14 @@ class AdminControllerTest extends AbstractWebTestCase
             1 => 'update',
             3 => '2',
         ];
-        $this->client->request('POST', '/activity/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         //assert that activity was updated
         $this->queryBuilder->select('name', 'factor')
             ->from('activities')->where('name = ?')
             ->setParameter(0, 'update');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'name' => 'update',
@@ -698,7 +698,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'name' => 'testActivities', //req
             'factor' => 2, //req
         ];
-        $this->client->request('POST', '/activity/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('activities');
@@ -719,20 +719,20 @@ class AdminControllerTest extends AbstractWebTestCase
             ->setParameter(0, 42)
             ->setParameter(1, 'activityForDeletion')
             ->setParameter(2, '1')
-            ->execute();
+            ->executeStatement();
         //Use ID of 42 to avoid problems when adding a new activity for testing
         $parameter = ['id' => 42];
         $expectedJson1 = [
             'success' => true,
         ];
-        $this->client->request('POST', '/activity/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/delete', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/activity/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
@@ -743,7 +743,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->setInitialDbState('activities');
         $this->logInSession('developer');
         $parameter = ['id' => 1];
-        $this->client->request('POST', '/activity/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('activities');
@@ -763,7 +763,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 6,
             'hours_6' => 7,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         $this->queryBuilder
@@ -771,7 +771,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '2025-11-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 1,
@@ -792,7 +792,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '2020-02-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 1,
@@ -819,7 +819,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 6,
             'hours_6' => 7,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         $this->queryBuilder
@@ -827,7 +827,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '2025-11-11');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 1,
@@ -848,7 +848,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '2020-02-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 1,
@@ -875,7 +875,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         // look at old contract
@@ -884,7 +884,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '0700-01-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 3,
@@ -923,10 +923,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
 
@@ -960,10 +960,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
 
@@ -996,10 +996,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
 
@@ -1031,10 +1031,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
 
@@ -1068,10 +1068,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.');
 
@@ -1104,10 +1104,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
 
@@ -1141,10 +1141,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
 
@@ -1178,10 +1178,10 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract1);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract1);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
-        $this->client->request('POST', '/contract/save', $parameterContract2);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract2);
         $this->assertStatusCode(406);
         $this->assertMessage('Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.');
 
@@ -1203,7 +1203,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         // test old contract not updated
@@ -1212,7 +1212,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '0700-01-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 3,
@@ -1240,7 +1240,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         // test old contract not updated
@@ -1249,7 +1249,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '1020-01-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = (method_exists($this->queryBuilder, 'executeQuery') ? $this->queryBuilder->executeQuery() : $this->queryBuilder->execute())->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 2,
@@ -1277,7 +1277,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         // test old contract not updated
@@ -1286,7 +1286,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '1020-01-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 2,
@@ -1314,7 +1314,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         // test old contract updated
@@ -1323,7 +1323,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '700-01-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 3,
@@ -1350,7 +1350,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         // test old contract updated
@@ -1359,7 +1359,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '700-01-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 3,
@@ -1386,7 +1386,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameterContract);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameterContract);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([5]);
         // test old contract not updated
@@ -1395,7 +1395,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('contracts')
             ->where('start = ?')
             ->setParameter(0, '1020-01-01');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'user_id' => 2,
@@ -1426,7 +1426,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->queryBuilder
             ->insert('contracts')
             ->values($values)
-            ->execute();
+            ->executeStatement();
 
         $parameter = [
             'user_id' => '3', //req
@@ -1439,7 +1439,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 1,
             'hours_6' => 1,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Für den Nutzer besteht mehr als ein unbefristeter Vertrag.');
 
@@ -1462,7 +1462,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 6,
             'hours_6' => 7,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('contracts');
@@ -1486,14 +1486,14 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_6' => 0,
         ];
 
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure([1]);
         // validate updated contract in db
         $this->queryBuilder->select('*')
             ->from('contracts')->where('id = ?')
             ->setParameter(0, 1);
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             [
                 'user_id' => 3,
@@ -1526,7 +1526,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Bitte geben Sie einen gültigen Benutzer an.');
     }
@@ -1546,7 +1546,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_6' => 0,
         ];
         $expectedJson = ['message' => 'No entry for id.'];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(404);
         $this->assertJsonStructure($expectedJson);
     }
@@ -1564,7 +1564,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Bitte geben Sie einen gültigen Vertragsbeginn an.');
     }
@@ -1583,7 +1583,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(406);
         $this->assertMessage('Das Vertragsende muss nach dem Vertragsbeginn liegen.');
     }
@@ -1604,7 +1604,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('contracts');
@@ -1616,14 +1616,14 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson1 = [
             'success' => true,
         ];
-        $this->client->request('POST', '/contract/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/delete', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/contract/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
@@ -1634,7 +1634,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->setInitialDbState('contracts');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
-        $this->client->request('POST', '/contract/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('contracts');
@@ -1703,7 +1703,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ],
         ];
 
-        $this->client->request('GET', '/getContracts');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getContracts');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -1718,7 +1718,7 @@ class AdminControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getTicketSystems');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getTicketSystems');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -1738,7 +1738,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'name' => 'testSaveTicketSystem',
         ];
-        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder
@@ -1746,7 +1746,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('ticket_systems')
             ->where('name = ?')
             ->setParameter(0, 'testSaveTicketSystem');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'name' => 'testSaveTicketSystem',
@@ -1769,7 +1769,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'publicKey' => '',
             'privateKey' => '',
         ];
-        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('ticket_systems');
@@ -1791,7 +1791,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'name' => 'testSaveTicketSystemUpdate',
         ];
-        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder
@@ -1799,7 +1799,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('ticket_systems')
             ->where('name = ?')
             ->setParameter(0, 'testSaveTicketSystemUpdate');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'name' => 'testSaveTicketSystemUpdate',
@@ -1823,7 +1823,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'publicKey' => '',
             'privateKey' => '',
         ];
-        $this->client->request('POST', '/ticketsystem/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('ticket_systems');
@@ -1835,14 +1835,14 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson1 = [
             'success' => true,
         ];
-        $this->client->request('POST', '/ticketsystem/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/delete', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/ticketsystem/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
@@ -1853,7 +1853,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->setInitialDbState('ticket_systems');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
-        $this->client->request('POST', '/ticketsystem/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('ticket_systems');
@@ -1874,7 +1874,7 @@ class AdminControllerTest extends AbstractWebTestCase
                 ],
             ],
         ];
-        $this->client->request('GET', '/getAllPresets');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllPresets');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -1895,7 +1895,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'activity' => 1,
             'description' => '',
         ];
-        $this->client->request('POST', '/preset/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/preset/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder
@@ -1903,7 +1903,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('presets')
             ->where('name = ?')
             ->setParameter(0, 'newPreset');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'name' => 'newPreset',
@@ -1927,7 +1927,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'activity' => 1, //req
             'description' => '',    //reg
         ];
-        $this->client->request('POST', '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('presets');
@@ -1950,7 +1950,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'activity' => 1,
             'description' => '',
         ];
-        $this->client->request('POST', '/preset/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/preset/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder
@@ -1958,7 +1958,7 @@ class AdminControllerTest extends AbstractWebTestCase
             ->from('presets')
             ->where('name = ?')
             ->setParameter(0, 'newPresetUpdated');
-        $result = $this->queryBuilder->execute()->fetchAll();
+        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'name' => 'newPresetUpdated',
@@ -1983,7 +1983,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'activity' => 1, //req
             'description' => '',    //reg
         ];
-        $this->client->request('POST', '/preset/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/preset/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('presets');
@@ -1995,14 +1995,14 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson1 = [
             'success' => true,
         ];
-        $this->client->request('POST', '/preset/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/preset/delete', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson1);
         //  second delete
         $expectedJson2 = [
             'message' => 'Der Datensatz konnte nicht enfernt werden! ',
         ];
-        $this->client->request('POST', '/preset/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/preset/delete', $parameter);
         $this->assertStatusCode(422, 'Second delete did not return expected 422');
         $this->assertContentType('application/json');
         $this->assertJsonStructure($expectedJson2);
@@ -2013,7 +2013,7 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->setInitialDbState('presets');
         $this->logInSession('developer');
         $parameter = ['id' => 1,];
-        $this->client->request('POST', '/preset/delete', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/preset/delete', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('presets');
@@ -2026,7 +2026,7 @@ class AdminControllerTest extends AbstractWebTestCase
         ];
 
         // Use the configured route from legacy routing
-        $this->client->request('GET', '/projects/1/syncsubtickets', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/projects/1/syncsubtickets', $parameter);
 
         $statusCode = $this->client->getResponse()->getStatusCode();
         $this->assertContains($statusCode, [200, 400, 401]);
@@ -2034,14 +2034,14 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testSyncAllProjectSubticketsAction(): void
     {
-        $this->client->request('GET', '/projects/syncsubtickets');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/projects/syncsubtickets');
         $statusCode = $this->client->getResponse()->getStatusCode();
         $this->assertContains($statusCode, [200, 400, 401]);
     }
 
     public function testJiraSyncEntriesAction(): void
     {
-        $this->client->request('GET', '/syncentries/jira', ['id' => 1]);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/syncentries/jira', ['id' => 1]);
         $statusCode = $this->client->getResponse()->getStatusCode();
         $this->assertContains($statusCode, [200, 400, 401]);
     }

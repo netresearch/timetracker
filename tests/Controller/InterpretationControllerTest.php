@@ -50,7 +50,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             ],
         ];
 
-        $this->client->request('GET', '/interpretation/entries', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -78,7 +78,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             ],
         ];
 
-        $this->client->request('GET', '/interpretation/time', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/time', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -96,7 +96,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
                 'quota' => '100.00%',
             ],
         ];
-        $this->client->request('GET', '/interpretation/activity', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/activity', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
     }
@@ -104,7 +104,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
     public function testGetAllEntriesActionDevNotAllowed(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/interpretation/allEntries', []);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries', []);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -114,7 +114,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
         $parameter = [
             'datestart=not a date',
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(406);
         $this->assertJsonStructure([
             'message' => 'Failed to parse time string (not a date) at position 0 (n): The timezone could not be found in the database',
@@ -126,7 +126,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
         $parameter = [
             'dateend=1',
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(406);
         $this->assertJsonStructure([
             'message' => 'Failed to parse time string (1) at position 0 (1): Unexpected character',
@@ -243,13 +243,13 @@ class InterpretationControllerTest extends AbstractWebTestCase
                     'activity_id' => 1,
                 ],
             ];
-            $this->client->request('POST', '/interpretation/allEntries');
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries');
             $this->assertStatusCode(200);
             $this->assertLength(7, 'data');
             $this->assertJsonStructure($expectedLinks);
             $this->assertJsonStructure($expectedData);
-        } catch (\Exception $e) {
-            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $e->getMessage());
+        } catch (\Exception $exception) {
+            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
         }
     }
 
@@ -314,12 +314,12 @@ class InterpretationControllerTest extends AbstractWebTestCase
                     'activity_id' => 1,
                 ],
             ];
-            $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
             $this->assertLength(3, 'data');
             $this->assertJsonStructure($expectedLinks);
             $this->assertJsonStructure($expectedData);
-        } catch (\Exception $e) {
-            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $e->getMessage());
+        } catch (\Exception $exception) {
+            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
         }
     }
 
@@ -328,7 +328,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
         $parameter = [
             'page=-1',
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(400);
         $this->assertJsonStructure(['message' => 'page can not be negative.',]);
     }
@@ -341,7 +341,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'prev' => null,
             'next' => null,
         ];
-        $this->client->request('POST', '/interpretation/allEntries');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedLinks);
         $this->assertLength(7, 'data');
@@ -363,7 +363,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'prev' => null,
             'next' => 'http://localhost/interpretation/allEntries?maxResults=2&page=1',
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(2, 'data');
         $this->assertJsonStructure($expectedLinks);
@@ -386,7 +386,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'prev' => 'http://localhost/interpretation/allEntries?maxResults=2&page=0',
             'next' => 'http://localhost/interpretation/allEntries?maxResults=2&page=2',
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(2, 'data');
         $this->assertJsonStructure($expectedLinks);
@@ -408,7 +408,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'prev' => 'http://localhost/interpretation/allEntries?maxResults=2&page=2',
             'next' => null,
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(1, 'data');
         $this->assertJsonStructure($expectedLinks);
@@ -426,7 +426,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'prev' => null,
             'next' => null,
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(0, 'data');
         $this->assertJsonStructure($expectedLinks);
@@ -444,7 +444,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'prev' => 'http://localhost/interpretation/allEntries?maxResults=2&page=3',
             'next' => null,
         ];
-        $this->client->request('POST', '/interpretation/allEntries?' . implode('&', $parameter));
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(0, 'data');
         $this->assertJsonStructure($expectedLinks);

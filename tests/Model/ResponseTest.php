@@ -11,7 +11,7 @@ class ResponseTest extends TestCase
 {
     public function testSendSetsCorsHeaders(): void
     {
-        $response = new Response('ok', 200);
+        $response = new Response('ok', \Symfony\Component\HttpFoundation\Response::HTTP_OK);
         // call send() which sets headers then parent::send(); but sending output is okay in test
         // we assert headers are set before send() returns
         $this->expectOutputString('ok');
