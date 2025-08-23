@@ -19,7 +19,7 @@ class InterpretationController extends BaseController
     private $cache;
 
     /**
- * @param array<string, mixed> $a
+* @param array<string, mixed> $a
      * @param array<string, mixed> $b
      */
     public function sortByName(array $a, array $b): int
@@ -281,8 +281,8 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach ($users as $user) {
-            $user['quota'] = TimeHelper::formatQuota($user['hours'], $sum);
+        foreach ($users as &$userRow) {
+            $userRow['quota'] = TimeHelper::formatQuota($userRow['hours'], $sum);
         }
 
         /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $users */
@@ -326,12 +326,12 @@ class InterpretationController extends BaseController
             $times[$day_r]['minutes'] += $entry->getDuration();
         }
 
-        // convert minutes to hours with exact integer division to avoid precision drift
-        $totalMinutes = 0;
-        foreach ($times as $t) { $totalMinutes += (int) ($t['minutes']); }
+        // convert minutes to hours preserving fractional part
+        $totalMinutes = 0.0;
+        foreach ($times as $t) { $totalMinutes += (float) ($t['minutes']); }
         foreach ($times as &$time) {
-            $minutes = (int) ($time['minutes']);
-            $time['hours'] = (int) ($minutes / 60);
+            $minutes = (float) ($time['minutes']);
+            $time['hours'] = $minutes / 60.0;
             unset($time['minutes']);
             $time['quota'] = TimeHelper::formatQuota($minutes, $totalMinutes);
         }
@@ -341,16 +341,13 @@ class InterpretationController extends BaseController
 
         $prepared = array_map(
             static function (array $t): array {
-                $row = [
-                    'id' => $t['id'] ?? null,
-                    'name' => $t['name'],
-                    'hours' => (int) $t['hours'],
-                    'quota' => $t['quota'] ?? 0,
+                return [
+                    'id' => $t['id'],
+                    'name' => (string) $t['name'],
+                    'day' => (string) $t['day'],
+                    'hours' => (float) $t['hours'],
+                    'quota' => (string) $t['quota'],
                 ];
-                if (isset($t['day']) && $t['day'] !== null) {
-                    $row['day'] = (string) $t['day'];
-                }
-                return $row;
             },
             $times
         );
@@ -487,16 +484,16 @@ class InterpretationController extends BaseController
     }
 
     /**
-     * @param array<int, array{id:int|null, name:string|null, day?:string, hours:int, quota?:int|string}> $data
+     * @param array<int, array{id:int|null, name:string|null, day?:string, hours:int|float, quota?:int|string}> $data
      *
-     * @return array<int, array{id:int|null, name:string, day:string|null, hours:int, quota:string}>
+     * @return array<int, array{id:int|null, name:string, day:string|null, hours:float, quota:string}>
      */
     private function normalizeData(array $data): array
     {
         $normalized = [];
 
         foreach ($data as $d) {
-            $hours = (int) $d['hours'];
+            $hours = (float) $d['hours'];
             $normalized[] = [
                 'id' => $d['id'] ?? null,
                 'name' => isset($d['name']) ? (string) $d['name'] : '',

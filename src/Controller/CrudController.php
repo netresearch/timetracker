@@ -291,11 +291,11 @@ class CrudController extends BaseController
                 $entry->setActivity($activity);
             }
 
-            $entry->setTicket(strtoupper(trim((string) ($request->request->get('ticket') ?: ''))))
-                ->setDescription($request->request->get('description') ?: '')
-                ->setDay($request->request->get('date') ?: date('Y-m-d'))
-                ->setStart($request->request->get('start') ?: '00:00:00')
-                ->setEnd($request->request->get('end') ?: '00:00:00')
+            $entry->setTicket(strtoupper(trim((string) ($request->request->get('ticket') ?? ''))))
+                ->setDescription((string) ($request->request->get('description') ?? ''))
+                ->setDay((string) ($request->request->get('date') ?? date('Y-m-d')))
+                ->setStart((string) ($request->request->get('start') ?? '00:00:00'))
+                ->setEnd((string) ($request->request->get('end') ?? '00:00:00'))
                 ->setInternalJiraTicketOriginalKey((string) ($request->request->get('extTicket') ?: ''))
                 // ->calcDuration(is_object($activity) ? $activity->getFactor() : 1);
                 ->calcDuration()
@@ -460,8 +460,8 @@ class CrudController extends BaseController
 
             $em = $doctrine->getManager();
 
-            $date = new \DateTime($request->request->get('startdate') ?: '');
-            $endDate = new \DateTime($request->request->get('enddate') ?: '');
+            $date = new \DateTime((string) ($request->request->get('startdate') ?? ''));
+            $endDate = new \DateTime((string) ($request->request->get('enddate') ?? ''));
 
             $c = 0;
 
@@ -562,8 +562,8 @@ class CrudController extends BaseController
                     $startTime = new \DateTime('08:00:00');
                     $endTime = (new \DateTime('08:00:00'))->add($hoursToAdd);
                 } else {
-                    $startTime = new \DateTime($request->request->get('starttime') ?: '00:00:00');
-                    $endTime = new \DateTime($request->request->get('endtime') ?: '00:00:00');
+                    $startTime = new \DateTime((string) ($request->request->get('starttime') ?? '00:00:00'));
+                    $endTime = new \DateTime((string) ($request->request->get('endtime') ?? '00:00:00'));
                 }
 
                 $entry = new Entry();
@@ -611,7 +611,7 @@ class CrudController extends BaseController
             if (!empty($contractHoursArray)
                 && isset($contractHoursArray[0]['start'])
                 && ($contractHoursArray[0]['start'] instanceof \DateTime)
-                && (new \DateTime($request->request->get('startdate') ?: '')) < $contractHoursArray[0]['start']
+                && (new \DateTime((string) ($request->request->get('startdate') ?? ''))) < $contractHoursArray[0]['start']
             ) {
                 $responseContent .= '<br/>'.
                     $this->translator->trans(
