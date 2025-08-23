@@ -6,17 +6,14 @@ use Rector\Config\RectorConfig;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
 use Rector\Symfony\Set\SymfonySetList;
-use Rector\Doctrine\Set\DoctrineSetList;
 
-return static function (RectorConfig $rectorConfig): void {
-    $rectorConfig->paths([
+return RectorConfig::configure()
+    ->withPaths([
         __DIR__.'/src',
         __DIR__.'/tests',
-    ]);
-
-    $rectorConfig->phpstanConfig(__DIR__.'/phpstan.neon');
-
-    $rectorConfig->sets([
+    ])
+    ->withPhpStanConfig(__DIR__.'/phpstan.neon')
+    ->withSets([
         LevelSetList::UP_TO_PHP_84,
         SetList::CODE_QUALITY,
         SetList::DEAD_CODE,
@@ -24,14 +21,8 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::TYPE_DECLARATION,
         SetList::NAMING,
         SetList::CODING_STYLE,
-        DoctrineSetList::DOCTRINE_ORM_29,
-        DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES,
-        // Symfony upgrade sets (5.4 -> 6.4 path)
         SymfonySetList::UP_TO_SYMFONY_64,
         SymfonySetList::SYMFONY_CODE_QUALITY,
-    ]);
-
-    $rectorConfig->skip([
-        // Skip certain files or directories if needed
-    ]);
-};
+    ])
+    ->withAttributesSets()
+    ->withSkip([]);
