@@ -16,7 +16,7 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->phpstanConfig(__DIR__ . '/phpstan.neon');
 
     $rectorConfig->sets([
-        LevelSetList::UP_TO_PHP_82,
+        LevelSetList::UP_TO_PHP_84,
         SetList::CODE_QUALITY,
         SetList::DEAD_CODE,
         SetList::EARLY_RETURN,
@@ -24,10 +24,7 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::NAMING,
         SetList::CODING_STYLE,
         // Symfony upgrade sets (5.4 -> 6.4 path)
-        SymfonySetList::SYMFONY_60,
-        SymfonySetList::SYMFONY_61,
-        SymfonySetList::SYMFONY_62,
-        SymfonySetList::SYMFONY_64,
+        SymfonySetList::UP_TO_SYMFONY_64,
         SymfonySetList::SYMFONY_CODE_QUALITY,
     ]);
 
