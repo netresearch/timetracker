@@ -83,7 +83,7 @@ Installation and set up
 Requirements
 ------------
 
-- PHP >= 8.2
+- PHP >= 8.4
 - MySQL compatible database
 - Composer
 - For more details see ``composer.json``

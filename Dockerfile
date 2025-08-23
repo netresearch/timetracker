@@ -1,4 +1,4 @@
-FROM php:8.2-fpm AS runtime
+FROM php:8.4-fpm AS runtime
 
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
