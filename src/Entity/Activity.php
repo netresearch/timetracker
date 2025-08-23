@@ -5,55 +5,48 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\ActivityRepository")
- * @ORM\Table(name="activities")
- */
+#[ORM\Entity(repositoryClass: \App\Repository\ActivityRepository::class)]
+#[ORM\Table(name: 'activities')]
 class Activity
 {
     /**
      * @var \Doctrine\Common\Collections\ArrayCollection
      */
     public $entries;
+
     /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="activity")
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
+    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'activity')]
     protected $entriesRelation;
+
     /**
      * @var \Doctrine\Common\Collections\ArrayCollection
      */
     public $presets;
+
     /**
-     * @ORM\OneToMany(targetEntity="Preset", mappedBy="activity")
      * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
+    #[ORM\OneToMany(targetEntity: \Preset::class, mappedBy: 'activity')]
     protected $presetsRelation;
+
     public const SICK    = 'Krank';
 
     public const HOLIDAY = 'Urlaub';
 
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
+    #[ORM\Column(type: 'string', length: 50)]
     protected ?string $name = null;
 
-    /**
-     * @ORM\Column(name="needs_ticket", type="boolean")
-     */
+    #[ORM\Column(name: 'needs_ticket', type: 'boolean')]
     protected ?bool $needsTicket = null;
 
-    /**
-     * @ORM\Column(name="factor", type="float")
-     */
+    #[ORM\Column(name: 'factor', type: 'float')]
     protected ?float $factor = null;
 
     public function __construct()

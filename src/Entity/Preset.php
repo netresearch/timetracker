@@ -5,57 +5,43 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\PresetRepository")
- * @ORM\Table(name="presets")
- */
+#[ORM\Entity(repositoryClass: \App\Repository\PresetRepository::class)]
+#[ORM\Table(name: 'presets')]
 class Preset extends Base
 {
     /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
      *
      * @var int|null
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
 
     /**
-     * @ORM\Column (type="string")
-     *
      * @var string
      */
+    #[ORM\Column(type: 'string')]
     protected $name;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="Project", inversedBy="presets")
-     *
-     * @ORM\JoinColumn (name="project_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \Project::class, inversedBy: 'presets')]
+    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected Project $project;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="Customer", inversedBy="presets")
-     *
-     * @ORM\JoinColumn (name="customer_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \Customer::class, inversedBy: 'presets')]
+    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected Customer $customer;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="Activity", inversedBy="presets")
-     *
-     * @ORM\JoinColumn (name="activity_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \Activity::class, inversedBy: 'presets')]
+    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected Activity $activity;
 
 
     /**
-     * @ORM\Column (type="string")
-     *
      * @var string
      */
+    #[ORM\Column(type: 'string')]
     protected $description;
 
 

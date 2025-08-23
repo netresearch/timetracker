@@ -5,11 +5,8 @@ namespace App\Entity;
 use App\Model\Base;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\EntryRepository")
- *
- * @ORM\Table(name="entries")
- */
+#[ORM\Entity(repositoryClass: \App\Repository\EntryRepository::class)]
+#[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
     public const CLASS_PLAIN = 1;
@@ -38,96 +35,64 @@ class Entry extends Base
     }
 
     /**
-     * @ORM\Id
      *
-     * @ORM\Column(type="integer")
      *
-     * @ORM\GeneratedValue(strategy="AUTO")
      *
      * @var int|null
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    /**
-     * @ORM\Column (type="string", length=32)
-     */
+    #[ORM\Column(type: 'string', length: 32)]
     protected string $ticket = '';
 
-    /**
-     * @ORM\Column (name="worklog_id", type="integer", nullable=true)
-     */
+    #[ORM\Column(name: 'worklog_id', type: 'integer', nullable: true)]
     protected ?int $worklog_id = null;
 
-    /**
-     * @ORM\Column (type="string")
-     */
+    #[ORM\Column(type: 'string')]
     protected string $description = '';
 
-    /**
-     * @ORM\Column (type="date")
-     */
+    #[ORM\Column(type: 'date')]
     protected ?\DateTime $day = null;
 
-    /**
-     * @ORM\Column (type="time")
-     */
+    #[ORM\Column(type: 'time')]
     protected ?\DateTime $start = null;
 
-    /**
-     * @ORM\Column (type="time")
-     */
+    #[ORM\Column(type: 'time')]
     protected ?\DateTime $end = null;
 
-    /**
-     * @ORM\Column (type="integer")
-     */
+    #[ORM\Column(type: 'integer')]
     protected int $duration = 0;
 
-    /**
-     * @ORM\Column (name="synced_to_ticketsystem", type="boolean", nullable=true)
-     */
+    #[ORM\Column(name: 'synced_to_ticketsystem', type: 'boolean', nullable: true)]
     protected bool $syncedToTicketsystem = false;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="Project", inversedBy="entries")
-     *
-     * @ORM\JoinColumn (name="project_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \Project::class, inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected ?Project $project = null;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="Customer", inversedBy="entries")
-     *
-     * @ORM\JoinColumn (name="customer_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \Customer::class, inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected ?Customer $customer = null;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="User", inversedBy="entries")
-     *
-     * @ORM\JoinColumn (name="user_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \User::class, inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected ?User $user = null;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="Account", inversedBy="entries")
-     *
-     * @ORM\JoinColumn (name="account_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \Account::class, inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id')]
     protected ?Account $account = null;
 
-    /**
-     * @ORM\ManyToOne (targetEntity="Activity", inversedBy="entries")
-     *
-     * @ORM\JoinColumn (name="activity_id", referencedColumnName="id")
-     */
+    #[ORM\ManyToOne(targetEntity: \Activity::class, inversedBy: 'entries')]
+    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected ?Activity $activity = null;
 
     /**
-     * @ORM\Column (name="class", type="smallint", nullable=false, options={"unsigned"=true, "default"=0})
-     *
      * @var int
      */
+    #[ORM\Column(name: 'class', type: 'smallint', nullable: false, options: ['unsigned' => true, 'default' => 0])]
     protected $class = self::CLASS_PLAIN;
 
     /**
@@ -148,10 +113,10 @@ class Entry extends Base
     /**
      * ID of the original booked external ticket.
      *
-     * @ORM\Column(name="internal_jira_ticket_original_key", type="string", length=50, nullable=true)
      *
      * @var string e.g. TYPO-1234
      */
+    #[ORM\Column(name: 'internal_jira_ticket_original_key', type: 'string', length: 50, nullable: true)]
     protected ?string $internalJiraTicketOriginalKey = null;
 
     /**
@@ -357,10 +322,8 @@ class Entry extends Base
 
     /**
      * Set description.
-     *
-     * @param string $description
      */
-    public function setDescription($description): static
+    public function setDescription(string $description): static
     {
         $this->description = $description;
 
@@ -372,7 +335,7 @@ class Entry extends Base
      *
      * @return string $description
      */
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -456,7 +419,7 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
-        if (null !== $this->end && null !== $this->start && $this->end->format('H:i') < $this->start->format('H:i')) {
+        if ($this->end instanceof \DateTime && $this->start instanceof \DateTime && $this->end->format('H:i') < $this->start->format('H:i')) {
             $this->end = clone $this->start;
         }
 
@@ -475,10 +438,8 @@ class Entry extends Base
 
     /**
      * Set duration.
-     *
-     * @param int $duration
      */
-    public function setDuration($duration): static
+    public function setDuration(int $duration): static
     {
         $this->duration = $duration;
 
@@ -490,7 +451,7 @@ class Entry extends Base
      *
      * @return int $duration
      */
-    public function getDuration()
+    public function getDuration(): int
     {
         return $this->duration;
     }
@@ -606,13 +567,13 @@ class Entry extends Base
 
         return [
             'id' => $this->getId(),
-            'date' => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
-            'start' => $this->getStart() ? $this->getStart()->format('H:i') : null,
-            'end' => $this->getEnd() ? $this->getEnd()->format('H:i') : null,
-            'user' => $this->getUser() ? $this->getUser()->getId() : null,
+            'date' => $this->getDay() instanceof \DateTime ? $this->getDay()->format('d/m/Y') : null,
+            'start' => $this->getStart() instanceof \DateTime ? $this->getStart()->format('H:i') : null,
+            'end' => $this->getEnd() instanceof \DateTime ? $this->getEnd()->format('H:i') : null,
+            'user' => $this->getUser() instanceof \App\Entity\User ? $this->getUser()->getId() : null,
             'customer' => $customer,
-            'project' => $this->getProject() ? $this->getProject()->getId() : null,
-            'activity' => $this->getActivity() ? $this->getActivity()->getId() : null,
+            'project' => $this->getProject() instanceof \App\Entity\Project ? $this->getProject()->getId() : null,
+            'activity' => $this->getActivity() instanceof \App\Entity\Activity ? $this->getActivity()->getId() : null,
             'description' => $this->getDescription(),
             'ticket' => $this->getTicket(),
             'duration' => $this->getDuration(),
@@ -758,20 +719,15 @@ class Entry extends Base
         ];
     }
 
-    /**
-     * @return bool
-     */
-    public function getSyncedToTicketsystem()
+    public function getSyncedToTicketsystem(): bool
     {
         return $this->syncedToTicketsystem;
     }
 
     /**
-     * @param bool $syncedToTicketsystem
-     *
      * @return $this
      */
-    public function setSyncedToTicketsystem($syncedToTicketsystem): static
+    public function setSyncedToTicketsystem(bool $syncedToTicketsystem): static
     {
         $this->syncedToTicketsystem = $syncedToTicketsystem;
 

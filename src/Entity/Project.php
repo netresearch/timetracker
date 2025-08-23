@@ -7,11 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use App\Helper\TimeHelper;
 use App\Model\Base;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\ProjectRepository")
- * @ORM\Table(name="projects")
- */
+#[ORM\Entity(repositoryClass: \App\Repository\ProjectRepository::class)]
+#[ORM\Table(name: 'projects')]
 class Project extends Base
 {
     public const BILLING_NONE  = 0;
@@ -23,59 +20,54 @@ class Project extends Base
     public const BILLING_MIXED = 3;
 
     /**
-     * @ORM\Id
      *
-     * @ORM\Column (type="integer")
      *
-     * @ORM\GeneratedValue (strategy="AUTO")
      *
      * @var int|null
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
     /**
-     * @ORM\Column (type="string", length=127)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', length: 127)]
     protected $name;
 
     /**
-     * @ORM\Column (type="boolean")
-     *
      * @var bool|null
      */
+    #[ORM\Column(type: 'boolean')]
     protected $active;
 
     /**
-     * @ORM\ManyToOne (targetEntity="Customer", inversedBy="projects")
      *
-     * @ORM\JoinColumn (name="customer_id", referencedColumnName="id")
      *
      * @var Customer|null
      */
+    #[ORM\ManyToOne(targetEntity: \Customer::class, inversedBy: 'projects')]
+    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
 
     /**
-     * @ORM\Column (type="boolean")
-     *
      * @var bool|null
      */
+    #[ORM\Column(type: 'boolean')]
     protected $global;
 
 
     /**
-     * @ORM\Column (type="string", name="jira_id", length=63, nullable=true)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', name: 'jira_id', length: 63, nullable: true)]
     protected $jiraId;
 
     /**
-     * @ORM\Column (type="string", name="jira_ticket", length=255, nullable=true)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', name: 'jira_ticket', length: 255, nullable: true)]
     protected $jiraTicket;
 
     /**
@@ -83,130 +75,129 @@ class Project extends Base
      * Gets calculated automatically.
      * Comma-separated string.
      *
-     * @ORM\Column (type="string", name="subtickets", length=255, nullable=true)
      *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', name: 'subtickets', length: 255, nullable: true)]
     protected $subtickets;
 
     /**
-     * @ORM\ManyToOne (targetEntity="TicketSystem")
      *
-     * @ORM\JoinColumn (name="ticket_system", referencedColumnName="id")
      *
      * @var TicketSystem|null
      */
+    #[ORM\ManyToOne(targetEntity: \TicketSystem::class)]
+    #[ORM\JoinColumn(name: 'ticket_system', referencedColumnName: 'id')]
     protected $ticketSystem;
 
     /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="project")
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
+    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'project')]
     protected $entries;
 
     /**
-     * @ORM\OneToMany(targetEntity="Preset", mappedBy="project")
      * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
+    #[ORM\OneToMany(targetEntity: \Preset::class, mappedBy: 'project')]
     protected $presets;
 
     /**
      * Estimated project duration in minutes
      *
-     * @ORM\Column (type="integer", name="estimation", nullable=true)
      *
      * @var float|int|null
      */
+    #[ORM\Column(type: 'integer', name: 'estimation', nullable: true)]
     protected $estimation;
 
     /**
      * Offer number
-     * @ORM\Column(name="offer", length=31, nullable=true)
      */
+    #[ORM\Column(name: 'offer', length: 31, nullable: true)]
     protected ?string $offer = null;
 
     /**
      * Used billing method
-     * @ORM\Column(type="smallint", name="billing", nullable=true, options={"default"=0})
      */
+    #[ORM\Column(type: 'smallint', name: 'billing', nullable: true, options: ['default' => 0])]
     protected ?int $billing = 0;
 
     /**
      * cost center (number or name)
-     * @ORM\Column(name="cost_center", length=31, nullable=true)
      */
+    #[ORM\Column(name: 'cost_center', length: 31, nullable: true)]
     protected ?string $costCenter = null;
 
     /**
      * internal reference number
      *
-     * @ORM\Column (name="internal_ref", length=31, nullable=true)
      *
      * @var null|string
      */
+    #[ORM\Column(name: 'internal_ref', length: 31, nullable: true)]
     protected $internalReference;
 
     /**
      * external (clients) reference number
      *
-     * @ORM\Column (name="external_ref", length=31, nullable=true)
      *
      * @var null|string
      */
+    #[ORM\Column(name: 'external_ref', length: 31, nullable: true)]
     protected $externalReference;
 
     /**
      * project manager user
      *
-     * @ORM\ManyToOne (targetEntity="User")
      *
-     * @ORM\JoinColumn (name="project_lead_id", referencedColumnName="id", nullable=true)
      *
      * @var null|object
      */
+    #[ORM\ManyToOne(targetEntity: \User::class)]
+    #[ORM\JoinColumn(name: 'project_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $projectLead;
 
     /**
      * lead developer
      *
-     * @ORM\ManyToOne (targetEntity="User")
      *
-     * @ORM\JoinColumn (name="technical_lead_id", referencedColumnName="id", nullable=true)
      *
      * @var null|object
      */
+    #[ORM\ManyToOne(targetEntity: \User::class)]
+    #[ORM\JoinColumn(name: 'technical_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $technicalLead;
 
     /**
      * invoice number, reserved for future use
-     * @ORM\Column(name="invoice", length=31, nullable=true)
      */
+    #[ORM\Column(name: 'invoice', length: 31, nullable: true)]
     protected ?string $invoice = null;
 
     /**
-     * @ORM\Column (name="additional_information_from_external", type="boolean")
-     *
      * @var bool|null
      */
+    #[ORM\Column(name: 'additional_information_from_external', type: 'boolean')]
     protected $additionalInformationFromExternal;
 
     /**
      * the internal key of the project the current ticket should be booked to.
      *
-     * @ORM\Column (name="internal_jira_project_key", type="string", length=255, nullable=true)
      *
      * @var null|string
      */
+    #[ORM\Column(name: 'internal_jira_project_key', type: 'string', length: 255, nullable: true)]
     protected $internalJiraProjectKey;
 
 
     /**
      * the id of the internal jira ticket system
      *
-     * @ORM\Column (name="internal_jira_ticket_system", type="string", length=255, nullable=true)
      *
      * @var null|string
      */
+    #[ORM\Column(name: 'internal_jira_ticket_system', type: 'string', length: 255, nullable: true)]
     protected $internalJiraTicketSystem;
 
     /**
@@ -658,8 +649,6 @@ class Project extends Base
 
     /**
      * Get presets
-     *
-     * @return \Doctrine\Common\Collections\Collection
      */
     public function getPresets(): \Doctrine\Common\Collections\Collection
     {

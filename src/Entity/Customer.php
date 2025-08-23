@@ -6,71 +6,62 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\CustomerRepository")
- * @ORM\Table(name="customers")
- */
+#[ORM\Entity(repositoryClass: \App\Repository\CustomerRepository::class)]
+#[ORM\Table(name: 'customers')]
 class Customer extends Base
 {
     /**
-     * @ORM\Id
      *
-     * @ORM\Column (type="integer")
      *
-     * @ORM\GeneratedValue (strategy="AUTO")
      *
      * @var int|null
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
     /**
-     * @ORM\Column (type="string", length=255)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', length: 255)]
     protected $name;
 
     /**
-     * @ORM\Column (type="boolean", options={"unsigned"=true, "default"=0})
-     *
      * @var bool
      */
+    #[ORM\Column(type: 'boolean', options: ['unsigned' => true, 'default' => 0])]
     protected $active = false;
 
     /**
-     * @ORM\Column (type="boolean", options={"unsigned"=true, "default"=0})
-     *
      * @var bool
      */
+    #[ORM\Column(type: 'boolean', options: ['unsigned' => true, 'default' => 0])]
     protected $global = false;
 
     /**
-     * @ORM\OneToMany(targetEntity="Project", mappedBy="customer")
      * @var \Doctrine\Common\Collections\Collection<int, Project>
      */
+    #[ORM\OneToMany(targetEntity: \Project::class, mappedBy: 'customer')]
     protected $projects;
 
     /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="customer")
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
+    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'customer')]
     protected $entries;
 
     /**
-     * @ORM\OneToMany(targetEntity="Preset", mappedBy="customer")
      * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
+    #[ORM\OneToMany(targetEntity: \Preset::class, mappedBy: 'customer')]
     protected $presets;
 
     /**
-     * @ORM\ManyToMany(targetEntity="Team", inversedBy="customers")
-     * @ORM\JoinTable(name="teams_customers",
-     *     joinColumns={@ORM\JoinColumn(name="customer_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id")}
-     * )
      * @var \Doctrine\Common\Collections\Collection<int, Team>
      */
+    #[ORM\ManyToMany(targetEntity: \Team::class, inversedBy: 'customers')]
+    #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
     protected $teams;
 
     public function __construct()
