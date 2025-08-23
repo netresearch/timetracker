@@ -29,8 +29,8 @@ doctrine:
         mappings:
             App:
                 is_bundle: false
-                # Use Doctrine annotations for entity mapping (entities use @ORM\...)
-                type: annotation
+                # Use PHP 8 attributes for entity mapping
+                type: attribute
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
