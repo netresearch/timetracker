@@ -7,6 +7,7 @@ use App\Entity\Contract;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
+use App\Util\RequestEntityHelper;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -52,12 +53,11 @@ class CrudController extends BaseController
 
         $alert = null;
 
-        if (0 != $request->request->get('id')) {
+        $entryId = RequestEntityHelper::id($request, 'id');
+        if ($entryId > 0) {
             $doctrine = $this->managerRegistry;
-            /** @var \App\Repository\EntryRepository $entryRepo */
-            $entryRepo = $doctrine->getRepository(Entry::class);
-            /** @var Entry $entry */
-            $entry = $entryRepo->find($request->request->get('id'));
+            /** @var Entry|null $entry */
+            $entry = RequestEntityHelper::findById($doctrine, Entry::class, $entryId);
 
             if (!$entry) {
                 $message = $this->translator->trans('No entry for id.');
@@ -223,11 +223,8 @@ class CrudController extends BaseController
             // We make a copy to determine if we have to update JIRA
             $oldEntry = clone $entry;
 
-            /** @var \App\Repository\ProjectRepository $projectRepo */
-            $projectRepo = $doctrine->getRepository(Project::class);
-            $projectFound = $projectRepo->find($request->request->get('project'));
-            if ($projectFound instanceof Project) {
-                $project = $projectFound;
+            $project = RequestEntityHelper::findById($doctrine, Project::class, RequestEntityHelper::id($request, 'project'));
+            if ($project instanceof Project) {
                 if (!$project->getActive()) {
                     $message = $this->translator->trans('This project is inactive and cannot be used for booking.');
                     throw new \Exception($message);
@@ -236,9 +233,7 @@ class CrudController extends BaseController
                 $entry->setProject($project);
             }
 
-            /** @var \App\Repository\CustomerRepository $customerRepo */
-            $customerRepo = $doctrine->getRepository(Customer::class);
-            $customer = $customerRepo->find($request->request->get('customer'));
+            $customer = RequestEntityHelper::findById($doctrine, Customer::class, RequestEntityHelper::id($request, 'customer'));
             if ($customer instanceof Customer) {
                 if (!$customer->getActive()) {
                     $message = $this->translator->trans('This customer is inactive and cannot be used for booking.');
@@ -286,7 +281,7 @@ class CrudController extends BaseController
                 }
             }
 
-            $activity = $doctrine->getRepository(Activity::class)->find($request->request->get('activity'));
+            $activity = RequestEntityHelper::findById($doctrine, Activity::class, RequestEntityHelper::id($request, 'activity'));
             if ($activity instanceof Activity) {
                 $entry->setActivity($activity);
             }

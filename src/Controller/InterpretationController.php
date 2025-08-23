@@ -14,9 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
 class InterpretationController extends BaseController
 {
     /**
-     * @var Entry[]
+     * @var Entry[]|null
      */
-    private $cache;
+    private $cache = null;
 
     /**
 * @param array<string, mixed> $a
@@ -64,7 +64,7 @@ class InterpretationController extends BaseController
      */
     private function getCachedEntries(Request $request): array
     {
-        if (null != $this->cache) {
+        if (null !== $this->cache) {
             return $this->cache;
         }
 
@@ -75,7 +75,7 @@ class InterpretationController extends BaseController
 
     private function getCachedSum(): int
     {
-        if (null == $this->cache) {
+        if (null === $this->cache) {
             return 0;
         }
 
@@ -219,7 +219,7 @@ class InterpretationController extends BaseController
         foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
 
-            if (!empty($ticket) && '-' != $ticket) {
+            if ($ticket !== '' && $ticket !== '-') {
                 if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = [
                         'id' => $entry->getId(),
@@ -475,9 +475,10 @@ class InterpretationController extends BaseController
 
     private function evalParam(Request $request, string $param): ?string
     {
-        $param = $request->query->get($param);
-        if ($param) {
-            return $param;
+        $value = $request->query->get($param);
+        if (is_scalar($value)) {
+            $string = (string) $value;
+            return $string !== '' ? $string : null;
         }
 
         return null;
@@ -542,11 +543,11 @@ class InterpretationController extends BaseController
             $searchArray['project'] = $project;
         }
 
-        if ($datestart) {
+        if (is_string($datestart) && $datestart !== '') {
             $searchArray['datestart'] = $datestart;
         }
 
-        if ($dateend) {
+        if (is_string($dateend) && $dateend !== '') {
             $searchArray['dateend'] = $dateend;
         }
 

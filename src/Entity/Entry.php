@@ -2,25 +2,23 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
-use DateTime;
+use Doctrine\ORM\Mapping as ORM;
 
 /**
- *
  * @ORM\Entity(repositoryClass="App\Repository\EntryRepository")
+ *
  * @ORM\Table(name="entries")
  */
 class Entry extends Base
 {
-    public const CLASS_PLAIN       = 1;
+    public const CLASS_PLAIN = 1;
 
-    public const CLASS_DAYBREAK    = 2;
+    public const CLASS_DAYBREAK = 2;
 
-    public const CLASS_PAUSE       = 4;
+    public const CLASS_PAUSE = 4;
 
-    public const CLASS_OVERLAP     = 8;
-
+    public const CLASS_OVERLAP = 8;
 
     /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.
@@ -30,6 +28,7 @@ class Entry extends Base
     public function setBillable(bool $billable): static
     {
         $this->billable = $billable;
+
         return $this;
     }
 
@@ -40,7 +39,9 @@ class Entry extends Base
 
     /**
      * @ORM\Id
+     *
      * @ORM\Column(type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      *
      * @var int|null
@@ -55,43 +56,37 @@ class Entry extends Base
     /**
      * @ORM\Column (name="worklog_id", type="integer", nullable=true)
      */
-    protected int|null $worklog_id = null;
+    protected ?int $worklog_id = null;
 
     /**
      * @ORM\Column (type="string")
-     *
-     * @var string
      */
-    protected $description;
+    protected string $description = '';
 
     /**
      * @ORM\Column (type="date")
      */
-    protected ?DateTime $day = null;
+    protected ?\DateTime $day = null;
 
     /**
      * @ORM\Column (type="time")
      */
-    protected ?DateTime $start = null;
+    protected ?\DateTime $start = null;
 
     /**
      * @ORM\Column (type="time")
      */
-    protected ?DateTime $end = null;
+    protected ?\DateTime $end = null;
 
     /**
      * @ORM\Column (type="integer")
-     *
-     * @var int
      */
-    protected $duration;
+    protected int $duration = 0;
 
     /**
      * @ORM\Column (name="synced_to_ticketsystem", type="boolean", nullable=true)
-     *
-     * @var bool
      */
-    protected $syncedToTicketsystem;
+    protected bool $syncedToTicketsystem = false;
 
     /**
      * @ORM\ManyToOne (targetEntity="Project", inversedBy="entries")
@@ -128,7 +123,6 @@ class Entry extends Base
      */
     protected ?Activity $activity = null;
 
-
     /**
      * @ORM\Column (name="class", type="smallint", nullable=false, options={"unsigned"=true, "default"=0})
      *
@@ -137,14 +131,14 @@ class Entry extends Base
     protected $class = self::CLASS_PLAIN;
 
     /**
-     * holds summary from external ticket system; no mapping for ORM required (yet)
+     * holds summary from external ticket system; no mapping for ORM required (yet).
      *
      * @var string
      */
     protected $externalSummary = '';
 
     /**
-     * Holds an array of labels assigned for the issue
+     * Holds an array of labels assigned for the issue.
      *
      * @var array
      */
@@ -153,18 +147,17 @@ class Entry extends Base
 
     /**
      * ID of the original booked external ticket.
+     *
      * @ORM\Column(name="internal_jira_ticket_original_key", type="string", length=50, nullable=true)
      *
      * @var string e.g. TYPO-1234
      */
-    protected $internalJiraTicketOriginalKey;
+    protected ?string $internalJiraTicketOriginalKey = null;
 
     /**
      * Title in ticket system; no ORM mapping.
-     *
-     * @var string
      */
-    protected $ticketTitle;
+    protected ?string $ticketTitle = null;
 
     /**
      * @param string $externalReporter
@@ -223,15 +216,16 @@ class Entry extends Base
     }
 
     /**
-     * holds external reporter; no mapping for ORM required (yet)
+     * holds external reporter; no mapping for ORM required (yet).
      *
      * @var string
      */
     protected $externalReporter = '';
 
     /**
-     * @return $this
      * @throws \Exception
+     *
+     * @return $this
      */
     public function validateDuration(): static
     {
@@ -245,11 +239,12 @@ class Entry extends Base
     public function setId(int $id): static
     {
         $this->id = $id;
+
         return $this;
     }
 
     /**
-     * Get id
+     * Get id.
      */
     public function getId(): ?int
     {
@@ -257,49 +252,49 @@ class Entry extends Base
     }
 
     /**
-     * Get userId
+     * Get userId.
      *
      * @return int|null $userId
      */
-    public function getUserId(): int|null
+    public function getUserId(): ?int
     {
         return is_object($this->getUser()) ? $this->getUser()->getId() : 0;
     }
 
     /**
-     * Get projectId
+     * Get projectId.
      *
      * @return int|null $projectId
      */
-    public function getProjectId(): int|null
+    public function getProjectId(): ?int
     {
         return is_object($this->getProject()) ? $this->getProject()->getId() : 0;
     }
 
     /**
-     * Get accountId
+     * Get accountId.
      *
      * @return int|null $accountId
      */
-    public function getAccountId(): int|null
+    public function getAccountId(): ?int
     {
         return is_object($this->getAccount()) ? $this->getAccount()->getId() : 0;
     }
 
     /**
-     * Get customerId
+     * Get customerId.
      *
      * @return int|null $customerId
      */
-    public function getCustomerId(): int|null
+    public function getCustomerId(): ?int
     {
         return is_object($this->getCustomer()) ? $this->getCustomer()->getId() : 0;
     }
 
     /**
-     * Get ActivityId
+     * Get ActivityId.
      *
-     * @return integer $ActivityId
+     * @return int $ActivityId
      */
     public function getActivityId(): int
     {
@@ -307,18 +302,19 @@ class Entry extends Base
     }
 
     /**
-     * Set ticket
+     * Set ticket.
      *
      * @param string $ticket
      */
     public function setTicket($ticket): static
     {
         $this->ticket = str_replace(' ', '', $ticket);
+
         return $this;
     }
 
     /**
-     * Get ticket
+     * Get ticket.
      *
      * @return string $ticket
      */
@@ -330,6 +326,7 @@ class Entry extends Base
     public function setTicketTitle(?string $ticketTitle): static
     {
         $this->ticketTitle = $ticketTitle;
+
         return $this;
     }
 
@@ -339,18 +336,17 @@ class Entry extends Base
     }
 
     /**
-     * Set Jira WorklogId
-     *
-     * @param int $worklog_id
+     * Set Jira WorklogId.
      */
     public function setWorklogId(?int $worklog_id): static
     {
         $this->worklog_id = $worklog_id;
+
         return $this;
     }
 
     /**
-     * Get Jira WorklogId
+     * Get Jira WorklogId.
      *
      * @return int $worklog_id
      */
@@ -360,18 +356,19 @@ class Entry extends Base
     }
 
     /**
-     * Set description
+     * Set description.
      *
      * @param string $description
      */
     public function setDescription($description): static
     {
         $this->description = $description;
+
         return $this;
     }
 
     /**
-     * Get description
+     * Get description.
      *
      * @return string $description
      */
@@ -381,24 +378,25 @@ class Entry extends Base
     }
 
     /**
-     * Set day
+     * Set day.
      *
      * @param string $day
      */
     public function setDay($day): static
     {
-        if (!$day instanceof DateTime) {
-            $day = new DateTime($day);
+        if (!$day instanceof \DateTime) {
+            $day = new \DateTime($day);
         }
 
         $this->day = $day;
+
         return $this;
     }
 
     /**
-     * Get day
+     * Get day.
      *
-     * @return DateTime $day
+     * @return \DateTime $day
      */
     public function getDay(): ?\DateTime
     {
@@ -406,27 +404,28 @@ class Entry extends Base
     }
 
     /**
-     * Set start
+     * Set start.
      *
      * @param string $start
      */
     public function setStart($start): static
     {
-        if (!$start instanceof DateTime) {
-            $start = new DateTime($start);
+        if (!$start instanceof \DateTime) {
+            $start = new \DateTime($start);
             [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $start->setDate((int) $year, (int) $month, (int) $day);
         }
 
         $this->start = $start;
         $this->alignStartAndEnd();
+
         return $this;
     }
 
     /**
-     * Get start
+     * Get start.
      *
-     * @return DateTime $start
+     * @return \DateTime $start
      */
     public function getStart(): ?\DateTime
     {
@@ -434,14 +433,14 @@ class Entry extends Base
     }
 
     /**
-     * Set end
+     * Set end.
      *
      * @param string $end
      */
     public function setEnd($end): static
     {
-        if (!$end instanceof DateTime) {
-            $end = new DateTime($end);
+        if (!$end instanceof \DateTime) {
+            $end = new \DateTime($end);
             [$year, $month, $day] = explode('-', $this->getDay()->format('Y-m-d'));
             $end->setDate((int) $year, (int) $month, (int) $day);
         }
@@ -453,11 +452,11 @@ class Entry extends Base
     }
 
     /**
-     *  Make sure end is greater or equal start
+     *  Make sure end is greater or equal start.
      */
     protected function alignStartAndEnd(): static
     {
-        if ($this->end !== null && $this->start !== null && $this->end->format('H:i') < $this->start->format('H:i')) {
+        if (null !== $this->end && null !== $this->start && $this->end->format('H:i') < $this->start->format('H:i')) {
             $this->end = clone $this->start;
         }
 
@@ -465,7 +464,7 @@ class Entry extends Base
     }
 
     /**
-     * Get end
+     * Get end.
      *
      * @return \DateTime $end
      */
@@ -475,20 +474,21 @@ class Entry extends Base
     }
 
     /**
-     * Set duration
+     * Set duration.
      *
-     * @param integer $duration
+     * @param int $duration
      */
     public function setDuration($duration): static
     {
         $this->duration = $duration;
+
         return $this;
     }
 
     /**
-     * Get duration
+     * Get duration.
      *
-     * @return integer $duration
+     * @return int $duration
      */
     public function getDuration()
     {
@@ -508,93 +508,95 @@ class Entry extends Base
     }
 
     /**
-     * Set project
-     *
-     *
+     * Set project.
      */
     public function setProject(Project $project): static
     {
         $this->project = $project;
+
         return $this;
     }
 
     /**
-     * Get project
+     * Get project.
      *
      * @return Project $project
      */
-    public function getProject(): ?\App\Entity\Project
+    public function getProject(): ?Project
     {
         return $this->project;
     }
 
     /**
-     * Set user
+     * Set user.
      */
     public function setUser(User $user): static
     {
         $this->user = $user;
+
         return $this;
     }
 
     /**
-     * Get user
+     * Get user.
      *
      * @return User $user
      */
-    public function getUser(): ?\App\Entity\User
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
     /**
-     * Set account
+     * Set account.
      */
     public function setAccount(Account $account): static
     {
         $this->account = $account;
+
         return $this;
     }
 
     /**
-     * Get account
+     * Get account.
      *
      * @return Account $account
      */
-    public function getAccount(): ?\App\Entity\Account
+    public function getAccount(): ?Account
     {
         return $this->account;
     }
 
     /**
-     * Set activity
+     * Set activity.
      */
     public function setActivity(Activity $activity): static
     {
         $this->activity = $activity;
+
         return $this;
     }
 
     /**
-     * Get activity
+     * Get activity.
      *
      * @return Activity $activity
      */
-    public function getActivity(): ?\App\Entity\Activity
+    public function getActivity(): ?Activity
     {
         return $this->activity;
     }
 
     /**
-     * Get array representation of entry object
+     * Get array representation of entry object.
      *
-     * @return (int|null|string)[]
+     * @return (int|string|null)[]
      *
      * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string|null}
      */
     public function toArray(): array
     {
-        if ($this->getCustomer() instanceof \App\Entity\Customer) {
+        if ($this->getCustomer() instanceof Customer) {
             $customer = $this->getCustomer()->getId();
         } elseif ($this->getProject() && $this->getProject()->getCustomer()) {
             $customer = $this->getProject()->getCustomer()->getId();
@@ -603,35 +605,36 @@ class Entry extends Base
         }
 
         return [
-            'id'             => $this->getId(),
-            'date'           => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
-            'start'          => $this->getStart() ? $this->getStart()->format('H:i') : null,
-            'end'            => $this->getEnd() ? $this->getEnd()->format('H:i') : null,
-            'user'           => $this->getUser() ? $this->getUser()->getId() : null,
-            'customer'       => $customer,
-            'project'        => $this->getProject() ? $this->getProject()->getId() : null,
-            'activity'       => $this->getActivity() ? $this->getActivity()->getId() : null,
-            'description'    => $this->getDescription(),
-            'ticket'         => $this->getTicket(),
-            'duration'       => $this->getDuration(),
+            'id' => $this->getId(),
+            'date' => $this->getDay() ? $this->getDay()->format('d/m/Y') : null,
+            'start' => $this->getStart() ? $this->getStart()->format('H:i') : null,
+            'end' => $this->getEnd() ? $this->getEnd()->format('H:i') : null,
+            'user' => $this->getUser() ? $this->getUser()->getId() : null,
+            'customer' => $customer,
+            'project' => $this->getProject() ? $this->getProject()->getId() : null,
+            'activity' => $this->getActivity() ? $this->getActivity()->getId() : null,
+            'description' => $this->getDescription(),
+            'ticket' => $this->getTicket(),
+            'duration' => $this->getDuration(),
             'durationString' => $this->getDurationString(),
-            'class'          => $this->getClass(),
-            'worklog'        => $this->getWorklogId(),
-            'extTicket'      => $this->getInternalJiraTicketOriginalKey(),
+            'class' => $this->getClass(),
+            'worklog' => $this->getWorklogId(),
+            'extTicket' => $this->getInternalJiraTicketOriginalKey(),
         ];
     }
 
     /**
-     * Calculate difference between start and end
+     * Calculate difference between start and end.
      *
      * @param int $factor
+     *
      * @throws \Exception
      */
     public function calcDuration($factor = 1): static
     {
         if ($this->getStart() && $this->getEnd()) {
-            $start = new DateTime($this->getStart()->format('H:i'));
-            $end = new DateTime($this->getEnd()->format('H:i'));
+            $start = new \DateTime($this->getStart()->format('H:i'));
+            $end = new \DateTime($this->getEnd()->format('H:i'));
 
             $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
             $this->setDuration((int) round($difference));
@@ -640,42 +643,44 @@ class Entry extends Base
         }
 
         $this->validateDuration();
+
         return $this;
     }
 
     /**
-     * Set customer
+     * Set customer.
      */
     public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
+
         return $this;
     }
 
     /**
-     * Get customer
+     * Get customer.
      */
-    public function getCustomer(): ?\App\Entity\Customer
+    public function getCustomer(): ?Customer
     {
         return $this->customer;
     }
 
-
     /**
-     * Set class
+     * Set class.
      *
-     * @param integer $class
+     * @param int $class
      */
     public function setClass($class): static
     {
         $this->class = $class;
+
         return $this;
     }
 
     /**
-     * Get class
+     * Get class.
      *
-     * @return integer $class
+     * @return int $class
      */
     public function getClass()
     {
@@ -689,7 +694,7 @@ class Entry extends Base
     {
         $ticketSystem = $this->getProject()->getTicketSystem();
 
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return $this->getTicket();
         }
 
@@ -704,29 +709,26 @@ class Entry extends Base
 
     /**
      * Returns the original ticket name.
-     *
-     * @return string
      */
-    public function getInternalJiraTicketOriginalKey()
+    public function getInternalJiraTicketOriginalKey(): ?string
     {
         return $this->internalJiraTicketOriginalKey;
     }
 
     /**
-    * Returns true, if a original ticket name.
-    */
+     * Returns true, if a original ticket name.
+     */
     public function hasInternalJiraTicketOriginalKey(): bool
     {
-        return !empty($this->internalJiraTicketOriginalKey);
+        return null !== $this->internalJiraTicketOriginalKey && '' !== $this->internalJiraTicketOriginalKey;
     }
 
     /**
      * Sets the original ticket name.
      *
-     * @param string $strTicket
      * @return $this
      */
-    public function setInternalJiraTicketOriginalKey($strTicket): static
+    public function setInternalJiraTicketOriginalKey(?string $strTicket): static
     {
         $this->internalJiraTicketOriginalKey = $strTicket;
 
@@ -743,13 +745,13 @@ class Entry extends Base
     public function getPostDataForInternalJiraTicketCreation(): array
     {
         return [
-            'fields' =>  [
-                'project'     =>  [
+            'fields' => [
+                'project' => [
                     'key' => $this->getProject()->getInternalJiraProjectKey(),
                 ],
-                'summary'     => $this->getTicket(),
+                'summary' => $this->getTicket(),
                 'description' => $this->getTicketSystemIssueLink(),
-                'issuetype'   => [
+                'issuetype' => [
                     'name' => 'Task',
                 ],
             ],
@@ -757,7 +759,7 @@ class Entry extends Base
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function getSyncedToTicketsystem()
     {
@@ -765,13 +767,14 @@ class Entry extends Base
     }
 
     /**
-     * @param boolean $syncedToTicketsystem
+     * @param bool $syncedToTicketsystem
      *
      * @return $this
      */
     public function setSyncedToTicketsystem($syncedToTicketsystem): static
     {
         $this->syncedToTicketsystem = $syncedToTicketsystem;
+
         return $this;
     }
 }

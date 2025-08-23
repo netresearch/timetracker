@@ -181,7 +181,23 @@ class BaseController extends AbstractController
         } else {
             $session = $request->getSession();
         }
-        return !($session === null || !$session->has('_security_main') || empty($session->get('_security_main')));
+        if ($session === null) {
+            return false;
+        }
+        if (!$session->has('_security_main')) {
+            return false;
+        }
+        $token = $session->get('_security_main');
+        if ($token === null) {
+            return false;
+        }
+        if (is_string($token)) {
+            return $token !== '';
+        }
+        if (is_array($token)) {
+            return count($token) > 0;
+        }
+        return true;
     }
 
     /**

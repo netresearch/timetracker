@@ -93,7 +93,7 @@ class ControllingController extends BaseController
         );
 
         $showBillableField = $this->params->has('app_show_billable_field_in_export')
-            && $this->params->get('app_show_billable_field_in_export');
+            && (bool) $this->params->get('app_show_billable_field_in_export');
         if ($showBillableField || $showTicketTitles) {
             $entries = $service->enrichEntriesWithTicketInformation(
                 $this->getUserId($request),

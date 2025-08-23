@@ -17,8 +17,9 @@ use App\Repository\UserRepository;
 use App\Response\Error;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\SubticketSyncService;
-use Symfony\Component\HttpFoundation\Request;
 use App\Util\RequestHelper;
+use App\Util\RequestEntityHelper;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class AdminController.
@@ -137,21 +138,15 @@ class AdminController extends BaseController
 
         /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystem = $request->request->get('ticket_system') ? $objectRepository->find($request->request->get('ticket_system')) : null;
+        $ticketSystem = RequestEntityHelper::ticketSystem($request, $this->doctrineRegistry, 'ticket_system');
 
         /** @var UserRepository $userRepo */
         $userRepo = $this->doctrineRegistry->getRepository(User::class);
-        $projectLead = $request->request->get('project_lead') ? $userRepo->find($request->request->get('project_lead')) : null;
-        if (null !== $projectLead && !$projectLead instanceof User) {
-            $projectLead = null;
-        }
-        $technicalLead = $request->request->get('technical_lead') ? $userRepo->find($request->request->get('technical_lead')) : null;
-        if (null !== $technicalLead && !$technicalLead instanceof User) {
-            $technicalLead = null;
-        }
+        $projectLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'project_lead');
+        $technicalLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'technical_lead');
 
-        $jiraId = $request->request->get('jiraId') ? strtoupper((string) $request->request->get('jiraId')) : '';
-        $jiraTicket = $request->request->get('jiraTicket') ? strtoupper((string) $request->request->get('jiraTicket')) : '';
+        $jiraId = RequestHelper::upperString($request, 'jiraId');
+        $jiraTicket = RequestHelper::upperString($request, 'jiraTicket');
         $active = RequestHelper::bool($request, 'active');
         $global = RequestHelper::bool($request, 'global');
         $estimation = TimeHelper::readable2minutes(RequestHelper::string($request, 'estimation', '0m'));
@@ -218,7 +213,8 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (1 < strlen($jiraId) && $project->getJiraId() !== $jiraId && $ticketSystem) {
+        $search = [];
+        if (strlen($jiraId) > 1 && $project->getJiraId() !== $jiraId && $ticketSystem instanceof TicketSystem) {
             $search['ticketSystem'] = $ticketSystem;
         }
 
@@ -231,7 +227,6 @@ class AdminController extends BaseController
 
         $project
             ->setName($name)
-            ->setTicketSystem($ticketSystem instanceof TicketSystem ? $ticketSystem : $project->getTicketSystem())
             ->setJiraId($jiraId)
             ->setJiraTicket($jiraTicket)
             ->setActive($active)
@@ -246,15 +241,23 @@ class AdminController extends BaseController
             ->setInternalJiraProjectKey($internalJiraProjectKey)
             ->setInternalJiraTicketSystem($internalJiraTicketSystem);
 
+        if ($ticketSystem instanceof TicketSystem) {
+            $project->setTicketSystem($ticketSystem);
+        } elseif ($project->getTicketSystem() instanceof TicketSystem) {
+            $project->setTicketSystem($project->getTicketSystem());
+        }
+
         $objectManager = $this->doctrineRegistry->getManager();
         $objectManager->persist($project);
         $objectManager->flush();
 
         $data = [$project->getId(), $name, $projectCustomer->getId(), $jiraId];
 
-        if ($ticketSystem) {
+        if ($ticketSystem instanceof TicketSystem) {
             try {
-                $this->subticketSyncService->syncProjectSubtickets($project->getId());
+                if (null !== $project->getId()) {
+                    $this->subticketSyncService->syncProjectSubtickets($project->getId());
+                }
             } catch (\Exception $e) {
                 // we do not let it fail because creating a new project
                 // would lead to inconsistencies in the frontend
@@ -423,7 +426,7 @@ class AdminController extends BaseController
             }
         }
 
-        if (0 == $customer->getTeams()->count() && $global === false) {
+        if (0 == $customer->getTeams()->count() && false === $global) {
             $response = new Response($this->translate('Every customer must belong to at least one team if it is not global.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -721,8 +724,8 @@ class AdminController extends BaseController
         $ticketUrl = (string) ($request->request->get('ticketUrl') ?? '');
         $oauthConsumerKeyRaw = $request->request->get('oauthConsumerKey');
         $oauthConsumerSecretRaw = $request->request->get('oauthConsumerSecret');
-        $oauthConsumerKey = ($oauthConsumerKeyRaw === null || $oauthConsumerKeyRaw === '') ? null : (string) $oauthConsumerKeyRaw;
-        $oauthConsumerSecret = ($oauthConsumerSecretRaw === null || $oauthConsumerSecretRaw === '') ? null : (string) $oauthConsumerSecretRaw;
+        $oauthConsumerKey = (null === $oauthConsumerKeyRaw || '' === $oauthConsumerKeyRaw) ? null : (string) $oauthConsumerKeyRaw;
+        $oauthConsumerSecret = (null === $oauthConsumerSecretRaw || '' === $oauthConsumerSecretRaw) ? null : (string) $oauthConsumerSecretRaw;
 
         if (0 !== $id) {
             $ticketSystem = $objectRepository->find($id);
