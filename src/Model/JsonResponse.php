@@ -32,7 +32,7 @@ namespace App\Model;
 class JsonResponse extends Response
 {
     /**
-     * @param array<string, string>|array<string, array<string>> $headers
+     * @param array<string, string|array<string>> $headers
      */
     /** @psalm-suppress PropertyNotSetInConstructor */
     public function __construct(mixed $content = null, int $status = 200, array $headers = [])

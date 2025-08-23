@@ -22,9 +22,9 @@ class Error extends JsonResponse
      */
     /** @psalm-suppress PropertyNotSetInConstructor */
     public function __construct(
-        $errorMessage,
-        $statusCode,
-        $forwardUrl = null,
+        string $errorMessage,
+        int $statusCode,
+        ?string $forwardUrl = null,
         ?\Throwable $throwable = null,
     ) {
         $message = ['message' => $errorMessage];
