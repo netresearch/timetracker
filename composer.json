@@ -6,7 +6,7 @@
   "config": {
     "bin-dir": "bin",
     "platform": {
-      "php": "8.2"
+      "php": "8.4"
     },
     "sort-packages": true,
     "allow-plugins": {
@@ -29,7 +29,7 @@
     }
   },
   "require": {
-    "php": "~8.2",
+    "php": "^8.2",
     "ext-date": "*",
     "ext-json": "*",
     "ext-ldap": "*",
