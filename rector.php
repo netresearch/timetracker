@@ -12,7 +12,7 @@ return RectorConfig::configure()
         __DIR__.'/src',
         __DIR__.'/tests',
     ])
-    ->withPhpStanConfig(__DIR__.'/phpstan.neon')
+    ->withPHPStanConfigs([__DIR__.'/phpstan.neon'])
     ->withSets([
         LevelSetList::UP_TO_PHP_84,
         SetList::CODE_QUALITY,
@@ -21,8 +21,11 @@ return RectorConfig::configure()
         SetList::TYPE_DECLARATION,
         SetList::NAMING,
         SetList::CODING_STYLE,
-        SymfonySetList::UP_TO_SYMFONY_64,
+        SymfonyLevelSetList::UP_TO_SYMFONY_64,
         SymfonySetList::SYMFONY_CODE_QUALITY,
+    ])
+    ->withSymfonyLevelSets([
+        SymfonyLevelSetList::UP_TO_SYMFONY_64,
     ])
     ->withAttributesSets()
     ->withSkip([]);
