@@ -1,14 +1,14 @@
-# Upgrade Plan: Symfony 4.4 to 7.2
+# Upgrade Plan: Symfony 4.4 to 7.3
 
-This document outlines the high-level plan for upgrading the application from Symfony 4.4 to Symfony 7.2.
+This document outlines the high-level plan for upgrading the application from Symfony 4.4 to Symfony 7.3.
 
 ## Overall Strategy
 
-The upgrade will proceed incrementally through major LTS (Long-Term Support) versions to minimize risk and manage complexity:
+The upgrade proceeds incrementally through major versions to minimize risk and manage complexity:
 
-1.  **Symfony 4.4 -> Symfony 5.4**
-2.  **Symfony 5.4 -> Symfony 6.4**
-3.  **Symfony 6.4 -> Symfony 7.2**
+1.  **Symfony 4.4 -> Symfony 5.4** (Completed)
+2.  **Symfony 5.4 -> Symfony 6.4** (Completed)
+3.  **Symfony 6.4 -> Symfony 7.3** (In Progress)
 
 ## Phases
 

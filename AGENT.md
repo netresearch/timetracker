@@ -6,7 +6,7 @@ This file is the canonical, tool-agnostic guide for agents working in this repos
 
 TimeTracker is a Symfony-based PHP application for project/customer-centric time tracking with Jira integration, LDAP authentication, reports, and exports.
 
-- Backend: PHP 8.2, Symfony 4.4, Doctrine ORM, Twig, Monolog
+- Backend: PHP 8.2, Symfony 6.4, Doctrine ORM, Twig, Monolog
 - Frontend assets: Webpack Encore, Stimulus, Sass
 - Infrastructure: Docker Compose (Nginx, PHP-FPM, MariaDB)
 - Tests: PHPUnit; static analysis via PHPStan and Psalm
@@ -105,7 +105,7 @@ Refer to configured tooling and rules in `phpcs.xml`, `phpstan.neon`, `psalm.xml
 
 ## Architecture and Design
 
-- MVC using Symfony 4.4; routing via annotations/attributes and YAML (legacy routes being migrated)
+- MVC using Symfony 6.4; routing via PHP attributes and YAML (legacy routes being migrated)
 - Persistence via Doctrine ORM; migrations under `migrations/`
 - Views with Twig templates under `templates/`
 - Service layer under `App\Service` provides cohesive units of business logic and integrations (e.g., Jira, LDAP)

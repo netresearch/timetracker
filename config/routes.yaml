@@ -1,7 +1,7 @@
 # config/routes.yaml
 # Main routing configuration
 
-# Standard login route (Symfony 4 convention)
+# Standard login route (Symfony 6 convention)
 _login:
     path: /login
     controller: App\Controller\SecurityController::login
@@ -11,9 +11,9 @@ login_check:
     path: /login_check
     methods: POST
 
-# Logout route (Symfony 4 convention)
+# Logout route (Symfony 6 convention)
 _logout:
     path: /logout
     methods: GET
 
-# Routes are provided via Doctrine annotations (@Route) in controllers on Symfony 4.4
+# Routes are primarily defined via PHP attributes (#[Route]) in controllers on Symfony 6.4
