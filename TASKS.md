@@ -2,7 +2,12 @@
 
 This document breaks down the upgrade plan into specific, actionable tasks.
 
-## Phase 1: Prepare for Symfony 5.4 (Working on Symfony 4.4)
+## Completed Phases (historical)
+
+*   `[x]` Symfony 4.4 -> Symfony 5.4
+*   `[x]` Symfony 5.4 -> Symfony 6.4
+
+## Phase 1: Prepare for Symfony 7.3 (Working on Symfony 6.4)
 
 ### 1.1: Improve Test Coverage
 *   **Goal:** Ensure critical parts of the application are covered by tests before refactoring and upgrading.
@@ -19,24 +24,24 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Task: Test Feature Y
         *   `[ ]` ... (add specific routes/features as identified)
 
-### 1.2: Address Deprecations for Symfony 5.4
-*   **Goal:** Remove usage of APIs deprecated in Symfony 4.4 and scheduled for removal in 5.0.
+### 1.2: Address Deprecations for Symfony 7.3
+*   **Goal:** Remove usage of APIs deprecated in Symfony 6.4 and scheduled for removal in 7.x/7.3.
 *   **Tasks:**
-    *   `[ ]` **Install Deprecation Detector:** Add `symfony/deprecation-contracts` if missing and potentially use `symfony/phpunit-bridge` or other tools to log deprecations during test runs. (Estimate: 0.5h)
-    *   `[ ]` **Run Tests and Collect Deprecations:** Execute the test suite and collect all `@trigger_error('...', E_USER_DEPRECATED)` logs. (Estimate: 0.5h)
-    *   `[ ]` **Fix Deprecations:** Go through the deprecation list and refactor code to use the recommended alternatives. (Estimate: Task per deprecation type, 0.25-1h each)
-        *   `[ ]` Task: Fix Deprecation Type 1
-        *   `[ ]` Task: Fix Deprecation Type 2
-        *   `[ ]` ... (add specific deprecations as identified)
+    *   `[ ]` **Enable deprecation tracking in tests:** Use `symfony/phpunit-bridge` and set `SYMFONY_DEPRECATIONS_HELPER=weak` for local runs. (0.25h)
+    *   `[ ]` **Run test suite with deprecations enabled:** `docker compose run --rm -e APP_ENV=test -e SYMFONY_DEPRECATIONS_HELPER=weak app bin/phpunit` and export report. (0.5h)
+    *   `[ ]` **Translations API audit:** Ensure only `Symfony\\Contracts\\Translation\\TranslatorInterface` is used; remove `Symfony\\Component\\Translation\\TranslatorInterface` alias from `config/services.yaml` if unused. (0.25h)
+    *   `[ ]` **Routing audit:** Confirm all controllers use PHP attributes; remove any leftover annotation/YAML routes. (0.25h)
+    *   `[ ]` **Twig & PHP audit:** Verify `twig/twig` constraint supports PHP 8.4/Symfony 7.3; plan bump if required. (0.25h)
+    *   `[ ]` **Fix remaining deprecations:** Triage and resolve notices from the report. (variable)
 
-### 1.3: Refactor to Symfony 4.4 Best Practices
-*   **Goal:** Align the codebase with standard Symfony 4.4 conventions.
+### 1.3: Finalize Symfony 6.4 Best Practices
+*   **Goal:** Align the codebase fully with Symfony 6.4 conventions before upgrading.
 *   **Tasks:**
-    *   `[ ]` **(NEW TASK 1.3.0) Analyze Controller Structure:**
+    *   `[ ]` **Analyze Controller Structure:**
         *   `[ ]` Review major controllers (e.g., `EntryController`, `AdminController`, potentially others) for size and responsibilities. (Estimate: 1h)
         *   `[ ]` Identify methods or logic within controllers that could be extracted into dedicated services (e.g., complex data manipulation, external API calls, business rules). (Estimate: 1h)
         *   `[ ]` Document potential refactoring opportunities (create sub-tasks below or separate issues). (Estimate: 0.5h)
-    *   `[x]` **(Updated Task 1.3.1) Move classes from `src/Services` to `src/Service`:**
+    *   `[x]` **Move classes from `src/Services` to `src/Service`:**
         *   `[x]` Move `src/Services/Export.php` to `src/Service/ExportService.php` (or similar appropriate name). (Estimate: 0.1h)
         *   `[x]` Update namespace in the moved file (`App\Services` -> `App\Service`). (Estimate: 0.1h)
         *   `[x]` Update any explicit references in `services.yaml` or elsewhere. (Estimate: 0.1h)
@@ -45,40 +50,20 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[x]` Update any explicit references. (Estimate: 0.1h)
         *   `[x]` Delete the `src/Services` directory once empty. (Estimate: 0.1h)
         *   `[ ]` Clear cache (`docker compose run --rm app bin/console cache:clear`). (Estimate: 0.1h)
-    *   `[ ]` **(Updated Task 1.3.2) Refactor `src/Helper` Classes to Services:**
-        *   `[ ]` **Refactor `JiraOAuthApi.php`:**
-            *   `[x]` Move `src/Helper/JiraOAuthApi.php` to `src/Service/Integration/Jira/JiraOAuthApiService.php` (or similar). (Implemented as BC shim delegating to new service)
-            *   `[x]` Update factory to create new service. Usages rely on factory DI.
-            *   `[x]` Update usages to use Dependency Injection where needed (removed direct instantiation in `CrudController`).
-        *   `[x]` **Refactor `LdapClient.php`:**
-            *   `[x]` Move `src/Helper/LdapClient.php` to `src/Service/Ldap/LdapClientService.php` with BC shim. (Estimate: 0.1h)
-            *   `[x]` Update namespace and register as a service. (Estimate: 0.1h)
-            *   `[x]` Update usages via DI in Security component. (Estimate: 0.5h)
-        *   `[ ]` **Refactor `LocalizationHelper.php`:**
-            *   `[ ]` Move `src/Helper/LocalizationHelper.php` to `src/Service/Util/LocalizationService.php` (or similar). (Estimate: 0.1h)
-            *   `[ ]` Update namespace. (Estimate: 0.1h)
-            *   `[x]` Ensure registered as a service. (Estimate: 0.1h)
-            *   `[ ]` Update usages via DI. (Estimate: 0.25h)
-        *   `[ ]` **Refactor `TicketHelper.php`:**
-            *   `[x]` Introduce `src/Service/Util/TicketService.php` and keep `TicketHelper` as BC facade. No DI changes required.
-        *   `[ ]` **Refactor `TimeHelper.php`:**
-            *   `[x]` Introduce `src/Service/Util/TimeCalculationService.php` and keep `TimeHelper` as BC facade. No DI changes required.
-        *   `[ ]` **Handle remaining Helper files:** (`JiraApiException.php`, `JiraApiInvalidResourceException.php`, `JiraApiUnauthorizedException.php`, `LOReadFilter.php`)
-            *   `[x]` Move `LOReadFilter.php` to `src/Util/PhpSpreadsheet/LOReadFilter.php` and update reference in `ControllingController.php`.
-            *   `[x]` Move Exception classes to `src/Exception/` subdirectories (e.g., `src/Exception/Integration/Jira/`). (Estimate: 0.25h)
-            *   `[ ]` Delete the `src/Helper` directory once empty. (pending; still contains facades used for BC)
-    *   `[ ]` **(Renumbered Task 1.3.3) Use Annotations/Attributes for Routes:**
-        *   `[ ]` Ensure `sensio/framework-extra-bundle` is installed (`docker compose run --rm app composer require sensio/framework-extra-bundle`). (Estimate: 0.25h)
-        *   `[ ]` Configure annotation routing if not already done (check `config/routes/annotations.yaml`). (Estimate: 0.25h)
-        *   `[ ]` Review existing routes defined via annotations in `src/Controller/`. (Estimate: 0.5h)
-        *   `[x]` **Migrate routes** defined in `config/legacy_bundle/routing.yml` to annotations/attributes within the relevant Controller classes. (Estimate: 0.5-1h+ depending on complexity)
-        *   `[x]` Remove the import for `legacy_bundle/routing.yml` from `config/routes.yaml` once migration is complete. (Estimate: 0.1h)
-        *   `[ ]` Prefer PHP 8 Attributes (`#[Route(...)]`) over annotations (`@Route(...)`) if possible within 4.4 constraints (requires PHP 8+). *Note: Full attribute support is better in later Symfony versions.*
-    *   `[ ]` **(Renumbered Task 1.3.4) Review Service Configuration:**
+    *   `[ ]` **Refactor `src/Helper` Classes to Services (state-aware):**
+        *   `[ ]` JiraOAuthApi: Update factory to return `JiraOAuthApiService` directly; remove `App\\Helper\\JiraOAuthApi`. (0.5-1h)
+        *   `[x]` LdapClient: `App\\Service\\Ldap\\LdapClientService` in use; delete unused helper `App\\Helper\\LdapClient`. (0.25h)
+        *   `[ ]` LocalizationHelper: Not used; delete `src/Helper/LocalizationHelper.php`. (0.25h)
+        *   `[ ]` LoginHelper: Replace usages (e.g., in `BaseController`) with Security APIs if any remain; then delete helper. (0.5-1h)
+        *   `[ ]` TicketHelper: Replace static calls in `CrudController` with DI of `App\\Service\\Util\\TicketService`; remove helper after migration. (0.5-1h)
+        *   `[ ]` TimeHelper: Replace static calls with `App\\Service\\Util\\TimeCalculationService` across controllers/repositories; review entity usage; remove helper after migration. (1-2h)
+        *   `[ ]` Cleanup: Delete `src/Helper/` once all helpers are removed. (0.1h)
+    *   `[x]` **Routing via PHP Attributes:** Controllers already use attributes; legacy YAML removed. (Done)
+    *   `[ ]` **Review Service Configuration:**
         *   `[ ]` Examine `config/services.yaml`. (Estimate: 0.5h)
         *   `[ ]` Ensure autowiring and autoconfiguration are enabled and used effectively (`_defaults`, `App\`). (Estimate: 0.5h)
-        *   `[ ]` Remove unnecessary explicit service definitions where autowiring suffices. (Estimate: 0.5h)
-    *   `[ ]` **(Renumbered Task 1.3.5) Ensure Strict Types and Type Hints:**
+        *   `[ ]` Remove unnecessary explicit service definitions and legacy aliases (e.g., translator, annotations reader) if unused. (0.5h)
+    *   `[ ]` **Ensure Strict Types and Type Hints:**
         *   `[ ]` Add `declare(strict_types=1);` to all PHP files. (Estimate: 0.5h - Use automated tooling if possible)
         *   `[ ]` Add parameter and return type hints wherever missing, replacing `@param`/`@return` phpdoc tags. (Estimate: 1h+ - Highly variable, do incrementally)
 
@@ -91,18 +76,18 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Tidy repository return types and static signatures (remaining)
     *   `[x]` **Run CS Check/Fix:** Execute `docker compose run --rm app composer cs-check` and `docker compose run --rm app composer cs-fix` to ensure PSR-12 compliance. (Estimate: 0.5h)
 
-## Phase 2: Upgrade to Symfony 5.4
+## Phase 2: Upgrade to Symfony 7.3
 
-*   `[x]` **Update `composer.json`:** Change Symfony dependencies to `^5.4`.
-*   `[x]` **Run `composer update`:** Resolve dependency conflicts.
-*   `[x]` **Address Compatibility Issues:** Fix errors based on Symfony 5 upgrade guides.
-*   `[x]` **Update Configuration Files:** Adapt `services.yaml`, `routes.yaml`, etc.
-*   `[x]` **Adjust Tests for Kernel Boot/Shutdown Changes:** Ensure `createClient()` usage and container access patterns are 5.4-compatible.
+*   `[ ]` **Update `composer.json`:** Change Symfony dependencies to `^7.3`.
+*   `[ ]` **Run `composer update`:** Resolve dependency conflicts.
+*   `[ ]` **Address Compatibility Issues:** Fix errors based on Symfony 7 upgrade guides.
+*   `[ ]` **Update Configuration Files:** Adapt `services.yaml`, `routes.yaml`, etc.
+*   `[ ]` **Adjust Tests where needed:** Ensure compatibility with updated kernel and testing tools.
 
-## Phase 3: Post-Upgrade (Symfony 5.4)
+## Phase 3: Post-Upgrade (Symfony 7.3)
 
 *   `[ ]` **Run Full Test Suite:** Ensure all tests pass.
 *   `[ ]` **Manual Testing:** Verify critical application flows.
 *   ...
 
-*(Further phases and tasks for 5.4 -> 6.4 and 6.4 -> 7.2 will be detailed later)*
+*(Historical phases retained above. Current focus: 6.4 -> 7.3.)*
