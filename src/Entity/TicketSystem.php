@@ -7,10 +7,9 @@ use App\Model\Base;
 
 /**
  * App\Entity\TicketSystem
- *
- * @ORM\Entity(repositoryClass="App\Repository\TicketSystemRepository")
- * @ORM\Table(name="ticket_systems")
  */
+#[ORM\Entity(repositoryClass: \App\Repository\TicketSystemRepository::class)]
+#[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {
     public const TYPE_JIRA = 'JIRA';
@@ -19,73 +18,64 @@ class TicketSystem extends Base
 
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
      */
+    #[ORM\Column(name: 'id', type: 'integer')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
     /**
      * @var string $name
-     * @ORM\Column(type="string", length=31, unique=true)
      */
+    #[ORM\Column(type: 'string', length: 31, unique: true)]
     protected $name;
 
     /**
      * @var boolean $bookTime;
-     * @ORM\Column(name="book_time", type="boolean", nullable=false, options={"default"=0})
      */
+    #[ORM\Column(name: 'book_time', type: 'boolean', nullable: false, options: ['default' => 0])]
     protected $bookTime = false;
 
     /**
      * @var string $type;
-     * @ORM\Column(type="string", length=15)
      */
+    #[ORM\Column(type: 'string', length: 15)]
     protected $type;
 
     /**
      * @var string $url
-     * @ORM\Column(type="string", length=255)
      */
+    #[ORM\Column(type: 'string', length: 255)]
     protected $url;
 
     /**
      * @var string $ticketUrl
-     * @ORM\Column(name="ticketurl", type="string", length=255, nullable=false)
      */
+    #[ORM\Column(name: 'ticketurl', type: 'string', length: 255, nullable: false)]
     protected $ticketUrl;
 
     /**
      * @var string $login
-     * @ORM\Column(type="string", length=63)
      */
+    #[ORM\Column(type: 'string', length: 63)]
     protected $login;
 
     /**
      * @var string $password
-     * @ORM\Column(type="string", length=63)
      */
+    #[ORM\Column(type: 'string', length: 63)]
     protected $password;
 
-    /**
-     * @ORM\Column(type="text", name="public_key")
-     */
+    #[ORM\Column(type: 'text', name: 'public_key')]
     protected string $publicKey = '';
 
-    /**
-     * @ORM\Column(type="text", name="private_key")
-     */
+    #[ORM\Column(type: 'text', name: 'private_key')]
     protected string $privateKey = '';
 
-    /**
-     * @ORM\Column(name="oauth_consumer_key", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'oauth_consumer_key', type: 'string', length: 255, nullable: true)]
     protected ?string $oauthConsumerKey = null;
 
-    /**
-     * @ORM\Column(name="oauth_consumer_secret", type="string", length=255, nullable=true)
-     */
+    #[ORM\Column(name: 'oauth_consumer_secret', type: 'string', length: 255, nullable: true)]
     protected ?string $oauthConsumerSecret = null;
 
 

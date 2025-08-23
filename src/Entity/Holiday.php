@@ -7,18 +7,14 @@ use App\Model\Base;
 
 /**
  * App\Entity\Holiday
- *
- * @ORM\Entity(repositoryClass="App\Repository\HolidayRepository")
- * @ORM\Table(name="holidays")
  */
+#[ORM\Entity(repositoryClass: \App\Repository\HolidayRepository::class)]
+#[ORM\Table(name: 'holidays')]
 class Holiday extends Base
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column (name="day", type="date")
-     * @var \DateTime|null
-     */
-    private $day;
+    #[ORM\Id]
+    #[ORM\Column(name: 'day', type: 'date')]
+    private \DateTime $day;
 
 
     public function __construct(string|\DateTime $day, private string $name)
@@ -46,20 +42,16 @@ class Holiday extends Base
 
     /**
      * Set name
-     *
-     * @param string $name
      */
-    public function setName($name): void
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
 
     /**
      * Get name
-     *
-     * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }

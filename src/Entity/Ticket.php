@@ -26,10 +26,9 @@ use App\Model\Base;
  * @author   Norman Kante <norman.kante@netresearch.de>
  * @license  No license
  * @link     http://www.netresearch.de
- *
- * @ORM\Entity(repositoryClass="App\Repository\TicketRepository")
- * @ORM\Table(name="tickets")
  */
+#[ORM\Entity(repositoryClass: \App\Repository\TicketRepository::class)]
+#[ORM\Table(name: 'tickets')]
 class Ticket extends Base
 {
     /**
@@ -39,51 +38,45 @@ class Ticket extends Base
 
     /**
      * @var int
-     *
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
 
     /**
      * @var int
-     *
-     * @ORM\Column(name="ticket_system_id", type="integer")
      */
+    #[ORM\Column(name: 'ticket_system_id', type: 'integer')]
     private $ticketSystemId;
 
 
     /**
      * @var string
-     *
-     * @ORM\Column(name="ticket_number", type="string", length=31)
      */
+    #[ORM\Column(name: 'ticket_number', type: 'string', length: 31)]
     private $ticketNumber;
 
 
     /**
      * @var string
-     *
-     * @ORM\Column(type="string", length=127)
      */
+    #[ORM\Column(type: 'string', length: 127)]
     private $name;
 
 
     /**
      * @var int
-     *
-     * @ORM\Column(type="integer", name="estimation")
      */
+    #[ORM\Column(type: 'integer', name: 'estimation')]
     private $estimatedDuration;
 
 
     /**
      * @var string
-     *
-     * @ORM\Column(type="string", name="parent", length=31)
      */
+    #[ORM\Column(type: 'string', name: 'parent', length: 31)]
     private $parentTicketNumber;
 
 

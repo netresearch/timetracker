@@ -7,97 +7,82 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @ORM\Table(name="users")
- */
+#[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
+#[ORM\Table(name: 'users')]
 class User implements UserInterface
 {
     /**
      * @var \Doctrine\Common\Collections\ArrayCollection
      */
     public $entries;
+
     /**
      * @var \Doctrine\Common\Collections\ArrayCollection
      */
     public $leadTeams;
+
     /**
-     * @ORM\Id
      *
-     * @ORM\Column (type="integer")
      *
-     * @ORM\GeneratedValue (strategy="AUTO")
      *
      * @var int|null
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
     /**
-     * @ORM\Column (type="string", length=50)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', length: 50)]
     protected $username;
 
     /**
-     * @ORM\Column (type="string", length=3, nullable=true)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', length: 3, nullable: true)]
     protected $abbr;
 
     /**
-     * @ORM\Column (type="string", length=255)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', length: 255)]
     protected $type;
 
-    /**
-     * @ORM\Column(name="show_empty_line", type="boolean", nullable=false, options={"default"=0})
-     */
+    #[ORM\Column(name: 'show_empty_line', type: 'boolean', nullable: false, options: ['default' => 0])]
     protected bool $showEmptyLine = false;
 
-    /**
-     * @ORM\Column(name="suggest_time", type="boolean", nullable=false, options={"default"=1})
-     */
+    #[ORM\Column(name: 'suggest_time', type: 'boolean', nullable: false, options: ['default' => 1])]
     protected bool $suggestTime = true;
 
 
-    /**
-     * @ORM\Column(name="show_future", type="boolean", nullable=false, options={"default"=1})
-     */
+    #[ORM\Column(name: 'show_future', type: 'boolean', nullable: false, options: ['default' => 1])]
     protected bool $showFuture = true;
 
 
 
     /**
-     * @ORM\ManyToMany(targetEntity="Team", inversedBy="users")
-     * @ORM\JoinTable(name="teams_users",
-     *     joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="team_id", referencedColumnName="id", onDelete="CASCADE")}
-     * )
      * @var \Doctrine\Common\Collections\Collection<int, Team>
      */
+    #[ORM\ManyToMany(targetEntity: \Team::class, inversedBy: 'users')]
+    #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id', onDelete: 'CASCADE')])]
     protected $teams;
 
-    /**
-     * @ORM\Column (name="locale", type="string", length=2, nullable=false, options={"default"="de"})
-     */
+    #[ORM\Column(name: 'locale', type: 'string', length: 2, nullable: false, options: ['default' => 'de'])]
     protected string $locale = 'de';
 
 
     /**
-     * @ORM\OneToMany(targetEntity="UserTicketsystem", mappedBy="user")
      * @var \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
      */
+    #[ORM\OneToMany(targetEntity: \UserTicketsystem::class, mappedBy: 'user')]
     protected $userTicketsystems;
 
     /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="user")
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
+    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'user')]
     protected $entriesRelation;
 
 
@@ -257,9 +242,9 @@ class User implements UserInterface
     }
 
     /**
-     * @ORM\OneToMany(targetEntity="Contract", mappedBy="user")
      * @var \Doctrine\Common\Collections\Collection<int, Contract>
      */
+    #[ORM\OneToMany(targetEntity: \Contract::class, mappedBy: 'user')]
     protected $contracts;
 
     /**

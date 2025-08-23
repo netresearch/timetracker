@@ -6,98 +6,82 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A user contract (working hours)
- *
- * @ORM\Entity(repositoryClass="App\Repository\ContractRepository")
- * @ORM\Table(name="contracts")
  */
+#[ORM\Entity(repositoryClass: \App\Repository\ContractRepository::class)]
+#[ORM\Table(name: 'contracts')]
 class Contract
 {
-    /**
-     * @var \App\Entity\User
-     */
-    /**
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
-     */
+    #[ORM\ManyToOne(targetEntity: \User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
     public User $user;
+
     /**
-     * @ORM\Id
      *
-     * @ORM\Column (type="integer")
      *
-     * @ORM\GeneratedValue (strategy="AUTO")
      *
      * @var int
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
 
 
-    /**
-     * @ORM\Column(type="date", nullable=false)
-     */
+    #[ORM\Column(type: 'date', nullable: false)]
     protected \DateTime $start;
 
 
-    /**
-     * @ORM\Column (type="date", nullable=true)
-     */
+    #[ORM\Column(type: 'date', nullable: true)]
     protected ?\DateTime $end = null;
 
 
     /**
-     * @ORM\Column (type="float", nullable=false)
-     *
      * @var float
      */
+    #[ORM\Column(type: 'float', nullable: false)]
     protected $hours_0;
 
 
     /**
-     * @ORM\Column (type="float", nullable=false)
-     *
      * @var float
      */
+    #[ORM\Column(type: 'float', nullable: false)]
     protected $hours_1;
 
 
     /**
-     * @ORM\Column (type="float", nullable=false)
-     *
      * @var float
      */
+    #[ORM\Column(type: 'float', nullable: false)]
     protected $hours_2;
 
 
     /**
-     * @ORM\Column (type="float", nullable=false)
-     *
      * @var float
      */
+    #[ORM\Column(type: 'float', nullable: false)]
     protected $hours_3;
 
 
     /**
-     * @ORM\Column (type="float", nullable=false)
-     *
      * @var float
      */
+    #[ORM\Column(type: 'float', nullable: false)]
     protected $hours_4;
 
 
     /**
-     * @ORM\Column (type="float", nullable=false)
-     *
      * @var float
      */
+    #[ORM\Column(type: 'float', nullable: false)]
     protected $hours_5;
 
 
     /**
-     * @ORM\Column (type="float", nullable=false)
-     *
      * @var float
      */
+    #[ORM\Column(type: 'float', nullable: false)]
     protected $hours_6;
 
 

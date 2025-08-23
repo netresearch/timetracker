@@ -4,12 +4,9 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- *
- * @ORM\Entity(repositoryClass="App\Repository\TeamRepository")
- * @ORM\Table(name="teams")
- * @ORM\HasLifecycleCallbacks
- */
+#[ORM\Entity(repositoryClass: \App\Repository\TeamRepository::class)]
+#[ORM\HasLifecycleCallbacks]
+#[ORM\Table(name: 'teams')]
 class Team
 {
     /**
@@ -18,41 +15,41 @@ class Team
     public $customers;
 
     /**
-     * @ORM\ManyToMany(targetEntity="Customer", mappedBy="teams")
      * @var \Doctrine\Common\Collections\Collection<int, Customer>
      */
+    #[ORM\ManyToMany(targetEntity: \Customer::class, mappedBy: 'teams')]
     protected $customersRelation;
+
     /**
-     * @ORM\Id
      *
-     * @ORM\Column (type="integer")
      *
-     * @ORM\GeneratedValue (strategy="AUTO")
      *
      * @var null|string
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
     /**
-     * @ORM\Column (type="string", length=31)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', length: 31)]
     protected $name;
 
     /**
-     * @ORM\ManyToOne (targetEntity="User", inversedBy="leadTeams")
      *
-     * @ORM\JoinColumn (name="lead_user_id", referencedColumnName="id")
      *
      * @var User|null
      */
+    #[ORM\ManyToOne(targetEntity: \User::class, inversedBy: 'leadTeams')]
+    #[ORM\JoinColumn(name: 'lead_user_id', referencedColumnName: 'id')]
     protected $leadUser;
 
     /**
-     * @ORM\ManyToMany(targetEntity="User", mappedBy="teams")
      * @var \Doctrine\Common\Collections\Collection<int, User>
      */
+    #[ORM\ManyToMany(targetEntity: \User::class, mappedBy: 'teams')]
     protected $users;
 
     /**
@@ -130,9 +127,8 @@ class Team
 
     /**
      * Detach ManyToMany relations so the join rows are removed before deleting team
-     *
-     * @ORM\PreRemove
      */
+    #[ORM\PreRemove]
     public function preRemove(): void
     {
         if ($this->users) {

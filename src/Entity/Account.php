@@ -5,35 +5,31 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- *
- * @ORM\Entity
- * @ORM\Table(name="accounts")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'accounts')]
 class Account
 {
     /**
-     * @ORM\Id
      *
-     * @ORM\Column (type="integer")
      *
-     * @ORM\GeneratedValue (strategy="AUTO")
      *
      * @var int|null
      */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
     /**
-     * @ORM\Column (type="string", length=50)
-     *
      * @var null|string
      */
+    #[ORM\Column(type: 'string', length: 50)]
     protected $name;
 
     /**
-     * @ORM\OneToMany(targetEntity="Entry", mappedBy="account")
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
+    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'account')]
     protected $entries;
 
     public function getId(): int|null
