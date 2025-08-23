@@ -11,7 +11,7 @@ final class RequestHelper
     public static function string(Request $request, string $key, string $default = ''): string
     {
         $value = $request->request->get($key);
-        if ($value === null) {
+        if (null === $value) {
             return $default;
         }
 
@@ -21,19 +21,19 @@ final class RequestHelper
     public static function nullableString(Request $request, string $key): ?string
     {
         $value = $request->request->get($key);
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 
         $string = trim((string) $value);
 
-        return $string === '' ? null : $string;
+        return '' === $string ? null : $string;
     }
 
     public static function bool(Request $request, string $key, bool $default = false): bool
     {
         $value = $request->request->get($key);
-        if ($value === null) {
+        if (null === $value) {
             return $default;
         }
 
@@ -49,7 +49,7 @@ final class RequestHelper
     public static function int(Request $request, string $key, ?int $default = null): ?int
     {
         $value = $request->request->get($key);
-        if ($value === null || $value === '') {
+        if (null === $value || '' === $value) {
             return $default;
         }
 
@@ -59,7 +59,7 @@ final class RequestHelper
     public static function float(Request $request, string $key, float $default = 0.0): float
     {
         $value = $request->request->get($key);
-        if ($value === null || $value === '') {
+        if (null === $value || '' === $value) {
             return $default;
         }
 
@@ -69,7 +69,7 @@ final class RequestHelper
     public static function dateFromFormat(Request $request, string $key, string $format): ?\DateTime
     {
         $value = self::string($request, $key);
-        if ($value === '') {
+        if ('' === $value) {
             return null;
         }
 
@@ -77,6 +77,11 @@ final class RequestHelper
 
         return $dt ?: null;
     }
+
+    public static function upperString(Request $request, string $key, string $default = ''): string
+    {
+        $value = self::string($request, $key, $default);
+
+        return strtoupper(trim($value));
+    }
 }
-
-

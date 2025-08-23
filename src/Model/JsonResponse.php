@@ -34,13 +34,18 @@ class JsonResponse extends Response
     /**
      * @param array<string, string>|array<string, array<string>> $headers
      */
+    /** @psalm-suppress PropertyNotSetInConstructor */
     public function __construct(mixed $content = null, int $status = 200, array $headers = [])
     {
+        // Initialize base Response with sane defaults
         parent::__construct('', $status, $headers);
-        
+        $this->version = '1.1';
+        $this->statusText = '';
+        $this->charset = 'UTF-8';
+
         if (null !== $content) {
-            $encoded = is_string($content) ? json_encode($content) : json_encode($content);
-            parent::setContent(false !== $encoded ? (string) $encoded : 'null');
+            $encoded = json_encode($content);
+            parent::setContent(false !== $encoded ? $encoded : 'null');
         } else {
             parent::setContent('null');
         }

@@ -20,6 +20,7 @@ class Error extends JsonResponse
      * @param int         $statusCode
      * @param string|null $forwardUrl
      */
+    /** @psalm-suppress PropertyNotSetInConstructor */
     public function __construct(
         $errorMessage,
         $statusCode,
@@ -28,7 +29,7 @@ class Error extends JsonResponse
     ) {
         $message = ['message' => $errorMessage];
 
-        if ($forwardUrl) {
+        if (is_string($forwardUrl) && '' !== $forwardUrl) {
             $message['forwardUrl'] = $forwardUrl;
         }
 

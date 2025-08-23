@@ -153,7 +153,7 @@ class DefaultController extends BaseController
 
         // early exit, if POST parameter for current entry is not given
         $entryId = $request->request->get('id');
-        if (!$entryId) {
+        if ($entryId === null || $entryId === '' || $entryId === false) {
             return new JsonResponse($data);
         }
 
@@ -248,10 +248,11 @@ class DefaultController extends BaseController
             return $this->login($request);
         }
 
-        if ($request->query->get('project')) {
+        $projectParam = $request->query->get('project');
+        if (is_scalar($projectParam) && (string) $projectParam !== '') {
             $project = $this->managerRegistry
                 ->getRepository(Project::class)
-                ->find($request->query->get('project'));
+                ->find($projectParam);
 
             if ($project instanceof Project && $project->getCustomer() instanceof Customer) {
                 return new JsonResponse(['customer' => $project->getCustomer()->getId()]);
@@ -428,7 +429,7 @@ class DefaultController extends BaseController
 
         $users = $objectRepository->getUsersWithTime($name ?? '');
 
-        if (empty($users)) {
+        if (count($users) === 0) {
             return new Response(
                 'There is no information available about this ticket.',
                 \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND
