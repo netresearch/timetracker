@@ -21,11 +21,11 @@ return RectorConfig::configure()
         SetList::TYPE_DECLARATION,
         SetList::NAMING,
         SetList::CODING_STYLE,
-        SymfonyLevelSetList::UP_TO_SYMFONY_64,
+        SymfonySetList::UP_TO_SYMFONY_64,
         SymfonySetList::SYMFONY_CODE_QUALITY,
     ])
     ->withSymfonyLevelSets([
-        SymfonyLevelSetList::UP_TO_SYMFONY_64,
+        SymfonySetList::UP_TO_SYMFONY_64,
     ])
     ->withAttributesSets()
     ->withSkip([]);
