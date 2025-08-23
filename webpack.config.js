@@ -77,8 +77,10 @@ Encore
         config.corejs = 3;
     })
 
-    // enables Sass/SCSS support
-    .enableSassLoader()
+    // enables Sass/SCSS support and use modern embedded Sass implementation to avoid legacy warnings
+    .enableSassLoader((options) => {
+        options.implementation = require('sass-embedded');
+    })
 
     // uncomment if you use TypeScript
     //.enableTypeScriptLoader()

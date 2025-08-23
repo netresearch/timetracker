@@ -18,6 +18,7 @@ use App\Response\Error;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\SubticketSyncService;
 use Symfony\Component\HttpFoundation\Request;
+use App\Util\RequestHelper;
 
 /**
  * Class AdminController.
@@ -132,7 +133,7 @@ class AdminController extends BaseController
         }
 
         $projectId = (int) $request->request->get('id');
-        $name = $request->request->get('name');
+        $name = RequestHelper::string($request, 'name');
 
         /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
@@ -151,13 +152,13 @@ class AdminController extends BaseController
 
         $jiraId = $request->request->get('jiraId') ? strtoupper((string) $request->request->get('jiraId')) : '';
         $jiraTicket = $request->request->get('jiraTicket') ? strtoupper((string) $request->request->get('jiraTicket')) : '';
-        $active = (bool) ($request->request->get('active') ?: 0);
-        $global = (bool) ($request->request->get('global') ?: 0);
-        $estimation = TimeHelper::readable2minutes($request->request->get('estimation') ?: '0m');
-        $billing = $request->request->get('billing') ?: 0;
-        $costCenter = $request->request->get('cost_center') ?: null;
-        $offer = $request->request->get('offer') ?: 0;
-        $additionalInformationFromExternal = (bool) ($request->request->get('additionalInformationFromExternal') ?: 0);
+        $active = RequestHelper::bool($request, 'active');
+        $global = RequestHelper::bool($request, 'global');
+        $estimation = TimeHelper::readable2minutes(RequestHelper::string($request, 'estimation', '0m'));
+        $billing = RequestHelper::int($request, 'billing', 0) ?? 0;
+        $costCenter = RequestHelper::nullableString($request, 'cost_center');
+        $offer = RequestHelper::nullableString($request, 'offer');
+        $additionalInformationFromExternal = RequestHelper::bool($request, 'additionalInformationFromExternal');
         /** @var \App\Repository\ProjectRepository $projectRepository */
         $projectRepository = $this->doctrineRegistry->getRepository(Project::class);
         $internalJiraTicketSystem = $request->request->get('internalJiraTicketSystem');
@@ -192,7 +193,7 @@ class AdminController extends BaseController
             $project->setCustomer($customer);
         }
 
-        if (strlen((string) $name) < 3) {
+        if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid project name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -364,10 +365,10 @@ class AdminController extends BaseController
         }
 
         $customerId = (int) $request->request->get('id');
-        $name = $request->request->get('name');
-        $active = (bool) ($request->request->get('active') ?: 0);
-        $global = (bool) ($request->request->get('global') ?: 0);
-        $teamIds = $request->request->get('teams') ?: [];
+        $name = RequestHelper::string($request, 'name');
+        $active = RequestHelper::bool($request, 'active');
+        $global = RequestHelper::bool($request, 'global');
+        $teamIds = $request->request->all('teams') ?: [];
 
         /** @var \App\Repository\CustomerRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
@@ -388,7 +389,7 @@ class AdminController extends BaseController
             $customer = new Customer();
         }
 
-        if (strlen((string) $name) < 3) {
+        if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid customer name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -481,11 +482,11 @@ class AdminController extends BaseController
         }
 
         $userId = (int) $request->request->get('id');
-        $name = $request->request->get('username');
-        $abbr = $request->request->get('abbr');
-        $type = $request->request->get('type');
-        $locale = $request->request->get('locale');
-        $teamIds = $request->request->get('teams') ? (array) $request->request->get('teams') : [];
+        $name = RequestHelper::string($request, 'username');
+        $abbr = RequestHelper::string($request, 'abbr');
+        $type = RequestHelper::string($request, 'type');
+        $locale = RequestHelper::string($request, 'locale');
+        $teamIds = $request->request->all('teams') ?: [];
 
         /** @var UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
@@ -495,14 +496,14 @@ class AdminController extends BaseController
             return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 
-        if (strlen((string) $name) < 3) {
+        if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid user name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        if (3 != strlen((string) $abbr)) {
+        if (3 != strlen($abbr)) {
             $response = new Response($this->translate('Please provide a valid user name abbreviation with 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -613,7 +614,7 @@ class AdminController extends BaseController
             $preset = $doctrine->getRepository(Preset::class)
                     ->find($id);
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrineRegistry->getManager();
             if ($preset) {
                 $em->remove($preset);
                 $em->flush();
@@ -642,16 +643,16 @@ class AdminController extends BaseController
         }
 
         $id = (int) $request->request->get('id');
-        $name = $request->request->get('name');
+        $name = (string) ($request->request->get('name') ?? '');
         $customer = $this->doctrineRegistry->getRepository(Customer::class)
             ->find($request->request->get('customer'));
         $project = $this->doctrineRegistry->getRepository(Project::class)
             ->find($request->request->get('project'));
         $activity = $this->doctrineRegistry->getRepository(Activity::class)
             ->find($request->request->get('activity'));
-        $description = $request->request->get('description');
+        $description = (string) ($request->request->get('description') ?? '');
 
-        if (strlen((string) $name) < 3) {
+        if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -709,17 +710,19 @@ class AdminController extends BaseController
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
         $id = (int) $request->request->get('id');
-        $name = $request->request->get('name');
-        $type = $request->request->get('type');
+        $name = (string) ($request->request->get('name') ?? '');
+        $type = (string) ($request->request->get('type') ?? '');
         $bookTime = $request->request->get('bookTime');
-        $url = $request->request->get('url');
-        $login = $request->request->get('login');
-        $password = $request->request->get('password');
-        $publicKey = $request->request->get('publicKey');
-        $privateKey = $request->request->get('privateKey');
-        $ticketUrl = $request->request->get('ticketUrl');
-        $oauthConsumerKey = $request->request->get('oauthConsumerKey');
-        $oauthConsumerSecret = $request->request->get('oauthConsumerSecret');
+        $url = (string) ($request->request->get('url') ?? '');
+        $login = (string) ($request->request->get('login') ?? '');
+        $password = (string) ($request->request->get('password') ?? '');
+        $publicKey = (string) ($request->request->get('publicKey') ?? '');
+        $privateKey = (string) ($request->request->get('privateKey') ?? '');
+        $ticketUrl = (string) ($request->request->get('ticketUrl') ?? '');
+        $oauthConsumerKeyRaw = $request->request->get('oauthConsumerKey');
+        $oauthConsumerSecretRaw = $request->request->get('oauthConsumerSecret');
+        $oauthConsumerKey = ($oauthConsumerKeyRaw === null || $oauthConsumerKeyRaw === '') ? null : (string) $oauthConsumerKeyRaw;
+        $oauthConsumerSecret = ($oauthConsumerSecretRaw === null || $oauthConsumerSecretRaw === '') ? null : (string) $oauthConsumerSecretRaw;
 
         if (0 !== $id) {
             $ticketSystem = $objectRepository->find($id);
@@ -735,7 +738,7 @@ class AdminController extends BaseController
             $ticketSystem = new TicketSystem();
         }
 
-        if (strlen((string) $name) < 3) {
+        if (strlen($name) < 3) {
             $response = new Response($this->translate('Please provide a valid ticket system name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -827,7 +830,7 @@ class AdminController extends BaseController
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
 
         $id = (int) $request->request->get('id');
-        $name = $request->request->get('name');
+        $name = (string) ($request->request->get('name') ?? '');
         $needsTicket = (bool) $request->request->get('needsTicket');
         $factorRaw = $request->request->get('factor');
         $factor = (float) str_replace(',', '.', (string) ($factorRaw ?? '0'));
@@ -889,7 +892,7 @@ class AdminController extends BaseController
             $activity = $doctrine->getRepository(Activity::class)
                 ->find($id);
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrineRegistry->getManager();
             if ($activity) {
                 $em->remove($activity);
                 $em->flush();
@@ -925,7 +928,7 @@ class AdminController extends BaseController
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
 
         $id = (int) $request->request->get('id');
-        $name = $request->request->get('name');
+        $name = (string) ($request->request->get('name') ?? '');
         $teamLead = $request->request->get('lead_user_id') ?
             $this->doctrineRegistry->getRepository(User::class)
                 ->find($request->request->get('lead_user_id'))
@@ -995,7 +998,7 @@ class AdminController extends BaseController
             $team = $doctrine->getRepository(Team::class)
                 ->find($id);
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrineRegistry->getManager();
             if ($team) {
                 $em->remove($team);
                 $em->flush();
@@ -1082,8 +1085,8 @@ class AdminController extends BaseController
         }
 
         $contractId = (int) $request->request->get('id');
-        $start = $request->request->get('start');
-        $end = $request->request->get('end');
+        $start = (string) ($request->request->get('start') ?? '');
+        $end = (string) ($request->request->get('end') ?? '');
         $hours_0 = (float) str_replace(',', '.', (string) ($request->request->get('hours_0') ?? '0'));
         $hours_1 = (float) str_replace(',', '.', (string) ($request->request->get('hours_1') ?? '0'));
         $hours_2 = (float) str_replace(',', '.', (string) ($request->request->get('hours_2') ?? '0'));
@@ -1121,7 +1124,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $dateStart = \DateTime::createFromFormat('Y-m-d', $start ?: '');
+        $dateStart = \DateTime::createFromFormat('Y-m-d', $start);
         if (!$dateStart) {
             $response = new Response($this->translate('Please enter a valid contract start.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -1132,7 +1135,7 @@ class AdminController extends BaseController
         $dateStart->setDate((int) $dateStart->format('Y'), (int) $dateStart->format('m'), (int) $dateStart->format('d'));
         $dateStart->setTime(0, 0, 0);
 
-        $dateEnd = \DateTime::createFromFormat('Y-m-d', $end ?: '');
+        $dateEnd = \DateTime::createFromFormat('Y-m-d', $end);
         if ($dateEnd) {
             $dateEnd->setDate((int) $dateEnd->format('Y'), (int) $dateEnd->format('m'), (int) $dateEnd->format('d'));
             $dateEnd->setTime(23, 59, 59);
@@ -1299,7 +1302,7 @@ class AdminController extends BaseController
             $contract = $doctrine->getRepository(Contract::class)
                 ->find($id);
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrineRegistry->getManager();
             if ($contract) {
                 $em->remove($contract);
                 $em->flush();
