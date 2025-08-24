@@ -17,11 +17,11 @@ class UserTicketsystem extends Base
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    #[ORM\ManyToOne(targetEntity: \TicketSystem::class)]
+    #[ORM\ManyToOne(targetEntity: TicketSystem::class)]
     #[ORM\JoinColumn(name: 'ticket_system_id', referencedColumnName: 'id', nullable: true)]
     protected TicketSystem $ticketSystem;
 
-    #[ORM\ManyToOne(targetEntity: \User::class, inversedBy: 'userTicketsystems')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'userTicketsystems')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
     protected User $user;
 

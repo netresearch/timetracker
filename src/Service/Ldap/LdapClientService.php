@@ -253,7 +253,7 @@ class LdapClientService
      */
     public function setPort($port): static
     {
-        $this->_port = (int) $port;
+        $this->_port = is_int($port) ? $port : (int) (string) $port;
 
         return $this;
     }
