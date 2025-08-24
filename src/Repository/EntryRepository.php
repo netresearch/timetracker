@@ -20,8 +20,8 @@ use App\Entity\User;
 use App\Helper\TimeHelper;
 use App\Service\ClockInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Class EntryRepository.
@@ -38,7 +38,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Convert N working days into calendar days by skipping weekends.
      */
-    private function getCalendarDaysByWorkDays(int $workingDays): int
+    public function getCalendarDaysByWorkDays(int $workingDays): int
     {
         if ($workingDays <= 0) {
             return 0;
@@ -47,17 +47,18 @@ class EntryRepository extends ServiceEntityRepository
         $days = 0;
         $date = $this->clock->today();
         while ($workingDays > 0) {
-            $days++;
+            ++$days;
             $date = $date->sub(new \DateInterval('P1D'));
             $dayOfWeek = (int) $date->format('N'); // 1 (Mon) .. 7 (Sun)
             if ($dayOfWeek < 6) {
-                $workingDays--;
+                --$workingDays;
             }
         }
 
         return $days;
     }
     private readonly ClockInterface $clock;
+
     public function __construct(ManagerRegistry $registry, ClockInterface $clock)
     {
         parent::__construct($registry, Entry::class);
@@ -640,7 +641,7 @@ class EntryRepository extends ServiceEntityRepository
         $rows = $statement->executeQuery()->fetchAllAssociative();
 
         return array_map(
-            static fn(array $row): array => [
+            static fn (array $row): array => [
                 'name' => isset($row['name']) ? (string) $row['name'] : null,
                 'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
             ],
@@ -670,7 +671,7 @@ class EntryRepository extends ServiceEntityRepository
         $rows = $statement->executeQuery()->fetchAllAssociative();
 
         return array_map(
-            static fn(array $row): array => [
+            static fn (array $row): array => [
                 'username' => (string) $row['username'],
                 'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
             ],
