@@ -12,12 +12,12 @@ class TicketSystemRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, TicketSystem::class);
     }
+    
     /**
      * get all ticket systems.
      *
      * @throws \ReflectionException
-     */
-    /**
+     *
      * @return array<int, array{ticketSystem: array<string, mixed>}>
      */
     public function getAllTicketSystems(): array

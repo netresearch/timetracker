@@ -102,9 +102,8 @@ class Entry extends Base
     /**
      * Holds an array of labels assigned for the issue.
      *
-     * @var array
+     * @var array<int, string>
      */
-    /** @var array<int, string> */
     protected $externalLabels = [];
 
     /**
@@ -147,9 +146,6 @@ class Entry extends Base
     /**
      * Returns the array of external labels.
      *
-     * @return array
-     */
-    /**
      * @return array<int, string>
      */
     public function getExternalLabels()
@@ -159,8 +155,7 @@ class Entry extends Base
 
     /**
      * Sets the array of external labels.
-     */
-    /**
+     *
      * @param array<int, string> $arExternalLabels
      */
     public function setExternalLabels(array $arExternalLabels): void

@@ -15,8 +15,8 @@ class Error extends JsonResponse
 {
     /**
      * Error constructor.
+     * @psalm-suppress PropertyNotSetInConstructor
      */
-    /** @psalm-suppress PropertyNotSetInConstructor */
     public function __construct(
         string $errorMessage,
         int $statusCode,

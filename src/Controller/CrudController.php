@@ -711,11 +711,9 @@ class CrudController extends BaseController
     /**
      * Write log entry using Symfony's standard logging mechanism.
      *
-     * @param array $data The data to log
-     * @param bool  $raw  Whether this is raw input data
-     */
-    /**
      * @param array<string, mixed>|list<mixed> $data
+     * @param bool  $raw  Whether this is raw input data
+
      */
     private function logData(array $data, bool $raw = false): void
     {

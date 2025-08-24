@@ -76,8 +76,7 @@ class EntryRepository extends ServiceEntityRepository
      * Uses DQL.
      *
      * @throws \Exception
-     */
-    /**
+     *
      * @return array<int, Entry>
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
@@ -106,11 +105,6 @@ class EntryRepository extends ServiceEntityRepository
      * @param int   $month      Filter entries by month
      * @param int   $projectId  Filter entries by project
      * @param int   $customerId Filter entries by customer
-     * @param array $arSort     Sort result by given fields
-     *
-     * @return Entry[]
-     */
-    /**
      * @param array<string, bool>|null $arSort
      *
      * @return array<int, Entry>
@@ -164,8 +158,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param int    $userId Filter by user ID
      * @param string $day    Filter by date
-     */
-    /**
+     *
      * @return array<int, Entry>
      */
     public function findByDay(int $userId, string $day): array
@@ -194,8 +187,7 @@ class EntryRepository extends ServiceEntityRepository
      * It converts the requested number of working days to calendar days using getCalendarDaysByWorkDays().
      *
      * @throws \Doctrine\DBAL\Exception
-     */
-    /**
+     *
      * @return array<int, array{entry: array<string, mixed>}>
      */
     public function getEntriesByUser(int $userId, int $days = 3, bool $showFuture = true): array
@@ -301,8 +293,7 @@ class EntryRepository extends ServiceEntityRepository
      * scopes: customer, project, activity, ticket.
      *
      * @throws \Doctrine\DBAL\Exception
-     */
-    /**
+     *
      * @param array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}> $data
      *
      * @return array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}>
@@ -430,8 +421,7 @@ class EntryRepository extends ServiceEntityRepository
      * Uses raw SQL. Refactored to use prepared statements.
      *
      * @throws \Doctrine\DBAL\Exception
-     */
-    /**
+     *
      * @return array{duration: int|mixed, count: bool}
      */
     public function getWorkByUser(int $userId, int $period = self::PERIOD_DAY): array
@@ -487,8 +477,6 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Get query of entries for given filter params.
      *
-     * @param array $arFilter every value is optional
-     *
      *  $arFilter[customer]         => int customer_id
      *           [project]          => int project_id
      *           [user]             => int user_id
@@ -502,8 +490,7 @@ class EntryRepository extends ServiceEntityRepository
      *           [visibility_user]  => user_id restricts entry visibility by users teams
      *
      * @throws \Exception
-     */
-    /**
+     *
      * @param array<string, mixed> $arFilter
      */
     public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\Query
@@ -606,11 +593,6 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @throws \Exception
      *
-     * @return array
-     */
-    /**
-     * @param array<string, mixed> $arFilter
-     *
      * @return array<int, Entry>
      */
     public function findByFilterArray(array $arFilter = [])
@@ -620,8 +602,7 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Get a list of activities with the total time booked on the ticket.
-     */
-    /**
+     *
      * @return array<int, array{name: string|null, total_time: int|string|null}>
      */
     public function getActivitiesWithTime(string $ticketname): array
@@ -651,8 +632,7 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Get a list of usernames that worked on the ticket and the total time they spent on it.
-     */
-    /**
+     *
      * @return array<int, array{username: string, total_time: int|string|null}>
      */
     public function getUsersWithTime(string $ticketname): array

@@ -180,9 +180,6 @@ class Customer extends Base
     /**
      * Get projects.
      *
-     * @return \Doctrine\Common\Collections\Collection $projects
-     */
-    /**
      * @return \Doctrine\Common\Collections\Collection<int, Project>
      */
     public function getProjects()
@@ -193,9 +190,6 @@ class Customer extends Base
     /**
      * Get entries.
      *
-     * @return \Doctrine\Common\Collections\Collection $entries
-     */
-    /**
      * @return \Doctrine\Common\Collections\Collection<int, Entry>
      */
     public function getEntries()
@@ -230,9 +224,6 @@ class Customer extends Base
     /**
      * Get teams.
      *
-     * @return \Doctrine\Common\Collections\Collection $teams
-     */
-    /**
      * @return \Doctrine\Common\Collections\Collection<int, Team>
      */
     public function getTeams()
@@ -284,11 +275,6 @@ class Customer extends Base
         $this->teams->removeElement($team);
     }
 
-    /**
-     * Get presets.
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
     /**
      * @return \Doctrine\Common\Collections\Collection<int, Preset>
      */

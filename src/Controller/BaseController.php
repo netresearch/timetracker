@@ -254,12 +254,10 @@ class BaseController extends AbstractController
      * helper method to shorten the usage of the translator in the controllers.
      *
      * @param string $id         translation identifier
-     * @param array  $parameters translation parameters
+     * @param array<string, mixed> $parameters
      * @param string $domain     translation file domain
      * @param null   $locale     translation locale
-     */
-    /**
-     * @param array<string, mixed> $parameters
+
      */
     protected function translate(
         string $id,

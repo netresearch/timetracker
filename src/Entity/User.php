@@ -232,9 +232,6 @@ class User implements UserInterface
     /**
      * Get teams.
      *
-     * @return \Doctrine\Common\Collections\Collection $teams
-     */
-    /**
      * @return \Doctrine\Common\Collections\Collection<int, Team>
      */
     public function getTeams()
@@ -281,11 +278,6 @@ class User implements UserInterface
     /**
      * return all relevant settings in an array.
      *
-     * @return (bool|int|string)[]
-     *
-     * @psalm-return array{show_empty_line: bool, suggest_time: bool, show_future: bool, user_id: int, user_name: string, type: string, locale: string}
-     */
-    /**
      * @return array{show_empty_line: bool, suggest_time: bool, show_future: bool, user_id: int, user_name: string, type: string, locale: string}
      */
     public function getSettings(): array
