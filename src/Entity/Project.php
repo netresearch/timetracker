@@ -242,9 +242,7 @@ class Project extends Base
     /**
      * Convert to array and add additional properties.
      *
-     * @return (mixed|string)[]
-     *
-     * @psalm-return array{estimationText: string,...}
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
