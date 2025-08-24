@@ -45,7 +45,10 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
             ->onlyMethods(['createQueryBuilder'])
             ->getMock();
 
-        $queryMock = $this->createMock(\Doctrine\ORM\AbstractQuery::class);
+        $queryMock = $this->getMockBuilder(\Doctrine\ORM\Query::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getResult'])
+            ->getMock();
         $queryMock->method('getResult')->willReturn([$project, $p2]);
 
         $qbMock = $this->getMockBuilder(\Doctrine\ORM\QueryBuilder::class)
