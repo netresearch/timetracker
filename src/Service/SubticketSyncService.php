@@ -3,15 +3,11 @@
 namespace App\Service;
 
 use App\Entity\Project;
-use App\Service\Integration\Jira\JiraOAuthApiFactory;
-use Doctrine\Persistence\ManagerRegistry;
 
 class SubticketSyncService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
-    {
-    }
-
+    public $managerRegistry;
+    public $jiraOAuthApiFactory;
     /**
      * Fetch subtickets from Jira and update the project record's "subtickets" field.
      *
@@ -39,7 +35,7 @@ class SubticketSyncService
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             throw new \Exception('No ticket system configured for project', 400);
         }
 

@@ -3,16 +3,16 @@
 declare(strict_types=1);
 
 /**
- * Netresearch Timetracker
+ * Netresearch Timetracker.
  *
  * PHP version 8
  *
  * @category   Netresearch
- * @package    Timetracker
- * @subpackage Util
+ *
  * @author     Various Artists <info@netresearch.de>
  * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
- * @link       http://www.netresearch.de
+ *
+ * @see       http://www.netresearch.de
  */
 
 namespace App\Util\PhpSpreadsheet;

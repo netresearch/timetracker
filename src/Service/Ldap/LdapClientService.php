@@ -53,12 +53,12 @@ class LdapClientService
     protected function getLdapOptions(): array
     {
         return [
-            'useSsl'   => $this->_useSSL,
-            'host'     => $this->_host,
+            'useSsl' => $this->_useSSL,
+            'host' => $this->_host,
             'username' => $this->_readUser,
             'password' => $this->_readPass,
-            'baseDn'   => $this->_baseDn,
-            'port'     => $this->_port,
+            'baseDn' => $this->_baseDn,
+            'port' => $this->_port,
         ];
     }
 
@@ -81,7 +81,7 @@ class LdapClientService
         putenv('LDAPTLS_REQCERT=never');
 
         try {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->debug('LDAP: Attempting read-only bind', [
                     'host' => $this->_host,
                     'port' => $this->_port,
@@ -92,11 +92,11 @@ class LdapClientService
             }
 
             $ldap->bind();
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->info('LDAP: Read-only bind successful.');
             }
         } catch (LdapException $ldapException) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error('LDAP: Read-only bind failed', [
                     'error' => $ldapException->getMessage(),
                     'code' => $ldapException->getCode(),
@@ -108,11 +108,11 @@ class LdapClientService
                 ]);
             }
 
-            throw new \Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $ldapException->getMessage() . '', $ldapException->getCode(), $ldapException);
+            throw new \Exception('No connection to LDAP: '.$this->getLdapOptions()['host'].': '.$ldapException->getMessage().'', $ldapException->getCode(), $ldapException);
         }
 
-        $searchFilter = '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')';
-        if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+        $searchFilter = '('.$this->_userNameField.'='.ldap_escape($this->_userName).')';
+        if ($this->logger instanceof LoggerInterface) {
             $this->logger->debug('LDAP: Searching for user', [
                 'baseDn' => $this->_baseDn,
                 'filter' => $searchFilter,
@@ -128,8 +128,8 @@ class LdapClientService
             ['cn', 'distinguishedName', 'dn']
         );
 
-        if (!is_object($collection) || ($collection->count() === 0)) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+        if (!is_object($collection) || (0 === $collection->count())) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: User search failed or returned no results.', [
                     'filter' => $searchFilter,
                     'baseDn' => $this->_baseDn,
@@ -148,7 +148,7 @@ class LdapClientService
         }
 
         $ldapEntry = $collection->getFirst();
-        if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+        if ($this->logger instanceof LoggerInterface) {
             $returnedDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? 'N/A');
             $this->logger->info('LDAP: User found.', [
                 'dn_returned' => $returnedDn,
@@ -170,12 +170,14 @@ class LdapClientService
      */
     /**
      * @param array<string, array<int, string>> $ldapEntry
+     *
+     * @return true
      */
     protected function verifyPassword(array $ldapEntry): bool
     {
         $userDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? null);
         if (!$userDn) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error('LDAP: Could not extract DN or distinguishedName from user entry.', ['entry' => $ldapEntry]);
             }
 
@@ -189,7 +191,7 @@ class LdapClientService
         $ldap = new Ldap($ldapOptions);
 
         try {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->debug('LDAP: Attempting user bind.', [
                     'host' => $this->_host,
                     'port' => $this->_port,
@@ -199,11 +201,11 @@ class LdapClientService
             }
 
             $ldap->bind();
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->info('LDAP: User bind successful.', ['bindDn' => $userDn]);
             }
         } catch (LdapException $ldapException) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error('LDAP: User bind failed.', [
                     'error' => $ldapException->getMessage(),
                     'code' => $ldapException->getCode(),
@@ -214,7 +216,7 @@ class LdapClientService
                 ]);
             }
 
-            throw new \Exception('Login data could not be validated: ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
+            throw new \Exception('Login data could not be validated: '.$ldapException->getMessage(), $ldapException->getCode(), $ldapException);
         }
 
         return true;
@@ -222,7 +224,7 @@ class LdapClientService
 
     public function setUserName(string $username): static
     {
-        if ($username === '' || $username === '0') {
+        if ('' === $username || '0' === $username) {
             throw new \Exception(sprintf("Invalid user name: '%s'", $username));
         }
 
@@ -238,90 +240,77 @@ class LdapClientService
     public function setUserPass(string $password): static
     {
         $this->_userPass = $password;
+
         return $this;
     }
 
     /**
-     * @param \UnitEnum|array|null|scalar $host
-     */
-    /**
-     * @param mixed $host
+     * @param \UnitEnum|array|scalar|null $host
      */
     public function setHost($host): static
     {
         $this->_host = (string) $host;
+
         return $this;
     }
 
     /**
-     * @param \UnitEnum|array|null|scalar $port
-     */
-    /**
-     * @param mixed $port
+     * @param \UnitEnum|array|scalar|null $port
      */
     public function setPort($port): static
     {
         $this->_port = (int) $port;
+
         return $this;
     }
 
     /**
-     * @param \UnitEnum|array|null|scalar $readUser
-     */
-    /**
-     * @param mixed $readUser
+     * @param \UnitEnum|array|scalar|null $readUser
      */
     public function setReadUser($readUser): static
     {
         $this->_readUser = (string) $readUser;
+
         return $this;
     }
 
     /**
-     * @param \UnitEnum|array|null|scalar $readPass
-     */
-    /**
-     * @param mixed $readPass
+     * @param \UnitEnum|array|scalar|null $readPass
      */
     public function setReadPass($readPass): static
     {
         $this->_readPass = (string) $readPass;
+
         return $this;
     }
 
     /**
-     * @param \UnitEnum|array|null|scalar $base_dn
-     */
-    /**
-     * @param mixed $base_dn
+     * @param \UnitEnum|array|scalar|null $base_dn
      */
     public function setBaseDn($base_dn): static
     {
         $this->_baseDn = (string) $base_dn;
+
         return $this;
     }
 
     /**
-     * @param \UnitEnum|array|null|scalar $useSSL
-     */
-    /**
-     * @param mixed $useSSL
+     * @param \UnitEnum|array|scalar|null $useSSL
      */
     public function setUseSSL($useSSL): static
     {
         $this->_useSSL = (bool) $useSSL;
+
         return $this;
     }
 
     /**
-     * @param \UnitEnum|array|null|scalar $userNameField
-     */
-    /**
-     * @param mixed $userNameField
+     * @param \UnitEnum|array|scalar|null $userNameField
      */
     public function setUserNameField($userNameField): static
     {
         $this->_userNameField = (string) $userNameField;
+
         return $this;
     }
 
@@ -329,8 +318,6 @@ class LdapClientService
      * Authenticate username and password at the LDAP server.
      *
      * @throws LdapException
-     *
-     * @return true
      */
     public function login(): true
     {
@@ -338,9 +325,10 @@ class LdapClientService
             $this->verifyUsername()
         );
         // verifyPassword returns bool true; enforce literal true for signature
-        if ($result !== true) {
+        if (!$result) {
             throw new \RuntimeException('LDAP verification did not return true');
         }
+
         return true;
     }
 
@@ -362,25 +350,25 @@ class LdapClientService
     {
         $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
         if (!$dn) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
             }
 
             return;
         }
 
-        $mappingFile = rtrim($this->projectDir, '/') . '/config/ldap_ou_team_mapping.yml';
+        $mappingFile = rtrim($this->projectDir, '/').'/config/ldap_ou_team_mapping.yml';
 
         $this->teams = [];
         if (file_exists($mappingFile)) {
-            if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+            if ($this->logger instanceof LoggerInterface) {
                 $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
             }
 
             try {
                 $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
                 if (!$arMapping || !is_array($arMapping)) {
-                    if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+                    if ($this->logger instanceof LoggerInterface) {
                         $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
                     }
 
@@ -389,27 +377,26 @@ class LdapClientService
 
                 /** @var array<string, string> $arMapping */
                 foreach ($arMapping as $group => $teamName) {
-                    if (str_contains(strtolower($dn), 'ou=' . strtolower($group))) {
-                        $this->teams[] = (string) $teamName;
-                        if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+                    if (str_contains(strtolower($dn), 'ou='.strtolower($group))) {
+                        $this->teams[] = $teamName;
+                        if ($this->logger instanceof LoggerInterface) {
                             $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
                         }
                     }
                 }
 
-                if ($this->teams === [] && $this->logger) {
+                if ([] === $this->teams && $this->logger) {
                     $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
                 }
-
             } catch (\Exception $e) {
-                if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+                if ($this->logger instanceof LoggerInterface) {
                     $this->logger->error('LDAP: Failed to parse team mapping file.', [
                         'mappingFile' => $mappingFile,
                         'error' => $e->getMessage(),
                     ]);
                 }
             }
-        } elseif ($this->logger instanceof \Psr\Log\LoggerInterface) {
+        } elseif ($this->logger instanceof LoggerInterface) {
             $this->logger->warning('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
         }
     }

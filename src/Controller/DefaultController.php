@@ -153,7 +153,7 @@ class DefaultController extends BaseController
 
         // early exit, if POST parameter for current entry is not given
         $entryId = $request->request->get('id');
-        if ($entryId === null || $entryId === '' || $entryId === false) {
+        if (null === $entryId || '' === $entryId || false === $entryId) {
             return new JsonResponse($data);
         }
 
@@ -249,7 +249,7 @@ class DefaultController extends BaseController
         }
 
         $projectParam = $request->query->get('project');
-        if (is_scalar($projectParam) && (string) $projectParam !== '') {
+        if (is_scalar($projectParam) && '' !== $projectParam) {
             $project = $this->managerRegistry
                 ->getRepository(Project::class)
                 ->find($projectParam);
@@ -429,7 +429,7 @@ class DefaultController extends BaseController
 
         $users = $objectRepository->getUsersWithTime($name ?? '');
 
-        if (count($users) === 0) {
+        if (0 === count($users)) {
             return new Response(
                 'There is no information available about this ticket.',
                 \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND
@@ -477,8 +477,8 @@ class DefaultController extends BaseController
         // Prefer modern public/ path; fall back to legacy web/ path for BC
         $projectDir = $this->kernel->getProjectDir();
         $publicPath = $projectDir.'/public/scripts/timeSummaryForJira.js';
-        $legacyPath = $projectDir.'/web/scripts/timeSummaryForJira.js';
-        $scriptPath = file_exists($publicPath) ? $publicPath : $legacyPath;
+        if (file_exists($publicPath)) {
+        }
 
         // Always return a string payload for the test, regardless of file presence
         // Always return a string payload with base URL for the ticket summary endpoint

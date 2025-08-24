@@ -23,42 +23,36 @@ final class RequestEntityHelper
 
         $id = (string) $raw;
 
-        return $id === '' ? null : $id;
+        return '' === $id ? null : $id;
     }
 
     /**
      * Generic find by id on a managed entity, returning typed or null.
      *
      * @template T of object
+     *
      * @param class-string<T> $entityClass
+     *
      * @return T|null
      */
-    public static function findById(ManagerRegistry $registry, string $entityClass, ?string $id): ?object
+    public static function findById(ManagerRegistry $managerRegistry, string $entityClass, ?string $id): ?object
     {
-        if ($id === null) {
+        if (null === $id) {
             return null;
         }
 
-        $entity = $registry->getRepository($entityClass)->find($id);
+        $entity = $managerRegistry->getRepository($entityClass)->find($id);
 
         return $entity instanceof $entityClass ? $entity : null;
     }
 
-    public static function user(Request $request, ManagerRegistry $registry, string $key): ?User
+    public static function user(Request $request, ManagerRegistry $managerRegistry, string $key): ?User
     {
-        /** @var User|null $user */
-        $user = self::findById($registry, User::class, self::id($request, $key));
-
-        return $user;
+        return self::findById($managerRegistry, User::class, self::id($request, $key));
     }
 
-    public static function ticketSystem(Request $request, ManagerRegistry $registry, string $key): ?TicketSystem
+    public static function ticketSystem(Request $request, ManagerRegistry $managerRegistry, string $key): ?TicketSystem
     {
-        /** @var TicketSystem|null $ts */
-        $ts = self::findById($registry, TicketSystem::class, self::id($request, $key));
-
-        return $ts;
+        return self::findById($managerRegistry, TicketSystem::class, self::id($request, $key));
     }
 }
-
-

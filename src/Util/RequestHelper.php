@@ -56,28 +56,6 @@ final class RequestHelper
         return (int) $value;
     }
 
-    public static function float(Request $request, string $key, float $default = 0.0): float
-    {
-        $value = $request->request->get($key);
-        if (null === $value || '' === $value) {
-            return $default;
-        }
-
-        return (float) str_replace(',', '.', (string) $value);
-    }
-
-    public static function dateFromFormat(Request $request, string $key, string $format): ?\DateTime
-    {
-        $value = self::string($request, $key);
-        if ('' === $value) {
-            return null;
-        }
-
-        $dt = \DateTime::createFromFormat($format, $value);
-
-        return $dt ?: null;
-    }
-
     public static function upperString(Request $request, string $key, string $default = ''): string
     {
         $value = self::string($request, $key, $default);

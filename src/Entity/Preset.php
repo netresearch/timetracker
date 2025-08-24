@@ -2,22 +2,20 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: \App\Repository\PresetRepository::class)]
 #[ORM\Table(name: 'presets')]
 class Preset extends Base
 {
     /**
-     *
      * @var int|null
      */
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
 
     /**
      * @var string
@@ -37,34 +35,31 @@ class Preset extends Base
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected Activity $activity;
 
-
     /**
      * @var string
      */
     #[ORM\Column(type: 'string')]
     protected $description;
 
-
-
     public function setId(int $id): static
     {
         $this->id = $id;
+
         return $this;
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer $id
+     * @return int $id
      */
     public function getId(): ?int
     {
         return $this->id;
     }
 
-
     /**
-     * Set name
+     * Set name.
      * *
      * @param string $name
      *
@@ -73,11 +68,12 @@ class Preset extends Base
     public function setName($name): static
     {
         $this->name = $name;
+
         return $this;
     }
 
     /**
-     * Get name
+     * Get name.
      *
      * @return string $name
      */
@@ -86,39 +82,34 @@ class Preset extends Base
         return $this->name;
     }
 
-
     /**
-     * Get customerId
+     * Get customerId.
      */
     public function getCustomerId(): ?int
     {
         return $this->getCustomer()->getId();
     }
 
-
     /**
-     * Get projectId
+     * Get projectId.
      */
     public function getProjectId(): ?int
     {
         return $this->getProject()->getId();
     }
 
-
     /**
-     * Get activityId
+     * Get activityId.
      *
-     * @return integer $activityId
+     * @return int $activityId
      */
     public function getActivityId(): ?int
     {
         return $this->getActivity()->getId();
     }
 
-
-
     /**
-     * Set description
+     * Set description.
      *
      * @param string $description
      *
@@ -127,11 +118,12 @@ class Preset extends Base
     public function setDescription($description): static
     {
         $this->description = $description;
+
         return $this;
     }
 
     /**
-     * Get description
+     * Get description.
      *
      * @return string $description
      */
@@ -140,91 +132,87 @@ class Preset extends Base
         return $this->description;
     }
 
-
     /**
-     * Set customer
-     *
+     * Set customer.
      *
      * @return $this
      */
     public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
+
         return $this;
     }
 
     /**
-     * Get customer
+     * Get customer.
      *
      * @return Customer $customer
      */
-    public function getCustomer(): \App\Entity\Customer
+    public function getCustomer(): Customer
     {
         return $this->customer;
     }
 
-
     /**
-     * Set project
-     *
+     * Set project.
      *
      * @return $this
      */
     public function setProject(Project $project): static
     {
         $this->project = $project;
+
         return $this;
     }
 
     /**
-     * Get project
+     * Get project.
      *
      * @return Project $project
      */
-    public function getProject(): \App\Entity\Project
+    public function getProject(): Project
     {
         return $this->project;
     }
 
-
     /**
-     * Set activity
-     *
+     * Set activity.
      *
      * @return $this
      */
     public function setActivity(Activity $activity): static
     {
         $this->activity = $activity;
+
         return $this;
     }
 
     /**
-     * Get activity
+     * Get activity.
      *
      * @return Activity $activity
      */
-    public function getActivity(): \App\Entity\Activity
+    public function getActivity(): Activity
     {
         return $this->activity;
     }
 
-
     /**
-     * Get array representation of a preset object
+     * Get array representation of a preset object.
      *
-     * @return (int|null|string)[]
+     * @return (int|string|null)[]
      *
      * @psalm-return array{id: int, name: string, customer: int|null, project: int|null, activity: int|null, description: string}
      */
     public function toArray(): array
     {
         return [
-            'id'          => $this->getId() ?? 0,
-            'name'        => $this->getName(),
-            'customer'    => $this->getCustomer()->getId(),
-            'project'     => $this->getProject()->getId(),
-            'activity'    => $this->getActivity()->getId(),
+            'id' => $this->getId() ?? 0,
+            'name' => $this->getName(),
+            'customer' => $this->getCustomer()->getId(),
+            'project' => $this->getProject()->getId(),
+            'activity' => $this->getActivity()->getId(),
             'description' => $this->getDescription(),
         ];
     }

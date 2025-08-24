@@ -10,7 +10,7 @@ class SecurityController extends AbstractController
 {
     /**
      * This is just a route target for the login form
-     * The actual rendering is now handled by Symfony's form_login system
+     * The actual rendering is now handled by Symfony's form_login system.
      */
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
@@ -24,7 +24,7 @@ class SecurityController extends AbstractController
     }
 
     /**
-     * This method can be empty - it will be intercepted by the logout key on your firewall
+     * This method can be empty - it will be intercepted by the logout key on your firewall.
      *
      * @codeCoverageIgnore
      */

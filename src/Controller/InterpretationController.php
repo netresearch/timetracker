@@ -16,11 +16,13 @@ class InterpretationController extends BaseController
     /**
      * @var Entry[]|null
      */
-    private $cache = null;
+    private ?array $cache = null;
 
     /**
-* @param array<string, mixed> $a
+     * @param array<string, mixed> $a
      * @param array<string, mixed> $b
+     *
+     * @psalm-return int<-1, 1>
      */
     public function sortByName(array $a, array $b): int
     {
@@ -73,6 +75,9 @@ class InterpretationController extends BaseController
         return $this->cache;
     }
 
+    /**
+     * @psalm-return int<min, max>
+     */
     private function getCachedSum(): int
     {
         if (null === $this->cache) {
@@ -91,6 +96,8 @@ class InterpretationController extends BaseController
      * @param Entry[] $entries
      *
      * @psalm-param array<Entry> $entries
+     *
+     * @psalm-return int<min, max>
      */
     private function calculateSum(array &$entries): int
     {
@@ -219,7 +226,7 @@ class InterpretationController extends BaseController
         foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
 
-            if ($ticket !== '' && $ticket !== '-') {
+            if ('' !== $ticket && '-' !== $ticket) {
                 if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = [
                         'id' => $entry->getId(),
@@ -281,8 +288,8 @@ class InterpretationController extends BaseController
         }
 
         $sum = $this->getCachedSum();
-        foreach ($users as &$userRow) {
-            $userRow['quota'] = TimeHelper::formatQuota($userRow['hours'], $sum);
+        foreach ($users as &$user) {
+            $user['quota'] = TimeHelper::formatQuota($user['hours'], $sum);
         }
 
         /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $users */
@@ -328,9 +335,12 @@ class InterpretationController extends BaseController
 
         // convert minutes to hours preserving fractional part
         $totalMinutes = 0.0;
-        foreach ($times as $t) { $totalMinutes += (float) ($t['minutes']); }
+        foreach ($times as $t) {
+            $totalMinutes += (float) $t['minutes'];
+        }
+
         foreach ($times as &$time) {
-            $minutes = (float) ($time['minutes']);
+            $minutes = (float) $time['minutes'];
             $time['hours'] = $minutes / 60.0;
             unset($time['minutes']);
             $time['quota'] = TimeHelper::formatQuota($minutes, $totalMinutes);
@@ -340,15 +350,18 @@ class InterpretationController extends BaseController
         usort($times, $this->sortByName(...));
 
         $prepared = array_map(
-            static function (array $t): array {
-                return [
-                    'id' => $t['id'],
-                    'name' => (string) $t['name'],
-                    'day' => (string) $t['day'],
-                    'hours' => (float) $t['hours'],
-                    'quota' => (string) $t['quota'],
-                ];
-            },
+            /**
+             * @return (float|string|null)[]
+             *
+             * @psalm-return array{id: null, name: string, day: string, hours: float, quota: '0'}
+             */
+            static fn(array $t): array => [
+                'id' => $t['id'],
+                'name' => $t['name'],
+                'day' => $t['day'],
+                'hours' => (float) $t['hours'],
+                'quota' => (string) $t['quota'],
+            ],
             $times
         );
 
@@ -388,7 +401,10 @@ class InterpretationController extends BaseController
         }
 
         $activitiesTotalHours = 0.0;
-        foreach ($activities as $a) { $activitiesTotalHours += (float) $a['hours']; }
+        foreach ($activities as $a) {
+            $activitiesTotalHours += (float) $a['hours'];
+        }
+
         foreach ($activities as &$activity) {
             $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $activitiesTotalHours);
         }
@@ -405,6 +421,8 @@ class InterpretationController extends BaseController
      * @throws \Exception
      *
      * @return Entry[]
+     *
+     * @psalm-return array<int, Entry>
      */
     private function getEntries(Request $request, ?int $maxResults = null): array
     {
@@ -431,9 +449,10 @@ class InterpretationController extends BaseController
 
                 // last day of month
                 $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
-                if ($dateend === false) {
+                if (false === $dateend) {
                     throw new \Exception('Invalid date');
                 }
+
                 $dateend->add(new \DateInterval('P1M'));
                 // go back 1 day, to set date from first day of next month back to last day of last month
                 // e.g. 2019-05-01 -> 2019-04-30
@@ -444,9 +463,10 @@ class InterpretationController extends BaseController
 
                 // last day of year
                 $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
-                if ($dateend === false) {
+                if (false === $dateend) {
                     throw new \Exception('Invalid date');
                 }
+
                 $dateend->add(new \DateInterval('P1Y'));
                 // go back 1 day, to set date from first day of next year back to last day of last year
                 // e.g. 2019-01-01 -> 2018-12-31
@@ -467,18 +487,17 @@ class InterpretationController extends BaseController
 
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        /** @var array<int, Entry> $result */
-        $result = $objectRepository->findByFilterArray($arParams);
 
-        return $result;
+        return $objectRepository->findByFilterArray($arParams);
     }
 
     private function evalParam(Request $request, string $param): ?string
     {
         $value = $request->query->get($param);
         if (is_scalar($value)) {
-            $string = (string) $value;
-            return $string !== '' ? $string : null;
+            $string = $value;
+
+            return '' !== $string ? $string : null;
         }
 
         return null;
@@ -487,7 +506,9 @@ class InterpretationController extends BaseController
     /**
      * @param array<int, array{id:int|null, name:string|null, day?:string, hours:int|float, quota?:int|string}> $data
      *
-     * @return array<int, array{id:int|null, name:string, day:string|null, hours:float, quota:string}>
+     * @return (float|int|string|null)[][]
+     *
+     * @psalm-return list{0?: array{id: int|null, name: string, day: null|string, hours: float, quota: string},...}
      */
     private function normalizeData(array $data): array
     {
@@ -497,7 +518,7 @@ class InterpretationController extends BaseController
             $hours = (float) $d['hours'];
             $normalized[] = [
                 'id' => $d['id'] ?? null,
-                'name' => isset($d['name']) ? (string) $d['name'] : '',
+                'name' => $d['name'] ?? '',
                 'day' => $d['day'] ?? null,
                 'hours' => $hours,
                 'quota' => isset($d['quota']) ? (string) $d['quota'] : '0%',
@@ -543,11 +564,11 @@ class InterpretationController extends BaseController
             $searchArray['project'] = $project;
         }
 
-        if (is_string($datestart) && $datestart !== '') {
+        if (is_string($datestart) && '' !== $datestart) {
             $searchArray['datestart'] = $datestart;
         }
 
-        if (is_string($dateend) && $dateend !== '') {
+        if (is_string($dateend) && '' !== $dateend) {
             $searchArray['dateend'] = $dateend;
         }
 

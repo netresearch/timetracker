@@ -6,7 +6,4 @@ namespace App\Service;
 
 interface ClockInterface
 {
-    public function now(): \DateTimeImmutable;
-
-    public function today(): \DateTimeImmutable;
 }

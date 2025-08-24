@@ -30,7 +30,7 @@ class TimeCalculationService
 
         $sum = 0;
         $c = count($matches[0]);
-        for ($i = 0; $i < $c; $i++) {
+        for ($i = 0; $i < $c; ++$i) {
             $sum += (float) str_replace(',', '.', $matches[1][$i]) * $this->getMinutesByLetter($matches[2][$i]);
         }
 
@@ -52,13 +52,13 @@ class TimeCalculationService
             $div = $this->getMinutesByLetter($size);
             $factor = (int) floor($minutes / $div);
             if ($factor > 0) {
-                $out .= $factor . $size . ' ';
+                $out .= $factor.$size.' ';
                 $minutes -= $factor * $div;
             }
         }
 
         if ($minutes > 0) {
-            $out .= $minutes . 'm';
+            $out .= $minutes.'m';
         }
 
         return trim($out);
@@ -70,16 +70,16 @@ class TimeCalculationService
         $hours = (int) floor($duration / 60);
         $minutes = (int) floor($duration % 60);
         if ($minutes < 10) {
-            $minutes = (int) ('0' . $minutes);
+            $minutes = (int) ('0'.$minutes);
         }
 
         if ($hours < 10) {
-            $hours = (int) ('0' . $hours);
+            $hours = (int) ('0'.$hours);
         }
 
         $text = sprintf('%02d:%02d', $hours, $minutes);
         if ($inDays && (float) $days > 1.00) {
-            $text .= ' (' . $days . ' PT)';
+            $text .= ' ('.$days.' PT)';
         }
 
         return $text;
@@ -87,6 +87,6 @@ class TimeCalculationService
 
     public function formatQuota(int|float $amount, int|float $sum): string
     {
-        return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';
+        return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2).'%';
     }
 }

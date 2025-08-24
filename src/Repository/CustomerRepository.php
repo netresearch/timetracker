@@ -4,18 +4,11 @@ namespace App\Repository;
 
 use App\Entity\Customer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
 
 class CustomerRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Customer::class);
-    }
     /**
-     * Returns an array of customers available for current user
-     *
-     * @param $userId
+     * Returns an array of customers available for current user.
      */
     /**
      * @return array<int, array{customer: array{id:int, name:string, active:bool}}>
@@ -35,8 +28,8 @@ class CustomerRepository extends ServiceEntityRepository
         $data = [];
         foreach ($result as $customer) {
             $data[] = ['customer' => [
-                'id'     => (int) $customer->getId(),
-                'name'   => (string) $customer->getName(),
+                'id' => (int) $customer->getId(),
+                'name' => (string) $customer->getName(),
                 'active' => (bool) $customer->getActive(),
             ]];
         }
@@ -66,11 +59,11 @@ class CustomerRepository extends ServiceEntityRepository
             }
 
             $data[] = ['customer' => [
-                'id'     => (int) $customer->getId(),
-                'name'   => (string) $customer->getName(),
+                'id' => (int) $customer->getId(),
+                'name' => (string) $customer->getName(),
                 'active' => (bool) $customer->getActive(),
                 'global' => (bool) $customer->getGlobal(),
-                'teams'  => $teams,
+                'teams' => $teams,
             ]];
         }
 
@@ -80,6 +73,7 @@ class CustomerRepository extends ServiceEntityRepository
     public function findOneByName(string $name): ?Customer
     {
         $result = $this->findOneBy(['name' => $name]);
+
         return $result instanceof Customer ? $result : null;
     }
 }

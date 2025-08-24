@@ -3,8 +3,8 @@
 namespace App\Entity;
 
 use App\Service\Util\LocalizationService;
-use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
@@ -12,19 +12,6 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class User implements UserInterface
 {
     /**
-     * @var \Doctrine\Common\Collections\ArrayCollection
-     */
-    public $entries;
-
-    /**
-     * @var \Doctrine\Common\Collections\ArrayCollection
-     */
-    public $leadTeams;
-
-    /**
-     *
-     *
-     *
      * @var int|null
      */
     #[ORM\Id]
@@ -33,19 +20,19 @@ class User implements UserInterface
     protected $id;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', length: 50)]
     protected $username;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', length: 3, nullable: true)]
     protected $abbr;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', length: 255)]
     protected $type;
@@ -56,11 +43,8 @@ class User implements UserInterface
     #[ORM\Column(name: 'suggest_time', type: 'boolean', nullable: false, options: ['default' => 1])]
     protected bool $suggestTime = true;
 
-
     #[ORM\Column(name: 'show_future', type: 'boolean', nullable: false, options: ['default' => 1])]
     protected bool $showFuture = true;
-
-
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Team>
@@ -71,7 +55,6 @@ class User implements UserInterface
 
     #[ORM\Column(name: 'locale', type: 'string', length: 2, nullable: false, options: ['default' => 'de'])]
     protected string $locale = 'de';
-
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
@@ -85,34 +68,24 @@ class User implements UserInterface
     #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'user')]
     protected $entriesRelation;
 
-
-
     public function __construct()
     {
-        $this->entries = new ArrayCollection();
-        $this->leadTeams = new ArrayCollection();
         $this->entriesRelation = new ArrayCollection();
         $this->userTicketsystems = new ArrayCollection();
     }
 
     /**
-     * Get id
+     * Get id.
      *
      * @return int|null $id
      */
-    public function getId(): int|null
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setId(int $id): static
-    {
-        $this->id = $id;
-        return $this;
-    }
-
     /**
-     * Set username
+     * Set username.
      *
      * @param string $username
      *
@@ -121,21 +94,22 @@ class User implements UserInterface
     public function setUsername($username): static
     {
         $this->username = $username;
+
         return $this;
     }
 
     /**
-     * Get username
+     * Get username.
      *
-     * @return null|string $username
+     * @return string|null $username
      */
-    public function getUsername(): string|null
+    public function getUsername(): ?string
     {
         return $this->username;
     }
 
     /**
-     * Set abbr
+     * Set abbr.
      *
      * @param string $abbr
      *
@@ -144,21 +118,22 @@ class User implements UserInterface
     public function setAbbr($abbr): static
     {
         $this->abbr = $abbr;
+
         return $this;
     }
 
     /**
-     * Get abbr
+     * Get abbr.
      *
-     * @return null|string $abbr
+     * @return string|null $abbr
      */
-    public function getAbbr(): string|null
+    public function getAbbr(): ?string
     {
         return $this->abbr;
     }
 
     /**
-     * Set type
+     * Set type.
      *
      * @param string $type
      *
@@ -167,15 +142,16 @@ class User implements UserInterface
     public function setType($type): static
     {
         $this->type = $type;
+
         return $this;
     }
 
     /**
-     * Get type
+     * Get type.
      *
-     * @return null|string $type
+     * @return string|null $type
      */
-    public function getType(): string|null
+    public function getType(): ?string
     {
         return $this->type;
     }
@@ -188,9 +164,9 @@ class User implements UserInterface
     public function setShowEmptyLine(bool $showEmptyLine): static
     {
         $this->showEmptyLine = $showEmptyLine;
+
         return $this;
     }
-
 
     public function getSuggestTime(): bool
     {
@@ -200,9 +176,9 @@ class User implements UserInterface
     public function setSuggestTime(bool $suggestTime): static
     {
         $this->suggestTime = $suggestTime;
+
         return $this;
     }
-
 
     public function getShowFuture(): bool
     {
@@ -212,32 +188,31 @@ class User implements UserInterface
     public function setShowFuture(bool $showFuture): static
     {
         $this->showFuture = $showFuture;
+
         return $this;
     }
 
-
-
-
     /**
-     * Reset teams
+     * Reset teams.
      *
      * @return $this
      */
     public function resetTeams(): static
     {
         $this->teams = new ArrayCollection();
+
         return $this;
     }
 
     /**
-     * Add team
-     *
+     * Add team.
      *
      * @return $this
      */
     public function addTeam(Team $team): static
     {
         $this->teams[] = $team;
+
         return $this;
     }
 
@@ -248,15 +223,7 @@ class User implements UserInterface
     protected $contracts;
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Contract>
-     */
-    public function getContracts()
-    {
-        return $this->contracts;
-    }
-
-    /**
-     * Get teams
+     * Get teams.
      *
      * @return \Doctrine\Common\Collections\Collection $teams
      */
@@ -268,36 +235,20 @@ class User implements UserInterface
         return $this->teams;
     }
 
-    /**
-     * @return \Doctrine\Common\Collections\Collection<int, Entry>
-     */
-    public function getEntries()
-    {
-        return $this->entriesRelation;
-    }
-
-    /**
-     * @return \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
-     */
-    public function getUserTicketsystems()
-    {
-        return $this->userTicketsystems;
-    }
-
     public function getLocale(): string
     {
         return $this->locale;
     }
 
-
     public function setLocale(string $locale): static
     {
         $this->locale = (new LocalizationService())->normalizeLocale($locale);
+
         return $this;
     }
 
     /**
-     * return all relevant settings in an array
+     * return all relevant settings in an array.
      *
      * @return (bool|int|string)[]
      *
@@ -309,29 +260,24 @@ class User implements UserInterface
     public function getSettings(): array
     {
         return [
-            'show_empty_line'   => $this->getShowEmptyLine(),
-            'suggest_time'      => $this->getSuggestTime(),
-            'show_future'       => $this->getShowFuture(),
-            'user_id'           => $this->getId() ?? 0,
-            'user_name'         => $this->getUsername() ?? '',
-            'type'              => $this->getType() ?? '',
-            'locale'            => (new LocalizationService())->normalizeLocale($this->getLocale())
+            'show_empty_line' => $this->getShowEmptyLine(),
+            'suggest_time' => $this->getSuggestTime(),
+            'show_future' => $this->getShowFuture(),
+            'user_id' => $this->getId() ?? 0,
+            'user_name' => $this->getUsername() ?? '',
+            'type' => $this->getType() ?? '',
+            'locale' => (new LocalizationService())->normalizeLocale($this->getLocale()),
         ];
     }
 
-
-
-
-
     /**
-     * Get Users accesstoken for a Ticketsystem
+     * Get Users accesstoken for a Ticketsystem.
      *
-     * @return null|string
+     * @return string|null
      */
     public function getTicketSystemAccessToken(TicketSystem $ticketsystem)
     {
         $return = null;
-        /** @var \App\Entity\UserTicketsystem $userTicketsystem */
         foreach ($this->userTicketsystems as $userTicketsystem) {
             if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
                 $return = $userTicketsystem->getAccessToken();
@@ -341,16 +287,14 @@ class User implements UserInterface
         return $return;
     }
 
-
     /**
-     * Get Users tokensecret for a Ticketsystem
+     * Get Users tokensecret for a Ticketsystem.
      *
-     * @return null|string
+     * @return string|null
      */
     public function getTicketSystemAccessTokenSecret(TicketSystem $ticketsystem)
     {
         $return = null;
-        /** @var \App\Entity\UserTicketsystem $userTicketsystem */
         foreach ($this->userTicketsystems as $userTicketsystem) {
             if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
                 $return = $userTicketsystem->getTokenSecret();
@@ -363,12 +307,12 @@ class User implements UserInterface
     /**
      * @return string[]
      *
-     * @psalm-return array<0|1, 'ROLE_ADMIN'|'ROLE_USER'>
+     * @psalm-return array<int<0, 1>, 'ROLE_ADMIN'|'ROLE_USER'>
      */
     public function getRoles(): array
     {
         $roles = ['ROLE_USER'];
-        if ($this->type === 'ADMIN') {
+        if ('ADMIN' === $this->type) {
             $roles[] = 'ROLE_ADMIN';
         }
 

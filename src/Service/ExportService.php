@@ -3,22 +3,18 @@
 namespace App\Service;
 
 use App\Entity\Entry;
-use App\Service\Integration\Jira\JiraOAuthApiFactory;
-use Doctrine\Persistence\ManagerRegistry;
 
 class ExportService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
-    {
-    }
-
+    public $managerRegistry;
     /**
      * Returns entries filtered and ordered.
      *
      * @param array<string, bool>|null $arSort
+     *
      * @return Entry[]
      *
-     * @psalm-return array<Entry>
+     * @psalm-return array<int, Entry>
      */
     public function exportEntries(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, ?array $arSort = null): array
     {

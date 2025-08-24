@@ -3,7 +3,7 @@
 namespace App\Helper;
 
 /**
- * Helper for permanent timetracker login
+ * Helper for permanent timetracker login.
  *
  * The "keep me logged in" cookie's design makes sure that
  *
@@ -15,8 +15,7 @@ namespace App\Helper;
  */
 class LoginHelper
 {
-    public const COOKIE_NAME   = 'nr_timetracker';
-
+    public const COOKIE_NAME = 'nr_timetracker';
 
     public static function setCookie(string $userId, string $userName, string $secret): void
     {
@@ -24,8 +23,8 @@ class LoginHelper
         setcookie(
             self::COOKIE_NAME,
             $userId
-            . ':' . self::hash($userName, $secret, $token)
-            . ':' . $token,
+            .':'.self::hash($userName, $secret, $token)
+            .':'.$token,
             ['expires' => time() + (14 * 24 * 60 * 60)]
         );
     }
@@ -48,20 +47,17 @@ class LoginHelper
             return false;
         }
 
-        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', $_COOKIE[self::COOKIE_NAME], $matches)) {
+        if (!preg_match('/^([0-9]+):([a-z0-9]+):([a-z0-9]+)$/i', (string) $_COOKIE[self::COOKIE_NAME], $matches)) {
             return false;
         }
 
         return [
-            'userId' => (int)    $matches[1],
-            'hash'   => $matches[2],
-            'token'  => $matches[3],
+            'userId' => (int) $matches[1],
+            'hash' => $matches[2],
+            'token' => $matches[3],
         ];
     }
 
-    /**
-     * @return false|int
-     */
     public static function getCookieUserId(): int|false
     {
         $cookieData = self::getCookieData();
@@ -80,11 +76,12 @@ class LoginHelper
         }
 
         $expectedHash = self::hash($expectedUserName, $secret, $cookieData['token']);
+
         return $expectedHash == $cookieData['hash'];
     }
 
     private static function hash(string $userName, string $secret, string $token): string
     {
-        return hash('sha256', $userName . $secret . $token);
+        return hash('sha256', $userName.$secret.$token);
     }
 }

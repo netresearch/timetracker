@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
+use Doctrine\ORM\Mapping as ORM;
 
 /**
- * App\Entity\Holiday
+ * App\Entity\Holiday.
  */
 #[ORM\Entity(repositoryClass: \App\Repository\HolidayRepository::class)]
 #[ORM\Table(name: 'holidays')]
@@ -15,7 +15,6 @@ class Holiday extends Base
     #[ORM\Id]
     #[ORM\Column(name: 'day', type: 'date')]
     private \DateTime $day;
-
 
     public function __construct(string|\DateTime $day, private string $name)
     {
@@ -29,19 +28,20 @@ class Holiday extends Base
         }
 
         $this->day = $day;
+
         return $this;
     }
 
     /**
-     * Get day
+     * Get day.
      */
-    public function getDay(): \DateTime|null
+    public function getDay(): ?\DateTime
     {
         return $this->day;
     }
 
     /**
-     * Set name
+     * Set name.
      */
     public function setName(string $name): void
     {
@@ -49,7 +49,7 @@ class Holiday extends Base
     }
 
     /**
-     * Get name
+     * Get name.
      */
     public function getName(): string
     {
@@ -57,17 +57,17 @@ class Holiday extends Base
     }
 
     /**
-     * Get array representation of holiday object
+     * Get array representation of holiday object.
      *
-     * @return (null|string)[]
+     * @return (string|null)[]
      *
      * @psalm-return array{day: null|string, description: string}
      */
     public function toArray(): array
     {
         return [
-            'day'         => $this->getDay() instanceof \DateTime ? $this->getDay()->format('d/m/Y') : null,
-            'description' => $this->getName()
+            'day' => $this->getDay() instanceof \DateTime ? $this->getDay()->format('d/m/Y') : null,
+            'description' => $this->getName(),
         ];
     }
 }

@@ -15,10 +15,6 @@ class Error extends JsonResponse
 {
     /**
      * Error constructor.
-     *
-     * @param string      $errorMessage
-     * @param int         $statusCode
-     * @param string|null $forwardUrl
      */
     /** @psalm-suppress PropertyNotSetInConstructor */
     public function __construct(
@@ -41,7 +37,9 @@ class Error extends JsonResponse
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @return (array|int|string|null)[]|null
+     *
+     * @psalm-return array{message: string, class: class-string<\Throwable>, code: int|string, file: string, line: int, trace: list<array{args?: array, class?: class-string, file?: string, function?: string, line?: int, type?: '->'|'::'}>, previous: array<string, mixed>|null}|null
      */
     protected function getExceptionAsArray(?\Throwable $throwable = null): ?array
     {

@@ -2,18 +2,13 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: \App\Repository\ActivityRepository::class)]
 #[ORM\Table(name: 'activities')]
 class Activity
 {
-    /**
-     * @var \Doctrine\Common\Collections\ArrayCollection
-     */
-    public $entries;
-
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
@@ -21,17 +16,12 @@ class Activity
     protected $entriesRelation;
 
     /**
-     * @var \Doctrine\Common\Collections\ArrayCollection
-     */
-    public $presets;
-
-    /**
      * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
     #[ORM\OneToMany(targetEntity: \Preset::class, mappedBy: 'activity')]
     protected $presetsRelation;
 
-    public const SICK    = 'Krank';
+    public const SICK = 'Krank';
 
     public const HOLIDAY = 'Urlaub';
 
@@ -51,54 +41,8 @@ class Activity
 
     public function __construct()
     {
-        $this->entries = new ArrayCollection();
-        $this->presets = new ArrayCollection();
         $this->entriesRelation = new ArrayCollection();
         $this->presetsRelation = new ArrayCollection();
-    }
-
-    public function setId(int $id): static
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @return \Doctrine\Common\Collections\Collection<int, Entry>
-     */
-    public function getEntries()
-    {
-        return $this->entriesRelation;
-    }
-
-    /**
-     * @return \Doctrine\Common\Collections\Collection<int, Preset>
-     */
-    public function getPresets()
-    {
-        return $this->presetsRelation;
-    }
-
-    public function addEntry(Entry $entry): static
-    {
-        $this->entriesRelation[] = $entry;
-        return $this;
-    }
-
-    public function removeEntry(Entry $entry): void
-    {
-        $this->entriesRelation->removeElement($entry);
-    }
-
-    public function addPreset(Preset $preset): static
-    {
-        $this->presetsRelation[] = $preset;
-        return $this;
-    }
-
-    public function removePreset(Preset $preset): void
-    {
-        $this->presetsRelation->removeElement($preset);
     }
 
     public function getId(): ?int
@@ -109,6 +53,7 @@ class Activity
     public function setName(string $name): static
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -130,6 +75,7 @@ class Activity
     public function setFactor(float $factor): static
     {
         $this->factor = $factor;
+
         return $this;
     }
 
@@ -145,7 +91,7 @@ class Activity
      */
     public function isSick(): bool
     {
-        return $this->getName() === self::SICK;
+        return self::SICK === $this->getName();
     }
 
     /**
@@ -153,6 +99,6 @@ class Activity
      */
     public function isHoliday(): bool
     {
-        return $this->getName() === self::HOLIDAY;
+        return self::HOLIDAY === $this->getName();
     }
 }

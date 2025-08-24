@@ -7,7 +7,6 @@ use App\Entity\Contract;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
-use App\Util\RequestEntityHelper;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -17,6 +16,7 @@ use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Util\RequestEntityHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -56,10 +56,9 @@ class CrudController extends BaseController
         $entryId = RequestEntityHelper::id($request, 'id');
         if ($entryId > 0) {
             $doctrine = $this->managerRegistry;
-            /** @var Entry|null $entry */
             $entry = RequestEntityHelper::findById($doctrine, Entry::class, $entryId);
 
-            if (!$entry) {
+            if (!$entry instanceof \App\Entity\Entry) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
@@ -102,7 +101,7 @@ class CrudController extends BaseController
         $project = $entry->getProject();
 
         if (!$ticketSystem instanceof TicketSystem) {
-            $ticketSystem = $project ? $project->getTicketSystem() : null;
+            $ticketSystem = $project instanceof \App\Entity\Project ? $project->getTicketSystem() : null;
         }
 
         if ($project && $project->hasInternalJiraProjectKey()) {
@@ -127,9 +126,8 @@ class CrudController extends BaseController
      * Set rendering classes for pause, overlap and daybreak.
      *
      * @param int    $userId
-     * @param string $day
      */
-    private function calculateClasses($userId, $day): void
+    private function calculateClasses($userId, string $day): void
     {
         if (0 === $userId) {
             return;
@@ -143,10 +141,6 @@ class CrudController extends BaseController
         $entries = $objectRepository->findByDay($userId, $day);
 
         if (!count($entries)) {
-            return;
-        }
-
-        if (!$entries[0] instanceof Entry) {
             return;
         }
 
@@ -249,6 +243,7 @@ class CrudController extends BaseController
             if (!$user instanceof User) {
                 return new Error($this->translator->trans('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
+
             $entry->setUser($user);
 
             // Ensure variables are defined for downstream logic
@@ -268,6 +263,7 @@ class CrudController extends BaseController
 
                     return $this->getFailedResponse($message, 400);
                 }
+
                 if ($this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory) {
                     $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
 
@@ -275,7 +271,7 @@ class CrudController extends BaseController
                     // so no need to check for existence; they are created automatically
                     $reqTicket = (string) ($request->request->get('ticket') ?? '');
                     if (!$project->hasInternalJiraProjectKey() && '' !== $reqTicket && !$jiraOAuthApi->doesTicketExist($reqTicket)) {
-                        $message = (string) $request->request->get('ticket').' existiert nicht';
+                        $message = $request->request->get('ticket').' existiert nicht';
                         throw new \Exception($message);
                     }
                 }
@@ -407,13 +403,10 @@ class CrudController extends BaseController
             /** @var User $user */
             $user = $doctrine->getRepository(User::class)
                 ->find($this->getUserId($request));
-            /** @var Customer|null $customer */
             $customer = $doctrine->getRepository(Customer::class)
                 ->find($preset->getCustomerId());
-            /** @var Project|null $project */
             $project = $doctrine->getRepository(Project::class)
                 ->find($preset->getProjectId());
-            /** @var Activity|null $activity */
             $activity = $doctrine->getRepository(Activity::class)
                 ->find($preset->getActivityId());
 
@@ -426,6 +419,7 @@ class CrudController extends BaseController
                     if (!$contract instanceof Contract) {
                         continue;
                     }
+
                     $contractHoursArray[] = [
                         'start' => $contract->getStart(),
                         // when user contract has no stop date, take the end date of bulkentry
@@ -603,7 +597,7 @@ class CrudController extends BaseController
             );
 
             // Send Message when contract starts during bulkentry
-            if (!empty($contractHoursArray)
+            if ($contractHoursArray !== []
                 && isset($contractHoursArray[0]['start'])
                 && ($contractHoursArray[0]['start'] instanceof \DateTime)
                 && (new \DateTime((string) ($request->request->get('startdate') ?? ''))) < $contractHoursArray[0]['start']
@@ -616,7 +610,7 @@ class CrudController extends BaseController
             }
 
             // Send Message when contract ends during bulkentry
-            if (!empty($contractHoursArray)) {
+            if ($contractHoursArray !== []) {
                 $lastContract = end($contractHoursArray);
                 if (is_array($lastContract)
                     && isset($lastContract['stop'])

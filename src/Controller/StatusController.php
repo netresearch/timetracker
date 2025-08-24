@@ -2,10 +2,7 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Model\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Core\Security;
 
 class StatusController extends BaseController
 {
@@ -25,12 +22,12 @@ class StatusController extends BaseController
     private function getStatus(): array
     {
         return [
-            'loginStatus' => $this->security->isGranted('IS_AUTHENTICATED')
+            'loginStatus' => $this->security->isGranted('IS_AUTHENTICATED'),
         ];
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/status/check', name: 'check_status', methods: ['GET'])]
-    public function check(): \App\Model\JsonResponse
+    public function check(): JsonResponse
     {
         return new JsonResponse($this->getStatus());
     }
@@ -42,7 +39,7 @@ class StatusController extends BaseController
 
         return $this->render('status.html.twig', [
             'loginClass' => ($status['loginStatus'] ? 'status_active' : 'status_inactive'),
-            'apptitle'   => $this->params->get('app_title'),
+            'apptitle' => $this->params->get('app_title'),
         ]);
     }
 }

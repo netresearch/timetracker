@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Exception\Integration\Jira;
 
 /**
- * Class JiraApiException
+ * Class JiraApiException.
  */
 class JiraApiException extends \Exception
 {
@@ -20,17 +20,17 @@ class JiraApiException extends \Exception
         string $message,
         int $code = 0,
         protected ?string $redirectUrl = null,
-        ?\Throwable $throwable = null
+        ?\Throwable $throwable = null,
     ) {
         if (!str_starts_with($message, 'Jira:')) {
-            $message = 'Jira: '. $message;
+            $message = 'Jira: '.$message;
         }
 
         parent::__construct($message, $code, $throwable);
     }
 
     /**
-     * Get the URL to redirect to for authentication if needed
+     * Get the URL to redirect to for authentication if needed.
      */
     public function getRedirectUrl(): ?string
     {
