@@ -45,7 +45,7 @@ class Team
     /**
      * Get id.
      *
-     * @return string|null $id
+     * @return int|null $id
      */
     public function getId(): ?int
     {
