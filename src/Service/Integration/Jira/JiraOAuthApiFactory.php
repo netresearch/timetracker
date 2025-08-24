@@ -14,6 +14,13 @@ class JiraOAuthApiFactory
 
     public RouterInterface $router;
 
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setDependencies(ManagerRegistry $managerRegistry, RouterInterface $router): void
+    {
+        $this->managerRegistry = $managerRegistry;
+        $this->router = $router;
+    }
+
     public function create(User $user, TicketSystem $ticketSystem): JiraOAuthApi
     {
         return new JiraOAuthApi($user, $ticketSystem, $this->managerRegistry, $this->router);

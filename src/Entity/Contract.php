@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'contracts')]
 class Contract
 {
-    #[ORM\ManyToOne(targetEntity: \User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
     public User $user;
 
@@ -91,6 +91,11 @@ class Contract
         $this->user = $user;
 
         return $this;
+    }
+
+    public function getUser(): User
+    {
+        return $this->user;
     }
 
     public function getStart(): \DateTime
