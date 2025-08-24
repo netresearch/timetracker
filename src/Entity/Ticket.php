@@ -29,7 +29,7 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @see     http://www.netresearch.de
  */
-#[ORM\Entity(repositoryClass: \App\Repository\TicketRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'tickets')]
 class Ticket extends Base
 {
