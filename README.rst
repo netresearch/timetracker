@@ -84,12 +84,13 @@ Requirements
 ------------
 
 - PHP >= 8.4
-- MySQL compatible database
+- MySQL/MariaDB compatible database
 - Composer
+- Docker and Docker Compose (recommended for local dev)
 - For more details see ``composer.json``
 
 
-Setup - manual from from sources
+Setup - manual from sources
 --------------------------------
 
 #. Fetch a local copy::
@@ -140,15 +141,23 @@ Setup - manual from from sources
 #. Login with your LDAP credentials
 
 
-Setup - with prebuilt docker images
+Setup - with Docker Compose
 -----------------------------------
 
 #. Create an empty folder
-#. Put the provided composer.yml from this git repo in it
+#. Use the provided ``compose.yml``/``compose.dev.yml`` from this repo
 #. Put the provided nginx configuration file from this repo into the above created folder
 #. Put the ``.env.local`` into the above created folder, and ``sentry.yml.dist`` as ``sentry.yml``.
 #. Check and adapt the copied configuration files to your needs
-#. Run ``docker compose up -d``
+#. Run ``docker compose up -d --build``
+   and then inside the container:
+
+   ::
+
+      docker compose run --rm app composer install
+      docker compose run --rm app npm install
+      docker compose run --rm app bin/console doctrine:database:create --if-not-exists
+      docker compose run --rm app bin/console doctrine:migrations:migrate -n
 
 
 Trusted proxies
@@ -370,6 +379,14 @@ You can view a rendered version in your browser by opening
 Automated tests
 ===============
 
-1. Run ``./tests/prepare-test-sql.sh``
-2. Create a separate database with settings from ``.env.test``
-3. Run ``./bin/phpunit tests/``
+Prefer running via Docker Compose to ensure the correct environment.
+
+::
+
+   docker compose run --rm -e APP_ENV=test app bin/phpunit
+
+Generate coverage (HTML in ``var/coverage``):
+
+::
+
+   docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-html var/coverage

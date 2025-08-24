@@ -71,7 +71,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 *   **Goal:** Ensure code quality meets defined standards.
 *   **Tasks:**
     *   `[x]` **Run PHPStan:** Execute `docker compose run --rm app composer analyze` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
-    *   `[ ]` **Run Psalm:** Execute `docker compose run --rm app composer psalm` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
+    *   `[x]` **Run Psalm:** Execute `docker compose run --rm app composer psalm` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
         *   `[x]` Reduce issues in controllers (admin/crud/default) and integration layer (JiraOAuthApiService)
         *   `[ ]` Tidy repository return types and static signatures (remaining)
     *   `[x]` **Run CS Check/Fix:** Execute `docker compose run --rm app composer cs-check` and `docker compose run --rm app composer cs-fix` to ensure PSR-12 compliance. (Estimate: 0.5h)
@@ -79,6 +79,8 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 ## Phase 2: Upgrade to Symfony 7.3
 
 *   `[ ]` **Update `composer.json`:** Change Symfony dependencies to `^7.3`.
+*   `[x]` **Doctrine ORM 3 compatibility:** Replaced deprecated DBAL APIs in repositories/tests; mock updates in tests.
+*   `[x]` **PHPUnit 12 migration:** phpunit.xml migrated to 12.3 schema; deprecated annotations replaced.
 *   `[ ]` **Run `composer update`:** Resolve dependency conflicts.
 *   `[ ]` **Address Compatibility Issues:** Fix errors based on Symfony 7 upgrade guides.
 *   `[ ]` **Update Configuration Files:** Adapt `services.yaml`, `routes.yaml`, etc.
