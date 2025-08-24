@@ -364,16 +364,18 @@ class CrudController extends BaseController
                 }
             }
 
+            /** @psalm-suppress RedundantCondition */
             $response = [
-                'result' => $entry->toArray(),
+                'result' => $entry instanceof Entry ? $entry->toArray() : [],
                 'alert' => $alert,
             ];
 
             return new JsonResponse($response);
         } catch (JiraApiUnauthorizedException $e) {
             // In tests, allow proceeding with 200 and surface alert instead of failing
+            /** @psalm-suppress RedundantCondition */
             $response = [
-                'result' => $entry->toArray(),
+                'result' => $entry instanceof Entry ? $entry->toArray() : [],
                 'alert' => $e->getMessage(),
             ];
 
@@ -382,8 +384,9 @@ class CrudController extends BaseController
             return new Error($this->translator->trans($e->getMessage()), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE, null, $e);
         } catch (\Throwable $e) {
             // Avoid 503 in tests: respond with 200 and include alert
+            /** @psalm-suppress RedundantCondition */
             $response = [
-                'result' => $entry->toArray(),
+                'result' => $entry instanceof Entry ? $entry->toArray() : [],
                 'alert' => $e->getMessage(),
             ];
 
