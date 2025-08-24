@@ -50,8 +50,8 @@ services:
     # Add more service definitions when explicit configuration is needed
     # Please note that last definitions always *replace* previous ones
 
-    # Alias TranslatorInterface to the translator service
-    Symfony\Component\Translation\TranslatorInterface: '@translator'
+    # Use Contracts TranslatorInterface to avoid deprecation of Framework one
+    Symfony\Contracts\Translation\TranslatorInterface: '@translator'
     Symfony\Component\HttpFoundation\Session\SessionInterface: '@session'
 
     # Logger alias for PSR-3
