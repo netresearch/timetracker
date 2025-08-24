@@ -206,6 +206,7 @@ class CrudController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
+        /** @var Entry|null $entry */
         $entry = null;
         try {
             $alert = null;
@@ -364,7 +365,7 @@ class CrudController extends BaseController
             }
 
             $response = [
-                'result' => $entry->toArray(),
+                'result' => $entry instanceof Entry ? $entry->toArray() : [],
                 'alert' => $alert,
             ];
 
@@ -372,7 +373,7 @@ class CrudController extends BaseController
         } catch (JiraApiUnauthorizedException $e) {
             // In tests, allow proceeding with 200 and surface alert instead of failing
             $response = [
-                'result' => $entry->toArray(),
+                'result' => $entry instanceof Entry ? $entry->toArray() : [],
                 'alert' => $e->getMessage(),
             ];
 
@@ -382,7 +383,7 @@ class CrudController extends BaseController
         } catch (\Throwable $e) {
             // Avoid 503 in tests: respond with 200 and include alert
             $response = [
-                'result' => $entry->toArray(),
+                'result' => $entry instanceof Entry ? $entry->toArray() : [],
                 'alert' => $e->getMessage(),
             ];
 
@@ -535,7 +536,6 @@ class CrudController extends BaseController
                 }
 
                 if ($request->request->get('usecontract')) {
-                    $contractHoursArray ??= [];
                     foreach ($contractHoursArray as $contractHourArray) {
                         // we can have multiple contracts per user with different date intervals
                         $workTime = 0;
@@ -606,7 +606,7 @@ class CrudController extends BaseController
             );
 
             // Send Message when contract starts during bulkentry
-            if ($contractHoursArray !== []
+            if (!empty($contractHoursArray)
                 && isset($contractHoursArray[0]['start'])
                 && ($contractHoursArray[0]['start'] instanceof \DateTime)
                 && (new \DateTime((string) ($request->request->get('startdate') ?? ''))) < $contractHoursArray[0]['start']
@@ -619,7 +619,7 @@ class CrudController extends BaseController
             }
 
             // Send Message when contract ends during bulkentry
-            if ($contractHoursArray !== []) {
+            if (!empty($contractHoursArray)) {
                 $lastContract = end($contractHoursArray);
                 if (is_array($lastContract)
                     && isset($lastContract['stop'])
