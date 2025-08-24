@@ -33,8 +33,8 @@ class JsonResponse extends Response
 {
     /**
      * @param array<string, string|array<string>> $headers
+     * @psalm-suppress PropertyNotSetInConstructor
      */
-    /** @psalm-suppress PropertyNotSetInConstructor */
     public function __construct(mixed $content = null, int $status = 200, array $headers = [])
     {
         // Initialize base Response with sane defaults

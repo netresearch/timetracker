@@ -1257,8 +1257,7 @@ class AdminController extends BaseController
      * look for old contracts that start during the duration of the new contract
      *      |--old----->
      *  |--new--(|)-->.
-     */
-    /**
+
      * @param array<int, Contract> $contracts
      */
     protected function checkOldContractsStartDateOverlap(array $contracts, \DateTime $newStartDate, ?\DateTime $newEndDate): bool
@@ -1279,8 +1278,7 @@ class AdminController extends BaseController
     /** look for contract with ongoing end
      * |--old--|
      *      |--new----->.
-     */
-    /**
+
      * @param array<int, Contract> $contracts
      */
     protected function checkOldContractsEndDateOverlap(array $contracts, \DateTime $newStartDate): bool

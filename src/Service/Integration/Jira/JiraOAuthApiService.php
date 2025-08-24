@@ -385,8 +385,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     */
-    /**
+     *
      * @param array<int, string> $fields
      */
     public function searchTicket(string $jql, array $fields, int $limit = 1): mixed
@@ -484,8 +483,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     */
-    /**
+     *
      * @param array<string, mixed> $data
      */
     protected function post(string $url, array $data = []): object
@@ -499,9 +497,8 @@ class JiraOAuthApiService
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    /**
      * @param array<string, mixed> $data
-     */
+    
     protected function put(string $url, array $data = []): object
     {
         return $this->getResponse('PUT', $url, $data);
@@ -521,8 +518,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     */
-    /**
+     *
      * @param array<string, mixed> $data
      */
     protected function getResponse(string $method, string $url, array $data = []): object

@@ -68,9 +68,6 @@ class LdapClientService
      * @throws \Exception
      * @throws LdapException
      *
-     * @return array The search result (corresponding ldap entry)
-     */
-    /**
      * @return array<string, array<int, string>>
      */
     protected function verifyUsername()
@@ -166,9 +163,6 @@ class LdapClientService
      *
      * @throws \Exception
      *
-     * @return true true
-     */
-    /**
      * @param array<string, array<int, string>> $ldapEntry
      *
      * @return true
@@ -332,9 +326,6 @@ class LdapClientService
         return true;
     }
 
-    /**
-     * @return array<int,string>
-     */
     /**
      * @return array<int, string>
      */

@@ -15,13 +15,7 @@ class ProjectRepository extends ServiceEntityRepository
     /**
      * Returns an array structure with keys of customer IDs and an "all" key.
      * Values are arrays of associative project arrays (id, name, jiraId, active).
-     */
-    /**
-     * @param array<int, array{customer: array{id:int}}|array<string, mixed>> $customers
-     *
-     * @return array<string|int, array<int, array{id:int, name:string, jiraId:?string, active?:bool}>>
-     */
-    /**
+     * 
      * @param array<int, array{customer: array{id:int}}|array<string, mixed>> $customers
      *
      * @return array<int|string, array<int, array{id:int, name:string, jiraId:string|null, active?:bool}>>

@@ -14,8 +14,7 @@ class CustomerRepository extends ServiceEntityRepository
     }
     /**
      * Returns an array of customers available for current user.
-     */
-    /**
+     *
      * @return array<int, array{customer: array{id:int, name:string, active:bool}}>
      */
     public function getCustomersByUser(int $userId): array
@@ -44,8 +43,7 @@ class CustomerRepository extends ServiceEntityRepository
 
     /*
      * Returns an array of all available customers
-     */
-    /**
+     *
      * @return array<int, array{customer: array{id:int, name:string, active:bool, global:bool, teams: array<int, int>}}>
      */
     public function getAllCustomers(): array

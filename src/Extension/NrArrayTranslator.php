@@ -53,8 +53,7 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
 
     /**
      * Returns the filters of the extension.
-     */
-    /**
+     *
      * @return \Twig\TwigFilter[]
      *
      * @psalm-return array{nr_array_translator: \Twig\TwigFilter}
@@ -73,9 +72,6 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      * @param string $string       json string
      * @param string $arrayKey     key value in the string
      * @param string $languageFile language file for translation
-     * @param array  $keys         key which will be translated
-     */
-    /**
      * @param array<int, string> $keys
      */
     public function filterArray(
