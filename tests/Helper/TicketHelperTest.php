@@ -4,12 +4,11 @@ namespace Tests\Helper;
 
 use App\Helper\TicketHelper;
 use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class TicketHelperTest extends AbstractWebTestCase
 {
-    /**
-     * @dataProvider checkTicketFormatDataProvider
-     */
+    #[DataProvider('checkTicketFormatDataProvider')]
     public function testCheckTicketFormat(bool $value, string $ticket): void
     {
         $this->assertEquals($value, TicketHelper::checkFormat($ticket));

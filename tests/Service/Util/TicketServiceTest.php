@@ -6,12 +6,11 @@ namespace Tests\Service\Util;
 
 use App\Service\Util\TicketService;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class TicketServiceTest extends TestCase
 {
-    /**
-     * @dataProvider checkTicketFormatDataProvider
-     */
+    #[DataProvider('checkTicketFormatDataProvider')]
     public function testCheckTicketFormat(bool $expected, string $ticket): void
     {
         $ticketService = new TicketService();
@@ -36,9 +35,7 @@ class TicketServiceTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider prefixDataProvider
-     */
+    #[DataProvider('prefixDataProvider')]
     public function testGetPrefix(?string $expectedPrefix, string $ticket): void
     {
         $ticketService = new TicketService();

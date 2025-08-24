@@ -4,12 +4,11 @@ namespace Tests\Helper;
 
 use App\Helper\TimeHelper;
 use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class TimeHelperTest extends AbstractWebTestCase
 {
-    /**
-     * @dataProvider readable2MinutesDataProvider
-     */
+    #[DataProvider('readable2MinutesDataProvider')]
     public function testReadable2Minutes(int $minutes, string $readable): void
     {
         $this->assertEquals($minutes, TimeHelper::readable2minutes($readable));
@@ -49,9 +48,7 @@ class TimeHelperTest extends AbstractWebTestCase
         ];
     }
 
-    /**
-     * @dataProvider minutes2ReadableDataProvider
-     */
+    #[DataProvider('minutes2ReadableDataProvider')]
     public function testMinutes2Readable(string $readable, int $minutes, bool $useWeeks= true): void
     {
         $this->assertEquals($readable, TimeHelper::minutes2readable($minutes, $useWeeks));
@@ -85,9 +82,7 @@ class TimeHelperTest extends AbstractWebTestCase
         ];
     }
 
-    /**
-     * @dataProvider formatDurationDataProvider
-     */
+    #[DataProvider('formatDurationDataProvider')]
     public function testFormatDuration(int|float $duration, bool $inDays, string $value): void
     {
         $this->assertEquals($value, TimeHelper::formatDuration($duration, $inDays));
@@ -109,9 +104,7 @@ class TimeHelperTest extends AbstractWebTestCase
         ];
     }
 
-    /**
-     * @dataProvider dataProviderTestFormatQuota
-     */
+    #[DataProvider('dataProviderTestFormatQuota')]
     public function testFormatQuota(int|float $amount, int $sum, string $value): void
     {
         $this->assertEquals($value, TimeHelper::formatQuota($amount, $sum));
