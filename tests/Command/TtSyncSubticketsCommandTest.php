@@ -44,12 +44,21 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
             ->disableOriginalConstructor()
             ->onlyMethods(['createQueryBuilder'])
             ->getMock();
-        $projectRepo->method('createQueryBuilder')->willReturn(new class($project, $p2) {
-            public function __construct(private readonly Project $a, private readonly Project $b) {}
-            public function where($expr): self { return $this; }
-            public function getQuery(): self { return $this; }
-            public function getResult(): array { return [$this->a, $this->b]; }
-        });
+
+        $queryMock = $this->getMockBuilder(\Doctrine\ORM\AbstractQuery::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getResult'])
+            ->getMockForAbstractClass();
+        $queryMock->method('getResult')->willReturn([$project, $p2]);
+
+        $qbMock = $this->getMockBuilder(\Doctrine\ORM\QueryBuilder::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['where', 'getQuery'])
+            ->getMock();
+        $qbMock->method('where')->willReturn($qbMock);
+        $qbMock->method('getQuery')->willReturn($queryMock);
+
+        $projectRepo->method('createQueryBuilder')->willReturn($qbMock);
 
         /** @var EntityManagerInterface&MockObject $em */
         /** @var EntityManagerInterface&MockObject $em */
