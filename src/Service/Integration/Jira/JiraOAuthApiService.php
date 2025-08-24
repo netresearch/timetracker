@@ -496,9 +496,9 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     */
+     *
      * @param array<string, mixed> $data
-    
+     */
     protected function put(string $url, array $data = []): object
     {
         return $this->getResponse('PUT', $url, $data);
