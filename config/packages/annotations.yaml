@@ -2,4 +2,4 @@
 # Annotations are configured in doctrine.yaml
 
 framework:
-    annotations: true
+    annotations: false
