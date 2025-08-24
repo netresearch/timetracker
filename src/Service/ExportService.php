@@ -81,7 +81,12 @@ class ExportService
                 $ticketSystem = $entry->getProject()->getTicketSystem();
 
                 if (!isset($arApi[$ticketSystem->getId()])) {
-                    $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
+                    $factory = class_exists(\App\Service\Integration\Jira\JiraOAuthApiFactory::class)
+                        ? new \App\Service\Integration\Jira\JiraOAuthApiFactory($this->managerRegistry, new \Symfony\Component\Routing\Generator\UrlGenerator())
+                        : null;
+                    if ($factory) {
+                        $arApi[$ticketSystem->getId()] = $factory->create($currentUser, $ticketSystem);
+                    }
                 }
 
                 $arTickets[$ticketSystem->getId()][] = $entry->getTicket();

@@ -13,6 +13,11 @@ class TimeHelper
 
     public const HOURS_PER_DAY = 8;
 
+    public static function getMinutesByLetter(string $letter): int
+    {
+        return (new \App\Service\Util\TimeCalculationService())->getMinutesByLetter($letter);
+    }
+
     public static function readable2minutes(string $readable): int|float
     {
         return (new \App\Service\Util\TimeCalculationService())->readableToMinutes($readable);
