@@ -6,6 +6,7 @@ use Tests\AbstractWebTestCase;
 use Tests\Service\TestClock;
 use App\Service\ClockInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class DefaultControllerTest extends AbstractWebTestCase
 {
@@ -397,9 +398,7 @@ class DefaultControllerTest extends AbstractWebTestCase
         ];
     }
 
-    /**
-     * @dataProvider getDataActionParameterProvider
-     */
+    #[DataProvider('getDataActionParameterProvider')]
     public function testGetDataActionForParameter(string $mockDate, int $daysParam, int $expectedCount, string $expectedDate): void
     {
         // Set the clock to the date provided by the data provider
