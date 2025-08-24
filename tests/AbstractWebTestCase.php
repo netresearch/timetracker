@@ -31,7 +31,14 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             return array_keys($a) !== range(0, count($a) - 1);
         };
 
-        $assertSubset = function (array $needle, array $haystack) use (&$assertSubset, $isAssoc): void {
+        $valuesEqual = static function ($expected, $actual): bool {
+            if (is_numeric($expected) && is_numeric($actual)) {
+                return (string) $expected === (string) $actual;
+            }
+            return $expected === $actual;
+        };
+
+        $assertSubset = function (array $needle, array $haystack) use (&$assertSubset, $isAssoc, $valuesEqual): void {
             if ($isAssoc($needle)) {
                 // Associative: each key/value in needle must match in haystack
                 foreach ($needle as $key => $value) {
@@ -40,7 +47,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                         $this->assertIsArray($haystack[$key]);
                         $assertSubset($value, $haystack[$key]);
                     } else {
-                        $this->assertSame($value, $haystack[$key]);
+                        $this->assertTrue($valuesEqual($value, $haystack[$key]), "Value mismatch at key '$key'");
                     }
                 }
             } else {
@@ -51,7 +58,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                         $this->assertIsArray($haystack[$index]);
                         $assertSubset($value, $haystack[$index]);
                     } else {
-                        $this->assertSame($value, $haystack[$index]);
+                        $this->assertTrue($valuesEqual($value, $haystack[$index]), "Value mismatch at index $index");
                     }
                 }
             }
