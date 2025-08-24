@@ -84,6 +84,13 @@ class User implements UserInterface
         return $this->id;
     }
 
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     /**
      * Set username.
      *
@@ -233,6 +240,30 @@ class User implements UserInterface
     public function getTeams()
     {
         return $this->teams;
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
+     */
+    public function getUserTicketsystems()
+    {
+        return $this->userTicketsystems;
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     */
+    public function getEntries()
+    {
+        return $this->entriesRelation;
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Contract>
+     */
+    public function getContracts()
+    {
+        return $this->contracts;
     }
 
     public function getLocale(): string

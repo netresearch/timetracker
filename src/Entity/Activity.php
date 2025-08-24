@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: \App\Repository\ActivityRepository::class)]
@@ -110,18 +111,36 @@ class Activity
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     * @return Collection<int, Entry>
      */
-    public function getEntries(): \Doctrine\Common\Collections\Collection
+    public function getEntries(): Collection
     {
         return $this->entriesRelation;
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Preset>
+     * @return Collection<int, Preset>
      */
-    public function getPresets(): \Doctrine\Common\Collections\Collection
+    public function getPresets(): Collection
     {
         return $this->presetsRelation;
+    }
+
+    public function addEntry(Entry $entry): static
+    {
+        if (!$this->entriesRelation->contains($entry)) {
+            $this->entriesRelation->add($entry);
+        }
+
+        return $this;
+    }
+
+    public function addPreset(Preset $preset): static
+    {
+        if (!$this->presetsRelation->contains($preset)) {
+            $this->presetsRelation->add($preset);
+        }
+
+        return $this;
     }
 }
