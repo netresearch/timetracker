@@ -365,7 +365,7 @@ class CrudController extends BaseController
             }
 
             $response = [
-                'result' => $entry instanceof Entry ? $entry->toArray() : [],
+                'result' => $entry->toArray(),
                 'alert' => $alert,
             ];
 
@@ -373,7 +373,7 @@ class CrudController extends BaseController
         } catch (JiraApiUnauthorizedException $e) {
             // In tests, allow proceeding with 200 and surface alert instead of failing
             $response = [
-                'result' => $entry instanceof Entry ? $entry->toArray() : [],
+                'result' => $entry->toArray(),
                 'alert' => $e->getMessage(),
             ];
 
@@ -383,7 +383,7 @@ class CrudController extends BaseController
         } catch (\Throwable $e) {
             // Avoid 503 in tests: respond with 200 and include alert
             $response = [
-                'result' => $entry instanceof Entry ? $entry->toArray() : [],
+                'result' => $entry->toArray(),
                 'alert' => $e->getMessage(),
             ];
 
@@ -607,8 +607,6 @@ class CrudController extends BaseController
 
             // Send Message when contract starts during bulkentry
             if (!empty($contractHoursArray)
-                && isset($contractHoursArray[0]['start'])
-                && ($contractHoursArray[0]['start'] instanceof \DateTime)
                 && (new \DateTime((string) ($request->request->get('startdate') ?? ''))) < $contractHoursArray[0]['start']
             ) {
                 $responseContent .= '<br/>'.
@@ -621,11 +619,7 @@ class CrudController extends BaseController
             // Send Message when contract ends during bulkentry
             if (!empty($contractHoursArray)) {
                 $lastContract = end($contractHoursArray);
-                if (is_array($lastContract)
-                    && isset($lastContract['stop'])
-                    && ($lastContract['stop'] instanceof \DateTime)
-                    && $endDate > $lastContract['stop']
-                ) {
+                if ($endDate > $lastContract['stop']) {
                     $responseContent .= '<br/>'.
                         $this->translator->trans(
                             'Contract expired at %date%.',
