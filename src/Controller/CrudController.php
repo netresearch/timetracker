@@ -394,6 +394,8 @@ class CrudController extends BaseController
             $this->logData($_POST, true);
 
             $doctrine = $this->managerRegistry;
+            // Ensure variable exists regardless of contract usage
+            $contractHoursArray = [];
 
             $preset = $doctrine->getRepository(\App\Entity\Preset::class)->find((int) $request->request->get('preset'));
             if (!$preset instanceof \App\Entity\Preset) {
@@ -415,7 +417,6 @@ class CrudController extends BaseController
                 $contracts = $doctrine->getRepository(Contract::class)
                     ->findBy(['user' => $this->getUserId($request)], ['start' => 'ASC']);
 
-                $contractHoursArray = [];
                 foreach ($contracts as $contract) {
                     if (!$contract instanceof Contract) {
                         continue;
