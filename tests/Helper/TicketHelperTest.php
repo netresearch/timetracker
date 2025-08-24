@@ -14,7 +14,7 @@ class TicketHelperTest extends AbstractWebTestCase
         $this->assertEquals($value, TicketHelper::checkFormat($ticket));
     }
 
-    public function checkTicketFormatDataProvider(): array
+    public static function checkTicketFormatDataProvider(): array
     {
         return [
             [false, ''],

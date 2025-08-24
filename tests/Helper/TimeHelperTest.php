@@ -14,7 +14,7 @@ class TimeHelperTest extends AbstractWebTestCase
         $this->assertEquals($minutes, TimeHelper::readable2minutes($readable));
     }
 
-    public function readable2MinutesDataProvider(): array
+    public static function readable2MinutesDataProvider(): array
     {
         return [
             [0, ''],
@@ -54,7 +54,7 @@ class TimeHelperTest extends AbstractWebTestCase
         $this->assertEquals($readable, TimeHelper::minutes2readable($minutes, $useWeeks));
     }
 
-    public function minutes2ReadableDataProvider(): array
+    public static function minutes2ReadableDataProvider(): array
     {
         return [
             ['0m', 0],
@@ -88,7 +88,7 @@ class TimeHelperTest extends AbstractWebTestCase
         $this->assertEquals($value, TimeHelper::formatDuration($duration, $inDays));
     }
 
-    public function formatDurationDataProvider(): array
+    public static function formatDurationDataProvider(): array
     {
         return [
              [0, false, '00:00'],
@@ -110,7 +110,7 @@ class TimeHelperTest extends AbstractWebTestCase
         $this->assertEquals($value, TimeHelper::formatQuota($amount, $sum));
     }
 
-    public function dataProviderTestFormatQuota(): array
+    public static function dataProviderTestFormatQuota(): array
     {
         return [
              [0, 100, '0.00%'],
