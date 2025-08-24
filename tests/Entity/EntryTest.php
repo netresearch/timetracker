@@ -147,9 +147,6 @@ class EntryTest extends AbstractWebTestCase
         $this->assertEquals(311, $entry->getDuration());
     }
 
-    /**
-     * @expectedExceptionMessage Duration must be greater than 0!
-     */
     public function testNullDurationException(): void
     {
         $day   = '2011-11-11';
@@ -159,12 +156,9 @@ class EntryTest extends AbstractWebTestCase
         $entry->setDay($day);
         $entry->setStart($start);
         $entry->setEnd($end);
-        try {
-            $entry->validateDuration();
-        } catch (\Exception $exception) {
-        }
-
-        $this->assertNotNull($exception, 'An expected exception has not been raised.');
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Duration must be greater than 0!');
+        $entry->validateDuration();
     }
 
     public function testToArray(): void
