@@ -73,23 +73,38 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         };
 
         if (!$isAssoc($subset) && !$isAssoc($array)) {
-            // Both lists
-            if (count($subset) === 1) {
-                $found = false;
-                foreach ($array as $element) {
-                    if (is_array($element)) {
-                        try {
-                            $assertSubset($subset[0], $element);
-                            $found = true;
-                            break;
-                        } catch (\Throwable) {
-                            // keep searching
+            // Both lists: allow order-insensitive subset matching
+            $remaining = $subset;
+            $haystack = $array;
+
+            $matchElement = function ($needle, array $hay) use ($assertSubset, $valuesEqual) {
+                foreach ($hay as $idx => $candidate) {
+                    try {
+                        if (is_array($needle)) {
+                            if (!is_array($candidate)) {
+                                continue;
+                            }
+                            $assertSubset($needle, $candidate);
+                            return $idx;
                         }
+                        if ($valuesEqual($needle, $candidate)) {
+                            return $idx;
+                        }
+                    } catch (\Throwable) {
+                        // try next
                     }
                 }
-                $this->assertTrue($found, $message !== '' ? $message : 'Subset element not found in array');
-                return;
+                return null;
+            };
+
+            foreach ($remaining as $needle) {
+                $idx = $matchElement($needle, $haystack);
+                if ($idx === null) {
+                    $this->fail($message !== '' ? $message : 'Subset element not found in array');
+                }
+                unset($haystack[$idx]);
             }
+            return;
         }
 
         $assertSubset($subset, $array);
