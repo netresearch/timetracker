@@ -11,7 +11,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
-use App\Helper\TicketHelper;
+use App\Service\Util\TicketService;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CrudController extends BaseController
 {
+    private ?TicketService $ticketService = null;
     private ?LoggerInterface $logger = null;
 
     private ?JiraOAuthApiFactory $jiraOAuthApiFactory = null;
@@ -42,6 +43,12 @@ class CrudController extends BaseController
     public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {
         $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
+    }
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setTicketService(TicketService $ticketService): void
+    {
+        $this->ticketService = $ticketService;
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
@@ -651,7 +658,7 @@ class CrudController extends BaseController
             return;
         }
 
-        if (!TicketHelper::checkFormat($ticket)) {
+        if ($this->ticketService && !$this->ticketService->checkFormat($ticket)) {
             $message = $this->translator->trans("The ticket's format is not recognized.");
             throw new \Exception($message);
         }
@@ -674,12 +681,12 @@ class CrudController extends BaseController
             return;
         }
 
-        if (!TicketHelper::checkFormat($ticket)) {
+        if ($this->ticketService && !$this->ticketService->checkFormat($ticket)) {
             $message = $this->translator->trans("The ticket's format is not recognized.");
             throw new \Exception($message);
         }
 
-        $jiraId = TicketHelper::getPrefix($ticket);
+        $jiraId = $this->ticketService ? $this->ticketService->getPrefix($ticket) : null;
         if (null === $jiraId) {
             $message = $this->translator->trans("The ticket's format is not recognized.");
             throw new \Exception($message);
