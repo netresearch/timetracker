@@ -1,11 +1,10 @@
 sentry:
     dsn: null
-    tracing:
-        enabled: false
-    messenger:
-        enabled: false
-    register_error_listener: false
     options:
-        enabled_integrations: []
+        default_integrations: false
+        integrations: []
+        enable_tracing: false
+        sample_rate: 0
+        traces_sample_rate: 0
 
 
