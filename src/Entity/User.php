@@ -49,7 +49,7 @@ class User implements UserInterface
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Team>
      */
-    #[ORM\ManyToMany(targetEntity: \Team::class, inversedBy: 'users')]
+    #[ORM\ManyToMany(targetEntity: Team::class, inversedBy: 'users')]
     #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id', onDelete: 'CASCADE')])]
     protected $teams;
 
@@ -59,13 +59,13 @@ class User implements UserInterface
     /**
      * @var \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
      */
-    #[ORM\OneToMany(targetEntity: \UserTicketsystem::class, mappedBy: 'user')]
+    #[ORM\OneToMany(targetEntity: UserTicketsystem::class, mappedBy: 'user')]
     protected $userTicketsystems;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
-    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'user')]
+    #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'user')]
     protected $entriesRelation;
 
     public function __construct()
@@ -226,7 +226,7 @@ class User implements UserInterface
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Contract>
      */
-    #[ORM\OneToMany(targetEntity: \Contract::class, mappedBy: 'user')]
+    #[ORM\OneToMany(targetEntity: Contract::class, mappedBy: 'user')]
     protected $contracts;
 
     /**

@@ -32,14 +32,14 @@ class Team
     /**
      * @var User|null
      */
-    #[ORM\ManyToOne(targetEntity: \User::class, inversedBy: 'leadTeams')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'leadTeams')]
     #[ORM\JoinColumn(name: 'lead_user_id', referencedColumnName: 'id')]
     protected $leadUser;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, User>
      */
-    #[ORM\ManyToMany(targetEntity: \User::class, mappedBy: 'teams')]
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'teams')]
     protected $users;
 
     /**

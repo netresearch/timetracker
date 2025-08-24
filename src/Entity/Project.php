@@ -42,7 +42,7 @@ class Project extends Base
     /**
      * @var Customer|null
      */
-    #[ORM\ManyToOne(targetEntity: \Customer::class, inversedBy: 'projects')]
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'projects')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
 
@@ -77,20 +77,20 @@ class Project extends Base
     /**
      * @var TicketSystem|null
      */
-    #[ORM\ManyToOne(targetEntity: \TicketSystem::class)]
+    #[ORM\ManyToOne(targetEntity: TicketSystem::class)]
     #[ORM\JoinColumn(name: 'ticket_system', referencedColumnName: 'id')]
     protected $ticketSystem;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
-    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'project')]
+    #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'project')]
     protected $entries;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
-    #[ORM\OneToMany(targetEntity: \Preset::class, mappedBy: 'project')]
+    #[ORM\OneToMany(targetEntity: Preset::class, mappedBy: 'project')]
     protected $presets;
 
     /**
@@ -140,7 +140,7 @@ class Project extends Base
      *
      * @var object|null
      */
-    #[ORM\ManyToOne(targetEntity: \User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'project_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $projectLead;
 
@@ -149,7 +149,7 @@ class Project extends Base
      *
      * @var object|null
      */
-    #[ORM\ManyToOne(targetEntity: \User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'technical_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $technicalLead;
 

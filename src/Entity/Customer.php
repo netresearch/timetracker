@@ -39,25 +39,25 @@ class Customer extends Base
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Project>
      */
-    #[ORM\OneToMany(targetEntity: \Project::class, mappedBy: 'customer')]
+    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'customer')]
     protected $projects;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
-    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'customer')]
+    #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'customer')]
     protected $entries;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
-    #[ORM\OneToMany(targetEntity: \Preset::class, mappedBy: 'customer')]
+    #[ORM\OneToMany(targetEntity: Preset::class, mappedBy: 'customer')]
     protected $presets;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Team>
      */
-    #[ORM\ManyToMany(targetEntity: \Team::class, inversedBy: 'customers')]
+    #[ORM\ManyToMany(targetEntity: Team::class, inversedBy: 'customers')]
     #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
     protected $teams;
 

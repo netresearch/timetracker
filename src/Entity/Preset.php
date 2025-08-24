@@ -23,15 +23,15 @@ class Preset extends Base
     #[ORM\Column(type: 'string')]
     protected $name;
 
-    #[ORM\ManyToOne(targetEntity: \Project::class, inversedBy: 'presets')]
+    #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'presets')]
     #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected Project $project;
 
-    #[ORM\ManyToOne(targetEntity: \Customer::class, inversedBy: 'presets')]
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'presets')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected Customer $customer;
 
-    #[ORM\ManyToOne(targetEntity: \Activity::class, inversedBy: 'presets')]
+    #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'presets')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected Activity $activity;
 
