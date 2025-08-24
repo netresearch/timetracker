@@ -12,6 +12,7 @@ class ActivityRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Activity::class);
     }
+
     /**
      * @return array<int, array{activity: array{id:int, name:string, needsTicket:bool, factor:float|string}}>
      */

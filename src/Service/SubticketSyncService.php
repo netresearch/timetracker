@@ -3,11 +3,13 @@
 namespace App\Service;
 
 use App\Entity\Project;
+use Doctrine\Persistence\ManagerRegistry;
 
 class SubticketSyncService
 {
-    public $managerRegistry;
-    public $jiraOAuthApiFactory;
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly \App\Service\Integration\Jira\JiraOAuthApiFactory $jiraOAuthApiFactory)
+    {
+    }
     /**
      * Fetch subtickets from Jira and update the project record's "subtickets" field.
      *

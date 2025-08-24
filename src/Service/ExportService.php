@@ -3,10 +3,13 @@
 namespace App\Service;
 
 use App\Entity\Entry;
+use Doctrine\Persistence\ManagerRegistry;
 
 class ExportService
 {
-    public $managerRegistry;
+    public function __construct(private readonly ManagerRegistry $managerRegistry)
+    {
+    }
     /**
      * Returns entries filtered and ordered.
      *
