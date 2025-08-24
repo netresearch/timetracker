@@ -17,7 +17,7 @@ class TicketServiceTest extends TestCase
         $this->assertSame($expected, $ticketService->checkFormat($ticket));
     }
 
-    public function checkTicketFormatDataProvider(): array
+    public static function checkTicketFormatDataProvider(): array
     {
         return [
             [false, ''],
@@ -42,7 +42,7 @@ class TicketServiceTest extends TestCase
         $this->assertSame($expectedPrefix, $ticketService->getPrefix($ticket));
     }
 
-    public function prefixDataProvider(): array
+    public static function prefixDataProvider(): array
     {
         return [
             [null, ''],
