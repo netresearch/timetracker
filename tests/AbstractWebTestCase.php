@@ -14,6 +14,14 @@ use Symfony\Component\BrowserKit\Cookie;
  */
 abstract class AbstractWebTestCase extends SymfonyWebTestCase
 {
+    protected static function ensureKernelShutdown(): void
+    {
+        $wasBooted = static::$booted;
+        parent::ensureKernelShutdown();
+        if ($wasBooted) {
+            @\restore_exception_handler();
+        }
+    }
     /**
      * Assert that $subset is contained within $array (recursive subset match).
      *
