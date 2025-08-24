@@ -38,7 +38,7 @@ class CrudControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure($expectedJson);
 
         $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
-        $result = $this->connection->query($query)->fetchAllAssociative();
+        $result = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $expectedDbEntry = [
             [
@@ -73,7 +73,7 @@ class CrudControllerTest extends AbstractWebTestCase
 
         // Get the created entry ID
         $query = 'SELECT id FROM `entries` WHERE `day` = "2024-01-01" ORDER BY `id` DESC LIMIT 1';
-        $result = $this->connection->query($query)->fetchAssociative();
+        $result = $this->connection->executeQuery($query)->fetchAssociative();
         $entryId = (int) $result['id'];
 
         // Now perform the delete
@@ -84,7 +84,7 @@ class CrudControllerTest extends AbstractWebTestCase
 
         // Verify entry is deleted
         $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
-        $result = $this->connection->query($query)->fetchAssociative();
+        $result = $this->connection->executeQuery($query)->fetchAssociative();
         $this->assertEquals(0, (int) $result['count'], "Entry was not deleted from database");
 
         // Try to delete again and expect 404
@@ -136,7 +136,7 @@ class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2020-01-25"
             AND `day` <= "2020-02-06"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $this->assertSame(10, count($results));
 
@@ -190,7 +190,7 @@ class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2024-01-01"
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
         $this->assertSame(8, count($results));
 
         // Assert days for the expected entries
@@ -244,7 +244,7 @@ class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2020-02-07"
             AND `day` <= "2020-02-10"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
         $this->assertSame(2, count($results));
 
         $staticExpected =  [
@@ -304,7 +304,7 @@ class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2020-02-10"
             AND `day` <= "2020-02-20"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $this->assertSame(10, count($results));
 
@@ -359,7 +359,7 @@ class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "0020-02-10"
             AND `day` <= "0020-02-20"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $this->assertSame(0, count($results));
     }
@@ -384,7 +384,7 @@ class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2019-12-29"
             AND `day` <= "2020-01-05"
             ORDER BY `id` ASC';
-        $results = $this->connection->query($query)->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $this->assertSame(4, count($results));
 
@@ -451,7 +451,7 @@ class CrudControllerTest extends AbstractWebTestCase
 
         // Verify the database entry
         $query = 'SELECT * FROM `entries` WHERE `day` = "2024-01-15" ORDER BY `id` DESC LIMIT 1';
-        $result = $this->connection->query($query)->fetchAllAssociative();
+        $result = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $expectedDbEntry = [
             [

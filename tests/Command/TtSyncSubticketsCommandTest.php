@@ -37,24 +37,19 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
             ->method('syncProjectSubtickets')
             ->willReturnOnConsecutiveCalls(['X-1','X-2'], []);
 
-        // Repository stub with createQueryBuilder available
+        // Repository mock that returns a minimal query builder-like object
         $project = (new Project())->setId(1)->setName('Alpha');
         $p2 = (new Project())->setId(2)->setName('Beta');
-        $projectRepo = new class($project, $p2) {
+        $projectRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['createQueryBuilder'])
+            ->getMock();
+        $projectRepo->method('createQueryBuilder')->willReturn(new class($project, $p2) {
             public function __construct(private readonly Project $a, private readonly Project $b) {}
-
-            public function createQueryBuilder(string $alias): object {
-                return new class($this->a, $this->b) {
-                    public function __construct(private readonly Project $a, private readonly Project $b) {}
-
-                    public function where($expr): self { return $this; }
-
-                    public function getQuery(): self { return $this; }
-
-                    public function getResult(): array { return [$this->a, $this->b]; }
-                };
-            }
-        };
+            public function where($expr): self { return $this; }
+            public function getQuery(): self { return $this; }
+            public function getResult(): array { return [$this->a, $this->b]; }
+        });
 
         /** @var EntityManagerInterface&MockObject $em */
         /** @var EntityManagerInterface&MockObject $em */
@@ -82,10 +77,12 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        // Repository stub with find() returning null
-        $projectRepo = new class {
-            public function find($id): null { return null; }
-        };
+        // Repository mock with find() returning null
+        $projectRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['find'])
+            ->getMock();
+        $projectRepo->method('find')->willReturn(null);
 
         /** @var EntityManagerInterface&MockObject $em */
         $em = $this->getMockBuilder(EntityManagerInterface::class)

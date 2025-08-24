@@ -92,7 +92,7 @@ class EntryRepository extends ServiceEntityRepository
             'SELECT e FROM App\Entity\Entry e'
             .' WHERE e.user = :user_id AND e.day >= :fromDate'
             .' ORDER BY e.day, e.start ASC'
-        )->setParameter('user_id', $user->getId())
+        )->setParameter('user_id', $user->getId(), \Doctrine\DBAL\ParameterType::INTEGER)
          ->setParameter('fromDate', $fromDate);
 
         return $query->getResult();
@@ -136,24 +136,24 @@ class EntryRepository extends ServiceEntityRepository
 
         if (0 < $userId) {
             $queryBuilder->andWhere('entry.user = :user_id');
-            $queryBuilder->setParameter('user_id', $userId, \PDO::PARAM_INT);
+            $queryBuilder->setParameter('user_id', $userId, \Doctrine\DBAL\ParameterType::INTEGER);
         }
 
         if (0 < (int) $projectId) {
             $queryBuilder->andWhere('entry.project = :project_id');
-            $queryBuilder->setParameter('project_id', $projectId, \PDO::PARAM_INT);
+            $queryBuilder->setParameter('project_id', $projectId, \Doctrine\DBAL\ParameterType::INTEGER);
         }
 
         if (0 < (int) $customerId) {
             $queryBuilder->andWhere('entry.customer = :customer_id');
-            $queryBuilder->setParameter('customer_id', $customerId, \PDO::PARAM_INT);
+            $queryBuilder->setParameter('customer_id', $customerId, \Doctrine\DBAL\ParameterType::INTEGER);
         }
 
         if (0 < $year) {
             $queryBuilder->andWhere(
                 $queryBuilder->expr()->like('entry.day', ':month')
             );
-            $queryBuilder->setParameter('month', sprintf('%04d-%02d-%%', $year, $month ?? 0), \PDO::PARAM_STR);
+            $queryBuilder->setParameter('month', sprintf('%04d-%02d-%%', $year, $month ?? 0), \Doctrine\DBAL\ParameterType::STRING);
         }
 
         return $queryBuilder->getQuery()->getResult();
@@ -177,7 +177,7 @@ class EntryRepository extends ServiceEntityRepository
             .' WHERE e.user = :user_id'
             .' AND e.day = :day'
             .' ORDER BY e.start ASC, e.end ASC, e.id ASC'
-        )->setParameter('user_id', $userId)
+        )->setParameter('user_id', $userId, \Doctrine\DBAL\ParameterType::INTEGER)
             ->setParameter('day', $day);
 
         /** @var array<int, Entry> $result */
