@@ -52,6 +52,20 @@ class BaseController extends AbstractController
     /** @var ManagerRegistry */
     protected $doctrineRegistry;
 
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setCoreDependencies(
+        ManagerRegistry $managerRegistry,
+        ParameterBagInterface $params,
+        TranslatorInterface $translator,
+        KernelInterface $kernel
+    ): void {
+        $this->managerRegistry = $managerRegistry;
+        $this->doctrineRegistry = $managerRegistry; // BC for legacy usages
+        $this->params = $params;
+        $this->translator = $translator;
+        $this->kernel = $kernel;
+    }
+
     /**
      * Check if user is logged in via Symfony Security.
      */
