@@ -38,7 +38,7 @@
     "ext-pdo": "*",
     "ext-reflection": "*",
     "doctrine/doctrine-bundle": "^2.12 || ^2.15",
-    "doctrine/doctrine-migrations-bundle": "^3.5",
+    "doctrine/doctrine-migrations-bundle": "^3.4",
     "doctrine/orm": "^3.5",
     "doctrine/persistence": "^3.3",
     "guzzlehttp/guzzle": "^7.9",
