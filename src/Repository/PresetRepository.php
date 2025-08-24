@@ -4,9 +4,14 @@ namespace App\Repository;
 
 use App\Entity\Preset;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
 class PresetRepository extends ServiceEntityRepository
 {
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Preset::class);
+    }
     /**
      * @return array<int, array{preset: array<string, mixed>}>
      */
