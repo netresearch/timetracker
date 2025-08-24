@@ -30,6 +30,13 @@ class Activity
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected ?int $id = null;
 
+    public function setId(int $id): static
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     #[ORM\Column(type: 'string', length: 50)]
     protected ?string $name = null;
 
