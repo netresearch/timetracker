@@ -20,6 +20,7 @@ use App\Entity\User;
 use App\Helper\TimeHelper;
 use App\Service\ClockInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\Query\Expr\Join;
 
 /**
@@ -34,7 +35,34 @@ use Doctrine\ORM\Query\Expr\Join;
  */
 class EntryRepository extends ServiceEntityRepository
 {
+    /**
+     * Convert N working days into calendar days by skipping weekends.
+     */
+    private function getCalendarDaysByWorkDays(int $workingDays): int
+    {
+        if ($workingDays <= 0) {
+            return 0;
+        }
+
+        $days = 0;
+        $date = $this->clock->today();
+        while ($workingDays > 0) {
+            $days++;
+            $date = $date->sub(new \DateInterval('P1D'));
+            $dayOfWeek = (int) $date->format('N'); // 1 (Mon) .. 7 (Sun)
+            if ($dayOfWeek < 6) {
+                $workingDays--;
+            }
+        }
+
+        return $days;
+    }
     private readonly ClockInterface $clock;
+    public function __construct(ManagerRegistry $registry, ClockInterface $clock)
+    {
+        parent::__construct($registry, Entry::class);
+        $this->clock = $clock;
+    }
 
     public const PERIOD_DAY = 1;
 
