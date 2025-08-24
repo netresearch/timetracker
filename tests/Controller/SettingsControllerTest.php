@@ -17,9 +17,9 @@ class SettingsControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'success' => true,
             'settings' => [
-                'show_empty_line' => 1,
-                'suggest_time' => 1,
-                'show_future' => 1,
+                'show_empty_line' => true,
+                'suggest_time' => true,
+                'show_future' => true,
                 'user_name' => 'i.myself',
                 'type' => 'PL',
                 'locale' => 'de',
