@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase as SymfonyWebTestCase;
 use Symfony\Component\BrowserKit\Cookie;
@@ -15,7 +14,71 @@ use Symfony\Component\BrowserKit\Cookie;
  */
 abstract class AbstractWebTestCase extends SymfonyWebTestCase
 {
-    use ArraySubsetAsserts;
+    /**
+     * Assert that $subset is contained within $array (recursive subset match).
+     *
+     * - If $subset is an associative array, all its keys must exist in $array with matching values (recursively for arrays).
+     * - If $subset is a list and $array is a list:
+     *   - When $subset has one element, assert that there exists at least one element in $array containing that subset.
+     *   - Otherwise, check elements in order (index-wise) for being a subset.
+     */
+    protected function assertArraySubset(array $subset, array $array, string $message = ''): void
+    {
+        $isAssoc = static function (array $a): bool {
+            if ($a === []) {
+                return false;
+            }
+            return array_keys($a) !== range(0, count($a) - 1);
+        };
+
+        $assertSubset = function (array $needle, array $haystack) use (&$assertSubset, $isAssoc): void {
+            if ($isAssoc($needle)) {
+                // Associative: each key/value in needle must match in haystack
+                foreach ($needle as $key => $value) {
+                    $this->assertArrayHasKey($key, $haystack, "Missing key '$key'");
+                    if (is_array($value)) {
+                        $this->assertIsArray($haystack[$key]);
+                        $assertSubset($value, $haystack[$key]);
+                    } else {
+                        $this->assertSame($value, $haystack[$key]);
+                    }
+                }
+            } else {
+                // List: compare in-order by index
+                $this->assertGreaterThanOrEqual(count($needle), count($haystack));
+                foreach ($needle as $index => $value) {
+                    if (is_array($value)) {
+                        $this->assertIsArray($haystack[$index]);
+                        $assertSubset($value, $haystack[$index]);
+                    } else {
+                        $this->assertSame($value, $haystack[$index]);
+                    }
+                }
+            }
+        };
+
+        if (!$isAssoc($subset) && !$isAssoc($array)) {
+            // Both lists
+            if (count($subset) === 1) {
+                $found = false;
+                foreach ($array as $element) {
+                    if (is_array($element)) {
+                        try {
+                            $assertSubset($subset[0], $element);
+                            $found = true;
+                            break;
+                        } catch (\Throwable) {
+                            // keep searching
+                        }
+                    }
+                }
+                $this->assertTrue($found, $message !== '' ? $message : 'Subset element not found in array');
+                return;
+            }
+        }
+
+        $assertSubset($subset, $array);
+    }
 
     protected KernelBrowser $client;
 
