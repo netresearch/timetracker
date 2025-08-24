@@ -4,9 +4,14 @@ namespace App\Repository;
 
 use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
 class ProjectRepository extends ServiceEntityRepository
 {
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Project::class);
+    }
     /**
      * Returns an array structure with keys of customer IDs and an "all" key.
      * Values are arrays of associative project arrays (id, name, jiraId, active).
