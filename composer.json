@@ -63,15 +63,14 @@
     "twig/twig": "^3.21"
   },
   "require-dev": {
-    "brianium/paratest": "*",
+    "brianium/paratest": "^7.11",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.1",
-    "dms/phpunit-arraysubset-asserts": "^0.5.0",
     "php-cs-fixer/shim": "^3.86",
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan": "^2.1",
     "phpstan/phpstan-doctrine": "^2.0",
     "phpstan/phpstan-symfony": "^2.0",
-    "phpunit/phpunit": "^9.6",
+    "phpunit/phpunit": "^12.3",
     "psalm/plugin-symfony": "^5.2",
     "rector/rector": "^2.1",
     "slevomat/coding-standard": "^8.20",

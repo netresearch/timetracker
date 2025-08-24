@@ -1,4 +1,5 @@
 sentry:
+    dsn: null
     tracing:
         enabled: false
     messenger:
@@ -6,7 +7,5 @@ sentry:
     register_error_listener: false
     options:
         enabled_integrations: []
-sentry:
-    dsn: null
 
 
