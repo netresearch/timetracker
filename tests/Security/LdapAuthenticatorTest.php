@@ -17,7 +17,7 @@ use App\Service\Ldap\LdapClientService;
 
 class LdapAuthenticatorTest extends TestCase
 {
-    private function makeSubject(ParameterBagInterface $parameterBag = null): LdapAuthenticator
+    private function makeSubject(?ParameterBagInterface $parameterBag = null): LdapAuthenticator
     {
         /** @var EntityManagerInterface&\PHPUnit\Framework\MockObject\MockObject $mock */
         $mock = $this->getMockBuilder(EntityManagerInterface::class)->disableOriginalConstructor()->getMock();

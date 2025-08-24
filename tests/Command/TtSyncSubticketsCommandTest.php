@@ -16,6 +16,14 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class TtSyncSubticketsCommandTest extends KernelTestCase
 {
+    protected static function ensureKernelShutdown(): void
+    {
+        $wasBooted = static::$booted;
+        parent::ensureKernelShutdown();
+        if ($wasBooted) {
+            @\restore_exception_handler();
+        }
+    }
     public function testRunsForAllProjectsWithTicketSystem(): void
     {
         self::bootKernel();
