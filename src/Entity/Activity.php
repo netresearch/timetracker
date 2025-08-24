@@ -12,13 +12,13 @@ class Activity
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
      */
-    #[ORM\OneToMany(targetEntity: \Entry::class, mappedBy: 'activity')]
+    #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'activity')]
     protected $entriesRelation;
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Preset>
      */
-    #[ORM\OneToMany(targetEntity: \Preset::class, mappedBy: 'activity')]
+    #[ORM\OneToMany(targetEntity: Preset::class, mappedBy: 'activity')]
     protected $presetsRelation;
 
     public const SICK = 'Krank';
@@ -100,5 +100,21 @@ class Activity
     public function isHoliday(): bool
     {
         return self::HOLIDAY === $this->getName();
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     */
+    public function getEntries(): \Doctrine\Common\Collections\Collection
+    {
+        return $this->entriesRelation;
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Preset>
+     */
+    public function getPresets(): \Doctrine\Common\Collections\Collection
+    {
+        return $this->presetsRelation;
     }
 }

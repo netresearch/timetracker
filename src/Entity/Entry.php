@@ -66,23 +66,23 @@ class Entry extends Base
     #[ORM\Column(name: 'synced_to_ticketsystem', type: 'boolean', nullable: true)]
     protected bool $syncedToTicketsystem = false;
 
-    #[ORM\ManyToOne(targetEntity: \Project::class, inversedBy: 'entries')]
+    #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
     protected ?Project $project = null;
 
-    #[ORM\ManyToOne(targetEntity: \Customer::class, inversedBy: 'entries')]
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected ?Customer $customer = null;
 
-    #[ORM\ManyToOne(targetEntity: \User::class, inversedBy: 'entries')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected ?User $user = null;
 
-    #[ORM\ManyToOne(targetEntity: \Account::class, inversedBy: 'entries')]
+    #[ORM\ManyToOne(targetEntity: Account::class, inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id')]
     protected ?Account $account = null;
 
-    #[ORM\ManyToOne(targetEntity: \Activity::class, inversedBy: 'entries')]
+    #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected ?Activity $activity = null;
 

@@ -12,7 +12,7 @@ class Team
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Customer>
      */
-    #[ORM\ManyToMany(targetEntity: \Customer::class, mappedBy: 'teams')]
+    #[ORM\ManyToMany(targetEntity: Customer::class, mappedBy: 'teams')]
     protected $customersRelation;
 
     /**
@@ -47,7 +47,7 @@ class Team
      *
      * @return string|null $id
      */
-    public function getId(): ?string
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -96,6 +96,23 @@ class Team
     public function getLeadUser(): ?User
     {
         return $this->leadUser;
+    }
+
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Customer>
+     */
+    public function getCustomers(): \Doctrine\Common\Collections\Collection
+    {
+        return $this->customersRelation;
+    }
+
+    public function addCustomer(Customer $customer): static
+    {
+        if (!$this->customersRelation->contains($customer)) {
+            $this->customersRelation->add($customer);
+        }
+
+        return $this;
     }
 
     /**
