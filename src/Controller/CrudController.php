@@ -56,6 +56,7 @@ class CrudController extends BaseController
         $entryId = RequestEntityHelper::id($request, 'id');
         if ($entryId > 0) {
             $doctrine = $this->managerRegistry;
+            $contractHoursArray = [];
             $entry = RequestEntityHelper::findById($doctrine, Entry::class, $entryId);
 
             if (!$entry instanceof \App\Entity\Entry) {
