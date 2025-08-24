@@ -63,12 +63,7 @@ services:
         factory: ['@session.factory', 'createSession']
         public: true
 
-    # Provide our own Doctrine Annotations reader (avoid deprecated FrameworkBundle service)
-    annotations.reader:
-        class: Doctrine\Common\Annotations\AnnotationReader
-        public: true
-    # Optional alias used by some libraries
-    annotation_reader: '@annotations.reader'
+    # Remove legacy annotations reader; using attributes mapping everywhere
 
     # Export service with alias (migrated from App\Services\Export)
     App\Service\ExportService:
