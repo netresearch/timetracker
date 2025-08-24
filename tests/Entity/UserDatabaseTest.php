@@ -398,14 +398,14 @@ class UserDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Check roles - The implementation only adds ROLE_USER and ROLE_ADMIN roles
-        $this->assertContains('ROLE_USER', $devUser->getRoles());
+        $this->assertContains('ROLE_USER', $devUser->getRoles(), 'Missing ROLE_USER for dev');
         $this->assertNotContains('ROLE_ADMIN', $devUser->getRoles());
 
-        $this->assertContains('ROLE_USER', $plUser->getRoles());
+        $this->assertContains('ROLE_USER', $plUser->getRoles(), 'Missing ROLE_USER for pl');
         $this->assertNotContains('ROLE_ADMIN', $plUser->getRoles());
 
-        $this->assertContains('ROLE_USER', $adminUser->getRoles());
-        $this->assertContains('ROLE_ADMIN', $adminUser->getRoles());
+        $this->assertContains('ROLE_USER', $adminUser->getRoles(), 'Missing ROLE_USER for admin');
+        $this->assertContains('ROLE_ADMIN', $adminUser->getRoles(), 'Missing ROLE_ADMIN for admin');
 
         // Clean up
         $this->entityManager->remove($devUser);

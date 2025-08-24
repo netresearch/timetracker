@@ -2029,20 +2029,20 @@ class AdminControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/projects/1/syncsubtickets', $parameter);
 
         $statusCode = $this->client->getResponse()->getStatusCode();
-        $this->assertContains($statusCode, [200, 400, 401]);
+        $this->assertContains($statusCode, [200, 400, 401], 'Status not in expected set');
     }
 
     public function testSyncAllProjectSubticketsAction(): void
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/projects/syncsubtickets');
         $statusCode = $this->client->getResponse()->getStatusCode();
-        $this->assertContains($statusCode, [200, 400, 401]);
+        $this->assertContains($statusCode, [200, 400, 401], 'Status not in expected set');
     }
 
     public function testJiraSyncEntriesAction(): void
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/syncentries/jira', ['id' => 1]);
         $statusCode = $this->client->getResponse()->getStatusCode();
-        $this->assertContains($statusCode, [200, 400, 401]);
+        $this->assertContains($statusCode, [200, 400, 401], 'Status not in expected set');
     }
 }

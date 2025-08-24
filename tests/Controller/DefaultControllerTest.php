@@ -685,6 +685,6 @@ class DefaultControllerTest extends AbstractWebTestCase
 
         // We accept either 200 text response or redirect back to start, depending on the mocked services
         $status = $this->client->getResponse()->getStatusCode();
-        $this->assertContains($status, [200, 302, 500]);
+        $this->assertContains($status, [200, 302, 500], 'Status not in expected set');
     }
 }

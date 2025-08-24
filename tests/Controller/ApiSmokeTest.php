@@ -121,7 +121,7 @@ class ApiSmokeTest extends AbstractWebTestCase
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getTicketTimeSummary/TIM-1');
         $status = $this->client->getResponse()->getStatusCode();
-        $this->assertContains($status, [200, 404]);
+        $this->assertContains($status, [200, 404], 'Status not in expected set');
     }
 
     public function testInterpretationEndpoints(): void
@@ -138,7 +138,7 @@ class ApiSmokeTest extends AbstractWebTestCase
         foreach ($paths as $path) {
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, $path);
             $status = $this->client->getResponse()->getStatusCode();
-            $this->assertContains($status, [200, 406]);
+            $this->assertContains($status, [200, 406], 'Status not in expected set');
         }
     }
 
