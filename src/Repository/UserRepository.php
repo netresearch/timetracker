@@ -4,30 +4,25 @@ namespace App\Repository;
 
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * Class UserRepository
- * @package App\Repository
+ * Class UserRepository.
  */
 class UserRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, User::class);
-    }
-
     /**
-     * Find a user by username
+     * Find a user by username.
      */
     public function findOneByUsername(string $username): ?User
     {
         $result = $this->findOneBy(['username' => $username]);
+
         return $result instanceof User ? $result : null;
     }
 
     /**
-     * @param integer $currentUserId
+     * @param int $currentUserId
+     *
      * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string}}>
      */
     public function getUsers($currentUserId): array
@@ -44,23 +39,23 @@ class UserRepository extends ServiceEntityRepository
             if (!$user instanceof User) {
                 continue;
             }
-            if ($currentUserId == $user->getId()) {
 
+            if ($currentUserId == $user->getId()) {
                 // Set current user on top
                 array_unshift($data, ['user' => [
-                    'id'       => (int) $user->getId(),
+                    'id' => (int) $user->getId(),
                     'username' => (string) $user->getUsername(),
-                    'type'     => (string) $user->getType(),
-                    'abbr'     => (string) $user->getAbbr(),
-                    'locale'   => (string) $user->getLocale(),
+                    'type' => (string) $user->getType(),
+                    'abbr' => (string) $user->getAbbr(),
+                    'locale' => $user->getLocale(),
                 ]]);
             } else {
                 $data[] = ['user' => [
-                    'id'       => (int) $user->getId(),
+                    'id' => (int) $user->getId(),
                     'username' => (string) $user->getUsername(),
-                    'type'     => (string) $user->getType(),
-                    'abbr'     => (string) $user->getAbbr(),
-                    'locale'   => (string) $user->getLocale(),
+                    'type' => (string) $user->getType(),
+                    'abbr' => (string) $user->getAbbr(),
+                    'locale' => $user->getLocale(),
                 ]];
             }
         }
@@ -84,18 +79,19 @@ class UserRepository extends ServiceEntityRepository
             if (!$user instanceof User) {
                 continue;
             }
+
             $teams = [];
             foreach ($user->getTeams() as $team) {
                 $teams[] = (int) $team->getId();
             }
 
             $data[] = ['user' => [
-                'id'       => (int) $user->getId(),
+                'id' => (int) $user->getId(),
                 'username' => (string) $user->getUsername(),
-                'type'     => (string) $user->getType(),
-                'abbr'     => (string) $user->getAbbr(),
-                'locale'   => (string) $user->getLocale(),
-                'teams'    => $teams,
+                'type' => (string) $user->getType(),
+                'abbr' => (string) $user->getAbbr(),
+                'locale' => $user->getLocale(),
+                'teams' => $teams,
             ]];
         }
 
@@ -105,6 +101,7 @@ class UserRepository extends ServiceEntityRepository
     public function findOneByAbbr(string $abbr): ?User
     {
         $result = $this->findOneBy(['abbr' => $abbr]);
+
         return $result instanceof User ? $result : null;
     }
 
@@ -119,11 +116,11 @@ class UserRepository extends ServiceEntityRepository
 
         if ($user instanceof User) {
             $data[] = ['user' => [
-                'id'       => (int) $user->getId(),
+                'id' => (int) $user->getId(),
                 'username' => (string) $user->getUsername(),
-                'type'     => (string) $user->getType(),
-                'abbr'     => (string) $user->getAbbr(),
-                'locale'   => (string) $user->getLocale(),
+                'type' => (string) $user->getType(),
+                'abbr' => (string) $user->getAbbr(),
+                'locale' => $user->getLocale(),
             ]];
         }
 

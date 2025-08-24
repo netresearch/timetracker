@@ -4,14 +4,9 @@ namespace App\Repository;
 
 use App\Entity\Team;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
 
 class TeamRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Team::class);
-    }
     // Do not override findAll(); it should return Team[] as in the parent
 
     /**
@@ -26,8 +21,8 @@ class TeamRepository extends ServiceEntityRepository
         $data = [];
         foreach ($teams as $team) {
             $data[] = ['team' => [
-                'id'           => (int) ($team->getId() ?? 0),
-                'name'         => (string) ($team->getName() ?? ''),
+                'id' => (int) ($team->getId() ?? 0),
+                'name' => (string) ($team->getName() ?? ''),
                 'lead_user_id' => (int) ($team->getLeadUser() ? $team->getLeadUser()->getId() : 0),
             ]];
         }
@@ -38,6 +33,7 @@ class TeamRepository extends ServiceEntityRepository
     public function findOneByName(string $name): ?Team
     {
         $result = $this->findOneBy(['name' => $name]);
+
         return $result instanceof Team ? $result : null;
     }
 }

@@ -2,27 +2,24 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
 use App\Helper\TimeHelper;
 use App\Model\Base;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: \App\Repository\ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
 class Project extends Base
 {
-    public const BILLING_NONE  = 0;
+    public const BILLING_NONE = 0;
 
-    public const BILLING_TM    = 1;
+    public const BILLING_TM = 1;
 
-    public const BILLING_FP    = 2;
+    public const BILLING_FP = 2;
 
     public const BILLING_MIXED = 3;
 
     /**
-     *
-     *
-     *
      * @var int|null
      */
     #[ORM\Id]
@@ -31,7 +28,7 @@ class Project extends Base
     protected $id;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', length: 127)]
     protected $name;
@@ -43,8 +40,6 @@ class Project extends Base
     protected $active;
 
     /**
-     *
-     *
      * @var Customer|null
      */
     #[ORM\ManyToOne(targetEntity: \Customer::class, inversedBy: 'projects')]
@@ -57,15 +52,14 @@ class Project extends Base
     #[ORM\Column(type: 'boolean')]
     protected $global;
 
-
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', name: 'jira_id', length: 63, nullable: true)]
     protected $jiraId;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', name: 'jira_ticket', length: 255, nullable: true)]
     protected $jiraTicket;
@@ -75,15 +69,12 @@ class Project extends Base
      * Gets calculated automatically.
      * Comma-separated string.
      *
-     *
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', name: 'subtickets', length: 255, nullable: true)]
     protected $subtickets;
 
     /**
-     *
-     *
      * @var TicketSystem|null
      */
     #[ORM\ManyToOne(targetEntity: \TicketSystem::class)]
@@ -103,8 +94,7 @@ class Project extends Base
     protected $presets;
 
     /**
-     * Estimated project duration in minutes
-     *
+     * Estimated project duration in minutes.
      *
      * @var float|int|null
      */
@@ -112,65 +102,59 @@ class Project extends Base
     protected $estimation;
 
     /**
-     * Offer number
+     * Offer number.
      */
     #[ORM\Column(name: 'offer', length: 31, nullable: true)]
     protected ?string $offer = null;
 
     /**
-     * Used billing method
+     * Used billing method.
      */
     #[ORM\Column(type: 'smallint', name: 'billing', nullable: true, options: ['default' => 0])]
     protected ?int $billing = 0;
 
     /**
-     * cost center (number or name)
+     * cost center (number or name).
      */
     #[ORM\Column(name: 'cost_center', length: 31, nullable: true)]
     protected ?string $costCenter = null;
 
     /**
-     * internal reference number
+     * internal reference number.
      *
-     *
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(name: 'internal_ref', length: 31, nullable: true)]
     protected $internalReference;
 
     /**
-     * external (clients) reference number
+     * external (clients) reference number.
      *
-     *
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(name: 'external_ref', length: 31, nullable: true)]
     protected $externalReference;
 
     /**
-     * project manager user
+     * project manager user.
      *
-     *
-     *
-     * @var null|object
+     * @var object|null
      */
     #[ORM\ManyToOne(targetEntity: \User::class)]
     #[ORM\JoinColumn(name: 'project_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $projectLead;
 
     /**
-     * lead developer
+     * lead developer.
      *
-     *
-     *
-     * @var null|object
+     * @var object|null
      */
     #[ORM\ManyToOne(targetEntity: \User::class)]
     #[ORM\JoinColumn(name: 'technical_lead_id', referencedColumnName: 'id', nullable: true)]
     protected $technicalLead;
 
     /**
-     * invoice number, reserved for future use
+     * invoice number, reserved for future use.
      */
     #[ORM\Column(name: 'invoice', length: 31, nullable: true)]
     protected ?string $invoice = null;
@@ -184,18 +168,15 @@ class Project extends Base
     /**
      * the internal key of the project the current ticket should be booked to.
      *
-     *
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(name: 'internal_jira_project_key', type: 'string', length: 255, nullable: true)]
     protected $internalJiraProjectKey;
 
-
     /**
-     * the id of the internal jira ticket system
+     * the id of the internal jira ticket system.
      *
-     *
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(name: 'internal_jira_ticket_system', type: 'string', length: 255, nullable: true)]
     protected $internalJiraTicketSystem;
@@ -203,7 +184,7 @@ class Project extends Base
     /**
      * Sets the additional Information.
      *
-     * @param boolean $additionalInformationFromExternal
+     * @param bool $additionalInformationFromExternal
      *
      * @return $this
      */
@@ -238,7 +219,7 @@ class Project extends Base
     public function setInternalJiraTicketSystem($nInternalJiraTicketSystem): static
     {
         // Normalize empty string to null for nullable DB column
-        if ($nInternalJiraTicketSystem === '' || $nInternalJiraTicketSystem === null) {
+        if ('' === $nInternalJiraTicketSystem || null === $nInternalJiraTicketSystem) {
             $this->internalJiraTicketSystem = null;
         } else {
             $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
@@ -247,12 +228,10 @@ class Project extends Base
         return $this;
     }
 
-
-    public function getAdditionalInformationFromExternal(): bool|null
+    public function getAdditionalInformationFromExternal(): ?bool
     {
         return $this->additionalInformationFromExternal;
     }
-
 
     public function __construct()
     {
@@ -263,39 +242,44 @@ class Project extends Base
     /**
      * Convert to array and add additional properties.
      *
-     * @psalm-return array<string, mixed>
+     * @return (mixed|string)[]
+     *
+     * @psalm-return array{estimationText: string,...}
      */
     public function toArray(): array
     {
         $data = parent::toArray();
         $data['estimationText'] = TimeHelper::minutes2readable((int) ($this->getEstimation() ?? 0), false);
+
         return $data;
     }
 
     /**
-     * Get id
+     * Get id.
      *
      * @return int|null $id
      */
-    public function getId(): int|null
+    public function getId(): ?int
     {
         return $this->id;
     }
 
     /**
-     * Set id
-     * @param integer $id
+     * Set id.
+     *
+     * @param int $id
      *
      * @return $this
      */
     public function setId($id): static
     {
         $this->id = $id;
+
         return $this;
     }
 
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -304,106 +288,103 @@ class Project extends Base
     public function setName($name): static
     {
         $this->name = $name;
+
         return $this;
     }
 
     /**
-     * Get name
+     * Get name.
      *
-     * @return null|string $name
+     * @return string|null $name
      */
-    public function getName(): string|null
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-
-
     /**
-     * Set active
+     * Set active.
      *
-     * @param boolean $active
+     * @param bool $active
      *
      * @return $this
      */
     public function setActive($active): static
     {
         $this->active = $active;
+
         return $this;
     }
 
     /**
-     * Get active
+     * Get active.
      *
      * @return bool|null $active
      */
-    public function getActive(): bool|null
+    public function getActive(): ?bool
     {
         return $this->active;
     }
 
-
-
     /**
-     * Set customer
-     *
+     * Set customer.
      *
      * @return $this
      */
     public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
+
         return $this;
     }
 
     /**
-     * Get customer
+     * Get customer.
      *
      * @return Customer|null $customer
      */
-    public function getCustomer(): Customer|null
+    public function getCustomer(): ?Customer
     {
         return $this->customer;
     }
 
-
-
-
     /**
-     * Set global
+     * Set global.
      *
-     * @param boolean $global
+     * @param bool $global
      *
      * @return $this
      */
     public function setGlobal($global): static
     {
         $this->global = $global;
+
         return $this;
     }
 
     /**
-     * Get global
+     * Get global.
      *
      * @return bool|null $global
      */
-    public function getGlobal(): bool|null
+    public function getGlobal(): ?bool
     {
         return $this->global;
     }
 
-
     /**
-     * Get entries
+     * Get entries.
      *
      * @return \Doctrine\Common\Collections\Collection $entries
+     *
+     * @psalm-return \Doctrine\Common\Collections\Collection<int, Entry>
      */
     public function getEntries(): \Doctrine\Common\Collections\Collection
     {
         return $this->entries;
     }
 
-    public function getJiraId(): string|null
+    public function getJiraId(): ?string
     {
         return $this->jiraId;
     }
@@ -411,21 +392,23 @@ class Project extends Base
     public function setJiraId(?string $jiraId): static
     {
         $this->jiraId = $jiraId;
+
         return $this;
     }
 
-    public function getJiraTicket(): string|null
+    public function getJiraTicket(): ?string
     {
         return $this->jiraTicket;
     }
 
     public function setJiraTicket(string $jiraTicket): static
     {
-        if ($jiraTicket === '') {
+        if ('' === $jiraTicket) {
             $jiraTicket = null;
         }
 
         $this->jiraTicket = $jiraTicket;
+
         return $this;
     }
 
@@ -436,7 +419,7 @@ class Project extends Base
      */
     public function getSubtickets(): array
     {
-        if ($this->subtickets == '') {
+        if ('' == $this->subtickets) {
             return [];
         }
 
@@ -453,27 +436,29 @@ class Project extends Base
         $subtickets = implode(',', $subtickets);
 
         $this->subtickets = $subtickets;
+
         return $this;
     }
 
     /**
      * @return TicketSystem|null $ticketSystem
      */
-    public function getTicketSystem(): TicketSystem|null
+    public function getTicketSystem(): ?TicketSystem
     {
         return $this->ticketSystem;
     }
 
     /**
-     * Set the id of the ticket system that is associated with this project
+     * Set the id of the ticket system that is associated with this project.
+     *
      * @param TicketSystem $ticketSystem
      */
     public function setTicketSystem($ticketSystem): static
     {
         $this->ticketSystem = $ticketSystem;
+
         return $this;
     }
-
 
     public function getEstimation(): float|int|null
     {
@@ -483,6 +468,7 @@ class Project extends Base
     public function setEstimation(float|int|null $estimation): static
     {
         $this->estimation = $estimation;
+
         return $this;
     }
 
@@ -494,6 +480,7 @@ class Project extends Base
     public function setOffer(?string $offer): static
     {
         $this->offer = $offer;
+
         return $this;
     }
 
@@ -505,6 +492,7 @@ class Project extends Base
     public function setBilling(?int $billing): static
     {
         $this->billing = $billing;
+
         return $this;
     }
 
@@ -516,6 +504,7 @@ class Project extends Base
     public function setCostCenter(?string $costCenter): static
     {
         $this->costCenter = $costCenter;
+
         return $this;
     }
 
@@ -527,34 +516,36 @@ class Project extends Base
     public function setInvoice(?string $invoice): static
     {
         $this->invoice = $invoice;
+
         return $this;
     }
 
-    public function setProjectLead(object|null $projectLead): static
+    public function setProjectLead(?object $projectLead): static
     {
         $this->projectLead = $projectLead;
+
         return $this;
     }
 
-    public function getProjectLead(): object|null
+    public function getProjectLead(): ?object
     {
         return $this->projectLead;
     }
 
-    public function setTechnicalLead(object|null $technicalLead): static
+    public function setTechnicalLead(?object $technicalLead): static
     {
         $this->technicalLead = $technicalLead;
+
         return $this;
     }
 
-    public function getTechnicalLead(): object|null
+    public function getTechnicalLead(): ?object
     {
         return $this->technicalLead;
     }
 
-
     /**
-     * Set internalReference
+     * Set internalReference.
      *
      * @param string $internalReference
      */
@@ -566,43 +557,45 @@ class Project extends Base
     }
 
     /**
-     * Get internalReference
+     * Get internalReference.
      */
-    public function getInternalReference(): string|null
+    public function getInternalReference(): ?string
     {
         return $this->internalReference;
     }
 
     /**
-     * Set externalReference
+     * Set externalReference.
      *
      * @param string $externalReference
      */
     public function setExternalReference($externalReference): static
     {
         $this->externalReference = $externalReference;
+
         return $this;
     }
 
     /**
-     * Get externalReference
+     * Get externalReference.
      */
-    public function getExternalReference(): string|null
+    public function getExternalReference(): ?string
     {
         return $this->externalReference;
     }
 
     /**
-     * Add entry
+     * Add entry.
      */
     public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
+
         return $this;
     }
 
     /**
-     * Remove entry
+     * Remove entry.
      */
     public function removeEntry(Entry $entry): void
     {
@@ -610,7 +603,7 @@ class Project extends Base
     }
 
     /**
-     * Returns the current defined InternalJiraProjectKey
+     * Returns the current defined InternalJiraProjectKey.
      *
      * @return mixed e.g. OPSA
      */
@@ -629,8 +622,6 @@ class Project extends Base
 
     /**
      * Returns the id of the internal JIRA ticket system.
-     *
-     * @return mixed
      */
     public function getInternalJiraTicketSystem()
     {
@@ -648,7 +639,9 @@ class Project extends Base
     }
 
     /**
-     * Get presets
+     * Get presets.
+     *
+     * @psalm-return \Doctrine\Common\Collections\Collection<int, Preset>
      */
     public function getPresets(): \Doctrine\Common\Collections\Collection
     {
@@ -656,16 +649,17 @@ class Project extends Base
     }
 
     /**
-     * Add preset
+     * Add preset.
      */
     public function addPreset(Preset $preset): static
     {
         $this->presets[] = $preset;
+
         return $this;
     }
 
     /**
-     * Remove preset
+     * Remove preset.
      */
     public function removePreset(Preset $preset): void
     {

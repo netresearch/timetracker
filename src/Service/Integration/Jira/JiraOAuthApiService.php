@@ -157,7 +157,7 @@ class JiraOAuthApiService
     /**
      * Returns temp file name.
      */
-    protected function getTempFile(): string
+    protected function getTempFile(): string|false
     {
         return tempnam(sys_get_temp_dir(), 'TTT');
     }
@@ -288,7 +288,7 @@ class JiraOAuthApiService
             return;
         }
 
-        if (!$entry->getDuration()) {
+        if ($entry->getDuration() === 0) {
             // delete possible old work log entry
             $this->deleteEntryJiraWorkLog($entry);
 
@@ -319,6 +319,7 @@ class JiraOAuthApiService
         if (!isset($workLog->id)) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
+
         $entry->setWorklogId((int) $workLog->id);
         $entry->setSyncedToTicketsystem(true);
     }
@@ -646,12 +647,12 @@ class JiraOAuthApiService
      */
     protected function getTicketSystemWorkLogComment(Entry $entry): string
     {
-        $activity = $entry->getActivity()
+        $activity = $entry->getActivity() instanceof \App\Entity\Activity
             ? $entry->getActivity()->getName()
             : 'no activity specified';
 
         $description = $entry->getDescription();
-        if (empty($description)) {
+        if ($description === '' || $description === '0') {
             $description = 'no description given';
         }
 
@@ -665,7 +666,7 @@ class JiraOAuthApiService
     protected function getTicketSystemWorkLogStartDate(Entry $entry): string
     {
         $startDate = $entry->getDay() ?: new \DateTime();
-        if ($entry->getStart()) {
+        if ($entry->getStart() instanceof \DateTime) {
             $startDate->setTime(
                 (int) $entry->getStart()->format('H'),
                 (int) $entry->getStart()->format('i')

@@ -1,31 +1,33 @@
 <?php
 
 /**
- * Class for ticket entities in the timetracker
+ * Class for ticket entities in the timetracker.
  *
  * PHP version 5
  *
  * @category  Model_Class
- * @package   App\Extension
+ *
  * @author    Norman Kante <norman.kante@netresearch.de>
  * @copyright 2013 Netresearch App Factory AG
  * @license   No license
- * @link      http://www.netresearch.de
+ *
+ * @see      http://www.netresearch.de
  */
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use App\Model\Base;
+use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Class Ticket
+ * Class Ticket.
  *
  * @category Model_Class
- * @package  App\Model
+ *
  * @author   Norman Kante <norman.kante@netresearch.de>
  * @license  No license
- * @link     http://www.netresearch.de
+ *
+ * @see     http://www.netresearch.de
  */
 #[ORM\Entity(repositoryClass: \App\Repository\TicketRepository::class)]
 #[ORM\Table(name: 'tickets')]
@@ -44,13 +46,11 @@ class Ticket extends Base
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-
     /**
      * @var int
      */
     #[ORM\Column(name: 'ticket_system_id', type: 'integer')]
     private $ticketSystemId;
-
 
     /**
      * @var string
@@ -58,13 +58,11 @@ class Ticket extends Base
     #[ORM\Column(name: 'ticket_number', type: 'string', length: 31)]
     private $ticketNumber;
 
-
     /**
      * @var string
      */
     #[ORM\Column(type: 'string', length: 127)]
     private $name;
-
 
     /**
      * @var int
@@ -72,16 +70,14 @@ class Ticket extends Base
     #[ORM\Column(type: 'integer', name: 'estimation')]
     private $estimatedDuration;
 
-
     /**
      * @var string
      */
     #[ORM\Column(type: 'string', name: 'parent', length: 31)]
     private $parentTicketNumber;
 
-
     /**
-     * Sets the estimated duration
+     * Sets the estimated duration.
      *
      * @param int $estimatedDuration estimated duration
      *
@@ -95,7 +91,7 @@ class Ticket extends Base
     }
 
     /**
-     * Get the estimated duration
+     * Get the estimated duration.
      *
      * @return int
      */
@@ -204,12 +200,10 @@ class Ticket extends Base
         return $this->ticketSystemId;
     }
 
-
-
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {

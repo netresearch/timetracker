@@ -17,8 +17,8 @@ use App\Repository\UserRepository;
 use App\Response\Error;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\SubticketSyncService;
-use App\Util\RequestHelper;
 use App\Util\RequestEntityHelper;
+use App\Util\RequestHelper;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -136,12 +136,12 @@ class AdminController extends BaseController
         $projectId = (int) $request->request->get('id');
         $name = RequestHelper::string($request, 'name');
 
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
+        /* @var \App\Repository\TicketSystemRepository $objectRepository */
+        $this->doctrineRegistry->getRepository(TicketSystem::class);
         $ticketSystem = RequestEntityHelper::ticketSystem($request, $this->doctrineRegistry, 'ticket_system');
 
-        /** @var UserRepository $userRepo */
-        $userRepo = $this->doctrineRegistry->getRepository(User::class);
+        /* @var UserRepository $userRepo */
+        $this->doctrineRegistry->getRepository(User::class);
         $projectLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'project_lead');
         $technicalLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'technical_lead');
 
@@ -154,8 +154,8 @@ class AdminController extends BaseController
         $costCenter = RequestHelper::nullableString($request, 'cost_center');
         $offer = RequestHelper::nullableString($request, 'offer');
         $additionalInformationFromExternal = RequestHelper::bool($request, 'additionalInformationFromExternal');
-        /** @var \App\Repository\ProjectRepository $projectRepository */
-        $projectRepository = $this->doctrineRegistry->getRepository(Project::class);
+        /** @var \App\Repository\ProjectRepository $objectRepository */
+        $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
         $internalJiraTicketSystem = $request->request->get('internalJiraTicketSystem');
         if ('' === $internalJiraTicketSystem || null === $internalJiraTicketSystem) {
             $internalJiraTicketSystem = null;
@@ -166,7 +166,7 @@ class AdminController extends BaseController
         $internalJiraProjectKey = (string) $request->request->get('internalJiraProjectKey', '');
 
         if (0 !== $projectId) {
-            $project = $projectRepository->find($projectId);
+            $project = $objectRepository->find($projectId);
             if (!$project instanceof Project) {
                 $message = $this->translator->trans('No entry for id.');
 
@@ -203,22 +203,21 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $sameNamedProject = $projectRepository->findOneBy(
+        $sameNamedProject = $objectRepository->findOneBy(
             ['name' => $name, 'customer' => $projectCustomer->getId()]
         );
-        if ($sameNamedProject instanceof Project && $project->getId() != $sameNamedProject->getId()) {
+        if ($sameNamedProject instanceof Project && $project->getId() !== $sameNamedProject->getId()) {
             $response = new Response($this->translate('The project name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        $search = [];
         if (strlen($jiraId) > 1 && $project->getJiraId() !== $jiraId && $ticketSystem instanceof TicketSystem) {
             $search['ticketSystem'] = $ticketSystem;
         }
 
-        if (strlen($jiraId) && false == $projectRepository->isValidJiraPrefix($jiraId)) {
+        if (strlen($jiraId) && false == $objectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -324,6 +323,7 @@ class AdminController extends BaseController
                 if (!$project instanceof Project) {
                     continue;
                 }
+
                 $this->subticketSyncService->syncProjectSubtickets($project->getId());
             }
 
@@ -383,6 +383,7 @@ class AdminController extends BaseController
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
+
             if (!$customer instanceof Customer) {
                 $message = $this->translator->trans('No entry for id.');
 
@@ -399,7 +400,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (($sameNamedCustomer = $objectRepository->findOneByName($name)) instanceof Customer && $customer->getId() != $sameNamedCustomer->getId()) {
+        if (($sameNamedCustomer = $objectRepository->findOneByName($name)) instanceof Customer && $customer->getId() !== $sameNamedCustomer->getId()) {
             $response = new Response($this->translate('The customer name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -513,14 +514,14 @@ class AdminController extends BaseController
             return $response;
         }
 
-        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) instanceof User && $user->getId() != $sameNamedUser->getId()) {
+        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) instanceof User && $user->getId() !== $sameNamedUser->getId()) {
             $response = new Response($this->translate('The user name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) instanceof User && $user->getId() != $sameAbbrUser->getId()) {
+        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) instanceof User && $user->getId() !== $sameAbbrUser->getId()) {
             $response = new Response($this->translate('The user name abreviation provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -671,6 +672,7 @@ class AdminController extends BaseController
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
+
             if (!$preset instanceof Preset) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
@@ -734,6 +736,7 @@ class AdminController extends BaseController
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
+
             if (!$ticketSystem instanceof TicketSystem) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
@@ -845,6 +848,7 @@ class AdminController extends BaseController
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
+
             if (!$activity instanceof Activity) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
@@ -853,7 +857,7 @@ class AdminController extends BaseController
         }
 
         $sameNamedActivity = $objectRepository->findOneByName($name);
-        if ($sameNamedActivity instanceof Activity && $activity->getId() != $sameNamedActivity->getId()) {
+        if ($sameNamedActivity instanceof Activity && $activity->getId() !== $sameNamedActivity->getId()) {
             $response = new Response($this->translate('The activity name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -945,6 +949,7 @@ class AdminController extends BaseController
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
+
             if (!$team instanceof Team) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
@@ -953,7 +958,7 @@ class AdminController extends BaseController
         }
 
         $sameNamedTeam = $objectRepository->findOneByName($name);
-        if ($sameNamedTeam instanceof Team && $team->getId() != $sameNamedTeam->getId()) {
+        if ($sameNamedTeam instanceof Team && $team->getId() !== $sameNamedTeam->getId()) {
             $response = new Response($this->translate('The team name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -982,7 +987,7 @@ class AdminController extends BaseController
             return $response;
         }
 
-        $data = [$team->getId(), $team->getName(), $team->getLeadUser() ? $team->getLeadUser()->getId() : ''];
+        $data = [$team->getId(), $team->getName(), $team->getLeadUser() instanceof \App\Entity\User ? $team->getLeadUser()->getId() : ''];
 
         return new JsonResponse($data);
     }
@@ -1050,10 +1055,12 @@ class AdminController extends BaseController
             if (!$user instanceof User) {
                 continue;
             }
+
             foreach ($ticketSystems as $ticketSystem) {
                 if (!$ticketSystem instanceof TicketSystem) {
                     continue;
                 }
+
                 try {
                     $jiraOauthApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
                     $jiraOauthApi->updateAllEntriesJiraWorkLogs();
@@ -1113,6 +1120,7 @@ class AdminController extends BaseController
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
+
             if (!$contract instanceof Contract) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
@@ -1214,7 +1222,7 @@ class AdminController extends BaseController
         }
 
         // filter to get only open-ended contracts
-        $contractsOld = array_filter($contractsOld, fn ($n): bool => ($n instanceof Contract) && (null == $n->getEnd()));
+        $contractsOld = array_filter($contractsOld, fn (\App\Entity\Contract $contract): bool => ($contract instanceof Contract) && (null == $contract->getEnd()));
         if (count($contractsOld) > 1) {
             return $this->translate('There is more than one open-ended contract for the user.');
         }

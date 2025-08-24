@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Extension;
@@ -9,8 +9,7 @@ namespace App\Extension;
 use Twig\Extension\AbstractExtension;
 
 /**
- * Class TwigCsvEscapingExtension
- * @package App\Extension
+ * Class TwigCsvEscapingExtension.
  */
 class TwigCsvEscapingExtension extends AbstractExtension
 {
@@ -22,7 +21,7 @@ class TwigCsvEscapingExtension extends AbstractExtension
     /**
      * @return \Twig\TwigFilter[]
      *
-     * @psalm-return array{0: \Twig\TwigFilter}
+     * @psalm-return list{\Twig\TwigFilter}
      */
     public function getFilters()
     {
@@ -31,10 +30,6 @@ class TwigCsvEscapingExtension extends AbstractExtension
         ];
     }
 
-    /**
-     * @param string $string
-     * @return string
-     */
     public function csvEscape(string $string): string
     {
         return str_replace('"', '""', $string);

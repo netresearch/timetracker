@@ -35,9 +35,6 @@ class Entry extends Base
     }
 
     /**
-     *
-     *
-     *
      * @var int|null
      */
     #[ORM\Id]
@@ -112,7 +109,6 @@ class Entry extends Base
 
     /**
      * ID of the original booked external ticket.
-     *
      *
      * @var string e.g. TYPO-1234
      */
@@ -570,10 +566,10 @@ class Entry extends Base
             'date' => $this->getDay() instanceof \DateTime ? $this->getDay()->format('d/m/Y') : null,
             'start' => $this->getStart() instanceof \DateTime ? $this->getStart()->format('H:i') : null,
             'end' => $this->getEnd() instanceof \DateTime ? $this->getEnd()->format('H:i') : null,
-            'user' => $this->getUser() instanceof \App\Entity\User ? $this->getUser()->getId() : null,
+            'user' => $this->getUser() instanceof User ? $this->getUser()->getId() : null,
             'customer' => $customer,
-            'project' => $this->getProject() instanceof \App\Entity\Project ? $this->getProject()->getId() : null,
-            'activity' => $this->getActivity() instanceof \App\Entity\Activity ? $this->getActivity()->getId() : null,
+            'project' => $this->getProject() instanceof Project ? $this->getProject()->getId() : null,
+            'activity' => $this->getActivity() instanceof Activity ? $this->getActivity()->getId() : null,
             'description' => $this->getDescription(),
             'ticket' => $this->getTicket(),
             'duration' => $this->getDuration(),

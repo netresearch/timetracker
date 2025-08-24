@@ -10,21 +10,13 @@ use Doctrine\ORM\Mapping as ORM;
 class Team
 {
     /**
-     * @var \Doctrine\Common\Collections\ArrayCollection
-     */
-    public $customers;
-
-    /**
      * @var \Doctrine\Common\Collections\Collection<int, Customer>
      */
     #[ORM\ManyToMany(targetEntity: \Customer::class, mappedBy: 'teams')]
     protected $customersRelation;
 
     /**
-     *
-     *
-     *
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
@@ -32,14 +24,12 @@ class Team
     protected $id;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', length: 31)]
     protected $name;
 
     /**
-     *
-     *
      * @var User|null
      */
     #[ORM\ManyToOne(targetEntity: \User::class, inversedBy: 'leadTeams')]
@@ -53,17 +43,17 @@ class Team
     protected $users;
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return null|string $id
+     * @return string|null $id
      */
-    public function getId(): string|null
+    public function getId(): ?string
     {
         return $this->id;
     }
 
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -72,83 +62,48 @@ class Team
     public function setName($name): static
     {
         $this->name = $name;
+
         return $this;
     }
 
     /**
-     * Get name
+     * Get name.
      *
-     * @return null|string $name
+     * @return string|null $name
      */
-    public function getName(): string|null
+    public function getName(): ?string
     {
         return $this->name;
     }
 
     /**
-     * Set lead user
-     *
+     * Set lead user.
      *
      * @return $this
      */
     public function setLeadUser(User $leadUser): static
     {
         $this->leadUser = $leadUser;
+
         return $this;
     }
 
     /**
-     * Get lead user
+     * Get lead user.
      *
      * @return User|null $leadUser
      */
-    public function getLeadUser(): User|null
+    public function getLeadUser(): ?User
     {
         return $this->leadUser;
     }
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
-        $this->customers = new \Doctrine\Common\Collections\ArrayCollection();
         $this->customersRelation = new \Doctrine\Common\Collections\ArrayCollection();
         $this->users = new \Doctrine\Common\Collections\ArrayCollection();
-    }
-
-    /**
-     * @return \Doctrine\Common\Collections\Collection<int, User>
-     */
-    public function getUsers()
-    {
-        return $this->users;
-    }
-
-    /**
-     * Detach ManyToMany relations so the join rows are removed before deleting team
-     */
-    #[ORM\PreRemove]
-    public function preRemove(): void
-    {
-        if ($this->users) {
-            foreach ($this->users as $user) {
-                $user->getTeams()->removeElement($this);
-            }
-        }
-    }
-
-    public function addCustomer(Customer $customer): static
-    {
-        $this->customersRelation[] = $customer;
-        return $this;
-    }
-
-    /**
-     * @return \Doctrine\Common\Collections\Collection<int, Customer>
-     */
-    public function getCustomers()
-    {
-        return $this->customersRelation;
     }
 }

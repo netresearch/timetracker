@@ -4,31 +4,28 @@ namespace App\Repository;
 
 use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
 
 class ProjectRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Project::class);
-    }
     /**
-  * Returns an array structure with keys of customer IDs and an "all" key.
-  * Values are arrays of associative project arrays (id, name, jiraId, active).
-  */
+     * Returns an array structure with keys of customer IDs and an "all" key.
+     * Values are arrays of associative project arrays (id, name, jiraId, active).
+     */
     /**
      * @param array<int, array{customer: array{id:int}}|array<string, mixed>> $customers
+     *
      * @return array<string|int, array<int, array{id:int, name:string, jiraId:?string, active?:bool}>>
      */
     /**
      * @param array<int, array{customer: array{id:int}}|array<string, mixed>> $customers
+     *
      * @return array<int|string, array<int, array{id:int, name:string, jiraId:string|null, active?:bool}>>
      */
     public function getProjectStructure(int $userId, array $customers): array
     {
         /** @var array<int, Project> $globalProjects */
         $globalProjects = $this->findBy(['global' => 1]);
-        $userProjects   = $this->getProjectsByUser($userId);
+        $userProjects = $this->getProjectsByUser($userId);
 
         $projects = [];
         foreach ($customers as $customer) {
@@ -36,8 +33,8 @@ class ProjectRepository extends ServiceEntityRepository
                 $up = $userProject['project'] ?? null;
                 if (is_array($up) && ($customer['customer']['id'] === ($up['customer'] ?? null))) {
                     $projects[$customer['customer']['id']][] = [
-                        'id'     => (int) ($up['id'] ?? 0),
-                        'name'   => (string) ($up['name'] ?? ''),
+                        'id' => (int) ($up['id'] ?? 0),
+                        'name' => (string) ($up['name'] ?? ''),
                         'jiraId' => $up['jiraId'] ?? null,
                         'active' => (bool) ($up['active'] ?? false),
                     ];
@@ -47,8 +44,8 @@ class ProjectRepository extends ServiceEntityRepository
             foreach ($globalProjects as $globalProject) {
                 if ($globalProject instanceof Project) {
                     $projects[$customer['customer']['id']][] = [
-                        'id'     => (int) $globalProject->getId(),
-                        'name'   => (string) $globalProject->getName(),
+                        'id' => (int) $globalProject->getId(),
+                        'name' => (string) $globalProject->getName(),
                         'jiraId' => $globalProject->getJiraId(),
                         'active' => (bool) $globalProject->getActive(),
                     ];
@@ -80,19 +77,18 @@ class ProjectRepository extends ServiceEntityRepository
         foreach ($globalProjects as $globalProject) {
             if ($globalProject instanceof Project) {
                 $projects['all'][] = [
-                    'id'     => (int) $globalProject->getId(),
-                    'name'   => (string) $globalProject->getName(),
+                    'id' => (int) $globalProject->getId(),
+                    'name' => (string) $globalProject->getName(),
                     'jiraId' => $globalProject->getJiraId(),
                 ];
             }
         }
 
-        foreach ($projects as &$projectList) {
-            if (is_array($projectList)) {
-                usort($projectList, static function (array $a, array $b): int {
+        foreach ($projects as &$project) {
+            if (is_array($project)) {
+                usort($project, static fn(array $a, array $b): int =>
                     // name is always present by construction
-                    return strcmp((string) $a['name'], (string) $b['name']);
-                });
+                    strcmp((string) $a['name'], (string) $b['name']));
             }
         }
 

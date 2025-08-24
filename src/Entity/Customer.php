@@ -2,18 +2,15 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
 use App\Model\Base;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: \App\Repository\CustomerRepository::class)]
 #[ORM\Table(name: 'customers')]
 class Customer extends Base
 {
     /**
-     *
-     *
-     *
      * @var int|null
      */
     #[ORM\Id]
@@ -22,7 +19,7 @@ class Customer extends Base
     protected $id;
 
     /**
-     * @var null|string
+     * @var string|null
      */
     #[ORM\Column(type: 'string', length: 255)]
     protected $name;
@@ -67,36 +64,37 @@ class Customer extends Base
     public function __construct()
     {
         $this->projects = new ArrayCollection();
-        $this->entries  = new ArrayCollection();
-        $this->teams    = new ArrayCollection();
-        $this->presets  = new ArrayCollection();
+        $this->entries = new ArrayCollection();
+        $this->teams = new ArrayCollection();
+        $this->presets = new ArrayCollection();
     }
 
-
     /**
-     * Set id
-     * @param integer $id
+     * Set id.
+     *
+     * @param int $id
      *
      * @return $this
      */
     public function setId($id): static
     {
         $this->id = $id;
+
         return $this;
     }
 
     /**
-     * Get id
+     * Get id.
      *
      * @return int|null $id
      */
-    public function getId(): int|null
+    public function getId(): ?int
     {
         return $this->id;
     }
 
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -105,81 +103,82 @@ class Customer extends Base
     public function setName($name): static
     {
         $this->name = $name;
+
         return $this;
     }
 
     /**
-     * Get name
+     * Get name.
      *
-     * @return null|string $name
+     * @return string|null $name
      */
-    public function getName(): string|null
+    public function getName(): ?string
     {
         return $this->name;
     }
 
     /**
-     * Set active
+     * Set active.
      *
-     * @param boolean $active
+     * @param bool $active
      *
      * @return $this
      */
     public function setActive($active): static
     {
         $this->active = $active;
+
         return $this;
     }
 
     /**
-     * Get active
+     * Get active.
      *
-     * @return boolean $active
+     * @return bool $active
      */
     public function getActive()
     {
         return $this->active;
     }
 
-
     /**
-     * Set global
+     * Set global.
      *
-     * @param boolean $global
+     * @param bool $global
      *
      * @return $this
      */
     public function setGlobal($global): static
     {
         $this->global = $global;
+
         return $this;
     }
 
     /**
-     * Get global
+     * Get global.
      *
-     * @return boolean $global
+     * @return bool $global
      */
     public function getGlobal()
     {
         return $this->global;
     }
 
-
     /**
-     * Add projects
-     *
+     * Add projects.
      *
      * @return $this
      */
     public function addProjects(Project $project): static
     {
         $this->projects[] = $project;
+
         return $this;
     }
 
     /**
-     * Get projects
+     * Get projects.
      *
      * @return \Doctrine\Common\Collections\Collection $projects
      */
@@ -192,7 +191,7 @@ class Customer extends Base
     }
 
     /**
-     * Get entries
+     * Get entries.
      *
      * @return \Doctrine\Common\Collections\Collection $entries
      */
@@ -205,30 +204,31 @@ class Customer extends Base
     }
 
     /**
-     * Reset teams
+     * Reset teams.
      *
      * @return $this
      */
     public function resetTeams(): static
     {
         $this->teams = new ArrayCollection();
+
         return $this;
     }
 
     /**
-     * Add team
-     *
+     * Add team.
      *
      * @return $this
      */
     public function addTeam(Team $team): static
     {
         $this->teams[] = $team;
+
         return $this;
     }
 
     /**
-     * Get teams
+     * Get teams.
      *
      * @return \Doctrine\Common\Collections\Collection $teams
      */
@@ -241,16 +241,17 @@ class Customer extends Base
     }
 
     /**
-     * Add projects
+     * Add projects.
      */
     public function addProject(Project $project): static
     {
         $this->projects[] = $project;
+
         return $this;
     }
 
     /**
-     * Remove projects
+     * Remove projects.
      */
     public function removeProject(Project $project): void
     {
@@ -258,16 +259,17 @@ class Customer extends Base
     }
 
     /**
-     * Add entry
+     * Add entry.
      */
     public function addEntry(Entry $entry): static
     {
         $this->entries[] = $entry;
+
         return $this;
     }
 
     /**
-     * Remove entry
+     * Remove entry.
      */
     public function removeEntry(Entry $entry): void
     {
@@ -275,7 +277,7 @@ class Customer extends Base
     }
 
     /**
-     * Remove teams
+     * Remove teams.
      */
     public function removeTeam(Team $team): void
     {
@@ -283,7 +285,7 @@ class Customer extends Base
     }
 
     /**
-     * Get presets
+     * Get presets.
      *
      * @return \Doctrine\Common\Collections\Collection
      */
@@ -296,16 +298,17 @@ class Customer extends Base
     }
 
     /**
-     * Add preset
+     * Add preset.
      */
     public function addPreset(Preset $preset): static
     {
         $this->presets[] = $preset;
+
         return $this;
     }
 
     /**
-     * Remove preset
+     * Remove preset.
      */
     public function removePreset(Preset $preset): void
     {

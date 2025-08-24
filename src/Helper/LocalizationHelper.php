@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH
+ * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
  */
 
 namespace App\Helper;
@@ -9,7 +9,7 @@ namespace App\Helper;
 use App\Service\Util\LocalizationService;
 
 /**
- * Helper for anything related to localization (BC facade to LocalizationService)
+ * Helper for anything related to localization (BC facade to LocalizationService).
  */
 class LocalizationHelper
 {

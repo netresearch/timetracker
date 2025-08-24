@@ -21,7 +21,6 @@ use App\Helper\TimeHelper;
 use App\Service\ClockInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query\Expr\Join;
-use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Class EntryRepository.
@@ -35,49 +34,8 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class EntryRepository extends ServiceEntityRepository
 {
-    public function getCalendarDaysByWorkDays(int $workDays): int
-    {
-        if ($workDays <= 0) {
-            return 0;
-        }
+    private readonly ClockInterface $clock;
 
-        $today = $this->clock->today();
-        $currentWeekday = (int) $today->format('N'); // 1 (Mon) .. 7 (Sun)
-
-        // Convert working days to calendar days by adding weekend gaps
-        $fullWeeks = intdiv($workDays, 5);
-        $remainingWorkDays = $workDays % 5;
-
-        $calendarDays = $fullWeeks * 7;
-
-        // Walk back from today for remaining days, counting weekends
-        $daysCounted = 0;
-        $workDaysCounted = 0;
-        while ($workDaysCounted < $remainingWorkDays) {
-            ++$daysCounted;
-            $weekday = (int) $today->sub(new \DateInterval('P'.($daysCounted - 1).'D'))->format('N');
-            if ($weekday < 6) {
-                ++$workDaysCounted;
-            }
-        }
-
-        // If starting on Monday and asking for 1 day, include Fri+Sat+Sun
-        if ($remainingWorkDays > 0 && 1 === $currentWeekday) {
-            // We already counted 1 working day (Mon), we need to include Fri..Sun gap
-            $calendarDays += max($daysCounted, 3);
-        } else {
-            $calendarDays += $daysCounted;
-        }
-
-        return $calendarDays;
-    }
-    private ClockInterface $clock;
-
-    public function __construct(ManagerRegistry $registry, ClockInterface $clock)
-    {
-        parent::__construct($registry, Entry::class);
-        $this->clock = $clock;
-    }
     public const PERIOD_DAY = 1;
 
     public const PERIOD_WEEK = 2;
@@ -125,6 +83,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     /**
      * @param array<string, bool>|null $arSort
+     *
      * @return array<int, Entry>
      */
     public function findByDate(int $userId, int $year, ?int $month = null, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null): array
@@ -165,7 +124,7 @@ class EntryRepository extends ServiceEntityRepository
             $queryBuilder->andWhere(
                 $queryBuilder->expr()->like('entry.day', ':month')
             );
-            $queryBuilder->setParameter('month', sprintf('%04d-%02d-%%', $year, (int) ($month ?? 0)), \PDO::PARAM_STR);
+            $queryBuilder->setParameter('month', sprintf('%04d-%02d-%%', $year, $month ?? 0), \PDO::PARAM_STR);
         }
 
         return $queryBuilder->getQuery()->getResult();
@@ -176,8 +135,6 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param int    $userId Filter by user ID
      * @param string $day    Filter by date
-     *
-     * @return array
      */
     /**
      * @return array<int, Entry>
@@ -196,6 +153,7 @@ class EntryRepository extends ServiceEntityRepository
 
         /** @var array<int, Entry> $result */
         $result = $query->getResult();
+
         return $result;
     }
 
@@ -209,7 +167,7 @@ class EntryRepository extends ServiceEntityRepository
      * @throws \Doctrine\DBAL\Exception
      */
     /**
-     * @return array<int, array{entry: array<string, mixed>}> 
+     * @return array<int, array{entry: array<string, mixed>}>
      */
     public function getEntriesByUser(int $userId, int $days = 3, bool $showFuture = true): array
     {
@@ -257,6 +215,7 @@ class EntryRepository extends ServiceEntityRepository
         foreach ($params as $key => $value) {
             $statement->bindValue(is_string($key) ? $key : (string) $key, $value);
         }
+
         $result = $statement->executeQuery()->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
 
         $data = [];
@@ -316,6 +275,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     /**
      * @param array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}> $data
+     *
      * @return array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}>
      */
     public function getEntrySummary(int $entryId, int $userId, array $data): array
@@ -407,7 +367,7 @@ class EntryRepository extends ServiceEntityRepository
             'total' => (int) ($result[0]['total'] ?? 0),
             'own' => (int) ($result[0]['own'] ?? 0),
             'estimation' => (int) ($result[0]['estimation'] ?? 0),
-        ] : ['scope' => 'customer','name' => '', 'entries' => 0, 'total' => 0,'own' => 0,'estimation' => 0];
+        ] : ['scope' => 'customer', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
         $data['project'] = isset($result[1]) ? [
             'scope' => (string) $result[1]['scope'],
             'name' => (string) ($result[1]['name'] ?? ''),
@@ -415,7 +375,7 @@ class EntryRepository extends ServiceEntityRepository
             'total' => (int) ($result[1]['total'] ?? 0),
             'own' => (int) ($result[1]['own'] ?? 0),
             'estimation' => (int) ($result[1]['estimation'] ?? 0),
-        ] : ['scope' => 'project','name' => '', 'entries' => 0, 'total' => 0,'own' => 0,'estimation' => 0];
+        ] : ['scope' => 'project', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
         $data['activity'] = isset($result[2]) ? [
             'scope' => (string) $result[2]['scope'],
             'name' => (string) ($result[2]['name'] ?? ''),
@@ -423,7 +383,7 @@ class EntryRepository extends ServiceEntityRepository
             'total' => (int) ($result[2]['total'] ?? 0),
             'own' => (int) ($result[2]['own'] ?? 0),
             'estimation' => (int) ($result[2]['estimation'] ?? 0),
-        ] : ['scope' => 'activity','name' => '', 'entries' => 0, 'total' => 0,'own' => 0,'estimation' => 0];
+        ] : ['scope' => 'activity', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
         $data['ticket'] = isset($result[3]) ? [
             'scope' => (string) $result[3]['scope'],
             'name' => (string) ($result[3]['name'] ?? ''),
@@ -431,7 +391,7 @@ class EntryRepository extends ServiceEntityRepository
             'total' => (int) ($result[3]['total'] ?? 0),
             'own' => (int) ($result[3]['own'] ?? 0),
             'estimation' => (int) ($result[3]['estimation'] ?? 0),
-        ] : ['scope' => 'ticket','name' => '', 'entries' => 0, 'total' => 0,'own' => 0,'estimation' => 0];
+        ] : ['scope' => 'ticket', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
 
         return $data;
     }
@@ -485,6 +445,7 @@ class EntryRepository extends ServiceEntityRepository
         foreach ($params as $key => $value) {
             $statement->bindValue(is_string($key) ? $key : (string) $key, $value);
         }
+
         $result = $statement->executeQuery()->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
 
         // Original code returned false for count, keeping that behavior
@@ -512,8 +473,6 @@ class EntryRepository extends ServiceEntityRepository
      *           [visibility_user]  => user_id restricts entry visibility by users teams
      *
      * @throws \Exception
-     *
-     * @return \Doctrine\ORM\Query
      */
     /**
      * @param array<string, mixed> $arFilter
@@ -622,6 +581,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     /**
      * @param array<string, mixed> $arFilter
+     *
      * @return array<int, Entry>
      */
     public function findByFilterArray(array $arFilter = [])
@@ -650,13 +610,12 @@ class EntryRepository extends ServiceEntityRepository
 
         /** @var array<int, array{name: string|null, total_time: int|string|null}> $rows */
         $rows = $statement->executeQuery()->fetchAllAssociative();
+
         return array_map(
-            static function (array $row): array {
-                return [
-                    'name' => isset($row['name']) ? (string) $row['name'] : null,
-                    'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
-                ];
-            },
+            static fn(array $row): array => [
+                'name' => isset($row['name']) ? (string) $row['name'] : null,
+                'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
+            ],
             $rows
         );
     }
@@ -681,13 +640,12 @@ class EntryRepository extends ServiceEntityRepository
 
         /** @var array<int, array{username: string, total_time: int|string|null}> $rows */
         $rows = $statement->executeQuery()->fetchAllAssociative();
+
         return array_map(
-            static function (array $row): array {
-                return [
-                    'username' => (string) $row['username'],
-                    'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
-                ];
-            },
+            static fn(array $row): array => [
+                'username' => (string) $row['username'],
+                'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
+            ],
             $rows
         );
     }

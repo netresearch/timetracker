@@ -1,16 +1,17 @@
 <?php
 
 /**
- * Json array translator for twig-templates
+ * Json array translator for twig-templates.
  *
  * PHP version 5
  *
  * @category  Twig_Extension
- * @package   App\Extension
+ *
  * @author    Norman Kante <norman.kante@netresearch.de>
  * @copyright 2013 Netresearch App Factory AG
  * @license   No license
- * @link      http://www.netresearch.de
+ *
+ * @see      http://www.netresearch.de
  */
 
 namespace App\Extension;
@@ -18,22 +19,23 @@ namespace App\Extension;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Class NrArrayTranslator
+ * Class NrArrayTranslator.
  *
  * @category Twig_Extension
- * @package  App\Extension
+ *
  * @author   Norman Kante <norman.kante@netresearch.de>
  * @license  No license
- * @link     http://www.netresearch.de
+ *
+ * @see     http://www.netresearch.de
  */
 class NrArrayTranslator extends \Twig\Extension\AbstractExtension
 {
     /**
-     * constructor
+     * constructor.
      *
      * @param TranslatorInterface $translator symfony translator
      */
-    public function __construct(protected \Symfony\Contracts\Translation\TranslatorInterface $translator)
+    public function __construct(protected TranslatorInterface $translator)
     {
     }
 
@@ -51,8 +53,6 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
 
     /**
      * Returns the filters of the extension.
-     *
-     * @return array
      */
     /**
      * @return \Twig\TwigFilter[]
@@ -74,8 +74,6 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      * @param string $arrayKey     key value in the string
      * @param string $languageFile language file for translation
      * @param array  $keys         key which will be translated
-     *
-     * @return string
      */
     /**
      * @param array<int, string> $keys
@@ -84,7 +82,7 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
         string $string,
         string $arrayKey,
         ?string $languageFile = 'messages',
-        array $keys = ['name']
+        array $keys = ['name'],
     ): string {
         $data = json_decode($string, true);
         unset($string);

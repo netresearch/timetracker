@@ -9,17 +9,6 @@ namespace App\Helper;
  */
 class TimeHelper
 {
-    public static function getMinutesByLetter(string $unit): int
-    {
-        return match (strtolower($unit)) {
-            '' => 1,
-            'm' => 1,
-            'h' => 60,
-            'd' => 480,
-            'w' => 2400,
-            default => 0,
-        };
-    }
     public const DAYS_PER_WEEK = 5;
 
     public const HOURS_PER_DAY = 8;

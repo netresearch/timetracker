@@ -4,13 +4,12 @@ namespace App\Command;
 
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\SubticketSyncService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Doctrine\ORM\EntityManagerInterface;
 
 #[\Symfony\Component\Console\Attribute\AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
 class TtSyncSubticketsCommand extends Command
@@ -42,6 +41,7 @@ class TtSyncSubticketsCommand extends Command
             $project = $entityRepository->find($projectId);
             if (!$project) {
                 $symfonyStyle->error('Project does not exist');
+
                 return 1;
             }
 
@@ -54,32 +54,27 @@ class TtSyncSubticketsCommand extends Command
         }
 
         $output->writeln(
-            'Found ' . count($projects) . ' projects with ticket system',
+            'Found '.count($projects).' projects with ticket system',
             OutputInterface::VERBOSITY_VERBOSE
         );
         foreach ($projects as $project) {
             $output->writeln(
-                'Syncing ' . $project->getId() . ' ' . $project->getName(),
+                'Syncing '.$project->getId().' '.$project->getName(),
                 OutputInterface::VERBOSITY_VERBOSE
             );
             try {
                 $subtickets = $this->subticketSyncService->syncProjectSubtickets($project);
             } catch (JiraApiUnauthorizedException $e) {
-                throw new JiraApiUnauthorizedException(
-                    $e->getMessage() . ' - project ' . $project->getName(),
-                    $e->getCode(),
-                    $e->getRedirectUrl(),
-                    $e
-                );
+                throw new JiraApiUnauthorizedException($e->getMessage().' - project '.$project->getName(), $e->getCode(), $e->getRedirectUrl(), $e);
             }
 
             $output->writeln(
-                ' ' . count($subtickets) . ' subtickets found',
+                ' '.count($subtickets).' subtickets found',
                 OutputInterface::VERBOSITY_VERBOSE
             );
-            if ($subtickets !== []) {
+            if ([] !== $subtickets) {
                 $output->writeln(
-                    ' ' . implode(',', $subtickets),
+                    ' '.implode(',', $subtickets),
                     OutputInterface::VERBOSITY_VERY_VERBOSE
                 );
             }
