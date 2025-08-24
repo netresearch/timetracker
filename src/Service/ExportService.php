@@ -4,10 +4,11 @@ namespace App\Service;
 
 use App\Entity\Entry;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 
 class ExportService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
     {
     }
     /**
@@ -81,11 +82,7 @@ class ExportService
                 $ticketSystem = $entry->getProject()->getTicketSystem();
 
                 if (!isset($arApi[$ticketSystem->getId()])) {
-                    // In tests, fall back to a no-op when factory isn't wired
-                    if (class_exists(\App\Service\Integration\Jira\JiraOAuthApiFactory::class)) {
-                        $factory = $this->managerRegistry->getRepository(Entry::class); // touch doctrine to avoid unused var
-                        // skip creating API in unit tests; integration covered elsewhere
-                    }
+                    $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
                 }
 
                 $arTickets[$ticketSystem->getId()][] = $entry->getTicket();

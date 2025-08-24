@@ -143,4 +143,22 @@ class Activity
 
         return $this;
     }
+
+    public function removeEntry(Entry $entry): static
+    {
+        if ($this->entriesRelation->contains($entry)) {
+            $this->entriesRelation->removeElement($entry);
+        }
+
+        return $this;
+    }
+
+    public function removePreset(Preset $preset): static
+    {
+        if ($this->presetsRelation->contains($preset)) {
+            $this->presetsRelation->removeElement($preset);
+        }
+
+        return $this;
+    }
 }
