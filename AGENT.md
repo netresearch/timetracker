@@ -6,10 +6,10 @@ This file is the canonical, tool-agnostic guide for agents working in this repos
 
 TimeTracker is a Symfony-based PHP application for project/customer-centric time tracking with Jira integration, LDAP authentication, reports, and exports.
 
-- Backend: PHP 8.4, Symfony 6.4, Doctrine ORM, Twig, Monolog
+- Backend: PHP 8.4, Symfony 6.4, Doctrine ORM 3, Twig, Monolog
 - Frontend assets: Webpack Encore, Stimulus, Sass
 - Infrastructure: Docker Compose (Nginx, PHP-FPM, MariaDB)
-- Tests: PHPUnit; static analysis via PHPStan and Psalm
+- Tests: PHPUnit 12; static analysis via PHPStan and Psalm (Psalm clean)
 - API: OpenAPI v3 at `public/api.yml` (Swagger UI at `/docs/swagger/index.html`)
 
 See also: @README.rst, @docs/techstack.md, @docs/features.md
@@ -157,6 +157,8 @@ See @docs/configuration.md and relevant notes in @README.rst (e.g., Jira OAuth s
 - Prefer running commands through Docker Compose to ensure correct PHP and extensions
 - When asked to lint, analyze, or test, use the composer scripts where available (see `composer.json`)
 - For legacy routes and helpers, consult @PLANNING.md and @TASKS.md before refactoring
+
+Upgrade status: Doctrine ORM 3 migration complete; PHPUnit 12 migration complete; phpunit.xml updated to 12.3 schema; tests green. Psalm shows 0 errors; addressing remaining PHPStan items is in progress (see @TASKS.md).
 
 ---
 

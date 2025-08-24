@@ -4,12 +4,11 @@ This document provides an overview of the technologies, frameworks, and tools us
 
 ## Backend
 
-*   **PHP:** Version `~8.2` (as specified in `composer.json`). The application logic is primarily written in PHP.
-*   **Symfony:** Version `4.4.x` (as specified in `composer.json`). The core web framework used for structuring the application, handling requests, routing, dependency injection, security, and more.
+*   **PHP:** Version `8.4`.
+*   **Symfony:** Version `6.4` (upgrade path to 7.3 in progress).
 *   **Doctrine:**
-    *   **ORM:** (`doctrine/orm`, `doctrine/doctrine-bundle`) Used for database abstraction and object-relational mapping, managing entities and their relationships.
-    *   **Migrations:** (`doctrine/doctrine-migrations-bundle`) Used for managing database schema changes incrementally.
-    *   **Annotations:** (`doctrine/annotations`) Used for metadata (though the plan is to move towards PHP 8 attributes).
+    *   **ORM 3:** (`doctrine/orm`, `doctrine/doctrine-bundle`) with PHP 8 attributes for metadata.
+    *   **Migrations:** (`doctrine/doctrine-migrations-bundle`) for incremental schema changes.
 *   **Twig:** (`twig/twig`, `symfony/twig-bundle`) The template engine used for rendering HTML views.
 *   **Monolog:** (`symfony/monolog-bundle`) Used for logging application events, errors, and debug information.
 *   **Guzzle:** (`guzzlehttp/guzzle`) A PHP HTTP client used for making external API requests.
@@ -30,7 +29,7 @@ This document provides an overview of the technologies, frameworks, and tools us
 *   **Docker & Docker Compose:** Used to create containerized, reproducible development and production environments.
 *   **Composer:** The dependency manager for PHP packages.
 *   **npm:** The dependency manager for Node.js packages (used for frontend build tools and libraries).
-*   **PHPUnit:** (`phpunit/phpunit`) The primary framework for writing and running unit, integration, and functional tests in PHP.
+*   **PHPUnit 12:** (`phpunit/phpunit`) The primary framework for unit, integration, and functional tests.
 *   **PHPStan:** (`phpstan/phpstan`) A static analysis tool for PHP, helping to find errors without running the code.
 *   **Psalm:** (`vimeo/psalm`) Another static analysis tool for PHP, focused on finding errors and improving code quality.
 *   **PHP_CodeSniffer:** (`squizlabs/php_codesniffer`) Checks PHP code against coding standards (e.g., PSR-12).
