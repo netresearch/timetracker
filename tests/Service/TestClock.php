@@ -13,7 +13,7 @@ class TestClock implements ClockInterface
 {
     private \DateTimeImmutable $dateTimeImmutable;
 
-    public function __construct(\DateTimeImmutable $startTime = null)
+    public function __construct(?\DateTimeImmutable $startTime = null)
     {
         $this->dateTimeImmutable = $startTime ?? new \DateTimeImmutable('2023-10-24 12:00:00'); // Default fixed time
     }
