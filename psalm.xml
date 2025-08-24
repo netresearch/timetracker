@@ -24,11 +24,5 @@
         <pluginClass class="Psalm\SymfonyPsalmPlugin\Plugin" />
     </plugins>
 
-    <issueHandlers>
-        <UndefinedClass>
-            <errorLevel type="suppress">
-                <directory name="tests" />
-            </errorLevel>
-        </UndefinedClass>
-    </issueHandlers>
+    
 </psalm> 
