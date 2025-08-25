@@ -88,13 +88,13 @@ services:
             $projectDir: '%kernel.project_dir%'
 
     # Add this: Configure ClockInterface and SystemClock
-    App\\Service\\ClockInterface:
-        alias: App\\Service\\SystemClock
+    App\Service\ClockInterface:
+        alias: App\Service\SystemClock
 
     # Explicit definition to ensure constructor injection of ClockInterface and TimeCalculationService
-    App\\Repository\\EntryRepository:
+    App\Repository\EntryRepository:
         arguments:
             $registry: '@doctrine'
-            $clock: '@App\\Service\\ClockInterface'
-            $timeCalculationService: '@App\\Service\\Util\\TimeCalculationService'
+            $clock: '@App\Service\ClockInterface'
+            $timeCalculationService: '@App\Service\Util\TimeCalculationService'
 
