@@ -17,7 +17,7 @@ namespace App\Repository;
 
 use App\Entity\Entry;
 use App\Entity\User;
-use App\Helper\TimeHelper;
+use App\Service\Util\TimeCalculationService;
 use App\Service\ClockInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query\Expr\Join;
@@ -246,7 +246,7 @@ class EntryRepository extends ServiceEntityRepository
                 $line['customer'] = (int) $line['customer'];
                 $line['project'] = (int) $line['project'];
                 $line['activity'] = (int) $line['activity'];
-                $line['duration'] = TimeHelper::formatDuration((int) $line['duration']);
+                $line['duration'] = (new TimeCalculationService())->formatDuration((int) $line['duration']);
                 $line['class'] = (int) $line['class'];
                 $data[] = ['entry' => $line];
             }

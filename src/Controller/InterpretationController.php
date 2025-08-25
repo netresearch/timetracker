@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Entry;
 use App\Entity\User;
-use App\Helper\TimeHelper;
+use App\Service\Util\TimeCalculationService;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
@@ -13,6 +13,16 @@ use Symfony\Component\HttpFoundation\Request;
 
 class InterpretationController extends BaseController
 {
+    private TimeCalculationService $timeCalculationService;
+
+    /**
+     * @codeCoverageIgnore
+     */
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
+    {
+        $this->timeCalculationService = $timeCalculationService;
+    }
     /**
      * @var Entry[]|null
      */
@@ -49,8 +59,8 @@ class InterpretationController extends BaseController
         $entryList = [];
         foreach ($entries as $entry) {
             $flatEntry = $entry->toArray();
-            $flatEntry['quota'] = TimeHelper::formatQuota($flatEntry['duration'], $sum);
-            $flatEntry['duration'] = TimeHelper::formatDuration($flatEntry['duration']);
+            $flatEntry['quota'] = $this->timeCalculationService->formatQuota($flatEntry['duration'], $sum);
+            $flatEntry['duration'] = $this->timeCalculationService->formatDuration($flatEntry['duration']);
             $entryList[] = ['entry' => $flatEntry];
         }
 
@@ -148,7 +158,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($customers as &$customer) {
-            $customer['quota'] = TimeHelper::formatQuota($customer['hours'], $sum);
+            $customer['quota'] = $this->timeCalculationService->formatQuota($customer['hours'], $sum);
         }
 
         /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $customers */
@@ -196,7 +206,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($projects as &$project) {
-            $project['quota'] = TimeHelper::formatQuota($project['hours'], $sum);
+            $project['quota'] = $this->timeCalculationService->formatQuota($project['hours'], $sum);
         }
 
         /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $projects */
@@ -242,7 +252,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($tickets as &$ticket) {
-            $ticket['quota'] = TimeHelper::formatQuota($ticket['hours'], $sum);
+            $ticket['quota'] = $this->timeCalculationService->formatQuota($ticket['hours'], $sum);
         }
 
         /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $tickets */
@@ -289,7 +299,7 @@ class InterpretationController extends BaseController
 
         $sum = $this->getCachedSum();
         foreach ($users as &$user) {
-            $user['quota'] = TimeHelper::formatQuota($user['hours'], $sum);
+            $user['quota'] = $this->timeCalculationService->formatQuota($user['hours'], $sum);
         }
 
         /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $users */
@@ -343,7 +353,7 @@ class InterpretationController extends BaseController
             $minutes = (float) $time['minutes'];
             $time['hours'] = $minutes / 60.0;
             unset($time['minutes']);
-            $time['quota'] = TimeHelper::formatQuota($minutes, $totalMinutes);
+            $time['quota'] = $this->timeCalculationService->formatQuota($minutes, $totalMinutes);
         }
 
         /* @var array<int, array{name:string,day:string,hours:int,quota?:string}> $times */
@@ -406,7 +416,7 @@ class InterpretationController extends BaseController
         }
 
         foreach ($activities as &$activity) {
-            $activity['quota'] = TimeHelper::formatQuota($activity['hours'], $activitiesTotalHours);
+            $activity['quota'] = $this->timeCalculationService->formatQuota($activity['hours'], $activitiesTotalHours);
         }
 
         /* @var array<int, array{id:int,name:string,hours:int,quota?:string}> $activities */
