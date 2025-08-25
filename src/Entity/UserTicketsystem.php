@@ -37,9 +37,6 @@ class UserTicketsystem extends Base
     #[ORM\Column(name: 'tokensecret', type: 'string', length: 50)]
     protected $tokenSecret;
 
-    /**
-     * @psalm-var 0|1
-     */
     #[ORM\Column(name: 'avoidconnection', type: 'boolean', options: ['default' => false])]
     protected bool $avoidConnection = false;
 

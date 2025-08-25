@@ -19,10 +19,10 @@ class Customer extends Base
     protected $id;
 
     /**
-     * @var string|null
+     * @var string
      */
     #[ORM\Column(type: 'string', length: 255)]
-    protected $name;
+    protected string $name = '';
 
     /**
      * @var bool

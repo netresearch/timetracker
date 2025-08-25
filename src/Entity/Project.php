@@ -514,26 +514,26 @@ class Project extends Base
         return $this;
     }
 
-    public function setProjectLead(?object $projectLead): static
+    public function setProjectLead(?User $projectLead): static
     {
         $this->projectLead = $projectLead;
 
         return $this;
     }
 
-    public function getProjectLead(): ?object
+    public function getProjectLead(): ?User
     {
         return $this->projectLead;
     }
 
-    public function setTechnicalLead(?object $technicalLead): static
+    public function setTechnicalLead(?User $technicalLead): static
     {
         $this->technicalLead = $technicalLead;
 
         return $this;
     }
 
-    public function getTechnicalLead(): ?object
+    public function getTechnicalLead(): ?User
     {
         return $this->technicalLead;
     }
