@@ -19,11 +19,11 @@ class UserTicketsystem extends Base
 
     #[ORM\ManyToOne(targetEntity: TicketSystem::class)]
     #[ORM\JoinColumn(name: 'ticket_system_id', referencedColumnName: 'id', nullable: true)]
-    protected TicketSystem $ticketSystem;
+    protected ?TicketSystem $ticketSystem = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'userTicketsystems')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true)]
-    protected User $user;
+    protected ?User $user = null;
 
     /**
      * @var string
@@ -41,7 +41,7 @@ class UserTicketsystem extends Base
      * @psalm-var 0|1
      */
     #[ORM\Column(name: 'avoidconnection', type: 'boolean', options: ['default' => false])]
-    protected int $avoidConnection;
+    protected bool $avoidConnection = false;
 
     public function getId(): ?int
     {
@@ -58,7 +58,7 @@ class UserTicketsystem extends Base
         return $this;
     }
 
-    public function getTicketSystem(): TicketSystem
+    public function getTicketSystem(): ?TicketSystem
     {
         return $this->ticketSystem;
     }
@@ -73,7 +73,7 @@ class UserTicketsystem extends Base
         return $this;
     }
 
-    public function getUser(): User
+    public function getUser(): ?User
     {
         return $this->user;
     }
@@ -124,7 +124,7 @@ class UserTicketsystem extends Base
 
     public function getAvoidConnection(): bool
     {
-        return 1 == $this->avoidConnection;
+        return (bool) $this->avoidConnection;
     }
 
     /**
@@ -132,9 +132,9 @@ class UserTicketsystem extends Base
      *
      * @return $this
      */
-    public function setAvoidConnection($avoidConnection): static
+    public function setAvoidConnection(bool $avoidConnection): static
     {
-        $this->avoidConnection = ($avoidConnection ? 1 : 0);
+        $this->avoidConnection = $avoidConnection;
 
         return $this;
     }

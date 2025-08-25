@@ -21,7 +21,7 @@ class Account
      * @var string|null
      */
     #[ORM\Column(type: 'string', length: 50)]
-    protected $name;
+    protected ?string $name = '';
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Entry>
