@@ -19,9 +19,6 @@ class Kernel extends BaseKernel
         }
     }
 
-    /**
-     * @psalm-return '/var/www/html'
-     */
     public function getProjectDir(): string
     {
         return \dirname(__DIR__);
