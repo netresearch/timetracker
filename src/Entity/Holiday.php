@@ -16,9 +16,13 @@ class Holiday extends Base
     #[ORM\Column(name: 'day', type: 'date')]
     private \DateTime $day;
 
-    public function __construct(string|\DateTime $day, private string $name)
+    #[ORM\Column(name: 'name', type: 'string', length: 255)]
+    private string $name;
+
+    public function __construct(string|\DateTime $day, string $name)
     {
         $this->setDay($day);
+        $this->setName($name);
     }
 
     public function setDay(string|\DateTime $day): static
