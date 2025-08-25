@@ -25,24 +25,11 @@ use Twig\Environment as TwigEnvironment;
  */
 class DefaultController extends BaseController
 {
-    private JiraOAuthApiFactory $jiraOAuthApiFactory;
-    private TimeCalculationService $timeCalculationService;
-
-    #[\Symfony\Contracts\Service\Attribute\Required]
-    public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
-    {
-        $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
-    }
-
-    #[\Symfony\Contracts\Service\Attribute\Required]
-    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
-    {
-        $this->timeCalculationService = $timeCalculationService;
-    }
-
     public function __construct(
         private readonly TwigEnvironment $twigEnvironment,
         \Doctrine\Persistence\ManagerRegistry $managerRegistry,
+        private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
+        private readonly TimeCalculationService $timeCalculationService,
     ) {
         $this->managerRegistry = $managerRegistry;
     }
@@ -379,7 +366,7 @@ class DefaultController extends BaseController
             ]
         );
 
-        $filename = strtolower(str_replace(' ', '-', $user->getUsername())).'.csv';
+        $filename = strtolower(str_replace(' ', '-', (string) $user->getUsername())).'.csv';
 
         $response = new Response();
         $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
@@ -408,7 +395,12 @@ class DefaultController extends BaseController
 
         try {
             $jiraOAuthApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-            $jiraOAuthApi->fetchOAuthAccessToken($request->query->get('oauth_token'), $request->query->get('oauth_verifier'));
+            $oauthToken = $request->query->get('oauth_token');
+            $oauthVerifier = $request->query->get('oauth_verifier');
+            if (!is_string($oauthToken) || '' === $oauthToken || !is_string($oauthVerifier) || '' === $oauthVerifier) {
+                return new Response('Invalid OAuth callback parameters', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            }
+            $jiraOAuthApi->fetchOAuthAccessToken($oauthToken, $oauthVerifier);
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
 
             return $this->redirectToRoute('_start');

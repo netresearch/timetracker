@@ -52,13 +52,13 @@ class Entry extends Base
     protected string $description = '';
 
     #[ORM\Column(type: 'date')]
-    protected ?\DateTime $day = null;
+    protected ?\DateTimeInterface $day = null;
 
     #[ORM\Column(type: 'time')]
-    protected ?\DateTime $start = null;
+    protected ?\DateTimeInterface $start = null;
 
     #[ORM\Column(type: 'time')]
-    protected ?\DateTime $end = null;
+    protected ?\DateTimeInterface $end = null;
 
     #[ORM\Column(type: 'integer')]
     protected int $duration = 0;
@@ -644,7 +644,8 @@ class Entry extends Base
      */
     public function getTicketSystemIssueLink(): string
     {
-        $ticketSystem = $this->getProject()->getTicketSystem();
+        $project = $this->getProject();
+        $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
 
         if (!$ticketSystem instanceof TicketSystem) {
             return $this->getTicket();

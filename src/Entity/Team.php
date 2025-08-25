@@ -27,7 +27,7 @@ class Team
      * @var string|null
      */
     #[ORM\Column(type: 'string', length: 31)]
-    protected $name;
+    protected ?string $name = '';
 
     /**
      * @var User|null

@@ -621,7 +621,7 @@ class Project extends Base
     /**
      * Returns the id of the internal JIRA ticket system.
      */
-    public function getInternalJiraTicketSystem()
+    public function getInternalJiraTicketSystem(): ?string
     {
         return $this->internalJiraTicketSystem;
     }
