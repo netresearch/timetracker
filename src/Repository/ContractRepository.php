@@ -33,7 +33,7 @@ class ContractRepository extends ServiceEntityRepository
             ->orderBy('users.username', 'ASC')
             ->addOrderBy('contracts.start', 'ASC');
 
-        /** @var \Doctrine\ORM\Query $query */
+        /** @var \Doctrine\ORM\Query<array-key, mixed> $query */
         $query = $queryBuilder->getQuery();
         /** @var Contract[] $contracts */
         $contracts = $query->getResult();

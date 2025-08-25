@@ -18,10 +18,10 @@ class Account
     protected $id;
 
     /**
-     * @var string|null
+     * @var string
      */
     #[ORM\Column(type: 'string', length: 50)]
-    protected ?string $name = '';
+    protected string $name = '';
 
     /**
      * @var \Doctrine\Common\Collections\Collection<int, Entry>

@@ -28,16 +28,16 @@ class Project extends Base
     protected $id;
 
     /**
-     * @var string|null
+     * @var string
      */
     #[ORM\Column(type: 'string', length: 127)]
-    protected $name;
+    protected string $name = '';
 
     /**
-     * @var bool|null
+     * @var bool
      */
-    #[ORM\Column(type: 'boolean')]
-    protected $active;
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    protected bool $active = false;
 
     /**
      * @var Customer|null
@@ -47,10 +47,10 @@ class Project extends Base
     protected $customer;
 
     /**
-     * @var bool|null
+     * @var bool
      */
-    #[ORM\Column(type: 'boolean')]
-    protected $global;
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    protected bool $global = false;
 
     /**
      * @var string|null
@@ -137,21 +137,17 @@ class Project extends Base
 
     /**
      * project manager user.
-     *
-     * @var object|null
      */
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'project_lead_id', referencedColumnName: 'id', nullable: true)]
-    protected $projectLead;
+    protected ?User $projectLead = null;
 
     /**
      * lead developer.
-     *
-     * @var object|null
      */
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'technical_lead_id', referencedColumnName: 'id', nullable: true)]
-    protected $technicalLead;
+    protected ?User $technicalLead = null;
 
     /**
      * invoice number, reserved for future use.
@@ -160,10 +156,10 @@ class Project extends Base
     protected ?string $invoice = null;
 
     /**
-     * @var bool|null
+     * @var bool
      */
-    #[ORM\Column(name: 'additional_information_from_external', type: 'boolean')]
-    protected $additionalInformationFromExternal;
+    #[ORM\Column(name: 'additional_information_from_external', type: 'boolean', options: ['default' => false])]
+    protected bool $additionalInformationFromExternal = false;
 
     /**
      * the internal key of the project the current ticket should be booked to.
