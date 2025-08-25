@@ -269,7 +269,8 @@ class AdminController extends BaseController
         if ($ticketSystem instanceof TicketSystem) {
             try {
                 if (null !== $project->getId()) {
-                    $this->subticketSyncService->syncProjectSubtickets($project->getId());
+                    // Pass the Project directly to match service signature (Project|int)
+                    $this->subticketSyncService->syncProjectSubtickets($project);
                 }
             } catch (\Exception $e) {
                 // we do not let it fail because creating a new project

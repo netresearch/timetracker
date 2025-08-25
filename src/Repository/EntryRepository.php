@@ -271,7 +271,10 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return Entry[]
      */
-    public function findByUserAndTicketSystemToSync($userId, $ticketSystemId, $maxResults = null)
+    /**
+     * @return array<int, Entry>
+     */
+    public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, ?int $maxResults = null)
     {
         $queryBuilder = $this->getEntityManager()->createQueryBuilder();
         $queryBuilder
@@ -498,6 +501,10 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed> $arFilter
      */
+    /**
+     * @param array<string, mixed> $arFilter
+     * @return \Doctrine\ORM\Query<int, Entry>
+     */
     public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\Query
     {
         $queryBuilder = $this->createQueryBuilder('e');
@@ -598,6 +605,10 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @throws \Exception
      *
+     * @return array<int, Entry>
+     */
+    /**
+     * @param array<string, mixed> $arFilter
      * @return array<int, Entry>
      */
     public function findByFilterArray(array $arFilter = [])

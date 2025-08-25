@@ -51,20 +51,20 @@ class Entry extends Base
     #[ORM\Column(type: 'string')]
     protected string $description = '';
 
-    #[ORM\Column(type: 'date')]
+    #[ORM\Column(type: 'date', nullable: false)]
     protected ?\DateTimeInterface $day = null;
 
-    #[ORM\Column(type: 'time')]
+    #[ORM\Column(type: 'time', nullable: false)]
     protected ?\DateTimeInterface $start = null;
 
-    #[ORM\Column(type: 'time')]
+    #[ORM\Column(type: 'time', nullable: false)]
     protected ?\DateTimeInterface $end = null;
 
     #[ORM\Column(type: 'integer')]
     protected int $duration = 0;
 
     #[ORM\Column(name: 'synced_to_ticketsystem', type: 'boolean', nullable: true)]
-    protected bool $syncedToTicketsystem = false;
+    protected ?bool $syncedToTicketsystem = false;
 
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'entries')]
     #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
@@ -713,7 +713,7 @@ class Entry extends Base
 
     public function getSyncedToTicketsystem(): bool
     {
-        return $this->syncedToTicketsystem;
+        return (bool) $this->syncedToTicketsystem;
     }
 
     /**
