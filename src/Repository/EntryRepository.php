@@ -58,11 +58,13 @@ class EntryRepository extends ServiceEntityRepository
         return $days;
     }
     private readonly ClockInterface $clock;
+    private readonly TimeCalculationService $timeCalculationService;
 
-    public function __construct(ManagerRegistry $registry, ClockInterface $clock)
+    public function __construct(ManagerRegistry $registry, ClockInterface $clock, TimeCalculationService $timeCalculationService)
     {
         parent::__construct($registry, Entry::class);
         $this->clock = $clock;
+        $this->timeCalculationService = $timeCalculationService;
     }
 
     public const PERIOD_DAY = 1;
@@ -246,7 +248,7 @@ class EntryRepository extends ServiceEntityRepository
                 $line['customer'] = (int) $line['customer'];
                 $line['project'] = (int) $line['project'];
                 $line['activity'] = (int) $line['activity'];
-                $line['duration'] = (new TimeCalculationService())->formatDuration((int) $line['duration']);
+                $line['duration'] = $this->timeCalculationService->formatDuration((int) $line['duration']);
                 $line['class'] = (int) $line['class'];
                 $data[] = ['entry' => $line];
             }
