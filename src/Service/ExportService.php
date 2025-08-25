@@ -40,7 +40,7 @@ class ExportService
                 ->getRepository(\App\Entity\User::class)
                 ->find($userId);
             if (null !== $user) {
-                $username = $user->getUsername();
+                $username = (string) $user->getUsername();
             }
         }
 

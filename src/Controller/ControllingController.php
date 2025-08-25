@@ -43,7 +43,7 @@ class ControllingController extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr', methods: ['GET'])]
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\\\\\d+', 'userid' => '\\\\\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\\\\d+', 'userid' => '\\\\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
     public function export(Request $request): Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         // Must be fully authenticated AND have a session token present
@@ -102,7 +102,7 @@ class ControllingController extends BaseController
             );
         }
 
-        $username = $service->getUsername($userId);
+        $username = (string) $service->getUsername($userId);
 
         $filename = strtolower(
             $year.'_'
@@ -141,8 +141,9 @@ class ControllingController extends BaseController
         $lineNumber = 3;
         $stats = [];
         foreach ($entries as $entry) {
-            if (!isset($stats[$entry->getUser()->getAbbr()])) {
-                $stats[$entry->getUser()->getAbbr()] = [
+            $abbr = $entry->getUser() ? (string) $entry->getUser()->getAbbr() : '';
+            if (!isset($stats[$abbr])) {
+                $stats[$abbr] = [
                     'holidays' => 0,
                     'sickdays' => 0,
                 ];
@@ -152,11 +153,11 @@ class ControllingController extends BaseController
 
             if (!is_null($activity)) {
                 if ($activity->isHoliday()) {
-                    ++$stats[$entry->getUser()->getAbbr()]['holidays'];
+                    ++$stats[$abbr]['holidays'];
                 }
 
                 if ($activity->isSick()) {
-                    ++$stats[$entry->getUser()->getAbbr()]['sickdays'];
+                    ++$stats[$abbr]['sickdays'];
                 }
 
                 $activity = $activity->getName();
@@ -164,15 +165,25 @@ class ControllingController extends BaseController
                 $activity = ' ';
             }
 
-            self::setCellDate($sheet, 'A', $lineNumber, $entry->getDay());
+            if ($entry->getDay() instanceof \DateTimeInterface) {
+                self::setCellDate($sheet, 'A', $lineNumber, $entry->getDay());
+            }
 
-            self::setCellHours($sheet, 'B', $lineNumber, $entry->getStart());
-            self::setCellHours($sheet, 'C', $lineNumber, $entry->getEnd());
+            if ($entry->getStart() instanceof \DateTimeInterface) {
+                self::setCellHours($sheet, 'B', $lineNumber, $entry->getStart());
+            }
+            if ($entry->getEnd() instanceof \DateTimeInterface) {
+                self::setCellHours($sheet, 'C', $lineNumber, $entry->getEnd());
+            }
             $sheet->setCellValue(
                 'D'.$lineNumber,
-                $entry->getCustomer()->getName() ?: $entry->getProject()->getCustomer()->getName()
+                (($entry->getCustomer() && $entry->getCustomer()->getName())
+                    ? (string) $entry->getCustomer()->getName()
+                    : (($entry->getProject() && $entry->getProject()->getCustomer())
+                        ? (string) $entry->getProject()->getCustomer()->getName()
+                        : ''))
             );
-            $sheet->setCellValue('E'.$lineNumber, $entry->getProject()->getName());
+            $sheet->setCellValue('E'.$lineNumber, $entry->getProject() ? (string) $entry->getProject()->getName() : '');
             $sheet->setCellValue('F'.$lineNumber, $activity);
             $sheet->setCellValue('G'.$lineNumber, $entry->getDescription());
             $sheet->setCellValue('H'.$lineNumber, $entry->getTicket());
@@ -180,7 +191,7 @@ class ControllingController extends BaseController
             // $sheet->setCellValue('I', $lineNumber, $entry->getDuration());
             $sheet->setCellValue('I'.$lineNumber, '=C'.$lineNumber.'-B'.$lineNumber);
 
-            $sheet->setCellValue('J'.$lineNumber, $entry->getUser()->getAbbr());
+            $sheet->setCellValue('J'.$lineNumber, $abbr);
             $sheet->setCellValue('K'.$lineNumber, $entry->getExternalReporter());
             $sheet->setCellValue('L'.$lineNumber, $entry->getExternalSummary());
             $sheet->setCellValue('M'.$lineNumber, implode(', ', $entry->getExternalLabels()));
