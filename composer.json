@@ -96,7 +96,7 @@
     ],
     "cs-check": "phpcs",
     "cs-fix": "php-cs-fixer fix",
-    "analyze": "phpstan analyze --configuration=phpstan.dist.neon --memory-limit=512M",
+    "analyze": "phpstan analyze --configuration=phpstan.neon --memory-limit=512M",
     "psalm": "psalm",
     "test": "APP_ENV=test php -d memory_limit=512M bin/phpunit",
     "test:unit": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit",
