@@ -10,7 +10,7 @@ use App\Entity\Project;
 use App\Entity\Team;
 use App\Entity\TicketSystem;
 use App\Entity\User;
-use App\Helper\TimeHelper;
+use App\Service\Util\TimeCalculationService;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\UserRepository;
@@ -30,6 +30,8 @@ class AdminController extends BaseController
 
     private JiraOAuthApiFactory $jiraOAuthApiFactory;
 
+    private TimeCalculationService $timeCalculationService;
+
     /**
      * @codeCoverageIgnore
      */
@@ -46,6 +48,15 @@ class AdminController extends BaseController
     public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {
         $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
+    {
+        $this->timeCalculationService = $timeCalculationService;
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllCustomers', name: '_getAllCustomers_attr', methods: ['GET'])]
@@ -149,7 +160,7 @@ class AdminController extends BaseController
         $jiraTicket = RequestHelper::upperString($request, 'jiraTicket');
         $active = RequestHelper::bool($request, 'active');
         $global = RequestHelper::bool($request, 'global');
-        $estimation = TimeHelper::readable2minutes(RequestHelper::string($request, 'estimation', '0m'));
+        $estimation = $this->timeCalculationService->readableToMinutes(RequestHelper::string($request, 'estimation', '0m'));
         $billing = RequestHelper::int($request, 'billing', 0) ?? 0;
         $costCenter = RequestHelper::nullableString($request, 'cost_center');
         $offer = RequestHelper::nullableString($request, 'offer');

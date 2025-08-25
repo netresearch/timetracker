@@ -10,7 +10,7 @@ use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
-use App\Helper\TimeHelper;
+use App\Service\Util\TimeCalculationService;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\EntryRepository;
@@ -26,6 +26,7 @@ use Twig\Environment as TwigEnvironment;
 class DefaultController extends BaseController
 {
     private JiraOAuthApiFactory $jiraOAuthApiFactory;
+    private TimeCalculationService $timeCalculationService;
 
     /**
      * @codeCoverageIgnore
@@ -34,6 +35,15 @@ class DefaultController extends BaseController
     public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {
         $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
+    {
+        $this->timeCalculationService = $timeCalculationService;
     }
 
     public function __construct(
@@ -170,7 +180,7 @@ class DefaultController extends BaseController
 
         if ($data['project']['estimation']) {
             $data['project']['quota'] =
-                TimeHelper::formatQuota(
+                $this->timeCalculationService->formatQuota(
                     $data['project']['total'],
                     $data['project']['estimation']
                 );
@@ -443,7 +453,7 @@ class DefaultController extends BaseController
             $key = $activity['name'] ?? 'No activity';
 
             $time['activities'][$key]['seconds'] = (int) $total * 60;
-            $time['activities'][$key]['time'] = TimeHelper::minutes2readable(
+            $time['activities'][$key]['time'] = $this->timeCalculationService->minutesToReadable(
                 (int) $total
             );
         }
@@ -452,13 +462,13 @@ class DefaultController extends BaseController
             $time['total_time']['time'] += (int) $user['total_time'];
             $key = $user['username'];
             $time['users'][$key]['seconds'] = (int) $user['total_time'] * 60;
-            $time['users'][$key]['time'] = TimeHelper::minutes2readable(
+            $time['users'][$key]['time'] = $this->timeCalculationService->minutesToReadable(
                 (int) $user['total_time']
             );
         }
 
         $time['total_time']['seconds'] = $time['total_time']['time'] * 60;
-        $time['total_time']['time'] = TimeHelper::minutes2readable(
+        $time['total_time']['time'] = $this->timeCalculationService->minutesToReadable(
             $time['total_time']['time']
         );
 

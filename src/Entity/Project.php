@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Helper\TimeHelper;
+use App\Service\Util\TimeCalculationService;
 use App\Model\Base;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -247,7 +247,7 @@ class Project extends Base
     public function toArray(): array
     {
         $data = parent::toArray();
-        $data['estimationText'] = TimeHelper::minutes2readable((int) ($this->getEstimation() ?? 0), false);
+        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable((int) ($this->getEstimation() ?? 0), false);
 
         return $data;
     }

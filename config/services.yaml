@@ -65,13 +65,10 @@ services:
 
     # Remove legacy annotations reader; using attributes mapping everywhere
 
-    # Export service with alias (migrated from App\Services\Export)
+    # Export service (modern service id)
     App\Service\ExportService:
         public: true
         autowire: true
-
-    # Alias legacy App\Services\Export to new service for BC
-    App\\Services\\Export: '@App\\Service\\ExportService'
 
     # Jira API factory for easier mocking in tests
     App\Service\Integration\Jira\JiraOAuthApiFactory:
@@ -94,9 +91,10 @@ services:
     App\\Service\\ClockInterface:
         alias: App\\Service\\SystemClock
 
-    # Explicitly define EntryRepository if autowiring isn't picking up ClockInterface correctly (optional, usually not needed)
-    # App\\Repository\\EntryRepository:
-    #     arguments:
-    #         $managerRegistry: '@doctrine' # Adjust based on actual ManagerRegistry service ID if needed
-    #         $clock: '@App\\Service\\ClockInterface'
+    # Explicit definition to ensure constructor injection of ClockInterface and TimeCalculationService
+    App\\Repository\\EntryRepository:
+        arguments:
+            $registry: '@doctrine'
+            $clock: '@App\\Service\\ClockInterface'
+            $timeCalculationService: '@App\\Service\\Util\\TimeCalculationService'
 
