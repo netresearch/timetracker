@@ -9,7 +9,6 @@
     beStrictAboutOutputDuringTests="false"
     beStrictAboutChangesToGlobalState="false"
     cacheDirectory=".phpunit.cache"
-    <!-- Removed unsupported attributes for PHPUnit 12.x schema -->
 >
     <coverage/>
     <source>
