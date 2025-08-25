@@ -7,10 +7,9 @@
     stopOnFailure="false"
     executionOrder="depends,defects"
     beStrictAboutOutputDuringTests="false"
-    beStrictAboutTodoAnnotatedTests="false"
     beStrictAboutChangesToGlobalState="false"
     cacheDirectory=".phpunit.cache"
-    verbose="true"
+    <!-- Removed unsupported attributes for PHPUnit 12.x schema -->
 >
     <coverage/>
     <source>

@@ -68,7 +68,18 @@ class AdminController extends BaseController
     {
         if (!$this->checkLogin($request)) {
             // For non-JSON clients, redirect to login, otherwise 401 JSON
-            return $this->login($request);
+            $redirect = $this->login($request);
+            if ($redirect instanceof \Symfony\Component\HttpFoundation\RedirectResponse) {
+                // Wrap into App\Model\Response to satisfy return type while preserving 302
+                $response = new Response('');
+                $response->setStatusCode(302);
+                $response->headers->set('Location', $redirect->getTargetUrl());
+
+                return $response;
+            }
+
+            // Fallback: 401 JSON/text
+            return $this->getFailedLoginResponse();
         }
 
         /** @var UserRepository $objectRepository */
