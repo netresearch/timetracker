@@ -39,13 +39,13 @@ class Activity
     }
 
     #[ORM\Column(type: 'string', length: 50)]
-    protected ?string $name = null;
+    protected string $name = '';
 
     #[ORM\Column(name: 'needs_ticket', type: 'boolean', options: ['default' => false])]
-    protected ?bool $needsTicket = false;
+    protected bool $needsTicket = false;
 
     #[ORM\Column(name: 'factor', type: 'float', options: ['default' => 1.0])]
-    protected ?float $factor = 1.0;
+    protected float $factor = 1.0;
 
     public function __construct()
     {

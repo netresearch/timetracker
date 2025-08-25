@@ -20,10 +20,10 @@ class User implements UserInterface
     protected $id;
 
     /**
-     * @var string|null
+     * @var string
      */
     #[ORM\Column(type: 'string', length: 50)]
-    protected ?string $username = '';
+    protected string $username = '';
 
     /**
      * @var string|null
@@ -32,10 +32,10 @@ class User implements UserInterface
     protected $abbr;
 
     /**
-     * @var string|null
+     * @var string
      */
     #[ORM\Column(type: 'string', length: 255)]
-    protected ?string $type = '';
+    protected string $type = '';
 
     #[ORM\Column(name: 'jira_token', type: 'string', length: 255, nullable: true)]
     protected ?string $jiraToken = null;
