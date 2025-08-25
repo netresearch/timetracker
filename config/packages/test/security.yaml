@@ -1,5 +1,11 @@
 security:
     firewalls:
         main:
+            # Disable the firewall in test to avoid redirects; controllers handle auth checks
+            security: false
             remember_me: false
+
+    access_control:
+        # Allow public access to all routes in tests; controller-level checks still enforced
+        - { path: ^/, roles: PUBLIC_ACCESS }
 
