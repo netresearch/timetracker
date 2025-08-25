@@ -354,7 +354,7 @@ class Entry extends Base
      */
     public function getDay(): ?\DateTime
     {
-        return $this->day;
+        return $this->day instanceof \DateTime ? $this->day : null;
     }
 
     /**
@@ -383,7 +383,7 @@ class Entry extends Base
      */
     public function getStart(): ?\DateTime
     {
-        return $this->start;
+        return $this->start instanceof \DateTime ? $this->start : null;
     }
 
     /**
@@ -424,7 +424,7 @@ class Entry extends Base
      */
     public function getEnd(): ?\DateTime
     {
-        return $this->end;
+        return $this->end instanceof \DateTime ? $this->end : null;
     }
 
     /**

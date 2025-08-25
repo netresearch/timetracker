@@ -24,16 +24,16 @@ class Preset extends Base
     protected $name;
 
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'presets')]
-    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id')]
-    protected Project $project;
+    #[ORM\JoinColumn(name: 'project_id', referencedColumnName: 'id', nullable: true)]
+    protected ?Project $project = null;
 
     #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'presets')]
-    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
-    protected Customer $customer;
+    #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id', nullable: true)]
+    protected ?Customer $customer = null;
 
     #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'presets')]
-    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
-    protected Activity $activity;
+    #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id', nullable: true)]
+    protected ?Activity $activity = null;
 
     /**
      * @var string
@@ -87,7 +87,7 @@ class Preset extends Base
      */
     public function getCustomerId(): ?int
     {
-        return $this->getCustomer()->getId();
+        return $this->getCustomer() instanceof Customer ? $this->getCustomer()->getId() : null;
     }
 
     /**
@@ -95,7 +95,7 @@ class Preset extends Base
      */
     public function getProjectId(): ?int
     {
-        return $this->getProject()->getId();
+        return $this->getProject() instanceof Project ? $this->getProject()->getId() : null;
     }
 
     /**
@@ -105,7 +105,7 @@ class Preset extends Base
      */
     public function getActivityId(): ?int
     {
-        return $this->getActivity()->getId();
+        return $this->getActivity() instanceof Activity ? $this->getActivity()->getId() : null;
     }
 
     /**
@@ -151,7 +151,7 @@ class Preset extends Base
      */
     public function getCustomer(): Customer
     {
-        return $this->customer;
+        return $this->customer ?? new Customer();
     }
 
     /**
@@ -173,7 +173,7 @@ class Preset extends Base
      */
     public function getProject(): Project
     {
-        return $this->project;
+        return $this->project ?? new Project();
     }
 
     /**
@@ -195,7 +195,7 @@ class Preset extends Base
      */
     public function getActivity(): Activity
     {
-        return $this->activity;
+        return $this->activity ?? new Activity();
     }
 
     /**
