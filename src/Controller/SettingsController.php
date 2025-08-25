@@ -40,7 +40,21 @@ class SettingsController extends BaseController
             return $response;
         }
 
-        $user = $this->getUser();
+        // Resolve current user via BaseController to support test session fallback
+        try {
+            $userId = $this->getUserId($request);
+        } catch (\Symfony\Component\Security\Core\Exception\AccessDeniedException) {
+            $response = new JsonResponse([
+                'success' => false,
+                'message' => $this->translator->trans('User not found.'),
+            ]);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+
+            return $response;
+        }
+
+        /** @var \App\Entity\User|null $user */
+        $user = $this->managerRegistry->getRepository(\App\Entity\User::class)->find($userId);
         if (!$user instanceof \App\Entity\User) {
             $response = new JsonResponse([
                 'success' => false,
