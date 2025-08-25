@@ -6,6 +6,9 @@ use App\Entity\TicketSystem;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<\App\Entity\TicketSystem>
+ */
 class TicketSystemRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

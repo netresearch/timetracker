@@ -33,6 +33,9 @@ use Doctrine\Persistence\ManagerRegistry;
  *
  * @see       http://www.netresearch.de
  */
+/**
+ * @extends ServiceEntityRepository<Entry>
+ */
 class EntryRepository extends ServiceEntityRepository
 {
     /**
