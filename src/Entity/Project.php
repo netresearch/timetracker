@@ -95,11 +95,9 @@ class Project extends Base
 
     /**
      * Estimated project duration in minutes.
-     *
-     * @var float|int|null
      */
     #[ORM\Column(type: 'integer', name: 'estimation', nullable: true)]
-    protected $estimation;
+    protected ?int $estimation = null;
 
     /**
      * Offer number.
@@ -454,12 +452,12 @@ class Project extends Base
         return $this;
     }
 
-    public function getEstimation(): float|int|null
+    public function getEstimation(): ?int
     {
         return $this->estimation;
     }
 
-    public function setEstimation(float|int|null $estimation): static
+    public function setEstimation(?int $estimation): static
     {
         $this->estimation = $estimation;
 

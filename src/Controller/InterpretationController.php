@@ -280,12 +280,16 @@ class InterpretationController extends BaseController
         $users = [];
 
         foreach ($entries as $entry) {
-            $user = $entry->getUser()->getId();
+            $u = $entry->getUser();
+            if (!$u instanceof User) {
+                continue;
+            }
+            $user = $u->getId();
 
             if (!isset($users[$user])) {
                 $users[$user] = [
                     'id' => $user,
-                    'name' => $entry->getUser()->getUsername(),
+                    'name' => (string) $u->getUsername(),
                     'hours' => 0,
                     'quota' => 0,
                 ];
@@ -324,13 +328,17 @@ class InterpretationController extends BaseController
         $times = [];
 
         foreach ($entries as $entry) {
-            $day_r = $entry->getDay()->format('y-m-d');
+            $day = $entry->getDay();
+            if (!$day instanceof \DateTimeInterface) {
+                continue;
+            }
+            $day_r = $day->format('y-m-d');
 
             if (!isset($times[$day_r])) {
                 $times[$day_r] = [
                     'id' => null,
                     'name' => $day_r,
-                    'day' => $entry->getDay()->format('d.m.'),
+                    'day' => $day->format('d.m.'),
                     'hours' => 0,
                     'minutes' => 0,
                     'quota' => 0,

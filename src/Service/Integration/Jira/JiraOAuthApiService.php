@@ -257,7 +257,7 @@ class JiraOAuthApiService
         $objectManager = $this->managerRegistry->getManager();
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        $entries = $objectRepository->findByUserAndTicketSystemToSync($this->user->getId(), $this->ticketSystem->getId(), $entryLimit);
+        $entries = $objectRepository->findByUserAndTicketSystemToSync((int) $this->user->getId(), (int) $this->ticketSystem->getId(), $entryLimit);
 
         foreach ($entries as $entry) {
             try {

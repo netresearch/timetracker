@@ -77,7 +77,7 @@ class CrudController extends BaseController
             }
 
             // remember the day to calculate classes afterwards
-            $day = $entry->getDay()->format('Y-m-d');
+            $day = $entry->getDay() ? $entry->getDay()->format('Y-m-d') : date('Y-m-d');
 
             $manager = $doctrine->getManager();
             $manager->remove($entry);
@@ -267,7 +267,7 @@ class CrudController extends BaseController
                     return $this->getFailedResponse($message, 400);
                 }
 
-                if ($this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory) {
+                if ($this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory && $project instanceof Project) {
                     $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
 
                     // tickets do not exist for external project tickets booked on internal ticket system
@@ -330,15 +330,15 @@ class CrudController extends BaseController
             }
 
             // we may have to update the classes of the entry's day
-            if (is_object($entry->getDay())) {
+            if ($entry->getDay() instanceof \DateTimeInterface) {
                 $this->calculateClasses(
-                    $user->getId(),
+                    (int) $user->getId(),
                     $entry->getDay()->format('Y-m-d')
                 );
                 // and the previous day, if the entry was moved
-                if ($entry->getDay()->format('Y-m-d') !== $oldEntry->getDay()->format('Y-m-d')) {
+                if ($oldEntry->getDay() instanceof \DateTimeInterface && $entry->getDay()->format('Y-m-d') !== $oldEntry->getDay()->format('Y-m-d')) {
                     $this->calculateClasses(
-                        $user->getId(),
+                        (int) $user->getId(),
                         $oldEntry->getDay()->format('Y-m-d')
                     );
                 }
