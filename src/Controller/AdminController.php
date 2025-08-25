@@ -32,27 +32,18 @@ class AdminController extends BaseController
 
     private TimeCalculationService $timeCalculationService;
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setSubticketSyncService(SubticketSyncService $subticketSyncService): void
     {
         $this->subticketSyncService = $subticketSyncService;
     }
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {
         $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
     }
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {

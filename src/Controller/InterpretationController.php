@@ -15,9 +15,6 @@ class InterpretationController extends BaseController
 {
     private TimeCalculationService $timeCalculationService;
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
