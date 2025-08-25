@@ -5,3 +5,9 @@ security:
             security: false
             remember_me: false
 
+framework:
+    router:
+        resource: '%kernel.project_dir%/config/routes.yaml'
+
+# Ensure logout route is available in tests (route exists in routes.yaml). No further changes needed.
+
