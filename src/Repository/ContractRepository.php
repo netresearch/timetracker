@@ -11,6 +11,9 @@ use Doctrine\Persistence\ManagerRegistry;
  *
  * @author Tony Kreissl <kreissl@mogic.com>
  */
+/**
+ * @extends ServiceEntityRepository<\App\Entity\Contract>
+ */
 class ContractRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
