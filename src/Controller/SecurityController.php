@@ -4,10 +4,27 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
+    private TokenStorageInterface $tokenStorage;
+    private RequestStack $requestStack;
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setTokenStorage(TokenStorageInterface $tokenStorage): void
+    {
+        $this->tokenStorage = $tokenStorage;
+    }
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setRequestStack(RequestStack $requestStack): void
+    {
+        $this->requestStack = $requestStack;
+    }
     /**
      * This is just a route target for the login form
      * The actual rendering is now handled by Symfony's form_login system.
@@ -28,9 +45,20 @@ class SecurityController extends AbstractController
      *
      * @codeCoverageIgnore
      */
-    public function logout(): never
+    public function logout(): Response
     {
-        // Symfony's security system handles the logout process
-        throw new \LogicException('This method should never be reached!');
+        // In production, this method is intercepted by the firewall's logout.
+        // In tests (firewall disabled), perform a manual logout and redirect.
+        if (isset($this->tokenStorage)) {
+            $this->tokenStorage->setToken(null);
+        }
+        if (isset($this->requestStack)) {
+            $request = $this->requestStack->getCurrentRequest();
+            if (null !== $request && $request->hasSession()) {
+                $request->getSession()->invalidate();
+            }
+        }
+
+        return new RedirectResponse('/login');
     }
 }
