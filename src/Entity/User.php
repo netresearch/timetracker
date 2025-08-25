@@ -37,6 +37,9 @@ class User implements UserInterface
     #[ORM\Column(type: 'string', length: 255)]
     protected $type;
 
+    #[ORM\Column(name: 'jira_token', type: 'string', length: 255, nullable: true)]
+    protected ?string $jiraToken = null;
+
     #[ORM\Column(name: 'show_empty_line', type: 'boolean', nullable: false, options: ['default' => 0])]
     protected bool $showEmptyLine = false;
 
@@ -161,6 +164,18 @@ class User implements UserInterface
     public function getType(): ?string
     {
         return $this->type;
+    }
+
+    public function getJiraToken(): ?string
+    {
+        return $this->jiraToken;
+    }
+
+    public function setJiraToken(?string $jiraToken): static
+    {
+        $this->jiraToken = $jiraToken;
+
+        return $this;
     }
 
     public function getShowEmptyLine(): bool
