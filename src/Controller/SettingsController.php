@@ -15,18 +15,12 @@ class SettingsController extends BaseController
     /** @var LocalizationService */
     protected $localizationService;
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setTranslator(TranslatorInterface $translator): void
     {
         $this->translator = $translator;
     }
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setLocalizationService(LocalizationService $localizationService): void
     {

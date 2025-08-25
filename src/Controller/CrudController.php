@@ -27,18 +27,12 @@ class CrudController extends BaseController
 
     private ?JiraOAuthApiFactory $jiraOAuthApiFactory = null;
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setLogger(LoggerInterface $trackingLogger): void
     {
         $this->logger = $trackingLogger;
     }
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {

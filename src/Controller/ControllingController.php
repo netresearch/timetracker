@@ -36,9 +36,6 @@ class ControllingController extends BaseController
 {
     private Export $export;
 
-    /**
-     * @codeCoverageIgnore
-     */
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setExportService(Export $export): void
     {
