@@ -67,7 +67,8 @@ class AdminController extends BaseController
     public function getUsers(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
+            // For non-JSON clients, redirect to login, otherwise 401 JSON
+            return $this->login($request);
         }
 
         /** @var UserRepository $objectRepository */
