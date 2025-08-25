@@ -53,9 +53,9 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     *   `[ ]` **Refactor `src/Helper` Classes to Services (state-aware):**
         *   `[ ]` JiraOAuthApi: Update factory to return `JiraOAuthApiService` directly; remove `App\\Helper\\JiraOAuthApi`. (0.5-1h)
         *   `[x]` LdapClient: `App\\Service\\Ldap\\LdapClientService` in use; delete unused helper `App\\Helper\\LdapClient`. (0.25h)
-        *   `[ ]` LocalizationHelper: Not used; delete `src/Helper/LocalizationHelper.php`. (0.25h)
-        *   `[ ]` LoginHelper: Replace usages (e.g., in `BaseController`) with Security APIs if any remain; then delete helper. (0.5-1h)
-        *   `[ ]` TicketHelper: Replace static calls in `CrudController` with DI of `App\\Service\\Util\\TicketService`; remove helper after migration. (0.5-1h)
+        *   `[x]` LocalizationHelper: Not used; delete `src/Helper/LocalizationHelper.php`. (0.25h)
+        *   `[x]` LoginHelper: Replace usages (e.g., in `BaseController`) with Security APIs if any remain; then delete helper. (0.5-1h)
+        *   `[x]` TicketHelper: Replace static calls in `CrudController` with DI of `App\\Service\\Util\\TicketService`; remove helper after migration. (0.5-1h)
         *   `[ ]` TimeHelper: Replace static calls with `App\\Service\\Util\\TimeCalculationService` across controllers/repositories; review entity usage; remove helper after migration. (1-2h)
         *   `[ ]` Cleanup: Delete `src/Helper/` once all helpers are removed. (0.1h)
     *   `[x]` **Routing via PHP Attributes:** Controllers already use attributes; legacy YAML removed. (Done)
