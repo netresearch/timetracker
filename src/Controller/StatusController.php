@@ -3,15 +3,23 @@
 namespace App\Controller;
 
 use App\Model\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class StatusController extends BaseController
 {
     private \Symfony\Bundle\SecurityBundle\Security $security;
+    private RequestStack $requestStack;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setSecurity(\Symfony\Bundle\SecurityBundle\Security $security): void
     {
         $this->security = $security;
+    }
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setRequestStack(RequestStack $requestStack): void
+    {
+        $this->requestStack = $requestStack;
     }
 
     /**
@@ -21,8 +29,18 @@ class StatusController extends BaseController
      */
     private function getStatus(): array
     {
+        $request = isset($this->requestStack) ? $this->requestStack->getCurrentRequest() : null;
+        $login = false;
+        if (null !== $request) {
+            // Prefer BaseController logic which supports test session fallback
+            $login = $this->isLoggedIn($request);
+        } else {
+            // Fallback to security service if no request could be resolved
+            $login = $this->security->isGranted('IS_AUTHENTICATED');
+        }
+
         return [
-            'loginStatus' => $this->security->isGranted('IS_AUTHENTICATED'),
+            'loginStatus' => $login,
         ];
     }
 
