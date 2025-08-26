@@ -120,6 +120,9 @@ class CrudController extends BaseController
             return;
         }
 
+        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
+            return;
+        }
         $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
         $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
     }
@@ -750,6 +753,9 @@ class CrudController extends BaseController
             $entry->setWorklogId(null);
         }
 
+        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
+            return;
+        }
         $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
         $jiraOAuthApi->updateEntryJiraWorkLog($entry);
     }
@@ -777,6 +783,9 @@ class CrudController extends BaseController
             throw new JiraApiException('No ticket system configured for project');
         }
 
+        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
+            throw new JiraApiException('JIRA API factory or user not available');
+        }
         $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
 
         return $jiraOAuthApi->createTicket($entry);
@@ -835,6 +844,9 @@ class CrudController extends BaseController
         }
 
         // check if issue exist
+        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
+            return;
+        }
         $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $internalJiraTicketSystem);
         $searchResult = $jiraOAuthApi->searchTicket(
             sprintf(
