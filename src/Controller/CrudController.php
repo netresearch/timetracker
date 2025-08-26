@@ -370,7 +370,7 @@ class CrudController extends BaseController
         } catch (JiraApiUnauthorizedException $e) {
             // In tests, allow proceeding with 200 and surface alert instead of failing
             $response = [
-                'result' => $entry ? $entry->toArray() : [],
+                'result' => $entry->toArray(),
                 'alert' => $e->getMessage(),
             ];
 
@@ -775,7 +775,7 @@ class CrudController extends BaseController
     ): mixed {
         if (!$ticketSystem instanceof TicketSystem) {
             $project = $entry->getProject();
-            $ticketSystem = $project->getTicketSystem();
+            $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
         }
 
         if (!$ticketSystem instanceof TicketSystem) {
