@@ -412,6 +412,11 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
+        // Guard when either start or end has not been initialized yet
+        if (!isset($this->start) || !isset($this->end)) {
+            return $this;
+        }
+
         if ($this->end->format('H:i') < $this->start->format('H:i')) {
             $this->end = clone $this->start;
         }
@@ -560,9 +565,9 @@ class Entry extends Base
 
         return [
             'id' => $this->getId(),
-            'date' => $this->getDay()->format('d/m/Y'),
-            'start' => $this->getStart()->format('H:i'),
-            'end' => $this->getEnd()->format('H:i'),
+            'date' => isset($this->day) ? $this->getDay()->format('d/m/Y') : null,
+            'start' => isset($this->start) ? $this->getStart()->format('H:i') : null,
+            'end' => isset($this->end) ? $this->getEnd()->format('H:i') : null,
             'user' => $this->getUser() instanceof User ? $this->getUser()->getId() : null,
             'customer' => $customer,
             'project' => $this->getProject() instanceof Project ? $this->getProject()->getId() : null,
