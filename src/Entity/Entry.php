@@ -350,7 +350,7 @@ class Entry extends Base
     /**
      * Get day.
      *
-     * @return \DateTime $day
+     * @return \DateTimeInterface $day
      */
     public function getDay(): \DateTimeInterface
     {
@@ -367,10 +367,8 @@ class Entry extends Base
         if (!$start instanceof \DateTimeInterface) {
             $start = new \DateTime((string) $start);
             $dayObj = $this->getDay();
-            if ($dayObj instanceof \DateTimeInterface) {
-                [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
-                $start->setDate((int) $year, (int) $month, (int) $day);
-            }
+            [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
+            $start->setDate((int) $year, (int) $month, (int) $day);
         }
 
         $this->start = $start;
@@ -382,7 +380,7 @@ class Entry extends Base
     /**
      * Get start.
      *
-     * @return \DateTime $start
+     * @return \DateTimeInterface $start
      */
     public function getStart(): \DateTimeInterface
     {
@@ -399,10 +397,8 @@ class Entry extends Base
         if (!$end instanceof \DateTimeInterface) {
             $end = new \DateTime((string) $end);
             $dayObj = $this->getDay();
-            if ($dayObj instanceof \DateTimeInterface) {
-                [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
-                $end->setDate((int) $year, (int) $month, (int) $day);
-            }
+            [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
+            $end->setDate((int) $year, (int) $month, (int) $day);
         }
 
         $this->end = $end;
@@ -426,7 +422,7 @@ class Entry extends Base
     /**
      * Get end.
      *
-     * @return \DateTime $end
+     * @return \DateTimeInterface $end
      */
     public function getEnd(): \DateTimeInterface
     {
