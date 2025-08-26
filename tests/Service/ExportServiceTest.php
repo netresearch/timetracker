@@ -8,7 +8,7 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Repository\EntryRepository;
-use App\Helper\JiraOAuthApi;
+use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use App\Service\ExportService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
