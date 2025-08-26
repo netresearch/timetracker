@@ -1,6 +1,6 @@
 # Project Goal
 
-The primary goal of this project is to incrementally upgrade the application from its current Symfony 6.4 version to the latest stable release, currently **Symfony 7.3**.
+The application has been upgraded to **Symfony 7.3**.
 
 This upgrade aims to:
 
@@ -10,4 +10,4 @@ This upgrade aims to:
 4.  **Ensure Long-Term Support:** Move to a version with active community and security support.
 5.  **Boost Performance:** Take advantage of performance improvements introduced in newer framework versions.
 
-The upgrade will be performed incrementally (4.4 -> 5.4 -> 6.4 [completed] -> 7.3) to manage complexity and risk effectively.
+The upgrade was performed incrementally (4.4 -> 5.4 -> 6.4 -> 7.3) to manage complexity and risk effectively.
