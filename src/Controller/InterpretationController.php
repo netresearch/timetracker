@@ -402,12 +402,16 @@ class InterpretationController extends BaseController
         $activities = [];
 
         foreach ($entries as $entry) {
-            $activityId = $entry->getActivity()->getId();
+            $activityObj = $entry->getActivity();
+            if (!$activityObj instanceof \App\Entity\Activity) {
+                continue;
+            }
+            $activityId = $activityObj->getId();
 
             if (!isset($activities[$activityId])) {
                 $activities[$activityId] = [
                     'id' => $activityId,
-                    'name' => $entry->getActivity()->getName(),
+                    'name' => $activityObj->getName(),
                     'hours' => 0,
                 ];
             }

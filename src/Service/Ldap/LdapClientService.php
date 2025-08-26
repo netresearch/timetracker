@@ -117,7 +117,7 @@ class LdapClientService
             ]);
         }
 
-        /** @var \Laminas\Ldap\Collection $collection */
+        /** @var \Laminas\Ldap\Collection<int, array<string, array<int, string>>> $collection */
         $collection = $ldap->search(
             $searchFilter,
             $this->_baseDn,
@@ -241,9 +241,12 @@ class LdapClientService
     /**
      * @param \UnitEnum|array|scalar|null $host
      */
+    /**
+     * @param string|int|float|bool|array|\UnitEnum|null $host
+     */
     public function setHost($host): static
     {
-        $this->_host = (string) $host;
+        $this->_host = is_scalar($host) ? (string) $host : (string) ($host ?? '');
 
         return $this;
     }
@@ -251,9 +254,12 @@ class LdapClientService
     /**
      * @param \UnitEnum|array|scalar|null $port
      */
+    /**
+     * @param string|int|float|bool|array|\UnitEnum|null $port
+     */
     public function setPort($port): static
     {
-        $this->_port = is_int($port) ? $port : (int) (string) $port;
+        $this->_port = is_int($port) ? $port : (int) (string) ($port ?? 0);
 
         return $this;
     }
@@ -261,9 +267,12 @@ class LdapClientService
     /**
      * @param \UnitEnum|array|scalar|null $readUser
      */
+    /**
+     * @param string|int|float|bool|array|\UnitEnum|null $readUser
+     */
     public function setReadUser($readUser): static
     {
-        $this->_readUser = (string) $readUser;
+        $this->_readUser = is_scalar($readUser) ? (string) $readUser : (string) ($readUser ?? '');
 
         return $this;
     }
@@ -271,9 +280,12 @@ class LdapClientService
     /**
      * @param \UnitEnum|array|scalar|null $readPass
      */
+    /**
+     * @param string|int|float|bool|array|\UnitEnum|null $readPass
+     */
     public function setReadPass($readPass): static
     {
-        $this->_readPass = (string) $readPass;
+        $this->_readPass = is_scalar($readPass) ? (string) $readPass : (string) ($readPass ?? '');
 
         return $this;
     }
@@ -281,9 +293,12 @@ class LdapClientService
     /**
      * @param \UnitEnum|array|scalar|null $base_dn
      */
+    /**
+     * @param string|int|float|bool|array|\UnitEnum|null $base_dn
+     */
     public function setBaseDn($base_dn): static
     {
-        $this->_baseDn = (string) $base_dn;
+        $this->_baseDn = is_scalar($base_dn) ? (string) $base_dn : (string) ($base_dn ?? '');
 
         return $this;
     }
@@ -291,9 +306,12 @@ class LdapClientService
     /**
      * @param \UnitEnum|array|scalar|null $useSSL
      */
+    /**
+     * @param string|int|float|bool|array|\UnitEnum|null $useSSL
+     */
     public function setUseSSL($useSSL): static
     {
-        $this->_useSSL = (bool) $useSSL;
+        $this->_useSSL = (bool) ($useSSL ?? false);
 
         return $this;
     }
@@ -301,9 +319,12 @@ class LdapClientService
     /**
      * @param \UnitEnum|array|scalar|null $userNameField
      */
+    /**
+     * @param string|int|float|bool|array|\UnitEnum|null $userNameField
+     */
     public function setUserNameField($userNameField): static
     {
-        $this->_userNameField = (string) $userNameField;
+        $this->_userNameField = is_scalar($userNameField) ? (string) $userNameField : (string) ($userNameField ?? '');
 
         return $this;
     }
