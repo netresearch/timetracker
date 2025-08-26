@@ -591,7 +591,9 @@ class CrudController extends BaseController
                 ++$numAdded;
 
                 // calculate color lines for the changed days
-                $this->calculateClasses($user->getId(), $entry->getDay()->format('Y-m-d'));
+                if ($entry->getDay() instanceof \DateTimeInterface) {
+                    $this->calculateClasses((int) ($user->getId() ?? 0), $entry->getDay()->format('Y-m-d'));
+                }
 
                 // print $date->format('d.m.Y') . " was saved.<br/>";
                 $date->add(new \DateInterval('P1D'));
@@ -732,7 +734,7 @@ class CrudController extends BaseController
         $project = $entry->getProject();
 
         if (!$ticketSystem instanceof TicketSystem) {
-            $ticketSystem = $project->getTicketSystem();
+            $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
         }
 
         if (!$ticketSystem instanceof TicketSystem) {
@@ -804,6 +806,10 @@ class CrudController extends BaseController
     protected function handleInternalJiraTicketSystem($entry, $oldEntry)
     {
         $project = $entry->getProject();
+
+        if (!$project instanceof Project) {
+            return;
+        }
 
         $internalJiraTicketSystem = $project->getInternalJiraTicketSystem();
         $internalJiraProjectKey = $project->getInternalJiraProjectKey();
