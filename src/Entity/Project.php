@@ -352,7 +352,7 @@ class Project extends Base
      */
     public function setGlobal($global): static
     {
-        $this->global = $global;
+        $this->global = (bool) $global;
 
         return $this;
     }
