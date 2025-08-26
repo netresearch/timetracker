@@ -240,11 +240,65 @@ class LdapClientService
     }
 
     /**
+     * Normalize a mixed value to string without triggering invalid casts.
+     */
+    private function toStringValue(mixed $value): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+        if (is_int($value) || is_float($value) || is_bool($value)) {
+            return (string) $value;
+        }
+        if ($value instanceof \BackedEnum) {
+            return (string) $value->value;
+        }
+        if ($value instanceof \UnitEnum) {
+            return $value->name;
+        }
+        return '';
+    }
+
+    /**
+     * Normalize a mixed value to int without triggering invalid casts.
+     */
+    private function toIntValue(mixed $value): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            return (int) $value;
+        }
+        if ($value instanceof \BackedEnum) {
+            return (int) $value->value;
+        }
+        if (is_float($value) || is_bool($value)) {
+            return (int) $value;
+        }
+        return 0;
+    }
+
+    /**
+     * Normalize a mixed value to bool without triggering invalid casts.
+     */
+    private function toBoolValue(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if ($value instanceof \BackedEnum) {
+            return (bool) $value->value;
+        }
+        return (bool) $value;
+    }
+
+    /**
      * @param string|int|float|bool|\UnitEnum|null $host
      */
     public function setHost($host): static
     {
-        $this->_host = is_scalar($host) ? (string) $host : (string) ($host ?? '');
+        $this->_host = $this->toStringValue($host);
 
         return $this;
     }
@@ -254,7 +308,7 @@ class LdapClientService
      */
     public function setPort($port): static
     {
-        $this->_port = is_int($port) ? $port : (int) (string) ($port ?? 0);
+        $this->_port = $this->toIntValue($port);
 
         return $this;
     }
@@ -264,7 +318,7 @@ class LdapClientService
      */
     public function setReadUser($readUser): static
     {
-        $this->_readUser = is_scalar($readUser) ? (string) $readUser : (string) ($readUser ?? '');
+        $this->_readUser = $this->toStringValue($readUser);
 
         return $this;
     }
@@ -274,7 +328,7 @@ class LdapClientService
      */
     public function setReadPass($readPass): static
     {
-        $this->_readPass = is_scalar($readPass) ? (string) $readPass : (string) ($readPass ?? '');
+        $this->_readPass = $this->toStringValue($readPass);
 
         return $this;
     }
@@ -284,7 +338,7 @@ class LdapClientService
      */
     public function setBaseDn($base_dn): static
     {
-        $this->_baseDn = is_scalar($base_dn) ? (string) $base_dn : (string) ($base_dn ?? '');
+        $this->_baseDn = $this->toStringValue($base_dn);
 
         return $this;
     }
@@ -294,7 +348,7 @@ class LdapClientService
      */
     public function setUseSSL($useSSL): static
     {
-        $this->_useSSL = (bool) ($useSSL ?? false);
+        $this->_useSSL = $this->toBoolValue($useSSL);
 
         return $this;
     }
@@ -304,7 +358,7 @@ class LdapClientService
      */
     public function setUserNameField($userNameField): static
     {
-        $this->_userNameField = is_scalar($userNameField) ? (string) $userNameField : (string) ($userNameField ?? '');
+        $this->_userNameField = $this->toStringValue($userNameField);
 
         return $this;
     }
