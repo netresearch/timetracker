@@ -21,7 +21,7 @@ return RectorConfig::configure()
         SetList::TYPE_DECLARATION,
         SetList::NAMING,
         SetList::CODING_STYLE,
-        SymfonySetList::SYMFONY_64,
+        SymfonySetList::SYMFONY_73,
         SymfonySetList::SYMFONY_CODE_QUALITY,
     ])
     ->withAttributesSets()
