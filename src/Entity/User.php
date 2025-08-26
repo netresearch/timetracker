@@ -317,7 +317,8 @@ class User implements UserInterface
     {
         $return = null;
         foreach ($this->userTicketsystems as $userTicketsystem) {
-            if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
+            $ts = $userTicketsystem->getTicketSystem();
+            if ($ts instanceof TicketSystem && $ts->getId() === $ticketsystem->getId()) {
                 $return = $userTicketsystem->getAccessToken();
             }
         }
@@ -334,7 +335,8 @@ class User implements UserInterface
     {
         $return = null;
         foreach ($this->userTicketsystems as $userTicketsystem) {
-            if ($userTicketsystem->getTicketSystem()->getId() == $ticketsystem->getId()) {
+            $ts = $userTicketsystem->getTicketSystem();
+            if ($ts instanceof TicketSystem && $ts->getId() === $ticketsystem->getId()) {
                 $return = $userTicketsystem->getTokenSecret();
             }
         }
