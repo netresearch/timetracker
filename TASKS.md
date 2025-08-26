@@ -34,7 +34,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     *   `[ ]` **Twig & PHP audit:** Verify `twig/twig` constraint supports PHP 8.4/Symfony 7.3; plan bump if required. (0.25h)
     *   `[ ]` **Fix remaining deprecations:** Triage and resolve notices from the report. (variable)
 
-### 1.3: Finalize Symfony 6.4 Best Practices
+### 1.3: Finalize Symfony 6.4 Best Practices (historical)
 *   **Goal:** Align the codebase fully with Symfony 6.4 conventions before upgrading.
 *   **Tasks:**
     *   `[ ]` **Analyze Controller Structure:**
@@ -76,19 +76,20 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         *   `[ ]` Tidy repository return types and static signatures (remaining)
     *   `[x]` **Run CS Check/Fix:** Execute `docker compose run --rm app composer cs-check` and `docker compose run --rm app composer cs-fix` to ensure PSR-12 compliance. (Estimate: 0.5h)
 
-## Phase 2: Upgrade to Symfony 7.3
+## Phase 2: Upgrade to Symfony 7.3 (Completed)
 
-*   `[ ]` **Update `composer.json`:** Change Symfony dependencies to `^7.3`.
+*   `[x]` **Update `composer.json`:** Change Symfony dependencies to `^7.3`.
 *   `[x]` **Doctrine ORM 3 compatibility:** Replaced deprecated DBAL APIs in repositories/tests; mock updates in tests.
 *   `[x]` **PHPUnit 12 migration:** phpunit.xml migrated to 12.3 schema; deprecated annotations replaced.
-*   `[ ]` **Run `composer update`:** Resolve dependency conflicts.
-*   `[ ]` **Address Compatibility Issues:** Fix errors based on Symfony 7 upgrade guides.
-*   `[ ]` **Update Configuration Files:** Adapt `services.yaml`, `routes.yaml`, etc.
-*   `[ ]` **Adjust Tests where needed:** Ensure compatibility with updated kernel and testing tools.
+*   `[x]` **Run `composer update`:** Resolve dependency conflicts.
+*   `[x]` **Address Compatibility Issues:** Fix errors based on Symfony 7 upgrade guides (e.g., Response::send signature).
+*   `[x]` **Update Configuration Files:** Adapt `packages/` updates from recipes, verify test framework config.
+*   `[x]` **Adjust Tests where needed:** Ensure compatibility; full suite green.
 
 ## Phase 3: Post-Upgrade (Symfony 7.3)
 
-*   `[ ]` **Run Full Test Suite:** Ensure all tests pass.
+*   `[x]` **Run Full Test Suite:** Ensure all tests pass.
+*   `[x]` **Add CI:** GitHub Actions workflow `ci.yml` runs static analysis and tests.
 *   `[ ]` **Manual Testing:** Verify critical application flows.
 *   ...
 
