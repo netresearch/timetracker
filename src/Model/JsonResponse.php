@@ -54,10 +54,10 @@ class JsonResponse extends Response
     /**
      * Add additional headers before sending an JSON reply to the client.
      */
-    public function send(): static
+    public function send(bool $flush = true): static
     {
         $this->headers->set('Content-Type', 'application/json');
-        parent::send();
+        parent::send($flush);
 
         return $this;
     }
