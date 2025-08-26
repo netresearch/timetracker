@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Helper;
+namespace Tests\Service\Util;
 
-use App\Helper\TimeHelper;
+use App\Service\Util\TimeCalculationService;
 use Tests\AbstractWebTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -11,7 +11,8 @@ class TimeHelperTest extends AbstractWebTestCase
     #[DataProvider('readable2MinutesDataProvider')]
     public function testReadable2Minutes(int $minutes, string $readable): void
     {
-        $this->assertEquals($minutes, TimeHelper::readable2minutes($readable));
+        $svc = new TimeCalculationService();
+        $this->assertEquals($minutes, $svc->readableToMinutes($readable));
     }
 
     public static function readable2MinutesDataProvider(): array
@@ -51,7 +52,8 @@ class TimeHelperTest extends AbstractWebTestCase
     #[DataProvider('minutes2ReadableDataProvider')]
     public function testMinutes2Readable(string $readable, int $minutes, bool $useWeeks= true): void
     {
-        $this->assertEquals($readable, TimeHelper::minutes2readable($minutes, $useWeeks));
+        $svc = new TimeCalculationService();
+        $this->assertEquals($readable, $svc->minutesToReadable($minutes, $useWeeks));
     }
 
     public static function minutes2ReadableDataProvider(): array
@@ -85,7 +87,8 @@ class TimeHelperTest extends AbstractWebTestCase
     #[DataProvider('formatDurationDataProvider')]
     public function testFormatDuration(int|float $duration, bool $inDays, string $value): void
     {
-        $this->assertEquals($value, TimeHelper::formatDuration($duration, $inDays));
+        $svc = new TimeCalculationService();
+        $this->assertEquals($value, $svc->formatDuration($duration, $inDays));
     }
 
     public static function formatDurationDataProvider(): array
@@ -107,7 +110,8 @@ class TimeHelperTest extends AbstractWebTestCase
     #[DataProvider('dataProviderTestFormatQuota')]
     public function testFormatQuota(int|float $amount, int $sum, string $value): void
     {
-        $this->assertEquals($value, TimeHelper::formatQuota($amount, $sum));
+        $svc = new TimeCalculationService();
+        $this->assertEquals($value, $svc->formatQuota($amount, $sum));
     }
 
     public static function dataProviderTestFormatQuota(): array
@@ -122,11 +126,12 @@ class TimeHelperTest extends AbstractWebTestCase
 
     public function testGetMinutesByLetter(): void
     {
-        $this->assertEquals(0, TimeHelper::getMinutesByLetter('f'));
-        $this->assertEquals(1, TimeHelper::getMinutesByLetter(''));
-        $this->assertEquals(1, TimeHelper::getMinutesByLetter('m'));
-        $this->assertEquals(60, TimeHelper::getMinutesByLetter('h'));
-        $this->assertEquals(60 * 8, TimeHelper::getMinutesByLetter('d'));
-        $this->assertEquals(60 * 8 * 5, TimeHelper::getMinutesByLetter('w'));
+        $svc = new TimeCalculationService();
+        $this->assertEquals(0, $svc->getMinutesByLetter('f'));
+        $this->assertEquals(1, $svc->getMinutesByLetter(''));
+        $this->assertEquals(1, $svc->getMinutesByLetter('m'));
+        $this->assertEquals(60, $svc->getMinutesByLetter('h'));
+        $this->assertEquals(60 * 8, $svc->getMinutesByLetter('d'));
+        $this->assertEquals(60 * 8 * 5, $svc->getMinutesByLetter('w'));
     }
 }
