@@ -366,12 +366,17 @@ class JiraOAuthApiService
      */
     public function createTicket(Entry $entry): mixed
     {
+        $project = $entry->getProject();
+        if (!$project instanceof \App\Entity\Project) {
+            throw new JiraApiException('Entry has no project', 400);
+        }
+
         return $this->post(
             'issue/',
             [
                 'fields' => [
                     'project' => [
-                        'key' => $entry->getProject()->getInternalJiraProjectKey(),
+                        'key' => (string) $project->getInternalJiraProjectKey(),
                     ],
                     'summary' => $entry->getTicket(),
                     'description' => $entry->getTicketSystemIssueLink(),

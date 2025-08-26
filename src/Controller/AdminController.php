@@ -163,7 +163,7 @@ class AdminController extends BaseController
         $jiraTicket = RequestHelper::upperString($request, 'jiraTicket');
         $active = RequestHelper::bool($request, 'active');
         $global = RequestHelper::bool($request, 'global');
-        $estimation = $this->timeCalculationService->readableToMinutes(RequestHelper::string($request, 'estimation', '0m'));
+        $estimation = (int) $this->timeCalculationService->readableToMinutes(RequestHelper::string($request, 'estimation', '0m'));
         $billing = RequestHelper::int($request, 'billing', 0) ?? 0;
         $costCenter = RequestHelper::nullableString($request, 'cost_center');
         $offer = RequestHelper::nullableString($request, 'offer');
@@ -339,7 +339,7 @@ class AdminController extends BaseController
                     continue;
                 }
 
-                $this->subticketSyncService->syncProjectSubtickets($project->getId());
+                $this->subticketSyncService->syncProjectSubtickets($project);
             }
 
             return new JsonResponse(

@@ -43,7 +43,7 @@ class SubticketSyncService
 
         $mainTickets = $project->getJiraTicket();
         if (null === $mainTickets) {
-            if ('' != $project->getSubtickets()) {
+            if ([] !== $project->getSubtickets()) {
                 $project->setSubtickets([]);
 
                 $em = $this->managerRegistry->getManager();

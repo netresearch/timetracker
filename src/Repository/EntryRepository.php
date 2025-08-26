@@ -239,7 +239,7 @@ class EntryRepository extends ServiceEntityRepository
         // Modified: Use prepare and executeQuery with parameters
         $statement = $connection->prepare(implode(' ', $sql));
         foreach ($params as $key => $value) {
-            $statement->bindValue(is_string($key) ? $key : (string) $key, $value);
+            $statement->bindValue($key, $value);
         }
 
         $result = $statement->executeQuery()->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
@@ -503,7 +503,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     /**
      * @param array<string, mixed> $arFilter
-     * @return \Doctrine\ORM\Query<int, Entry>
+     * @return \Doctrine\ORM\Query
      */
     public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\Query
     {
