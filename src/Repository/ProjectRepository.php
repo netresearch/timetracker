@@ -87,11 +87,11 @@ class ProjectRepository extends ServiceEntityRepository
         }
 
         foreach ($projects as &$project) {
-            if (is_array($project)) {
-                usort($project, static fn(array $a, array $b): int =>
-                    // name is always present by construction
-                    strcmp((string) $a['name'], (string) $b['name']));
+            if (!is_array($project)) {
+                continue;
             }
+            usort($project, static fn(array $a, array $b): int =>
+                strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? '')));
         }
 
         return $projects;
