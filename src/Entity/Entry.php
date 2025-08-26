@@ -591,6 +591,12 @@ class Entry extends Base
      */
     public function calcDuration($factor = 1): static
     {
+        // If either start or end is not yet initialized, duration is 0 for now
+        if (!isset($this->start) || !isset($this->end)) {
+            $this->setDuration(0);
+            return $this;
+        }
+
         $start = new \DateTime($this->start->format('H:i'));
         $end = new \DateTime($this->end->format('H:i'));
 
