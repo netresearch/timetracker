@@ -29,7 +29,7 @@ class StatusController extends BaseController
      */
     private function getStatus(): array
     {
-        $request = isset($this->requestStack) ? $this->requestStack->getCurrentRequest() : null;
+        $request = $this->requestStack->getCurrentRequest();
         $login = false;
         if (null !== $request) {
             // Prefer BaseController logic which supports test session fallback

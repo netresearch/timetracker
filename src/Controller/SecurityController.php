@@ -52,11 +52,9 @@ class SecurityController extends AbstractController
         if (isset($this->tokenStorage)) {
             $this->tokenStorage->setToken(null);
         }
-        if (isset($this->requestStack)) {
-            $request = $this->requestStack->getCurrentRequest();
-            if (null !== $request && $request->hasSession()) {
-                $request->getSession()->invalidate();
-            }
+        $request = $this->requestStack->getCurrentRequest();
+        if (null !== $request && $request->hasSession()) {
+            $request->getSession()->invalidate();
         }
 
         return new RedirectResponse('/login');

@@ -333,10 +333,10 @@ class CrudController extends BaseController
             }
 
             // we may have to update the classes of the entry's day
-            $this->calculateClasses((int) ($user->getId() ?? 0), $entry->getDay()->format('Y-m-d'));
+            $this->calculateClasses($user->getId() ?? 0, $entry->getDay()->format('Y-m-d'));
             // and the previous day, if the entry was moved
             if ($entry->getDay()->format('Y-m-d') !== $oldEntry->getDay()->format('Y-m-d')) {
-                $this->calculateClasses((int) ($user->getId() ?? 0), $oldEntry->getDay()->format('Y-m-d'));
+                $this->calculateClasses($user->getId() ?? 0, $oldEntry->getDay()->format('Y-m-d'));
             }
 
             // update JIRA, if necessary
@@ -583,7 +583,7 @@ class CrudController extends BaseController
                 ++$numAdded;
 
                 // calculate color lines for the changed days
-                $this->calculateClasses((int) ($user->getId() ?? 0), $entry->getDay()->format('Y-m-d'));
+                $this->calculateClasses($user->getId() ?? 0, $entry->getDay()->format('Y-m-d'));
 
                 // print $date->format('d.m.Y') . " was saved.<br/>";
                 $date->add(new \DateInterval('P1D'));

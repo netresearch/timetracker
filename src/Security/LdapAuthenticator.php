@@ -55,7 +55,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 // Cast parameter bag values to expected scalar types
                 $this->ldapClientService
                     ->setHost((string) (is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : ''))
-                    ->setPort((int) ($this->parameterBag->get('ldap_port') ?? 0))
+                    ->setPort((int) (is_scalar($this->parameterBag->get('ldap_port')) ? $this->parameterBag->get('ldap_port') : 0))
                     ->setReadUser((string) (is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : ''))
                     ->setReadPass((string) (is_scalar($this->parameterBag->get('ldap_readpass')) ? $this->parameterBag->get('ldap_readpass') : ''))
                     ->setBaseDn((string) (is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : ''))

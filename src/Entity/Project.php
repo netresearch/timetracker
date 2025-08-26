@@ -241,7 +241,7 @@ class Project extends Base
     public function toArray(): array
     {
         $data = parent::toArray();
-        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable((int) ($this->getEstimation() ?? 0), false);
+        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable($this->getEstimation() ?? 0, false);
 
         return $data;
     }

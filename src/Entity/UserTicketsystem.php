@@ -121,7 +121,7 @@ class UserTicketsystem extends Base
 
     public function getAvoidConnection(): bool
     {
-        return (bool) $this->avoidConnection;
+        return $this->avoidConnection;
     }
 
     /**
