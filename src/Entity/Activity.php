@@ -67,17 +67,17 @@ class Activity
 
     public function getName(): string
     {
-        return (string) $this->name;
+        return $this->name;
     }
 
     public function getNeedsTicket(): bool
     {
-        return (bool) $this->needsTicket;
+        return $this->needsTicket;
     }
 
     public function getFactor(): float
     {
-        return (float) $this->factor;
+        return $this->factor;
     }
 
     public function setFactor(float $factor): static
