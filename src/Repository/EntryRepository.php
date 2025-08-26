@@ -583,7 +583,9 @@ class EntryRepository extends ServiceEntityRepository
                 ->setParameter('vis_user', (int) $arFilter['visibility_user']);
         }
 
-        return $queryBuilder->getQuery();
+        /** @var \Doctrine\ORM\Query<int, Entry> $query */
+        $query = $queryBuilder->getQuery();
+        return $query;
     }
 
     /**
