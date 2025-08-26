@@ -503,9 +503,9 @@ class EntryRepository extends ServiceEntityRepository
      */
     /**
      * @param array<string, mixed> $arFilter
-     * @return \Doctrine\ORM\Query
+     * @return \Doctrine\ORM\AbstractQuery
      */
-    public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\Query
+    public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\AbstractQuery
     {
         $queryBuilder = $this->createQueryBuilder('e');
 
