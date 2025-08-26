@@ -669,13 +669,11 @@ class JiraOAuthApiService
      */
     protected function getTicketSystemWorkLogStartDate(Entry $entry): string
     {
-        $startDate = $entry->getDay() ?: new \DateTime();
-        if ($entry->getStart() instanceof \DateTime) {
-            $startDate->setTime(
-                (int) $entry->getStart()->format('H'),
-                (int) $entry->getStart()->format('i')
-            );
-        }
+        $startDate = \DateTime::createFromInterface($entry->getDay());
+        $startDate->setTime(
+            (int) $entry->getStart()->format('H'),
+            (int) $entry->getStart()->format('i')
+        );
 
         return $startDate->format('Y-m-d\TH:i:s.000O');
     }
