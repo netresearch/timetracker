@@ -55,7 +55,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 // Cast parameter bag values to expected scalar types
                 $this->ldapClientService
                     ->setHost((string) (is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : ''))
-                    ->setPort((int) (is_scalar($this->parameterBag->get('ldap_port')) ? $this->parameterBag->get('ldap_port') : 0))
+                    ->setPort($this->parsePort($this->parameterBag->get('ldap_port')))
                     ->setReadUser((string) (is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : ''))
                     ->setReadPass((string) (is_scalar($this->parameterBag->get('ldap_readpass')) ? $this->parameterBag->get('ldap_readpass') : ''))
                     ->setBaseDn((string) (is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : ''))
@@ -129,4 +129,18 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
     }
 
     private ?string $currentPassword = null;
+
+    private function parsePort(mixed $value): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            return (int) $value;
+        }
+        if ($value instanceof \BackedEnum) {
+            return (int) $value->value;
+        }
+        return 0;
+    }
 }

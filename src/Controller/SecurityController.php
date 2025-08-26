@@ -49,9 +49,7 @@ class SecurityController extends AbstractController
     {
         // In production, this method is intercepted by the firewall's logout.
         // In tests (firewall disabled), perform a manual logout and redirect.
-        if (isset($this->tokenStorage)) {
-            $this->tokenStorage->setToken(null);
-        }
+        $this->tokenStorage->setToken(null);
         $request = $this->requestStack->getCurrentRequest();
         if (null !== $request && $request->hasSession()) {
             $request->getSession()->invalidate();
