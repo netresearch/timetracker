@@ -54,15 +54,15 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 // --- Perform LDAP Authentication ---
                 // Cast parameter bag values to expected scalar types
                 $this->ldapClientService
-                    ->setHost((string) ($this->parameterBag->get('ldap_host') ?? ''))
+                    ->setHost((string) (is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : ''))
                     ->setPort((int) ($this->parameterBag->get('ldap_port') ?? 0))
-                    ->setReadUser((string) ($this->parameterBag->get('ldap_readuser') ?? ''))
-                    ->setReadPass((string) ($this->parameterBag->get('ldap_readpass') ?? ''))
-                    ->setBaseDn((string) ($this->parameterBag->get('ldap_basedn') ?? ''))
+                    ->setReadUser((string) (is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : ''))
+                    ->setReadPass((string) (is_scalar($this->parameterBag->get('ldap_readpass')) ? $this->parameterBag->get('ldap_readpass') : ''))
+                    ->setBaseDn((string) (is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : ''))
                     ->setUserName($userIdentifier)
                     ->setUserPass($this->currentPassword ?? '')
                     ->setUseSSL((bool) ($this->parameterBag->get('ldap_usessl') ?? false))
-                    ->setUserNameField((string) ($this->parameterBag->get('ldap_usernamefield') ?? ''))
+                    ->setUserNameField((string) (is_scalar($this->parameterBag->get('ldap_usernamefield')) ? $this->parameterBag->get('ldap_usernamefield') : ''))
                     ->login();
 
                 $this->logger->info('LDAP authentication successful.', ['username' => $userIdentifier]);
