@@ -5,7 +5,7 @@ This document provides an overview of the technologies, frameworks, and tools us
 ## Backend
 
 *   **PHP:** Version `8.4`.
-*   **Symfony:** Version `6.4` (upgrade path to 7.3 in progress).
+*   **Symfony:** Version `7.3`.
 *   **Doctrine:**
     *   **ORM 3:** (`doctrine/orm`, `doctrine/doctrine-bundle`) with PHP 8 attributes for metadata.
     *   **Migrations:** (`doctrine/doctrine-migrations-bundle`) for incremental schema changes.

@@ -6,7 +6,7 @@ This file is the canonical, tool-agnostic guide for agents working in this repos
 
 TimeTracker is a Symfony-based PHP application for project/customer-centric time tracking with Jira integration, LDAP authentication, reports, and exports.
 
-- Backend: PHP 8.4, Symfony 6.4, Doctrine ORM 3, Twig, Monolog
+- Backend: PHP 8.4, Symfony 7.3, Doctrine ORM 3, Twig, Monolog
 - Frontend assets: Webpack Encore, Stimulus, Sass
 - Infrastructure: Docker Compose (Nginx, PHP-FPM, MariaDB)
 - Tests: PHPUnit 12; static analysis via PHPStan and Psalm (Psalm clean)
@@ -105,7 +105,7 @@ Refer to configured tooling and rules in `phpcs.xml`, `phpstan.neon`, `psalm.xml
 
 ## Architecture and Design
 
-- MVC using Symfony 6.4; routing via PHP attributes and YAML (legacy routes being migrated)
+- MVC using Symfony 7.3; routing via PHP attributes and YAML (legacy routes being migrated)
 - Persistence via Doctrine ORM; migrations under `migrations/`
 - Views with Twig templates under `templates/`
 - Service layer under `App\Service` provides cohesive units of business logic and integrations (e.g., Jira, LDAP)
@@ -158,7 +158,7 @@ See @docs/configuration.md and relevant notes in @README.rst (e.g., Jira OAuth s
 - When asked to lint, analyze, or test, use the composer scripts where available (see `composer.json`)
 - For legacy routes and helpers, consult @PLANNING.md and @TASKS.md before refactoring
 
-Upgrade status: Doctrine ORM 3 migration complete; PHPUnit 12 migration complete; phpunit.xml updated to 12.3 schema; tests green. Psalm shows 0 errors; addressing remaining PHPStan items is in progress (see @TASKS.md).
+Upgrade status: Doctrine ORM 3 migration complete; PHPUnit 12 migration complete; Symfony 7.3 upgrade complete; phpunit.xml updated to 12.3 schema; tests green; CI via GitHub Actions configured. Psalm shows 0 errors; addressing remaining PHPStan items is in progress (see @TASKS.md).
 
 ---
 

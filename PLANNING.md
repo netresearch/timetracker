@@ -8,9 +8,9 @@ The upgrade proceeds incrementally through major versions to minimize risk and m
 
 1.  **Symfony 4.4 -> Symfony 5.4** (Completed)
 2.  **Symfony 5.4 -> Symfony 6.4** (Completed)
-3.  **Symfony 6.4 -> Symfony 7.3** (In Progress)
+3.  **Symfony 6.4 -> Symfony 7.3** (Completed)
 
-Doctrine has been updated to ORM 3 and PHPUnit to 12.3; deprecations have been resolved in tests and phpunit.xml migrated to 12.3 schema. Static analysis (Psalm) is clean; PHPStan issues remain tracked in TASKS.md.
+Doctrine has been updated to ORM 3 and PHPUnit to 12.3; Symfony is at 7.3; deprecations have been resolved in tests and phpunit.xml migrated to 12.3 schema. Static analysis (Psalm) is clean; PHPStan issues remain tracked in TASKS.md. CI for tests and static analysis is configured in GitHub Actions.
 
 ## Phases
 
