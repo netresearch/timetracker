@@ -586,15 +586,11 @@ class Entry extends Base
      */
     public function calcDuration($factor = 1): static
     {
-        if ($this->start instanceof \DateTimeInterface && $this->end instanceof \DateTimeInterface) {
-            $start = new \DateTime($this->start->format('H:i'));
-            $end = new \DateTime($this->end->format('H:i'));
+        $start = new \DateTime($this->start->format('H:i'));
+        $end = new \DateTime($this->end->format('H:i'));
 
-            $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
-            $this->setDuration((int) round($difference));
-        } else {
-            $this->setDuration(0);
-        }
+        $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
+        $this->setDuration((int) round($difference));
 
         $this->validateDuration();
 
