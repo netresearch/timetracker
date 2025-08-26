@@ -703,10 +703,25 @@ class Entry extends Base
      */
     public function getPostDataForInternalJiraTicketCreation(): array
     {
+        $project = $this->getProject();
+        if (!$project instanceof Project) {
+            return [
+                'fields' => [
+                    'project' => [
+                        'key' => '',
+                    ],
+                    'summary' => $this->getTicket(),
+                    'description' => $this->getTicketSystemIssueLink(),
+                    'issuetype' => [
+                        'name' => 'Task',
+                    ],
+                ],
+            ];
+        }
         return [
             'fields' => [
                 'project' => [
-                    'key' => $this->getProject()->getInternalJiraProjectKey(),
+                    'key' => (string) $project->getInternalJiraProjectKey(),
                 ],
                 'summary' => $this->getTicket(),
                 'description' => $this->getTicketSystemIssueLink(),

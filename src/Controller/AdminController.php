@@ -163,7 +163,7 @@ class AdminController extends BaseController
         $jiraTicket = RequestHelper::upperString($request, 'jiraTicket');
         $active = RequestHelper::bool($request, 'active');
         $global = RequestHelper::bool($request, 'global');
-        $estimation = (int) $this->timeCalculationService->readableToMinutes(RequestHelper::string($request, 'estimation', '0m'));
+        $estimation = $this->timeCalculationService->readableToFullMinutes(RequestHelper::string($request, 'estimation', '0m'));
         $billing = RequestHelper::int($request, 'billing', 0) ?? 0;
         $costCenter = RequestHelper::nullableString($request, 'cost_center');
         $offer = RequestHelper::nullableString($request, 'offer');
@@ -1237,7 +1237,7 @@ class AdminController extends BaseController
         }
 
         // filter to get only open-ended contracts
-        $contractsOld = array_filter($contractsOld, fn (\App\Entity\Contract $contract): bool => ($contract instanceof Contract) && (null == $contract->getEnd()));
+        $contractsOld = array_filter($contractsOld, fn (\App\Entity\Contract $contract): bool => (null === $contract->getEnd()));
         if (count($contractsOld) > 1) {
             return $this->translate('There is more than one open-ended contract for the user.');
         }
@@ -1247,9 +1247,6 @@ class AdminController extends BaseController
         }
 
         $contractOld = array_values($contractsOld)[0];
-        if (!$contractOld instanceof Contract) {
-            return '';
-        }
 
         // alter exisiting contract with open end
         // |--old--(update)

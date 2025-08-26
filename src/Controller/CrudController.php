@@ -332,13 +332,13 @@ class CrudController extends BaseController
             // we may have to update the classes of the entry's day
             if ($entry->getDay() instanceof \DateTimeInterface) {
                 $this->calculateClasses(
-                    (int) $user->getId(),
+                    (int) ($user->getId() ?? 0),
                     $entry->getDay()->format('Y-m-d')
                 );
                 // and the previous day, if the entry was moved
                 if ($oldEntry->getDay() instanceof \DateTimeInterface && $entry->getDay()->format('Y-m-d') !== $oldEntry->getDay()->format('Y-m-d')) {
                     $this->calculateClasses(
-                        (int) $user->getId(),
+                        (int) ($user->getId() ?? 0),
                         $oldEntry->getDay()->format('Y-m-d')
                     );
                 }

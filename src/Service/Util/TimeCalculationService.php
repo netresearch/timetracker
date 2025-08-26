@@ -37,6 +37,15 @@ class TimeCalculationService
         return $sum;
     }
 
+    /**
+     * Parse a human readable duration and round down to full minutes.
+     */
+    public function readableToFullMinutes(string $readable): int
+    {
+        $minutes = $this->readableToMinutes($readable);
+        return (int) floor($minutes);
+    }
+
     public function minutesToReadable(int|float $minutes, bool $useWeeks = true): string
     {
         $minutes = (int) $minutes;
