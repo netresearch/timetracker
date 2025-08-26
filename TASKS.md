@@ -34,7 +34,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     *   `[ ]` **Twig & PHP audit:** Verify `twig/twig` constraint supports PHP 8.4/Symfony 7.3; plan bump if required. (0.25h)
     *   `[ ]` **Fix remaining deprecations:** Triage and resolve notices from the report. (variable)
 
-### 1.3: Finalize Symfony 6.4 Best Practices (historical)
+### 1.3: Finalize Symfony 7.3 Best Practices (historical)
 *   **Goal:** Align the codebase fully with Symfony 6.4 conventions before upgrading.
 *   **Tasks:**
     *   `[ ]` **Analyze Controller Structure:**
