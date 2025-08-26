@@ -503,7 +503,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     /**
      * @param array<string, mixed> $arFilter
-     * @return \Doctrine\ORM\Query<int, Entry>
+     * @return \Doctrine\ORM\Query
      */
     public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\Query
     {

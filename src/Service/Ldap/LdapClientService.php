@@ -240,7 +240,7 @@ class LdapClientService
     }
 
     /**
-     * @param string|int|float|bool|array|\UnitEnum|null $host
+     * @param string|int|float|bool|\UnitEnum|null $host
      */
     public function setHost($host): static
     {
@@ -250,7 +250,7 @@ class LdapClientService
     }
 
     /**
-     * @param string|int|float|bool|array|\UnitEnum|null $port
+     * @param string|int|float|bool|\UnitEnum|null $port
      */
     public function setPort($port): static
     {
@@ -260,7 +260,7 @@ class LdapClientService
     }
 
     /**
-     * @param string|int|float|bool|array|\UnitEnum|null $readUser
+     * @param string|int|float|bool|\UnitEnum|null $readUser
      */
     public function setReadUser($readUser): static
     {
@@ -270,7 +270,7 @@ class LdapClientService
     }
 
     /**
-     * @param string|int|float|bool|array|\UnitEnum|null $readPass
+     * @param string|int|float|bool|\UnitEnum|null $readPass
      */
     public function setReadPass($readPass): static
     {
@@ -280,7 +280,7 @@ class LdapClientService
     }
 
     /**
-     * @param string|int|float|bool|array|\UnitEnum|null $base_dn
+     * @param string|int|float|bool|\UnitEnum|null $base_dn
      */
     public function setBaseDn($base_dn): static
     {
@@ -290,7 +290,7 @@ class LdapClientService
     }
 
     /**
-     * @param string|int|float|bool|array|\UnitEnum|null $useSSL
+     * @param string|int|float|bool|\UnitEnum|null $useSSL
      */
     public function setUseSSL($useSSL): static
     {
@@ -300,7 +300,7 @@ class LdapClientService
     }
 
     /**
-     * @param string|int|float|bool|array|\UnitEnum|null $userNameField
+     * @param string|int|float|bool|\UnitEnum|null $userNameField
      */
     public function setUserNameField($userNameField): static
     {
