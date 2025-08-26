@@ -267,7 +267,7 @@ class CrudController extends BaseController
                     return $this->getFailedResponse($message, 400);
                 }
 
-                if ($this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory && $project instanceof Project) {
+                if ($this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory && $project instanceof Project && $entry->getUser() instanceof User) {
                     $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
 
                     // tickets do not exist for external project tickets booked on internal ticket system
@@ -321,7 +321,7 @@ class CrudController extends BaseController
             $em->persist($entry);
             $em->flush();
 
-            if ($this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory) {
+            if ($this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory && $entry->getUser() instanceof User) {
                 try {
                     $this->handleInternalJiraTicketSystem($entry, $oldEntry);
                 } catch (\Throwable $exception) {
