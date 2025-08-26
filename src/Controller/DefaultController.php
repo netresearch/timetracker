@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controller;
 
@@ -16,6 +17,7 @@ use App\Model\Response;
 use App\Repository\EntryRepository;
 use App\Response\Error;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Util\RequestHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Environment as TwigEnvironment;

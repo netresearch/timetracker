@@ -143,7 +143,7 @@ class ProjectRepository extends ServiceEntityRepository
         return $result;
     }
 
-    public function isValidJiraPrefix(string $jiraId): int|false
+    public function isValidJiraPrefix(string $jiraId): int
     {
         return preg_match('/^([A-Z]+[A-Z0-9]*[, ]*)*$/', $jiraId);
     }

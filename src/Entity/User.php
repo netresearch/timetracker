@@ -149,7 +149,7 @@ class User implements UserInterface
      *
      * @return $this
      */
-    public function setType($type): static
+    public function setType(string $type): static
     {
         $this->type = $type;
 

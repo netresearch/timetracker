@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Dto\InterpretationFiltersDto;
 use App\Service\Util\TimeCalculationService;
 use App\Model\JsonResponse;
 use App\Model\Response;
@@ -445,23 +446,12 @@ class InterpretationController extends BaseController
      */
     private function getEntries(Request $request, ?int $maxResults = null): array
     {
-        $arParams = [
-            'customer' => $this->evalParam($request, 'customer'),
-            'project' => $this->evalParam($request, 'project'),
-            'user' => $this->evalParam($request, 'user'),
-            'activity' => $this->evalParam($request, 'activity'),
-            'team' => $this->evalParam($request, 'team'),
-            'ticket' => $this->evalParam($request, 'ticket'),
-            'description' => $this->evalParam($request, 'description'),
-            'visibility_user' => ($this->isDEV($request) ? $this->getUserId($request) : null),
-            'maxResults' => $maxResults,
-            'datestart' => $this->evalParam($request, 'datestart'),
-            'dateend' => $this->evalParam($request, 'dateend'),
-        ];
+        $filters = InterpretationFiltersDto::fromRequest($request);
+        $arParams = $filters->toFilterArray($this->isDEV($request) ? $this->getUserId($request) : null, $maxResults);
 
-        $year = $this->evalParam($request, 'year');
+        $year = $filters->year;
         if (null !== $year) {
-            $month = $this->evalParam($request, 'month');
+            $month = $filters->month;
             if (null !== $month) {
                 // first day of month
                 $datestart = $year.'-'.$month.'-01';

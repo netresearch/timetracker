@@ -412,6 +412,11 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
+        // Guard: if either start or end is not initialized yet (during partial construction)
+        if (!isset($this->start) || !isset($this->end)) {
+            return $this;
+        }
+
         if ($this->end->format('H:i') < $this->start->format('H:i')) {
             $this->end = clone $this->start;
         }
@@ -558,11 +563,12 @@ class Entry extends Base
             $customer = null;
         }
 
+        /** @psalm-suppress RedundantPropertyInitializationCheck */
         return [
             'id' => $this->getId(),
-            'date' => $this->getDay()->format('d/m/Y'),
-            'start' => $this->getStart()->format('H:i'),
-            'end' => $this->getEnd()->format('H:i'),
+            'date' => isset($this->day) ? $this->getDay()->format('d/m/Y') : null,
+            'start' => isset($this->start) ? $this->getStart()->format('H:i') : null,
+            'end' => isset($this->end) ? $this->getEnd()->format('H:i') : null,
             'user' => $this->getUser() instanceof User ? $this->getUser()->getId() : null,
             'customer' => $customer,
             'project' => $this->getProject() instanceof Project ? $this->getProject()->getId() : null,
@@ -586,6 +592,12 @@ class Entry extends Base
      */
     public function calcDuration($factor = 1): static
     {
+        // Guard: if either start or end is not initialized yet (during partial construction)
+        if (!isset($this->start) || !isset($this->end)) {
+            $this->setDuration(0);
+            return $this;
+        }
+
         $start = new \DateTime($this->start->format('H:i'));
         $end = new \DateTime($this->end->format('H:i'));
 

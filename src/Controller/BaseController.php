@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * basic controller to share some features with the child controllers.

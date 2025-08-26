@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controller;
 
@@ -164,7 +165,7 @@ class AdminController extends BaseController
         $active = RequestHelper::bool($request, 'active');
         $global = RequestHelper::bool($request, 'global');
         $estimation = $this->timeCalculationService->readableToFullMinutes(RequestHelper::string($request, 'estimation', '0m'));
-        $billing = RequestHelper::int($request, 'billing', 0) ?? 0;
+        $billing = RequestHelper::int($request, 'billing', 0);
         $costCenter = RequestHelper::nullableString($request, 'cost_center');
         $offer = RequestHelper::nullableString($request, 'offer');
         $additionalInformationFromExternal = RequestHelper::bool($request, 'additionalInformationFromExternal');
@@ -359,7 +360,7 @@ class AdminController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        $projectId = (int) $request->query->get('project');
+        $projectId = (int) ($request->query->get('project') ?? 0);
 
         try {
             $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectId);

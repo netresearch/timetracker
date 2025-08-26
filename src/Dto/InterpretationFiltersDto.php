@@ -1,0 +1,96 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Dto;
+
+use Symfony\Component\HttpFoundation\Request;
+
+/**
+ * Data-transfer object for interpretation query filters.
+ */
+final class InterpretationFiltersDto
+{
+    public ?int $customer = null;
+    public ?int $project = null;
+    public ?int $user = null;
+    public ?int $activity = null;
+    public ?int $team = null;
+
+    public ?string $ticket = null;
+    public ?string $description = null;
+    public ?string $datestart = null;
+    public ?string $dateend = null;
+    public ?string $year = null;
+    public ?string $month = null;
+
+    public ?int $maxResults = null;
+    public ?int $page = null;
+
+    public static function fromRequest(Request $request): self
+    {
+        $self = new self();
+
+        $self->customer = self::toNullableInt($request->query->get('customer'));
+        $self->project = self::toNullableInt($request->query->get('project'));
+        $self->user = self::toNullableInt($request->query->get('user'));
+        $self->activity = self::toNullableInt($request->query->get('activity'));
+        $self->team = self::toNullableInt($request->query->get('team'));
+
+        $self->ticket = self::toNullableString($request->query->get('ticket'));
+        $self->description = self::toNullableString($request->query->get('description'));
+        $self->datestart = self::toNullableString($request->query->get('datestart'));
+        $self->dateend = self::toNullableString($request->query->get('dateend'));
+        $self->year = self::toNullableString($request->query->get('year'));
+        $self->month = self::toNullableString($request->query->get('month'));
+
+        $self->maxResults = self::toNullableInt($request->query->get('maxResults'));
+        $self->page = self::toNullableInt($request->query->get('page'));
+
+        return $self;
+    }
+
+    /**
+     * Build repository filter array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toFilterArray(?int $visibilityUserId, ?int $overrideMaxResults = null): array
+    {
+        return [
+            'customer' => $this->customer,
+            'project' => $this->project,
+            'user' => $this->user,
+            'activity' => $this->activity,
+            'team' => $this->team,
+            'ticket' => $this->ticket,
+            'description' => $this->description,
+            'datestart' => $this->datestart,
+            'dateend' => $this->dateend,
+            'visibility_user' => $visibilityUserId,
+            'maxResults' => $overrideMaxResults ?? $this->maxResults,
+            'page' => $this->page,
+        ];
+    }
+
+    private static function toNullableInt(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+        return null;
+    }
+
+    private static function toNullableString(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $s = trim((string) $value);
+        return $s === '' ? null : $s;
+    }
+}
+
+
