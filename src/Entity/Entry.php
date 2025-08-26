@@ -185,7 +185,7 @@ class Entry extends Base
      */
     public function validateDuration(): static
     {
-        if ($this->end instanceof \DateTime && $this->start instanceof \DateTime && $this->end->getTimestamp() <= $this->start->getTimestamp()) {
+        if ($this->end->getTimestamp() <= $this->start->getTimestamp()) {
             throw new \Exception('Duration must be greater than 0!');
         }
 
@@ -416,7 +416,7 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
-        if ($this->end instanceof \DateTime && $this->start instanceof \DateTime && $this->end->format('H:i') < $this->start->format('H:i')) {
+        if ($this->end->format('H:i') < $this->start->format('H:i')) {
             $this->end = clone $this->start;
         }
 
@@ -564,9 +564,9 @@ class Entry extends Base
 
         return [
             'id' => $this->getId(),
-            'date' => $this->getDay() instanceof \DateTime ? $this->getDay()->format('d/m/Y') : null,
-            'start' => $this->getStart() instanceof \DateTime ? $this->getStart()->format('H:i') : null,
-            'end' => $this->getEnd() instanceof \DateTime ? $this->getEnd()->format('H:i') : null,
+            'date' => $this->getDay()->format('d/m/Y'),
+            'start' => $this->getStart()->format('H:i'),
+            'end' => $this->getEnd()->format('H:i'),
             'user' => $this->getUser() instanceof User ? $this->getUser()->getId() : null,
             'customer' => $customer,
             'project' => $this->getProject() instanceof Project ? $this->getProject()->getId() : null,
