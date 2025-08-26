@@ -87,11 +87,8 @@ class ProjectRepository extends ServiceEntityRepository
         }
 
         foreach ($projects as &$project) {
-            if (!is_array($project)) {
-                continue;
-            }
-            usort($project, static fn(array $a, array $b): int =>
-                strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? '')));
+            // Both branches construct arrays; phpstan knows they are arrays
+            usort($project, static fn(array $a, array $b): int => strcmp((string) $a['name'], (string) $b['name']));
         }
 
         return $projects;

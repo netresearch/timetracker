@@ -52,13 +52,13 @@ class Entry extends Base
     protected string $description = '';
 
     #[ORM\Column(type: 'date', nullable: false)]
-    protected ?\DateTimeInterface $day = null;
+    protected \DateTimeInterface $day;
 
     #[ORM\Column(type: 'time', nullable: false)]
-    protected ?\DateTimeInterface $start = null;
+    protected \DateTimeInterface $start;
 
     #[ORM\Column(type: 'time', nullable: false)]
-    protected ?\DateTimeInterface $end = null;
+    protected \DateTimeInterface $end;
 
     #[ORM\Column(type: 'integer')]
     protected int $duration = 0;
@@ -352,9 +352,9 @@ class Entry extends Base
      *
      * @return \DateTime $day
      */
-    public function getDay(): ?\DateTime
+    public function getDay(): \DateTimeInterface
     {
-        return $this->day instanceof \DateTime ? $this->day : null;
+        return $this->day;
     }
 
     /**
@@ -384,9 +384,9 @@ class Entry extends Base
      *
      * @return \DateTime $start
      */
-    public function getStart(): ?\DateTime
+    public function getStart(): \DateTimeInterface
     {
-        return $this->start instanceof \DateTime ? $this->start : null;
+        return $this->start;
     }
 
     /**
@@ -428,9 +428,9 @@ class Entry extends Base
      *
      * @return \DateTime $end
      */
-    public function getEnd(): ?\DateTime
+    public function getEnd(): \DateTimeInterface
     {
-        return $this->end instanceof \DateTime ? $this->end : null;
+        return $this->end;
     }
 
     /**
@@ -590,9 +590,9 @@ class Entry extends Base
      */
     public function calcDuration($factor = 1): static
     {
-        if ($this->getStart() && $this->getEnd()) {
-            $start = new \DateTime($this->getStart()->format('H:i'));
-            $end = new \DateTime($this->getEnd()->format('H:i'));
+        if ($this->start instanceof \DateTimeInterface && $this->end instanceof \DateTimeInterface) {
+            $start = new \DateTime($this->start->format('H:i'));
+            $end = new \DateTime($this->end->format('H:i'));
 
             $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
             $this->setDuration((int) round($difference));

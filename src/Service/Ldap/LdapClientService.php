@@ -117,7 +117,7 @@ class LdapClientService
             ]);
         }
 
-        /** @var \Laminas\Ldap\Collection $collection */
+        /** @var \Laminas\Ldap\Collection<array<string, array<int, string>>> $collection */
         $collection = $ldap->search(
             $searchFilter,
             $this->_baseDn,
