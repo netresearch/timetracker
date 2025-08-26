@@ -598,7 +598,11 @@ class InterpretationController extends BaseController
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         try {
-            $paginator = new Paginator($objectRepository->queryByFilterArray($searchArray));
+            $query = $objectRepository->queryByFilterArray($searchArray);
+            if (!$query instanceof \Doctrine\ORM\Query) {
+                $query = $query->getQuery();
+            }
+            $paginator = new Paginator($query);
         } catch (\Exception $exception) {
             return new Error($this->translate($exception->getMessage()), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
         }
