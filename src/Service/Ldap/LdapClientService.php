@@ -117,7 +117,7 @@ class LdapClientService
             ]);
         }
 
-        /** @var \Laminas\Ldap\Collection<int, array<string, array<int, string>>> $collection */
+        /** @var \Laminas\Ldap\Collection $collection */
         $collection = $ldap->search(
             $searchFilter,
             $this->_baseDn,
@@ -144,6 +144,7 @@ class LdapClientService
             ]);
         }
 
+        /** @var array<string, array<int, string>> $ldapEntry */
         $ldapEntry = $collection->getFirst();
         if ($this->logger instanceof LoggerInterface) {
             $returnedDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? 'N/A');

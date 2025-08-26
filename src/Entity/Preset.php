@@ -87,7 +87,7 @@ class Preset extends Base
      */
     public function getCustomerId(): ?int
     {
-        return $this->getCustomer() instanceof Customer ? $this->getCustomer()->getId() : null;
+        return $this->getCustomer()->getId();
     }
 
     /**
@@ -95,7 +95,7 @@ class Preset extends Base
      */
     public function getProjectId(): ?int
     {
-        return $this->getProject() instanceof Project ? $this->getProject()->getId() : null;
+        return $this->getProject()->getId();
     }
 
     /**
@@ -105,7 +105,7 @@ class Preset extends Base
      */
     public function getActivityId(): ?int
     {
-        return $this->getActivity() instanceof Activity ? $this->getActivity()->getId() : null;
+        return $this->getActivity()->getId();
     }
 
     /**
