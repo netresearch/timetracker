@@ -2,7 +2,8 @@
 framework:
     secret: '%env(APP_SECRET)%'
     default_locale: '%locale%'
-    csrf_protection: ~
+    csrf_protection:
+        enabled: true
     http_method_override: true
     annotations:
         enabled: false
