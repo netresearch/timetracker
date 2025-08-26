@@ -52,16 +52,17 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         $userLoader = function (string $userIdentifier): User {
             try {
                 // --- Perform LDAP Authentication ---
+                // Cast parameter bag values to expected scalar types
                 $this->ldapClientService
-                    ->setHost($this->parameterBag->get('ldap_host'))
-                    ->setPort($this->parameterBag->get('ldap_port'))
-                    ->setReadUser($this->parameterBag->get('ldap_readuser'))
-                    ->setReadPass($this->parameterBag->get('ldap_readpass'))
-                    ->setBaseDn($this->parameterBag->get('ldap_basedn'))
+                    ->setHost((string) $this->parameterBag->get('ldap_host'))
+                    ->setPort((int) $this->parameterBag->get('ldap_port'))
+                    ->setReadUser((string) $this->parameterBag->get('ldap_readuser'))
+                    ->setReadPass((string) $this->parameterBag->get('ldap_readpass'))
+                    ->setBaseDn((string) $this->parameterBag->get('ldap_basedn'))
                     ->setUserName($userIdentifier)
                     ->setUserPass($this->currentPassword ?? '')
-                    ->setUseSSL($this->parameterBag->get('ldap_usessl'))
-                    ->setUserNameField($this->parameterBag->get('ldap_usernamefield'))
+                    ->setUseSSL((bool) $this->parameterBag->get('ldap_usessl'))
+                    ->setUserNameField((string) $this->parameterBag->get('ldap_usernamefield'))
                     ->login();
 
                 $this->logger->info('LDAP authentication successful.', ['username' => $userIdentifier]);
