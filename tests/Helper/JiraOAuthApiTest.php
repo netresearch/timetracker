@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Helper;
+namespace Tests\Integration\Jira;
 
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
-use App\Helper\JiraOAuthApi;
+use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 
 class JiraOAuthApiTest extends TestCase
 {
-    private function makeSubject(callable $requestHandler, bool $withTokens = true): \App\Helper\JiraOAuthApi
+    private function makeSubject(callable $requestHandler, bool $withTokens = true): JiraOAuthApi
     {
         // Create minimal doubles for constructor
         $mock = $this->getMockBuilder(\App\Entity\User::class)->disableOriginalConstructor()->getMock();

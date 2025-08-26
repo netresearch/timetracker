@@ -177,7 +177,7 @@ class SubticketSyncServiceTest extends TestCase
 
         $router = $this->createMock(RouterInterface::class);
 
-        $jiraApi = $this->createMock(\App\Helper\JiraOAuthApi::class);
+        $jiraApi = $this->createMock(\App\Service\Integration\Jira\JiraOAuthApiService::class);
         $jiraApi->expects($this->exactly(2))
             ->method('getSubtickets')
             ->willReturnCallback(fn (string $main): array => $main === 'ABC-1' ? ['ABC-2'] : []);
