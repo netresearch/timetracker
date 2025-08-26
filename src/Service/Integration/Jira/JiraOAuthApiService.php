@@ -149,9 +149,6 @@ class JiraOAuthApiService
     protected function getTempKeyFile(string $certificate): string
     {
         $keyFile = $this->getTempFile();
-        if ($keyFile === false) {
-            throw new JiraApiException('Failed to create temporary key file');
-        }
         file_put_contents($keyFile, $certificate);
 
         return $keyFile;
@@ -160,9 +157,13 @@ class JiraOAuthApiService
     /**
      * Returns temp file name.
      */
-    protected function getTempFile(): string|false
+    protected function getTempFile(): string
     {
-        return tempnam(sys_get_temp_dir(), 'TTT');
+        $tmp = tempnam(sys_get_temp_dir(), 'TTT');
+        if ($tmp === false) {
+            throw new JiraApiException('Failed to create temporary file');
+        }
+        return $tmp;
     }
 
     /**
