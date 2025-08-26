@@ -13,9 +13,20 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Test proxy exposing protected API for assertions.
+ */
+interface JiraOAuthApiTestProxy
+{
+    public function callGetResponse(string $method, string $url, array $data = []): object;
+}
+
 class JiraOAuthApiTest extends TestCase
 {
-    private function makeSubject(callable $requestHandler, bool $withTokens = true): JiraOAuthApi
+    /**
+     * @return JiraOAuthApi&JiraOAuthApiTestProxy
+     */
+    private function makeSubject(callable $requestHandler, bool $withTokens = true)
     {
         // Create minimal doubles for constructor
         $mock = $this->getMockBuilder(\App\Entity\User::class)->disableOriginalConstructor()->getMock();
@@ -44,7 +55,7 @@ class JiraOAuthApiTest extends TestCase
         };
 
         // Subclass to expose getResponse and return fake client
-        return new class ($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi {
+        return new class ($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
             public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, private $client)
             {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
