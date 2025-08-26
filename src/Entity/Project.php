@@ -279,6 +279,9 @@ class Project extends Base
      */
     public function setName($name): static
     {
+        if (null === $name) {
+            $name = '';
+        }
         $this->name = $name;
 
         return $this;
