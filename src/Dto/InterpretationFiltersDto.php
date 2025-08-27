@@ -11,9 +11,12 @@ use Symfony\Component\HttpFoundation\Request;
 final class InterpretationFiltersDto
 {
     public ?int $customer = null;
+    public ?int $customer_id = null; // legacy alias support
     public ?int $project = null;
+    public ?int $project_id = null; // legacy alias support
     public ?int $user = null;
     public ?int $activity = null;
+    public ?int $activity_id = null; // legacy alias support
     public ?int $team = null;
 
     public ?string $ticket = null;
@@ -31,9 +34,12 @@ final class InterpretationFiltersDto
         $self = new self();
 
         $self->customer = self::toNullableInt($request->query->get('customer'));
+        $self->customer_id = self::toNullableInt($request->query->get('customer_id'));
         $self->project = self::toNullableInt($request->query->get('project'));
+        $self->project_id = self::toNullableInt($request->query->get('project_id'));
         $self->user = self::toNullableInt($request->query->get('user'));
         $self->activity = self::toNullableInt($request->query->get('activity'));
+        $self->activity_id = self::toNullableInt($request->query->get('activity_id'));
         $self->team = self::toNullableInt($request->query->get('team'));
 
         $self->ticket = self::toNullableString($request->query->get('ticket'));
@@ -57,10 +63,11 @@ final class InterpretationFiltersDto
     public function toFilterArray(?int $visibilityUserId, ?int $overrideMaxResults = null): array
     {
         return [
-            'customer' => $this->customer,
-            'project' => $this->project,
+            // prefer explicit fields, fall back to legacy *_id aliases
+            'customer' => $this->customer ?? $this->customer_id,
+            'project' => $this->project ?? $this->project_id,
             'user' => $this->user,
-            'activity' => $this->activity,
+            'activity' => $this->activity ?? $this->activity_id,
             'team' => $this->team,
             'ticket' => $this->ticket,
             'description' => $this->description,
