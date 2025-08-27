@@ -6,6 +6,9 @@ namespace App\Controller\Admin;
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Service\Attribute\Required;
+use App\Service\SubticketSyncService;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 
 final class SyncAllProjectSubticketsAction extends BaseController
 {
@@ -24,6 +27,21 @@ final class SyncAllProjectSubticketsAction extends BaseController
         }
 
         return new JsonResponse(['success' => $result]);
+    }
+
+    private SubticketSyncService $subticketSyncService;
+    private JiraOAuthApiFactory $jiraOAuthApiFactory;
+
+    #[Required]
+    public function setSubticketSyncService(SubticketSyncService $svc): void
+    {
+        $this->subticketSyncService = $svc;
+    }
+
+    #[Required]
+    public function setJiraApiFactory(JiraOAuthApiFactory $factory): void
+    {
+        $this->jiraOAuthApiFactory = $factory;
     }
 }
 
