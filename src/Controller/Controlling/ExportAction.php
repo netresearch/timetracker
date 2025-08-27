@@ -25,8 +25,16 @@ final class ExportAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\\d+', 'userid' => '\\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
     public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $q): Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
+        // Map legacy path parameters to query parameters for backward compatibility
+        $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
+        foreach ($attributeKeysToMap as $attributeKeyToMap) {
+            if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
+                $request->query->set($attributeKeyToMap, (string) $request->attributes->get($attributeKeyToMap));
+            }
+        }
         if (null !== $this->container && $this->container->has('session')) {
             $session = $this->container->get('session');
         } else {
