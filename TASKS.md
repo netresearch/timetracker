@@ -61,7 +61,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         -   `[x]` LocalizationHelper: Not used; delete `src/Helper/LocalizationHelper.php`. (0.25h)
         -   `[x]` LoginHelper: Replace usages (e.g., in `BaseController`) with Security APIs if any remain; then delete helper. (0.5-1h)
         -   `[x]` TicketHelper: Replace static calls in `CrudController` with DI of `App\\Service\\Util\\TicketService`; remove helper after migration. (0.5-1h)
-        -   `[ ]` TimeHelper: Replace static calls with `App\\Service\\Util\\TimeCalculationService` across controllers/repositories; review entity usage; remove helper after migration. (1-2h)
+        -   `[x]` TimeHelper: Replace static calls with `App\\Service\\Util\\TimeCalculationService` across controllers/repositories; review entity usage; remove helper after migration. (1-2h)
             -   Status: Controllers and repository use `TimeCalculationService`; entity `Project::toArray()` still instantiates service directly for `minutesToReadable`. Consider injecting formatter via DTO or a static utility; acceptable for now.
         -   `[x]` Cleanup: Delete `src/Helper/` once all helpers are removed. (0.1h)
     -   `[x]` **Routing via PHP Attributes:** Controllers already use attributes; legacy YAML removed. (Done)
