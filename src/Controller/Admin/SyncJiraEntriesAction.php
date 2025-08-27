@@ -30,10 +30,12 @@ final class SyncJiraEntriesAction extends BaseController
         /** @var \App\Entity\TicketSystem|null $ticketSystem */
         $ticketSystem = $this->doctrineRegistry->getRepository(\App\Entity\TicketSystem::class)->findOneBy([]);
         $jiraApi = ($user && $ticketSystem) ? $this->jiraOAuthApiFactory->create($user, $ticketSystem) : null;
-        $result = $jiraApi ? $jiraApi->syncMonthEntries($fromDate, $toDate) : false;
         if ($jiraApi) {
-            $jiraApi->revokeAdminToken();
+            // Mirror earlier behavior: update entries limited window
+            // Choose a reasonable limit (null => all pending)
+            $jiraApi->updateEntriesJiraWorkLogsLimited();
         }
+        $result = (bool) $jiraApi;
 
         return new JsonResponse(['success' => $result]);
     }
