@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -216,7 +217,7 @@ class Project extends Base
         if ('' === $nInternalJiraTicketSystem || null === $nInternalJiraTicketSystem) {
             $this->internalJiraTicketSystem = null;
         } else {
-            $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
+            $this->internalJiraTicketSystem = (string) $nInternalJiraTicketSystem;
         }
 
         return $this;
@@ -620,7 +621,11 @@ class Project extends Base
      */
     public function getInternalJiraTicketSystem(): ?string
     {
-        return $this->internalJiraTicketSystem;
+        $value = $this->internalJiraTicketSystem;
+        if (null === $value || '' === $value) {
+            return null;
+        }
+        return (string) $value;
     }
 
     /**
