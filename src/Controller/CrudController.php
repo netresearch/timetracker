@@ -46,7 +46,7 @@ class CrudController extends BaseController
         $this->ticketService = $ticketService;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function delete(Request $request): Response|Error|JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -197,7 +197,7 @@ class CrudController extends BaseController
         }
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function save(Request $request): Response|JsonResponse|Error
     {
         if (!$this->checkLogin($request)) {
@@ -381,7 +381,7 @@ class CrudController extends BaseController
         }
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function bulkentry(Request $request): Response
     {
         if (!$this->checkLogin($request)) {
