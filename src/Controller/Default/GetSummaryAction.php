@@ -8,9 +8,17 @@ use App\Entity\Entry;
 use App\Model\JsonResponse;
 use App\Response\Error;
 use Symfony\Component\HttpFoundation\Request;
+use App\Service\Util\TimeCalculationService;
 
 final class GetSummaryAction extends BaseController
 {
+    private TimeCalculationService $timeCalculationService;
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
+    {
+        $this->timeCalculationService = $timeCalculationService;
+    }
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
     {
@@ -42,7 +50,7 @@ final class GetSummaryAction extends BaseController
         $data = $objectRepository->getEntrySummary((int) $entryId, $userId, $data);
 
         if ($data['project']['estimation']) {
-            $data['project']['quota'] = $this->get('App\\Service\\Util\\TimeCalculationService')->formatQuota(
+            $data['project']['quota'] = $this->timeCalculationService->formatQuota(
                 $data['project']['total'],
                 $data['project']['estimation']
             );
