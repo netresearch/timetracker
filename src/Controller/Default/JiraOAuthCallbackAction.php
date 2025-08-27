@@ -8,9 +8,17 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
 use Symfony\Component\HttpFoundation\Request;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 
 final class JiraOAuthCallbackAction extends BaseController
 {
+    private JiraOAuthApiFactory $jiraOAuthApiFactory;
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setJiraApiFactory(JiraOAuthApiFactory $factory): void
+    {
+        $this->jiraOAuthApiFactory = $factory;
+    }
     #[\Symfony\Component\Routing\Attribute\Route(path: '/jiraoauthcallback', name: 'jiraOAuthCallback', methods: ['GET'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
@@ -24,9 +32,7 @@ final class JiraOAuthCallbackAction extends BaseController
         }
 
         try {
-            /** @var \App\Service\Integration\Jira\JiraOAuthApiFactory $factory */
-            $factory = $this->container->get(\App\Service\Integration\Jira\JiraOAuthApiFactory::class);
-            $jiraOAuthApi = $factory->create($user, $ticketSystem);
+            $jiraOAuthApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
             $oauthToken = $request->query->get('oauth_token');
             $oauthVerifier = $request->query->get('oauth_verifier');
             if (!is_string($oauthToken) || '' === $oauthToken || !is_string($oauthVerifier) || '' === $oauthVerifier) {
