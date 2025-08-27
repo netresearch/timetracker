@@ -14,7 +14,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class DeleteActivityAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/delete', name: 'deleteActivity_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error
+    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();

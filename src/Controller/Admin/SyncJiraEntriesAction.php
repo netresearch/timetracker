@@ -23,9 +23,17 @@ final class SyncJiraEntriesAction extends BaseController
         $fromDate = null !== $from ? new \DateTime((string) $from) : (new \DateTime())->modify('-3 days');
         $toDate = null !== $to ? new \DateTime((string) $to) : new \DateTime();
 
-        $jiraApi = $this->jiraOAuthApiFactory->createApi();
-        $result = $jiraApi->syncMonthEntries($fromDate, $toDate);
-        $jiraApi->revokeAdminToken();
+        // Use current user as admin context if available
+        $userId = $this->getUserId($request);
+        /** @var \App\Entity\User|null $user */
+        $user = $this->doctrineRegistry->getRepository(\App\Entity\User::class)->find($userId);
+        /** @var \App\Entity\TicketSystem|null $ticketSystem */
+        $ticketSystem = $this->doctrineRegistry->getRepository(\App\Entity\TicketSystem::class)->findOneBy([]);
+        $jiraApi = ($user && $ticketSystem) ? $this->jiraOAuthApiFactory->create($user, $ticketSystem) : null;
+        $result = $jiraApi ? $jiraApi->syncMonthEntries($fromDate, $toDate) : false;
+        if ($jiraApi) {
+            $jiraApi->revokeAdminToken();
+        }
 
         return new JsonResponse(['success' => $result]);
     }

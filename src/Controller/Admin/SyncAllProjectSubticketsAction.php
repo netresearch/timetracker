@@ -19,7 +19,16 @@ final class SyncAllProjectSubticketsAction extends BaseController
             return new JsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
         }
 
-        $result = $this->subticketSyncService->syncProjectsSubtickets();
+        // Legacy route syncs all projects; mirror behavior by iterating all
+        $projects = $this->doctrineRegistry->getRepository(\App\Entity\Project::class)->findAll();
+        $result = true;
+        foreach ($projects as $project) {
+            try {
+                $this->subticketSyncService->syncProjectSubtickets($project);
+            } catch (\Throwable) {
+                $result = false;
+            }
+        }
 
         if (true === $request->query->getBoolean('jira')) {
             $jiraApi = $this->jiraOAuthApiFactory->createApi();
