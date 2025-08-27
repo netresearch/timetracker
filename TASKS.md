@@ -87,8 +87,8 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     -   `[x]` Add `App\Dto\InterpretationFiltersDto` and refactor `InterpretationController` to use it
     -   `[x]` Introduce invokable controller `App\Controller\Interpretation\GetAllEntriesAction` using `#[MapQueryString]`
     -   `[x]` Add `App\Dto\ExportQueryDto` and invokable `App\Controller\Controlling\ExportAction` using `#[MapQueryString]`
-    -   `[ ]` Add `App\Dto\AdminSyncDto` and invokable `App\Controller\Admin\SyncProjectSubticketsAction` using `#[MapQueryString]`
-    -   `[ ]` Wire routes to new invokables and deprecate legacy actions incrementally
+    -   `[x]` Add `App\Dto\AdminSyncDto` and invokable `App\Controller\Admin\SyncProjectSubticketsAction` using `#[MapQueryString]`
+    -   `[x]` Wire routes to new invokables and deprecate legacy actions incrementally
     -   `[ ]` Follow-up: consider `#[MapRequestPayload]` for POST endpoints (project/customer/preset save)
 
 ## Phase 2: Upgrade to Symfony 7.3 (Completed)

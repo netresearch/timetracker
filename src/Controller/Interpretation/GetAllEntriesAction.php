@@ -22,9 +22,10 @@ final class GetAllEntriesAction extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        $project = (int) ($filters->project ?? 0);
-        $customer = (int) ($filters->customer ?? 0);
-        $activity = (int) ($filters->activity ?? 0);
+        // Support legacy *_id aliases in addition to canonical names
+        $project = (int) (($filters->project ?? $filters->project_id) ?? 0);
+        $customer = (int) (($filters->customer ?? $filters->customer_id) ?? 0);
+        $activity = (int) (($filters->activity ?? $filters->activity_id) ?? 0);
         $maxResults = (int) ($filters->maxResults ?? 0);
         $page = (int) ($filters->page ?? 0);
         $datestart = $filters->datestart;
