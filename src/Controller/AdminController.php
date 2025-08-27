@@ -353,7 +353,6 @@ class AdminController extends BaseController
         }
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr', methods: ['GET'])]
     public function syncProjectSubtickets(Request $request): Response|JsonResponse|Error
     {
         if (!$this->checkLogin($request)) {
