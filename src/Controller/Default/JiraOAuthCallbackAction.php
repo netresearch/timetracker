@@ -1,0 +1,45 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controller\Default;
+
+use App\Controller\BaseController;
+use App\Entity\TicketSystem;
+use App\Entity\User;
+use App\Exception\Integration\Jira\JiraApiException;
+use Symfony\Component\HttpFoundation\Request;
+
+final class JiraOAuthCallbackAction extends BaseController
+{
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/jiraoauthcallback', name: 'jiraOAuthCallback', methods: ['GET'])]
+    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
+    {
+        /** @var User $user */
+        $user = $this->managerRegistry->getRepository(User::class)->find($this->getUserId($request));
+
+        /** @var TicketSystem $ticketSystem */
+        $ticketSystem = $this->managerRegistry->getRepository(TicketSystem::class)->find($request->query->get('tsid'));
+        if (!$ticketSystem instanceof TicketSystem) {
+            return new \App\Model\Response('Ticket system not found', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+        }
+
+        try {
+            /** @var \App\Service\Integration\Jira\JiraOAuthApiFactory $factory */
+            $factory = $this->container->get(\App\Service\Integration\Jira\JiraOAuthApiFactory::class);
+            $jiraOAuthApi = $factory->create($user, $ticketSystem);
+            $oauthToken = $request->query->get('oauth_token');
+            $oauthVerifier = $request->query->get('oauth_verifier');
+            if (!is_string($oauthToken) || '' === $oauthToken || !is_string($oauthVerifier) || '' === $oauthVerifier) {
+                return new \App\Model\Response('Invalid OAuth callback parameters', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            }
+            $jiraOAuthApi->fetchOAuthAccessToken($oauthToken, $oauthVerifier);
+            $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
+
+            return $this->redirectToRoute('_start');
+        } catch (JiraApiException $jiraApiException) {
+            return new \App\Model\Response($jiraApiException->getMessage());
+        }
+    }
+}
+
+
