@@ -2,14 +2,12 @@
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
-
-use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Symfony\Component\HttpFoundation\Request;
 
-final class GroupByTicketAction extends BaseController
+final class GroupByTicketAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
@@ -27,9 +25,7 @@ final class GroupByTicketAction extends BaseController
         }
 
         try {
-            /** @var \App\Repository\EntryRepository $repo */
-            $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
-            $entries = $repo->findByFilterArray(['user' => $this->getUserId($request)]);
+            $entries = $this->getEntries($request);
         } catch (\Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -49,7 +45,7 @@ final class GroupByTicketAction extends BaseController
 
         $sum = 0; foreach ($tickets as $t) { $sum += $t['hours']; }
         foreach ($tickets as &$t) { $t['quota'] = $this->timeCalculationService->formatQuota($t['hours'], $sum); }
-        usort($tickets, static fn($a, $b) => strcmp((string) $b['name'], (string) $a['name']));
+        usort($tickets, $this->sortByName(...));
 
         return new JsonResponse(array_values($tickets));
     }
