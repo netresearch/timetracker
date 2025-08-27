@@ -2,14 +2,12 @@
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
-
-use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Symfony\Component\HttpFoundation\Request;
 
-final class GroupByWorktimeAction extends BaseController
+final class GroupByWorktimeAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
@@ -27,9 +25,7 @@ final class GroupByWorktimeAction extends BaseController
         }
 
         try {
-            /** @var \App\Repository\EntryRepository $repo */
-            $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
-            $entries = $repo->findByFilterArray(['user' => $this->getUserId($request)]);
+            $entries = $this->getEntries($request);
         } catch (\Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -55,7 +51,7 @@ final class GroupByWorktimeAction extends BaseController
             $time['quota'] = $this->timeCalculationService->formatQuota($minutes, $totalMinutes);
         }
 
-        usort($times, static fn($a, $b) => strcmp((string) $b['name'], (string) $a['name']));
+        usort($times, $this->sortByName(...));
         $prepared = array_map(static fn(array $t): array => [
             'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => (float) $t['hours'], 'quota' => (string) $t['quota'],
         ], $times);

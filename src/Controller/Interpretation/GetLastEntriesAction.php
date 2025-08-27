@@ -2,14 +2,12 @@
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
-
-use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Symfony\Component\HttpFoundation\Request;
 
-final class GetLastEntriesAction extends BaseController
+final class GetLastEntriesAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
@@ -27,17 +25,14 @@ final class GetLastEntriesAction extends BaseController
         }
 
         try {
-            /** @var \App\Repository\EntryRepository $repo */
-            $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
-            $entries = $repo->findByFilterArray(['maxResults' => 50, 'user' => $this->getUserId($request)]);
+            $entries = $this->getEntries($request, 50);
         } catch (\Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
             return $response;
         }
 
-        $sum = 0;
-        foreach ($entries as $e) { $sum += $e->getDuration(); }
+        $sum = $this->calculateSum($entries);
         $entryList = [];
         foreach ($entries as $entry) {
             $flatEntry = $entry->toArray();

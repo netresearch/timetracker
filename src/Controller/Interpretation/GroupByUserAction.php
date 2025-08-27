@@ -2,14 +2,12 @@
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
-
-use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Symfony\Component\HttpFoundation\Request;
 
-final class GroupByUserAction extends BaseController
+final class GroupByUserAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
@@ -28,9 +26,7 @@ final class GroupByUserAction extends BaseController
         }
 
         try {
-            /** @var \App\Repository\EntryRepository $repo */
-            $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
-            $entries = $repo->findByFilterArray(['user' => $this->getUserId($request)]);
+            $entries = $this->getEntries($request);
         } catch (\Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -50,7 +46,7 @@ final class GroupByUserAction extends BaseController
 
         $sum = 0; foreach ($users as $u) { $sum += $u['hours']; }
         foreach ($users as &$u) { $u['quota'] = $this->timeCalculationService->formatQuota($u['hours'], $sum); }
-        usort($users, static fn($a, $b) => strcmp((string) $b['name'], (string) $a['name']));
+        usort($users, $this->sortByName(...));
 
         return new JsonResponse(array_values($users));
     }
