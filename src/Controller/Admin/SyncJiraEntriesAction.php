@@ -6,6 +6,8 @@ namespace App\Controller\Admin;
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Service\Attribute\Required;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 
 final class SyncJiraEntriesAction extends BaseController
 {
@@ -26,6 +28,14 @@ final class SyncJiraEntriesAction extends BaseController
         $jiraApi->revokeAdminToken();
 
         return new JsonResponse(['success' => $result]);
+    }
+
+    private JiraOAuthApiFactory $jiraOAuthApiFactory;
+
+    #[Required]
+    public function setJiraApiFactory(JiraOAuthApiFactory $factory): void
+    {
+        $this->jiraOAuthApiFactory = $factory;
     }
 }
 

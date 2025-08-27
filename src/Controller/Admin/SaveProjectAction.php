@@ -14,6 +14,9 @@ use App\Response\Error;
 use App\Util\RequestEntityHelper;
 use App\Util\RequestHelper;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Service\Attribute\Required;
+use App\Service\Util\TimeCalculationService;
+use App\Service\SubticketSyncService;
 
 final class SaveProjectAction extends BaseController
 {
@@ -152,6 +155,21 @@ final class SaveProjectAction extends BaseController
         }
 
         return new JsonResponse($data);
+    }
+
+    private TimeCalculationService $timeCalculationService;
+    private SubticketSyncService $subticketSyncService;
+
+    #[Required]
+    public function setTimeCalculationService(TimeCalculationService $svc): void
+    {
+        $this->timeCalculationService = $svc;
+    }
+
+    #[Required]
+    public function setSubticketSyncService(SubticketSyncService $svc): void
+    {
+        $this->subticketSyncService = $svc;
     }
 }
 
