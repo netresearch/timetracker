@@ -32,7 +32,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     -   `[ ]` **Enable deprecation tracking in tests:** Use `symfony/phpunit-bridge` and set `SYMFONY_DEPRECATIONS_HELPER=weak` for local runs. (0.25h)
     -   `[ ]` **Run test suite with deprecations enabled:** `docker compose run --rm -e APP_ENV=test -e SYMFONY_DEPRECATIONS_HELPER=weak app bin/phpunit` and export report. (0.5h)
     -   `[ ]` **Translations API audit:** Ensure only `Symfony\\Contracts\\Translation\\TranslatorInterface` is used; remove `Symfony\\Component\\Translation\\TranslatorInterface` alias from `config/services.yaml` if unused. (0.25h)
-    -   `[ ]` **Routing audit:** Confirm all controllers use PHP attributes; remove any leftover annotation/YAML routes. (0.25h)
+    -   `[x]` **Routing audit:** Confirm all controllers use PHP attributes; remove any leftover annotation/YAML routes. (0.25h)
     -   `[ ]` **Twig & PHP audit:** Verify `twig/twig` constraint supports PHP 8.4/Symfony 7.3; plan bump if required. (0.25h)
     -   `[ ]` **Fix remaining deprecations:** Triage and resolve notices from the report. (variable)
 
@@ -89,6 +89,11 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     -   `[x]` Add `App\Dto\ExportQueryDto` and invokable `App\Controller\Controlling\ExportAction` using `#[MapQueryString]`
     -   `[x]` Add `App\Dto\AdminSyncDto` and invokable `App\Controller\Admin\SyncProjectSubticketsAction` using `#[MapQueryString]`
     -   `[x]` Wire routes to new invokables and deprecate legacy actions incrementally
+    -   `[x]` Refactor Admin controller into invokable actions; remove legacy `AdminController`
+    -   `[x]` Refactor Tracking actions into invokables (`SaveEntry`, `DeleteEntry`, `BulkEntry`); remove legacy `CrudController`
+    -   `[x]` Refactor Settings save into invokable; remove legacy `SettingsController`
+    -   `[x]` Refactor Interpretation endpoints into invokables; remove legacy `InterpretationController`
+    -   `[x]` Refactor Default endpoints into invokables (index, summaries, data, exports, JIRA callback, scripts)
     -   `[ ]` Follow-up: consider `#[MapRequestPayload]` for POST endpoints (project/customer/preset save)
 
 ## Phase 2: Upgrade to Symfony 7.3 (Completed)
