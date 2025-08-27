@@ -1,0 +1,53 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controller\Interpretation;
+
+use App\Controller\BaseController;
+use App\Model\JsonResponse;
+use App\Model\Response as ModelResponse;
+use App\Service\Util\TimeCalculationService;
+use Symfony\Component\HttpFoundation\Request;
+
+final class GetLastEntriesAction extends BaseController
+{
+    private TimeCalculationService $timeCalculationService;
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
+    {
+        $this->timeCalculationService = $timeCalculationService;
+    }
+
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
+    public function __invoke(Request $request): ModelResponse|JsonResponse
+    {
+        if (!$this->checkLogin($request)) {
+            return $this->getFailedLoginResponse();
+        }
+
+        try {
+            /** @var \App\Repository\EntryRepository $repo */
+            $repo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
+            $entries = $repo->findByFilterArray(['maxResults' => 50, 'user' => $this->getUserId($request)]);
+        } catch (\Exception $exception) {
+            $response = new ModelResponse($this->translate($exception->getMessage()));
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+            return $response;
+        }
+
+        $sum = 0;
+        foreach ($entries as $e) { $sum += $e->getDuration(); }
+        $entryList = [];
+        foreach ($entries as $entry) {
+            $flatEntry = $entry->toArray();
+            $flatEntry['quota'] = $this->timeCalculationService->formatQuota($flatEntry['duration'], $sum);
+            $flatEntry['duration'] = $this->timeCalculationService->formatDuration($flatEntry['duration']);
+            $entryList[] = ['entry' => $flatEntry];
+        }
+
+        return new JsonResponse($entryList);
+    }
+}
+
+
