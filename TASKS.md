@@ -70,7 +70,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         -   `[x]` Ensure autowiring and autoconfiguration are enabled and used effectively (`_defaults`, `App\\`). (Estimate: 0.5h)
         -   `[ ]` Remove unnecessary explicit service definitions and legacy aliases (e.g., translator, annotations reader) if unused. (0.5h)
     -   `[ ]` **Ensure Strict Types and Type Hints:**
-        -   `[ ]` Add `declare(strict_types=1);` to all PHP files. (Estimate: 0.5h - Use automated tooling if possible)
+        -   `[x]` Add `declare(strict_types=1);` to all PHP files. (Estimate: 0.5h - Use automated tooling if possible)
         -   `[ ]` Add parameter and return type hints wherever missing, replacing `@param`/`@return` phpdoc tags. (Estimate: 1h+ - Highly variable, do incrementally)
 
 ### 1.4: Static Analysis & Code Standards
