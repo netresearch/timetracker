@@ -65,10 +65,11 @@ This document breaks down the upgrade plan into specific, actionable tasks.
             -   Status: Controllers and repository use `TimeCalculationService`; entity `Project::toArray()` still instantiates service directly for `minutesToReadable`. Consider injecting formatter via DTO or a static utility; acceptable for now.
         -   `[x]` Cleanup: Delete `src/Helper/` once all helpers are removed. (0.1h)
     -   `[x]` **Routing via PHP Attributes:** Controllers already use attributes; legacy YAML removed. (Done)
-    -   `[ ]` **Review Service Configuration:**
+    -   `[x]` **Review Service Configuration:**
         -   `[x]` Examine `config/services.yaml`. (Estimate: 0.5h)
         -   `[x]` Ensure autowiring and autoconfiguration are enabled and used effectively (`_defaults`, `App\\`). (Estimate: 0.5h)
-        -   `[ ]` Remove unnecessary explicit service definitions and legacy aliases (e.g., translator, annotations reader) if unused. (0.5h)
+        -   `[x]` Remove unnecessary explicit service definitions and legacy aliases (e.g., translator, annotations reader) if unused. (0.5h)
+            -   Note: Kept aliases for `TranslatorInterface`, `SessionInterface`, and `LoggerInterface` (in active use). Explicit `session` service retained for prod/dev; no legacy annotations reader present.
     -   `[ ]` **Ensure Strict Types and Type Hints:**
         -   `[x]` Add `declare(strict_types=1);` to all PHP files. (Estimate: 0.5h - Use automated tooling if possible)
         -   `[ ]` Add parameter and return type hints wherever missing, replacing `@param`/`@return` phpdoc tags. (Estimate: 1h+ - Highly variable, do incrementally)
