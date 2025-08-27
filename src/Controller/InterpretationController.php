@@ -537,7 +537,6 @@ class InterpretationController extends BaseController
         return $normalized;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
     public function getAllEntries(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
