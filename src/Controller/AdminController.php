@@ -51,7 +51,7 @@ class AdminController extends BaseController
         $this->timeCalculationService = $timeCalculationService;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllCustomers', name: '_getAllCustomers_attr', methods: ['GET'])]
+    #[\Deprecated]
     public function getCustomers(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -64,12 +64,12 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->getAllCustomers());
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllUsers', name: '_getAllUsers_attr', methods: ['GET'])]
+    #[\Deprecated]
     public function getUsers(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             // For non-JSON clients, redirect to login, otherwise 401 JSON
-            $redirect = $this->login($request);
+        	$redirect = $this->login($request);
             if ($redirect instanceof \Symfony\Component\HttpFoundation\RedirectResponse) {
                 // Wrap into App\Model\Response to satisfy return type while preserving 302
                 $response = new Response('');
@@ -89,7 +89,7 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->getAllUsers());
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllTeams', name: '_getAllTeams_attr', methods: ['GET'])]
+    #[\Deprecated]
     public function getTeams(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -102,7 +102,7 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->getAllTeamsAsArray());
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllPresets', name: '_getAllPresets_attr', methods: ['GET'])]
+    #[\Deprecated]
     public function getPresets(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -115,176 +115,7 @@ class AdminController extends BaseController
         return new JsonResponse($objectRepository->getAllPresets());
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getTicketSystems', name: '_getTicketSystems_attr', methods: ['GET'])]
-    public function getTicketSystems(Request $request): Response|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystems = $objectRepository->getAllTicketSystems();
-
-        if (false === $this->isPl($request)) {
-            $c = count($ticketSystems);
-            for ($i = 0; $i < $c; ++$i) {
-                unset($ticketSystems[$i]['ticketSystem']['login']);
-                unset($ticketSystems[$i]['ticketSystem']['password']);
-                unset($ticketSystems[$i]['ticketSystem']['publicKey']);
-                unset($ticketSystems[$i]['ticketSystem']['privateKey']);
-                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerSecret']);
-                unset($ticketSystems[$i]['ticketSystem']['oauthConsumerKey']);
-            }
-        }
-
-        return new JsonResponse($ticketSystems);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
-    public function saveProject(Request $request): Response|Error|JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        $projectId = (int) $request->request->get('id');
-        $name = RequestHelper::string($request, 'name');
-
-        /* @var \App\Repository\TicketSystemRepository $objectRepository */
-        $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystem = RequestEntityHelper::ticketSystem($request, $this->doctrineRegistry, 'ticket_system');
-
-        /* @var UserRepository $userRepo */
-        $this->doctrineRegistry->getRepository(User::class);
-        $projectLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'project_lead');
-        $technicalLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'technical_lead');
-
-        $jiraId = RequestHelper::upperString($request, 'jiraId');
-        $jiraTicket = RequestHelper::upperString($request, 'jiraTicket');
-        $active = RequestHelper::bool($request, 'active');
-        $global = RequestHelper::bool($request, 'global');
-        $estimation = $this->timeCalculationService->readableToFullMinutes(RequestHelper::string($request, 'estimation', '0m'));
-        $billing = RequestHelper::int($request, 'billing', 0);
-        $costCenter = RequestHelper::nullableString($request, 'cost_center');
-        $offer = RequestHelper::nullableString($request, 'offer');
-        $additionalInformationFromExternal = RequestHelper::bool($request, 'additionalInformationFromExternal');
-        /** @var \App\Repository\ProjectRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
-        $internalJiraTicketSystem = $request->request->get('internalJiraTicketSystem');
-        if ('' === $internalJiraTicketSystem || null === $internalJiraTicketSystem) {
-            $internalJiraTicketSystem = null;
-        } else {
-            $internalJiraTicketSystem = (string) $internalJiraTicketSystem;
-        }
-
-        $internalJiraProjectKey = (string) $request->request->get('internalJiraProjectKey', '');
-
-        if (0 !== $projectId) {
-            $project = $objectRepository->find($projectId);
-            if (!$project instanceof Project) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-        } else {
-            $project = new Project();
-
-            /** @var Customer $customer */
-            $customer = $this->doctrineRegistry->getRepository(Customer::class)
-                ->find($request->request->get('customer'));
-            if (!$customer instanceof Customer) {
-                $response = new Response($this->translate('Please choose a customer.'));
-                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-                return $response;
-            }
-
-            $project->setCustomer($customer);
-        }
-
-        if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid project name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        $projectCustomer = $project->getCustomer();
-        if (!$projectCustomer instanceof Customer) {
-            $response = new Response($this->translate('Please choose a customer.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        $sameNamedProject = $objectRepository->findOneBy(
-            ['name' => $name, 'customer' => $projectCustomer->getId()]
-        );
-        if ($sameNamedProject instanceof Project && $project->getId() !== $sameNamedProject->getId()) {
-            $response = new Response($this->translate('The project name provided already exists.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        if (strlen($jiraId) > 1 && $project->getJiraId() !== $jiraId && $ticketSystem instanceof TicketSystem) {
-            $search['ticketSystem'] = $ticketSystem;
-        }
-
-        if (strlen($jiraId) && false == $objectRepository->isValidJiraPrefix($jiraId)) {
-            $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        $project
-            ->setName($name)
-            ->setJiraId($jiraId)
-            ->setJiraTicket($jiraTicket)
-            ->setActive($active)
-            ->setGlobal($global)
-            ->setEstimation($estimation)
-            ->setProjectLead($projectLead)
-            ->setTechnicalLead($technicalLead)
-            ->setBilling($billing)
-            ->setOffer($offer)
-            ->setCostCenter($costCenter)
-            ->setAdditionalInformationFromExternal($additionalInformationFromExternal)
-            ->setInternalJiraProjectKey($internalJiraProjectKey)
-            ->setInternalJiraTicketSystem($internalJiraTicketSystem);
-
-        if ($ticketSystem instanceof TicketSystem) {
-            $project->setTicketSystem($ticketSystem);
-        } elseif ($project->getTicketSystem() instanceof TicketSystem) {
-            $project->setTicketSystem($project->getTicketSystem());
-        }
-
-        $objectManager = $this->doctrineRegistry->getManager();
-        $objectManager->persist($project);
-        $objectManager->flush();
-
-        $data = [$project->getId(), $name, $projectCustomer->getId(), $jiraId];
-
-        if ($ticketSystem instanceof TicketSystem) {
-            try {
-                if (null !== $project->getId()) {
-                    // Pass the Project directly to match service signature (Project|int)
-                    $this->subticketSyncService->syncProjectSubtickets($project);
-                }
-            } catch (\Exception $e) {
-                // we do not let it fail because creating a new project
-                // would lead to inconsistencies in the frontend
-                // ("project with that name exists already")
-                $data['message'] = $e->getMessage();
-            }
-        }
-
-        return new JsonResponse($data);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/project/delete', name: 'deleteProject_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function deleteProject(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -319,146 +150,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/syncsubtickets', name: 'syncAllProjectSubtickets_attr', methods: ['GET'])]
-    public function syncAllProjectSubtickets(Request $request): Response|JsonResponse|Error
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        /** @var \App\Repository\ProjectRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
-        /** @var array<int, Project> $projects */
-        $projects = $objectRepository->createQueryBuilder('p')
-            ->where('p.ticketSystem IS NOT NULL')
-            ->getQuery()
-            ->getResult();
-
-        try {
-            foreach ($projects as $project) {
-                if (!$project instanceof Project) {
-                    continue;
-                }
-
-                $this->subticketSyncService->syncProjectSubtickets($project);
-            }
-
-            return new JsonResponse(
-                [
-                    'success' => true,
-                ]
-            );
-        } catch (\Exception $exception) {
-            return new Error($exception->getMessage(), (int) ($exception->getCode() ?: 500));
-        }
-    }
-
-    public function syncProjectSubtickets(Request $request): Response|JsonResponse|Error
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        $projectId = (int) ($request->query->get('project') ?? 0);
-
-        try {
-            $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectId);
-
-            return new JsonResponse(
-                [
-                    'success' => true,
-                    'subtickets' => $subtickets,
-                ]
-            );
-        } catch (\Exception $exception) {
-            return new Error($exception->getMessage(), (int) ($exception->getCode() ?: 500));
-        }
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/customer/save', name: 'saveCustomer_attr', methods: ['POST'])]
-    public function saveCustomer(Request $request): Response|Error|JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        $customerId = (int) $request->request->get('id');
-        $name = RequestHelper::string($request, 'name');
-        $active = RequestHelper::bool($request, 'active');
-        $global = RequestHelper::bool($request, 'global');
-        $teamIds = $request->request->all('teams') ?: [];
-
-        /** @var \App\Repository\CustomerRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
-
-        if (0 !== $customerId) {
-            $customer = $objectRepository->find($customerId);
-            if (!$customer) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-
-            if (!$customer instanceof Customer) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-        } else {
-            $customer = new Customer();
-        }
-
-        if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid customer name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        if (($sameNamedCustomer = $objectRepository->findOneByName($name)) instanceof Customer && $customer->getId() !== $sameNamedCustomer->getId()) {
-            $response = new Response($this->translate('The customer name provided already exists.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        $customer->setName($name)->setActive($active)->setGlobal($global);
-
-        $customer->resetTeams();
-
-        foreach ($teamIds as $teamId) {
-            if (!$teamId) {
-                continue;
-            }
-
-            $team = $this->doctrineRegistry->getRepository(Team::class)->find((int) $teamId);
-            if ($team instanceof Team) {
-                $customer->addTeam($team);
-            } else {
-                $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
-                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-                return $response;
-            }
-        }
-
-        if (0 == $customer->getTeams()->count() && false === $global) {
-            $response = new Response($this->translate('Every customer must belong to at least one team if it is not global.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        $objectManager = $this->doctrineRegistry->getManager();
-        $objectManager->persist($customer);
-        $objectManager->flush();
-
-        $data = [$customer->getId(), $name, $active, $global, $teamIds];
-
-        return new JsonResponse($data);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/customer/delete', name: 'deleteCustomer_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function deleteCustomer(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -493,7 +185,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function saveUser(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -584,7 +276,7 @@ class AdminController extends BaseController
         return new JsonResponse($data);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/user/delete', name: 'deleteUser_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function deleteUser(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -598,7 +290,7 @@ class AdminController extends BaseController
             $user = $doctrine->getRepository(User::class)
                 ->find($id);
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrineRegistry->getManager();
             if ($user) {
                 $em->remove($user);
                 $em->flush();
@@ -619,7 +311,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/delete', name: 'deletePreset_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function deletePreset(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -654,154 +346,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
-    public function savePreset(Request $request): Response|Error|JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        $id = (int) $request->request->get('id');
-        $name = (string) ($request->request->get('name') ?? '');
-        $customer = $this->doctrineRegistry->getRepository(Customer::class)
-            ->find($request->request->get('customer'));
-        $project = $this->doctrineRegistry->getRepository(Project::class)
-            ->find($request->request->get('project'));
-        $activity = $this->doctrineRegistry->getRepository(Activity::class)
-            ->find($request->request->get('activity'));
-        $description = (string) ($request->request->get('description') ?? '');
-
-        if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        $objectRepository = $this->doctrineRegistry->getRepository(Preset::class);
-
-        if (0 !== $id) {
-            $preset = $objectRepository->find($id);
-            if (!$preset) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-
-            if (!$preset instanceof Preset) {
-                return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-        } else {
-            $preset = new Preset();
-        }
-
-        try {
-            if (!$customer instanceof Customer || !$project instanceof Project || !$activity instanceof Activity) {
-                throw new \Exception('Please choose a customer, a project and an activity.');
-            }
-
-            $preset->setName($name)
-                ->setCustomer($customer)
-                ->setProject($project)
-                ->setActivity($activity)
-                ->setDescription($description);
-
-            $em = $this->doctrineRegistry->getManager();
-            $em->persist($preset);
-            $em->flush();
-        } catch (\Exception) {
-            $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
-
-            return $response;
-        }
-
-        return new JsonResponse($preset->toArray());
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/save', name: 'saveTicketSystem_attr', methods: ['POST'])]
-    public function saveTicketSystem(Request $request): Response|Error|JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
-
-        $id = (int) $request->request->get('id');
-        $name = (string) ($request->request->get('name') ?? '');
-        $type = (string) ($request->request->get('type') ?? '');
-        $bookTime = $request->request->get('bookTime');
-        $url = (string) ($request->request->get('url') ?? '');
-        $login = (string) ($request->request->get('login') ?? '');
-        $password = (string) ($request->request->get('password') ?? '');
-        $publicKey = (string) ($request->request->get('publicKey') ?? '');
-        $privateKey = (string) ($request->request->get('privateKey') ?? '');
-        $ticketUrl = (string) ($request->request->get('ticketUrl') ?? '');
-        $oauthConsumerKeyRaw = $request->request->get('oauthConsumerKey');
-        $oauthConsumerSecretRaw = $request->request->get('oauthConsumerSecret');
-        $oauthConsumerKey = (null === $oauthConsumerKeyRaw || '' === $oauthConsumerKeyRaw) ? null : (string) $oauthConsumerKeyRaw;
-        $oauthConsumerSecret = (null === $oauthConsumerSecretRaw || '' === $oauthConsumerSecretRaw) ? null : (string) $oauthConsumerSecretRaw;
-
-        if (0 !== $id) {
-            $ticketSystem = $objectRepository->find($id);
-            if (!$ticketSystem) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-
-            if (!$ticketSystem instanceof TicketSystem) {
-                return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-        } else {
-            $ticketSystem = new TicketSystem();
-        }
-
-        if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid ticket system name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        $sameNamedSystem = $objectRepository->findOneByName($name);
-        if ($sameNamedSystem instanceof TicketSystem && $ticketSystem->getId() != $sameNamedSystem->getId()) {
-            $response = new Response($this->translate('The ticket system name provided already exists.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        try {
-            $ticketSystem
-                ->setName($name)
-                ->setType($type)
-                ->setBookTime((bool) $bookTime)
-                ->setUrl($url)
-                ->setTicketUrl($ticketUrl)
-                ->setLogin($login)
-                ->setPassword($password)
-                ->setPublicKey($publicKey)
-                ->setPrivateKey($privateKey)
-                ->setOauthConsumerKey($oauthConsumerKey)
-                ->setOauthConsumerSecret($oauthConsumerSecret);
-
-            $em = $this->doctrineRegistry->getManager();
-            $em->persist($ticketSystem);
-            $em->flush();
-        } catch (\Exception $exception) {
-            $response = new Response($this->translate('Error on save').': '.$exception->getMessage());
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
-
-            return $response;
-        }
-
-        return new JsonResponse($ticketSystem->toArray());
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/delete', name: 'deleteTicketSystem_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function deleteTicketSystem(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -815,7 +360,7 @@ class AdminController extends BaseController
             $ticketSystem = $doctrine->getRepository(TicketSystem::class)
                 ->find($id);
 
-            $em = $doctrine->getManager();
+            $em = $this->doctrineRegistry->getManager();
             if ($ticketSystem) {
                 $em->remove($ticketSystem);
                 $em->flush();
@@ -836,106 +381,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
-    public function saveActivity(Request $request): Response|Error|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        /** @var \App\Repository\ActivityRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
-
-        $id = (int) $request->request->get('id');
-        $name = (string) ($request->request->get('name') ?? '');
-        $needsTicket = (bool) $request->request->get('needsTicket');
-        $factorRaw = $request->request->get('factor');
-        $factor = (float) str_replace(',', '.', (string) ($factorRaw ?? '0'));
-
-        if (0 !== $id) {
-            $activity = $objectRepository->find($id);
-            if (!$activity) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-
-            if (!$activity instanceof Activity) {
-                return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-        } else {
-            $activity = new Activity();
-        }
-
-        $sameNamedActivity = $objectRepository->findOneByName($name);
-        if ($sameNamedActivity instanceof Activity && $activity->getId() !== $sameNamedActivity->getId()) {
-            $response = new Response($this->translate('The activity name provided already exists.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        try {
-            $activity
-                ->setName($name)
-                ->setNeedsTicket($needsTicket)
-                ->setFactor($factor);
-
-            $em = $this->doctrineRegistry->getManager();
-            $em->persist($activity);
-            $em->flush();
-        } catch (\Exception $exception) {
-            $response = new Response($this->translate('Error on save').': '.$exception->getMessage());
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
-
-            return $response;
-        }
-
-        $data = [$activity->getId(), $activity->getName(), $activity->getNeedsTicket(), $activity->getFactor()];
-
-        return new JsonResponse($data);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/delete', name: 'deleteActivity_attr', methods: ['POST'])]
-    public function deleteActivity(Request $request): Response|Error|JsonResponse
-    {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        try {
-            $id = (int) $request->request->get('id');
-            $doctrine = $this->doctrineRegistry;
-
-            $activity = $doctrine->getRepository(Activity::class)
-                ->find($id);
-
-            $em = $this->doctrineRegistry->getManager();
-            if ($activity) {
-                $em->remove($activity);
-                $em->flush();
-            } else {
-                throw new \RuntimeException('Already deleted');
-            }
-        } catch (\Exception $exception) {
-            $reason = '';
-            if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
-                $reason = $this->translate('Other datasets refer to this one.');
-            }
-
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
-
-            return new Error($msg, \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        return new JsonResponse(['success' => true]);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function saveTeam(Request $request): Response|Error|JsonResponse
     {
         if (!$this->checkLogin($request)) {
@@ -1007,7 +453,7 @@ class AdminController extends BaseController
         return new JsonResponse($data);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/team/delete', name: 'deleteTeam_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function deleteTeam(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -1042,67 +488,7 @@ class AdminController extends BaseController
         return new JsonResponse(['success' => true]);
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/syncentries/jira', name: 'syncEntriesToJira_attr', methods: ['GET'])]
-    public function jiraSyncEntries(Request $request): Response|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
-
-        $doctrine = $this->doctrineRegistry;
-
-        $users = $doctrine
-            ->getRepository(User::class)
-            ->findAll();
-
-        /** @var array<int, TicketSystem> $ticketSystems */
-        $ticketSystems = $doctrine
-            ->getRepository(TicketSystem::class)
-            ->findAll();
-
-        $data = [];
-
-        foreach ($users as $user) {
-            if (!$user instanceof User) {
-                continue;
-            }
-
-            foreach ($ticketSystems as $ticketSystem) {
-                if (!$ticketSystem instanceof TicketSystem) {
-                    continue;
-                }
-
-                try {
-                    $jiraOauthApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-                    $jiraOauthApi->updateAllEntriesJiraWorkLogs();
-                    $data[$ticketSystem->getName().' | '.$user->getUsername()] = 'success';
-                } catch (\Exception $e) {
-                    $data[$ticketSystem->getName().' | '.$user->getUsername()] = 'error ('.$e->getMessage().')';
-                }
-            }
-        }
-
-        return new JsonResponse($data);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getContracts', name: '_getContracts_attr', methods: ['GET'])]
-    public function getContracts(Request $request): Response|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
-        /** @var \App\Repository\ContractRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
-
-        return new JsonResponse($objectRepository->getContracts());
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function saveContract(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
@@ -1309,7 +695,7 @@ class AdminController extends BaseController
         return (bool) $filteredContracts;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/delete', name: 'deleteContract_attr', methods: ['POST'])]
+    #[\Deprecated]
     public function deleteContract(Request $request): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
