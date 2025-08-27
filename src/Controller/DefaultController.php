@@ -40,75 +40,7 @@ class DefaultController extends BaseController
 
     // getCustomers/getUsers/getCustomer/getProjects now handled by dedicated invokable actions in App\Controller\Default\*
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
-    public function getAllProjects(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|Response|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
-
-        $customerId = (int) $request->query->get('customer');
-        $managerRegistry = $this->managerRegistry;
-        /** @var \App\Repository\ProjectRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(Project::class);
-        /** @var array<int, Project> $result */
-        $result = $customerId > 0 ? $objectRepository->findByCustomer($customerId) : $objectRepository->findAll();
-
-        $data = [];
-        foreach ($result as $project) {
-            if ($project instanceof Project) {
-                $data[] = ['project' => $project->toArray()];
-            }
-        }
-
-        return new JsonResponse($data);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjectStructure', name: '_getProjectStructure_attr', methods: ['GET'])]
-    public function getProjectStructure(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|Response|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
-
-        $userId = $this->getUserId($request);
-        $managerRegistry = $this->managerRegistry;
-
-        /** @var \App\Repository\CustomerRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(Customer::class);
-        $customers = $objectRepository->getCustomersByUser($userId);
-
-        /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $managerRegistry->getRepository(Project::class);
-        $projectStructure = $projectRepo->getProjectStructure($userId, $customers);
-
-        return new JsonResponse($projectStructure);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getActivities', name: '_getActivities_attr', methods: ['GET'])]
-    public function getActivities(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|Response|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
-
-        /** @var \App\Repository\ActivityRepository $objectRepository */
-        $objectRepository = $this->managerRegistry->getRepository(Activity::class);
-        $data = $objectRepository->getActivities();
-
-        return new JsonResponse($data);
-    }
-
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
-    public function getHolidays(): JsonResponse
-    {
-        /** @var \App\Repository\HolidayRepository $objectRepository */
-        $objectRepository = $this->managerRegistry
-            ->getRepository(Holiday::class);
-        $holidays = $objectRepository->findByMonth((int) date('Y'), (int) date('m'));
-
-        return new JsonResponse($holidays);
-    }
+    // getAllProjects/getProjectStructure/getActivities/getHolidays now handled by invokables in App\Controller\Default\*
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
     public function export(Request $request): Response
