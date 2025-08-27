@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * Json array translator for twig-templates.
