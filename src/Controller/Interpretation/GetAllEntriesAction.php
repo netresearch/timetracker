@@ -7,6 +7,7 @@ use App\Controller\BaseController;
 use App\Dto\InterpretationFiltersDto;
 use App\Entity\Entry;
 use App\Model\JsonResponse;
+use App\Model\Response as ModelResponse;
 use App\Response\Error;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,7 +16,7 @@ use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 final class GetAllEntriesAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $filters): JsonResponse|Error
+    public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $filters): ModelResponse|JsonResponse|Error
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -92,27 +93,45 @@ final class GetAllEntriesAction extends BaseController
         }
 
         $total = $paginator->count();
-        $query_params['page'] = $page;
-        $self = $route.http_build_query($query_params);
+        $links = ['links' => []];
+        if ($total > 0) {
+            $query_params['page'] = $page;
+            $self = $route.http_build_query($query_params);
 
-        $lastPage = ceil($total / $maxResults) - 1;
-        $query_params['page'] = $lastPage;
-        $last = $total ? $route.http_build_query($query_params) : null;
+            $lastPage = ceil($total / $maxResults) - 1;
+            $query_params['page'] = $lastPage;
+            $last = $route.http_build_query($query_params);
 
-        $query_params['page'] = min($page - 1, $lastPage);
-        $prev = $page && $total ? $route.http_build_query($query_params) : null;
+            $query_params['page'] = min($page - 1, $lastPage);
+            $prev = $page ? $route.http_build_query($query_params) : null;
 
-        $query_params['page'] = $page + 1;
-        $next = $page < $lastPage ? $route.http_build_query($query_params) : null;
+            $query_params['page'] = $page + 1;
+            $next = $page < $lastPage ? $route.http_build_query($query_params) : null;
 
-        $links = [
-            'links' => [
-                'self' => $self,
-                'last' => $last,
-                'prev' => $prev,
-                'next' => $next,
-            ],
-        ];
+            $links = [
+                'links' => [
+                    'self' => $self,
+                    'last' => $last,
+                    'prev' => $prev,
+                    'next' => $next,
+                ],
+            ];
+        }
+
+        // Always include self link. When there are no results, only self is present and others are null as per tests
+        if ($links['links'] === []) {
+            $query_params['page'] = $page;
+            $self = $route.http_build_query($query_params);
+            $links = [
+                'links' => [
+                    'self' => $self,
+                    'last' => null,
+                    'prev' => null,
+                    'next' => null,
+                ],
+            ];
+        }
+
         $entryList = array_merge($links, ['data' => $entryList]);
 
         return new JsonResponse($entryList);
