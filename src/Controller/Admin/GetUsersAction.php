@@ -14,7 +14,9 @@ final class GetUsersAction extends BaseController
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): Response|JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (null === $user) {
-            return $this->redirectToRoute('_login');
+            if (!$this->checkLogin($request)) {
+                return $this->redirectToRoute('_login');
+            }
         }
 
         /** @var \App\Repository\UserRepository $objectRepository */
