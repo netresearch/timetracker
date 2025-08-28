@@ -42,17 +42,13 @@ class BaseController extends AbstractController
 {
     public ManagerRegistry $managerRegistry;
 
-    /** @var ParameterBagInterface */
-    protected $params;
+    protected ParameterBagInterface $params;
 
-    /** @var TranslatorInterface */
-    protected $translator;
+    protected TranslatorInterface $translator;
 
-    /** @var KernelInterface */
-    protected $kernel;
+    protected KernelInterface $kernel;
 
-    /** @var ManagerRegistry */
-    protected $doctrineRegistry;
+    protected ManagerRegistry $doctrineRegistry;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setCoreDependencies(
