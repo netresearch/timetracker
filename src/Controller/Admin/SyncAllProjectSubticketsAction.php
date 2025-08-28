@@ -43,11 +43,7 @@ final class SyncAllProjectSubticketsAction extends BaseController
         $this->subticketSyncService = $svc;
     }
 
-    #[Required]
-    public function setJiraApiFactory(JiraOAuthApiFactory $factory): void
-    {
-        $this->jiraOAuthApiFactory = $factory;
-    }
+    // No Jira API factory required in current implementation
 }
 
 
