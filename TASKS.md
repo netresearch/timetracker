@@ -55,7 +55,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
         -   `[x]` Update any explicit references. (Estimate: 0.1h)
         -   `[x]` Delete the `src/Services` directory once empty. (Estimate: 0.1h)
         -   `[x]` Clear cache (`docker compose run --rm app bin/console cache:clear`). (Estimate: 0.1h)
-    -   `[ ]` **Refactor `src/Helper` Classes to Services (state-aware):**
+    -   `[x]` **Refactor `src/Helper` Classes to Services (state-aware):**
         -   `[x]` JiraOAuthApi: Update factory to return `JiraOAuthApiService` directly; remove `App\\Helper\\JiraOAuthApi`. (0.5-1h)
         -   `[x]` LdapClient: `App\\Service\\Ldap\\LdapClientService` in use; delete unused helper `App\\Helper\\LdapClient`. (0.25h)
         -   `[x]` LocalizationHelper: Not used; delete `src/Helper/LocalizationHelper.php`. (0.25h)
