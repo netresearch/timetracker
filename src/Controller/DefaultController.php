@@ -28,10 +28,7 @@ use Twig\Environment as TwigEnvironment;
 class DefaultController extends BaseController
 {
     public function __construct(
-        private readonly TwigEnvironment $twigEnvironment,
         \Doctrine\Persistence\ManagerRegistry $managerRegistry,
-        private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
-        private readonly TimeCalculationService $timeCalculationService,
     ) {
         $this->managerRegistry = $managerRegistry;
     }
