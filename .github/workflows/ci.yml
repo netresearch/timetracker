@@ -22,6 +22,13 @@ jobs:
           docker --version
           docker compose version
 
+      - name: Prepare config files
+        run: |
+          # Ensure PHPStan config exists
+          if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
+          # Ensure PHPUnit config exists
+          if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
+
       - name: Install dependencies (Composer)
         run: |
           docker compose -f compose.yml -f compose.dev.yml run --rm app composer install --no-interaction --prefer-dist
