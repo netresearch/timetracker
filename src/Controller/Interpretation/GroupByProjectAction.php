@@ -47,7 +47,7 @@ final class GroupByProjectAction extends BaseInterpretationController
         foreach ($projects as &$p) { $p['quota'] = $this->timeCalculationService->formatQuota($p['hours'], $sum); }
         usort($projects, $this->sortByName(...));
 
-        return new JsonResponse(array_values($projects));
+        return new JsonResponse($projects);
     }
 }
 
