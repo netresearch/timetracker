@@ -35,9 +35,12 @@ final class SaveEntryAction extends BaseTrackingController
 
             $requestedId = $request->request->get('id');
             $entryId = is_numeric($requestedId) ? (int) $requestedId : 0;
-            $entry = $entryId > 0 ? $entryRepo->find($entryId) : new Entry();
-            if (!$entry instanceof Entry) {
-                return new Error($this->translator->trans('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+            if ($entryId > 0) {
+                $foundEntry = $entryRepo->find($entryId);
+                if (!$foundEntry instanceof Entry) {
+                    return new Error($this->translator->trans('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+                }
+                $entry = $foundEntry;
             }
 
             // We make a copy to determine if we have to update JIRA
