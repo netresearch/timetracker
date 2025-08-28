@@ -12,13 +12,10 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetTimeSummaryAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
-    public function __invoke(Request $request): JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+    #[\Symfony\Bundle\SecurityBundle\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->redirectToRoute('_login');
-        }
-
-        $userId = $this->getUserId($request);
+        $userId = (int) $user->getId();
         /** @var EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         $today = $objectRepository->getWorkByUser($userId, EntryRepository::PERIOD_DAY);

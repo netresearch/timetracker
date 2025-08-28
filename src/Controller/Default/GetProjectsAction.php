@@ -11,14 +11,11 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetProjectsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjects', name: '_getProjects_attr', methods: ['GET'])]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
+    #[\Symfony\Bundle\SecurityBundle\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
-
         $customerId = (int) $request->query->get('customer');
-        $userId = $this->getUserId($request);
+        $userId = (int) $user->getId();
         /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Project::class);
         $data = $objectRepository->getProjectsByUser($userId, $customerId);

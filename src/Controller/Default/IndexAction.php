@@ -12,19 +12,11 @@ use Symfony\Component\HttpFoundation\Request;
 final class IndexAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
+    #[\Symfony\Bundle\SecurityBundle\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] User $user): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
-
-        $userId = $this->getUserId($request);
+        $userId = (int) $user->getId();
         $managerRegistry = $this->managerRegistry;
-
-        $user = $managerRegistry->getRepository(User::class)->find($userId);
-        if (!$user instanceof User) {
-            return $this->getFailedLoginResponse();
-        }
 
         $settings = $user->getSettings();
 
