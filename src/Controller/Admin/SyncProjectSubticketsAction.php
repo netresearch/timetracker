@@ -7,6 +7,7 @@ use App\Controller\BaseController;
 use App\Dto\AdminSyncDto;
 use App\Entity\Project;
 use App\Model\JsonResponse;
+use App\Model\Response as ModelResponse;
 use App\Response\Error;
 use App\Service\SubticketSyncService;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,7 +24,7 @@ final class SyncProjectSubticketsAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
-    public function __invoke(Request $request, #[MapQueryString] AdminSyncDto $dto): JsonResponse|Error
+    public function __invoke(Request $request, #[MapQueryString] AdminSyncDto $dto): JsonResponse|Error|ModelResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();

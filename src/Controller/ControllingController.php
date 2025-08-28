@@ -51,11 +51,7 @@ class ControllingController extends BaseController
         // Must be fully authenticated AND have a session token present
         // Redirect to login when session token is not present (test clears session explicitly)
         // Require presence of session security token to consider the user logged in
-        if (null !== $this->container && $this->container->has('session')) {
-            $session = $this->container->get('session');
-        } else {
-            $session = $request->getSession();
-        }
+        $session = $request->getSession();
 
         if (null === $session || !$session->has('_security_main') || empty($session->get('_security_main'))) {
             return $this->login($request);

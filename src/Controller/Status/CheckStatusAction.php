@@ -29,14 +29,6 @@ final class CheckStatusAction extends BaseController
     public function __invoke(Request $request): JsonResponse
     {
         $login = $this->isLoggedIn($request);
-        if (null === $request) {
-            $req = $this->requestStack->getCurrentRequest();
-            if (null !== $req) {
-                $login = $this->isLoggedIn($req);
-            } else {
-                $login = $this->security->isGranted('IS_AUTHENTICATED');
-            }
-        }
 
         return new JsonResponse(['loginStatus' => $login]);
     }

@@ -35,11 +35,7 @@ final class ExportAction extends BaseController
                 $request->query->set($attributeKeyToMap, (string) $request->attributes->get($attributeKeyToMap));
             }
         }
-        if (null !== $this->container && $this->container->has('session')) {
-            $session = $this->container->get('session');
-        } else {
-            $session = $request->getSession();
-        }
+        $session = $request->getSession();
 
         if (null === $session || !$session->has('_security_main') || empty($session->get('_security_main'))) {
             return $this->login($request);
@@ -196,7 +192,7 @@ final class ExportAction extends BaseController
         return $response;
     }
 
-    protected static function setCellDate(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD)
+    protected static function setCellDate(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD): void
     {
         $worksheet->setCellValue(
             $column.$row,
@@ -207,7 +203,7 @@ final class ExportAction extends BaseController
             ->setFormatCode($format);
     }
 
-    protected static function setCellHours(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date)
+    protected static function setCellHours(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date): void
     {
         $dateValue = (float) \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
