@@ -23,8 +23,7 @@ final class UserSaveDto
         $self->abbr = (string) ($request->request->get('abbr') ?? '');
         $self->type = (string) ($request->request->get('type') ?? '');
         $self->locale = (string) ($request->request->get('locale') ?? '');
-        $rawTeams = $request->request->all('teams');
-        $self->teams = is_array($rawTeams) ? array_values($rawTeams) : [];
+        $self->teams = array_values((array) $request->request->all('teams'));
         return $self;
     }
 }
