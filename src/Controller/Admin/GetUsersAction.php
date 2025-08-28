@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetUsersAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllUsers', name: '_getAllUsers_attr', methods: ['GET'])]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): Response|JsonResponse
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): Response|JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (null === $user) {
             return $this->redirectToRoute('_login');
