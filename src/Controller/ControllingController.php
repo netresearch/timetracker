@@ -20,7 +20,7 @@ class ControllingController extends BaseController
         int $row,
         \DateTimeInterface $date,
         string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD,
-    ) {
+    ): void {
         $worksheet->setCellValue(
             $column.$row,
             \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date)
@@ -38,7 +38,7 @@ class ControllingController extends BaseController
         string $column,
         int $row,
         \DateTimeInterface $date,
-    ) {
+    ): void {
         $dateValue = (float) \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
         $worksheet->setCellValue($column.$row, $hourValue);
