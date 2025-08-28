@@ -13,8 +13,12 @@ final class IndexAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] User $user): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
+        if (null === $user) {
+            return $this->login($request);
+        }
+
         $userId = (int) $user->getId();
         $managerRegistry = $this->managerRegistry;
 
