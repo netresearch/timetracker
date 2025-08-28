@@ -27,6 +27,9 @@ class BasicAccessTest extends AbstractWebTestCase
         // Use the Base class login functionality to authenticate
         $this->logInSession('unittest');
 
+        // Perform a lightweight request to apply the session cookie to the browser
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
+
         // Check authentication is working with a simple endpoint
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
         $this->assertStatusCode(200);
