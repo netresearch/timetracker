@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 final class CheckStatusAction extends BaseController
 {
+    // kept for attribute injection compatibility in other environments
     private \Symfony\Bundle\SecurityBundle\Security $security;
     private RequestStack $requestStack;
 

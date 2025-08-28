@@ -362,7 +362,8 @@ class User implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->username !== '' ? $this->username : '';
+        // Guarantee non-empty string as required by Symfony contracts
+        return $this->username !== '' ? $this->username : '_';
     }
 
     public function eraseCredentials(): void
