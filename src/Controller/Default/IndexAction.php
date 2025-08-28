@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 final class IndexAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
-    #[\Symfony\Bundle\SecurityBundle\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] User $user): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
         $userId = (int) $user->getId();
