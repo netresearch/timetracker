@@ -15,7 +15,7 @@ final class GetProjectsAction extends BaseController
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
         if (null === $user) {
-            return $this->login($request);
+            return $this->redirectToRoute('_login');
         }
 
         $customerId = (int) $request->query->get('customer');
