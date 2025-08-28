@@ -15,7 +15,7 @@ final class GetTimeSummaryAction extends BaseController
     public function __invoke(Request $request): JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (!$this->checkLogin($request)) {
-            return $this->login($request);
+            return $this->redirectToRoute('_login');
         }
 
         $userId = $this->getUserId($request);
