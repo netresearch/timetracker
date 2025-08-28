@@ -10,13 +10,10 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetCustomersAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getCustomers', name: '_getCustomers_attr', methods: ['GET'])]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
+    #[\Symfony\Bundle\SecurityBundle\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
-
-        $userId = $this->getUserId($request);
+        $userId = (int) $user->getId();
         /** @var \App\Repository\CustomerRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\Customer::class);
         $data = $objectRepository->getCustomersByUser($userId);
