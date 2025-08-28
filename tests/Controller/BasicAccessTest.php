@@ -19,6 +19,10 @@ class BasicAccessTest extends AbstractWebTestCase
         // Clear session first
         $this->client->getContainer()->get('session')->clear();
         $this->client->getCookieJar()->clear();
+        // Ensure unauthenticated by clearing the token storage as well
+        if ($this->client->getContainer()->has('security.token_storage')) {
+            $this->client->getContainer()->get('security.token_storage')->setToken(null);
+        }
 
         // Try to access protected route - should fail
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
