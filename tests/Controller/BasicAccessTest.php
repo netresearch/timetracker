@@ -40,6 +40,7 @@ class BasicAccessTest extends AbstractWebTestCase
 
         // Reinforce authentication just before admin endpoint
         $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
 
         // Now try the AdminController endpoint
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
