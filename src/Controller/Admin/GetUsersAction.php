@@ -11,12 +11,10 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetUsersAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllUsers', name: '_getAllUsers_attr', methods: ['GET'])]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): Response|JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function __invoke(Request $request): Response|JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
     {
-        if (null === $user) {
-            if (!$this->checkLogin($request)) {
-                return $this->redirectToRoute('_login');
-            }
+        if (!$this->isLoggedIn($request)) {
+            return $this->redirectToRoute('_login');
         }
 
         /** @var \App\Repository\UserRepository $objectRepository */
