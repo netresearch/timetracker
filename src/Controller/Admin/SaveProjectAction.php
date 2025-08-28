@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
+use App\Dto\ProjectSaveDto;
 use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
@@ -17,45 +18,43 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
 use App\Service\Util\TimeCalculationService;
 use App\Service\SubticketSyncService;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use App\Service\Validation\ProjectValidator;
 
 final class SaveProjectAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
-    public function __invoke(Request $request): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $dto, ObjectMapperInterface $mapper, ProjectValidator $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $projectId = (int) $request->request->get('id');
-        $name = RequestHelper::string($request, 'name');
+        $projectId = $dto->id;
 
         $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystem = RequestEntityHelper::ticketSystem($request, $this->doctrineRegistry, 'ticket_system');
+        $ticketSystem = null !== $dto->ticket_system ? $this->doctrineRegistry->getRepository(TicketSystem::class)->find($dto->ticket_system) : null;
 
         $this->doctrineRegistry->getRepository(User::class);
-        $projectLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'project_lead');
-        $technicalLead = RequestEntityHelper::user($request, $this->doctrineRegistry, 'technical_lead');
+        $projectLead = null !== $dto->project_lead ? $this->doctrineRegistry->getRepository(User::class)->find($dto->project_lead) : null;
+        $technicalLead = null !== $dto->technical_lead ? $this->doctrineRegistry->getRepository(User::class)->find($dto->technical_lead) : null;
 
-        $jiraId = RequestHelper::upperString($request, 'jiraId');
-        $jiraTicket = RequestHelper::upperString($request, 'jiraTicket');
-        $active = RequestHelper::bool($request, 'active');
-        $global = RequestHelper::bool($request, 'global');
-        $estimation = $this->timeCalculationService->readableToFullMinutes(RequestHelper::string($request, 'estimation', '0m'));
-        $billing = RequestHelper::int($request, 'billing', 0);
-        $costCenter = RequestHelper::nullableString($request, 'cost_center');
-        $offer = RequestHelper::nullableString($request, 'offer');
-        $additionalInformationFromExternal = RequestHelper::bool($request, 'additionalInformationFromExternal');
+        $jiraId = $dto->jiraId ?? '';
+        $jiraTicket = $dto->jiraTicket ?? '';
+        $active = $dto->active;
+        $global = $dto->global;
+        $estimation = $this->timeCalculationService->readableToFullMinutes($dto->estimation);
+        $billing = $dto->billing;
+        $costCenter = $dto->cost_center;
+        $offer = $dto->offer;
+        $additionalInformationFromExternal = $dto->additionalInformationFromExternal;
+
         /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
-        $internalJiraTicketSystem = $request->request->get('internalJiraTicketSystem');
-        if ('' === $internalJiraTicketSystem || null === $internalJiraTicketSystem) {
-            $internalJiraTicketSystem = null;
-        } else {
-            $internalJiraTicketSystem = (string) $internalJiraTicketSystem;
-        }
 
-        $internalJiraProjectKey = (string) $request->request->get('internalJiraProjectKey', '');
+        $internalJiraTicketSystem = $dto->internalJiraTicketSystem;
+        $internalJiraProjectKey = $dto->internalJiraProjectKey;
 
         if (0 !== $projectId) {
             $project = $objectRepository->find($projectId);
@@ -68,8 +67,7 @@ final class SaveProjectAction extends BaseController
             $project = new Project();
 
             /** @var Customer $customer */
-            $customer = $this->doctrineRegistry->getRepository(Customer::class)
-                ->find($request->request->get('customer'));
+            $customer = null !== $dto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($dto->customer) : null;
             if (!$customer instanceof Customer) {
                 $response = new Response($this->translate('Please choose a customer.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -80,7 +78,7 @@ final class SaveProjectAction extends BaseController
             $project->setCustomer($customer);
         }
 
-        if (strlen($name) < 3) {
+        if (strlen($dto->name) < 3) {
             $response = new Response($this->translate('Please provide a valid project name with at least 3 letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -95,18 +93,11 @@ final class SaveProjectAction extends BaseController
             return $response;
         }
 
-        $sameNamedProject = $objectRepository->findOneBy(
-            ['name' => $name, 'customer' => $projectCustomer->getId()]
-        );
-        if ($sameNamedProject instanceof Project && $project->getId() !== $sameNamedProject->getId()) {
+        if (!$validator->isNameUniqueForCustomer($dto->name, (int) $projectCustomer->getId(), $project->getId())) {
             $response = new Response($this->translate('The project name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
-        }
-
-        if (strlen($jiraId) > 1 && $project->getJiraId() !== $jiraId && $ticketSystem instanceof TicketSystem) {
-            $search['ticketSystem'] = $ticketSystem;
         }
 
         if (strlen($jiraId) && false == $objectRepository->isValidJiraPrefix($jiraId)) {
@@ -116,8 +107,10 @@ final class SaveProjectAction extends BaseController
             return $response;
         }
 
+        // Map scalar fields from DTO to entity
+        $mapper->map($dto, $project);
+        // Then set computed/relations
         $project
-            ->setName($name)
             ->setJiraId($jiraId)
             ->setJiraTicket($jiraTicket)
             ->setActive($active)
@@ -142,7 +135,7 @@ final class SaveProjectAction extends BaseController
         $objectManager->persist($project);
         $objectManager->flush();
 
-        $data = [$project->getId(), $name, $projectCustomer->getId(), $jiraId];
+        $data = [$project->getId(), $dto->name, $projectCustomer->getId(), $jiraId];
 
         if ($ticketSystem instanceof TicketSystem) {
             try {

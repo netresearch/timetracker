@@ -12,11 +12,13 @@ use App\Model\Response;
 use App\Response\Error;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use App\Service\Validation\UserValidator;
 
 final class SaveUserAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $dto): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $dto, ObjectMapperInterface $mapper, UserValidator $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -49,24 +51,21 @@ final class SaveUserAction extends BaseController
             return $response;
         }
 
-        if (($sameNamedUser = $objectRepository->findOneByUsername($name)) instanceof User && $user->getId() !== $sameNamedUser->getId()) {
+        if (!$validator->isUsernameUnique($name, $user->getId())) {
             $response = new Response($this->translate('The user name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        if (($sameAbbrUser = $objectRepository->findOneByAbbr($abbr)) instanceof User && $user->getId() !== $sameAbbrUser->getId()) {
+        if (!$validator->isAbbrUnique($abbr, $user->getId())) {
             $response = new Response($this->translate('The user name abreviation provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        $user->setUsername($name)
-            ->setAbbr($abbr)
-            ->setLocale($locale)
-            ->setType($type);
+        $mapper->map($dto, $user);
 
         $user->resetTeams();
         foreach ($dto->teams as $teamId) {

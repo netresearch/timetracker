@@ -34,7 +34,7 @@ class UserRepository extends ServiceEntityRepository
      *
      * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string}}>
      */
-    public function getUsers($currentUserId): array
+    public function getUsers(int $currentUserId): array
     {
         /** @var User[] $users */
         $users = $this->findBy(

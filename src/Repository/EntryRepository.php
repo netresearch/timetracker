@@ -275,7 +275,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * @return array<int, Entry>
      */
-    public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, ?int $maxResults = null)
+    public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, ?int $maxResults = null): array
     {
         $queryBuilder = $this->getEntityManager()->createQueryBuilder();
         $queryBuilder
@@ -614,7 +614,7 @@ class EntryRepository extends ServiceEntityRepository
      * @param array<string, mixed> $arFilter
      * @return array<int, Entry>
      */
-    public function findByFilterArray(array $arFilter = [])
+    public function findByFilterArray(array $arFilter = []): array
     {
         return $this->queryByFilterArray($arFilter)->getResult();
     }

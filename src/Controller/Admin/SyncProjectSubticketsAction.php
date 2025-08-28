@@ -30,7 +30,7 @@ final class SyncProjectSubticketsAction extends BaseController
             return $this->getFailedLoginResponse();
         }
 
-        $projectId = (int) ($dto->project ?? 0);
+        $projectId = $dto->project;
 
         try {
             $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectId);

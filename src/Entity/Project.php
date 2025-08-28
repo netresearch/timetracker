@@ -217,7 +217,7 @@ class Project extends Base
         if ('' === $nInternalJiraTicketSystem || null === $nInternalJiraTicketSystem) {
             $this->internalJiraTicketSystem = null;
         } else {
-            $this->internalJiraTicketSystem = (string) $nInternalJiraTicketSystem;
+            $this->internalJiraTicketSystem = $nInternalJiraTicketSystem;
         }
 
         return $this;
