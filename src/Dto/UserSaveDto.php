@@ -12,7 +12,7 @@ final class UserSaveDto
     public string $abbr = '';
     public string $type = '';
     public string $locale = '';
-    /** @var array<int|string> */
+    /** @var list<int|string> */
     public array $teams = [];
 
     public static function fromRequest(Request $request): self
@@ -23,7 +23,7 @@ final class UserSaveDto
         $self->abbr = (string) ($request->request->get('abbr') ?? '');
         $self->type = (string) ($request->request->get('type') ?? '');
         $self->locale = (string) ($request->request->get('locale') ?? '');
-        /** @var array<int|string>|string|null $teams */
+        /** @var list<int|string>|string|null $teams */
         $teams = $request->request->all('teams');
         $self->teams = is_array($teams) ? $teams : [];
         return $self;

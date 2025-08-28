@@ -184,7 +184,7 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error($this->translator->trans($e->getMessage()), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE, null, $e);
         } catch (\Throwable $e) {
             $response = [
-                'result' => ($entry instanceof Entry) ? $entry->toArray() : [],
+                'result' => is_object($entry) ? $entry->toArray() : [],
                 'alert' => $e->getMessage(),
             ];
 
