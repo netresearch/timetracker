@@ -22,12 +22,12 @@ final class GetAllEntriesAction extends BaseController
             return $this->getFailedAuthorizationResponse();
         }
 
-        // Support legacy *_id aliases in addition to canonical names
-        $project = (int) (($filters->project ?? $filters->project_id) ?? 0);
-        $customer = (int) (($filters->customer ?? $filters->customer_id) ?? 0);
-        $activity = (int) (($filters->activity ?? $filters->activity_id) ?? 0);
-        $maxResults = (int) ($filters->maxResults ?? 0);
-        $page = (int) ($filters->page ?? 0);
+        // Legacy *_id aliases are handled inside the DTO helper
+        $project = $filters->project ?? $filters->project_id ?? 0;
+        $customer = $filters->customer ?? $filters->customer_id ?? 0;
+        $activity = $filters->activity ?? $filters->activity_id ?? 0;
+        $maxResults = $filters->maxResults ?? 0;
+        $page = $filters->page ?? 0;
         $datestart = $filters->datestart;
         $dateend = $filters->dateend;
 

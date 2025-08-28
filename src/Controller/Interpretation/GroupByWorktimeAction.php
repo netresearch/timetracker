@@ -43,9 +43,9 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             $times[$key]['minutes'] += $entry->getDuration();
         }
 
-        $totalMinutes = 0.0; foreach ($times as $t) { $totalMinutes += (float) $t['minutes']; }
+        $totalMinutes = 0.0; foreach ($times as $t) { $totalMinutes += $t['minutes']; }
         foreach ($times as &$time) {
-            $minutes = (float) $time['minutes'];
+            $minutes = $time['minutes'];
             $time['hours'] = $minutes / 60.0;
             unset($time['minutes']);
             $time['quota'] = $this->timeCalculationService->formatQuota($minutes, $totalMinutes);
@@ -56,7 +56,8 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => (float) $t['hours'], 'quota' => (string) $t['quota'],
         ], $times);
 
-        return new JsonResponse(array_values(array_reverse($prepared)));
+        $prepared = array_reverse($prepared);
+        return new JsonResponse($prepared);
     }
 }
 

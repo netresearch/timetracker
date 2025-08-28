@@ -413,7 +413,12 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
-        // Guard: if either start or end is not initialized yet (during partial construction)
+        /**
+         * Guard for partially initialized entity during construction/hydration.
+         *
+         * @psalm-suppress RedundantPropertyInitializationCheck
+         * @psalm-suppress TypeDoesNotContainType
+         */
         if (!isset($this->start) || !isset($this->end)) {
             return $this;
         }
@@ -593,7 +598,12 @@ class Entry extends Base
      */
     public function calcDuration($factor = 1): static
     {
-        // Guard: if either start or end is not initialized yet (during partial construction)
+        /**
+         * Guard for partially initialized entity during construction/hydration.
+         *
+         * @psalm-suppress RedundantPropertyInitializationCheck
+         * @psalm-suppress TypeDoesNotContainType
+         */
         if (!isset($this->start) || !isset($this->end)) {
             $this->setDuration(0);
             return $this;

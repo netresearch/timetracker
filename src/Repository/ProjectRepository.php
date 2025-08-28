@@ -129,7 +129,7 @@ class ProjectRepository extends ServiceEntityRepository
     /**
      * @return array<int, Project>
      */
-    public function findByCustomer(int $customerId = 0)
+    public function findByCustomer(int $customerId = 0): array
     {
         /** @var array<int, Project> $result */
         $result = $this->createQueryBuilder('project')

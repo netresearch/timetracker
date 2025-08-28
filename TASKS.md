@@ -81,7 +81,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     -   `[x]` **Run PHPStan:** Execute `docker compose run --rm app composer analyze` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
     -   `[x]` **Run Psalm:** Execute `docker compose run --rm app composer psalm` and fix reported issues. (Estimate: 1h+ - Highly variable, depends on initial state)
         -   `[x]` Reduce issues in controllers (admin/crud/default) and integration layer (JiraOAuthApiService)
-        -   `[ ]` Tidy repository return types and static signatures (remaining)
+        -   `[x]` Tidy repository return types and static signatures (remaining)
     -   `[x]` **Run CS Check/Fix:** Execute `docker compose run --rm app composer cs-check` and `docker compose run --rm app composer cs-fix` to ensure PSR-12 compliance. (Estimate: 0.5h)
 
 ### 1.5: Request DTOs and Request Mapping
@@ -98,7 +98,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
     -   `[x]` Refactor Settings save into invokable; remove legacy `SettingsController`
     -   `[x]` Refactor Interpretation endpoints into invokables; remove legacy `InterpretationController`
     -   `[x]` Refactor Default endpoints into invokables (index, summaries, data, exports, JIRA callback, scripts)
-    -   `[ ]` Follow-up: consider `#[MapRequestPayload]` for POST endpoints (project/customer/preset save)
+    -   `[x]` Follow-up: consider `#[MapRequestPayload]` for POST endpoints (project/customer/preset save)
 
 ## Phase 2: Upgrade to Symfony 7.3 (Completed)
 
