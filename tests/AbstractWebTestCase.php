@@ -346,6 +346,22 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             $cookie = new Cookie($session->getName(), $session->getId());
             $this->client->getCookieJar()->set($cookie);
 
+            // Also set the token directly in token storage for the current kernel request cycle
+            if ($this->serviceContainer->has('security.token_storage')) {
+                $tokenStorage = $this->serviceContainer->get('security.token_storage');
+                try {
+                    $postAuthToken = new \Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken(
+                        $userEntity,
+                        'main',
+                        $userEntity->getRoles()
+                    );
+                    $tokenStorage->setToken($postAuthToken);
+                } catch (\Throwable) {
+                    // Fallback to UsernamePasswordToken if PostAuthenticationToken not available
+                    $tokenStorage->setToken($usernamePasswordToken);
+                }
+            }
+
             // Avoid kernel reboot to keep the same DB connection within a test method
             // This ensures transactional visibility across multiple requests
             $this->client->disableReboot();
