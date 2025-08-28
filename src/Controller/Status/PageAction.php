@@ -9,21 +9,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 final class PageAction extends BaseController
 {
-    // kept for attribute injection compatibility in other environments
-    private \Symfony\Bundle\SecurityBundle\Security $security;
-    private RequestStack $requestStack;
-
-    #[\Symfony\Contracts\Service\Attribute\Required]
-    public function setSecurity(\Symfony\Bundle\SecurityBundle\Security $security): void
-    {
-        $this->security = $security;
-    }
-
-    #[\Symfony\Contracts\Service\Attribute\Required]
-    public function setRequestStack(RequestStack $requestStack): void
-    {
-        $this->requestStack = $requestStack;
-    }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/status/page', name: 'check_page', methods: ['GET'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\Response

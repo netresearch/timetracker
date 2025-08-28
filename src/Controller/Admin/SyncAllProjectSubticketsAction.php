@@ -36,8 +36,6 @@ final class SyncAllProjectSubticketsAction extends BaseController
     }
 
     private SubticketSyncService $subticketSyncService;
-    // Optional dependency; kept for BC but currently unused
-    private JiraOAuthApiFactory $jiraOAuthApiFactory;
 
     #[Required]
     public function setSubticketSyncService(SubticketSyncService $svc): void
