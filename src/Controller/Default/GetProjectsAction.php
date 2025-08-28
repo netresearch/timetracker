@@ -12,8 +12,12 @@ final class GetProjectsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjects', name: '_getProjects_attr', methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): JsonResponse
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
+        if (null === $user) {
+            return $this->login($request);
+        }
+
         $customerId = (int) $request->query->get('customer');
         $userId = (int) $user->getId();
         /** @var \App\Repository\ProjectRepository $objectRepository */
