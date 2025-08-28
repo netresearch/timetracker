@@ -5,4 +5,6 @@ parameters:
         - config/
         - public/
         - src/
-        - tests/
+    excludePaths:
+        - tests/*
+    treatPhpDocTypesAsCertain: false
