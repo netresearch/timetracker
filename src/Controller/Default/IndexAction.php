@@ -16,7 +16,7 @@ final class IndexAction extends BaseController
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
         if (null === $user) {
-            return $this->login($request);
+            return $this->redirectToRoute('_login');
         }
 
         $userId = (int) $user->getId();
