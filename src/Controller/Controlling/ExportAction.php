@@ -35,9 +35,7 @@ final class ExportAction extends BaseController
                 $request->query->set($attributeKeyToMap, (string) $request->attributes->get($attributeKeyToMap));
             }
         }
-        $session = $request->getSession();
-
-        if (null === $session || !$session->has('_security_main') || empty($session->get('_security_main'))) {
+        if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
 

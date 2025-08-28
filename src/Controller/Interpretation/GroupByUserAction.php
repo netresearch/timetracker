@@ -48,7 +48,7 @@ final class GroupByUserAction extends BaseInterpretationController
         foreach ($users as &$u) { $u['quota'] = $this->timeCalculationService->formatQuota($u['hours'], $sum); }
         usort($users, $this->sortByName(...));
 
-        return new JsonResponse(array_values($users));
+        return new JsonResponse($users);
     }
 }
 

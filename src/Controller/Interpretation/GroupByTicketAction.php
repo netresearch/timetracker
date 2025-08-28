@@ -47,7 +47,7 @@ final class GroupByTicketAction extends BaseInterpretationController
         foreach ($tickets as &$t) { $t['quota'] = $this->timeCalculationService->formatQuota($t['hours'], $sum); }
         usort($tickets, $this->sortByName(...));
 
-        return new JsonResponse(array_values($tickets));
+        return new JsonResponse($tickets);
     }
 }
 
