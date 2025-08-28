@@ -175,7 +175,7 @@ final class SaveEntryAction extends BaseTrackingController
             return new JsonResponse($response);
         } catch (\App\Exception\Integration\Jira\JiraApiUnauthorizedException $e) {
             $response = [
-                'result' => ($entry instanceof Entry) ? $entry->toArray() : [],
+                'result' => ($entry instanceof \App\Entity\Entry) ? $entry->toArray() : [],
                 'alert' => $e->getMessage(),
             ];
 
@@ -184,7 +184,7 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error($this->translator->trans($e->getMessage()), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE, null, $e);
         } catch (\Throwable $e) {
             $response = [
-                'result' => ($entry instanceof Entry) ? $entry->toArray() : [],
+                'result' => ($entry instanceof \App\Entity\Entry) ? $entry->toArray() : [],
                 'alert' => $e->getMessage(),
             ];
 
