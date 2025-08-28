@@ -10,8 +10,8 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetCustomersAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getCustomers', name: '_getCustomers_attr', methods: ['GET'])]
-    #[\Symfony\Bundle\SecurityBundle\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
+    #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): JsonResponse
     {
         $userId = (int) $user->getId();
         /** @var \App\Repository\CustomerRepository $objectRepository */

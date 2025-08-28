@@ -11,8 +11,8 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetProjectsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjects', name: '_getProjects_attr', methods: ['GET'])]
-    #[\Symfony\Bundle\SecurityBundle\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
+    #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] \App\Entity\User $user): JsonResponse
     {
         $customerId = (int) $request->query->get('customer');
         $userId = (int) $user->getId();
