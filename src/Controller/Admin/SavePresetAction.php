@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 final class SavePresetAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
-    public function __invoke(Request $request): Response|JsonResponse
+    public function __invoke(Request $request): Response|JsonResponse|\App\Response\Error
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();

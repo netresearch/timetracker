@@ -17,7 +17,7 @@ use App\Entity\Contract;
 final class BulkEntryAction extends BaseTrackingController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
-    public function __invoke(Request $request): Response|Error
+    public function __invoke(Request $request): Response
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();

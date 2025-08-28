@@ -362,7 +362,7 @@ class User implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->username;
+        return $this->username !== '' ? $this->username : '';
     }
 
     public function eraseCredentials(): void

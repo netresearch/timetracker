@@ -30,10 +30,7 @@ final class SyncAllProjectSubticketsAction extends BaseController
             }
         }
 
-        if (true === $request->query->getBoolean('jira')) {
-            $jiraApi = $this->jiraOAuthApiFactory->createApi();
-            $jiraApi->revokeAdminToken();
-        }
+        // Optional JIRA token cleanup is not implemented in current API; no-op for now
 
         return new JsonResponse(['success' => $result]);
     }

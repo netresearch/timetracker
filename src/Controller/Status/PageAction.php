@@ -28,14 +28,6 @@ final class PageAction extends BaseController
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $login = $this->isLoggedIn($request);
-        if (null === $request) {
-            $req = $this->requestStack->getCurrentRequest();
-            if (null !== $req) {
-                $login = $this->isLoggedIn($req);
-            } else {
-                $login = $this->security->isGranted('IS_AUTHENTICATED');
-            }
-        }
 
         return $this->render('status.html.twig', [
             'loginClass' => ($login ? 'status_active' : 'status_inactive'),
