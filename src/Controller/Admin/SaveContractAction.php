@@ -66,8 +66,9 @@ final class SaveContractAction extends BaseController
 
         $dateEnd = null;
         if (null !== $end) {
-            $dateEnd = \DateTime::createFromFormat('Y-m-d', $end);
-            if ($dateEnd) {
+            $dateEndTmp = \DateTime::createFromFormat('Y-m-d', $end);
+            if ($dateEndTmp instanceof \DateTime) {
+                $dateEnd = $dateEndTmp;
                 $dateEnd->setDate((int) $dateEnd->format('Y'), (int) $dateEnd->format('m'), (int) $dateEnd->format('d'));
                 $dateEnd->setTime(23, 59, 59);
 
@@ -157,7 +158,11 @@ final class SaveContractAction extends BaseController
         return '';
     }
 
-    /** look for old contracts that start during the duration of the new contract */
+    /**
+     * look for old contracts that start during the duration of the new contract
+     *
+     * @param array<int, Contract> $contracts
+     */
     protected function checkOldContractsStartDateOverlap(array $contracts, \DateTime $newStartDate, ?\DateTime $newEndDate): bool
     {
         $filteredContracts = [];
@@ -176,7 +181,11 @@ final class SaveContractAction extends BaseController
         return (bool) $filteredContracts;
     }
 
-    /** look for contract with ongoing end */
+    /**
+     * look for contract with ongoing end
+     *
+     * @param array<int, Contract> $contracts
+     */
     protected function checkOldContractsEndDateOverlap(array $contracts, \DateTime $newStartDate): bool
     {
         $filteredContracts = [];

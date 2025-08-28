@@ -21,7 +21,7 @@ final class GetTicketTimeSummaryAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
-    public function __invoke(Request $request): JsonResponse|Response
+    public function __invoke(Request $request): Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->login($request);
