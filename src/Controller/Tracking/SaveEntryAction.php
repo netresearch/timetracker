@@ -24,8 +24,7 @@ final class SaveEntryAction extends BaseTrackingController
             return $this->getFailedLoginResponse();
         }
 
-        /** @var Entry|null $entry */
-        $entry = null;
+        $entry = new Entry();
         try {
             $alert = null;
             $this->logData($_POST, true);
