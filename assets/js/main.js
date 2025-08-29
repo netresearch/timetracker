@@ -309,6 +309,53 @@ function handleRedirect(response, title, message) {
     }
 }
 
+/**
+ * Parses an Ext.Ajax error response and extracts a user-friendly message.
+ * - For 422 responses with JSON bodies: concatenates violations or uses message
+ * - Otherwise: returns response.responseText
+ */
+function parseAjaxError(response) {
+    var data = undefined;
+    var message = '';
+    try {
+        var ct = (response.getResponseHeader ? response.getResponseHeader('Content-Type') : '') || '';
+        if (ct.indexOf('json') !== -1) {
+            try { data = Ext.decode(response.responseText); } catch (e) {}
+        }
+        if (response.status === 422 && data) {
+            if (data.violations && Ext.isArray(data.violations) && data.violations.length) {
+                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+            } else if (data.message) {
+                message = data.message;
+            }
+        }
+    } catch (e) {}
+    if (!message) {
+        if (data && data.message) {
+            message = data.message;
+        } else {
+            message = response.responseText;
+        }
+    }
+    return { message: message, data: data };
+}
+
+/**
+ * Shows a standardized error notification from an Ajax response.
+ * Applies a fallback when the plain response text looks like a stack trace.
+ */
+function showAjaxFailure(title, response, fallbackMessage, shortTextThreshold) {
+    var parsed = parseAjaxError(response);
+    var threshold = (typeof shortTextThreshold === 'number') ? shortTextThreshold : 200;
+    var isPlain = (parsed.message === response.responseText);
+    var message = parsed.message;
+    if ((!message) || (isPlain && response.responseText && response.responseText.length >= threshold)) {
+        message = fallbackMessage || 'An error occurred.';
+    }
+    showNotification(title, message, false);
+    return parsed;
+}
+
 var notification = undefined;
 
 /**
