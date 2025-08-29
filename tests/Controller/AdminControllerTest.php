@@ -1741,8 +1741,12 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'name' => 'testSaveTicketSystem',
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
-        $this->assertStatusCode(200);
+        try {
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
+            $this->assertStatusCode(200);
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
+            $this->fail('Unexpected 422 for valid ticketsystem save');
+        }
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder
             ->select('*')
@@ -1795,8 +1799,12 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'name' => 'testSaveTicketSystemUpdate',
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
-        $this->assertStatusCode(200);
+        try {
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
+            $this->assertStatusCode(200);
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
+            $this->fail('Unexpected 422 for valid ticketsystem update');
+        }
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder
             ->select('*')

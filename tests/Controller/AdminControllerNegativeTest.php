@@ -183,10 +183,14 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'url' => '',
             'ticketUrl' => '',
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
-        $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        try {
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
+            $this->assertStatusCode(422);
+            $content = (string) $this->client->getResponse()->getContent();
+            $this->assertNotEmpty($content);
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
+            $this->assertSame(422, $e->getStatusCode());
+        }
     }
 
     // Skipping a test for missing preset relations due to strict type setters causing TypeError
