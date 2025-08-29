@@ -231,7 +231,24 @@ Ext.define('Netresearch.widget.Extras', {
                             showNotification(panel._successTitle, response.responseText, true);
                         },
                         failure: function(response) {
-                            showNotification(panel._errorTitle, response.responseText, false);
+                            var message = '';
+                            try {
+                                if (response.status === 422) {
+                                    var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
+                                    if (ct && ct.indexOf('json') !== -1) {
+                                        var data = Ext.decode(response.responseText);
+                                        if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
+                                            message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                        } else if (data && data.message) {
+                                            message = data.message;
+                                        }
+                                    }
+                                }
+                            } catch (e) {}
+                            if (!message) {
+                                message = response.responseText;
+                            }
+                            showNotification(panel._errorTitle, message, false);
                         }
                     });
                 }

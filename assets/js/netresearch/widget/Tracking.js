@@ -812,9 +812,27 @@ Ext.define('Netresearch.widget.Tracking', {
                 failure: function(response) {
                     record.saveInProgress=undefined;
                     record.dirty = true;
-                    const responseContent = JSON.parse(response.responseText);
-                    showNotification(grid._errorTitle, responseContent.message, false);
-                    if (typeof responseContent.forwardUrl !== 'undefined') {
+                    var message = '';
+                    var responseContent = {};
+                    try {
+                        if (response.status === 422) {
+                            var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
+                            if (ct && ct.indexOf('json') !== -1) {
+                                responseContent = Ext.decode(response.responseText);
+                                if (responseContent && responseContent.violations && Ext.isArray(responseContent.violations) && responseContent.violations.length) {
+                                    message = Ext.Array.map(responseContent.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                } else if (responseContent && responseContent.message) {
+                                    message = responseContent.message;
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                    if (!message) {
+                        try { responseContent = Ext.decode(response.responseText); } catch (e) {}
+                        message = (responseContent && responseContent.message) ? responseContent.message : response.responseText;
+                    }
+                    showNotification(grid._errorTitle, message, false);
+                    if (responseContent && typeof responseContent.forwardUrl !== 'undefined') {
                         setTimeout("window.location.href = '" + responseContent.forwardUrl + "'", 2000);
                     }
                 }
