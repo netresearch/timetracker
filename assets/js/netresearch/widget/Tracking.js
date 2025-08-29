@@ -20,7 +20,7 @@ Ext.define('Netresearch.widget.Tracking', {
     activityStore: Ext.create('Netresearch.store.Activities'),
     userStore: Ext.create('Netresearch.store.AdminUsers'),
     ticketSystemStore: Ext.create('Netresearch.store.TicketSystems'),
-    startTime : null,
+    startTime: null,
 
     /* Strings */
     _tabTitle: 'Time Tracking',
@@ -36,7 +36,7 @@ Ext.define('Netresearch.widget.Tracking', {
     _infoTitle: 'Info',
     _continueTitle: 'Continue',
     _deleteTitle: 'Delete',
-    _addTitle : 'Add Entry',
+    _addTitle: 'Add Entry',
     _refreshTitle: 'Refresh',
     _exportTitle: 'Export',
     _daysTitle: 'Days',
@@ -67,14 +67,13 @@ Ext.define('Netresearch.widget.Tracking', {
     _successTitle: 'Success',
 
     /* Initialize tracking widget */
-    initComponent: function()
-    {
+    initComponent: function () {
         this.on('render', this.refresh, this);
         this.startTime = this.roundTime(this.getNewDate());
 
         const entryStore = Ext.create('Netresearch.store.Entries');
         const grid = this;
-        entryStore.on("load", function() { grid.selectRow(0); });
+        entryStore.on("load", function () { grid.selectRow(0); });
 
         if (this.autoRefreshInterval === true) {
             this.autoRefreshInterval = window.setInterval(
@@ -95,7 +94,7 @@ Ext.define('Netresearch.widget.Tracking', {
                  * - grey: break
                  * - red: overlapping times
                  */
-                getRowClass: function(record, index) {
+                getRowClass: function (record, index) {
                     // new algorithm using backend
                     switch (parseInt(record.data.class)) {
                         case 1: return '';
@@ -109,10 +108,10 @@ Ext.define('Netresearch.widget.Tracking', {
                     const maxIndex = store.getCount() - 1;
 
                     // skip unsaved entries
-                    if (('undefined' === typeof(record.index))
-                            || (undefined === record.data.id)
-                            || (null == record.data.id)
-                            || (record.data.id < 1)) {
+                    if (('undefined' === typeof (record.index))
+                        || (undefined === record.data.id)
+                        || (null == record.data.id)
+                        || (record.data.id < 1)) {
                         return 'unsaved';
                     }
 
@@ -145,8 +144,8 @@ Ext.define('Netresearch.widget.Tracking', {
 
                         // immediately escalate on overlapping entries
                         if ((comparison.data.start.toString() < record.data.start.toString())
-                        && (comparison.data.start.toString() < record.data.end.toString())
-                        && (comparison.data.end.toString() > record.data.start.toString())) {
+                            && (comparison.data.start.toString() < record.data.end.toString())
+                            && (comparison.data.end.toString() > record.data.start.toString())) {
                             return 'overlap-row-bottom';
                         }
 
@@ -241,7 +240,7 @@ Ext.define('Netresearch.widget.Tracking', {
                         selectOnFocus: true,
                         listeners: {
                             scope: this,
-                            blur: function(field, options) {
+                            blur: function (field, options) {
                                 const selection = this.getSelectionModel().getSelection();
                                 if (selection.length < 1) {
                                     return;
@@ -257,7 +256,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
                                 // new method inside JS
                                 const result = this.mapTicketToProject(selection[0].data.ticket);
-                                if (! result)
+                                if (!result)
                                     return;
 
                                 if ((result['customer'] === 0) && (result['id'] === 0))
@@ -287,21 +286,21 @@ Ext.define('Netresearch.widget.Tracking', {
                                 selection[0].commit();
 
                                 if (edited) {
-                                    this.editingPlugin.startEditByPosition({row: this.getStore().indexOf(selection[0]), column: editStartColumn});
+                                    this.editingPlugin.startEditByPosition({ row: this.getStore().indexOf(selection[0]), column: editStartColumn });
                                 }
 
                                 return;
                             }
                         }
                     },
-                    renderer: function(ticket) {
+                    renderer: function (ticket) {
                         /* Display link to bugs.nr, if Ticket is not empty */
-                        if ((!ticket)||(ticket === "")||(ticket === "-")) {
+                        if ((!ticket) || (ticket === "") || (ticket === "-")) {
                             return '-';
                         }
-                        const str = ticket.replace(/ /g,'').toUpperCase();
+                        const str = ticket.replace(/ /g, '').toUpperCase();
                         const ticketUrl = this.getTicketsystemUrlByTicket(str);
-                        return '<a href="' + ticketUrl + '" target="_new">'+ str  +'</a>';
+                        return '<a href="' + ticketUrl + '" target="_new">' + str + '</a>';
                     }
                 }, {
                     header: this._customerTitle,
@@ -325,15 +324,15 @@ Ext.define('Netresearch.widget.Tracking', {
                         anchor: '100%',
                         listeners: {
                             scope: this,
-                            focus: function(field, value) {
+                            focus: function (field, value) {
                                 this.customerStore.load(true);
                             },
-                            blur: function(field, options) {
+                            blur: function (field, options) {
                                 this.customerStore.load(false);
                             }
                         }
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         const record = this.customerStore.getById(id);
                         return record ? record.get('name') : id;
                     }
@@ -359,7 +358,7 @@ Ext.define('Netresearch.widget.Tracking', {
                         anchor: '100%',
                         listeners: {
                             scope: this,
-                            focus: function(field, value) {
+                            focus: function (field, value) {
                                 var ticket = this.getSelectedField('ticket');
                                 if ((ticket == "") || (ticket == "-")) {
                                     ticket = null;
@@ -367,12 +366,12 @@ Ext.define('Netresearch.widget.Tracking', {
 
                                 this.projectStore.loadData(projectsData, this.getSelectedField('customer'), ticket, true);
                             },
-                            blur: function(field, options) {
+                            blur: function (field, options) {
                                 // this.clearProjectStore();
                             }
                         }
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         const record = this.projectStore.getById(id);
                         return record ? record.get('name') : id;
                     }
@@ -397,7 +396,7 @@ Ext.define('Netresearch.widget.Tracking', {
                         valueField: 'id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         const record = this.activityStore.getById(id);
                         return record ? record.get('name') : id;
                     }
@@ -414,7 +413,7 @@ Ext.define('Netresearch.widget.Tracking', {
                         selectOnFocus: true,
                         selectOnTab: true
                     },
-                    renderer: function(text) {
+                    renderer: function (text) {
                         text = new String('' + text);
                         text = text.replace(/&/g, '&amp;')
                             .replace(/</g, '&lt;')
@@ -441,7 +440,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     dataIndex: 'extTicket',
                     sortable: false,
                     width: 110,
-                    renderer: function(extTicket) {
+                    renderer: function (extTicket) {
                         if (!extTicket) {
                             return;
                         }
@@ -462,7 +461,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     iconCls: 'icon-add',
                     tooltip: 'Shortcut (Alt + a)',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         this.addInlineEntry();
                     }
                 }, {
@@ -470,7 +469,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     iconCls: 'icon-refresh',
                     tooltip: 'Shortcut (Alt + r)',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         this.refreshHard();
                     }
                 }, {
@@ -478,7 +477,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     iconCls: 'icon-export',
                     tooltip: 'Shortcut (Alt + x)',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         this.exportEntries();
                     }
                 }, {
@@ -500,14 +499,14 @@ Ext.define('Netresearch.widget.Tracking', {
                     displayField: 'days',
                     valueField: 'days',
                     listeners: {
-                        afterrender: function(field, eOpts) {
+                        afterrender: function (field, eOpts) {
                             /* Set interval dropdown default value to 3 days */
                             var defaultValue = '3';
                             field.setValue(defaultValue);
                             this.days = defaultValue;
                         },
                         scope: this,
-                        change: function(field, newValue, oldValue, eOpts) {
+                        change: function (field, newValue, oldValue, eOpts) {
                             /* Reload if interval dropdown has changed */
                             if (undefined !== oldValue && newValue !== oldValue && '' !== newValue) {
                                 // reload
@@ -521,7 +520,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 }
             ],
             listeners: {
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     /* Right-click menu */
@@ -531,7 +530,7 @@ Ext.define('Netresearch.widget.Tracking', {
                                 text: this._infoTitle,
                                 iconCls: 'icon-info',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.showInfoOnSelectedEntry();
                                 },
                                 disabled: !(record.data.id && record.data.customer && record.data.project)
@@ -539,14 +538,14 @@ Ext.define('Netresearch.widget.Tracking', {
                                 text: this._continueTitle,
                                 iconCls: 'icon-add',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.continueSelectedEntry();
                                 }
                             }, {
                                 text: this._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteSelectedEntry();
                                 }
                             }
@@ -557,11 +556,11 @@ Ext.define('Netresearch.widget.Tracking', {
                 },
                 /* Refresh grid when columns are resized via drag and drop by user */
                 columnresize: {
-                    fn: function(container, column, width, eOpts) {
+                    fn: function (container, column, width, eOpts) {
                         this.getView().refresh();
                     }
                 },
-                edit: function(grid, row, field, rowIndex, columnIndex) {
+                edit: function (grid, row, field, rowIndex, columnIndex) {
                     /* Display empty line on top, if specific setting is enabled */
                     if (settingsData.show_empty_line) {
                         if (0 === row.rowIdx && 0 !== row.record.data.id && 0 !== this.getStore().getAt(row.rowIdx).data.id) {
@@ -585,10 +584,10 @@ Ext.define('Netresearch.widget.Tracking', {
                             for (let key in projects) {
                                 const value = projects[key];
                                 if (value.id === record.data.project) {
-                                     record.data.customer = parseInt(value.customer);
-                                     record.commit();
-                                     this.customerStore.load();
-                                     break;
+                                    record.data.customer = parseInt(value.customer);
+                                    record.commit();
+                                    this.customerStore.load();
+                                    break;
                                 }
                             }
                         }
@@ -599,11 +598,11 @@ Ext.define('Netresearch.widget.Tracking', {
             }
         };
 
-        Ext.applyIf(this,config);
+        Ext.applyIf(this, config);
         this.callParent();
     },
 
-    mapTicketToProject: function(ticket) {
+    mapTicketToProject: function (ticket) {
         const validProjects = findProjects(null, ticket);
 
         this.debug && console.log("Mapping ticket " + ticket);
@@ -633,7 +632,7 @@ Ext.define('Netresearch.widget.Tracking', {
         // If we found no unique project, lets take the last used one
         if ((parseInt(customer) > 0) && (id === 0)) {
             id = parseInt(this.findLastProjectByTicket(ticket, parseInt(customer)));
-            if (! id) {
+            if (!id) {
                 id = parseInt(this.findLastProjectByPrefix(extractTicketPrefix(ticket), parseInt(customer)));
                 sure = false;
             }
@@ -646,7 +645,7 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Finds the last used project number based on a ticket and customer
      */
-    findLastProjectByTicket: function(ticket, customer) {
+    findLastProjectByTicket: function (ticket, customer) {
         const store = this.getStore();
 
         for (let i = 0; i < store.getCount() && i < 100; i++) {
@@ -668,8 +667,8 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Finds the last used project number based on a ticket prefix and customer
      */
-    findLastProjectByPrefix: function(prefix, customer) {
-        if (! prefix)
+    findLastProjectByPrefix: function (prefix, customer) {
+        if (!prefix)
             return false;
 
         const store = this.getStore();
@@ -682,7 +681,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 continue;
             if ((undefined != record.data.ticket) && (null != record.data.ticket) && (record.data.ticket.length > 0)) {
                 if (extractTicketPrefix(record.data.ticket) == prefix)
-                return record.data.project;
+                    return record.data.project;
             }
         }
 
@@ -692,10 +691,10 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Returns the Ticketsystem-URL for a Ticket
      */
-    getTicketsystemUrlByTicket: function(ticket) {
+    getTicketsystemUrlByTicket: function (ticket) {
         let baseUrl;
 
-        try{
+        try {
             const projectMapping = this.mapTicketToProject(ticket);
             const project = this.projectStore.getById(projectMapping.id);
             const ticketSystem = this.ticketSystemStore.getById(project.get('ticket_system'));
@@ -703,7 +702,7 @@ Ext.define('Netresearch.widget.Tracking', {
             if (baseUrl == '') {
                 throw "empty baseUrl";
             }
-        } catch(err){
+        } catch (err) {
             baseUrl = 'http://bugs.nr/%s';
         }
 
@@ -713,21 +712,21 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Edit selected or first entry and jump to endtime column
      */
-    editSelectedEntry: function() {
+    editSelectedEntry: function () {
         const index = this.getSelectedIndex();
         if (0 > index)
             return;
 
         const record = this.store.getAt(index);
         if (undefined != record)
-            this.editingPlugin.startEditByPosition({row: index, column: 3});
+            this.editingPlugin.startEditByPosition({ row: index, column: 3 });
         return;
     },
 
     /**
      * Show info on selected or first entry's ticket / project and customer
      */
-    showInfoOnSelectedEntry: function() {
+    showInfoOnSelectedEntry: function () {
         var index = this.getSelectedIndex();
         if (0 > index)
             return;
@@ -740,7 +739,7 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Save given record to database
      */
-    saveRecord: function(record) {
+    saveRecord: function (record) {
 
         if ((null == record.data.start) || (undefined == record.data.start) || (1 > record.data.start.length)) {
             return;
@@ -759,7 +758,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
         }
 
-        if ((0 === parseInt(record.data.project+0)) || (0 === parseInt(record.data.customer+0)) || (0 === parseInt(record.data.activity+0))) {
+        if ((0 === parseInt(record.data.project + 0)) || (0 === parseInt(record.data.customer + 0)) || (0 === parseInt(record.data.activity + 0))) {
             return;
         }
 
@@ -768,15 +767,15 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
         }
 
-        if ('undefined' == typeof(record.saveInProgress)) {
+        if ('undefined' == typeof (record.saveInProgress)) {
             // Check if customer and project are related
             var projectCheck = this.checkCustomerProjectRelation(record.data.customer, record.data.project);
             if (false == projectCheck) {
                 showNotification(this._errorTitle,
-                        this._customerProjectMismatchTitle
-                        + '<br /><br />'
-                        + this._chooseOtherCustomerOrProjectTitle
-                        , false
+                    this._customerProjectMismatchTitle
+                    + '<br /><br />'
+                    + this._chooseOtherCustomerOrProjectTitle
+                    , false
                 );
                 return;
             }
@@ -786,14 +785,14 @@ Ext.define('Netresearch.widget.Tracking', {
             }
 
             // reformat ticket
-            record.data.ticket = record.data.ticket.replace(/ /g,'').toUpperCase();
+            record.data.ticket = record.data.ticket.replace(/ /g, '').toUpperCase();
 
             const grid = this;
             Ext.Ajax.request({
                 url: url + 'tracking/save',
                 params: record.data,
-                success: function(response) {
-                    record.saveInProgress=undefined;
+                success: function (response) {
+                    record.saveInProgress = undefined;
                     var data = Ext.decode(response.responseText);
 
                     if (data.result) {
@@ -809,31 +808,12 @@ Ext.define('Netresearch.widget.Tracking', {
 
                     countTime();
                 },
-                failure: function(response) {
-                    record.saveInProgress=undefined;
+                failure: function (response) {
+                    record.saveInProgress = undefined;
                     record.dirty = true;
-                    var message = '';
-                    var responseContent = {};
-                    try {
-                        if (response.status === 422) {
-                            var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                            if (ct && ct.indexOf('json') !== -1) {
-                                responseContent = Ext.decode(response.responseText);
-                                if (responseContent && responseContent.violations && Ext.isArray(responseContent.violations) && responseContent.violations.length) {
-                                    message = Ext.Array.map(responseContent.violations, function(v){ return v.title || v.message || v; }).join('<br>');
-                                } else if (responseContent && responseContent.message) {
-                                    message = responseContent.message;
-                                }
-                            }
-                        }
-                    } catch (e) {}
-                    if (!message) {
-                        try { responseContent = Ext.decode(response.responseText); } catch (e) {}
-                        message = (responseContent && responseContent.message) ? responseContent.message : response.responseText;
-                    }
-                    showNotification(grid._errorTitle, message, false);
-                    if (responseContent && typeof responseContent.forwardUrl !== 'undefined') {
-                        setTimeout("window.location.href = '" + responseContent.forwardUrl + "'", 2000);
+                    var parsed = showAjaxFailure(grid._errorTitle, response, grid._seriousErrorTitle, 200);
+                    if (parsed && parsed.data && typeof parsed.data.forwardUrl !== 'undefined') {
+                        setTimeout("window.location.href = '" + parsed.data.forwardUrl + "'", 2000);
                     }
                 }
             });
@@ -856,7 +836,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * Check if current customer has the current project
      * Display error message if not
      */
-    checkCustomerProjectRelation: function(customer, project) {
+    checkCustomerProjectRelation: function (customer, project) {
         if (undefined === customer) {
             return true;
         }
@@ -871,7 +851,7 @@ Ext.define('Netresearch.widget.Tracking', {
         }
 
         const customerProjects = projectsData[customer];
-        if (! customerProjects) {
+        if (!customerProjects) {
             return false;
         }
 
@@ -922,10 +902,10 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Format summary report (right click -> info)
      */
-    formatSummary: function(title, summary) {
+    formatSummary: function (title, summary) {
         var str = "<h2>" + title + " " + summary.name + "</h2>"
-                + this._entriesTitle + ": " + summary.entries
-                + ", " + this._totalDurationTitle + ": " + formatDuration(summary.total, true);
+            + this._entriesTitle + ": " + summary.entries
+            + ", " + this._totalDurationTitle + ": " + formatDuration(summary.total, true);
 
         if ((undefined != summary.estimation) && (0 < summary.estimation)) {
             str += ', ' + this._plannedTitle + ': ' + formatDuration(summary.estimation, true);
@@ -940,31 +920,31 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Get summary for day, week and month from database
      */
-    getSummary: function(id) {
+    getSummary: function (id) {
         Ext.Ajax.request({
             url: url + 'getSummary',
             params: { id: id },
             scope: this,
-            success: function(response) {
+            success: function (response) {
                 const data = Ext.decode(response.responseText);
 
                 let dlgMessage = this.formatSummary(this._customerTitle, data.customer)
-                                + this.formatSummary(this._projectTitle, data.project);
+                    + this.formatSummary(this._projectTitle, data.project);
 
                 if (data.activity.name.length > 2) {
                     dlgMessage += this.formatSummary(this._activityTitle, data.activity);
                 } else {
                     dlgMessage += "<h2>" + this._activityTitle + "</h2>"
-                    + "<i>" + this._noActivityGivenTitle + "</i>"
-                    + "<br/><br/>";
+                        + "<i>" + this._noActivityGivenTitle + "</i>"
+                        + "<br/><br/>";
                 }
 
                 if (data.ticket.name.length > 2) {
                     dlgMessage += this.formatSummary(this._ticketTitle, data.ticket);
                 } else {
                     dlgMessage += "<h2>" + this._ticketTitle + "</h2>"
-                    + "<i>" + this._noTicketGivenTitle + "</i>"
-                    + "<br/><br/>";
+                        + "<i>" + this._noTicketGivenTitle + "</i>"
+                        + "<br/><br/>";
                 }
 
                 /* Display info window with summary data */
@@ -974,29 +954,29 @@ Ext.define('Netresearch.widget.Tracking', {
                     html: dlgMessage,
                     width: 525,
                     listeners: {
-                        close: function() {
+                        close: function () {
                             grid.getView().el.focus();
                         }
                     }
                 });
                 infowindow.show();
             },
-            failure: function(response) {
+            failure: function (response) {
                 handleRedirect(response,
-                        this._informationRetrievalErrorTitle,
-                        this._sessionExpiredTitle);
+                    this._informationRetrievalErrorTitle,
+                    this._sessionExpiredTitle);
             }
         });
     },
 
-    prolongLastEntry: function() {
+    prolongLastEntry: function () {
         const record = this.store.getAt(0);
         if ((undefined == record) || (null == record) || (undefined == record.data) || (null == record.data))
             return;
 
         const date = this.roundTime(this.getNewDate());
 
-        if (! this.isSameDay(date, record.data.date))
+        if (!this.isSameDay(date, record.data.date))
             return;
 
         record.data.end = date;
@@ -1004,7 +984,7 @@ Ext.define('Netresearch.widget.Tracking', {
         this.saveRecord(record);
     },
 
-    continueSelectedEntry: function() {
+    continueSelectedEntry: function () {
         const index = this.getSelectedIndex();
         if (0 > index)
             return;
@@ -1027,7 +1007,7 @@ Ext.define('Netresearch.widget.Tracking', {
         this.addInlineEntry(data);
     },
 
-    deleteSelectedEntry: function() {
+    deleteSelectedEntry: function () {
         const index = this.getSelectedIndex();
         if (0 > index)
             return;
@@ -1039,9 +1019,9 @@ Ext.define('Netresearch.widget.Tracking', {
 
         /* compose a message for the customer to re-check basic activity data */
         const grid = this;
-        const duration     = this.formatTime(record.data.duration);
-        const ticket       = record.data.ticket;
-        const description  = record.data.description;
+        const duration = this.formatTime(record.data.duration);
+        const ticket = record.data.ticket;
+        const description = record.data.description;
         let shortDescription = duration;
         if (0 < ticket.length) {
             shortDescription += ' | ' + ticket;
@@ -1062,7 +1042,7 @@ Ext.define('Netresearch.widget.Tracking', {
         shortDescription += ' | ' + description;
 
         /* Display confirm message before deletion */
-        Ext.Msg.confirm(this._attentionTitle, this._confirmDeleteTitle + '<br />' + shortDescription, function(btn) {
+        Ext.Msg.confirm(this._attentionTitle, this._confirmDeleteTitle + '<br />' + shortDescription, function (btn) {
             if (btn === 'yes') {
                 grid.deleteEntry(index);
             }
@@ -1073,7 +1053,7 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Remove entry from grid and database (if already saved)
      */
-    deleteEntry: function(index) {
+    deleteEntry: function (index) {
         const record = this.store.getAt(index);
         if (undefined == record)
             return;
@@ -1092,10 +1072,10 @@ Ext.define('Netresearch.widget.Tracking', {
         Ext.Ajax.request({
             url: url + 'tracking/delete',
             params: {
-                    id: id
+                id: id
             },
             scope: this,
-            success: function(response) {
+            success: function (response) {
                 const data = Ext.decode(response.responseText);
 
                 this.getStore().remove(record);
@@ -1106,7 +1086,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     showNotification(grid._attentionTitle, data.alert, false);
                 }
             },
-            failure: function(response) {
+            failure: function (response) {
                 const data = Ext.decode(response.responseText);
                 showNotification(grid._errorTitle, data.message, false);
                 if (typeof data.forwardUrl != 'undefined') {
@@ -1119,7 +1099,7 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Redirect to exports action
      */
-    exportEntries: function() {
+    exportEntries: function () {
         if ('undefined' == this.days) {
             this.days = 10000;
         }
@@ -1131,7 +1111,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * Useful when project data/settings changed in the background,
      * and we do not want to get them with a hard page reload.
      */
-    refreshHard: function() {
+    refreshHard: function () {
         tracking = this;
         tracking.customerStore.reloadFromServer(function () {
             tracking.projectStore.reloadFromServer(function () {
@@ -1144,7 +1124,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * Reload project data, then refresh store data.
      * Used for automatic background refreshes to make subtickets available.
      */
-    autoRefreshProjectData: function(tracking) {
+    autoRefreshProjectData: function (tracking) {
         tracking.customerStore.reloadFromServer(function () {
             tracking.projectStore.reloadFromServer(function () {
                 tracking.refresh(false);
@@ -1155,7 +1135,7 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Refresh stores
      */
-    refresh: function(reloadView = true) {
+    refresh: function (reloadView = true) {
         this.clearProjectStore();
         this.customerStore.load();
         this.activityStore.load();
@@ -1174,14 +1154,14 @@ Ext.define('Netresearch.widget.Tracking', {
      * 11:22 ==> 11:20
      * 11:28 ==> 11:30
      */
-    round5: function(x) {
+    round5: function (x) {
         return (x % 5) >= 2.5 ? parseInt(x / 5) * 5 + 5 : parseInt(x / 5) * 5;
     },
 
     /*
      * Returns rounded time object from given time object
      */
-    roundTime: function(time) {
+    roundTime: function (time) {
         time ? time.setMinutes(this.round5(time.getMinutes())) : '';
         return time;
     },
@@ -1189,7 +1169,7 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Create new date object
      */
-    getNewDate: function() {
+    getNewDate: function () {
         const date = new Date();
         date.setMilliseconds(0);
         date.setSeconds(0);
@@ -1199,25 +1179,25 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Return given date in "d.m.Y" representation
      */
-    formatDate: function(value) {
+    formatDate: function (value) {
         return value ? Ext.Date.dateFormat(value, 'd.m.Y') : '';
     },
 
     /*
      * Return given time in "H:i" representation
      */
-    formatTime: function(value) {
+    formatTime: function (value) {
         return value ? Ext.Date.dateFormat(value, 'H:i') : '';
     },
 
     /*
      * Reload data from json var into project store (json var is set on page load by symfony output)
      */
-    clearProjectStore: function() {
+    clearProjectStore: function () {
         this.projectStore.loadData(projectsData, null, null, false);
     },
 
-    getSelectedIndex: function() {
+    getSelectedIndex: function () {
         if (1 > this.store.getCount())
             return -1;
 
@@ -1228,7 +1208,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return 0;
     },
 
-    getSelectedField: function(field) {
+    getSelectedField: function (field) {
         const selection = this.getSelectionModel().getSelection();
         if (selection.length > 0) {
             return selection[0].get(field);
@@ -1240,11 +1220,11 @@ Ext.define('Netresearch.widget.Tracking', {
     /*
      * Display informative error message if an error occurred during save process
      */
-    showSaveFailure: function(response, opts) {
+    showSaveFailure: function (response, opts) {
         let dlgMessage = '<h2>' + this._saveErrorTitle + '</h2>'
-                        + '<b>' + this._possibleErrorsTitle + ':</b>'
-                        + '<br />b) ' + this._timesOverlapTitle + '<br />' + this._checkTimesTitle
-                        + '<br />c) ' + this._fieldsMissingTitle + '<br/>' + this._checkFieldsTitle;
+            + '<b>' + this._possibleErrorsTitle + ':</b>'
+            + '<br />b) ' + this._timesOverlapTitle + '<br />' + this._checkTimesTitle
+            + '<br />c) ' + this._fieldsMissingTitle + '<br/>' + this._checkFieldsTitle;
 
         /* If response contains useful error message, use it */
         if (response && response.responseText) {
@@ -1253,20 +1233,20 @@ Ext.define('Netresearch.widget.Tracking', {
         showNotification(this._errorTitle, dlgMessage, false);
     },
 
-    isSameDay : function(a, b) {
+    isSameDay: function (a, b) {
         return (a.getYear() == b.getYear())
             && (a.getMonth() == b.getMonth())
             && (a.getDate() == b.getDate());
     },
 
-    getMinutesFromMidnight : function(a) {
+    getMinutesFromMidnight: function (a) {
         return (a.getHours() * 60 + a.getMinutes());
     },
 
     /*
      * Add new entry to grid (without saving it do database!)
      */
-    addInlineEntry: function(record) {
+    addInlineEntry: function (record) {
 
         const projectStore = Ext.create('Netresearch.store.Projects', {
             autoLoad: false
@@ -1283,7 +1263,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
         // Determine new start and end time
         let start = this.roundTime(this.getNewDate());
-        let end   = this.roundTime(this.getNewDate());
+        let end = this.roundTime(this.getNewDate());
 
         let editStartColumn = 2;
 
@@ -1293,7 +1273,7 @@ Ext.define('Netresearch.widget.Tracking', {
             if ((lastRecord != undefined)
                 && (lastRecord.data)
                 && (this.isSameDay(lastRecord.data.date, date))) {
-                    start = new Date(lastRecord.data.end);
+                start = new Date(lastRecord.data.end);
             }
             // or by widget start time
             else if (this.isSameDay(this.startTime, date)) {
@@ -1314,27 +1294,27 @@ Ext.define('Netresearch.widget.Tracking', {
 
         /* Set record data */
         const newRecord = Ext.ModelManager.create({
-            id:          '',
-            date:        Ext.Date.clearTime(date),
-            start:       settingsData.suggest_time ? start : null,
-            end:         settingsData.suggest_time ? end   : null,
-            customer:    record.customer           ? record.customer       : null,
-            project:     record.project            ? record.project        : null,
-            activity:    record.activity           ? record.activity       : null,
-            description: record.description        ? record.description    : null,
-            ticket:      record.ticket             ? record.ticket         : null,
-            extTicket:   record.extTicket          ? record.extTicket      : null,
-            extTicketUrl: record.extTicketUrl      ? record.extTicketUrl   : null,
+            id: '',
+            date: Ext.Date.clearTime(date),
+            start: settingsData.suggest_time ? start : null,
+            end: settingsData.suggest_time ? end : null,
+            customer: record.customer ? record.customer : null,
+            project: record.project ? record.project : null,
+            activity: record.activity ? record.activity : null,
+            description: record.description ? record.description : null,
+            ticket: record.ticket ? record.ticket : null,
+            extTicket: record.extTicket ? record.extTicket : null,
+            extTicketUrl: record.extTicketUrl ? record.extTicketUrl : null,
         }, 'Netresearch.model.Entry');
 
         newRecord.dirty = true;
         this.getStore().insert(0, newRecord);
 
         /* Set different start position */
-        this.editingPlugin.startEditByPosition({row: 0, column: editStartColumn});
+        this.editingPlugin.startEditByPosition({ row: 0, column: editStartColumn });
     },
 
-    getCustomerName: function(id) {
+    getCustomerName: function (id) {
         const store = this.customerStore;
         for (let c = 0; c < store.getCount(); c++) {
             const record = store.getAt(c);
@@ -1344,7 +1324,7 @@ Ext.define('Netresearch.widget.Tracking', {
         return null;
     },
 
-    getProjectName: function(id) {
+    getProjectName: function (id) {
         const store = this.projectStore;
         for (let c = 0; c < store.getCount(); c++) {
             const record = store.getAt(c);
@@ -1354,39 +1334,39 @@ Ext.define('Netresearch.widget.Tracking', {
         return null;
     },
 
-    getActivityName: function(id) {
+    getActivityName: function (id) {
         const activity = this.activityStore.findRecord('id', id);
         if (undefined != activity)
             return activity.data.name;
         return null;
     },
 
-    isEditing: function() {
+    isEditing: function () {
         return (undefined != this.editingPlugin)
             && (undefined != this.editingPlugin.activeRecord);
     },
 
     /* Show shortcuts help window */
-    displayShortcuts: function() {
+    displayShortcuts: function () {
         if (this.isEditing())
             return;
 
         const shortcuts = ['ALT-A: Eintrag hinzufügen (<b>A</b>dd)',
-                'ALT-C: Selektierten/Letzten Eintrag fortsetzen (<b>C</b>ontinue)',
-                'ALT-E: Selektierten/Letzten Eintrag editieren (<b>E</b>dit)',
-                'ALT-I: Info zu Selektiertem/Letztem Eintrag anzeigen (<b>I</b>nfo)',
-                'ALT-P: Letzten Eintrag verlängern (<b>P</b>rolong)',
-                'ALT-R: Anzeige aktualisieren (<b>R</b>eload)',
-                'ALT-X: Liste exportieren (E<b>x</b>port)',
-                '',
-                '?: Hilfefenster anzeigen'];
+            'ALT-C: Selektierten/Letzten Eintrag fortsetzen (<b>C</b>ontinue)',
+            'ALT-E: Selektierten/Letzten Eintrag editieren (<b>E</b>dit)',
+            'ALT-I: Info zu Selektiertem/Letztem Eintrag anzeigen (<b>I</b>nfo)',
+            'ALT-P: Letzten Eintrag verlängern (<b>P</b>rolong)',
+            'ALT-R: Anzeige aktualisieren (<b>R</b>eload)',
+            'ALT-X: Liste exportieren (E<b>x</b>port)',
+            '',
+            '?: Hilfefenster anzeigen'];
         const grid = this;
-        Ext.MessageBox.alert('Shortcuts', shortcuts.join('<br/>'), function(btn) {
+        Ext.MessageBox.alert('Shortcuts', shortcuts.join('<br/>'), function (btn) {
             grid.getView().el.focus();
         });
     },
 
-    selectRow: function(index) {
+    selectRow: function (index) {
         this.getFocus();
 
         if (1 > this.store.getCount())
@@ -1400,7 +1380,7 @@ Ext.define('Netresearch.widget.Tracking', {
         this.getView().select(index);
     },
 
-    getFocus: function() {
+    getFocus: function () {
         if (undefined != this.getView().el)
             this.getView().el.focus();
     }

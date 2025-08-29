@@ -6,8 +6,8 @@
 Ext.define('Netresearch.widget.Extras', {
     extend: 'Ext.tab.Panel',
 
-	requires: [
-   	    'Netresearch.store.AdminPresets'
+    requires: [
+        'Netresearch.store.AdminPresets'
     ],
 
     presetStore: Ext.create('Netresearch.store.AdminPresets'),
@@ -41,7 +41,7 @@ Ext.define('Netresearch.widget.Extras', {
     _errorTitle: 'Error',
     _successTitle: 'Success',
 
-    initComponent: function() {
+    initComponent: function () {
         this.on('render', this.refreshStores, this);
 
         /* Little store for yes/no dropdown */
@@ -98,7 +98,7 @@ Ext.define('Netresearch.widget.Extras', {
                 startDay: 1,
                 labelWidth: 100,
                 width: 260
-            },{
+            }, {
                 id: 'cnt-usecontract',
                 xtype: 'combo',
                 store: yesnoSourceModel,
@@ -160,7 +160,7 @@ Ext.define('Netresearch.widget.Extras', {
             buttons: [{
                 text: 'Eintragen',
                 scope: this,
-                handler: function() {
+                handler: function () {
                     var date = new Date();
                     date.setMilliseconds(0);
                     date.setSeconds(0);
@@ -227,28 +227,11 @@ Ext.define('Netresearch.widget.Extras', {
                     Ext.Ajax.request({
                         url: url + 'tracking/bulkentry',
                         params: data,
-                        success: function(response) {
+                        success: function (response) {
                             showNotification(panel._successTitle, response.responseText, true);
                         },
-                        failure: function(response) {
-                            var message = '';
-                            try {
-                                if (response.status === 422) {
-                                    var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                    if (ct && ct.indexOf('json') !== -1) {
-                                        var data = Ext.decode(response.responseText);
-                                        if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                            message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
-                                        } else if (data && data.message) {
-                                            message = data.message;
-                                        }
-                                    }
-                                }
-                            } catch (e) {}
-                            if (!message) {
-                                message = response.responseText;
-                            }
-                            showNotification(panel._errorTitle, message, false);
+                        failure: function (response) {
+                            showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                         }
                     });
                 }
@@ -263,11 +246,11 @@ Ext.define('Netresearch.widget.Extras', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ form ]
+            items: [form]
         });
         var config = {
             title: this._tabTitle,
-            items: [ extrasPanel ]
+            items: [extrasPanel]
         };
 
         /* Apply settings */
@@ -275,7 +258,7 @@ Ext.define('Netresearch.widget.Extras', {
         this.callParent();
     },
 
-    refreshStores: function() {
+    refreshStores: function () {
         this.presetStore.load();
     }
 });

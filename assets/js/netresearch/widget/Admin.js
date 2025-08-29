@@ -356,26 +356,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 window.close();
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
@@ -866,26 +847,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 window.close();
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
@@ -1202,26 +1164,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 window.close();
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
@@ -1409,26 +1352,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 showNotification(panel._successTitle, panel._teamSavedTitle, true);
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
@@ -1722,26 +1646,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 window.close();
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
@@ -1982,26 +1887,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 showNotification(panel._successTitle, panel._ticketSystemSavedTitle, true);
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
@@ -2176,26 +2062,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 showNotification(panel._successTitle, panel._activitySavedTitle, true);
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
@@ -2433,26 +2300,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 showNotification(panel._successTitle, panel._contractSavedTitle, true);
                                             },
                                             failure: function (response) {
-                                                var message = '';
-                                                try {
-                                                    if (response.status === 422) {
-                                                        var ct = response.getResponseHeader ? response.getResponseHeader('Content-Type') : '';
-                                                        if (ct && ct.indexOf('json') !== -1) {
-                                                            var data = Ext.decode(response.responseText);
-                                                            if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
-                                                            } else if (data && data.message) {
-                                                                message = data.message;
-                                                            }
-                                                        }
-                                                    }
-                                                } catch (e) { }
-                                                if (!message) {
-                                                    message = response.responseText.length < 200
-                                                        ? response.responseText
-                                                        : panel._seriousErrorTitle;
-                                                }
-                                                showNotification(panel._errorTitle, message, false);
+                                                showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
                                             }
                                         });
                                     }
