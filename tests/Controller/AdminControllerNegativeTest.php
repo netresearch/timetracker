@@ -183,12 +183,6 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'url' => '',
             'ticketUrl' => '',
         ];
-        try {
-            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
-            $this->assertStatusCode(422);
-        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
-            $this->assertSame(422, $e->getStatusCode());
-        }
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
         $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();

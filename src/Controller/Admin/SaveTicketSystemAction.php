@@ -42,12 +42,7 @@ final class SaveTicketSystemAction extends BaseController
             $ticketSystem = new TicketSystem();
         }
 
-        if (strlen($dto->name) < 3) {
-            $response = new Response($this->translate('Please provide a valid ticket system name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
+        // Basic length validation handled by DTO constraints via MapRequestPayload (422)
 
         $sameNamedSystem = $objectRepository->findOneByName($dto->name);
         if ($sameNamedSystem instanceof TicketSystem && $ticketSystem->getId() != $sameNamedSystem->getId()) {
