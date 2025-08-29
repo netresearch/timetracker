@@ -45,6 +45,10 @@ jobs:
         run: |
           docker compose -f compose.yml -f compose.dev.yml run --rm app composer cs-check
 
+      - name: Lint Twig templates
+        run: |
+          docker compose -f compose.yml -f compose.dev.yml run --rm app composer twig:lint
+
       - name: Run tests (PHPUnit)
         env:
           APP_ENV: test

@@ -90,7 +90,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'type' => 'DEV'
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
     }

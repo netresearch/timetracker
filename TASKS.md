@@ -117,4 +117,10 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 -   `[ ]` **Manual Testing:** Verify critical application flows.
 -   ...
 
+### Planned: TypeInfo and DatePoint adoption
+
+-   `[ ]` Introduce Symfony TypeInfo component for stronger type introspection in services and mappers (`symfony/type-info`). See docs: https://symfony.com/doc/current/components/type_info.html
+-   `[ ]` Migrate date/time transfer to DatePoint/DatePointType for immutable, timezone-aware values in DTOs and forms where applicable.
+-   `[ ]` Extend object-mapper transformations to handle DatePoint mapping to entities.
+
 _(Historical phases retained above. Current focus: 6.4 -> 7.3.)_
