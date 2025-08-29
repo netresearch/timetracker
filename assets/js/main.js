@@ -36,7 +36,7 @@ const cellEditing = Ext.create('Ext.grid.plugin.CellEditing', {
 
 let strings = {
     'Today': 'Today',
-    'Week' : 'Week',
+    'Week': 'Week',
     'Month': 'Month',
     'Monthly overview': 'Monthly overview',
     'Logout': 'Logout'
@@ -45,7 +45,7 @@ let strings = {
 if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
     strings = {
         'Today': 'Heute',
-        'Week' : 'Woche',
+        'Week': 'Woche',
         'Month': 'Monat',
         'Monthly overview': 'Monatsauswertung',
         'Logout': 'Logout'
@@ -62,8 +62,8 @@ function switchTab(number) {
         return;
     }
 
-    const itemId = ttt_items[(number-1)].getItemId();
-    if (! ttt_tabpanel.isActiveTab(itemId))
+    const itemId = ttt_items[(number - 1)].getItemId();
+    if (!ttt_tabpanel.isActiveTab(itemId))
         ttt_tabpanel.setActiveTab(ttt_tabpanel.child('#' + itemId));
     if (number === 1)
         ttt_items[0].getFocus();
@@ -75,7 +75,7 @@ function addTab(component) {
     ttt_items.push(component);
 }
 
-Ext.onReady(function() {
+Ext.onReady(function () {
     // Setup state manager
     Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
 
@@ -88,7 +88,7 @@ Ext.onReady(function() {
 
     NetresearchWidgetInterpretationLoadSettings(settingsData);
     const interpretationWidget = Ext.create('Netresearch.widget.Interpretation', { itemId: 'interpretation' });
-    const extrasWidget = Ext.create('Netresearch.widget.Extras', { itemId: 'extras'});
+    const extrasWidget = Ext.create('Netresearch.widget.Extras', { itemId: 'extras' });
     const settingsWidget = Ext.create('Netresearch.widget.Settings', { itemId: 'settings' });
 
     addTab(trackingWidget);
@@ -117,14 +117,14 @@ Ext.onReady(function() {
         activeTab: 0,
         items: ttt_items,
         listeners: {
-            tabchange: function(tabPanel, newCard, oldCard, eOpts) {
+            tabchange: function (tabPanel, newCard, oldCard, eOpts) {
                 newCard.focus();
                 if (ttt_tabpanel.isActiveTab('tracking')) {
                     ttt_items[0].getFocus();
                 }
             }
         },
-        isActiveTab: function(name) {
+        isActiveTab: function (name) {
             return this.getActiveTab() == ttt_tabpanel.child('#' + name);
         }
     });
@@ -138,16 +138,16 @@ Ext.onReady(function() {
             height: 100,
             id: 'header',
             html: (globalConfig.header_url != '' ? '<iframe id="nrnavi" src="' + globalConfig.header_url + '"></iframe>' : '')
-                    + '<div><img id="logo" src="' + globalConfig.logo_url + '" title="logo" alt="logo"></div>'
-                    + (typeof statusUrlHtml !== 'undefined'
-                        ? '<iframe id="statusfrm" src="' + statusUrlHtml + '"></iframe>' : '')
-                    + '<div id="worktime">'
-                    + '<span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
-                    + (typeof globalConfig.monthly_overview_url !== 'undefined' && globalConfig.monthly_overview_url != null && globalConfig.monthly_overview_url != ''
-                        ? '<br><span id="sumlink"><a href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_new">' + strings['Monthly overview'] + '</a></span>' : '')
-                    + '</div>'
-                    + (typeof logoutUrlHtml !== 'undefined'
-                        ? '<div id="logout"><a href="' + logoutUrlHtml + '">' + strings['Logout'] + '</a></div>' : '')
+                + '<div><img id="logo" src="' + globalConfig.logo_url + '" title="logo" alt="logo"></div>'
+                + (typeof statusUrlHtml !== 'undefined'
+                    ? '<iframe id="statusfrm" src="' + statusUrlHtml + '"></iframe>' : '')
+                + '<div id="worktime">'
+                + '<span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
+                + (typeof globalConfig.monthly_overview_url !== 'undefined' && globalConfig.monthly_overview_url != null && globalConfig.monthly_overview_url != ''
+                    ? '<br><span id="sumlink"><a href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_new">' + strings['Monthly overview'] + '</a></span>' : '')
+                + '</div>'
+                + (typeof logoutUrlHtml !== 'undefined'
+                    ? '<div id="logout"><a href="' + logoutUrlHtml + '">' + strings['Logout'] + '</a></div>' : '')
         },
             ttt_tabpanel
         ]
@@ -158,7 +158,7 @@ Ext.onReady(function() {
         {
             key: Ext.EventObject.A,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.addInlineEntry();
             },
@@ -166,7 +166,7 @@ Ext.onReady(function() {
         }, {
             key: Ext.EventObject.C,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.continueSelectedEntry();
             },
@@ -174,7 +174,7 @@ Ext.onReady(function() {
         }, {
             key: Ext.EventObject.D,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.deleteSelectedEntry();
             },
@@ -182,7 +182,7 @@ Ext.onReady(function() {
         }, {
             key: Ext.EventObject.E,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.editSelectedEntry();
             },
@@ -190,7 +190,7 @@ Ext.onReady(function() {
         }, {
             key: Ext.EventObject.I,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.showInfoOnSelectedEntry();
             },
@@ -198,7 +198,7 @@ Ext.onReady(function() {
         }, {
             key: Ext.EventObject.P,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.prolongLastEntry();
             },
@@ -206,7 +206,7 @@ Ext.onReady(function() {
         }, {
             key: Ext.EventObject.R,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.refresh();
                 if (ttt_tabpanel.isActiveTab('interpretation'))
@@ -216,16 +216,16 @@ Ext.onReady(function() {
         }, {
             key: Ext.EventObject.X,
             alt: true,
-            handler: function() {
+            handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.exportEntries();
             },
             defaultEventAction: 'stopEvent'
         }, {
             // Alt + Number is used for Tab switching
-            key: [ Ext.EventObject.ONE, Ext.EventObject.TWO, Ext.EventObject.THREE, Ext.EventObject.FOUR, Ext.EventObject.FIVE, Ext.EventObject.SIX, Ext.EventObject.SEVEN ],
+            key: [Ext.EventObject.ONE, Ext.EventObject.TWO, Ext.EventObject.THREE, Ext.EventObject.FOUR, Ext.EventObject.FIVE, Ext.EventObject.SIX, Ext.EventObject.SEVEN],
             alt: true,
-            handler: function(key, e) {
+            handler: function (key, e) {
                 switchTab(parseInt(key) - 48);
                 e.stopEvent();
             },
@@ -233,7 +233,7 @@ Ext.onReady(function() {
         }, {
             shift: true,
             key: 191,
-            handler: function(key, e) {
+            handler: function (key, e) {
                 if (ttt_tabpanel.isActiveTab('tracking') && trackingWidget.isEditing()) {
                     return true;
                 }
@@ -262,9 +262,8 @@ Ext.onReady(function() {
 /**
  * Formats a duration from minutes into hours:minutes
  */
-function formatDuration(duration, inDays)
-{
-    const days = Math.floor(duration / (60*8) * 100) / 100;
+function formatDuration(duration, inDays) {
+    const days = Math.floor(duration / (60 * 8) * 100) / 100;
     const hours = Math.floor(duration / 60);
     let minutes = duration % 60;
     if (minutes < 10) {
@@ -272,7 +271,7 @@ function formatDuration(duration, inDays)
     }
 
     let text = hours + ':' + minutes;
-    if ((inDays)&&(days > 1.0)) {
+    if ((inDays) && (days > 1.0)) {
         text += ' (' + days + ' PT)';
     }
 
@@ -286,7 +285,7 @@ function countTime() {
     Ext.Ajax.request({
         url: url + 'getTimeSummary',
         scope: this,
-        success: function(response) {
+        success: function (response) {
             const data = Ext.decode(response.responseText);
             Ext.get('worktime-day').update(strings['Today'] + ': ' + formatDuration(data.today.duration, false));
             Ext.get('worktime-week').update(strings['Week'] + ': ' + formatDuration(data.week.duration, false));
@@ -320,16 +319,16 @@ function parseAjaxError(response) {
     try {
         var ct = (response.getResponseHeader ? response.getResponseHeader('Content-Type') : '') || '';
         if (ct.indexOf('json') !== -1) {
-            try { data = Ext.decode(response.responseText); } catch (e) {}
+            try { data = Ext.decode(response.responseText); } catch (e) { }
         }
         if (response.status === 422 && data) {
             if (data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
             } else if (data.message) {
                 message = data.message;
             }
         }
-    } catch (e) {}
+    } catch (e) { }
     if (!message) {
         if (data && data.message) {
             message = data.message;
@@ -361,16 +360,14 @@ var notification = undefined;
 /**
  * Displays a toaster like message
  */
-function showNotification(title, message, success)
-{
+function showNotification(title, message, success) {
     let cls = 'ux-notification-light';
     if (false === success) {
         cls = 'ux-notification-light-error';
     }
 
     if ((undefined !== notification)
-        && (null != notification))
-    {
+        && (null != notification)) {
         notification.hide();
         notification = undefined;
     }
@@ -399,8 +396,7 @@ function showNotification(title, message, success)
 /**
  * Returns the prefix of a given ticket
  */
-function extractTicketPrefix(ticket)
-{
+function extractTicketPrefix(ticket) {
     const regexp = /([A-Za-z]+[A-Za-z0-9]*)-[0-9]+/;
     ticket = ticket.toUpperCase() + '';
     const result = ticket.match(regexp);
@@ -412,8 +408,7 @@ function extractTicketPrefix(ticket)
 }
 
 
-function findProjects(customer, ticket)
-{
+function findProjects(customer, ticket) {
     // 1. Find all projects by this customer, if defined
     if ((null == customer) || (undefined == customer) || (1 > parseInt(customer))) {
         customer = 'all';
