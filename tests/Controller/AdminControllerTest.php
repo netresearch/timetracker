@@ -1526,12 +1526,8 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        try {
-            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
-            $this->assertStatusCode(422);
-        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
-            $this->assertSame(422, $e->getStatusCode());
-        }
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
+        $this->assertStatusCode(406);
     }
 
     public function testCreateContractNoEntry(): void
@@ -1935,7 +1931,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'activity' => 1, //req
             'description' => '',    //reg
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/preset/save', $parameter);
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
         $this->assertDbState('presets');
