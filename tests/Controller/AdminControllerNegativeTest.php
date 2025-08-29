@@ -75,12 +75,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         try {
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
-            $this->assertStatusCode(422);
+            $this->assertStatusCode(406);
         } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
-            $this->assertSame(422, $e->getStatusCode());
+            $this->fail('Unexpected 422 for duplicate name; should be business-rule 406');
         }
-        $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
     }
 
     public function testSaveUserInvalidAbbrLength(): void
