@@ -1,6 +1,6 @@
 # Netresearch TimeTracker — Makefile helpers
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel coverage stan psalm cs-check cs-fix check-all fix-all db-migrate cache-clear swagger
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel coverage stan psalm cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -17,6 +17,7 @@ help:
 	@echo "make stan|psalm     # static analysis"
 	@echo "make cs-check|cs-fix# coding standards"
 	@echo "make check-all      # stan + psalm + phpcs"
+	@echo "make twig-lint      # lint twig templates"
 	@echo "make fix-all        # psalm alter + cs-fixer + rector"
 
 up:
@@ -80,6 +81,8 @@ cs-fix:
 
 check-all:
 	docker compose run --rm app composer check:all
+twig-lint:
+	docker compose run --rm app composer twig:lint
 
 fix-all:
 	docker compose run --rm app composer fix:all

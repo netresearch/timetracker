@@ -14,11 +14,12 @@ use App\Service\Validation\CustomerValidator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class SaveCustomerAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/customer/save', name: 'saveCustomer_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] CustomerSaveDto $dto, ObjectMapperInterface $mapper, CustomerValidator $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] CustomerSaveDto $dto, ObjectMapperInterface $mapper, CustomerValidator $customerValidator, ValidatorInterface $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -47,14 +48,7 @@ final class SaveCustomerAction extends BaseController
             $customer = new Customer();
         }
 
-        if (strlen($dto->name) < 3) {
-            $response = new Response($this->translate('Please provide a valid customer name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        if (!$validator->isNameUnique($dto->name, $customer->getId())) {
+        if (!$customerValidator->isNameUnique($dto->name, $customer->getId())) {
             $response = new Response($this->translate('The customer name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 

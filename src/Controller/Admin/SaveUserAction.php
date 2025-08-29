@@ -14,11 +14,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use App\Service\Validation\UserValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class SaveUserAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $dto, ObjectMapperInterface $mapper, UserValidator $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $dto, ObjectMapperInterface $mapper, UserValidator $userValidator, ValidatorInterface $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -37,28 +38,15 @@ final class SaveUserAction extends BaseController
         $locale = $dto->locale;
         $type = $dto->type;
 
-        if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid user name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        if (3 != strlen($abbr)) {
-            $response = new Response($this->translate('Please provide a valid user name abbreviation with 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        if (!$validator->isUsernameUnique($name, $user->getId())) {
+        // uniqueness checks remain
+        if (!$userValidator->isUsernameUnique($name, $user->getId())) {
             $response = new Response($this->translate('The user name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        if (!$validator->isAbbrUnique($abbr, $user->getId())) {
+        if (!$userValidator->isAbbrUnique($abbr, $user->getId())) {
             $response = new Response($this->translate('The user name abreviation provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 

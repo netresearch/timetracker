@@ -21,11 +21,12 @@ use App\Service\SubticketSyncService;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use App\Service\Validation\ProjectValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class SaveProjectAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $dto, ObjectMapperInterface $mapper, ProjectValidator $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $dto, ObjectMapperInterface $mapper, ProjectValidator $projectValidator, ValidatorInterface $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -78,13 +79,6 @@ final class SaveProjectAction extends BaseController
             $project->setCustomer($customer);
         }
 
-        if (strlen($dto->name) < 3) {
-            $response = new Response($this->translate('Please provide a valid project name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
         $projectCustomer = $project->getCustomer();
         if (!$projectCustomer instanceof Customer) {
             $response = new Response($this->translate('Please choose a customer.'));
@@ -93,7 +87,7 @@ final class SaveProjectAction extends BaseController
             return $response;
         }
 
-        if (!$validator->isNameUniqueForCustomer($dto->name, (int) $projectCustomer->getId(), $project->getId())) {
+        if (!$projectValidator->isNameUniqueForCustomer($dto->name, (int) $projectCustomer->getId(), $project->getId())) {
             $response = new Response($this->translate('The project name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
