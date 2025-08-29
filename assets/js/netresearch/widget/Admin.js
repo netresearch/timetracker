@@ -157,16 +157,16 @@ Ext.define('Netresearch.widget.Admin', {
                     header: this._teamsTitle,
                     dataIndex: 'teams',
                     flex: 1,
-                    renderer: function(value) {
+                    renderer: function (value) {
                         var output = '';
                         /* Display space separated list of related teams */
-                        Ext.each(value, function(teamId) {
+                        Ext.each(value, function (teamId) {
                             if (isNaN(teamId)) {
-                              return;
+                                return;
                             }
                             var team = customerGrid.teamStore.getById(parseInt(teamId));
                             if (null == team) {
-                              return;
+                                return;
                             }
                             if (output != '')
                                 output += ', ';
@@ -181,7 +181,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'checkbox'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return renderCheckbox(value);
                     }
                 },
@@ -191,7 +191,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'checkbox'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return renderCheckbox(value);
                     }
                 }
@@ -201,21 +201,21 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addCustomerTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         customerGrid.editCustomer();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         customerGrid.refresh();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -224,14 +224,14 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editCustomer(record.data);
                                 }
                             }, {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteCustomer(record.data);
                                 }
                             }
@@ -241,8 +241,8 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             },
-            editCustomer: function(record) {
-                if(!record) record = {};
+            editCustomer: function (record) {
+                if (!record) record = {};
 
                 var teamStore = Ext.create('Netresearch.store.AdminTeams', {
                     autoLoad: false
@@ -258,7 +258,7 @@ Ext.define('Netresearch.widget.Admin', {
                         /* Reload on destroy */
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -305,14 +305,14 @@ Ext.define('Netresearch.widget.Admin', {
                                     //disabled: record.global ? true : false,
                                     listeners: {
                                         /* Reload teams column to fit information */
-                                        afterrender: function(field, value) {
+                                        afterrender: function (field, value) {
                                             teamStore.load({
                                                 params: {
                                                     team: field.getValue()
                                                 }
                                             });
                                         },
-                                        select: function(field, value) {
+                                        select: function (field, value) {
                                             teamStore.load({
                                                 params: {
                                                     team: field.getValue()
@@ -327,7 +327,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: panel._saveTitle,
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         if (!form.isValid()) {
                                             var fields = form.getFields();
@@ -352,10 +352,10 @@ Ext.define('Netresearch.widget.Admin', {
                                             url: url + 'customer/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 window.close();
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -363,13 +363,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -387,10 +387,10 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            deleteCustomer: function(record) {
+            deleteCustomer: function (record) {
                 var grid = this;
                 var id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'customer/delete',
@@ -398,10 +398,10 @@ Ext.define('Netresearch.widget.Admin', {
                                 id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(grid._errorTitle, data.message, false);
                             }
@@ -409,7 +409,7 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            refresh: function() {
+            refresh: function () {
                 let grid = this;
                 let lastFocused = grid.getSelectionModel().getLastFocused();
 
@@ -455,7 +455,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         var record = this.customerStore.getById(id);
                         return record ? record.get('name') : id;
                     }
@@ -489,7 +489,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         if (1 > parseInt(id))
                             return '';
 
@@ -503,7 +503,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'checkbox'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return renderCheckbox(value);
                     }
                 },
@@ -513,7 +513,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'checkbox'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return renderCheckbox(value);
                     }
                 },
@@ -523,7 +523,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'checkbox'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return renderCheckbox(value);
                     }
                 },
@@ -558,7 +558,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'value',
                         anchor: '100%'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         var record = billingStore.findRecord('value', value);
                         return record ? record.get('displayname') : value;
                     }
@@ -572,7 +572,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'textfield'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return formatDuration(value, true);
                     }
                 }
@@ -582,28 +582,28 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addProjectTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         projectGrid.editProject();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         projectGrid.refresh();
                     }
                 }, {
                     text: this._projectSubticketsSyncTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         projectGrid.syncAllProjectSubtickets();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -612,7 +612,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editProject(record.data);
                                 }
                             },
@@ -620,7 +620,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteProject(record.data);
                                 }
                             },
@@ -631,7 +631,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._projectSubticketsTitle,
                                 iconCls: 'icon-info',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.showProjectSubtickets(record.data);
                                 }
                             },
@@ -639,7 +639,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._projectSubticketsSyncTitle,
                                 iconCls: 'icon-refresh',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.syncProjectSubtickets(record.data);
                                 }
                             }
@@ -649,7 +649,7 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             }, // end listeners
-            editProject: function(record) {
+            editProject: function (record) {
                 var projectLeadStore = Ext.create('Netresearch.store.AdminUsers');
                 var technicalLeadStore = Ext.create('Netresearch.store.AdminUsers');
                 var projectStore = Ext.create('Netresearch.store.AdminProjects', {
@@ -672,7 +672,7 @@ Ext.define('Netresearch.widget.Admin', {
                     listeners: {
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -701,14 +701,14 @@ Ext.define('Netresearch.widget.Admin', {
                                     anchor: '100%',
                                     disabled: record.customer ? true : false,
                                     listeners: {
-                                        afterrender: function(field, value) {
+                                        afterrender: function (field, value) {
                                             projectStore.load({
                                                 params: {
                                                     customer: field.getValue()
                                                 }
                                             });
                                         },
-                                        select: function(field, value) {
+                                        select: function (field, value) {
                                             projectStore.load({
                                                 params: {
                                                     customer: field.getValue()
@@ -850,7 +850,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: panel._saveTitle,
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
 
@@ -858,14 +858,14 @@ Ext.define('Netresearch.widget.Admin', {
                                             url: url + 'project/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 let data = Ext.decode(response.responseText);
                                                 if (data.message) {
                                                     showNotification(panel._errorTitle, data.message, false);
                                                 }
                                                 window.close();
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -873,13 +873,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -897,10 +897,10 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            deleteProject: function(record) {
+            deleteProject: function (record) {
                 var grid = this;
                 var id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'project/delete',
@@ -908,10 +908,10 @@ Ext.define('Netresearch.widget.Admin', {
                                 id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(panel._errorTitle, data.message, false);
                             }
@@ -919,48 +919,48 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            showProjectSubtickets: function(project) {
+            showProjectSubtickets: function (project) {
                 Ext.Msg.alert(
                     panel._projectSubticketsTitle + ': ' + project['name'],
                     project['jiraTicket'] + "<br/>\n"
                     + project['subtickets']
                 );
             },
-            syncProjectSubtickets: function(project) {
+            syncProjectSubtickets: function (project) {
                 var grid = this;
                 Ext.Ajax.request({
                     method: 'POST',
                     url: url + 'projects/' + project.id + '/syncsubtickets',
                     scope: this,
-                    success: function(response) {
+                    success: function (response) {
                         var data = Ext.decode(response.responseText);
                         project['subtickets'] = data.subtickets;
                         grid.refresh();
                         grid.showProjectSubtickets(project);
                     },
-                    failure: function(response) {
+                    failure: function (response) {
                         var data = Ext.decode(response.responseText);
                         showNotification(panel._errorTitle, data.message, false);
                     }
                 });
             },
-            syncAllProjectSubtickets: function() {
+            syncAllProjectSubtickets: function () {
                 var grid = this;
                 Ext.Ajax.request({
                     method: 'POST',
                     url: url + 'projects/syncsubtickets',
                     scope: this,
-                    success: function(response) {
+                    success: function (response) {
                         grid.refresh();
                         showNotification(panel._successTitle, panel._subticketSyncFinishedTitle, true);
                     },
-                    failure: function(response) {
+                    failure: function (response) {
                         var data = Ext.decode(response.responseText);
                         showNotification(panel._errorTitle, data.message, false);
                     }
                 });
             },
-            refresh: function() {
+            refresh: function () {
                 let grid = this;
                 let lastFocused = grid.getSelectionModel().getLastFocused();
 
@@ -1014,16 +1014,16 @@ Ext.define('Netresearch.widget.Admin', {
                     header: this._teamsTitle,
                     dataIndex: 'teams',
                     flex: 1,
-                    renderer: function(value) {
+                    renderer: function (value) {
                         /* Display space seperated list of related teams */
                         var output = '';
-                        Ext.each(value, function(teamId) {
+                        Ext.each(value, function (teamId) {
                             if (isNaN(teamId)) {
-                              return;
+                                return;
                             }
                             var team = userGrid.teamStore.getById(parseInt(teamId));
                             if (null == team) {
-                              return;
+                                return;
                             }
                             if (output != '')
                                 output += ', ';
@@ -1038,21 +1038,21 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addUserTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         userGrid.editUser();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         userGrid.refresh();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -1061,14 +1061,14 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editUser(record.data);
                                 }
                             }, {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteUser(record.data);
                                 }
                             }
@@ -1078,8 +1078,8 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             },
-            editUser: function(record) {
-                if(!record) record = {};
+            editUser: function (record) {
+                if (!record) record = {};
 
                 var teamStore = this.teamStore;
                 teamStore.load();
@@ -1104,7 +1104,7 @@ Ext.define('Netresearch.widget.Admin', {
                     listeners: {
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -1146,9 +1146,9 @@ Ext.define('Netresearch.widget.Admin', {
                                     store: Ext.create('Ext.data.Store', {
                                         fields: ['type', 'name'],
                                         data: [
-                                            { 'type':'DEV', 'name': panel._developerTitle},
-                                            { 'type':'PL', 'name': panel._projectManagerTitle},
-                                            { 'type':'CTL', 'name': panel._controllingTitle}
+                                            { 'type': 'DEV', 'name': panel._developerTitle },
+                                            { 'type': 'PL', 'name': panel._projectManagerTitle },
+                                            { 'type': 'CTL', 'name': panel._controllingTitle }
                                         ]
                                     }),
                                     queryMode: 'local',
@@ -1168,14 +1168,14 @@ Ext.define('Netresearch.widget.Admin', {
                                     triggerAction: 'all',
                                     anchor: '100%',
                                     listeners: {
-                                        afterrender: function(field, value) {
+                                        afterrender: function (field, value) {
                                             teamStore.load({
                                                 params: {
                                                     team: field.getValue()
                                                 }
                                             });
                                         },
-                                        select: function(field, value) {
+                                        select: function (field, value) {
                                             teamStore.load({
                                                 params: {
                                                     team: field.getValue()
@@ -1190,7 +1190,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: panel._saveTitle,
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
 
@@ -1198,10 +1198,10 @@ Ext.define('Netresearch.widget.Admin', {
                                             url: url + 'user/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 window.close();
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -1209,13 +1209,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -1233,10 +1233,10 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            deleteUser: function(record) {
+            deleteUser: function (record) {
                 var grid = this;
                 var id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.username, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.username, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'user/delete',
@@ -1244,10 +1244,10 @@ Ext.define('Netresearch.widget.Admin', {
                                 id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(grid._errorTitle, data.message, false);
                             }
@@ -1255,7 +1255,7 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            refresh: function() {
+            refresh: function () {
                 let grid = this;
                 let lastFocused = grid.getSelectionModel().getLastFocused();
 
@@ -1295,7 +1295,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'lead_user_id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         var record = this.userStore.getById(id);
                         return record ? record.get('username') : id;
                     }
@@ -1306,21 +1306,21 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addTeamTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         teamGrid.editTeam();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         teamGrid.refresh();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -1329,14 +1329,14 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editTeam(record.data);
                                 }
                             }, {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteTeam(record.data);
                                 }
                             }
@@ -1346,7 +1346,7 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             },
-            editTeam: function(record) {
+            editTeam: function (record) {
                 var leadUserStore = Ext.create('Netresearch.store.AdminUsers');
                 leadUserStore.load();
                 record = record || {};
@@ -1360,7 +1360,7 @@ Ext.define('Netresearch.widget.Admin', {
                     listeners: {
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -1396,7 +1396,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: panel._saveTitle,
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
 
@@ -1404,11 +1404,11 @@ Ext.define('Netresearch.widget.Admin', {
                                             url: url + 'team/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 window.close();
                                                 showNotification(panel._successTitle, panel._teamSavedTitle, true);
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -1416,13 +1416,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -1440,10 +1440,10 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            deleteTeam: function(record) {
+            deleteTeam: function (record) {
                 var grid = this;
                 var id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'team/delete',
@@ -1451,10 +1451,10 @@ Ext.define('Netresearch.widget.Admin', {
                                 id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(grid._errorTitle, data.message, false);
                             }
@@ -1462,7 +1462,7 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            refresh: function() {
+            refresh: function () {
                 let grid = this;
                 let lastFocused = grid.getSelectionModel().getLastFocused();
 
@@ -1506,7 +1506,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         var record = this.customerStore.getById(id);
                         return record ? record.get('name') : id;
                     }
@@ -1523,7 +1523,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         var record = this.projectStore.getById(id);
                         return record ? record.get('name') : id;
                     }
@@ -1540,7 +1540,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         var record = this.activityStore.getById(id);
                         return record ? record.get('name') : id;
                     }
@@ -1559,21 +1559,21 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addPresetTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         presetGrid.editPreset();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         presetGrid.refresh();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -1582,14 +1582,14 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editPreset(record.data);
                                 }
                             }, {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deletePreset(record);
                                 }
                             }
@@ -1599,21 +1599,21 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             }, // end listeners
-            deletePreset: function(record) {
+            deletePreset: function (record) {
                 var grid = this;
                 var id = parseInt(record.data.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.data.name, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.data.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'preset/delete',
                             params: {
-                                    id: id
+                                id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(grid._errorTitle, data.message, false);
                             }
@@ -1621,14 +1621,14 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            editPreset: function(record) {
+            editPreset: function (record) {
                 var projectStore = Ext.create('Netresearch.store.AdminProjects');
                 projectStore.load();
                 var presetStore = Ext.create('Netresearch.store.AdminPresets', {
                     autoLoad: false
                 });
 
-                if(!record) record = {};
+                if (!record) record = {};
 
                 var window = Ext.create('Ext.window.Window', {
                     title: panel._editPresetTitle,
@@ -1639,7 +1639,7 @@ Ext.define('Netresearch.widget.Admin', {
                     listeners: {
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -1680,7 +1680,7 @@ Ext.define('Netresearch.widget.Admin', {
                                     value: record.project ? record.project : '',
                                     listeners: {
                                         scope: this,
-                                        focus: function() {
+                                        focus: function () {
                                             projectStore.load({
                                                 params: {
                                                     customer: Ext.getCmp('preset-edit-customer').getValue()
@@ -1710,7 +1710,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: 'Speichern',
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
 
@@ -1718,10 +1718,10 @@ Ext.define('Netresearch.widget.Admin', {
                                             url: url + 'preset/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 window.close();
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -1729,13 +1729,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -1753,7 +1753,7 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            refresh: function(){
+            refresh: function () {
                 this.customerStore.load();
                 this.projectStore.load();
                 this.activityStore.load();
@@ -1786,7 +1786,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'checkbox'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return renderCheckbox(value);
                     }
                 }, {
@@ -1817,21 +1817,21 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addTicketSystemTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         ticketSystemGrid.editTicketSystem();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         ticketSystemGrid.refresh();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -1840,14 +1840,14 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editTicketSystem(record.data);
                                 }
                             }, {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteTicketSystem(record.data);
                                 }
                             }
@@ -1857,7 +1857,7 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             }, // end listeners
-            editTicketSystem: function(record) {
+            editTicketSystem: function (record) {
                 var ticketSytemStore = Ext.create('Netresearch.store.TicketSystems', {
                     autoLoad: false
                 });
@@ -1865,11 +1865,11 @@ Ext.define('Netresearch.widget.Admin', {
                 var ticketSystemTypeStore = new Ext.data.ArrayStore({
                     fields: ['type'],
                     data: [
-                            ['JIRA'], ['OTRS'], ['FRESHDESK']
-                        ]
+                        ['JIRA'], ['OTRS'], ['FRESHDESK']
+                    ]
                 });
 
-                if(!record) record = {};
+                if (!record) record = {};
 
                 var window = Ext.create('Ext.window.Window', {
                     title: panel._editTicketSystemTitle,
@@ -1880,7 +1880,7 @@ Ext.define('Netresearch.widget.Admin', {
                     listeners: {
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -1969,7 +1969,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: panel._saveTitle,
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
 
@@ -1977,11 +1977,11 @@ Ext.define('Netresearch.widget.Admin', {
                                             url: url + 'ticketsystem/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 window.close();
                                                 showNotification(panel._successTitle, panel._ticketSystemSavedTitle, true);
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -1989,13 +1989,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -2013,10 +2013,10 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            deleteTicketSystem: function(record) {
+            deleteTicketSystem: function (record) {
                 var grid = this;
                 var id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'ticketsystem/delete',
@@ -2024,10 +2024,10 @@ Ext.define('Netresearch.widget.Admin', {
                                 id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(grid._errorTitle, data.message, false);
                             }
@@ -2035,7 +2035,7 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            refresh: function() {
+            refresh: function () {
                 this.store.load();
                 this.getView().refresh();
             }
@@ -2058,7 +2058,7 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'checkbox'
                     },
-                    renderer: function(value) {
+                    renderer: function (value) {
                         return renderCheckbox(value);
                     }
                 }, {
@@ -2075,21 +2075,21 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addActivityTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         activityGrid.editActivity();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         activityGrid.refresh();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -2098,14 +2098,14 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editActivity(record.data);
                                 }
                             }, {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteActivity(record.data);
                                 }
                             }
@@ -2115,7 +2115,7 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             },
-            editActivity: function(record) {
+            editActivity: function (record) {
                 record = record || {};
 
                 var window = Ext.create('Ext.window.Window', {
@@ -2127,7 +2127,7 @@ Ext.define('Netresearch.widget.Admin', {
                     listeners: {
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -2163,7 +2163,7 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: panel._saveTitle,
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
 
@@ -2171,11 +2171,11 @@ Ext.define('Netresearch.widget.Admin', {
                                             url: url + 'activity/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 window.close();
                                                 showNotification(panel._successTitle, panel._activitySavedTitle, true);
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -2183,13 +2183,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -2207,10 +2207,10 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            deleteActivity: function(record) {
+            deleteActivity: function (record) {
                 var grid = this;
                 var id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'activity/delete',
@@ -2218,10 +2218,10 @@ Ext.define('Netresearch.widget.Admin', {
                                 id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(grid._errorTitle, data.message, false);
                             }
@@ -2229,7 +2229,7 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            refresh: function() {
+            refresh: function () {
                 this.store.load();
                 this.getView().refresh();
             }
@@ -2252,7 +2252,7 @@ Ext.define('Netresearch.widget.Admin', {
                         valueField: 'user_id',
                         anchor: '100%'
                     },
-                    renderer: function(id) {
+                    renderer: function (id) {
                         var record = this.userStore.getById(id);
                         return record ? record.get('username') : id;
                     }
@@ -2273,21 +2273,21 @@ Ext.define('Netresearch.widget.Admin', {
                     text: this._addContractTitle,
                     iconCls: 'icon-add',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         contractGrid.editContract();
                     }
                 }, {
                     text: this._refreshTitle,
                     iconCls: 'icon-refresh',
                     scope: this,
-                    handler: function() {
+                    handler: function () {
                         contractGrid.refresh();
                     }
                 }
             ],
             listeners: {
                 /* Right-click menu */
-                itemcontextmenu: function(grid, record, item, index, event, options) {
+                itemcontextmenu: function (grid, record, item, index, event, options) {
                     event.stopEvent();
 
                     var contextMenu = Ext.create('Ext.menu.Menu', {
@@ -2296,14 +2296,14 @@ Ext.define('Netresearch.widget.Admin', {
                                 text: panel._editTitle,
                                 iconCls: 'icon-edit',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.editContract(record.data);
                                 }
                             }, {
                                 text: panel._deleteTitle,
                                 iconCls: 'icon-delete',
                                 scope: this,
-                                handler: function() {
+                                handler: function () {
                                     this.deleteContract(record.data);
                                 }
                             }
@@ -2313,7 +2313,7 @@ Ext.define('Netresearch.widget.Admin', {
                     contextMenu.showAt(event.xy);
                 }
             },
-            editContract: function(record) {
+            editContract: function (record) {
                 var editUserStore = Ext.create('Netresearch.store.AdminUsers', {
                     autoLoad: false
                 });
@@ -2331,7 +2331,7 @@ Ext.define('Netresearch.widget.Admin', {
                     listeners: {
                         destroy: {
                             scope: this,
-                            fn: function() {
+                            fn: function () {
                                 this.refresh();
                             }
                         }
@@ -2421,18 +2421,18 @@ Ext.define('Netresearch.widget.Admin', {
                                 {
                                     text: panel._saveTitle,
                                     scope: this,
-                                    handler: function(btn) {
+                                    handler: function (btn) {
                                         var form = btn.up('form').getForm();
                                         var values = form.getValues();
                                         Ext.Ajax.request({
                                             url: url + 'contract/save',
                                             params: values,
                                             scope: this,
-                                            success: function(response) {
+                                            success: function (response) {
                                                 window.close();
                                                 showNotification(panel._successTitle, panel._contractSavedTitle, true);
                                             },
-                                            failure: function(response) {
+                                            failure: function (response) {
                                                 var message = '';
                                                 try {
                                                     if (response.status === 422) {
@@ -2440,13 +2440,13 @@ Ext.define('Netresearch.widget.Admin', {
                                                         if (ct && ct.indexOf('json') !== -1) {
                                                             var data = Ext.decode(response.responseText);
                                                             if (data && data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                                                                message = Ext.Array.map(data.violations, function(v){ return v.title || v.message || v; }).join('<br>');
+                                                                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
                                                             } else if (data && data.message) {
                                                                 message = data.message;
                                                             }
                                                         }
                                                     }
-                                                } catch (e) {}
+                                                } catch (e) { }
                                                 if (!message) {
                                                     message = response.responseText.length < 200
                                                         ? response.responseText
@@ -2464,10 +2464,10 @@ Ext.define('Netresearch.widget.Admin', {
 
                 window.show();
             },
-            deleteContract: function(record) {
+            deleteContract: function (record) {
                 var grid = this;
                 var id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function(btn) {
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'contract/delete',
@@ -2475,10 +2475,10 @@ Ext.define('Netresearch.widget.Admin', {
                                 id: id
                             },
                             scope: this,
-                            success: function(response) {
+                            success: function (response) {
                                 grid.refresh();
                             },
-                            failure: function(response) {
+                            failure: function (response) {
                                 var data = Ext.decode(response.responseText);
                                 showNotification(grid._errorTitle, data.message, false);
                             }
@@ -2486,7 +2486,7 @@ Ext.define('Netresearch.widget.Admin', {
                     }
                 });
             },
-            refresh: function() {
+            refresh: function () {
                 this.userStore.load();
                 this.store.load();
                 this.getView().refresh();
@@ -2501,7 +2501,7 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ customerGrid ]
+            items: [customerGrid]
         });
 
         var projectPanel = Ext.create('Ext.panel.Panel', {
@@ -2511,7 +2511,7 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ projectGrid ]
+            items: [projectGrid]
         });
 
         var userPanel = Ext.create('Ext.panel.Panel', {
@@ -2521,7 +2521,7 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ userGrid ]
+            items: [userGrid]
         });
 
         var teamPanel = Ext.create('Ext.panel.Panel', {
@@ -2531,7 +2531,7 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ teamGrid ]
+            items: [teamGrid]
         });
 
         var presetPanel = Ext.create('Ext.panel.Panel', {
@@ -2541,7 +2541,7 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ presetGrid ]
+            items: [presetGrid]
         });
 
         var ticketSystemPanel = Ext.create('Ext.panel.Panel', {
@@ -2551,7 +2551,7 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ ticketSystemGrid ]
+            items: [ticketSystemGrid]
         });
 
         var activityPanel = Ext.create('Ext.panel.Panel', {
@@ -2561,7 +2561,7 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ activityGrid ]
+            items: [activityGrid]
         });
 
         var contractPanel = Ext.create('Ext.panel.Panel', {
@@ -2571,12 +2571,12 @@ Ext.define('Netresearch.widget.Admin', {
             collapsible: false,
             width: '100%',
             margin: '0 0 10 0',
-            items: [ contractGrid ]
+            items: [contractGrid]
         });
 
         var config = {
             title: this._tabTitle,
-            items: [ customerPanel, projectPanel, userPanel, teamPanel, presetPanel, ticketSystemPanel, activityPanel, contractPanel ]
+            items: [customerPanel, projectPanel, userPanel, teamPanel, presetPanel, ticketSystemPanel, activityPanel, contractPanel]
         };
 
         /* Apply config */
