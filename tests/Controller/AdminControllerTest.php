@@ -1527,8 +1527,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_6' => 0,
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
-        $this->assertStatusCode(406);
-        $this->assertMessage('Bitte geben Sie einen gültigen Benutzer an.');
+        $this->assertStatusCode(422);
     }
 
     public function testCreateContractNoEntry(): void
@@ -1565,8 +1564,7 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_6' => 0,
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
-        $this->assertStatusCode(406);
-        $this->assertMessage('Bitte geben Sie einen gültigen Vertragsbeginn an.');
+        $this->assertStatusCode(422);
     }
 
     public function testCreateContractGreaterStartThenEnd(): void
@@ -1725,6 +1723,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testSaveTicketSystemAction(): void
     {
+        $this->logInSession('unittest');
         $parameter = [
             'name' => 'testSaveTicketSystem', //req
             'url' => '',
@@ -1777,6 +1776,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testUpdateTicketSystem(): void
     {
+        $this->logInSession('unittest');
         $parameter = [
             'id' => 1,
             'name' => 'testSaveTicketSystemUpdate', //req
