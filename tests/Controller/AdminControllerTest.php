@@ -1526,8 +1526,12 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
-        $this->assertStatusCode(422);
+        try {
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
+            $this->assertStatusCode(422);
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
+            $this->assertSame(422, $e->getStatusCode());
+        }
     }
 
     public function testCreateContractNoEntry(): void
@@ -1563,8 +1567,12 @@ class AdminControllerTest extends AbstractWebTestCase
             'hours_5' => 0,
             'hours_6' => 0,
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
-        $this->assertStatusCode(422);
+        try {
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/contract/save', $parameter);
+            $this->assertStatusCode(422);
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
+            $this->assertSame(422, $e->getStatusCode());
+        }
     }
 
     public function testCreateContractGreaterStartThenEnd(): void
