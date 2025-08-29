@@ -155,6 +155,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
 
         // Reuse kernel between tests for performance; client reboot disabled below
         $this->client = static::createClient();
+        // Convert kernel exceptions to HTTP responses (e.g., 422 from MapRequestPayload)
+        $this->client->catchExceptions(false);
         // Use the test container to access private services like test.session
         $this->serviceContainer = static::getContainer();
 
