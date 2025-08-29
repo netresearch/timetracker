@@ -12,7 +12,7 @@ final class ContractSaveDto
     #[Assert\Positive(message: 'Please enter a valid user.')]
     public int $user_id = 0;
     #[Assert\NotBlank(message: 'Please enter a valid contract start.')]
-    #[Assert\Regex(pattern: '/^\d{4}-\d{2}-\d{2}$/', message: 'Please enter a valid contract start.')]
+    #[Assert\Regex(pattern: '/^\d{3,4}-\d{2}-\d{2}$/', message: 'Please enter a valid contract start.')]
     public string $start = '';
     public ?string $end = null;
     public float $hours_0 = 0.0;

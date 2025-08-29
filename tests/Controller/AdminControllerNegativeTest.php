@@ -182,7 +182,9 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'ticketUrl' => '',
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->assertStatusCode(422);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         $this->assertNotEmpty($content);
     }
