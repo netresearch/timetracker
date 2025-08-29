@@ -31,12 +31,7 @@ final class SavePresetAction extends BaseController
         $activity = null !== $dto->activity ? $this->doctrineRegistry->getRepository(Activity::class)->find($dto->activity) : null;
         $description = $dto->description;
 
-        if (strlen($name) < 3) {
-            $response = new Response($this->translate('Please provide a valid preset name with at least 3 letters.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
+        // Basic length validation now handled by DTO constraints via MapRequestPayload (422)
 
         $objectRepository = $this->doctrineRegistry->getRepository(Preset::class);
 

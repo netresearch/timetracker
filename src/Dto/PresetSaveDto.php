@@ -5,11 +5,14 @@ namespace App\Dto;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[Map(target: \App\Entity\Preset::class)]
 final class PresetSaveDto
 {
     public int $id = 0;
+    #[Assert\NotBlank(message: 'Please provide a valid preset name with at least 3 letters.')]
+    #[Assert\Length(min: 3, minMessage: 'Please provide a valid preset name with at least 3 letters.')]
     public string $name = '';
     /** IDs for relations; handled manually */
     #[Map(if: false)]
