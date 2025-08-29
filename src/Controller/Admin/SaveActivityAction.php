@@ -4,16 +4,19 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
+use App\Dto\ActivitySaveDto;
 use App\Entity\Activity;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 
 final class SaveActivityAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
-    public function __invoke(Request $request): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $dto, ObjectMapperInterface $mapper): Response|Error|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -26,11 +29,7 @@ final class SaveActivityAction extends BaseController
         /** @var \App\Repository\ActivityRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
 
-        $id = (int) $request->request->get('id');
-        $name = (string) ($request->request->get('name') ?? '');
-        $needsTicket = (bool) $request->request->get('needsTicket');
-        $factorRaw = $request->request->get('factor');
-        $factor = (float) str_replace(',', '.', (string) ($factorRaw ?? '0'));
+        $id = $dto->id;
 
         if (0 !== $id) {
             $activity = $objectRepository->find($id);
@@ -47,7 +46,7 @@ final class SaveActivityAction extends BaseController
             $activity = new Activity();
         }
 
-        $sameNamedActivity = $objectRepository->findOneByName($name);
+        $sameNamedActivity = $objectRepository->findOneByName($dto->name);
         if ($sameNamedActivity instanceof Activity && $activity->getId() !== $sameNamedActivity->getId()) {
             $response = new Response($this->translate('The activity name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -56,10 +55,7 @@ final class SaveActivityAction extends BaseController
         }
 
         try {
-            $activity
-                ->setName($name)
-                ->setNeedsTicket($needsTicket)
-                ->setFactor($factor);
+            $mapper->map($dto, $activity);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($activity);
