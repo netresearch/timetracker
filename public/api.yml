@@ -303,6 +303,16 @@ paths:
             schema:
               $ref: '#/components/schemas/Customer'
       responses:
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                nameTooShort:
+                  value:
+                    message: Please provide a valid customer name with at least 3 letters.
         '500':
           description: Error Internal Server Error
         '404':
@@ -1591,6 +1601,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                nameTooShort:
+                  value:
+                    message: Please provide a valid project name with at least 3 letters.
         '406':
           description: Error Not Acceptable
           content:
@@ -2069,6 +2089,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ForbiddenResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                usernameTooShort:
+                  value:
+                    message: Please provide a valid user name with at least 3 letters.
+                abbrLength:
+                  value:
+                    message: Please provide a valid user name abbreviation with 3 letters.
         '406':
           description: Error Not Acceptable
           content:
