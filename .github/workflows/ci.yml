@@ -35,22 +35,16 @@ jobs:
 
       - name: Prepare test database
         run: |
-          # Ensure unittest DB exists and schema/data are loaded (use dev compose db_unittest init)
+          # Ensure unittest schema file exists and is in sync with full structure
+          cp -f sql/full.sql sql/unittest/001_testtables.sql
+
+          # Start DB (entrypoint will run 001_testtables.sql + 002_testdata.sql)
           docker compose -f compose.yml -f compose.dev.yml up -d db_unittest
-          # Wait for DB to be healthy (prefer mariadb-admin, fallback to mysqladmin)
+
+          # Wait until DB is ready using unittest credentials (align with local dev)
           for i in {1..30}; do
-            docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb-admin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD' && break || sleep 2;
+            docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest -e "SELECT 1"' && break || sleep 2;
           done
-          # Optionally create DB/user and grants if script exists locally
-          if [ -f sql/unittest/000_testdatabase.sql ]; then
-            docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD' < sql/unittest/000_testdatabase.sql || true
-          fi
-          # Load base schema and fixes (mirror local dev init) by piping from host
-          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/000_base.sql
-          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/001_fixes.sql
-          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/002_contracts.sql
-          # Load unittest test data (truncates and inserts)
-          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/unittest/002_testdata.sql
 
       - name: Static analysis (PHPStan)
         run: |
