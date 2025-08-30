@@ -1,0 +1,6 @@
+services:
+  Symfony\Component\ObjectMapper\ObjectMapperInterface:
+    class: Symfony\Component\ObjectMapper\ObjectMapper
+    arguments:
+      - null # default metadata factory
+      - '@property_accessor' # use PropertyAccessor for reading/writing

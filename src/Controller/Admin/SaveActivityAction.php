@@ -62,7 +62,7 @@ final class SaveActivityAction extends BaseController
             $em->flush();
         } catch (\Exception $exception) {
             $response = new Response($this->translate('Error on save').': '.$exception->getMessage());
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 
             return $response;
         }

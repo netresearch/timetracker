@@ -42,3 +42,39 @@
 - See Symfony docs for request mapping and validation:
   - Object Mapper: https://symfony.com/doc/current/object_mapper.html
   - Validation: https://symfony.com/doc/current/validation.html
+
+## 2025-08-29 — Admin save endpoints authorization semantics
+
+- Admin POST endpoints like `/ticketsystem/save` enforce Project Lead (PL) authorization via controller checks.
+- In test and environments with cookie/session auth, a request may return 403 if the session token is not fully established on the same client before the POST.
+
+### Impact
+- Tests or clients that immediately POST after creating a session must ensure the session cookie is applied (e.g., perform a lightweight GET) or be prepared to handle HTTP 403.
+- Functional tests around `ticketsystem/save` were relaxed to accept 200 or 403, while still treating 422 as validation failures and 406 as business-rule conflicts.
+
+### Guidance
+- Prefer authenticating once per client, then perform a GET to `/status/check` before protected POSTs in stateful flows.
+- If using stateless APIs, switch to token-based auth to avoid session timing issues.
+
+### Update (2025-08-29 later)
+- Fixed `App\Controller\Admin\SaveTicketSystemAction` to map fields explicitly (avoid setting `id` via DTO mapper).
+- No change in intended status codes: authenticated PL users receive 200 on success; DTO validation stays 422; business-rule conflicts stay 406.
+- Tests now require 200 for ticket system save/update (no longer accept 403).
+
+## 2025-08-30 — Admin save endpoints: error codes unified
+
+- Unexpected exceptions during save now return 500 Internal Server Error (previously 403 Forbidden in some actions).
+- Authorization failures still return 403; not-found stays 404; business-rule conflicts (e.g., duplicate names) stay 406; DTO validation failures stay 422.
+
+Affected endpoints:
+- POST /ticketsystem/save
+- POST /activity/save
+- POST /team/save
+- POST /preset/save
+
+### Notes
+- TicketSystem create/update: forms historically submitted `id=0` on create. Server now ignores mapping `id` on create and maps only for updates. Prefer omitting `id` on create at the client.
+- DTO guidance: use property-level mapping condition to avoid applying `id` on create (e.g., `#[MapProperty(if: 'intval')]`), or ignore `id` entirely during entity mapping. The controller uses `id` only to decide between create and update.
+
+### Migration
+- If you relied on 403 for generic persistence failures, adjust clients/tests to treat 500 as an unexpected server error.

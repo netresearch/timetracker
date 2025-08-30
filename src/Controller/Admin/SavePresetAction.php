@@ -67,7 +67,7 @@ final class SavePresetAction extends BaseController
             $em->flush();
         } catch (\Exception) {
             $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 
             return $response;
         }
