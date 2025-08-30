@@ -35,16 +35,17 @@ jobs:
 
       - name: Prepare test database
         run: |
-          # Ensure unittest schema file exists and is in sync with full structure
-          cp -f sql/full.sql sql/unittest/001_testtables.sql
-
-          # Start DB (entrypoint will run 001_testtables.sql + 002_testdata.sql)
+          # Start DB container
           docker compose -f compose.yml -f compose.dev.yml up -d db_unittest
 
           # Wait until DB is ready using unittest credentials (align with local dev)
           for i in {1..30}; do
             docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest -e "SELECT 1"' && break || sleep 2;
           done
+
+          # Manually import full structure and unittest data from host
+          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/full.sql
+          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/unittest/002_testdata.sql
 
       - name: Static analysis (PHPStan)
         run: |
