@@ -141,7 +141,13 @@ class BaseController extends AbstractController
         if (false === $this->checkLogin($request)) {
             return false;
         }
+        // Prefer the currently authenticated user from token storage
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User) {
+            return 'PL' === $currentUser->getType();
+        }
 
+        // Fallback to repository lookup via session-derived user id
         $userId = $this->getUserId($request);
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(User::class);

@@ -101,9 +101,11 @@
       "@auto-scripts"
     ],
     "cs-check": "phpcs",
-    "cs-fix": "php-cs-fixer fix",
+    "cs-fix": "php-cs-fixer fix src",
     "analyze": "phpstan analyze --configuration=phpstan.neon --memory-limit=512M",
     "psalm": "psalm",
+    "psalm:fix": "psalm --alter --issues=all",
+    "rector": "rector process src",
     "test": "APP_ENV=test php -d memory_limit=512M bin/phpunit",
     "test:unit": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit",
     "test:controller": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=controller",
@@ -113,9 +115,18 @@
     "test:coverage-text": "APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-text",
     "security-check": "echo 'Running security check with Local PHP Security Checker'; curl -o security-checker.phar -s https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 && chmod +x security-checker.phar && ./security-checker.phar && rm security-checker.phar",
     "twig:lint": "php bin/console lint:twig templates --show-deprecations",
-    "check:all": "phpstan analyze && psalm && phpcs && php bin/console lint:twig templates --show-deprecations",
+    "check:all": [
+      "@analyze",
+      "@psalm",
+      "@cs-check",
+      "@twig:lint"
+    ],
     "test:all": "APP_ENV=test php -d memory_limit=512M bin/phpunit && APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
-    "fix:all": "psalm --alter --issues=all && php-cs-fixer fix src && rector process src"
+    "fix:all": [
+      "@psalm:fix",
+      "@cs-fix",
+      "@rector"
+    ]
   },
   "extra": {
     "symfony": {
