@@ -1798,7 +1798,8 @@ Ext.define('Netresearch.widget.Admin', {
                             items: [
                                 new Ext.form.field.Hidden({
                                     name: 'id',
-                                    value: record.id ? record.id : 0
+                                    submitValue: !!record.id,
+                                    value: record.id ? record.id : ''
                                 }), {
                                     fieldLabel: panel._nameTitle,
                                     name: 'name',

@@ -53,22 +53,12 @@ final class SaveTicketSystemAction extends BaseController
         }
 
         try {
-            // Map via ObjectMapper; id is not submitted on create and is ignored by mapping for non-positive values
             $mapper->map($dto, $ticketSystem);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);
             $em->flush();
         } catch (\Exception $exception) {
-            try {
-                if (isset($this->container) && $this->container->has('logger')) {
-                    $this->container->get('logger')->error('SaveTicketSystemAction failed', [
-                        'exception' => $exception,
-                        'message' => $exception->getMessage(),
-                    ]);
-                }
-            } catch (\Throwable) {
-            }
             $response = new Response($this->translate('Error on save').': '.$exception->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 

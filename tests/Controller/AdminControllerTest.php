@@ -1728,6 +1728,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testSaveTicketSystemAction(): void
     {
         $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
         $parameter = [
             'name' => 'testSaveTicketSystem', //req
             'url' => '',
@@ -1785,6 +1786,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testUpdateTicketSystem(): void
     {
         $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
         $parameter = [
             'id' => 1,
             'name' => 'testSaveTicketSystemUpdate', //req
