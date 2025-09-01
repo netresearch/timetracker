@@ -117,6 +117,17 @@ This document breaks down the upgrade plan into specific, actionable tasks.
 -   `[ ]` **Manual Testing:** Verify critical application flows.
 -   ...
 
+## Ongoing: Auth YOLO Upgrade
+
+-   `[x]` Audit auth: `config/packages/security.yaml`, `App\Security\LdapAuthenticator`, `App\Controller\SecurityController`, `App\Controller\BaseController`, login tests
+-   `[x]` Add `App\EventSubscriber\AccessDeniedSubscriber` to keep legacy 403 message text
+-   `[ ]` Unify login route to `/login` (GET+POST); align `LdapAuthenticator::supports`
+-   `[ ]` Replace manual `checkLogin`/`isPl` with `#[IsGranted]`/`#[Security]` across controllers (in progress)
+-   `[ ]` Modernize `BaseController` to use `TokenStorage`; remove session unserialize hacks (in progress)
+-   `[ ]` Update tests to use `loginUser` helper; remove session token hacks
+-   `[ ]` Adjust `assets/js*` for auth redirects and 401 handling if needed
+-   `[ ]` Run analyzers and fast tests; commit after each step (in progress)
+
 ### Planned: TypeInfo and DatePoint adoption
 
 -   `[ ]` Introduce Symfony TypeInfo component for stronger type introspection in services and mappers (`symfony/type-info`). See docs: https://symfony.com/doc/current/components/type_info.html
