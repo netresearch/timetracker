@@ -9,7 +9,7 @@
   },
   "php.validate.enable": true,
   "php.suggest.basic": true,
-  "intelephense.environment.phpVersion": "8.2",
+  "intelephense.environment.phpVersion": "8.4",
   "php.executablePath": "docker compose run --rm app php",
   "extensions.recommendations": [
     "junstyle.php-cs-fixer",
@@ -89,7 +89,7 @@
     "zip",
     "zlib"
   ],
-  "php.validate.executablePath": "/usr/bin/php8.2",
+  "php.validate.executablePath": "/usr/bin/php8.4",
   "phpcs.autoConfigSearch": true,
   "phpcs.enable": true,
   "phpcs.executablePath": "bin/phpcs",

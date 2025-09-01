@@ -31,14 +31,14 @@ class TtSyncSubticketsCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $project = $input->getArgument('project');
+        $projectArg = $input->getArgument('project');
         $symfonyStyle = new SymfonyStyle($input, $output);
 
-        $projectId = $project;
+        $projectId = is_scalar($projectArg) ? (string) $projectArg : null;
 
         $entityRepository = $this->entityManager
             ->getRepository(\App\Entity\Project::class);
-        if ($projectId) {
+        if (null !== $projectId && '' !== $projectId) {
             $project = $entityRepository->find($projectId);
             if (!$project instanceof \App\Entity\Project) {
                 $symfonyStyle->error('Project does not exist');
@@ -54,19 +54,21 @@ class TtSyncSubticketsCommand extends Command
                 ->getResult();
         }
 
+        /** @var array<int, \App\Entity\Project> $projects */
+        $count = count($projects);
         $output->writeln(
-            'Found '.count($projects).' projects with ticket system',
+            'Found '.$count.' projects with ticket system',
             OutputInterface::VERBOSITY_VERBOSE
         );
-        foreach ($projects as $project) {
+        foreach ($projects as $projectEntity) {
             $output->writeln(
-                'Syncing '.$project->getId().' '.$project->getName(),
+                'Syncing '.$projectEntity->getId().' '.$projectEntity->getName(),
                 OutputInterface::VERBOSITY_VERBOSE
             );
             try {
-                $subtickets = $this->subticketSyncService->syncProjectSubtickets($project);
+                $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectEntity);
             } catch (JiraApiUnauthorizedException $e) {
-                throw new JiraApiUnauthorizedException($e->getMessage().' - project '.$project->getName(), $e->getCode(), $e->getRedirectUrl(), $e);
+                throw new JiraApiUnauthorizedException($e->getMessage().' - project '.$projectEntity->getName(), $e->getCode(), $e->getRedirectUrl(), $e);
             }
 
             $output->writeln(
