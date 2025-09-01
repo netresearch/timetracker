@@ -24,6 +24,7 @@ class TtSyncSubticketsCommandTest extends KernelTestCase
             @\restore_exception_handler();
         }
     }
+
     public function testRunsForAllProjectsWithTicketSystem(): void
     {
         self::bootKernel();

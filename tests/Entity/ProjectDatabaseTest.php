@@ -72,7 +72,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch customer to ensure it's managed
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
-        if ($fetchedCustomer) {
+        if ($fetchedCustomer instanceof \App\Entity\Customer) {
             $this->entityManager->remove($fetchedCustomer);
             $this->entityManager->flush();
         }
@@ -132,7 +132,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch customer to ensure it's managed
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
-        if ($fetchedCustomer) {
+        if ($fetchedCustomer instanceof \App\Entity\Customer) {
             $this->entityManager->remove($fetchedCustomer);
             $this->entityManager->flush();
         }
@@ -183,7 +183,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Clean up customer - re-fetch to ensure it's managed
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
-        if ($fetchedCustomer) {
+        if ($fetchedCustomer instanceof \App\Entity\Customer) {
             $this->entityManager->remove($fetchedCustomer);
             $this->entityManager->flush();
         }
@@ -327,15 +327,15 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedTechnicalLead = $this->entityManager->find(User::class, $technicalLeadId);
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
 
-        if ($fetchedProjectLead) {
+        if ($fetchedProjectLead instanceof \App\Entity\User) {
             $this->entityManager->remove($fetchedProjectLead);
         }
 
-        if ($fetchedTechnicalLead) {
+        if ($fetchedTechnicalLead instanceof \App\Entity\User) {
             $this->entityManager->remove($fetchedTechnicalLead);
         }
 
-        if ($fetchedCustomer) {
+        if ($fetchedCustomer instanceof \App\Entity\Customer) {
             $this->entityManager->remove($fetchedCustomer);
         }
 
@@ -400,11 +400,11 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedTicketSystem = $this->entityManager->find(TicketSystem::class, $ticketSystemId);
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
 
-        if ($fetchedTicketSystem) {
+        if ($fetchedTicketSystem instanceof \App\Entity\TicketSystem) {
             $this->entityManager->remove($fetchedTicketSystem);
         }
 
-        if ($fetchedCustomer) {
+        if ($fetchedCustomer instanceof \App\Entity\Customer) {
             $this->entityManager->remove($fetchedCustomer);
         }
 
@@ -487,11 +487,11 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedActivity = $this->entityManager->find(\App\Entity\Activity::class, $activityId);
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
 
-        if ($fetchedActivity) {
+        if ($fetchedActivity instanceof \App\Entity\Activity) {
             $this->entityManager->remove($fetchedActivity);
         }
 
-        if ($fetchedCustomer) {
+        if ($fetchedCustomer instanceof \App\Entity\Customer) {
             $this->entityManager->remove($fetchedCustomer);
         }
 

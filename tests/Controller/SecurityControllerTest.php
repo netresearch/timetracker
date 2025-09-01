@@ -60,9 +60,7 @@ class SecurityControllerTest extends AbstractWebTestCase
         $this->assertStringContainsString('url: "/login"', $content);
     }
 
-    /**
-     * @group network
-     */
+    #[\PHPUnit\Framework\Attributes\Group('network')]
     public function testLogoutReturnsToLogin(): void
     {
         // When a user is logged in

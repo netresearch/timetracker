@@ -61,6 +61,6 @@ class LdapAuthenticatorTest extends TestCase
         $mock->method('getUsername')->willReturn('dev');
         $tokenStub = new \Tests\Fixtures\TokenStub($mock);
         $redirectResponse = $ldapAuthenticator->onAuthenticationSuccess($request, $tokenStub, 'main');
-        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_FOUND, $redirectResponse->getStatusCode(), $redirectResponse->getContent());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_FOUND, $redirectResponse->getStatusCode(), (string) $redirectResponse->getContent());
     }
 }

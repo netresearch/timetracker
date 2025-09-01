@@ -276,12 +276,12 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $customerId = $customer->getId();
         $project = $this->entityManager->find(Project::class, $projectId);
         $customer = $this->entityManager->find(Customer::class, $customerId);
-        if ($project) {
+        if ($project instanceof \App\Entity\Project) {
             $this->entityManager->remove($project);
             $this->entityManager->flush();
         }
 
-        if ($customer) {
+        if ($customer instanceof \App\Entity\Customer) {
             $this->entityManager->remove($customer);
             $this->entityManager->flush();
         }

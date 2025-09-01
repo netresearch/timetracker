@@ -76,7 +76,7 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
         try {
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
             $this->assertStatusCode(406);
-        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException) {
             $this->fail('Unexpected 422 for duplicate name; should be business-rule 406');
         }
     }
@@ -94,9 +94,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
         try {
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
             $this->assertStatusCode(422);
-        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
-            $this->assertSame(422, $e->getStatusCode());
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException) {
+            $this->assertSame(422, $unprocessableEntityHttpException->getStatusCode());
         }
+
         // No further response assertions; exception path may bypass BrowserKit response population
         $this->assertTrue(true);
     }
@@ -188,8 +189,8 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             $this->assertStatusCode(422);
             $content = (string) $this->client->getResponse()->getContent();
             $this->assertNotEmpty($content);
-        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
-            $this->assertSame(422, $e->getStatusCode());
+        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException) {
+            $this->assertSame(422, $unprocessableEntityHttpException->getStatusCode());
         }
     }
 

@@ -23,6 +23,7 @@ class ControllingControllerTest extends AbstractWebTestCase
         if (method_exists($session, 'save')) {
             $session->save();
         }
+
         // Clear cookies so no previous session id is reused
         $this->client->getCookieJar()->clear();
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling/export');
@@ -99,14 +100,12 @@ class ControllingControllerTest extends AbstractWebTestCase
 
         // Test setCellDate method
         $reflectionMethod = $reflectionClass->getMethod('setCellDate');
-        $reflectionMethod->setAccessible(true);
 
         $testDate = new \DateTime('2025-03-30');
         $reflectionMethod->invokeArgs(null, [$worksheet, 'A', 1, $testDate]);
 
         // Test setCellHours method
         $setCellHoursMethod = $reflectionClass->getMethod('setCellHours');
-        $setCellHoursMethod->setAccessible(true);
 
         $testTime = new \DateTime('2025-03-30 14:30:00');
         $setCellHoursMethod->invokeArgs(null, [$worksheet, 'B', 1, $testTime]);
