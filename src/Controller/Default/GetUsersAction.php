@@ -12,15 +12,16 @@ final class GetUsersAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getUsers', name: '_getUsers_attr', methods: ['GET'])]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
-        if (null === $user) {
+        if (!$user instanceof \App\Entity\User) {
             if (!$this->checkLogin($request)) {
                 return $this->redirectToRoute('_login');
             }
+
             $userId = $this->getUserId($request);
             /** @var \App\Repository\UserRepository $userRepo */
             $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
             $current = $userRepo->find($userId);
-            $isDev = $current && method_exists($current, 'getType') ? $current->getType() === 'DEV' : false;
+            $isDev = $current && method_exists($current, 'getType') && $current->getType() === 'DEV';
         } else {
             $userId = (int) $user->getId();
             $isDev = $user->getType() === 'DEV';
@@ -28,11 +29,7 @@ final class GetUsersAction extends BaseController
 
         /** @var \App\Repository\UserRepository $userRepo */
         $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
-        if ($isDev) {
-            $data = $userRepo->getUserById($userId);
-        } else {
-            $data = $userRepo->getUsers($userId);
-        }
+        $data = $isDev ? $userRepo->getUserById($userId) : $userRepo->getUsers($userId);
 
         return new JsonResponse($data);
     }

@@ -12,10 +12,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ProjectRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Project::class);
+        parent::__construct($managerRegistry, Project::class);
     }
+
     /**
      * Returns an array structure with keys of customer IDs and an "all" key.
      * Values are arrays of associative project arrays (id, name, jiraId, active).
@@ -89,7 +90,7 @@ class ProjectRepository extends ServiceEntityRepository
 
         foreach ($projects as &$project) {
             // Both branches construct arrays; phpstan knows they are arrays
-            usort($project, static fn(array $a, array $b): int => strcmp((string) $a['name'], (string) $b['name']));
+            usort($project, static fn(array $a, array $b): int => strcmp($a['name'], $b['name']));
         }
 
         return $projects;

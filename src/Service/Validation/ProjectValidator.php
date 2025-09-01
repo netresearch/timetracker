@@ -6,9 +6,9 @@ namespace App\Service\Validation;
 use App\Entity\Project;
 use App\Repository\ProjectRepository;
 
-final class ProjectValidator
+final readonly class ProjectValidator
 {
-    public function __construct(private readonly ProjectRepository $projectRepository)
+    public function __construct(private ProjectRepository $projectRepository)
     {
     }
 

@@ -247,15 +247,19 @@ class LdapClientService
         if (is_string($value)) {
             return $value;
         }
+
         if (is_int($value) || is_float($value) || is_bool($value)) {
             return (string) $value;
         }
+
         if ($value instanceof \BackedEnum) {
             return (string) $value->value;
         }
+
         if ($value instanceof \UnitEnum) {
             return $value->name;
         }
+
         return '';
     }
 
@@ -267,15 +271,19 @@ class LdapClientService
         if (is_int($value)) {
             return $value;
         }
+
         if (is_string($value)) {
             return (int) $value;
         }
+
         if ($value instanceof \BackedEnum) {
             return (int) $value->value;
         }
+
         if (is_float($value) || is_bool($value)) {
             return (int) $value;
         }
+
         return 0;
     }
 
@@ -287,9 +295,11 @@ class LdapClientService
         if (is_bool($value)) {
             return $value;
         }
+
         if ($value instanceof \BackedEnum) {
             return (bool) $value->value;
         }
+
         return (bool) $value;
     }
 

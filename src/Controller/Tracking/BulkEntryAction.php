@@ -62,7 +62,7 @@ final class BulkEntryAction extends BaseTrackingController
                     ];
                 }
 
-                if (!$contracts) {
+                if ($contracts === []) {
                     $response = new Response(
                         $this->translator->trans('No contract for user found. Please use custome time.')
                     );
@@ -98,6 +98,7 @@ final class BulkEntryAction extends BaseTrackingController
                         $date->add(new \DateInterval('P1D'));
                         continue;
                     }
+
                     if (in_array($date->format('Y-m-d'), $irregular_holidays)) {
                         $date->add(new \DateInterval('P1D'));
                         continue;
@@ -142,9 +143,11 @@ final class BulkEntryAction extends BaseTrackingController
                 if ($project instanceof Project) {
                     $entry->setProject($project);
                 }
+
                 if ($activity instanceof Activity) {
                     $entry->setActivity($activity);
                 }
+
                 if ($customer instanceof Customer) {
                     $entry->setCustomer($customer);
                 }
@@ -159,10 +162,11 @@ final class BulkEntryAction extends BaseTrackingController
             } while ($date <= $endDate);
 
             $responseContent = $this->translator->trans('%num% entries have been added', ['%num%' => $numAdded]);
-            if (!empty($contractHoursArray) && (new \DateTime((string) ($request->request->get('startdate') ?? ''))) < $contractHoursArray[0]['start']) {
+            if ($contractHoursArray !== [] && (new \DateTime((string) ($request->request->get('startdate') ?? ''))) < $contractHoursArray[0]['start']) {
                 $responseContent .= '<br/>'.$this->translator->trans('Contract is valid from %date%.', ['%date%' => $contractHoursArray[0]['start']->format('d.m.Y')]);
             }
-            if (!empty($contractHoursArray)) {
+
+            if ($contractHoursArray !== []) {
                 $lastContract = end($contractHoursArray);
                 if ($endDate > $lastContract['stop']) {
                     $responseContent .= '<br/>'.$this->translator->trans('Contract expired at %date%.', ['%date%' => $lastContract['stop']->format('d.m.Y')]);

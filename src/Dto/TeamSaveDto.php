@@ -11,9 +11,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 final class TeamSaveDto
 {
     public int $id = 0;
+
     #[Assert\NotBlank(message: 'Please provide a valid team name with at least 3 letters.')]
     #[Assert\Length(min: 3, minMessage: 'Please provide a valid team name with at least 3 letters.')]
     public string $name = '';
+
     public int $lead_user_id = 0;
 
     public static function fromRequest(Request $request): self

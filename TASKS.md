@@ -72,7 +72,7 @@ This document breaks down the upgrade plan into specific, actionable tasks.
             -   Note: Kept aliases for `TranslatorInterface`, `SessionInterface`, and `LoggerInterface` (in active use). Explicit `session` service retained for prod/dev; no legacy annotations reader present.
     -   `[ ]` **Ensure Strict Types and Type Hints:**
         -   `[x]` Add `declare(strict_types=1);` to all PHP files. (Estimate: 0.5h - Use automated tooling if possible)
-        -   `[ ]` Add parameter and return type hints wherever missing, replacing `@param`/`@return` phpdoc tags. (Estimate: 1h+ - Highly variable, do incrementally)
+        -   `[x]` Add parameter and return type hints wherever missing, replacing `@param`/`@return` phpdoc tags. (Estimate: 1h+ - Highly variable, do incrementally)
 
 ### 1.4: Static Analysis & Code Standards
 

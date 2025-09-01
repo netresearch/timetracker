@@ -21,7 +21,9 @@ use Psr\Log\LoggerInterface;
 abstract class BaseTrackingController extends BaseController
 {
     protected ?TicketService $ticketService = null;
+
     protected ?LoggerInterface $logger = null;
+
     protected ?JiraOAuthApiFactory $jiraOAuthApiFactory = null;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
@@ -75,8 +77,9 @@ abstract class BaseTrackingController extends BaseController
         if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
             return;
         }
-        $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
-        $jiraOAuthApi->deleteEntryJiraWorkLog($entry);
+
+        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
+        $jiraOAuthApiService->deleteEntryJiraWorkLog($entry);
     }
 
     /**
@@ -183,7 +186,7 @@ abstract class BaseTrackingController extends BaseController
             throw new \Exception($message);
         }
 
-        $jiraId = $this->ticketService ? $this->ticketService->getPrefix($ticket) : null;
+        $jiraId = $this->ticketService instanceof \App\Service\Util\TicketService ? $this->ticketService->getPrefix($ticket) : null;
         if (null === $jiraId) {
             $message = $this->translator->trans("The ticket's format is not recognized.");
             throw new \Exception($message);
@@ -254,8 +257,9 @@ abstract class BaseTrackingController extends BaseController
         if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
             return;
         }
-        $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
-        $jiraOAuthApi->updateEntryJiraWorkLog($entry);
+
+        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
+        $jiraOAuthApiService->updateEntryJiraWorkLog($entry);
     }
 
     /**
@@ -277,9 +281,10 @@ abstract class BaseTrackingController extends BaseController
         if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
             throw new JiraApiException('JIRA API factory or user not available');
         }
-        $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
 
-        return $jiraOAuthApi->createTicket($entry);
+        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
+
+        return $jiraOAuthApiService->createTicket($entry);
     }
 
     /**
@@ -296,11 +301,11 @@ abstract class BaseTrackingController extends BaseController
         $internalJiraTicketSystem = $project->getInternalJiraTicketSystem();
         $internalJiraProjectKey = $project->getInternalJiraProjectKey();
 
-        if (empty($internalJiraTicketSystem)) {
+        if ($internalJiraTicketSystem === null || $internalJiraTicketSystem === '' || $internalJiraTicketSystem === '0') {
             return;
         }
 
-        if (empty($internalJiraProjectKey)) {
+        if ($internalJiraProjectKey === null || $internalJiraProjectKey === '' || $internalJiraProjectKey === '0') {
             return;
         }
 
@@ -325,8 +330,9 @@ abstract class BaseTrackingController extends BaseController
         if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
             return;
         }
-        $jiraOAuthApi = $this->jiraOAuthApiFactory->create($entry->getUser(), $internalJiraTicketSystem);
-        $searchResult = $jiraOAuthApi->searchTicket(
+
+        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $internalJiraTicketSystem);
+        $searchResult = $jiraOAuthApiService->searchTicket(
             sprintf(
                 'project = %s AND summary ~ %s',
                 $project->getInternalJiraProjectKey(),

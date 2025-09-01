@@ -163,6 +163,7 @@ class JiraOAuthApiService
         if ($tmp === false) {
             throw new JiraApiException('Failed to create temporary file');
         }
+
         return $tmp;
     }
 

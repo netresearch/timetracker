@@ -8,11 +8,17 @@ use Symfony\Component\HttpFoundation\Request;
 final class ExportQueryDto
 {
     public int $userid = 0;
+
     public int $year = 0;
+
     public int $month = 0;
+
     public int $project = 0;
+
     public int $customer = 0;
+
     public bool $billable = false;
+
     public bool $tickettitles = false;
 
     public static function fromRequest(Request $request): self
@@ -34,6 +40,7 @@ final class ExportQueryDto
         if ($value === null || $value === '') {
             return 0;
         }
+
         return (int) $value;
     }
 
@@ -42,9 +49,11 @@ final class ExportQueryDto
         if ($value === null) {
             return false;
         }
+
         if (is_bool($value)) {
             return $value;
         }
+
         $normalized = strtolower(trim((string) $value));
         return in_array($normalized, ['1','true','on','yes'], true);
     }

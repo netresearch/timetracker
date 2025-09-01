@@ -14,20 +14,20 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class DeleteTeamAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/team/delete', name: 'deleteTeam_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = $dto->id;
+            $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;
 
             $team = $doctrine->getRepository(Team::class)->find($id);
 
             $em = $doctrine->getManager();
-            if ($team) {
+            if ($team instanceof \App\Entity\Team) {
                 $em->remove($team);
                 $em->flush();
             } else {

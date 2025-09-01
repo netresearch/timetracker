@@ -20,11 +20,10 @@ class TtSyncSubticketsCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->addArgument('project', InputArgument::OPTIONAL, 'Single project ID to update')
-        ;
+            ->addArgument('project', InputArgument::OPTIONAL, 'Single project ID to update');
     }
 
     /**
@@ -32,15 +31,16 @@ class TtSyncSubticketsCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $project = $input->getArgument('project');
         $symfonyStyle = new SymfonyStyle($input, $output);
 
-        $projectId = $input->getArgument('project');
+        $projectId = $project;
 
         $entityRepository = $this->entityManager
             ->getRepository(\App\Entity\Project::class);
         if ($projectId) {
             $project = $entityRepository->find($projectId);
-            if (!$project) {
+            if (!$project instanceof \App\Entity\Project) {
                 $symfonyStyle->error('Project does not exist');
 
                 return 1;
@@ -81,6 +81,6 @@ class TtSyncSubticketsCommand extends Command
             }
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

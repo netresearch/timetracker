@@ -18,9 +18,6 @@ class Account
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    /**
-     * @var string
-     */
     #[ORM\Column(type: 'string', length: 50)]
     protected string $name = '';
 

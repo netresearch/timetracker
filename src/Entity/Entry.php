@@ -120,25 +120,16 @@ class Entry extends Base
      */
     protected ?string $ticketTitle = null;
 
-    /**
-     * @param string $externalReporter
-     */
     public function setExternalReporter(string $externalReporter): void
     {
         $this->externalReporter = $externalReporter;
     }
 
-    /**
-     * @return string
-     */
     public function getExternalReporter(): string
     {
         return $this->externalReporter;
     }
 
-    /**
-     * @param string $externalSummary
-     */
     public function setExternalSummary(string $externalSummary): void
     {
         $this->externalSummary = $externalSummary;
@@ -164,9 +155,6 @@ class Entry extends Base
         $this->externalLabels = $arExternalLabels;
     }
 
-    /**
-     * @return string
-     */
     public function getExternalSummary(): string
     {
         return $this->externalSummary;
@@ -595,6 +583,7 @@ class Entry extends Base
                 ],
             ];
         }
+
         return [
             'fields' => [
                 'project' => [

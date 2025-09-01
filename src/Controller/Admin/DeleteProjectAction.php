@@ -14,20 +14,20 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class DeleteProjectAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/project/delete', name: 'deleteProject_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = $dto->id;
+            $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;
 
             $project = $doctrine->getRepository(Project::class)->find($id);
 
             $em = $doctrine->getManager();
-            if ($project) {
+            if ($project instanceof \App\Entity\Project) {
                 $em->remove($project);
                 $em->flush();
             } else {

@@ -46,12 +46,14 @@ final class GetTicketTimeSummaryAction extends BaseController
             $time['activities'][$key]['seconds'] = (int) $total * 60;
             $time['activities'][$key]['time'] = $this->timeCalculationService->minutesToReadable((int) $total);
         }
+
         foreach ($users as $user) {
             $time['total_time']['time'] += (int) $user['total_time'];
             $key = $user['username'];
             $time['users'][$key]['seconds'] = (int) $user['total_time'] * 60;
             $time['users'][$key]['time'] = $this->timeCalculationService->minutesToReadable((int) $user['total_time']);
         }
+
         $time['total_time']['seconds'] = $time['total_time']['time'] * 60;
         $time['total_time']['time'] = $this->timeCalculationService->minutesToReadable($time['total_time']['time']);
 

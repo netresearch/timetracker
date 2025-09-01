@@ -36,14 +36,17 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         foreach ($entries as $entry) {
             $day = $entry->getDay();
             if (!$day instanceof \DateTimeInterface) { continue; }
+
             $key = $day->format('y-m-d');
             if (!isset($times[$key])) {
                 $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'hours' => 0.0, 'minutes' => 0.0, 'quota' => 0];
             }
+
             $times[$key]['minutes'] += $entry->getDuration();
         }
 
         $totalMinutes = 0.0; foreach ($times as $t) { $totalMinutes += $t['minutes']; }
+
         foreach ($times as &$time) {
             $minutes = $time['minutes'];
             $time['hours'] = $minutes / 60.0;
@@ -53,7 +56,7 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
         usort($times, $this->sortByName(...));
         $prepared = array_map(static fn(array $t): array => [
-            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => (float) $t['hours'], 'quota' => (string) $t['quota'],
+            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'quota' => (string) $t['quota'],
         ], $times);
 
         $prepared = array_reverse($prepared);

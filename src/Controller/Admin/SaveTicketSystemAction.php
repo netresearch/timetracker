@@ -16,7 +16,7 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 final class SaveTicketSystemAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/save', name: 'saveTicketSystem_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $dto, ObjectMapperInterface $mapper): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -25,7 +25,7 @@ final class SaveTicketSystemAction extends BaseController
         /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
-        $id = $dto->id;
+        $id = $ticketSystemSaveDto->id;
 
         if (null !== $id) {
             $ticketSystem = $objectRepository->find($id);
@@ -44,7 +44,7 @@ final class SaveTicketSystemAction extends BaseController
 
         // Basic length validation handled by DTO constraints via MapRequestPayload (422)
 
-        $sameNamedSystem = $objectRepository->findOneByName($dto->name);
+        $sameNamedSystem = $objectRepository->findOneByName($ticketSystemSaveDto->name);
         if ($sameNamedSystem instanceof TicketSystem && $ticketSystem->getId() != $sameNamedSystem->getId()) {
             $response = new Response($this->translate('The ticket system name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -53,7 +53,7 @@ final class SaveTicketSystemAction extends BaseController
         }
 
         try {
-            $mapper->map($dto, $ticketSystem);
+            $objectMapper->map($ticketSystemSaveDto, $ticketSystem);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);

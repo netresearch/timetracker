@@ -16,20 +16,20 @@ use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 final class GetAllEntriesAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $filters): ModelResponse|JsonResponse|Error
+    public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $interpretationFiltersDto): ModelResponse|JsonResponse|Error
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         // Legacy *_id aliases are handled inside the DTO helper
-        $project = $filters->project ?? $filters->project_id ?? 0;
-        $customer = $filters->customer ?? $filters->customer_id ?? 0;
-        $activity = $filters->activity ?? $filters->activity_id ?? 0;
-        $maxResults = $filters->maxResults ?? 0;
-        $page = $filters->page ?? 0;
-        $datestart = $filters->datestart;
-        $dateend = $filters->dateend;
+        $project = $interpretationFiltersDto->project ?? $interpretationFiltersDto->project_id ?? 0;
+        $customer = $interpretationFiltersDto->customer ?? $interpretationFiltersDto->customer_id ?? 0;
+        $activity = $interpretationFiltersDto->activity ?? $interpretationFiltersDto->activity_id ?? 0;
+        $maxResults = $interpretationFiltersDto->maxResults ?? 0;
+        $page = $interpretationFiltersDto->page ?? 0;
+        $datestart = $interpretationFiltersDto->datestart;
+        $dateend = $interpretationFiltersDto->dateend;
 
         if ($page < 0) {
             $message = $this->translator->trans('page can not be negative.');
@@ -46,15 +46,19 @@ final class GetAllEntriesAction extends BaseController
         if (0 !== $activity) {
             $searchArray['activity'] = $activity;
         }
+
         if (0 !== $project) {
             $searchArray['project'] = $project;
         }
+
         if (is_string($datestart) && '' !== $datestart) {
             $searchArray['datestart'] = $datestart;
         }
+
         if (is_string($dateend) && '' !== $dateend) {
             $searchArray['dateend'] = $dateend;
         }
+
         if (0 !== $customer) {
             $searchArray['customer'] = $customer;
         }
@@ -66,6 +70,7 @@ final class GetAllEntriesAction extends BaseController
             if (!$query instanceof \Doctrine\ORM\Query) {
                 $query = $query->getQuery();
             }
+
             $paginator = new Paginator($query);
         } catch (\Exception $exception) {
             return new Error($this->translate($exception->getMessage()), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -104,7 +109,7 @@ final class GetAllEntriesAction extends BaseController
             $last = $route.http_build_query($query_params);
 
             $query_params['page'] = min($page - 1, $lastPage);
-            $prev = $page ? $route.http_build_query($query_params) : null;
+            $prev = $page !== 0 ? $route.http_build_query($query_params) : null;
 
             $query_params['page'] = $page + 1;
             $next = $page < $lastPage ? $route.http_build_query($query_params) : null;

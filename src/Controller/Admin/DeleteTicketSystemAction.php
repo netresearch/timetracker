@@ -14,20 +14,20 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class DeleteTicketSystemAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/delete', name: 'deleteTicketSystem_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = $dto->id;
+            $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;
 
             $ticketSystem = $doctrine->getRepository(TicketSystem::class)->find($id);
 
             $em = $doctrine->getManager();
-            if ($ticketSystem) {
+            if ($ticketSystem instanceof \App\Entity\TicketSystem) {
                 $em->remove($ticketSystem);
                 $em->flush();
             } else {

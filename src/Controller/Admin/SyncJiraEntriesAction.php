@@ -15,13 +15,13 @@ final class SyncJiraEntriesAction extends BaseController
     public function __invoke(Request $request): JsonResponse
     {
         if (false === $this->isPl($request)) {
-            return new JsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
+            return new JsonResponse(['success' => false, 'message' => 'Forbidden'], \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
         }
 
         $from = $request->query->get('from');
         $to = $request->query->get('to');
-        $fromDate = null !== $from ? new \DateTime((string) $from) : (new \DateTime())->modify('-3 days');
-        $toDate = null !== $to ? new \DateTime((string) $to) : new \DateTime();
+        null !== $from ? new \DateTime((string) $from) : (new \DateTime())->modify('-3 days');
+        null !== $to ? new \DateTime((string) $to) : new \DateTime();
 
         // Use current user as admin context if available
         $userId = $this->getUserId($request);
@@ -30,11 +30,12 @@ final class SyncJiraEntriesAction extends BaseController
         /** @var \App\Entity\TicketSystem|null $ticketSystem */
         $ticketSystem = $this->doctrineRegistry->getRepository(\App\Entity\TicketSystem::class)->findOneBy([]);
         $jiraApi = ($user && $ticketSystem) ? $this->jiraOAuthApiFactory->create($user, $ticketSystem) : null;
-        if ($jiraApi) {
+        if ($jiraApi instanceof \App\Service\Integration\Jira\JiraOAuthApiService) {
             // Mirror earlier behavior: update entries limited window
             // Choose a reasonable limit (null => all pending)
             $jiraApi->updateEntriesJiraWorkLogsLimited();
         }
+
         $result = (bool) $jiraApi;
 
         return new JsonResponse(['success' => $result]);
@@ -43,9 +44,9 @@ final class SyncJiraEntriesAction extends BaseController
     private JiraOAuthApiFactory $jiraOAuthApiFactory;
 
     #[Required]
-    public function setJiraApiFactory(JiraOAuthApiFactory $factory): void
+    public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {
-        $this->jiraOAuthApiFactory = $factory;
+        $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
     }
 }
 

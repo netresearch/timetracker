@@ -126,8 +126,6 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param bool $avoidConnection
-     *
      * @return $this
      */
     public function setAvoidConnection(bool $avoidConnection): static

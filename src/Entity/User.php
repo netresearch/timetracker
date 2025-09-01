@@ -20,9 +20,6 @@ class User implements UserInterface
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    /**
-     * @var string
-     */
     #[ORM\Column(type: 'string', length: 50)]
     protected string $username = '';
 
@@ -32,9 +29,6 @@ class User implements UserInterface
     #[ORM\Column(type: 'string', length: 3, nullable: true)]
     protected $abbr;
 
-    /**
-     * @var string
-     */
     #[ORM\Column(type: 'string', length: 255)]
     protected string $type = '';
 
@@ -98,11 +92,10 @@ class User implements UserInterface
     /**
      * Set username.
      *
-     * @param string $username
      *
      * @return $this
      */
-    public function setUsername($username): static
+    public function setUsername(string $username): static
     {
         $this->username = $username;
 
@@ -146,7 +139,6 @@ class User implements UserInterface
     /**
      * Set type.
      *
-     * @param string $type
      *
      * @return $this
      */

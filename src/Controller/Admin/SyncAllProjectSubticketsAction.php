@@ -16,7 +16,7 @@ final class SyncAllProjectSubticketsAction extends BaseController
     public function __invoke(Request $request): JsonResponse
     {
         if (false === $this->isPl($request)) {
-            return new JsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
+            return new JsonResponse(['success' => false, 'message' => 'Forbidden'], \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
         }
 
         // Legacy route syncs all projects; mirror behavior by iterating all
@@ -38,9 +38,9 @@ final class SyncAllProjectSubticketsAction extends BaseController
     private SubticketSyncService $subticketSyncService;
 
     #[Required]
-    public function setSubticketSyncService(SubticketSyncService $svc): void
+    public function setSubticketSyncService(SubticketSyncService $subticketSyncService): void
     {
-        $this->subticketSyncService = $svc;
+        $this->subticketSyncService = $subticketSyncService;
     }
 
     // No Jira API factory required in current implementation

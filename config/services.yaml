@@ -94,7 +94,7 @@ services:
     # Explicit definition to ensure constructor injection of ClockInterface and TimeCalculationService
     App\Repository\EntryRepository:
         arguments:
-            $registry: '@doctrine'
+            $managerRegistry: '@doctrine'
             $clock: '@App\Service\ClockInterface'
             $timeCalculationService: '@App\Service\Util\TimeCalculationService'
 

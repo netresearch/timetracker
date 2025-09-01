@@ -37,15 +37,19 @@ final class GroupByUserAction extends BaseInterpretationController
         foreach ($entries as $entry) {
             $u = $entry->getUser();
             if (!$u) { continue; }
+
             $uid = $u->getId();
             if (!isset($users[$uid])) {
                 $users[$uid] = ['id' => $uid, 'name' => (string) $u->getUsername(), 'hours' => 0, 'quota' => 0];
             }
+
             $users[$uid]['hours'] += $entry->getDuration() / 60;
         }
 
         $sum = 0; foreach ($users as $u) { $sum += $u['hours']; }
-        foreach ($users as &$u) { $u['quota'] = $this->timeCalculationService->formatQuota($u['hours'], $sum); }
+
+        foreach ($users as &$user) { $user['quota'] = $this->timeCalculationService->formatQuota($user['hours'], $sum); }
+
         usort($users, $this->sortByName(...));
 
         return new JsonResponse($users);

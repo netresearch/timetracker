@@ -19,9 +19,6 @@ class Customer extends Base
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    /**
-     * @var string
-     */
     #[ORM\Column(type: 'string', length: 255)]
     protected string $name = '';
 
@@ -97,11 +94,10 @@ class Customer extends Base
     /**
      * Set name.
      *
-     * @param string $name
      *
      * @return $this
      */
-    public function setName($name): static
+    public function setName(string $name): static
     {
         $this->name = $name;
 

@@ -15,18 +15,18 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class SaveContractAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] ContractSaveDto $dto): Response|JsonResponse|\App\Response\Error
+    public function __invoke(Request $request, #[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|\App\Response\Error
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $contractId = $dto->id;
-        $start = $dto->start;
-        $end = $dto->end;
+        $contractId = $contractSaveDto->id;
+        $start = $contractSaveDto->start;
+        $end = $contractSaveDto->end;
 
         /** @var User|object|null $user */
-        $user = $dto->user_id ? $this->doctrineRegistry->getRepository(User::class)->find($dto->user_id) : null;
+        $user = $contractSaveDto->user_id !== 0 ? $this->doctrineRegistry->getRepository(User::class)->find($contractSaveDto->user_id) : null;
 
         /** @var \App\Repository\ContractRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
@@ -84,13 +84,13 @@ final class SaveContractAction extends BaseController
         $contract->setUser($user)
             ->setStart($dateStart)
             ->setEnd($dateEnd)
-            ->setHours0($dto->hours_0)
-            ->setHours1($dto->hours_1)
-            ->setHours2($dto->hours_2)
-            ->setHours3($dto->hours_3)
-            ->setHours4($dto->hours_4)
-            ->setHours5($dto->hours_5)
-            ->setHours6($dto->hours_6);
+            ->setHours0($contractSaveDto->hours_0)
+            ->setHours1($contractSaveDto->hours_1)
+            ->setHours2($contractSaveDto->hours_2)
+            ->setHours3($contractSaveDto->hours_3)
+            ->setHours4($contractSaveDto->hours_4)
+            ->setHours5($contractSaveDto->hours_5)
+            ->setHours6($contractSaveDto->hours_6);
 
         $objectManager = $this->doctrineRegistry->getManager();
         $objectManager->persist($contract);
@@ -137,7 +137,7 @@ final class SaveContractAction extends BaseController
             return $this->translate('There is already an ongoing contract with a closed end date in the future.');
         }
 
-        $contractsOld = array_filter($contractsOld, fn (Contract $contract): bool => (null === $contract->getEnd()));
+        $contractsOld = array_filter($contractsOld, fn (Contract $contract): bool => (!$contract->getEnd() instanceof \DateTime));
         if (count($contractsOld) > 1) {
             return $this->translate('There is more than one open-ended contract for the user.');
         }
@@ -170,6 +170,7 @@ final class SaveContractAction extends BaseController
             if (!$contract instanceof Contract) {
                 continue;
             }
+
             $startsAfterOrOnNewStartDate = $contract->getStart() >= $newStartDate;
             $startsBeforeOrOnNewEndDate = ($newEndDate instanceof \DateTime) ? ($contract->getStart() <= $newEndDate) : true;
 
@@ -193,9 +194,10 @@ final class SaveContractAction extends BaseController
             if (!$contract instanceof Contract) {
                 continue;
             }
+
             $startsBeforeOrOnNewDate = $contract->getStart() <= $newStartDate;
             $endsAfterOrOnNewDate = $contract->getEnd() >= $newStartDate;
-            $hasEndDate = null !== $contract->getEnd();
+            $hasEndDate = $contract->getEnd() instanceof \DateTime;
 
             if ($startsBeforeOrOnNewDate && $endsAfterOrOnNewDate && $hasEndDate) {
                 $filteredContracts[] = $contract;

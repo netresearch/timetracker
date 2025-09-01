@@ -13,6 +13,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 class SecurityController extends AbstractController
 {
     private TokenStorageInterface $tokenStorage;
+
     private RequestStack $requestStack;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
@@ -26,6 +27,7 @@ class SecurityController extends AbstractController
     {
         $this->requestStack = $requestStack;
     }
+
     /**
      * This is just a route target for the login form
      * The actual rendering is now handled by Symfony's form_login system.
@@ -52,7 +54,7 @@ class SecurityController extends AbstractController
         // In tests (firewall disabled), perform a manual logout and redirect.
         $this->tokenStorage->setToken(null);
         $request = $this->requestStack->getCurrentRequest();
-        if (null !== $request && $request->hasSession()) {
+        if ($request instanceof \Symfony\Component\HttpFoundation\Request && $request->hasSession()) {
             $request->getSession()->invalidate();
         }
 

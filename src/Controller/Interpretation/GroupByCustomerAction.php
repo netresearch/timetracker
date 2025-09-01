@@ -36,15 +36,19 @@ final class GroupByCustomerAction extends BaseInterpretationController
         foreach ($entries as $entry) {
             $customerEntity = $entry->getCustomer();
             if (!$customerEntity) { continue; }
+
             $cid = $customerEntity->getId();
             if (!isset($customers[$cid])) {
                 $customers[$cid] = ['id' => $cid, 'name' => $customerEntity->getName(), 'hours' => 0, 'quota' => 0];
             }
+
             $customers[$cid]['hours'] += $entry->getDuration() / 60;
         }
 
         $sum = 0; foreach ($customers as $c) { $sum += $c['hours']; }
-        foreach ($customers as &$c) { $c['quota'] = $this->timeCalculationService->formatQuota($c['hours'], $sum); }
+
+        foreach ($customers as &$customer) { $customer['quota'] = $this->timeCalculationService->formatQuota($customer['hours'], $sum); }
+
         usort($customers, $this->sortByName(...));
 
         return new JsonResponse($customers);
