@@ -11,12 +11,9 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetCustomerAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getCustomer', name: '_getCustomer_attr', methods: ['GET'])]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
+    #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request): JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
-
         $projectParam = $request->query->get('project');
         if (is_scalar($projectParam) && '' !== $projectParam) {
             $project = $this->managerRegistry->getRepository(Project::class)->find($projectParam);
