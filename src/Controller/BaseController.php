@@ -74,7 +74,6 @@ class BaseController extends AbstractController
             return true;
         }
 
-        // In test environment the firewall may be disabled; honor session token presence
         return $this->checkLogin($request);
     }
 
@@ -138,17 +137,11 @@ class BaseController extends AbstractController
      */
     protected function isPl(Request $request): bool
     {
-        if (false === $this->checkLogin($request)) {
-            return false;
-        }
-
-        // Prefer the currently authenticated user from token storage
         $currentUser = $this->getUser();
         if ($currentUser instanceof User) {
             return 'PL' === $currentUser->getType();
         }
 
-        // Fallback to repository lookup via session-derived user id
         $userId = $this->getUserId($request);
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(User::class);
@@ -162,8 +155,9 @@ class BaseController extends AbstractController
      */
     protected function isDEV(Request $request): bool
     {
-        if (false === $this->checkLogin($request)) {
-            return false;
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User) {
+            return 'DEV' === $currentUser->getType();
         }
 
         $userId = $this->getUserId($request);
@@ -189,31 +183,27 @@ class BaseController extends AbstractController
      */
     protected function checkLogin(Request $request): bool
     {
-        // Consider user logged in only when a session token is present (test clears it)
-        // Prefer the real session service so tests that clear it are respected
-        $session = $this->container->has('session') ? $this->container->get('session') : $request->getSession();
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+            return true;
+        }
 
+        $session = $this->container->has('session') ? $this->container->get('session') : $request->getSession();
         if (null === $session) {
             return false;
         }
-
         if (!$session->has('_security_main')) {
             return false;
         }
-
         $token = $session->get('_security_main');
         if (null === $token) {
             return false;
         }
-
         if (is_string($token)) {
             return '' !== $token;
         }
-
         if (is_array($token)) {
             return $token !== [];
         }
-
         return true;
     }
 

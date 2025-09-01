@@ -16,6 +16,11 @@ class SecurityControllerTest extends AbstractWebTestCase
         $session->clear();
         $session->save();
 
+        // Also clear the security token to ensure full logout in test env
+        if ($this->client->getContainer()->has('security.token_storage')) {
+            $this->client->getContainer()->get('security.token_storage')->setToken(null);
+        }
+
         // Try to access a protected route
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling/export');
 
