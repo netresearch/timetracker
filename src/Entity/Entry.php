@@ -123,7 +123,7 @@ class Entry extends Base
     /**
      * @param string $externalReporter
      */
-    public function setExternalReporter($externalReporter): void
+    public function setExternalReporter(string $externalReporter): void
     {
         $this->externalReporter = $externalReporter;
     }
@@ -131,7 +131,7 @@ class Entry extends Base
     /**
      * @return string
      */
-    public function getExternalReporter()
+    public function getExternalReporter(): string
     {
         return $this->externalReporter;
     }
@@ -139,7 +139,7 @@ class Entry extends Base
     /**
      * @param string $externalSummary
      */
-    public function setExternalSummary($externalSummary): void
+    public function setExternalSummary(string $externalSummary): void
     {
         $this->externalSummary = $externalSummary;
     }
@@ -149,7 +149,7 @@ class Entry extends Base
      *
      * @return array<int, string>
      */
-    public function getExternalLabels()
+    public function getExternalLabels(): array
     {
         return $this->externalLabels;
     }
@@ -167,7 +167,7 @@ class Entry extends Base
     /**
      * @return string
      */
-    public function getExternalSummary()
+    public function getExternalSummary(): string
     {
         return $this->externalSummary;
     }
@@ -263,7 +263,7 @@ class Entry extends Base
      *
      * @param string $ticket
      */
-    public function setTicket($ticket): static
+    public function setTicket(string $ticket): static
     {
         $this->ticket = str_replace(' ', '', $ticket);
 
@@ -337,10 +337,10 @@ class Entry extends Base
      *
      * @param string $day
      */
-    public function setDay($day): static
+    public function setDay(\DateTimeInterface|string $day): static
     {
         if (!$day instanceof \DateTimeInterface) {
-            $day = new \DateTime((string) $day);
+            $day = new \DateTime($day);
         }
 
         $this->day = $day;
@@ -363,10 +363,10 @@ class Entry extends Base
      *
      * @param string $start
      */
-    public function setStart($start): static
+    public function setStart(\DateTimeInterface|string $start): static
     {
         if (!$start instanceof \DateTimeInterface) {
-            $start = new \DateTime((string) $start);
+            $start = new \DateTime($start);
             $dayObj = $this->getDay();
             [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
             $start->setDate((int) $year, (int) $month, (int) $day);
@@ -393,10 +393,10 @@ class Entry extends Base
      *
      * @param string $end
      */
-    public function setEnd($end): static
+    public function setEnd(\DateTimeInterface|string $end): static
     {
         if (!$end instanceof \DateTimeInterface) {
-            $end = new \DateTime((string) $end);
+            $end = new \DateTime($end);
             $dayObj = $this->getDay();
             [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
             $end->setDate((int) $year, (int) $month, (int) $day);
@@ -596,7 +596,7 @@ class Entry extends Base
      *
      * @throws \Exception
      */
-    public function calcDuration($factor = 1): static
+    public function calcDuration(float $factor = 1.0): static
     {
         /**
          * Guard for partially initialized entity during construction/hydration.
@@ -643,7 +643,7 @@ class Entry extends Base
      *
      * @param int $class
      */
-    public function setClass($class): static
+    public function setClass(int $class): static
     {
         $this->class = $class;
 
@@ -655,7 +655,7 @@ class Entry extends Base
      *
      * @return int $class
      */
-    public function getClass()
+    public function getClass(): int
     {
         return $this->class;
     }
