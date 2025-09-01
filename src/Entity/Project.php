@@ -183,7 +183,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setAdditionalInformationFromExternal($additionalInformationFromExternal): static
+    public function setAdditionalInformationFromExternal(bool $additionalInformationFromExternal): static
     {
         $this->additionalInformationFromExternal = $additionalInformationFromExternal;
 
@@ -197,7 +197,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setInternalJiraProjectKey($strInternalJiraProjectKey): static
+    public function setInternalJiraProjectKey(?string $strInternalJiraProjectKey): static
     {
         $this->internalJiraProjectKey = $strInternalJiraProjectKey;
 
@@ -211,7 +211,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setInternalJiraTicketSystem($nInternalJiraTicketSystem): static
+    public function setInternalJiraTicketSystem(?string $nInternalJiraTicketSystem): static
     {
         // Normalize empty string to null for nullable DB column
         if ('' === $nInternalJiraTicketSystem || null === $nInternalJiraTicketSystem) {
@@ -264,7 +264,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setId($id): static
+    public function setId(?int $id): static
     {
         $this->id = $id;
 
@@ -278,7 +278,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setName($name): static
+    public function setName(?string $name): static
     {
         if (null === $name) {
             $name = '';
@@ -305,7 +305,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setActive($active): static
+    public function setActive(bool $active): static
     {
         $this->active = $active;
 
@@ -351,7 +351,7 @@ class Project extends Base
      *
      * @return $this
      */
-    public function setGlobal($global): static
+    public function setGlobal(?bool $global): static
     {
         $this->global = (bool) $global;
 
@@ -449,7 +449,7 @@ class Project extends Base
      *
      * @param TicketSystem $ticketSystem
      */
-    public function setTicketSystem($ticketSystem): static
+    public function setTicketSystem(?TicketSystem $ticketSystem): static
     {
         $this->ticketSystem = $ticketSystem;
 
@@ -545,7 +545,7 @@ class Project extends Base
      *
      * @param string $internalReference
      */
-    public function setInternalReference($internalReference): static
+    public function setInternalReference(?string $internalReference): static
     {
         $this->internalReference = $internalReference;
 
@@ -565,7 +565,7 @@ class Project extends Base
      *
      * @param string $externalReference
      */
-    public function setExternalReference($externalReference): static
+    public function setExternalReference(?string $externalReference): static
     {
         $this->externalReference = $externalReference;
 
@@ -601,9 +601,9 @@ class Project extends Base
     /**
      * Returns the current defined InternalJiraProjectKey.
      *
-     * @return mixed e.g. OPSA
+     * @return string|null e.g. OPSA
      */
-    public function getInternalJiraProjectKey()
+    public function getInternalJiraProjectKey(): ?string
     {
         return $this->internalJiraProjectKey;
     }
@@ -633,7 +633,7 @@ class Project extends Base
      *
      * @param string $projectKey
      */
-    public function matchesInternalJiraProject($projectKey): bool
+    public function matchesInternalJiraProject(string $projectKey): bool
     {
         return $projectKey === $this->getInternalJiraProjectKey();
     }
