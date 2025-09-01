@@ -23,9 +23,9 @@ class Activity
     #[ORM\OneToMany(targetEntity: Preset::class, mappedBy: 'activity')]
     protected $presetsRelation;
 
-    public const SICK = 'Krank';
+    public const string SICK = 'Krank';
 
-    public const HOLIDAY = 'Urlaub';
+    public const string HOLIDAY = 'Urlaub';
 
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]

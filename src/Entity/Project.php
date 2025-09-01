@@ -12,13 +12,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'projects')]
 class Project extends Base
 {
-    public const BILLING_NONE = 0;
+    public const int BILLING_NONE = 0;
 
-    public const BILLING_TM = 1;
+    public const int BILLING_TM = 1;
 
-    public const BILLING_FP = 2;
+    public const int BILLING_FP = 2;
 
-    public const BILLING_MIXED = 3;
+    public const int BILLING_MIXED = 3;
 
     /**
      * @var int|null

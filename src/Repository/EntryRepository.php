@@ -67,11 +67,11 @@ class EntryRepository extends ServiceEntityRepository
         parent::__construct($managerRegistry, Entry::class);
     }
 
-    public const PERIOD_DAY = 1;
+    public const int PERIOD_DAY = 1;
 
-    public const PERIOD_WEEK = 2;
+    public const int PERIOD_WEEK = 2;
 
-    public const PERIOD_MONTH = 3;
+    public const int PERIOD_MONTH = 3;
 
     /**
      * Returns work log entries for user and recent days.

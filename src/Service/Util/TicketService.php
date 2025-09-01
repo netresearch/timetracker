@@ -6,7 +6,7 @@ namespace App\Service\Util;
 
 class TicketService
 {
-    public const TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
+    public const string TICKET_REGEXP = '/^([A-Z]+[0-9A-Z]*)-([0-9]+)$/i';
 
     public function checkFormat(string $ticket): bool
     {
