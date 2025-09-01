@@ -19,7 +19,6 @@ final class DeleteUserAction extends BaseController
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
-
         try {
             $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;
@@ -39,7 +38,7 @@ final class DeleteUserAction extends BaseController
                 $reason = $this->translate('Other datasets refer to this one.');
             }
 
-            $msg = sprintf($this->translate('Dataset could not be removed. %s'), $reason);
+            $msg = 'Der Datensatz konnte nicht enfernt werden! ';
 
             return new Error($msg, \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
         }

@@ -87,6 +87,11 @@ services:
         bind:
             $projectDir: '%kernel.project_dir%'
 
+    # Access denied subscriber to keep legacy 403 message
+    App\EventSubscriber\AccessDeniedSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
     # Add this: Configure ClockInterface and SystemClock
     App\Service\ClockInterface:
         alias: App\Service\SystemClock

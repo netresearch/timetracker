@@ -1,5 +1,18 @@
 # Breaking Changes
 
+## 2025-09-01 — AccessDenied subscriber and PL role attribute adoption
+
+- Added `App\EventSubscriber\AccessDeniedSubscriber` to convert authorization denials into a legacy 403 with message "You are not allowed to perform this action." while we migrate to attribute-based security. This preserves UI/test expectations during the transition.
+- Adopted `#[IsGranted('ROLE_PL')]` on selected Admin endpoints (e.g., `/team/save`, `/user/delete`). Controllers still contain explicit `isPl(...)` guards to preserve existing response codes (e.g., 422 for second delete) until tests and clients are fully updated.
+
+Impact
+- Authorization failures now pass through the subscriber and return a stable 403 with the legacy message.
+- For endpoints that also keep the in-controller PL guard, business rule/status code semantics remain unchanged.
+
+Migration Notes
+- Tests should authenticate via the `loginUser` helper (already wired in `tests/AbstractWebTestCase`) and, if necessary, perform a lightweight GET to `/status/check` before protected POSTs to ensure the session cookie/token is applied.
+- When moving more endpoints to attribute-only authorization, update tests to expect 403 for authz failures and keep 422/406 for validation/business rules. Consider migrating to RFC7807 for standardized payloads.
+
 ## 2025-08-28 — Authentication handling in controllers
 
 - Controllers in `App\Controller\Default\*` now accept `#[CurrentUser] ?User` and redirect to `_login` when unauthenticated.
