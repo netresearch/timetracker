@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class SaveTeamAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
+    #[\Symfony\Component\Security\Http\Attribute\IsGranted('ROLE_PL')]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {

@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 final class GetActivitiesAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getActivities', name: '_getActivities_attr', methods: ['GET'])]
+    #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {

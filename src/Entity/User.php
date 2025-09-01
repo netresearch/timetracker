@@ -340,13 +340,16 @@ class User implements UserInterface
     /**
      * @return string[]
      *
-     * @psalm-return array<int<0, 1>, 'ROLE_ADMIN'|'ROLE_USER'>
+     * @psalm-return array<int<0, 2>, 'ROLE_ADMIN'|'ROLE_PL'|'ROLE_USER'>
      */
     public function getRoles(): array
     {
         $roles = ['ROLE_USER'];
         if ('ADMIN' === $this->type) {
             $roles[] = 'ROLE_ADMIN';
+        }
+        if ('PL' === $this->type) {
+            $roles[] = 'ROLE_PL';
         }
 
         return array_unique($roles);

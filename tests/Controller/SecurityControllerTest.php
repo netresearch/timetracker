@@ -33,7 +33,7 @@ class SecurityControllerTest extends AbstractWebTestCase
     public function testLoggedInUserCanAccessProtectedRoute(): void
     {
         // Use the Base class login functionality to authenticate
-        $this->logInSession('unittest');
+        $this->logInSession('i.myself');
 
         // Try to access a simple protected route
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');

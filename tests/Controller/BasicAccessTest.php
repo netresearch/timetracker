@@ -29,7 +29,7 @@ class BasicAccessTest extends AbstractWebTestCase
         $this->assertStatusCode(302); // Should redirect to login
 
         // Use the Base class login functionality to authenticate
-        $this->logInSession('unittest');
+        $this->logInSession('i.myself');
 
         // Perform a lightweight request to apply the session cookie to the browser
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
@@ -39,7 +39,7 @@ class BasicAccessTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         // Reinforce authentication just before admin endpoint
-        $this->logInSession('unittest');
+        $this->logInSession('i.myself');
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
 
         // Now try the AdminController endpoint
