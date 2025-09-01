@@ -13,9 +13,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {
-    public const TYPE_JIRA = 'JIRA';
+    public const string TYPE_JIRA = 'JIRA';
 
-    public const TYPE_OTRS = 'OTRS';
+    public const string TYPE_OTRS = 'OTRS';
 
     /**
      * @var int $id

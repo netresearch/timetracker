@@ -10,13 +10,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
-    public const CLASS_PLAIN = 1;
+    public const int CLASS_PLAIN = 1;
 
-    public const CLASS_DAYBREAK = 2;
+    public const int CLASS_DAYBREAK = 2;
 
-    public const CLASS_PAUSE = 4;
+    public const int CLASS_PAUSE = 4;
 
-    public const CLASS_OVERLAP = 8;
+    public const int CLASS_OVERLAP = 8;
 
     /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.

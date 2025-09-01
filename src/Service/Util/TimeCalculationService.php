@@ -6,9 +6,9 @@ namespace App\Service\Util;
 
 class TimeCalculationService
 {
-    public const DAYS_PER_WEEK = 5;
+    public const int DAYS_PER_WEEK = 5;
 
-    public const HOURS_PER_DAY = 8;
+    public const int HOURS_PER_DAY = 8;
 
     public function getMinutesByLetter(string $letter): int
     {
