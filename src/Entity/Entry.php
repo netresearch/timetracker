@@ -200,69 +200,36 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get id.
-     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Get userId.
-     *
-     * @return int|null $userId
-     */
     public function getUserId(): ?int
     {
         return is_object($this->getUser()) ? $this->getUser()->getId() : 0;
     }
 
-    /**
-     * Get projectId.
-     *
-     * @return int|null $projectId
-     */
     public function getProjectId(): ?int
     {
         return is_object($this->getProject()) ? $this->getProject()->getId() : 0;
     }
 
-    /**
-     * Get accountId.
-     *
-     * @return int|null $accountId
-     */
     public function getAccountId(): ?int
     {
         return is_object($this->getAccount()) ? $this->getAccount()->getId() : 0;
     }
 
-    /**
-     * Get customerId.
-     *
-     * @return int|null $customerId
-     */
     public function getCustomerId(): ?int
     {
         return is_object($this->getCustomer()) ? $this->getCustomer()->getId() : 0;
     }
 
-    /**
-     * Get ActivityId.
-     *
-     * @return int $ActivityId
-     */
     public function getActivityId(): int
     {
         return (int) (is_object($this->getActivity()) ? $this->getActivity()->getId() : 0);
     }
 
-    /**
-     * Set ticket.
-     *
-     * @param string $ticket
-     */
     public function setTicket(string $ticket): static
     {
         $this->ticket = str_replace(' ', '', $ticket);
@@ -270,11 +237,6 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get ticket.
-     *
-     * @return string $ticket
-     */
     public function getTicket(): string
     {
         return $this->ticket;
@@ -304,17 +266,12 @@ class Entry extends Base
 
     /**
      * Get Jira WorklogId.
-     *
-     * @return int $worklog_id
      */
     public function getWorklogId(): ?int
     {
         return $this->worklog_id;
     }
 
-    /**
-     * Set description.
-     */
     public function setDescription(string $description): static
     {
         $this->description = $description;
@@ -322,21 +279,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get description.
-     *
-     * @return string $description
-     */
     public function getDescription(): string
     {
         return $this->description;
     }
 
-    /**
-     * Set day.
-     *
-     * @param string $day
-     */
     public function setDay(\DateTimeInterface|string $day): static
     {
         if (!$day instanceof \DateTimeInterface) {
@@ -348,21 +295,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get day.
-     *
-     * @return \DateTimeInterface $day
-     */
     public function getDay(): \DateTimeInterface
     {
         return $this->day;
     }
 
-    /**
-     * Set start.
-     *
-     * @param string $start
-     */
     public function setStart(\DateTimeInterface|string $start): static
     {
         if (!$start instanceof \DateTimeInterface) {
@@ -378,21 +315,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get start.
-     *
-     * @return \DateTimeInterface $start
-     */
     public function getStart(): \DateTimeInterface
     {
         return $this->start;
     }
 
-    /**
-     * Set end.
-     *
-     * @param string $end
-     */
     public function setEnd(\DateTimeInterface|string $end): static
     {
         if (!$end instanceof \DateTimeInterface) {
@@ -430,19 +357,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get end.
-     *
-     * @return \DateTimeInterface $end
-     */
     public function getEnd(): \DateTimeInterface
     {
         return $this->end;
     }
 
-    /**
-     * Set duration.
-     */
     public function setDuration(int $duration): static
     {
         $this->duration = $duration;
@@ -450,11 +369,6 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get duration.
-     *
-     * @return int $duration
-     */
     public function getDuration(): int
     {
         return $this->duration;
@@ -472,9 +386,6 @@ class Entry extends Base
         return sprintf('%02d:%02d', $nHours, $nMinutes);
     }
 
-    /**
-     * Set project.
-     */
     public function setProject(Project $project): static
     {
         $this->project = $project;
@@ -482,19 +393,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get project.
-     *
-     * @return Project $project
-     */
     public function getProject(): ?Project
     {
         return $this->project;
     }
 
-    /**
-     * Set user.
-     */
     public function setUser(User $user): static
     {
         $this->user = $user;
@@ -502,19 +405,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get user.
-     *
-     * @return User $user
-     */
     public function getUser(): ?User
     {
         return $this->user;
     }
 
-    /**
-     * Set account.
-     */
     public function setAccount(Account $account): static
     {
         $this->account = $account;
@@ -522,19 +417,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get account.
-     *
-     * @return Account $account
-     */
     public function getAccount(): ?Account
     {
         return $this->account;
     }
 
-    /**
-     * Set activity.
-     */
     public function setActivity(Activity $activity): static
     {
         $this->activity = $activity;
@@ -542,11 +429,6 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get activity.
-     *
-     * @return Activity $activity
-     */
     public function getActivity(): ?Activity
     {
         return $this->activity;
@@ -592,8 +474,6 @@ class Entry extends Base
     /**
      * Calculate difference between start and end.
      *
-     * @param int $factor
-     *
      * @throws \Exception
      */
     public function calcDuration(float $factor = 1.0): static
@@ -620,9 +500,6 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Set customer.
-     */
     public function setCustomer(Customer $customer): static
     {
         $this->customer = $customer;
@@ -630,19 +507,11 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get customer.
-     */
     public function getCustomer(): ?Customer
     {
         return $this->customer;
     }
 
-    /**
-     * Set class.
-     *
-     * @param int $class
-     */
     public function setClass(int $class): static
     {
         $this->class = $class;
@@ -650,11 +519,6 @@ class Entry extends Base
         return $this;
     }
 
-    /**
-     * Get class.
-     *
-     * @return int $class
-     */
     public function getClass(): int
     {
         return $this->class;
@@ -699,8 +563,6 @@ class Entry extends Base
 
     /**
      * Sets the original ticket name.
-     *
-     * @return $this
      */
     public function setInternalJiraTicketOriginalKey(?string $strTicket): static
     {
@@ -752,9 +614,6 @@ class Entry extends Base
         return (bool) $this->syncedToTicketsystem;
     }
 
-    /**
-     * @return $this
-     */
     public function setSyncedToTicketsystem(bool $syncedToTicketsystem): static
     {
         $this->syncedToTicketsystem = $syncedToTicketsystem;
