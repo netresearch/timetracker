@@ -14,20 +14,20 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class DeletePresetAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/delete', name: 'deletePreset_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = $dto->id;
+            $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;
 
             $preset = $doctrine->getRepository(Preset::class)->find($id);
 
             $em = $doctrine->getManager();
-            if ($preset) {
+            if ($preset instanceof \App\Entity\Preset) {
                 $em->remove($preset);
                 $em->flush();
             } else {

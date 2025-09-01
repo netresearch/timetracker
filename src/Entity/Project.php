@@ -28,15 +28,9 @@ class Project extends Base
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    /**
-     * @var string
-     */
     #[ORM\Column(type: 'string', length: 127)]
     protected string $name = '';
 
-    /**
-     * @var bool
-     */
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     protected bool $active = false;
 
@@ -47,9 +41,6 @@ class Project extends Base
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected $customer;
 
-    /**
-     * @var bool
-     */
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     protected bool $global = false;
 
@@ -154,9 +145,6 @@ class Project extends Base
     #[ORM\Column(name: 'invoice', length: 31, nullable: true)]
     protected ?string $invoice = null;
 
-    /**
-     * @var bool
-     */
     #[ORM\Column(name: 'additional_information_from_external', type: 'boolean', options: ['default' => false])]
     protected bool $additionalInformationFromExternal = false;
 
@@ -179,7 +167,6 @@ class Project extends Base
     /**
      * Sets the additional Information.
      *
-     * @param bool $additionalInformationFromExternal
      *
      * @return $this
      */
@@ -283,6 +270,7 @@ class Project extends Base
         if (null === $name) {
             $name = '';
         }
+
         $this->name = $name;
 
         return $this;
@@ -301,7 +289,6 @@ class Project extends Base
     /**
      * Set active.
      *
-     * @param bool $active
      *
      * @return $this
      */
@@ -516,9 +503,9 @@ class Project extends Base
         return $this;
     }
 
-    public function setProjectLead(?User $projectLead): static
+    public function setProjectLead(?User $user): static
     {
-        $this->projectLead = $projectLead;
+        $this->projectLead = $user;
 
         return $this;
     }
@@ -528,9 +515,9 @@ class Project extends Base
         return $this->projectLead;
     }
 
-    public function setTechnicalLead(?User $technicalLead): static
+    public function setTechnicalLead(?User $user): static
     {
-        $this->technicalLead = $technicalLead;
+        $this->technicalLead = $user;
 
         return $this;
     }
@@ -625,13 +612,12 @@ class Project extends Base
         if (null === $value || '' === $value) {
             return null;
         }
+
         return (string) $value;
     }
 
     /**
      * Returns true, if the passed project key matches the configured internal project key.
-     *
-     * @param string $projectKey
      */
     public function matchesInternalJiraProject(string $projectKey): bool
     {

@@ -12,9 +12,9 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class TicketSystemRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, TicketSystem::class);
+        parent::__construct($managerRegistry, TicketSystem::class);
     }
     
     /**

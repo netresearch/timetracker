@@ -39,12 +39,15 @@ final class GroupByTicketAction extends BaseInterpretationController
                 if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = ['id' => $entry->getId(), 'name' => $ticket, 'hours' => 0, 'quota' => 0];
                 }
+
                 $tickets[$ticket]['hours'] += $entry->getDuration() / 60;
             }
         }
 
         $sum = 0; foreach ($tickets as $t) { $sum += $t['hours']; }
-        foreach ($tickets as &$t) { $t['quota'] = $this->timeCalculationService->formatQuota($t['hours'], $sum); }
+
+        foreach ($tickets as &$ticket) { $ticket['quota'] = $this->timeCalculationService->formatQuota($ticket['hours'], $sum); }
+
         usort($tickets, $this->sortByName(...));
 
         return new JsonResponse($tickets);

@@ -136,12 +136,15 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         if (is_int($value)) {
             return $value;
         }
+
         if (is_string($value)) {
             return (int) $value;
         }
+
         if ($value instanceof \BackedEnum) {
             return (int) $value->value;
         }
+
         return 0;
     }
 }

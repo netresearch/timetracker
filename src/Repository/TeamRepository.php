@@ -12,10 +12,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class TeamRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Team::class);
+        parent::__construct($managerRegistry, Team::class);
     }
+
     // Do not override findAll(); it should return Team[] as in the parent
 
     /**

@@ -61,14 +61,10 @@ class EntryRepository extends ServiceEntityRepository
 
         return $days;
     }
-    private readonly ClockInterface $clock;
-    private readonly TimeCalculationService $timeCalculationService;
 
-    public function __construct(ManagerRegistry $registry, ClockInterface $clock, TimeCalculationService $timeCalculationService)
+    public function __construct(ManagerRegistry $managerRegistry, private readonly ClockInterface $clock, private readonly TimeCalculationService $timeCalculationService)
     {
-        parent::__construct($registry, Entry::class);
-        $this->clock = $clock;
-        $this->timeCalculationService = $timeCalculationService;
+        parent::__construct($managerRegistry, Entry::class);
     }
 
     public const PERIOD_DAY = 1;
@@ -246,16 +242,14 @@ class EntryRepository extends ServiceEntityRepository
         $result = $statement->executeQuery()->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
 
         $data = [];
-        if (count($result)) {
-            foreach ($result as &$line) {
-                $line['user'] = (int) $line['user'];
-                $line['customer'] = (int) $line['customer'];
-                $line['project'] = (int) $line['project'];
-                $line['activity'] = (int) $line['activity'];
-                $line['duration'] = $this->timeCalculationService->formatDuration((int) $line['duration']);
-                $line['class'] = (int) $line['class'];
-                $data[] = ['entry' => $line];
-            }
+        foreach ($result as &$line) {
+            $line['user'] = (int) $line['user'];
+            $line['customer'] = (int) $line['customer'];
+            $line['project'] = (int) $line['project'];
+            $line['activity'] = (int) $line['activity'];
+            $line['duration'] = $this->timeCalculationService->formatDuration((int) $line['duration']);
+            $line['class'] = (int) $line['class'];
+            $data[] = ['entry' => $line];
         }
 
         return $data;
@@ -642,7 +636,7 @@ class EntryRepository extends ServiceEntityRepository
 
         return array_map(
             static fn (array $row): array => [
-                'name' => isset($row['name']) ? (string) $row['name'] : null,
+                'name' => $row['name'] ?? null,
                 'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
             ],
             $rows
@@ -671,7 +665,7 @@ class EntryRepository extends ServiceEntityRepository
 
         return array_map(
             static fn (array $row): array => [
-                'username' => (string) $row['username'],
+                'username' => $row['username'],
                 'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
             ],
             $rows

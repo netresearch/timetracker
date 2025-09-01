@@ -18,14 +18,23 @@ final class TicketSystemSaveDto
     public string $name = '';
 
     public string $type = '';
+
     public bool $bookTime = false;
+
     public string $url = '';
+
     public string $login = '';
+
     public string $password = '';
+
     public string $publicKey = '';
+
     public string $privateKey = '';
+
     public string $ticketUrl = '';
+
     public ?string $oauthConsumerKey = null;
+
     public ?string $oauthConsumerSecret = null;
 }
 

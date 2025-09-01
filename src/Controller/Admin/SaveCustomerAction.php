@@ -19,14 +19,14 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class SaveCustomerAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/customer/save', name: 'saveCustomer_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] CustomerSaveDto $dto, ObjectMapperInterface $mapper, CustomerValidator $customerValidator, ValidatorInterface $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] CustomerSaveDto $customerSaveDto, ObjectMapperInterface $objectMapper, CustomerValidator $customerValidator, ValidatorInterface $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $customerId = $dto->id;
-        $teamIds = $dto->teams;
+        $customerId = $customerSaveDto->id;
+        $teamIds = $customerSaveDto->teams;
 
         /** @var \App\Repository\CustomerRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
@@ -48,20 +48,21 @@ final class SaveCustomerAction extends BaseController
             $customer = new Customer();
         }
 
-        if (!$customerValidator->isNameUnique($dto->name, $customer->getId())) {
+        if (!$customerValidator->isNameUnique($customerSaveDto->name, $customer->getId())) {
             $response = new Response($this->translate('The customer name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
             return $response;
         }
 
-        $mapper->map($dto, $customer);
+        $objectMapper->map($customerSaveDto, $customer);
 
         $customer->resetTeams();
         foreach ($teamIds as $teamId) {
             if (!$teamId) {
                 continue;
             }
+
             $team = $this->doctrineRegistry->getRepository(Team::class)->find((int) $teamId);
             if ($team instanceof Team) {
                 $customer->addTeam($team);
@@ -73,7 +74,7 @@ final class SaveCustomerAction extends BaseController
             }
         }
 
-        if (0 == $customer->getTeams()->count() && false === $dto->global) {
+        if (0 == $customer->getTeams()->count() && false === $customerSaveDto->global) {
             $response = new Response($this->translate('Every customer must belong to at least one team if it is not global.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -84,7 +85,7 @@ final class SaveCustomerAction extends BaseController
         $objectManager->persist($customer);
         $objectManager->flush();
 
-        $data = [$customer->getId(), $dto->name, $dto->active, $dto->global, $teamIds];
+        $data = [$customer->getId(), $customerSaveDto->name, $customerSaveDto->active, $customerSaveDto->global, $teamIds];
 
         return new JsonResponse($data);
     }

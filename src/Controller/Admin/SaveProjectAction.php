@@ -26,36 +26,36 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class SaveProjectAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $dto, ObjectMapperInterface $mapper, ProjectValidator $projectValidator, ValidatorInterface $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $projectSaveDto, ObjectMapperInterface $objectMapper, ProjectValidator $projectValidator, ValidatorInterface $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $projectId = $dto->id;
+        $projectId = $projectSaveDto->id;
 
         $this->doctrineRegistry->getRepository(TicketSystem::class);
-        $ticketSystem = null !== $dto->ticket_system ? $this->doctrineRegistry->getRepository(TicketSystem::class)->find($dto->ticket_system) : null;
+        $ticketSystem = null !== $projectSaveDto->ticket_system ? $this->doctrineRegistry->getRepository(TicketSystem::class)->find($projectSaveDto->ticket_system) : null;
 
         $this->doctrineRegistry->getRepository(User::class);
-        $projectLead = null !== $dto->project_lead ? $this->doctrineRegistry->getRepository(User::class)->find($dto->project_lead) : null;
-        $technicalLead = null !== $dto->technical_lead ? $this->doctrineRegistry->getRepository(User::class)->find($dto->technical_lead) : null;
+        $projectLead = null !== $projectSaveDto->project_lead ? $this->doctrineRegistry->getRepository(User::class)->find($projectSaveDto->project_lead) : null;
+        $technicalLead = null !== $projectSaveDto->technical_lead ? $this->doctrineRegistry->getRepository(User::class)->find($projectSaveDto->technical_lead) : null;
 
-        $jiraId = $dto->jiraId ?? '';
-        $jiraTicket = $dto->jiraTicket ?? '';
-        $active = $dto->active;
-        $global = $dto->global;
-        $estimation = $this->timeCalculationService->readableToFullMinutes($dto->estimation);
-        $billing = $dto->billing;
-        $costCenter = $dto->cost_center;
-        $offer = $dto->offer;
-        $additionalInformationFromExternal = $dto->additionalInformationFromExternal;
+        $jiraId = $projectSaveDto->jiraId ?? '';
+        $jiraTicket = $projectSaveDto->jiraTicket ?? '';
+        $active = $projectSaveDto->active;
+        $global = $projectSaveDto->global;
+        $estimation = $this->timeCalculationService->readableToFullMinutes($projectSaveDto->estimation);
+        $billing = $projectSaveDto->billing;
+        $costCenter = $projectSaveDto->cost_center;
+        $offer = $projectSaveDto->offer;
+        $additionalInformationFromExternal = $projectSaveDto->additionalInformationFromExternal;
 
         /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
 
-        $internalJiraTicketSystem = $dto->internalJiraTicketSystem;
-        $internalJiraProjectKey = $dto->internalJiraProjectKey;
+        $internalJiraTicketSystem = $projectSaveDto->internalJiraTicketSystem;
+        $internalJiraProjectKey = $projectSaveDto->internalJiraProjectKey;
 
         if (0 !== $projectId) {
             $project = $objectRepository->find($projectId);
@@ -68,7 +68,7 @@ final class SaveProjectAction extends BaseController
             $project = new Project();
 
             /** @var Customer $customer */
-            $customer = null !== $dto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($dto->customer) : null;
+            $customer = null !== $projectSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($projectSaveDto->customer) : null;
             if (!$customer instanceof Customer) {
                 $response = new Response($this->translate('Please choose a customer.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -87,7 +87,7 @@ final class SaveProjectAction extends BaseController
             return $response;
         }
 
-        if (!$projectValidator->isNameUniqueForCustomer($dto->name, (int) $projectCustomer->getId(), $project->getId())) {
+        if (!$projectValidator->isNameUniqueForCustomer($projectSaveDto->name, (int) $projectCustomer->getId(), $project->getId())) {
             $response = new Response($this->translate('The project name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -102,7 +102,7 @@ final class SaveProjectAction extends BaseController
         }
 
         // Map scalar fields from DTO to entity
-        $mapper->map($dto, $project);
+        $objectMapper->map($projectSaveDto, $project);
         // Then set computed/relations
         $project
             ->setJiraId($jiraId)
@@ -129,7 +129,7 @@ final class SaveProjectAction extends BaseController
         $objectManager->persist($project);
         $objectManager->flush();
 
-        $data = [$project->getId(), $dto->name, $projectCustomer->getId(), $jiraId];
+        $data = [$project->getId(), $projectSaveDto->name, $projectCustomer->getId(), $jiraId];
 
         if ($ticketSystem instanceof TicketSystem) {
             try {
@@ -145,18 +145,19 @@ final class SaveProjectAction extends BaseController
     }
 
     private TimeCalculationService $timeCalculationService;
+
     private SubticketSyncService $subticketSyncService;
 
     #[Required]
-    public function setTimeCalculationService(TimeCalculationService $svc): void
+    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
-        $this->timeCalculationService = $svc;
+        $this->timeCalculationService = $timeCalculationService;
     }
 
     #[Required]
-    public function setSubticketSyncService(SubticketSyncService $svc): void
+    public function setSubticketSyncService(SubticketSyncService $subticketSyncService): void
     {
-        $this->subticketSyncService = $svc;
+        $this->subticketSyncService = $subticketSyncService;
     }
 }
 

@@ -12,6 +12,7 @@ class ExportService
     public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
     {
     }
+
     /**
      * Returns entries filtered and ordered.
      *

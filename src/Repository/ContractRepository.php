@@ -17,10 +17,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ContractRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Contract::class);
+        parent::__construct($managerRegistry, Contract::class);
     }
+
     /**
      * Find all contracts, sorted by start ascending.
      *

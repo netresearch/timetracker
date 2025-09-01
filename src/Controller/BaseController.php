@@ -53,13 +53,13 @@ class BaseController extends AbstractController
     #[\Symfony\Contracts\Service\Attribute\Required]
     public function setCoreDependencies(
         ManagerRegistry $managerRegistry,
-        ParameterBagInterface $params,
+        ParameterBagInterface $parameterBag,
         TranslatorInterface $translator,
         KernelInterface $kernel
     ): void {
         $this->managerRegistry = $managerRegistry;
         $this->doctrineRegistry = $managerRegistry; // BC for legacy usages
-        $this->params = $params;
+        $this->params = $parameterBag;
         $this->translator = $translator;
         $this->kernel = $kernel;
     }
@@ -141,6 +141,7 @@ class BaseController extends AbstractController
         if (false === $this->checkLogin($request)) {
             return false;
         }
+
         // Prefer the currently authenticated user from token storage
         $currentUser = $this->getUser();
         if ($currentUser instanceof User) {

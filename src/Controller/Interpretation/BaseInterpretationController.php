@@ -45,18 +45,19 @@ abstract class BaseInterpretationController extends BaseController
      */
     protected function getEntries(\Symfony\Component\HttpFoundation\Request $request, ?int $maxResults = null): array
     {
-        $filters = InterpretationFiltersDto::fromRequest($request);
-        $arParams = $filters->toFilterArray($this->isDEV($request) ? $this->getUserId($request) : null, $maxResults);
+        $interpretationFiltersDto = InterpretationFiltersDto::fromRequest($request);
+        $arParams = $interpretationFiltersDto->toFilterArray($this->isDEV($request) ? $this->getUserId($request) : null, $maxResults);
 
-        $year = $filters->year;
+        $year = $interpretationFiltersDto->year;
         if (null !== $year) {
-            $month = $filters->month;
+            $month = $interpretationFiltersDto->month;
             if (null !== $month) {
                 $datestart = $year.'-'.$month.'-01';
                 $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
                 if (false === $dateend) {
                     throw new \Exception('Invalid date');
                 }
+
                 $dateend->add(new \DateInterval('P1M'));
                 $dateend->sub(new \DateInterval('P1D'));
             } else {
@@ -65,9 +66,11 @@ abstract class BaseInterpretationController extends BaseController
                 if (false === $dateend) {
                     throw new \Exception('Invalid date');
                 }
+
                 $dateend->add(new \DateInterval('P1Y'));
                 $dateend->sub(new \DateInterval('P1D'));
             }
+
             $arParams['datestart'] = $datestart;
             $arParams['dateend'] = $dateend->format('Y-m-d');
         }
@@ -76,9 +79,9 @@ abstract class BaseInterpretationController extends BaseController
             throw new \Exception($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
-        /** @var \App\Repository\EntryRepository $repo */
-        $repo = $this->managerRegistry->getRepository(Entry::class);
-        return $repo->findByFilterArray($arParams);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        return $objectRepository->findByFilterArray($arParams);
     }
 }
 

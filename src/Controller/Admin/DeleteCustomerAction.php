@@ -14,20 +14,20 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class DeleteCustomerAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/customer/delete', name: 'deleteCustomer_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = $dto->id;
+            $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;
 
             $customer = $doctrine->getRepository(Customer::class)->find($id);
 
             $em = $doctrine->getManager();
-            if ($customer) {
+            if ($customer instanceof \App\Entity\Customer) {
                 $em->remove($customer);
                 $em->flush();
             } else {

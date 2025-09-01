@@ -11,22 +11,35 @@ use Symfony\Component\HttpFoundation\Request;
 final class InterpretationFiltersDto
 {
     public ?int $customer = null;
-    public ?int $customer_id = null; // legacy alias support
+
+    public ?int $customer_id = null;
+     // legacy alias support
     public ?int $project = null;
-    public ?int $project_id = null; // legacy alias support
+
+    public ?int $project_id = null;
+     // legacy alias support
     public ?int $user = null;
+
     public ?int $activity = null;
-    public ?int $activity_id = null; // legacy alias support
+
+    public ?int $activity_id = null;
+     // legacy alias support
     public ?int $team = null;
 
     public ?string $ticket = null;
+
     public ?string $description = null;
+
     public ?string $datestart = null;
+
     public ?string $dateend = null;
+
     public ?string $year = null;
+
     public ?string $month = null;
 
     public ?int $maxResults = null;
+
     public ?int $page = null;
 
     public static function fromRequest(Request $request): self
@@ -84,9 +97,11 @@ final class InterpretationFiltersDto
         if ($value === null || $value === '') {
             return null;
         }
+
         if (is_numeric($value)) {
             return (int) $value;
         }
+
         return null;
     }
 
@@ -95,6 +110,7 @@ final class InterpretationFiltersDto
         if ($value === null) {
             return null;
         }
+
         $s = trim((string) $value);
         return $s === '' ? null : $s;
     }

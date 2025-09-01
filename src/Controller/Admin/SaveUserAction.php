@@ -19,7 +19,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class SaveUserAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $dto, ObjectMapperInterface $mapper, UserValidator $userValidator, ValidatorInterface $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper, UserValidator $userValidator, ValidatorInterface $validator): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -28,15 +28,14 @@ final class SaveUserAction extends BaseController
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
 
-        $user = 0 !== $dto->id ? $objectRepository->find($dto->id) : new User();
+        $user = 0 !== $userSaveDto->id ? $objectRepository->find($userSaveDto->id) : new User();
         if (!$user instanceof User) {
             return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 
-        $name = $dto->username;
-        $abbr = $dto->abbr;
-        $locale = $dto->locale;
-        $type = $dto->type;
+        $name = $userSaveDto->username;
+        $abbr = $userSaveDto->abbr;
+        $type = $userSaveDto->type;
 
         // uniqueness checks remain
         if (!$userValidator->isUsernameUnique($name, $user->getId())) {
@@ -53,13 +52,14 @@ final class SaveUserAction extends BaseController
             return $response;
         }
 
-        $mapper->map($dto, $user);
+        $objectMapper->map($userSaveDto, $user);
 
         $user->resetTeams();
-        foreach ($dto->teams as $teamId) {
+        foreach ($userSaveDto->teams as $teamId) {
             if (!$teamId) {
                 continue;
             }
+
             $team = $this->doctrineRegistry->getRepository(Team::class)->find((int) $teamId);
             if ($team instanceof Team) {
                 $user->addTeam($team);

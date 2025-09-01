@@ -12,10 +12,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CustomerRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Customer::class);
+        parent::__construct($managerRegistry, Customer::class);
     }
+
     /**
      * Returns an array of customers available for current user.
      *

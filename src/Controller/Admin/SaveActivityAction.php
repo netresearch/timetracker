@@ -16,7 +16,7 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 final class SaveActivityAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $dto, ObjectMapperInterface $mapper): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -29,7 +29,7 @@ final class SaveActivityAction extends BaseController
         /** @var \App\Repository\ActivityRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
 
-        $id = $dto->id;
+        $id = $activitySaveDto->id;
 
         if (0 !== $id) {
             $activity = $objectRepository->find($id);
@@ -46,7 +46,7 @@ final class SaveActivityAction extends BaseController
             $activity = new Activity();
         }
 
-        $sameNamedActivity = $objectRepository->findOneByName($dto->name);
+        $sameNamedActivity = $objectRepository->findOneByName($activitySaveDto->name);
         if ($sameNamedActivity instanceof Activity && $activity->getId() !== $sameNamedActivity->getId()) {
             $response = new Response($this->translate('The activity name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
@@ -55,7 +55,7 @@ final class SaveActivityAction extends BaseController
         }
 
         try {
-            $mapper->map($dto, $activity);
+            $objectMapper->map($activitySaveDto, $activity);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($activity);

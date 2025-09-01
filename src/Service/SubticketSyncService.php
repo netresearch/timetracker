@@ -11,6 +11,7 @@ class SubticketSyncService
     public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly \App\Service\Integration\Jira\JiraOAuthApiFactory $jiraOAuthApiFactory)
     {
     }
+
     /**
      * Fetch subtickets from Jira and update the project record's "subtickets" field.
      *
@@ -66,7 +67,7 @@ class SubticketSyncService
         }
 
         // Create the Jira API service with our service's dependencies
-        $jiraOAuthApi = $this->jiraOAuthApiFactory->create($userWithJiraAccess, $ticketSystem);
+        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($userWithJiraAccess, $ticketSystem);
 
         $mainTickets = array_map('trim', explode(',', $mainTickets));
         $allSubtickets = [];
@@ -76,7 +77,7 @@ class SubticketSyncService
             $allSubtickets[] = $mainTicket;
             $allSubtickets = array_merge(
                 $allSubtickets,
-                $jiraOAuthApi->getSubtickets($mainTicket)
+                $jiraOAuthApiService->getSubtickets($mainTicket)
             );
         }
 

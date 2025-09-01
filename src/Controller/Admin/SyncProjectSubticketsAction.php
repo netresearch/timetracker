@@ -24,13 +24,13 @@ final class SyncProjectSubticketsAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
-    public function __invoke(Request $request, #[MapQueryString] AdminSyncDto $dto): JsonResponse|Error|ModelResponse
+    public function __invoke(Request $request, #[MapQueryString] AdminSyncDto $adminSyncDto): JsonResponse|Error|ModelResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
 
-        $projectId = $dto->project;
+        $projectId = $adminSyncDto->project;
 
         try {
             $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectId);

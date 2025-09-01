@@ -12,9 +12,9 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ActivityRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Activity::class);
+        parent::__construct($managerRegistry, Activity::class);
     }
 
     /**

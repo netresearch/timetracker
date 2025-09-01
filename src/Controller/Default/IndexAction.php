@@ -12,9 +12,9 @@ use Symfony\Component\HttpFoundation\Request;
 final class IndexAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
+    public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
-        if (null === $user) {
+        if (!$user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 

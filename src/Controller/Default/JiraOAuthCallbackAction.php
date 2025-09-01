@@ -15,10 +15,11 @@ final class JiraOAuthCallbackAction extends BaseController
     private JiraOAuthApiFactory $jiraOAuthApiFactory;
 
     #[\Symfony\Contracts\Service\Attribute\Required]
-    public function setJiraApiFactory(JiraOAuthApiFactory $factory): void
+    public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {
-        $this->jiraOAuthApiFactory = $factory;
+        $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
     }
+
     #[\Symfony\Component\Routing\Attribute\Route(path: '/jiraoauthcallback', name: 'jiraOAuthCallback', methods: ['GET'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
@@ -38,6 +39,7 @@ final class JiraOAuthCallbackAction extends BaseController
             if (!is_string($oauthToken) || '' === $oauthToken || !is_string($oauthVerifier) || '' === $oauthVerifier) {
                 return new \App\Model\Response('Invalid OAuth callback parameters', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
             }
+
             $jiraOAuthApi->fetchOAuthAccessToken($oauthToken, $oauthVerifier);
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
 

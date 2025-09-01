@@ -26,7 +26,7 @@ final class ExportAction extends BaseController
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\\d+', 'userid' => '\\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
-    public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $q): Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         // Map legacy path parameters to query parameters for backward compatibility
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
@@ -35,6 +35,7 @@ final class ExportAction extends BaseController
                 $request->query->set($attributeKeyToMap, (string) $request->attributes->get($attributeKeyToMap));
             }
         }
+
         if (!$this->checkLogin($request)) {
             return $this->login($request);
         }
@@ -42,11 +43,11 @@ final class ExportAction extends BaseController
         $service = $this->export;
         /** @var array<int, Entry> $entries */
         $entries = $service->exportEntries(
-            $q->userid,
-            $q->year,
-            $q->month,
-            $q->project,
-            $q->customer,
+            $exportQueryDto->userid,
+            $exportQueryDto->year,
+            $exportQueryDto->month,
+            $exportQueryDto->project,
+            $exportQueryDto->customer,
             [
                 'user.username' => true,
                 'entry.day' => true,
@@ -56,21 +57,21 @@ final class ExportAction extends BaseController
 
         $showBillableField = $this->params->has('app_show_billable_field_in_export')
             && (bool) $this->params->get('app_show_billable_field_in_export');
-        if ($showBillableField || $q->tickettitles) {
+        if ($showBillableField || $exportQueryDto->tickettitles) {
             $entries = $service->enrichEntriesWithTicketInformation(
                 $this->getUserId($request),
                 $entries,
                 $showBillableField,
-                $q->billable,
-                $q->tickettitles
+                $exportQueryDto->billable,
+                $exportQueryDto->tickettitles
             );
         }
 
-        $username = (string) $service->getUsername($q->userid);
+        $username = (string) $service->getUsername($exportQueryDto->userid);
 
         $filename = strtolower(
-            $q->year.'_'
-            .str_pad((string) $q->month, 2, '0', STR_PAD_LEFT)
+            $exportQueryDto->year.'_'
+            .str_pad((string) $exportQueryDto->month, 2, '0', STR_PAD_LEFT)
             .'_'
             .str_replace(' ', '-', $username)
         );
@@ -94,7 +95,7 @@ final class ExportAction extends BaseController
             $sheet->getStyle('N2')->applyFromArray($headingStyle);
         }
 
-        if ($q->tickettitles) {
+        if ($exportQueryDto->tickettitles) {
             $sheet->setCellValue('O2', 'Tickettitel');
             $sheet->getStyle('O2')->applyFromArray($headingStyle);
         }
@@ -115,9 +116,11 @@ final class ExportAction extends BaseController
                 if ($activity->isHoliday()) {
                     ++$stats[$abbr]['holidays'];
                 }
+
                 if ($activity->isSick()) {
                     ++$stats[$abbr]['sickdays'];
                 }
+
                 $activity = $activity->getName();
             } else {
                 $activity = ' ';
@@ -126,12 +129,15 @@ final class ExportAction extends BaseController
             if ($entry->getDay() instanceof \DateTimeInterface) {
                 self::setCellDate($sheet, 'A', $lineNumber, $entry->getDay());
             }
+
             if ($entry->getStart() instanceof \DateTimeInterface) {
                 self::setCellHours($sheet, 'B', $lineNumber, $entry->getStart());
             }
+
             if ($entry->getEnd() instanceof \DateTimeInterface) {
                 self::setCellHours($sheet, 'C', $lineNumber, $entry->getEnd());
             }
+
             $sheet->setCellValue(
                 'D'.$lineNumber,
                 (($entry->getCustomer() && $entry->getCustomer()->getName())
@@ -152,9 +158,11 @@ final class ExportAction extends BaseController
             if ($showBillableField) {
                 $sheet->setCellValue('N'.$lineNumber, (int) ((bool) $entry->getBillable()));
             }
-            if ($q->tickettitles) {
+
+            if ($exportQueryDto->tickettitles) {
                 $sheet->setCellValue('O'.$lineNumber, $entry->getTicketTitle());
             }
+
             ++$lineNumber;
         }
 
@@ -163,7 +171,7 @@ final class ExportAction extends BaseController
         ksort($stats);
         foreach ($stats as $user => $userStats) {
             $sheet->setCellValue('A'.$lineNumber, $user);
-            $sheet->setCellValue('B'.$lineNumber, $q->month);
+            $sheet->setCellValue('B'.$lineNumber, $exportQueryDto->month);
             $sheet->setCellValue('D'.$lineNumber, '=SUMIF(ZE!$J$1:$J$5000,A'.$lineNumber.',ZE!$I$1:$I$5000)');
             $sheet->getStyle('D'.$lineNumber)
                 ->getNumberFormat()
@@ -171,9 +179,11 @@ final class ExportAction extends BaseController
             if ($userStats['holidays'] > 0) {
                 $sheet->setCellValue('E'.$lineNumber, $userStats['holidays']);
             }
+
             if ($userStats['sickdays'] > 0) {
                 $sheet->setCellValue('F'.$lineNumber, $userStats['sickdays']);
             }
+
             ++$lineNumber;
         }
 
@@ -184,6 +194,7 @@ final class ExportAction extends BaseController
         $response = new Response();
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $response->headers->set('Content-disposition', 'attachment;filename='.$filename.'.xlsx');
+
         $content = file_get_contents($file) ?: '';
         $response->setContent($content);
         unlink($file);

@@ -12,10 +12,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class HolidayRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Holiday::class);
+        parent::__construct($managerRegistry, Holiday::class);
     }
+
     /**
      * get all holidays in a given year and month.
      *

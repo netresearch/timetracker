@@ -12,10 +12,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class PresetRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, Preset::class);
+        parent::__construct($managerRegistry, Preset::class);
     }
+
     /**
      * @return array<int, array{preset: array<string, mixed>}>
      */

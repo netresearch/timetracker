@@ -6,9 +6,9 @@ namespace App\Service\Validation;
 use App\Entity\User;
 use App\Repository\UserRepository;
 
-final class UserValidator
+final readonly class UserValidator
 {
-    public function __construct(private readonly UserRepository $userRepository)
+    public function __construct(private UserRepository $userRepository)
     {
     }
 
@@ -18,6 +18,7 @@ final class UserValidator
         if (!$existing instanceof User) {
             return true;
         }
+
         return $existing->getId() === $currentUserId;
     }
 
@@ -27,6 +28,7 @@ final class UserValidator
         if (!$existing instanceof User) {
             return true;
         }
+
         return $existing->getId() === $currentUserId;
     }
 }

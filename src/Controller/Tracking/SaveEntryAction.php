@@ -40,6 +40,7 @@ final class SaveEntryAction extends BaseTrackingController
                 if (!$foundEntry instanceof Entry) {
                     return new Error($this->translator->trans('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
                 }
+
                 $entry = $foundEntry;
             }
 
@@ -95,12 +96,10 @@ final class SaveEntryAction extends BaseTrackingController
 
                 if ($project instanceof Project && $entry->getUser() instanceof User) {
                     $reqTicket = (string) ($request->request->get('ticket') ?? '');
-                    if (!$project->hasInternalJiraProjectKey() && '' !== $reqTicket) {
-                        // Only validate format/existence when service present
-                        if ($this->ticketService && !$this->ticketService->checkFormat($reqTicket)) {
-                            $message = $request->request->get('ticket').' existiert nicht';
-                            throw new \Exception($message);
-                        }
+                    // Only validate format/existence when service present
+                    if (!$project->hasInternalJiraProjectKey() && '' !== $reqTicket && ($this->ticketService && !$this->ticketService->checkFormat($reqTicket))) {
+                        $message = $request->request->get('ticket').' existiert nicht';
+                        throw new \Exception($message);
                     }
                 }
             }

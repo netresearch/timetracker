@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class SaveTeamAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $dto): Response|JsonResponse|\App\Response\Error
+    public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -28,10 +28,10 @@ final class SaveTeamAction extends BaseController
         /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
 
-        $id = $dto->id;
-        $name = $dto->name;
-        $teamLead = $dto->lead_user_id
-            ? $this->doctrineRegistry->getRepository(User::class)->find($dto->lead_user_id)
+        $id = $teamSaveDto->id;
+        $name = $teamSaveDto->name;
+        $teamLead = $teamSaveDto->lead_user_id !== 0
+            ? $this->doctrineRegistry->getRepository(User::class)->find($teamSaveDto->lead_user_id)
             : null;
 
         if (0 !== $id) {

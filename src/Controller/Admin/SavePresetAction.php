@@ -18,18 +18,16 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class SavePresetAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] PresetSaveDto $dto, ObjectMapperInterface $mapper): Response|JsonResponse|\App\Response\Error
+    public function __invoke(Request $request, #[MapRequestPayload] PresetSaveDto $presetSaveDto, ObjectMapperInterface $objectMapper): Response|JsonResponse|\App\Response\Error
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
-        $id = $dto->id;
-        $name = $dto->name;
-        $customer = null !== $dto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($dto->customer) : null;
-        $project = null !== $dto->project ? $this->doctrineRegistry->getRepository(Project::class)->find($dto->project) : null;
-        $activity = null !== $dto->activity ? $this->doctrineRegistry->getRepository(Activity::class)->find($dto->activity) : null;
-        $description = $dto->description;
+        $id = $presetSaveDto->id;
+        $customer = null !== $presetSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($presetSaveDto->customer) : null;
+        $project = null !== $presetSaveDto->project ? $this->doctrineRegistry->getRepository(Project::class)->find($presetSaveDto->project) : null;
+        $activity = null !== $presetSaveDto->activity ? $this->doctrineRegistry->getRepository(Activity::class)->find($presetSaveDto->activity) : null;
 
         // Basic length validation now handled by DTO constraints via MapRequestPayload (422)
 
@@ -37,15 +35,13 @@ final class SavePresetAction extends BaseController
 
         if (0 !== $id) {
             $preset = $objectRepository->find($id);
-            if (!$preset) {
+            if (!$preset instanceof \App\Entity\Preset) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (!$preset instanceof Preset) {
-                return new \App\Response\Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
+            // $preset is already instance of Preset due to the check above
         } else {
             $preset = new Preset();
         }
@@ -56,7 +52,7 @@ final class SavePresetAction extends BaseController
             }
 
             // Map scalar fields (name, description)
-            $mapper->map($dto, $preset);
+            $objectMapper->map($presetSaveDto, $preset);
             // Relations set explicitly
             $preset->setCustomer($customer)
                 ->setProject($project)

@@ -14,21 +14,21 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 final class DeleteContractAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/delete', name: 'deleteContract_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $dto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
 
         try {
-            $id = $dto->id;
+            $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;
 
             $contract = $doctrine->getRepository(Contract::class)
                 ->find($id);
 
             $em = $this->doctrineRegistry->getManager();
-            if ($contract) {
+            if ($contract instanceof \App\Entity\Contract) {
                 $em->remove($contract);
                 $em->flush();
             } else {

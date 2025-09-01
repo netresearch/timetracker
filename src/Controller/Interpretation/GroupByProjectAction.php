@@ -36,15 +36,19 @@ final class GroupByProjectAction extends BaseInterpretationController
         foreach ($entries as $entry) {
             $projectEntity = $entry->getProject();
             if (!$projectEntity) { continue; }
+
             $pid = $projectEntity->getId();
             if (!isset($projects[$pid])) {
                 $projects[$pid] = ['id' => $pid, 'name' => $projectEntity->getName(), 'hours' => 0, 'quota' => 0];
             }
+
             $projects[$pid]['hours'] += $entry->getDuration() / 60;
         }
 
         $sum = 0; foreach ($projects as $p) { $sum += $p['hours']; }
-        foreach ($projects as &$p) { $p['quota'] = $this->timeCalculationService->formatQuota($p['hours'], $sum); }
+
+        foreach ($projects as &$project) { $project['quota'] = $this->timeCalculationService->formatQuota($project['hours'], $sum); }
+
         usort($projects, $this->sortByName(...));
 
         return new JsonResponse($projects);

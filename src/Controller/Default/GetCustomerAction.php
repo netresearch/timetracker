@@ -23,6 +23,7 @@ final class GetCustomerAction extends BaseController
             if ($project instanceof Project && $project->getCustomer() instanceof \App\Entity\Customer) {
                 return new JsonResponse(['customer' => $project->getCustomer()->getId()]);
             }
+
             return new JsonResponse(['customer' => null]);
         }
 

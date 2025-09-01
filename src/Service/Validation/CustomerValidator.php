@@ -6,9 +6,9 @@ namespace App\Service\Validation;
 use App\Entity\Customer;
 use App\Repository\CustomerRepository;
 
-final class CustomerValidator
+final readonly class CustomerValidator
 {
-    public function __construct(private readonly CustomerRepository $customerRepository)
+    public function __construct(private CustomerRepository $customerRepository)
     {
     }
 

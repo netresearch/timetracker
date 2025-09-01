@@ -15,10 +15,11 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class UserRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
-        parent::__construct($registry, User::class);
+        parent::__construct($managerRegistry, User::class);
     }
+
     /**
      * Find a user by username.
      */
@@ -30,8 +31,6 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param int $currentUserId
-     *
      * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string}}>
      */
     public function getUsers(int $currentUserId): array

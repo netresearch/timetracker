@@ -36,15 +36,19 @@ final class GroupByActivityAction extends BaseInterpretationController
         foreach ($entries as $entry) {
             $activityObj = $entry->getActivity();
             if (!$activityObj instanceof \App\Entity\Activity) { continue; }
+
             $aid = $activityObj->getId();
             if (!isset($activities[$aid])) {
                 $activities[$aid] = ['id' => $aid, 'name' => $activityObj->getName(), 'hours' => 0];
             }
+
             $activities[$aid]['hours'] += $entry->getDuration() / 60;
         }
 
         $total = 0.0; foreach ($activities as $a) { $total += (float) $a['hours']; }
-        foreach ($activities as &$a) { $a['quota'] = $this->timeCalculationService->formatQuota($a['hours'], $total); }
+
+        foreach ($activities as &$activity) { $activity['quota'] = $this->timeCalculationService->formatQuota($activity['hours'], $total); }
+
         usort($activities, $this->sortByName(...));
 
         return new JsonResponse($activities);
