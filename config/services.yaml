@@ -124,3 +124,26 @@ services:
         arguments:
             $parameterBag: '@parameter_bag'
 
+    # Response Factory Service
+    App\Service\Response\ResponseFactory:
+        arguments:
+            $translator: '@translator'
+
+    # JIRA Integration Service
+    App\Service\Integration\Jira\JiraIntegrationService:
+        arguments:
+            $managerRegistry: '@doctrine'
+            $jiraApiFactory: '@App\Service\Integration\Jira\JiraOAuthApiFactory'
+            $workLogService: '@App\Service\Integration\Jira\JiraWorkLogService'
+            $logger: '@?logger'
+        tags:
+            - { name: monolog.logger, channel: jira }
+
+    # Modern LDAP Service
+    App\Service\Ldap\ModernLdapService:
+        arguments:
+            $params: '@parameter_bag'
+            $logger: '@?logger'
+        tags:
+            - { name: monolog.logger, channel: ldap }
+
