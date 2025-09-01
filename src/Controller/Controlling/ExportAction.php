@@ -138,15 +138,24 @@ final class ExportAction extends BaseController
                 self::setCellHours($sheet, 'C', $lineNumber, $entry->getEnd());
             }
 
-            $sheet->setCellValue(
-                'D'.$lineNumber,
-                (($entry->getCustomer() && $entry->getCustomer()->getName())
-                    ? (string) $entry->getCustomer()->getName()
-                    : (($entry->getProject() && $entry->getProject()->getCustomer())
-                        ? (string) $entry->getProject()->getCustomer()->getName()
-                        : ''))
-            );
-            $sheet->setCellValue('E'.$lineNumber, $entry->getProject() ? (string) $entry->getProject()->getName() : '');
+            $customerName = '';
+            $customerEntity = $entry->getCustomer();
+            if ($customerEntity instanceof \App\Entity\Customer) {
+                $customerName = (string) $customerEntity->getName();
+            } else {
+                $projectEntity = $entry->getProject();
+                if ($projectEntity instanceof \App\Entity\Project && $projectEntity->getCustomer() instanceof \App\Entity\Customer) {
+                    $customerName = (string) $projectEntity->getCustomer()->getName();
+                }
+            }
+            $sheet->setCellValue('D'.$lineNumber, $customerName);
+
+            $projectName = '';
+            $projectEntity = $entry->getProject();
+            if ($projectEntity instanceof \App\Entity\Project) {
+                $projectName = (string) $projectEntity->getName();
+            }
+            $sheet->setCellValue('E'.$lineNumber, $projectName);
             $sheet->setCellValue('F'.$lineNumber, $activity);
             $sheet->setCellValue('G'.$lineNumber, $entry->getDescription());
             $sheet->setCellValue('H'.$lineNumber, $entry->getTicket());
@@ -187,17 +196,21 @@ final class ExportAction extends BaseController
             ++$lineNumber;
         }
 
-        $file = tempnam(sys_get_temp_dir(), 'ttt-export-');
+        $tmp = tempnam(sys_get_temp_dir(), 'ttt-export-');
+        $filePath = false !== $tmp
+            ? $tmp
+            : $this->kernel->getProjectDir().'/var/tmp/'.uniqid('ttt-export-', true).'.xlsx';
+
         $xlsx = new Xlsx($spreadsheet);
-        $xlsx->save($file);
+        $xlsx->save($filePath);
 
         $response = new Response();
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $response->headers->set('Content-disposition', 'attachment;filename='.$filename.'.xlsx');
 
-        $content = file_get_contents($file) ?: '';
+        $content = file_get_contents($filePath) ?: '';
         $response->setContent($content);
-        unlink($file);
+        unlink($filePath);
         return $response;
     }
 
