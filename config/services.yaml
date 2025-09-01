@@ -96,10 +96,31 @@ services:
     App\Service\ClockInterface:
         alias: App\Service\SystemClock
 
-    # Explicit definition to ensure constructor injection of ClockInterface and TimeCalculationService
-    App\Repository\EntryRepository:
+    # Query Cache Service configuration
+    App\Service\Cache\QueryCacheService:
+        arguments:
+            $cache: '@cache.app'
+            $logger: '@?logger'
+        tags:
+            - { name: monolog.logger, channel: cache }
+
+    # Optimized Entry Repository configuration
+    App\Repository\OptimizedEntryRepository:
         arguments:
             $managerRegistry: '@doctrine'
             $clock: '@App\Service\ClockInterface'
             $timeCalculationService: '@App\Service\Util\TimeCalculationService'
+            $cache: '@?cache.app'
+        tags:
+            - { name: 'doctrine.repository_service' }
+
+    # Use optimized version as the default EntryRepository
+    App\Repository\EntryRepository:
+        alias: App\Repository\OptimizedEntryRepository
+        public: false
+
+    # Token Encryption Service
+    App\Service\Security\TokenEncryptionService:
+        arguments:
+            $parameterBag: '@parameter_bag'
 
