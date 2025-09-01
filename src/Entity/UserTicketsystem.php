@@ -28,14 +28,16 @@ class UserTicketsystem extends Base
 
     /**
      * @var string
+     * Encrypted OAuth access token
      */
-    #[ORM\Column(name: 'accesstoken', type: 'string', length: 50)]
+    #[ORM\Column(name: 'accesstoken', type: 'text')]
     protected $accessToken;
 
     /**
      * @var string
+     * Encrypted OAuth token secret
      */
-    #[ORM\Column(name: 'tokensecret', type: 'string', length: 50)]
+    #[ORM\Column(name: 'tokensecret', type: 'text')]
     protected $tokenSecret;
 
     #[ORM\Column(name: 'avoidconnection', type: 'boolean', options: ['default' => false])]

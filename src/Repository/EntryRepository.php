@@ -317,12 +317,12 @@ class EntryRepository extends ServiceEntityRepository
             c.name AS name,
             COUNT(e.id) AS entries,
             SUM(e.duration) AS total,
-            SUM(IF(e.user_id = {$userId} , e.duration, 0)) AS own,
+            SUM(IF(e.user_id = :userId , e.duration, 0)) AS own,
             0 as estimation";
         $sql['customer']['from'] = 'FROM entries e';
         $sql['customer']['join_c'] = 'LEFT JOIN customers c ON c.id = e.customer_id';
         if ($entry->getCustomer() instanceof \App\Entity\Customer) {
-            $sql['customer']['where_c'] = 'WHERE e.customer_id = '.(int) $entry->getCustomer()->getId();
+            $sql['customer']['where_c'] = 'WHERE e.customer_id = :customerId';
         } else {
             $sql['customer']['where_c'] = '';
         }
@@ -332,13 +332,13 @@ class EntryRepository extends ServiceEntityRepository
             CONCAT(p.name) AS name,
             COUNT(e.id) AS entries,
             SUM(e.duration) AS total,
-            SUM(IF(e.user_id = {$userId} , e.duration, 0)) AS own,
+            SUM(IF(e.user_id = :userId , e.duration, 0)) AS own,
             p.estimation AS estimation";
         $sql['project']['from'] = 'FROM entries e';
         $sql['project']['join_c'] = 'LEFT JOIN customers c ON c.id = e.customer_id';
         $sql['project']['join_p'] = 'LEFT JOIN projects p ON p.id=e.project_id';
-        $sql['project']['where_c'] = $entry->getCustomer() instanceof \App\Entity\Customer ? ('WHERE e.customer_id = '.(int) $entry->getCustomer()->getId()) : '';
-        $sql['project']['where_p'] = $entry->getProject() instanceof \App\Entity\Project ? ('AND e.project_id = '.(int) $entry->getProject()->getId()) : '';
+        $sql['project']['where_c'] = $entry->getCustomer() instanceof \App\Entity\Customer ? 'WHERE e.customer_id = :customerId' : '';
+        $sql['project']['where_p'] = $entry->getProject() instanceof \App\Entity\Project ? 'AND e.project_id = :projectId' : '';
 
         // activity total / activity total by current user
         if ($entry->getActivity() instanceof \App\Entity\Activity) {
@@ -346,15 +346,15 @@ class EntryRepository extends ServiceEntityRepository
                 CONCAT(a.name) AS name,
                 COUNT(e.id) AS entries,
                 SUM(e.duration) AS total,
-                SUM(IF(e.user_id = {$userId} , e.duration, 0)) AS own,
+                SUM(IF(e.user_id = :userId , e.duration, 0)) AS own,
                 0 as estimation";
             $sql['activity']['from'] = 'FROM entries e';
             $sql['activity']['join_c'] = 'LEFT JOIN customers c ON c.id = e.customer_id';
             $sql['activity']['join_p'] = 'LEFT JOIN projects p ON p.id=e.project_id';
             $sql['activity']['join_a'] = 'LEFT JOIN activities a ON a.id=e.activity_id';
-            $sql['activity']['where_c'] = $entry->getCustomer() instanceof \App\Entity\Customer ? ('WHERE e.customer_id = '.(int) $entry->getCustomer()->getId()) : '';
-            $sql['activity']['where_p'] = $entry->getProject() instanceof \App\Entity\Project ? ('AND e.project_id = '.(int) $entry->getProject()->getId()) : '';
-            $sql['activity']['where_a'] = 'AND e.activity_id = '.(int) $entry->getActivity()->getId();
+            $sql['activity']['where_c'] = $entry->getCustomer() instanceof \App\Entity\Customer ? 'WHERE e.customer_id = :customerId' : '';
+            $sql['activity']['where_p'] = $entry->getProject() instanceof \App\Entity\Project ? 'AND e.project_id = :projectId' : '';
+            $sql['activity']['where_a'] = 'AND e.activity_id = :activityId';
         } else {
             $sql['activity']['select'] = "SELECT 'activity' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own";
         }
@@ -365,22 +365,42 @@ class EntryRepository extends ServiceEntityRepository
                 ticket AS name,
                 COUNT(id) AS entries,
                 SUM(duration) AS total,
-                SUM(IF(user_id = {$userId}, duration, 0)) AS own,
+                SUM(IF(user_id = :userId, duration, 0)) AS own,
                 0 as estimation";
             $sql['ticket']['from'] = 'FROM entries';
-            $sql['ticket']['where'] = "WHERE ticket = '".addslashes($entry->getTicket())."'";
+            $sql['ticket']['where'] = 'WHERE ticket = :ticketName';
         } else {
             $sql['ticket']['select'] = "SELECT 'ticket' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own, 0 AS estimation";
         }
 
-        $result = $connection
-            ->executeQuery(
-                implode(' ', $sql['customer'])
-                .' UNION '.implode(' ', $sql['project'])
-                .' UNION '.implode(' ', $sql['activity'])
-                .' UNION '.implode(' ', $sql['ticket'])
-            )
-            ->fetchAllAssociative();
+        // Prepare parameters for binding
+        $params = ['userId' => $userId];
+        
+        if ($entry->getCustomer() instanceof \App\Entity\Customer) {
+            $params['customerId'] = $entry->getCustomer()->getId();
+        }
+        if ($entry->getProject() instanceof \App\Entity\Project) {
+            $params['projectId'] = $entry->getProject()->getId();
+        }
+        if ($entry->getActivity() instanceof \App\Entity\Activity) {
+            $params['activityId'] = $entry->getActivity()->getId();
+        }
+        if ('' !== $entry->getTicket()) {
+            $params['ticketName'] = $entry->getTicket();
+        }
+        
+        // Build and execute the UNION query with prepared statements
+        $fullQuery = implode(' ', $sql['customer'])
+            .' UNION '.implode(' ', $sql['project'])
+            .' UNION '.implode(' ', $sql['activity'])
+            .' UNION '.implode(' ', $sql['ticket']);
+        
+        $statement = $connection->prepare($fullQuery);
+        foreach ($params as $key => $value) {
+            $statement->bindValue($key, $value);
+        }
+        
+        $result = $statement->executeQuery()->fetchAllAssociative();
 
         // ensure consistent array shapes with correct scalar casts
         $data['customer'] = isset($result[0]) ? [

@@ -42,7 +42,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $username = (string) $request->request->get('_username');
+        $username = $this->sanitizeLdapInput((string) $request->request->get('_username'));
         $password = (string) $request->request->get('_password');
         $csrfToken = (string) $request->request->get('_csrf_token');
 
@@ -50,17 +50,23 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
             throw new CustomUserMessageAuthenticationException('Username and password cannot be empty.');
         }
 
+        // Validate username format
+        if (!$this->isValidUsername($username)) {
+            $this->logger->warning('Invalid username format attempted', ['username' => substr($username, 0, 3) . '***']);
+            throw new CustomUserMessageAuthenticationException('Invalid username format.');
+        }
+
         $userLoader = function (string $userIdentifier): User {
             try {
                 // --- Perform LDAP Authentication ---
                 // Cast parameter bag values to expected scalar types
                 $this->ldapClientService
-                    ->setHost((string) (is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : ''))
+                    ->setHost($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : '')))
                     ->setPort($this->parsePort($this->parameterBag->get('ldap_port')))
-                    ->setReadUser((string) (is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : ''))
+                    ->setReadUser($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : '')))
                     ->setReadPass((string) (is_scalar($this->parameterBag->get('ldap_readpass')) ? $this->parameterBag->get('ldap_readpass') : ''))
-                    ->setBaseDn((string) (is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : ''))
-                    ->setUserName($userIdentifier)
+                    ->setBaseDn($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : '')))
+                    ->setUserName($this->sanitizeLdapInput($userIdentifier))
                     ->setUserPass($this->currentPassword ?? '')
                     ->setUseSSL((bool) ($this->parameterBag->get('ldap_usessl') ?? false))
                     ->setUserNameField((string) (is_scalar($this->parameterBag->get('ldap_usernamefield')) ? $this->parameterBag->get('ldap_usernamefield') : ''))
@@ -96,9 +102,28 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 $this->entityManager->flush();
 
                 return $newUser;
+            } catch (\Laminas\Ldap\Exception\LdapException $ldapException) {
+                // Specific LDAP errors
+                $this->logger->error('LDAP authentication error', [
+                    'username' => substr($userIdentifier, 0, 3) . '***',
+                    'error_code' => $ldapException->getCode(),
+                    'error_type' => get_class($ldapException)
+                ]);
+                
+                // Don't expose LDAP-specific errors to the user
+                throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.');
+            } catch (UserNotFoundException $userException) {
+                // User not found and creation disabled
+                $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
+                throw $userException;
             } catch (\Throwable $throwable) {
-                $this->logger->warning('LDAP authentication failed.', ['username' => $userIdentifier, 'message' => $throwable->getMessage()]);
-                throw new CustomUserMessageAuthenticationException('Invalid credentials.');
+                // Generic error handling
+                $this->logger->error('Unexpected authentication error', [
+                    'username' => substr($userIdentifier, 0, 3) . '***',
+                    'error' => $throwable->getMessage(),
+                    'trace' => $throwable->getTraceAsString()
+                ]);
+                throw new CustomUserMessageAuthenticationException('An unexpected error occurred during authentication.');
             }
         };
 
@@ -146,5 +171,44 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         }
 
         return 0;
+    }
+
+    /**
+     * Sanitizes LDAP input to prevent injection attacks
+     * Escapes special characters according to RFC 4515
+     */
+    private function sanitizeLdapInput(string $input): string
+    {
+        // LDAP special characters that need escaping
+        $metaChars = [
+            '\\' => '\5c',   // Must be first
+            '*' => '\2a',
+            '(' => '\28',
+            ')' => '\29',
+            "\x00" => '\00',
+            '/' => '\2f'
+        ];
+        
+        // Replace each special character with its escaped version
+        return str_replace(
+            array_keys($metaChars),
+            array_values($metaChars),
+            $input
+        );
+    }
+
+    /**
+     * Validates username format to prevent injection attacks
+     */
+    private function isValidUsername(string $username): bool
+    {
+        // Allow alphanumeric, dots, hyphens, underscores, and @ for email-style usernames
+        // Max length 256 characters
+        if (strlen($username) > 256) {
+            return false;
+        }
+        
+        // Check for basic valid characters
+        return preg_match('/^[a-zA-Z0-9._@-]+$/', $username) === 1;
     }
 }
