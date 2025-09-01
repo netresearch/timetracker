@@ -26,6 +26,11 @@ class ControllingControllerTest extends AbstractWebTestCase
 
         // Clear cookies so no previous session id is reused
         $this->client->getCookieJar()->clear();
+
+        // Also clear the security token to ensure full logout in test env
+        if ($this->client->getContainer()->has('security.token_storage')) {
+            $this->client->getContainer()->get('security.token_storage')->setToken(null);
+        }
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling/export');
 
         // The test environment redirects to login (302) rather than returning 401

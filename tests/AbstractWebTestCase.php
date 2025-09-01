@@ -323,42 +323,37 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         $userEntity = $userRepository->find($userId);
 
         if ($userEntity) {
-            // Create the token for session storage only (let the firewall load it on next request)
-            $usernamePasswordToken = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
-                $userEntity,
-                'main',
-                $userEntity->getRoles()
-            );
+            // Primary: modern login helper for the "main" firewall
+            $this->client->loginUser($userEntity, 'main');
 
-            // Obtain a session instance in Symfony 6 test environment
-            // Prefer the real 'session' service so tests that clear it work reliably
+            // Compatibility: also persist a session token like legacy tests expect
+            $session = null;
             if ($this->serviceContainer->has('session')) {
                 $session = $this->serviceContainer->get('session');
             } elseif ($this->serviceContainer->has('test.session')) {
                 $session = $this->serviceContainer->get('test.session');
-            } elseif ($this->serviceContainer->has('session.factory')) {
-                $sessionFactory = $this->serviceContainer->get('session.factory');
-                $session = $sessionFactory->createSession();
-            } else {
-                $session = new \Symfony\Component\HttpFoundation\Session\Session(
-                    new \Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage()
+            }
+
+            if ($session) {
+                if (method_exists($session, 'isStarted') && !$session->isStarted()) {
+                    $session->start();
+                }
+
+                $usernamePasswordToken = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
+                    $userEntity,
+                    'main',
+                    $userEntity->getRoles()
                 );
+                $session->set('_security_main', serialize($usernamePasswordToken));
+                $session->save();
+
+                // Sync cookie jar with the session id
+                $this->client->getCookieJar()->clear();
+                $cookie = new Cookie($session->getName(), $session->getId());
+                $this->client->getCookieJar()->set($cookie);
             }
 
-            // Ensure session is started, then store token in session for firewall "main"
-            if (method_exists($session, 'isStarted') && !$session->isStarted()) {
-                $session->start();
-            }
-
-            $session->set('_security_main', serialize($usernamePasswordToken));
-            $session->save();
-
-            // Clear and set the cookies
-            $this->client->getCookieJar()->clear();
-            $cookie = new Cookie($session->getName(), $session->getId());
-            $this->client->getCookieJar()->set($cookie);
-
-            // Also set the token directly in token storage for the current kernel request cycle
+            // Ensure token storage reflects the authenticated user in current request cycle
             if ($this->serviceContainer->has('security.token_storage')) {
                 $tokenStorage = $this->serviceContainer->get('security.token_storage');
                 try {
@@ -369,13 +364,16 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                     );
                     $tokenStorage->setToken($postAuthenticationToken);
                 } catch (\Throwable) {
-                    // Fallback to UsernamePasswordToken if PostAuthenticationToken not available
-                    $tokenStorage->setToken($usernamePasswordToken);
+                    $fallbackToken = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
+                        $userEntity,
+                        'main',
+                        $userEntity->getRoles()
+                    );
+                    $tokenStorage->setToken($fallbackToken);
                 }
             }
 
             // Avoid kernel reboot to keep the same DB connection within a test method
-            // This ensures transactional visibility across multiple requests
             $this->client->disableReboot();
         }
     }
