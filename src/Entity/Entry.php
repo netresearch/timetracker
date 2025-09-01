@@ -195,27 +195,52 @@ class Entry extends Base
 
     public function getUserId(): ?int
     {
-        return is_object($this->getUser()) ? $this->getUser()->getId() : 0;
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            return $user->getId();
+        }
+
+        return 0;
     }
 
     public function getProjectId(): ?int
     {
-        return is_object($this->getProject()) ? $this->getProject()->getId() : 0;
+        $project = $this->getProject();
+        if ($project instanceof Project) {
+            return $project->getId();
+        }
+
+        return 0;
     }
 
     public function getAccountId(): ?int
     {
-        return is_object($this->getAccount()) ? $this->getAccount()->getId() : 0;
+        $account = $this->getAccount();
+        if ($account instanceof Account) {
+            return $account->getId();
+        }
+
+        return 0;
     }
 
     public function getCustomerId(): ?int
     {
-        return is_object($this->getCustomer()) ? $this->getCustomer()->getId() : 0;
+        $customer = $this->getCustomer();
+        if ($customer instanceof Customer) {
+            return $customer->getId();
+        }
+
+        return 0;
     }
 
     public function getActivityId(): int
     {
-        return (int) (is_object($this->getActivity()) ? $this->getActivity()->getId() : 0);
+        $activity = $this->getActivity();
+        if ($activity instanceof Activity) {
+            return (int) $activity->getId();
+        }
+
+        return 0;
     }
 
     public function setTicket(string $ticket): static
@@ -428,27 +453,34 @@ class Entry extends Base
      * @return (int|string|null)[]
      *
      * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string|null}
+     * @psalm-suppress RedundantPropertyInitializationCheck
      */
     public function toArray(): array
     {
-        if ($this->getCustomer() instanceof Customer) {
-            $customer = $this->getCustomer()->getId();
-        } elseif ($this->getProject() && $this->getProject()->getCustomer()) {
-            $customer = $this->getProject()->getCustomer()->getId();
+        $customerEntity = $this->getCustomer();
+        $projectEntity = $this->getProject();
+        if ($customerEntity instanceof Customer) {
+            $customer = $customerEntity->getId();
+        } elseif ($projectEntity instanceof Project) {
+            $projectCustomer = $projectEntity->getCustomer();
+            $customer = $projectCustomer instanceof Customer ? $projectCustomer->getId() : null;
         } else {
             $customer = null;
         }
 
+        /** @psalm-suppress RedundantPropertyInitializationCheck */
+        $userEntity = $this->getUser();
+        $activityEntity = $this->getActivity();
         /** @psalm-suppress RedundantPropertyInitializationCheck */
         return [
             'id' => $this->getId(),
             'date' => isset($this->day) ? $this->getDay()->format('d/m/Y') : null,
             'start' => isset($this->start) ? $this->getStart()->format('H:i') : null,
             'end' => isset($this->end) ? $this->getEnd()->format('H:i') : null,
-            'user' => $this->getUser() instanceof User ? $this->getUser()->getId() : null,
+            'user' => $userEntity instanceof User ? $userEntity->getId() : null,
             'customer' => $customer,
-            'project' => $this->getProject() instanceof Project ? $this->getProject()->getId() : null,
-            'activity' => $this->getActivity() instanceof Activity ? $this->getActivity()->getId() : null,
+            'project' => $projectEntity instanceof Project ? $projectEntity->getId() : null,
+            'activity' => $activityEntity instanceof Activity ? $activityEntity->getId() : null,
             'description' => $this->getDescription(),
             'ticket' => $this->getTicket(),
             'duration' => $this->getDuration(),
