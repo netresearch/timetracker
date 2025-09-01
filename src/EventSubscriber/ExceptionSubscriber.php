@@ -1,0 +1,186 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\EventSubscriber;
+
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
+use App\Service\Response\ResponseFactory;
+use App\Service\Validation\ValidationException;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
+
+/**
+ * Global exception handler for converting exceptions to appropriate responses.
+ */
+class ExceptionSubscriber implements EventSubscriberInterface
+{
+    public function __construct(
+        private readonly ResponseFactory $responseFactory,
+        private readonly ?LoggerInterface $logger = null,
+        private readonly string $environment = 'prod',
+    ) {
+    }
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            KernelEvents::EXCEPTION => ['onKernelException', 10],
+        ];
+    }
+
+    public function onKernelException(ExceptionEvent $event): void
+    {
+        $exception = $event->getThrowable();
+        $request = $event->getRequest();
+
+        // Log the exception
+        $this->logException($exception, $request->getPathInfo());
+
+        // Determine if we should return JSON response
+        $acceptsJson = str_contains($request->headers->get('Accept', ''), 'application/json') ||
+                      str_contains($request->getPathInfo(), '/api/');
+
+        if (!$acceptsJson) {
+            // Let Symfony handle HTML error pages
+            return;
+        }
+
+        // Convert exception to appropriate response
+        $response = $this->createResponseFromException($exception);
+        
+        if ($response instanceof JsonResponse) {
+            $event->setResponse($response);
+        }
+    }
+
+    private function createResponseFromException(\Throwable $exception): ?JsonResponse
+    {
+        // Handle validation exceptions
+        if ($exception instanceof ValidationException) {
+            return new JsonResponse([
+                'error' => 'Validation failed',
+                'errors' => $exception->getErrorsByField(),
+            ], 422);
+        }
+
+        // Handle JIRA API exceptions
+        if ($exception instanceof JiraApiUnauthorizedException) {
+            return new JsonResponse([
+                'error' => 'JIRA authentication required',
+                'message' => $exception->getMessage(),
+                'redirect_url' => $exception->getRedirectUrl(),
+            ], 401);
+        }
+
+        if ($exception instanceof JiraApiException) {
+            return new JsonResponse([
+                'error' => 'JIRA API error',
+                'message' => $exception->getMessage(),
+            ], 502);
+        }
+
+        // Handle HTTP exceptions
+        if ($exception instanceof HttpExceptionInterface) {
+            $statusCode = $exception->getStatusCode();
+            $message = $exception->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
+
+            return new JsonResponse([
+                'error' => $this->getErrorTypeForStatusCode($statusCode),
+                'message' => $message,
+            ], $statusCode);
+        }
+
+        // Handle generic exceptions (only show details in dev mode)
+        if ($this->environment === 'dev') {
+            return new JsonResponse([
+                'error' => 'Internal server error',
+                'message' => $exception->getMessage(),
+                'exception' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ], 500);
+        }
+
+        // Production mode - hide internal details
+        return new JsonResponse([
+            'error' => 'Internal server error',
+            'message' => 'An unexpected error occurred. Please try again later.',
+        ], 500);
+    }
+
+    private function getErrorTypeForStatusCode(int $statusCode): string
+    {
+        return match ($statusCode) {
+            400 => 'Bad request',
+            401 => 'Unauthorized',
+            403 => 'Forbidden',
+            404 => 'Not found',
+            405 => 'Method not allowed',
+            406 => 'Not acceptable',
+            409 => 'Conflict',
+            422 => 'Unprocessable entity',
+            429 => 'Too many requests',
+            500 => 'Internal server error',
+            502 => 'Bad gateway',
+            503 => 'Service unavailable',
+            default => 'Error',
+        };
+    }
+
+    private function getDefaultMessageForStatusCode(int $statusCode): string
+    {
+        return match ($statusCode) {
+            400 => 'The request was invalid or cannot be processed.',
+            401 => 'Authentication is required to access this resource.',
+            403 => 'You do not have permission to access this resource.',
+            404 => 'The requested resource was not found.',
+            405 => 'The request method is not allowed for this resource.',
+            406 => 'The requested format is not acceptable.',
+            409 => 'The request conflicts with the current state of the resource.',
+            422 => 'The request was well-formed but contains semantic errors.',
+            429 => 'Too many requests have been sent in a given amount of time.',
+            500 => 'An internal server error occurred.',
+            502 => 'The server received an invalid response from an upstream server.',
+            503 => 'The service is temporarily unavailable.',
+            default => 'An error occurred while processing your request.',
+        };
+    }
+
+    private function logException(\Throwable $exception, string $path): void
+    {
+        if (!$this->logger) {
+            return;
+        }
+
+        $context = [
+            'exception' => get_class($exception),
+            'message' => $exception->getMessage(),
+            'path' => $path,
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+        ];
+
+        // Determine log level based on exception type
+        if ($exception instanceof HttpExceptionInterface) {
+            $statusCode = $exception->getStatusCode();
+            if ($statusCode >= 500) {
+                $this->logger->error('Server error occurred', $context);
+            } elseif ($statusCode >= 400) {
+                $this->logger->warning('Client error occurred', $context);
+            }
+        } elseif ($exception instanceof ValidationException) {
+            $this->logger->info('Validation failed', array_merge($context, [
+                'errors' => $exception->getErrors(),
+            ]));
+        } else {
+            $this->logger->error('Unexpected exception occurred', $context);
+        }
+    }
+}

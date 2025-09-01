@@ -35,7 +35,18 @@ services:
     # This creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/*'
-        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+        exclude: 
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Migrations/'
+            - '../src/Tests/'
+            - '../src/Kernel.php'
+            - '../src/Service/Integration/Jira/JiraHttpClientService.php'
+            - '../src/Service/Integration/Jira/JiraWorkLogService.php'
+            - '../src/Service/Integration/Jira/JiraTicketService.php'
+            - '../src/Service/Integration/Jira/JiraAuthenticationService.php'
+            - '../src/Service/Integration/Jira/JiraIntegrationService.php'
+            - '../src/EventSubscriber/EntryEventSubscriber.php'
 
     # Controllers are tagged automatically
     App\Controller\:
@@ -129,15 +140,6 @@ services:
         arguments:
             $translator: '@translator'
 
-    # JIRA Integration Service
-    App\Service\Integration\Jira\JiraIntegrationService:
-        arguments:
-            $managerRegistry: '@doctrine'
-            $jiraApiFactory: '@App\Service\Integration\Jira\JiraOAuthApiFactory'
-            $workLogService: '@App\Service\Integration\Jira\JiraWorkLogService'
-            $logger: '@?logger'
-        tags:
-            - { name: monolog.logger, channel: jira }
 
     # Modern LDAP Service
     App\Service\Ldap\ModernLdapService:
@@ -146,4 +148,20 @@ services:
             $logger: '@?logger'
         tags:
             - { name: monolog.logger, channel: ldap }
+
+    # Validation Service
+    App\Service\Validation\ValidationService:
+        arguments:
+            $validator: '@validator'
+
+
+    # Exception Subscriber for global error handling
+    App\EventSubscriber\ExceptionSubscriber:
+        arguments:
+            $responseFactory: '@App\Service\Response\ResponseFactory'
+            $logger: '@?logger'
+            $environment: '%kernel.environment%'
+        tags:
+            - { name: kernel.event_subscriber }
+            - { name: monolog.logger, channel: exception }
 
