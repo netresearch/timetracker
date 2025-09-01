@@ -21,7 +21,6 @@ class LdapClientServiceTest extends TestCase
         // Indirectly verify normalization via reflection
         $reflectionClass = new \ReflectionClass($ldapClientService);
         $reflectionProperty = $reflectionClass->getProperty('_userName');
-        $reflectionProperty->setAccessible(true);
         $this->assertSame('juergen.mueller', trim((string) $reflectionProperty->getValue($ldapClientService), '.'));
     }
 
@@ -30,7 +29,6 @@ class LdapClientServiceTest extends TestCase
         $ldapClientService = new LdapClientService();
         $reflectionClass = new \ReflectionClass($ldapClientService);
         $reflectionMethod = $reflectionClass->getMethod('setTeamsByLdapResponse');
-        $reflectionMethod->setAccessible(true);
         $reflectionMethod->invoke($ldapClientService, [['cn' => ['No DN']]]);
         $this->assertSame([], $ldapClientService->getTeams());
     }

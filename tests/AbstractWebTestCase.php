@@ -22,6 +22,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             @\restore_exception_handler();
         }
     }
+
     /**
      * Assert that $subset is contained within $array (recursive subset match).
      *
@@ -36,6 +37,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             if ($a === []) {
                 return false;
             }
+
             return array_keys($a) !== range(0, count($a) - 1);
         };
 
@@ -43,6 +45,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             if (is_numeric($expected) && is_numeric($actual)) {
                 return (string) $expected === (string) $actual;
             }
+
             return $expected === $actual;
         };
 
@@ -50,12 +53,12 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             if ($isAssoc($needle)) {
                 // Associative: each key/value in needle must match in haystack
                 foreach ($needle as $key => $value) {
-                    $this->assertArrayHasKey($key, $haystack, "Missing key '$key'");
+                    $this->assertArrayHasKey($key, $haystack, sprintf("Missing key '%s'", $key));
                     if (is_array($value)) {
                         $this->assertIsArray($haystack[$key]);
                         $assertSubset($value, $haystack[$key]);
                     } else {
-                        $this->assertTrue($valuesEqual($value, $haystack[$key]), "Value mismatch at key '$key'");
+                        $this->assertTrue($valuesEqual($value, $haystack[$key]), sprintf("Value mismatch at key '%s'", $key));
                     }
                 }
             } else {
@@ -66,7 +69,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                         $this->assertIsArray($haystack[$index]);
                         $assertSubset($value, $haystack[$index]);
                     } else {
-                        $this->assertTrue($valuesEqual($value, $haystack[$index]), "Value mismatch at index $index");
+                        $this->assertTrue($valuesEqual($value, $haystack[$index]), 'Value mismatch at index ' . $index);
                     }
                 }
             }
@@ -77,16 +80,18 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             $remaining = $subset;
             $haystack = $array;
 
-            $matchElement = function ($needle, array $hay) use ($assertSubset, $valuesEqual) {
+            $matchElement = function ($needle, array $hay) use ($assertSubset, $valuesEqual): int|string|null {
                 foreach ($hay as $idx => $candidate) {
                     try {
                         if (is_array($needle)) {
                             if (!is_array($candidate)) {
                                 continue;
                             }
+
                             $assertSubset($needle, $candidate);
                             return $idx;
                         }
+
                         if ($valuesEqual($needle, $candidate)) {
                             return $idx;
                         }
@@ -94,6 +99,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                         // try next
                     }
                 }
+
                 return null;
             };
 
@@ -102,8 +108,10 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                 if ($idx === null) {
                     $this->fail($message !== '' ? $message : 'Subset element not found in array');
                 }
+
                 unset($haystack[$idx]);
             }
+
             return;
         }
 
@@ -169,6 +177,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         if (method_exists($dbal, 'setNestTransactionsWithSavepoints')) {
             $dbal->setNestTransactionsWithSavepoints(true);
         }
+
         $this->queryBuilder = $dbal->createQueryBuilder();
 
         // Begin a transaction to isolate test database changes (reliable via DBAL)
@@ -340,6 +349,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             if (method_exists($session, 'isStarted') && !$session->isStarted()) {
                 $session->start();
             }
+
             $session->set('_security_main', serialize($usernamePasswordToken));
             $session->save();
 
@@ -352,12 +362,12 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             if ($this->serviceContainer->has('security.token_storage')) {
                 $tokenStorage = $this->serviceContainer->get('security.token_storage');
                 try {
-                    $postAuthToken = new \Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken(
+                    $postAuthenticationToken = new \Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken(
                         $userEntity,
                         'main',
                         $userEntity->getRoles()
                     );
-                    $tokenStorage->setToken($postAuthToken);
+                    $tokenStorage->setToken($postAuthenticationToken);
                 } catch (\Throwable) {
                     // Fallback to UsernamePasswordToken if PostAuthenticationToken not available
                     $tokenStorage->setToken($usernamePasswordToken);

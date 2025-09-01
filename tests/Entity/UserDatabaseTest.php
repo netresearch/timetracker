@@ -318,6 +318,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setShowEmptyLine(0);
         $user->setSuggestTime(1);
         $user->setShowFuture(1);
+
         $this->entityManager->persist($user);
 
         $ticketSystem = new TicketSystem();
@@ -332,6 +333,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $ticketSystem->setPrivateKey('test-private-key');
         $ticketSystem->setOauthConsumerKey('test-consumer-key');
         $ticketSystem->setOauthConsumerSecret('test-consumer-secret');
+
         $this->entityManager->persist($ticketSystem);
 
         // Create user-ticketsystem connection
@@ -344,6 +346,7 @@ class UserDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->persist($userTicketSystem);
         $this->entityManager->flush();
+
         $userId = $user->getId();
         $ticketSystemId = $ticketSystem->getId();
 
@@ -363,9 +366,10 @@ class UserDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         $this->entityManager->remove($fetchedUser);
-        if ($fetchedTicketSystem) {
+        if ($fetchedTicketSystem instanceof \App\Entity\TicketSystem) {
             $this->entityManager->remove($fetchedTicketSystem);
         }
+
         $this->entityManager->flush();
     }
 

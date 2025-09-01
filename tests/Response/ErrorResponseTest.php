@@ -12,7 +12,7 @@ class ErrorResponseTest extends TestCase
     public function testConstructSetsMessageAndStatus(): void
     {
         $error = new Error('Not found', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND, $error->getStatusCode(), $error->getContent());
+        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND, $error->getStatusCode(), (string) $error->getContent());
 
         $data = json_decode((string) $error->getContent(), true);
         $this->assertIsArray($data);

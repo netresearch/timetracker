@@ -29,7 +29,6 @@ class EntryRepositoryTest extends TestCase
         // Avoid touching Doctrine by creating a partial instance without constructor
         $entryRepository = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
         $reflectionProperty = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
-        $reflectionProperty->setAccessible(true);
         $reflectionProperty->setValue($entryRepository, $clock);
 
         // 1 working day on Monday should include previous Fri,Sat,Sun => 3 calendar days
@@ -57,7 +56,6 @@ class EntryRepositoryTest extends TestCase
         $entryRepository = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
         // Inject clock via reflection
         $reflectionProperty = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
-        $reflectionProperty->setAccessible(true);
         $reflectionProperty->setValue($entryRepository, $clock);
 
         $this->assertSame(0, $entryRepository->getCalendarDaysByWorkDays(0));
@@ -81,7 +79,6 @@ class EntryRepositoryTest extends TestCase
         $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
         $entryRepository = (new \ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
         $reflectionProperty = (new \ReflectionClass(EntryRepository::class))->getProperty('clock');
-        $reflectionProperty->setAccessible(true);
         $reflectionProperty->setValue($entryRepository, $clock);
 
         $this->assertSame(3, $entryRepository->getCalendarDaysByWorkDays(1)); // Monday spans back to Friday

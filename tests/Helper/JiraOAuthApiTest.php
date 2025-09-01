@@ -26,7 +26,7 @@ class JiraOAuthApiTest extends TestCase
     /**
      * @return JiraOAuthApi&JiraOAuthApiTestProxy
      */
-    private function makeSubject(callable $requestHandler, bool $withTokens = true)
+    private function makeSubject(callable $requestHandler, bool $withTokens = true): object
     {
         // Create minimal doubles for constructor
         $mock = $this->getMockBuilder(\App\Entity\User::class)->disableOriginalConstructor()->getMock();
@@ -84,8 +84,7 @@ class JiraOAuthApiTest extends TestCase
 
         // Also stub fetchOAuthRequestToken path to avoid nested failures in throwUnauthorizedRedirect
         $reflectionClass = new \ReflectionClass($jiraOAuthApi);
-        $reflectionMethod = $reflectionClass->getMethod('fetchOAuthRequestToken');
-        $reflectionMethod->setAccessible(true);
+        $reflectionClass->getMethod('fetchOAuthRequestToken');
         // Hack via closure binding to override protected method call using runkit-like approach is not available;
         // instead, expect generic JiraApiException as fallback which still exercises error path.
         $this->expectException(JiraApiException::class);
