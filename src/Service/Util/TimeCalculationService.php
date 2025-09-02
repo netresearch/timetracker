@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service\Util;
 
+use function count;
+use function sprintf;
+
 class TimeCalculationService
 {
     public const int DAYS_PER_WEEK = 5;
@@ -43,6 +46,7 @@ class TimeCalculationService
     public function readableToFullMinutes(string $readable): int
     {
         $minutes = $this->readableToMinutes($readable);
+
         return (int) floor($minutes);
     }
 
@@ -61,13 +65,13 @@ class TimeCalculationService
             $div = $this->getMinutesByLetter($size);
             $factor = (int) floor($minutes / $div);
             if ($factor > 0) {
-                $out .= $factor.$size.' ';
+                $out .= $factor . $size . ' ';
                 $minutes -= $factor * $div;
             }
         }
 
         if ($minutes > 0) {
-            $out .= $minutes.'m';
+            $out .= $minutes . 'm';
         }
 
         return trim($out);
@@ -79,16 +83,16 @@ class TimeCalculationService
         $hours = (int) floor($duration / 60);
         $minutes = (int) floor($duration % 60);
         if ($minutes < 10) {
-            $minutes = (int) ('0'.$minutes);
+            $minutes = (int) ('0' . $minutes);
         }
 
         if ($hours < 10) {
-            $hours = (int) ('0'.$hours);
+            $hours = (int) ('0' . $hours);
         }
 
         $text = sprintf('%02d:%02d', $hours, $minutes);
         if ($inDays && (float) $days > 1.00) {
-            $text .= ' ('.$days.' PT)';
+            $text .= ' (' . $days . ' PT)';
         }
 
         return $text;
@@ -96,6 +100,6 @@ class TimeCalculationService
 
     public function formatQuota(int|float $amount, int|float $sum): string
     {
-        return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2).'%';
+        return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';
     }
 }

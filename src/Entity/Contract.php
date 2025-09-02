@@ -1,8 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -25,10 +27,10 @@ class Contract
     protected $id;
 
     #[ORM\Column(type: 'date', nullable: false)]
-    protected \DateTime $start;
+    protected DateTime $start;
 
     #[ORM\Column(type: 'date', nullable: true)]
-    protected ?\DateTime $end = null;
+    protected ?DateTime $end = null;
 
     /**
      * @var float
@@ -99,7 +101,7 @@ class Contract
         return $this->user;
     }
 
-    public function getStart(): \DateTime
+    public function getStart(): DateTime
     {
         return $this->start;
     }
@@ -107,14 +109,14 @@ class Contract
     /**
      * @return $this
      */
-    public function setStart(\DateTime $start): static
+    public function setStart(DateTime $start): static
     {
         $this->start = $start;
 
         return $this;
     }
 
-    public function getEnd(): ?\DateTime
+    public function getEnd(): ?DateTime
     {
         return $this->end;
     }
@@ -122,7 +124,7 @@ class Contract
     /**
      * @return $this
      */
-    public function setEnd(?\DateTime $dateTimed): static
+    public function setEnd(?DateTime $dateTimed): static
     {
         $this->end = $dateTimed;
 

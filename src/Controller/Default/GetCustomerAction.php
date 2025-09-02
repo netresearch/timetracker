@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -7,6 +8,8 @@ use App\Controller\BaseController;
 use App\Entity\Project;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+
+use function is_scalar;
 
 final class GetCustomerAction extends BaseController
 {
@@ -27,5 +30,3 @@ final class GetCustomerAction extends BaseController
         return new JsonResponse(['customer' => 0]);
     }
 }
-
-

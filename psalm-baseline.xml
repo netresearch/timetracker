@@ -1,0 +1,2278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="6.5.0@38fc8444edf0cebc9205296ee6e30e906ade783b">
+  <file src="src/Command/TtSyncSubticketsCommand.php">
+    <InvalidOperand>
+      <code><![CDATA[$count]]></code>
+      <code><![CDATA[$projectEntity->getId()]]></code>
+      <code><![CDATA[count($subtickets)]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[addArgument]]></code>
+      <code><![CDATA[getArgument]]></code>
+      <code><![CDATA[parent::__construct()]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$subtickets]]></code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment>
+      <code><![CDATA[$projects]]></code>
+    </MixedAssignment>
+    <PossiblyNullOperand>
+      <code><![CDATA[$projectEntity->getId()]]></code>
+      <code><![CDATA[$projectEntity->getName()]]></code>
+      <code><![CDATA[$projectEntity->getName()]]></code>
+    </PossiblyNullOperand>
+    <RedundantCast>
+      <code><![CDATA[(string) $projectArg]]></code>
+    </RedundantCast>
+    <UnusedClass>
+      <code><![CDATA[TtSyncSubticketsCommand]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeleteActivityAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeleteActivityAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeleteContractAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeleteContractAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeleteCustomerAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeleteCustomerAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeletePresetAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeletePresetAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeleteProjectAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeleteProjectAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeleteTeamAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeleteTeamAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeleteTicketSystemAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeleteTicketSystemAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/DeleteUserAction.php">
+    <UnusedClass>
+      <code><![CDATA[DeleteUserAction]]></code>
+    </UnusedClass>
+    <UnusedVariable>
+      <code><![CDATA[$reason]]></code>
+      <code><![CDATA[$reason]]></code>
+    </UnusedVariable>
+  </file>
+  <file src="src/Controller/Admin/GetContractsAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetContractsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/GetCustomersAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetCustomersAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/GetPresetsAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetPresetsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/GetTeamsAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetTeamsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/GetTicketSystemsAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getAllTicketSystems]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[GetTicketSystemsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/GetUsersAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetUsersAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SaveActivityAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response($this->translate('Error on save') . ': ' . $exception->getMessage())]]></code>
+      <code><![CDATA[new Response($this->translate('The activity name provided already exists.'))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[SaveActivityAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SaveContractAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[findBy]]></code>
+      <code><![CDATA[new DateInterval('P1D')]]></code>
+      <code><![CDATA[new Response($responseMessage)]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[throw new \InvalidArgumentException('Invalid start date format')]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[SaveContractAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SaveCustomerAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[new Response($this->translate('Every customer must belong to at least one team if it is not global.'))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[trans]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[SaveCustomerAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SavePresetAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response($this->translate('Please choose a customer, a project and an activity.'))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[toArray]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[SavePresetAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SaveProjectAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[new Response($this->translate('Please choose a customer.'))]]></code>
+      <code><![CDATA[new Response($this->translate('Please choose a customer.'))]]></code>
+      <code><![CDATA[new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <TypeDoesNotContainType>
+      <code><![CDATA[false === $objectRepository->isValidJiraPrefix($jiraId)]]></code>
+    </TypeDoesNotContainType>
+    <UnusedClass>
+      <code><![CDATA[SaveProjectAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SaveTeamAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response($this->translate('Error on save') . ': ' . $exception->getMessage())]]></code>
+      <code><![CDATA[new Response($this->translate('Please provide a valid user as team leader.'))]]></code>
+      <code><![CDATA[new Response($this->translate('The team name provided already exists.'))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullReference>
+      <code><![CDATA[getId]]></code>
+    </PossiblyNullReference>
+    <UnusedClass>
+      <code><![CDATA[SaveTeamAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SaveTicketSystemAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response($this->translate('Error on save') . ': ' . $exception->getMessage())]]></code>
+      <code><![CDATA[new Response($this->translate('The ticket system name provided already exists.'))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[toArray]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[SaveTicketSystemAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SaveUserAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[map]]></code>
+      <code><![CDATA[map]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[SaveUserAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SyncAllProjectSubticketsAction.php">
+    <UnusedClass>
+      <code><![CDATA[SyncAllProjectSubticketsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SyncJiraEntriesAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <RedundantCastGivenDocblockType>
+      <code><![CDATA[(string) $from]]></code>
+      <code><![CDATA[(string) $to]]></code>
+    </RedundantCastGivenDocblockType>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[\App\Entity\TicketSystem|null]]></code>
+      <code><![CDATA[\App\Entity\User|null]]></code>
+    </UnnecessaryVarAnnotation>
+    <UnusedClass>
+      <code><![CDATA[SyncJiraEntriesAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Admin/SyncProjectSubticketsAction.php">
+    <UnusedClass>
+      <code><![CDATA[SyncProjectSubticketsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/BaseController.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getUser]]></code>
+      <code><![CDATA[getUser]]></code>
+      <code><![CDATA[getUser]]></code>
+      <code><![CDATA[isGranted]]></code>
+      <code><![CDATA[isGranted]]></code>
+      <code><![CDATA[new Response($message)]]></code>
+      <code><![CDATA[new Response($message)]]></code>
+      <code><![CDATA[new Response($message)]]></code>
+      <code><![CDATA[new Response($this->generateUrl('_login'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN)]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[throw new AccessDeniedException('No user logged in')]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <MixedAssignment>
+      <code><![CDATA[$rawToken]]></code>
+      <code><![CDATA[$session]]></code>
+      <code><![CDATA[$session]]></code>
+      <code><![CDATA[$token]]></code>
+      <code><![CDATA[$token]]></code>
+    </MixedAssignment>
+    <MixedMethodCall>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[has]]></code>
+      <code><![CDATA[has]]></code>
+    </MixedMethodCall>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[setCoreDependencies]]></code>
+    </PossiblyUnusedMethod>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$session->has('_security_main')]]></code>
+      <code><![CDATA[$session->has('_security_main')]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="src/Controller/Controlling/ExportAction.php">
+    <InvalidOperand>
+      <code><![CDATA[$exportQueryDto->year]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$lineNumber]]></code>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$row]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response()]]></code>
+      <code><![CDATA[save]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullReference>
+      <code><![CDATA[getAbbr]]></code>
+      <code><![CDATA[getName]]></code>
+    </PossiblyNullReference>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[file_get_contents($filePath)]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[array<int, Entry>]]></code>
+    </UnnecessaryVarAnnotation>
+    <UnusedClass>
+      <code><![CDATA[ExportAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/ControllingController.php">
+    <InvalidOperand>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$row]]></code>
+    </InvalidOperand>
+    <UnusedClass>
+      <code><![CDATA[ControllingController]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/ExportCsvAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[findByRecentDaysOfUser]]></code>
+      <code><![CDATA[new Response()]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[ExportCsvAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetActivitiesAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetActivitiesAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetAllProjectsAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[$project instanceof Project]]></code>
+    </RedundantConditionGivenDocblockType>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[array<int, Project>]]></code>
+    </UnnecessaryVarAnnotation>
+    <UnusedClass>
+      <code><![CDATA[GetAllProjectsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetCustomerAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullReference>
+      <code><![CDATA[getId]]></code>
+    </PossiblyNullReference>
+    <UnusedClass>
+      <code><![CDATA[GetCustomerAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetCustomersAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetCustomersAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetDataAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getEntriesByUser]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[GetDataAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetHolidaysAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetHolidaysAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetProjectStructureAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetProjectStructureAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetProjectsAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[GetProjectsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetSummaryAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[getEntrySummary]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$data['project']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+    <UnusedClass>
+      <code><![CDATA[GetSummaryAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetTicketTimeSummaryAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response('There is no information available about this ticket.', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$name ?? '']]></code>
+      <code><![CDATA[$name ?? '']]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$name]]></code>
+    </MixedAssignment>
+    <UnusedClass>
+      <code><![CDATA[GetTicketTimeSummaryAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetTicketTimeSummaryJsAction.php">
+    <UnusedClass>
+      <code><![CDATA[GetTicketTimeSummaryJsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetTimeSummaryAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getWorkByUser]]></code>
+      <code><![CDATA[getWorkByUser]]></code>
+      <code><![CDATA[getWorkByUser]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[GetTimeSummaryAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/GetUsersAction.php">
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[$current && method_exists($current, 'getType')]]></code>
+    </RedundantConditionGivenDocblockType>
+    <UnusedClass>
+      <code><![CDATA[GetUsersAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/IndexAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[IndexAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Default/JiraOAuthCallbackAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[new \App\Model\Response($jiraApiException->getMessage())]]></code>
+      <code><![CDATA[new \App\Model\Response('Invalid OAuth callback parameters', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST)]]></code>
+      <code><![CDATA[new \App\Model\Response('Ticket system not found', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND)]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[JiraOAuthCallbackAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/BaseInterpretationController.php">
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$a['name']]]></code>
+      <code><![CDATA[$arParams['customer']]]></code>
+      <code><![CDATA[$arParams['project']]]></code>
+      <code><![CDATA[$arParams['ticket']]]></code>
+      <code><![CDATA[$arParams['user']]]></code>
+      <code><![CDATA[$b['name']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="src/Controller/Interpretation/GetAllEntriesAction.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA[$query instanceof \Doctrine\ORM\Query]]></code>
+    </DocblockTypeContradiction>
+    <InvalidOperand>
+      <code><![CDATA[ceil($total / $maxResults) - 1]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$query]]></code>
+    </MixedArgument>
+    <MixedArrayAccess>
+      <code><![CDATA[$flatEntry['activity']]]></code>
+      <code><![CDATA[$flatEntry['activity']]]></code>
+      <code><![CDATA[$flatEntry['class']]]></code>
+      <code><![CDATA[$flatEntry['customer']]]></code>
+      <code><![CDATA[$flatEntry['customer']]]></code>
+      <code><![CDATA[$flatEntry['project']]]></code>
+      <code><![CDATA[$flatEntry['project']]]></code>
+      <code><![CDATA[$flatEntry['user']]]></code>
+      <code><![CDATA[$flatEntry['user']]]></code>
+      <code><![CDATA[$flatEntry['worklog']]]></code>
+      <code><![CDATA[$flatEntry['worklog']]]></code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment>
+      <code><![CDATA[$flatEntry['activity_id']]]></code>
+      <code><![CDATA[$flatEntry['customer_id']]]></code>
+      <code><![CDATA[$flatEntry['date']]]></code>
+      <code><![CDATA[$flatEntry['project_id']]]></code>
+      <code><![CDATA[$flatEntry['user_id']]]></code>
+      <code><![CDATA[$flatEntry['worklog_id']]]></code>
+    </MixedArrayAssignment>
+    <MixedAssignment>
+      <code><![CDATA[$entries]]></code>
+      <code><![CDATA[$entry]]></code>
+      <code><![CDATA[$entryList[]]]></code>
+      <code><![CDATA[$flatEntry]]></code>
+      <code><![CDATA[$flatEntry['activity_id']]]></code>
+      <code><![CDATA[$flatEntry['customer_id']]]></code>
+      <code><![CDATA[$flatEntry['date']]]></code>
+      <code><![CDATA[$flatEntry['project_id']]]></code>
+      <code><![CDATA[$flatEntry['user_id']]]></code>
+      <code><![CDATA[$flatEntry['worklog_id']]]></code>
+      <code><![CDATA[$query]]></code>
+    </MixedAssignment>
+    <MixedMethodCall>
+      <code><![CDATA[format]]></code>
+      <code><![CDATA[getDay]]></code>
+      <code><![CDATA[getDay]]></code>
+      <code><![CDATA[getQuery]]></code>
+      <code><![CDATA[toArray]]></code>
+    </MixedMethodCall>
+    <PossiblyNullArgument>
+      <code><![CDATA[$request->getQueryString()]]></code>
+    </PossiblyNullArgument>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$request->getQueryString()]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[GetAllEntriesAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/GetLastEntriesAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[new ModelResponse($this->translate($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[GetLastEntriesAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/GroupByActivityAction.php">
+    <InvalidOperand>
+      <code><![CDATA[$activities[$aid]['hours'] += $entry->getDuration() / 60]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new ModelResponse($this->translate($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$activities]]></code>
+      <code><![CDATA[$activities]]></code>
+    </PossiblyNullArrayOffset>
+    <UnusedClass>
+      <code><![CDATA[GroupByActivityAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/GroupByCustomerAction.php">
+    <InvalidOperand>
+      <code><![CDATA[$customers[$cid]['hours'] += $entry->getDuration() / 60]]></code>
+      <code><![CDATA[$sum += $c['hours']]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new ModelResponse($this->translate($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$customers]]></code>
+      <code><![CDATA[$customers]]></code>
+    </PossiblyNullArrayOffset>
+    <UnusedClass>
+      <code><![CDATA[GroupByCustomerAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/GroupByProjectAction.php">
+    <InvalidOperand>
+      <code><![CDATA[$projects[$pid]['hours'] += $entry->getDuration() / 60]]></code>
+      <code><![CDATA[$sum += $p['hours']]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new ModelResponse($this->translate($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$projects]]></code>
+      <code><![CDATA[$projects]]></code>
+    </PossiblyNullArrayOffset>
+    <UnusedClass>
+      <code><![CDATA[GroupByProjectAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/GroupByTicketAction.php">
+    <InvalidOperand>
+      <code><![CDATA[$sum += $t['hours']]]></code>
+      <code><![CDATA[$tickets[$ticket]['hours'] += $entry->getDuration() / 60]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new ModelResponse($this->translate($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[GroupByTicketAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/GroupByUserAction.php">
+    <InvalidOperand>
+      <code><![CDATA[$sum += $u['hours']]]></code>
+      <code><![CDATA[$users[$uid]['hours'] += $entry->getDuration() / 60]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new ModelResponse($this->translate($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$users]]></code>
+      <code><![CDATA[$users]]></code>
+    </PossiblyNullArrayOffset>
+    <UnusedClass>
+      <code><![CDATA[GroupByUserAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Interpretation/GroupByWorktimeAction.php">
+    <InvalidOperand>
+      <code><![CDATA[$times[$key]['minutes'] += $entry->getDuration()]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new ModelResponse($this->translate($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[GroupByWorktimeAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/SecurityController.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getSession]]></code>
+      <code><![CDATA[new RedirectResponse('/login')]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[SecurityController]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Settings/SaveSettingsAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[trans]]></code>
+      <code><![CDATA[trans]]></code>
+      <code><![CDATA[trans]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[\App\Entity\User|null]]></code>
+    </UnnecessaryVarAnnotation>
+    <UnusedClass>
+      <code><![CDATA[SaveSettingsAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Status/CheckStatusAction.php">
+    <UnusedClass>
+      <code><![CDATA[CheckStatusAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Status/PageAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[PageAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Tracking/BaseTrackingController.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[createTicket]]></code>
+      <code><![CDATA[createTicket]]></code>
+      <code><![CDATA[searchTicket]]></code>
+      <code><![CDATA[searchTicket]]></code>
+      <code><![CDATA[throw new JiraApiException('JIRA API factory or user not available')]]></code>
+      <code><![CDATA[throw new JiraApiException('No ticket system configured for project')]]></code>
+      <code><![CDATA[throw new RuntimeException('Invalid issue response')]]></code>
+      <code><![CDATA[updateJiraWorklog]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$issue->key]]></code>
+      <code><![CDATA[$searchResult->issues]]></code>
+      <code><![CDATA[$searchResult->issues]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$issue]]></code>
+      <code><![CDATA[$searchResult]]></code>
+    </MixedAssignment>
+    <MixedPropertyFetch>
+      <code><![CDATA[$searchResult->issues]]></code>
+    </MixedPropertyFetch>
+    <PossiblyNullArgument>
+      <code><![CDATA[$entry->getUser()]]></code>
+      <code><![CDATA[$entry->getUser()]]></code>
+      <code><![CDATA[$entry->getUser()]]></code>
+      <code><![CDATA[$entry->getUser()]]></code>
+      <code><![CDATA[$project->getInternalJiraProjectKey()]]></code>
+      <code><![CDATA[$strTicket]]></code>
+    </PossiblyNullArgument>
+    <PossiblyUndefinedIntArrayOffset>
+      <code><![CDATA[$entries[0]]]></code>
+    </PossiblyUndefinedIntArrayOffset>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[setJiraApiFactory]]></code>
+      <code><![CDATA[setLogger]]></code>
+      <code><![CDATA[setTicketService]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Controller/Tracking/BulkEntryAction.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$_POST]]></code>
+    </ArgumentTypeCoercion>
+    <InvalidOperand>
+      <code><![CDATA[$fractionPart]]></code>
+      <code><![CDATA[60 * ((float) ('0.' . $fractionPart))]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response($this->translator->trans($exception->getMessage()))]]></code>
+      <code><![CDATA[setStatusCode]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$request->request->get('skipholidays')]]></code>
+      <code><![CDATA[$request->request->get('skipweekend')]]></code>
+      <code><![CDATA[$request->request->get('usecontract')]]></code>
+      <code><![CDATA[$request->request->get('usecontract')]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[BulkEntryAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Tracking/DeleteEntryAction.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[trans]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[DeleteEntryAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Controller/Tracking/SaveEntryAction.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$_POST]]></code>
+    </ArgumentTypeCoercion>
+    <InvalidOperand>
+      <code><![CDATA[$request->request->get('ticket')]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[toArray]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyNullArgument>
+      <code><![CDATA[$entry->getProject()]]></code>
+    </PossiblyNullArgument>
+    <PossiblyNullOperand>
+      <code><![CDATA[$request->request->get('ticket')]]></code>
+    </PossiblyNullOperand>
+    <UnusedClass>
+      <code><![CDATA[SaveEntryAction]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Dto/ActivitySaveDto.php">
+    <PossiblyUnusedProperty>
+      <code><![CDATA[$factor]]></code>
+      <code><![CDATA[$needsTicket]]></code>
+    </PossiblyUnusedProperty>
+  </file>
+  <file src="src/Dto/AdminSyncDto.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Dto/ContractSaveDto.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Dto/CustomerSaveDto.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[all]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+    <RedundantFunctionCallGivenDocblockType>
+      <code><![CDATA[array_values]]></code>
+    </RedundantFunctionCallGivenDocblockType>
+  </file>
+  <file src="src/Dto/EntrySaveDto.php">
+    <InvalidArgument>
+      <code><![CDATA['trim']]></code>
+    </InvalidArgument>
+    <PossiblyInvalidArgument>
+      <code><![CDATA['strtoupper']]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[validateTimeRange]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Dto/ExportQueryDto.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Dto/IdDto.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Dto/InterpretationFiltersDto.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+  </file>
+  <file src="src/Dto/PresetSaveDto.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedProperty>
+      <code><![CDATA[$description]]></code>
+      <code><![CDATA[$name]]></code>
+    </PossiblyUnusedProperty>
+  </file>
+  <file src="src/Dto/ProjectSaveDto.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyInvalidArgument>
+      <code><![CDATA['strtoupper']]></code>
+      <code><![CDATA['strtoupper']]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Dto/TeamSaveDto.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Dto/TicketSystemSaveDto.php">
+    <PossiblyUnusedProperty>
+      <code><![CDATA[$bookTime]]></code>
+      <code><![CDATA[$login]]></code>
+      <code><![CDATA[$oauthConsumerKey]]></code>
+      <code><![CDATA[$oauthConsumerSecret]]></code>
+      <code><![CDATA[$password]]></code>
+      <code><![CDATA[$privateKey]]></code>
+      <code><![CDATA[$publicKey]]></code>
+      <code><![CDATA[$ticketUrl]]></code>
+      <code><![CDATA[$type]]></code>
+      <code><![CDATA[$url]]></code>
+    </PossiblyUnusedProperty>
+  </file>
+  <file src="src/Dto/UserSaveDto.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[all]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[fromRequest]]></code>
+      <code><![CDATA[validateTeams]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedProperty>
+      <code><![CDATA[$locale]]></code>
+    </PossiblyUnusedProperty>
+    <RedundantFunctionCallGivenDocblockType>
+      <code><![CDATA[array_values]]></code>
+    </RedundantFunctionCallGivenDocblockType>
+  </file>
+  <file src="src/Entity/Account.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[addEntry]]></code>
+      <code><![CDATA[getEntries]]></code>
+      <code><![CDATA[getName]]></code>
+      <code><![CDATA[setId]]></code>
+      <code><![CDATA[setName]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Entity/Activity.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[addEntry]]></code>
+      <code><![CDATA[addPreset]]></code>
+      <code><![CDATA[getEntries]]></code>
+      <code><![CDATA[getPresets]]></code>
+      <code><![CDATA[removeEntry]]></code>
+      <code><![CDATA[removePreset]]></code>
+      <code><![CDATA[setFactor]]></code>
+      <code><![CDATA[setId]]></code>
+      <code><![CDATA[setName]]></code>
+      <code><![CDATA[setNeedsTicket]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Entity/Contract.php">
+    <MissingConstructor>
+      <code><![CDATA[$hours_0]]></code>
+      <code><![CDATA[$hours_1]]></code>
+      <code><![CDATA[$hours_2]]></code>
+      <code><![CDATA[$hours_3]]></code>
+      <code><![CDATA[$hours_4]]></code>
+      <code><![CDATA[$hours_5]]></code>
+      <code><![CDATA[$hours_6]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$start]]></code>
+      <code><![CDATA[$user]]></code>
+    </MissingConstructor>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getUser]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Entity/Customer.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[addEntry]]></code>
+      <code><![CDATA[addPreset]]></code>
+      <code><![CDATA[addProject]]></code>
+      <code><![CDATA[addProjects]]></code>
+      <code><![CDATA[getEntries]]></code>
+      <code><![CDATA[getGlobal]]></code>
+      <code><![CDATA[getPresets]]></code>
+      <code><![CDATA[getProjects]]></code>
+      <code><![CDATA[removeEntry]]></code>
+      <code><![CDATA[removePreset]]></code>
+      <code><![CDATA[removeProject]]></code>
+      <code><![CDATA[removeTeam]]></code>
+      <code><![CDATA[setActive]]></code>
+      <code><![CDATA[setGlobal]]></code>
+      <code><![CDATA[setId]]></code>
+      <code><![CDATA[setName]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Entity/Entry.php">
+    <InvalidOperand>
+      <code><![CDATA[($end->getTimestamp() - $start->getTimestamp()) * $factor]]></code>
+    </InvalidOperand>
+    <MissingConstructor>
+      <code><![CDATA[$day]]></code>
+      <code><![CDATA[$end]]></code>
+      <code><![CDATA[$start]]></code>
+    </MissingConstructor>
+    <PossiblyUndefinedIntArrayOffset>
+      <code><![CDATA[$day]]></code>
+      <code><![CDATA[$day]]></code>
+      <code><![CDATA[$month]]></code>
+      <code><![CDATA[$month]]></code>
+    </PossiblyUndefinedIntArrayOffset>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getAccountId]]></code>
+      <code><![CDATA[getActivityId]]></code>
+      <code><![CDATA[getCustomerId]]></code>
+      <code><![CDATA[getPostDataForInternalJiraTicketCreation]]></code>
+      <code><![CDATA[getProjectId]]></code>
+      <code><![CDATA[getUserId]]></code>
+      <code><![CDATA[setAccount]]></code>
+      <code><![CDATA[setExternalLabels]]></code>
+      <code><![CDATA[setExternalReporter]]></code>
+      <code><![CDATA[setExternalSummary]]></code>
+      <code><![CDATA[setId]]></code>
+    </PossiblyUnusedMethod>
+    <RedundantPropertyInitializationCheck>
+      <code><![CDATA[!isset($this->end)]]></code>
+      <code><![CDATA[!isset($this->end)]]></code>
+    </RedundantPropertyInitializationCheck>
+    <TypeDoesNotContainType>
+      <code><![CDATA[!isset($this->start)]]></code>
+      <code><![CDATA[!isset($this->start)]]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Entity/Holiday.php">
+    <PossiblyNullReference>
+      <code><![CDATA[format]]></code>
+    </PossiblyNullReference>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$day]]></code>
+      <code><![CDATA[$name]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Entity/Preset.php">
+    <MissingConstructor>
+      <code><![CDATA[$description]]></code>
+      <code><![CDATA[$name]]></code>
+    </MissingConstructor>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[setDescription]]></code>
+      <code><![CDATA[setId]]></code>
+      <code><![CDATA[setName]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Entity/Project.php">
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$subtickets]]></code>
+    </MixedArgumentTypeCoercion>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[addEntry]]></code>
+      <code><![CDATA[addPreset]]></code>
+      <code><![CDATA[getAdditionalInformationFromExternal]]></code>
+      <code><![CDATA[getBilling]]></code>
+      <code><![CDATA[getCostCenter]]></code>
+      <code><![CDATA[getEntries]]></code>
+      <code><![CDATA[getExternalReference]]></code>
+      <code><![CDATA[getGlobal]]></code>
+      <code><![CDATA[getInternalReference]]></code>
+      <code><![CDATA[getInvoice]]></code>
+      <code><![CDATA[getOffer]]></code>
+      <code><![CDATA[getPresets]]></code>
+      <code><![CDATA[getTechnicalLead]]></code>
+      <code><![CDATA[removeEntry]]></code>
+      <code><![CDATA[removePreset]]></code>
+      <code><![CDATA[setExternalReference]]></code>
+      <code><![CDATA[setId]]></code>
+      <code><![CDATA[setInternalReference]]></code>
+      <code><![CDATA[setInvoice]]></code>
+      <code><![CDATA[setName]]></code>
+    </PossiblyUnusedMethod>
+    <RedundantCastGivenDocblockType>
+      <code><![CDATA[(string) $value]]></code>
+    </RedundantCastGivenDocblockType>
+  </file>
+  <file src="src/Entity/Team.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[addCustomer]]></code>
+      <code><![CDATA[getCustomers]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedProperty>
+      <code><![CDATA[$users]]></code>
+    </PossiblyUnusedProperty>
+  </file>
+  <file src="src/Entity/Ticket.php">
+    <MissingConstructor>
+      <code><![CDATA[$estimatedDuration]]></code>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$parentTicketNumber]]></code>
+      <code><![CDATA[$ticketId]]></code>
+      <code><![CDATA[$ticketNumber]]></code>
+      <code><![CDATA[$ticketSystemId]]></code>
+    </MissingConstructor>
+    <UnusedClass>
+      <code><![CDATA[Ticket]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Entity/TicketSystem.php">
+    <MissingConstructor>
+      <code><![CDATA[$id]]></code>
+      <code><![CDATA[$login]]></code>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$password]]></code>
+      <code><![CDATA[$ticketUrl]]></code>
+      <code><![CDATA[$type]]></code>
+      <code><![CDATA[$url]]></code>
+    </MissingConstructor>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getPassword]]></code>
+      <code><![CDATA[getPrivateKey]]></code>
+      <code><![CDATA[getPublicKey]]></code>
+      <code><![CDATA[setBookTime]]></code>
+      <code><![CDATA[setLogin]]></code>
+      <code><![CDATA[setName]]></code>
+      <code><![CDATA[setOauthConsumerKey]]></code>
+      <code><![CDATA[setOauthConsumerSecret]]></code>
+      <code><![CDATA[setPassword]]></code>
+      <code><![CDATA[setPrivateKey]]></code>
+      <code><![CDATA[setPublicKey]]></code>
+      <code><![CDATA[setTicketUrl]]></code>
+      <code><![CDATA[setType]]></code>
+      <code><![CDATA[setUrl]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Entity/User.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getContracts]]></code>
+      <code><![CDATA[getEntries]]></code>
+      <code><![CDATA[getJiraToken]]></code>
+      <code><![CDATA[getTeams]]></code>
+      <code><![CDATA[getUserTicketsystems]]></code>
+      <code><![CDATA[setAbbr]]></code>
+      <code><![CDATA[setId]]></code>
+      <code><![CDATA[setJiraToken]]></code>
+    </PossiblyUnusedMethod>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$contracts]]></code>
+      <code><![CDATA[$teams]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Entity/UserTicketsystem.php">
+    <MissingConstructor>
+      <code><![CDATA[$accessToken]]></code>
+      <code><![CDATA[$tokenSecret]]></code>
+    </MissingConstructor>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[getId]]></code>
+      <code><![CDATA[getUser]]></code>
+      <code><![CDATA[setId]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Event/EntryEvent.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/EventSubscriber/AccessDeniedSubscriber.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[new Response('You are not allowed to perform this action.', Response::HTTP_FORBIDDEN)]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[AccessDeniedSubscriber]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/EventSubscriber/EntryEventSubscriber.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$entry->getUser()->getId()]]></code>
+      <code><![CDATA[$entry->getUser()->getId()]]></code>
+      <code><![CDATA[$entry->getUser()->getId()]]></code>
+    </PossiblyNullArgument>
+    <PossiblyNullReference>
+      <code><![CDATA[getId]]></code>
+      <code><![CDATA[getId]]></code>
+      <code><![CDATA[getId]]></code>
+    </PossiblyNullReference>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[EntryEventSubscriber]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/EventSubscriber/ExceptionSubscriber.php">
+    <LessSpecificReturnType>
+      <code><![CDATA[?JsonResponse]]></code>
+    </LessSpecificReturnType>
+    <UnusedClass>
+      <code><![CDATA[ExceptionSubscriber]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Extension/NrArrayTranslator.php">
+    <MixedArgument>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$value]]></code>
+    </MixedArgument>
+    <MixedArrayAssignment>
+      <code><![CDATA[$data[$rowKey][$arrayKey]]]></code>
+      <code><![CDATA[$data[$rowKey][$arrayKey][$key]]]></code>
+    </MixedArrayAssignment>
+    <MixedAssignment>
+      <code><![CDATA[$key]]></code>
+      <code><![CDATA[$row]]></code>
+      <code><![CDATA[$value]]></code>
+    </MixedAssignment>
+    <UnusedClass>
+      <code><![CDATA[NrArrayTranslator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Extension/TwigCsvEscapingExtension.php">
+    <UnusedClass>
+      <code><![CDATA[TwigCsvEscapingExtension]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Kernel.php">
+    <MixedArrayAccess>
+      <code><![CDATA[$envs[$this->environment]]]></code>
+      <code><![CDATA[$envs['all']]]></code>
+    </MixedArrayAccess>
+    <MixedAssignment>
+      <code><![CDATA[$class]]></code>
+      <code><![CDATA[$contents]]></code>
+      <code><![CDATA[$envs]]></code>
+    </MixedAssignment>
+    <MixedMethodCall>
+      <code><![CDATA[new $class()]]></code>
+    </MixedMethodCall>
+    <MoreSpecificReturnType>
+      <code><![CDATA[Generator]]></code>
+    </MoreSpecificReturnType>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$envs[$this->environment] ?? $envs['all'] ?? false]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnresolvableInclude>
+      <code><![CDATA[require $this->getProjectDir() . '/config/bundles.php']]></code>
+    </UnresolvableInclude>
+  </file>
+  <file src="src/Model/Base.php">
+    <MixedAssignment>
+      <code><![CDATA[$data[$name]]]></code>
+      <code><![CDATA[$data[$name]]]></code>
+      <code><![CDATA[$value]]></code>
+      <code><![CDATA[$value]]></code>
+    </MixedAssignment>
+  </file>
+  <file src="src/Model/JsonResponse.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[parent::__construct('', $status, $headers)]]></code>
+    </MissingThrowsDocblock>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[JsonResponse]]></code>
+      <code><![CDATA[JsonResponse]]></code>
+      <code><![CDATA[JsonResponse]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Repository/ActivityRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$name]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/ContractRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$managerRegistry]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/CustomerRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[findOneByName]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$userId]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/EntryRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[getCalendarDaysByWorkDays]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$arFilter]]></code>
+      <code><![CDATA[$arFilter]]></code>
+      <code><![CDATA[$arSort]]></code>
+      <code><![CDATA[$customerId]]></code>
+      <code><![CDATA[$data]]></code>
+      <code><![CDATA[$day]]></code>
+      <code><![CDATA[$days]]></code>
+      <code><![CDATA[$days]]></code>
+      <code><![CDATA[$entryId]]></code>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$maxResults]]></code>
+      <code><![CDATA[$month]]></code>
+      <code><![CDATA[$period]]></code>
+      <code><![CDATA[$projectId]]></code>
+      <code><![CDATA[$showFuture]]></code>
+      <code><![CDATA[$ticketSystemId]]></code>
+      <code><![CDATA[$ticketname]]></code>
+      <code><![CDATA[$ticketname]]></code>
+      <code><![CDATA[$user]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$workingDays]]></code>
+      <code><![CDATA[$year]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/HolidayRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$month]]></code>
+      <code><![CDATA[$year]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/OptimizedEntryRepository.php">
+    <PossiblyUnusedParam>
+      <code><![CDATA[$arSort]]></code>
+      <code><![CDATA[$cache]]></code>
+      <code><![CDATA[$customerId]]></code>
+      <code><![CDATA[$days]]></code>
+      <code><![CDATA[$entryId]]></code>
+      <code><![CDATA[$filter]]></code>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$month]]></code>
+      <code><![CDATA[$period]]></code>
+      <code><![CDATA[$projectId]]></code>
+      <code><![CDATA[$user]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$workingDays]]></code>
+      <code><![CDATA[$year]]></code>
+    </PossiblyUnusedParam>
+    <UnusedClass>
+      <code><![CDATA[OptimizedEntryRepository]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Repository/PresetRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$managerRegistry]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/ProjectRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$customerId]]></code>
+      <code><![CDATA[$customerId]]></code>
+      <code><![CDATA[$customers]]></code>
+      <code><![CDATA[$jiraId]]></code>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$userId]]></code>
+      <code><![CDATA[$userId]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/TeamRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$name]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/TicketSystemRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$name]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Repository/UserRepository.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[findOneByAbbr]]></code>
+      <code><![CDATA[findOneByUsername]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$abbr]]></code>
+      <code><![CDATA[$currentUserId]]></code>
+      <code><![CDATA[$currentUserId]]></code>
+      <code><![CDATA[$managerRegistry]]></code>
+      <code><![CDATA[$username]]></code>
+    </PossiblyUnusedParam>
+  </file>
+  <file src="src/Response/Error.php">
+    <MixedReturnTypeCoercion>
+      <code><![CDATA[[
+            'message' => $throwable->getMessage(),
+            'class' => $throwable::class,
+            'code' => $throwable->getCode(),
+            'file' => $throwable->getFile(),
+            'line' => $throwable->getLine(),
+            'trace' => $throwable->getTrace(),
+            'previous' => $this->getExceptionAsArray($throwable->getPrevious()),
+        ]]]></code>
+      <code><![CDATA[array{
+     *   message: string,
+     *   class: class-string<Throwable>,
+     *   code: int|string,
+     *   file: string,
+     *   line: int,
+     *   trace: list<array{args?: array<int, mixed>, class?: class-string, file?: string, function?: string, line?: int, type?: '->'|'::'}>,
+     *   previous: array<string, mixed>|null
+     * }|null]]></code>
+    </MixedReturnTypeCoercion>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[Error]]></code>
+      <code><![CDATA[Error]]></code>
+      <code><![CDATA[Error]]></code>
+      <code><![CDATA[Error]]></code>
+      <code><![CDATA[Error]]></code>
+    </PropertyNotSetInConstructor>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[ini_get('display_errors')]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="src/Security/LdapAuthenticator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[getSession]]></code>
+      <code><![CDATA[new RedirectResponse($targetPath)]]></code>
+      <code><![CDATA[new RedirectResponse($this->router->generate('_start'))]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyInvalidCast>
+      <code><![CDATA[is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : '']]></code>
+      <code><![CDATA[is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : '']]></code>
+      <code><![CDATA[is_scalar($this->parameterBag->get('ldap_readpass')) ? $this->parameterBag->get('ldap_readpass') : '']]></code>
+      <code><![CDATA[is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : '']]></code>
+      <code><![CDATA[is_scalar($this->parameterBag->get('ldap_usernamefield')) ? $this->parameterBag->get('ldap_usernamefield') : '']]></code>
+    </PossiblyInvalidCast>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$targetPath = $this->getTargetPath($request->getSession(), $firewallName)]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[LdapAuthenticator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Service/Cache/QueryCacheService.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[deleteItem]]></code>
+      <code><![CDATA[getItem]]></code>
+      <code><![CDATA[getItem]]></code>
+      <code><![CDATA[getItem]]></code>
+      <code><![CDATA[hasItem]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$cacheKey]]></code>
+      <code><![CDATA[$key]]></code>
+      <code><![CDATA[$key]]></code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$callback]]></code>
+      <code><![CDATA[$key]]></code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAssignment>
+      <code><![CDATA[$this->tags[$tag][]]]></code>
+    </MixedArrayAssignment>
+    <MixedAssignment>
+      <code><![CDATA[$cacheKey]]></code>
+      <code><![CDATA[$callback]]></code>
+      <code><![CDATA[$key]]></code>
+      <code><![CDATA[$keys]]></code>
+    </MixedAssignment>
+    <MixedReturnStatement>
+      <code><![CDATA[$item->get()]]></code>
+    </MixedReturnStatement>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[clear]]></code>
+      <code><![CDATA[delete]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[getStats]]></code>
+      <code><![CDATA[has]]></code>
+      <code><![CDATA[set]]></code>
+      <code><![CDATA[tag]]></code>
+      <code><![CDATA[warmUp]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[T]]></code>
+    </PossiblyUnusedReturnValue>
+    <UnusedVariable>
+      <code><![CDATA[$tag]]></code>
+    </UnusedVariable>
+  </file>
+  <file src="src/Service/ClockInterface.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[now]]></code>
+      <code><![CDATA[today]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Service/ExportService.php">
+    <MixedAssignment>
+      <code><![CDATA[$issue]]></code>
+      <code><![CDATA[$issueFields]]></code>
+      <code><![CDATA[$labels]]></code>
+      <code><![CDATA[$ret]]></code>
+      <code><![CDATA[$summary]]></code>
+    </MixedAssignment>
+    <MixedPropertyFetch>
+      <code><![CDATA[$ret->issues]]></code>
+    </MixedPropertyFetch>
+    <PossiblyNullReference>
+      <code><![CDATA[getBookTime]]></code>
+      <code><![CDATA[getId]]></code>
+      <code><![CDATA[getTicketSystem]]></code>
+      <code><![CDATA[getTicketSystem]]></code>
+      <code><![CDATA[getTicketSystem]]></code>
+      <code><![CDATA[getTicketSystem]]></code>
+      <code><![CDATA[getType]]></code>
+    </PossiblyNullReference>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[null !== $user]]></code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="src/Service/Integration/Jira/JiraAuthenticationService.php">
+    <InvalidArgument>
+      <code><![CDATA[$this->getOAuthAuthUrl($ticketSystem, '')]]></code>
+      <code><![CDATA[401]]></code>
+    </InvalidArgument>
+    <MissingThrowsDocblock>
+      <code><![CDATA[encryptToken]]></code>
+      <code><![CDATA[encryptToken]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[post]]></code>
+      <code><![CDATA[post]]></code>
+      <code><![CDATA[throw new JiraApiException('Empty response from Jira OAuth endpoint', 500)]]></code>
+      <code><![CDATA[throw new JiraApiException(sprintf('OAuth problem: %s', $tokens['oauth_problem']), 401)]]></code>
+      <code><![CDATA[throw new JiraApiUnauthorizedException('Unauthorized. Redirecting to Jira OAuth.', $this->getOAuthAuthUrl($ticketSystem, ''), 401, $throwable)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$tokens['oauth_problem']]]></code>
+      <code><![CDATA[$tokens['oauth_token']]]></code>
+      <code><![CDATA[$tokens['oauth_token']]]></code>
+      <code><![CDATA[$tokens['oauth_token_secret']]]></code>
+    </MixedArgument>
+    <MixedReturnStatement>
+      <code><![CDATA[$tokens['oauth_token']]]></code>
+    </MixedReturnStatement>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[deleteTokens]]></code>
+      <code><![CDATA[fetchOAuthAccessToken]]></code>
+      <code><![CDATA[fetchOAuthRequestToken]]></code>
+      <code><![CDATA[getOAuthCallbackUrl]]></code>
+    </PossiblyUnusedMethod>
+    <UnusedProperty>
+      <code><![CDATA[$router]]></code>
+    </UnusedProperty>
+    <UnusedReturnValue>
+      <code><![CDATA[array]]></code>
+    </UnusedReturnValue>
+  </file>
+  <file src="src/Service/Integration/Jira/JiraHttpClientService.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA['']]></code>
+    </DocblockTypeContradiction>
+    <InvalidArgument>
+      <code><![CDATA[$e]]></code>
+      <code><![CDATA[$e]]></code>
+      <code><![CDATA[$e]]></code>
+      <code><![CDATA[$e]]></code>
+    </InvalidArgument>
+    <MissingThrowsDocblock>
+      <code><![CDATA[getClient]]></code>
+      <code><![CDATA[throw new JiraApiException('Could not create temp file', 500)]]></code>
+      <code><![CDATA[throw new JiraApiException('Could not write private key to temp file', 500)]]></code>
+      <code><![CDATA[throw new JiraApiException('OAuth private key not configured', 500)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$certificate]]></code>
+      <code><![CDATA[$statusCode]]></code>
+      <code><![CDATA[$statusCode]]></code>
+      <code><![CDATA[$tokens['secret']]]></code>
+      <code><![CDATA[$tokens['token']]]></code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$data['errorMessages']]]></code>
+      <code><![CDATA[array_values($data['errors'])]]></code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment>
+      <code><![CDATA[$certificate]]></code>
+      <code><![CDATA[$data]]></code>
+      <code><![CDATA[$response]]></code>
+      <code><![CDATA[$statusCode]]></code>
+    </MixedAssignment>
+    <MixedMethodCall>
+      <code><![CDATA[getBody]]></code>
+      <code><![CDATA[getStatusCode]]></code>
+    </MixedMethodCall>
+    <MixedOperand>
+      <code><![CDATA[$tokens['token']]]></code>
+    </MixedOperand>
+    <MixedReturnStatement>
+      <code><![CDATA[$this->sendRequest('DELETE', $url)]]></code>
+      <code><![CDATA[$this->sendRequest('POST', $url, $data)]]></code>
+      <code><![CDATA[$this->sendRequest('PUT', $url, $data)]]></code>
+    </MixedReturnStatement>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$tokens['secret']]]></code>
+      <code><![CDATA[$tokens['secret']]]></code>
+      <code><![CDATA[$tokens['token']]]></code>
+      <code><![CDATA[$tokens['token']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[object]]></code>
+    </PossiblyUnusedReturnValue>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[$this->ticketSystem->getLogin()]]></code>
+    </RedundantConditionGivenDocblockType>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getResponse]]></code>
+    </UndefinedInterfaceMethod>
+    <UndefinedMethod>
+      <code><![CDATA[getOauthKey]]></code>
+    </UndefinedMethod>
+  </file>
+  <file src="src/Service/Integration/Jira/JiraIntegrationService.php">
+    <MixedArgument>
+      <code><![CDATA[$result['worklogId']]]></code>
+    </MixedArgument>
+    <MixedArrayAccess>
+      <code><![CDATA[$result['worklogId']]]></code>
+      <code><![CDATA[$result['worklogId']]]></code>
+      <code><![CDATA[$result['worklogId']]]></code>
+    </MixedArrayAccess>
+    <MixedAssignment>
+      <code><![CDATA[$api]]></code>
+      <code><![CDATA[$result]]></code>
+    </MixedAssignment>
+    <MixedMethodCall>
+      <code><![CDATA[deleteWorkLog]]></code>
+    </MixedMethodCall>
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$results]]></code>
+      <code><![CDATA[$results]]></code>
+    </PossiblyNullArrayOffset>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[bulkSyncEntries]]></code>
+      <code><![CDATA[needsSync]]></code>
+    </PossiblyUnusedMethod>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UndefinedMethod>
+      <code><![CDATA[createApiObject]]></code>
+      <code><![CDATA[syncWorkLog]]></code>
+    </UndefinedMethod>
+  </file>
+  <file src="src/Service/Integration/Jira/JiraOAuthApiFactory.php">
+    <PossiblyUnusedMethod>
+      <code><![CDATA[setDependencies]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Service/Integration/Jira/JiraOAuthApiService.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA[!$userTicketSystem]]></code>
+      <code><![CDATA[!$userTicketSystem]]></code>
+      <code><![CDATA[!$userTicketSystem]]></code>
+      <code><![CDATA[$userTicketSystem]]></code>
+    </DocblockTypeContradiction>
+    <InvalidOperand>
+      <code><![CDATA[$entry->getId()]]></code>
+      <code><![CDATA[$this->ticketSystem->getId()]]></code>
+    </InvalidOperand>
+    <MissingThrowsDocblock>
+      <code><![CDATA[doesTicketExist]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[generate]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[searchTicket]]></code>
+      <code><![CDATA[searchTicket]]></code>
+      <code><![CDATA[throw new JiraApiException('Failed to create temporary file')]]></code>
+      <code><![CDATA[throw new JiraApiException('Failed to fetch OAuth URL: ' . ($jiraApiException->getPrevious()?->getMessage() ?? $jiraApiException->getMessage()), 400, null, $jiraApiException)]]></code>
+      <code><![CDATA[throw new UnexpectedValueException('Invalid token mode: ' . $tokenMode)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$access]]></code>
+      <code><![CDATA[$secret]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$access]]></code>
+      <code><![CDATA[$epicSubs]]></code>
+      <code><![CDATA[$epicSubtask]]></code>
+      <code><![CDATA[$secret]]></code>
+      <code><![CDATA[$subtask]]></code>
+      <code><![CDATA[$subtask]]></code>
+      <code><![CDATA[$subtickets[]]]></code>
+      <code><![CDATA[$subtickets[]]]></code>
+      <code><![CDATA[$subtickets[]]]></code>
+      <code><![CDATA[$ticket]]></code>
+    </MixedAssignment>
+    <MixedPropertyFetch>
+      <code><![CDATA[$epicSubs->issues]]></code>
+      <code><![CDATA[$epicSubtask->fields]]></code>
+      <code><![CDATA[$epicSubtask->fields->subtasks]]></code>
+      <code><![CDATA[$epicSubtask->key]]></code>
+      <code><![CDATA[$subtask->key]]></code>
+      <code><![CDATA[$subtask->key]]></code>
+      <code><![CDATA[$ticket->fields]]></code>
+      <code><![CDATA[$ticket->fields->issuetype]]></code>
+      <code><![CDATA[$ticket->fields->issuetype->name]]></code>
+      <code><![CDATA[$ticket->fields->subtasks]]></code>
+    </MixedPropertyFetch>
+    <PossiblyNullArgument>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+    </PossiblyNullArgument>
+    <PossiblyNullOperand>
+      <code><![CDATA[$entry->getId()]]></code>
+      <code><![CDATA[$oAuthToken]]></code>
+    </PossiblyNullOperand>
+    <PossiblyNullReference>
+      <code><![CDATA[getName]]></code>
+    </PossiblyNullReference>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$token['oauth_token']]]></code>
+      <code><![CDATA[$token['oauth_token_secret']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[updateAllEntriesJiraWorkLogs]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[object]]></code>
+    </PossiblyUnusedReturnValue>
+    <RedundantCastGivenDocblockType>
+      <code><![CDATA[(int) $this->ticketSystem->getId()]]></code>
+    </RedundantCastGivenDocblockType>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="src/Service/Integration/Jira/JiraTicketService.php">
+    <InvalidArgument>
+      <code><![CDATA[$e]]></code>
+    </InvalidArgument>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$fields]]></code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment>
+      <code><![CDATA[$issue]]></code>
+      <code><![CDATA[$response]]></code>
+      <code><![CDATA[$subtask]]></code>
+      <code><![CDATA[$transition]]></code>
+    </MixedAssignment>
+    <MixedPropertyFetch>
+      <code><![CDATA[$issue->fields]]></code>
+      <code><![CDATA[$issue->fields->subtasks]]></code>
+      <code><![CDATA[$response->transitions]]></code>
+      <code><![CDATA[$subtask->fields]]></code>
+      <code><![CDATA[$subtask->fields->assignee]]></code>
+      <code><![CDATA[$subtask->fields->assignee->displayName]]></code>
+      <code><![CDATA[$subtask->fields->status]]></code>
+      <code><![CDATA[$subtask->fields->status->name]]></code>
+      <code><![CDATA[$subtask->fields->summary]]></code>
+      <code><![CDATA[$subtask->key]]></code>
+      <code><![CDATA[$transition->id]]></code>
+      <code><![CDATA[$transition->name]]></code>
+      <code><![CDATA[$transition->to]]></code>
+      <code><![CDATA[$transition->to->id]]></code>
+      <code><![CDATA[$transition->to->name]]></code>
+    </MixedPropertyFetch>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[addComment]]></code>
+      <code><![CDATA[createTicket]]></code>
+      <code><![CDATA[getSubtickets]]></code>
+      <code><![CDATA[getTicket]]></code>
+      <code><![CDATA[getTransitions]]></code>
+      <code><![CDATA[searchTickets]]></code>
+      <code><![CDATA[transitionTicket]]></code>
+      <code><![CDATA[updateTicket]]></code>
+    </PossiblyUnusedMethod>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$projectJiraId]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedParam>
+      <code><![CDATA[$entry]]></code>
+    </UnusedParam>
+  </file>
+  <file src="src/Service/Integration/Jira/JiraWorkLogService.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[post]]></code>
+      <code><![CDATA[put]]></code>
+      <code><![CDATA[throw new JiraApiException('Entry missing required day or start time', 400)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$entry]]></code>
+      <code><![CDATA[$entry->getId()]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$entries]]></code>
+      <code><![CDATA[$entry]]></code>
+    </MixedAssignment>
+    <MixedMethodCall>
+      <code><![CDATA[getId]]></code>
+    </MixedMethodCall>
+    <PossiblyNullArgument>
+      <code><![CDATA[$entry->getId()]]></code>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+    </PossiblyNullArgument>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[updateAllEntriesWorkLogs]]></code>
+    </PossiblyUnusedMethod>
+    <RedundantCast>
+      <code><![CDATA[(string) $entry->getDescription()]]></code>
+    </RedundantCast>
+    <RedundantCastGivenDocblockType>
+      <code><![CDATA[(int) $ticketSystem->getId()]]></code>
+    </RedundantCastGivenDocblockType>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$workLogId]]></code>
+      <code><![CDATA[$entry->getWorklogId()]]></code>
+    </RiskyTruthyFalsyComparison>
+    <TypeDoesNotContainType>
+      <code><![CDATA[!$day]]></code>
+      <code><![CDATA[!$day]]></code>
+      <code><![CDATA[!$start]]></code>
+      <code><![CDATA[!$start]]></code>
+    </TypeDoesNotContainType>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[findByUserAndTicketSystemToSync]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Service/Ldap/LdapClientService.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA[!$result]]></code>
+      <code><![CDATA[!is_object($collection)]]></code>
+      <code><![CDATA[$result]]></code>
+    </DocblockTypeContradiction>
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new Exception(sprintf("Invalid user name: '%s'", $username))]]></code>
+      <code><![CDATA[throw new RuntimeException('LDAP verification did not return true')]]></code>
+      <code><![CDATA[verifyPassword]]></code>
+      <code><![CDATA[verifyUsername]]></code>
+    </MissingThrowsDocblock>
+    <MixedReturnTypeCoercion>
+      <code><![CDATA[$this->teams]]></code>
+      <code><![CDATA[array<int, string>]]></code>
+    </MixedReturnTypeCoercion>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[true]]></code>
+    </PossiblyUnusedReturnValue>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$_userName]]></code>
+      <code><![CDATA[$_userPass]]></code>
+    </PropertyNotSetInConstructor>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$dn]]></code>
+      <code><![CDATA[!$userDn]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="src/Service/Ldap/ModernLdapService.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[findUser]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[throw new InvalidArgumentException('Password cannot be empty')]]></code>
+      <code><![CDATA[throw new InvalidArgumentException('Username cannot be empty')]]></code>
+      <code><![CDATA[throw new InvalidArgumentException('Username is too long')]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['readPass']]]></code>
+      <code><![CDATA[$this->config['readUser']]]></code>
+      <code><![CDATA[$this->config['userNameField']]]></code>
+      <code><![CDATA[$this->config['userNameField']]]></code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$entry]]></code>
+      <code><![CDATA[$entry]]></code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAccess>
+      <code><![CDATA[$entry[$this->config['userNameField']][0]]]></code>
+    </MixedArrayAccess>
+    <MixedArrayOffset>
+      <code><![CDATA[$entry[$this->config['userNameField']]]]></code>
+    </MixedArrayOffset>
+    <MixedReturnStatement>
+      <code><![CDATA[$user['dn'] ?? null]]></code>
+      <code><![CDATA[$user['dn'] ?? null]]></code>
+    </MixedReturnStatement>
+    <MixedReturnTypeCoercion>
+      <code><![CDATA[$groups]]></code>
+      <code><![CDATA[array<int, array<string, string>>]]></code>
+    </MixedReturnTypeCoercion>
+    <PossiblyInvalidCast>
+      <code><![CDATA[$this->params->get('ldap_basedn') ?: '']]></code>
+      <code><![CDATA[$this->params->get('ldap_host') ?: 'localhost']]></code>
+      <code><![CDATA[$this->params->get('ldap_readpass') ?: '']]></code>
+      <code><![CDATA[$this->params->get('ldap_readuser') ?: '']]></code>
+      <code><![CDATA[$this->params->get('ldap_usernamefield') ?: 'uid']]></code>
+    </PossiblyInvalidCast>
+    <PossiblyNullArgument>
+      <code><![CDATA[$entry]]></code>
+      <code><![CDATA[$entry]]></code>
+    </PossiblyNullArgument>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['baseDn']]]></code>
+      <code><![CDATA[$this->config['host']]]></code>
+      <code><![CDATA[$this->config['port']]]></code>
+      <code><![CDATA[$this->config['readPass']]]></code>
+      <code><![CDATA[$this->config['readUser']]]></code>
+      <code><![CDATA[$this->config['useSsl']]]></code>
+      <code><![CDATA[$this->config['userNameField']]]></code>
+      <code><![CDATA[$this->config['userNameField']]]></code>
+      <code><![CDATA[$this->config['userNameField']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+    <PossiblyUnusedParam>
+      <code><![CDATA[$limit]]></code>
+    </PossiblyUnusedParam>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$userDn]]></code>
+      <code><![CDATA[$this->params->get('ldap_basedn')]]></code>
+      <code><![CDATA[$this->params->get('ldap_host')]]></code>
+      <code><![CDATA[$this->params->get('ldap_readpass')]]></code>
+      <code><![CDATA[$this->params->get('ldap_readuser')]]></code>
+      <code><![CDATA[$this->params->get('ldap_usernamefield')]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[ModernLdapService]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Service/Response/ResponseFactory.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[trans]]></code>
+      <code><![CDATA[trans]]></code>
+      <code><![CDATA[trans]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$error]]></code>
+    </MixedArgument>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[conflict]]></code>
+      <code><![CDATA[failedLogin]]></code>
+      <code><![CDATA[jiraApiError]]></code>
+      <code><![CDATA[notFound]]></code>
+      <code><![CDATA[paginated]]></code>
+      <code><![CDATA[validationError]]></code>
+      <code><![CDATA[withMetadata]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Service/Security/TokenEncryptionService.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[decryptToken]]></code>
+      <code><![CDATA[encryptToken]]></code>
+      <code><![CDATA[throw new RuntimeException('Encryption key not configured. Set APP_ENCRYPTION_KEY in environment.')]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyInvalidCast>
+      <code><![CDATA[$key]]></code>
+    </PossiblyInvalidCast>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+      <code><![CDATA[rotateToken]]></code>
+    </PossiblyUnusedMethod>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$key]]></code>
+    </RiskyTruthyFalsyComparison>
+    <TypeDoesNotContainType>
+      <code><![CDATA[false === $iv]]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Service/SubticketSyncService.php">
+    <PossiblyNullOperand>
+      <code><![CDATA[$project->getName()]]></code>
+      <code><![CDATA[$project->getName()]]></code>
+      <code><![CDATA[$userWithJiraAccess->getUsername()]]></code>
+    </PossiblyNullOperand>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[__construct]]></code>
+    </PossiblyUnusedMethod>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$token]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="src/Service/SystemClock.php">
+    <UnusedClass>
+      <code><![CDATA[SystemClock]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Service/Util/TicketService.php">
+    <PossiblyUndefinedIntArrayOffset>
+      <code><![CDATA[$matches[1]]]></code>
+    </PossiblyUndefinedIntArrayOffset>
+  </file>
+  <file src="src/Service/Util/TimeCalculationService.php">
+    <InvalidOperand>
+      <code><![CDATA[$amount * 100.00]]></code>
+      <code><![CDATA[$duration % 60]]></code>
+      <code><![CDATA[$duration / (60 * self::HOURS_PER_DAY)]]></code>
+      <code><![CDATA[$duration / 60]]></code>
+      <code><![CDATA[$factor]]></code>
+      <code><![CDATA[$hours]]></code>
+      <code><![CDATA[$minutes]]></code>
+      <code><![CDATA[$minutes]]></code>
+      <code><![CDATA[$sum += (float) str_replace(',', '.', $matches[1][$i]) * $this->getMinutesByLetter($matches[2][$i])]]></code>
+      <code><![CDATA[(float) str_replace(',', '.', $matches[1][$i]) * $this->getMinutesByLetter($matches[2][$i])]]></code>
+    </InvalidOperand>
+    <PossiblyUndefinedIntArrayOffset>
+      <code><![CDATA[$matches[0]]]></code>
+      <code><![CDATA[$matches[1]]]></code>
+      <code><![CDATA[$matches[2]]]></code>
+    </PossiblyUndefinedIntArrayOffset>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!preg_match_all('/([0-9.,]+)([wdhm]|$)/iU', $readable, $matches)]]></code>
+    </RiskyTruthyFalsyComparison>
+  </file>
+  <file src="src/Util/RequestEntityHelper.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[ticketSystem]]></code>
+      <code><![CDATA[user]]></code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/Util/RequestHelper.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+      <code><![CDATA[get]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[RequestHelper]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/ContractDatesValidValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, ContractDatesValid::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$end]]></code>
+      <code><![CDATA[$start]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$end]]></code>
+      <code><![CDATA[$start]]></code>
+    </MixedAssignment>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[empty($start)]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[ContractDatesValidValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/CustomerTeamsRequiredValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, CustomerTeamsRequired::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedAssignment>
+      <code><![CDATA[$global]]></code>
+      <code><![CDATA[$teams]]></code>
+    </MixedAssignment>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$global]]></code>
+      <code><![CDATA[empty($teams)]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[CustomerTeamsRequiredValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/UniqueActivityNameValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, UniqueActivityName::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$value]]></code>
+    </MixedArgument>
+    <UnusedClass>
+      <code><![CDATA[UniqueActivityNameValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/UniqueCustomerName.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$groups]]></code>
+    </MixedArgumentTypeCoercion>
+  </file>
+  <file src="src/Validator/Constraints/UniqueCustomerNameValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getOneOrNullResult]]></code>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, UniqueCustomerName::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedAssignment>
+      <code><![CDATA[$customerId]]></code>
+      <code><![CDATA[$existingCustomer]]></code>
+    </MixedAssignment>
+    <UnusedClass>
+      <code><![CDATA[UniqueCustomerNameValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/UniqueProjectNameForCustomerValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, UniqueProjectNameForCustomer::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$name]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$customerId]]></code>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$projectId]]></code>
+    </MixedAssignment>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[empty($name)]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedClass>
+      <code><![CDATA[UniqueProjectNameForCustomerValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/UniqueTeamNameValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, UniqueTeamName::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$value]]></code>
+    </MixedArgument>
+    <UnusedClass>
+      <code><![CDATA[UniqueTeamNameValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/UniqueTicketSystemNameValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, UniqueTicketSystemName::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgument>
+      <code><![CDATA[$value]]></code>
+    </MixedArgument>
+    <UnusedClass>
+      <code><![CDATA[UniqueTicketSystemNameValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/UniqueUserAbbr.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$groups]]></code>
+    </MixedArgumentTypeCoercion>
+  </file>
+  <file src="src/Validator/Constraints/UniqueUserAbbrValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getOneOrNullResult]]></code>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, UniqueUserAbbr::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedAssignment>
+      <code><![CDATA[$existingUser]]></code>
+      <code><![CDATA[$userId]]></code>
+    </MixedAssignment>
+    <UnusedClass>
+      <code><![CDATA[UniqueUserAbbrValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/UniqueUsername.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+      <code><![CDATA[parent::__construct([], $groups, $payload)]]></code>
+    </MissingThrowsDocblock>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$groups]]></code>
+    </MixedArgumentTypeCoercion>
+  </file>
+  <file src="src/Validator/Constraints/UniqueUsernameValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[getOneOrNullResult]]></code>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, UniqueUsername::class)]]></code>
+    </MissingThrowsDocblock>
+    <MixedAssignment>
+      <code><![CDATA[$existingUser]]></code>
+      <code><![CDATA[$userId]]></code>
+    </MixedAssignment>
+    <UnusedClass>
+      <code><![CDATA[UniqueUsernameValidator]]></code>
+    </UnusedClass>
+  </file>
+  <file src="src/Validator/Constraints/ValidUserValidator.php">
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new UnexpectedTypeException($constraint, ValidUser::class)]]></code>
+    </MissingThrowsDocblock>
+    <UnusedClass>
+      <code><![CDATA[ValidUserValidator]]></code>
+    </UnusedClass>
+  </file>
+</files>

@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
-use Symfony\Component\BrowserKit\Cookie;
-use Symfony\Component\DependencyInjection\Exception\EnvNotFoundException;
-use Symfony\Component\HttpFoundation\Response;
 use Tests\AbstractWebTestCase;
 
-class SecurityControllerTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class SecurityControllerTest extends AbstractWebTestCase
 {
     public function testAccessToProtectedRouteRedirectsToLogin(): void
     {
@@ -27,7 +31,7 @@ class SecurityControllerTest extends AbstractWebTestCase
         // Should redirect to login
         $this->assertStatusCode(302);
         $response = $this->client->getResponse();
-        $this->assertStringContainsString('/login', $response->headers->get('Location'));
+        self::assertStringContainsString('/login', $response->headers->get('Location'));
     }
 
     public function testLoggedInUserCanAccessProtectedRoute(): void
@@ -47,7 +51,7 @@ class SecurityControllerTest extends AbstractWebTestCase
         // Ensure kernel booted in setUp (if any) is shut down before creating a new client
         self::ensureKernelShutdown();
 
-        $kernelBrowser = static::createClient();
+        $kernelBrowser = self::createClient();
         // Use the crawler provided by the client request
         $kernelBrowser->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/login');
 
@@ -57,12 +61,12 @@ class SecurityControllerTest extends AbstractWebTestCase
         $content = $kernelBrowser->getResponse()->getContent();
 
         // The form is created with ExtJS, so check for the right script elements
-        $this->assertStringContainsString('Ext.form.Panel', $content);
-        $this->assertStringContainsString("name: '_username'", $content);
-        $this->assertStringContainsString("name: '_password'", $content);
-        $this->assertStringContainsString("name: '_csrf_token'", $content);
+        self::assertStringContainsString('Ext.form.Panel', $content);
+        self::assertStringContainsString("name: '_username'", $content);
+        self::assertStringContainsString("name: '_password'", $content);
+        self::assertStringContainsString("name: '_csrf_token'", $content);
         // Ensure the form URL now points to /login
-        $this->assertStringContainsString('url: "/login"', $content);
+        self::assertStringContainsString('url: "/login"', $content);
     }
 
     #[\PHPUnit\Framework\Attributes\Group('network')]
@@ -79,17 +83,17 @@ class SecurityControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/logout');
 
         // The user should be redirected
-        $this->assertTrue($this->client->getResponse()->isRedirect());
+        self::assertTrue($this->client->getResponse()->isRedirect());
 
         // Ensure token cleared to avoid sticky authentication across requests
         $tokenStorage = $this->client->getContainer()->get('security.token_storage');
-        $this->assertNull($tokenStorage->getToken());
+        self::assertNull($tokenStorage->getToken());
 
         // Try to access a protected route again
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
 
         // Should be redirected to login
         $this->assertStatusCode(302);
-        $this->assertStringContainsString('/login', $this->client->getResponse()->headers->get('Location'));
+        self::assertStringContainsString('/login', $this->client->getResponse()->headers->get('Location'));
     }
 }

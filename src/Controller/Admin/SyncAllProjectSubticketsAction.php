@@ -1,14 +1,15 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
+use App\Service\SubticketSyncService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
-use App\Service\SubticketSyncService;
-use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use Throwable;
 
 final class SyncAllProjectSubticketsAction extends BaseController
 {
@@ -25,7 +26,7 @@ final class SyncAllProjectSubticketsAction extends BaseController
         foreach ($projects as $project) {
             try {
                 $this->subticketSyncService->syncProjectSubtickets($project);
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 $result = false;
             }
         }
@@ -45,6 +46,3 @@ final class SyncAllProjectSubticketsAction extends BaseController
 
     // No Jira API factory required in current implementation
 }
-
-
-

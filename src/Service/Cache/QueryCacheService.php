@@ -7,6 +7,11 @@ namespace App\Service\Cache;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
+use function count;
+use function get_class;
+use function is_callable;
+use function sprintf;
+
 /**
  * Service for managing query result caching.
  * Provides centralized cache management with automatic invalidation.
@@ -15,9 +20,11 @@ class QueryCacheService
 {
     private const string DEFAULT_PREFIX = 'query_';
     private const int DEFAULT_TTL = 300; // 5 minutes
-    
+
     /**
      * Cache invalidation tags for group invalidation.
+     * 
+     * @var array<string, array<string>>
      */
     private array $tags = [];
 
@@ -29,32 +36,35 @@ class QueryCacheService
 
     /**
      * Gets cached value or executes callback and caches result.
-     * 
+     *
      * @template T
+     *
      * @param callable(): T $callback
+     *
      * @return T
      */
     public function remember(string $key, callable $callback, int $ttl = self::DEFAULT_TTL): mixed
     {
         $cacheKey = $this->getCacheKey($key);
         $item = $this->cache->getItem($cacheKey);
-        
+
         if ($item->isHit()) {
             $this->log('Cache hit', ['key' => $cacheKey]);
+
             return $item->get();
         }
-        
+
         $this->log('Cache miss', ['key' => $cacheKey]);
-        
+
         $value = $callback();
-        
+
         $item->set($value);
         $item->expiresAfter($ttl);
-        
+
         $this->cache->save($item);
-        
+
         $this->log('Cache set', ['key' => $cacheKey, 'ttl' => $ttl]);
-        
+
         return $value;
     }
 
@@ -65,14 +75,15 @@ class QueryCacheService
     {
         $cacheKey = $this->getCacheKey($key);
         $item = $this->cache->getItem($cacheKey);
-        
+
         if ($item->isHit()) {
             $this->log('Cache hit', ['key' => $cacheKey]);
+
             return $item->get();
         }
-        
+
         $this->log('Cache miss', ['key' => $cacheKey]);
-        
+
         return null;
     }
 
@@ -83,12 +94,12 @@ class QueryCacheService
     {
         $cacheKey = $this->getCacheKey($key);
         $item = $this->cache->getItem($cacheKey);
-        
+
         $item->set($value);
         $item->expiresAfter($ttl);
-        
+
         $this->cache->save($item);
-        
+
         $this->log('Cache set', ['key' => $cacheKey, 'ttl' => $ttl]);
     }
 
@@ -98,6 +109,7 @@ class QueryCacheService
     public function has(string $key): bool
     {
         $cacheKey = $this->getCacheKey($key);
+
         return $this->cache->hasItem($cacheKey);
     }
 
@@ -108,7 +120,7 @@ class QueryCacheService
     {
         $cacheKey = $this->getCacheKey($key);
         $this->cache->deleteItem($cacheKey);
-        
+
         $this->log('Cache delete', ['key' => $cacheKey]);
     }
 
@@ -120,9 +132,10 @@ class QueryCacheService
         if (null === $pattern) {
             $this->cache->clear();
             $this->log('Cache cleared');
+
             return;
         }
-        
+
         // Pattern-based clearing (if supported by cache adapter)
         $this->clearByPattern($pattern);
     }
@@ -133,15 +146,15 @@ class QueryCacheService
     public function tag(string $key, string ...$tags): void
     {
         $cacheKey = $this->getCacheKey($key);
-        
+
         foreach ($tags as $tag) {
             if (!isset($this->tags[$tag])) {
                 $this->tags[$tag] = [];
             }
-            
+
             $this->tags[$tag][] = $cacheKey;
         }
-        
+
         $this->log('Cache tagged', ['key' => $cacheKey, 'tags' => $tags]);
     }
 
@@ -153,13 +166,13 @@ class QueryCacheService
         if (!isset($this->tags[$tag])) {
             return;
         }
-        
+
         foreach ($this->tags[$tag] as $cacheKey) {
             $this->cache->deleteItem($cacheKey);
         }
-        
+
         unset($this->tags[$tag]);
-        
+
         $this->log('Tag invalidated', ['tag' => $tag]);
     }
 
@@ -170,12 +183,14 @@ class QueryCacheService
     {
         $pattern = sprintf('%s_%s_%d_*', self::DEFAULT_PREFIX, $this->getEntityPrefix($entityClass), $entityId);
         $this->clearByPattern($pattern);
-        
+
         $this->log('Entity cache invalidated', ['entity' => $entityClass, 'id' => $entityId]);
     }
 
     /**
      * Warms up cache by executing callbacks.
+     *
+     * @param array<string, callable> $callbacks
      */
     public function warmUp(array $callbacks): void
     {
@@ -184,18 +199,20 @@ class QueryCacheService
                 $this->remember($key, $callback);
             }
         }
-        
+
         $this->log('Cache warmed up', ['keys' => array_keys($callbacks)]);
     }
 
     /**
      * Gets cache statistics.
+     *
+     * @return array<string, mixed>
      */
     public function getStats(): array
     {
         // This depends on the cache adapter implementation
         // Some adapters provide statistics, others don't
-        
+
         return [
             'adapter' => get_class($this->cache),
             'tags' => array_keys($this->tags),
@@ -217,6 +234,7 @@ class QueryCacheService
     private function getEntityPrefix(string $entityClass): string
     {
         $parts = explode('\\', $entityClass);
+
         return strtolower(end($parts));
     }
 
@@ -228,7 +246,7 @@ class QueryCacheService
         // This is adapter-specific
         // For Redis/Memcached adapters, we could use SCAN/DELETE commands
         // For filesystem adapter, we could iterate through files
-        
+
         // Fallback: iterate through known keys
         foreach ($this->tags as $tag => $keys) {
             foreach ($keys as $key) {
@@ -237,12 +255,14 @@ class QueryCacheService
                 }
             }
         }
-        
+
         $this->log('Cache cleared by pattern', ['pattern' => $pattern]);
     }
 
     /**
      * Logs cache operations.
+     *
+     * @param array<string, mixed> $context
      */
     private function log(string $message, array $context = []): void
     {

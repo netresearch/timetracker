@@ -7,6 +7,8 @@ namespace App\Service\Integration\Jira;
 use App\Entity\Entry;
 use App\Exception\Integration\Jira\JiraApiException;
 
+use function sprintf;
+
 /**
  * Manages Jira ticket operations.
  * Handles ticket creation, search, and validation.
@@ -20,25 +22,25 @@ class JiraTicketService
 
     /**
      * Creates a new Jira ticket from entry.
-     * 
+     *
      * @throws JiraApiException
      */
     public function createTicket(Entry $entry): mixed
     {
         $project = $entry->getProject();
-        
+
         if (!$project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
         $projectJiraId = $project->getJiraId();
-        
+
         if (!$projectJiraId) {
             throw new JiraApiException('Project has no Jira ID configured', 400);
         }
 
         $description = $entry->getDescription() ?: 'No description provided';
-        
+
         $ticketData = [
             'fields' => [
                 'project' => [
@@ -59,7 +61,7 @@ class JiraTicketService
         }
 
         $response = $this->httpClient->post('issue', $ticketData);
-        
+
         if (!isset($response->key)) {
             throw new JiraApiException('Failed to create Jira ticket', 500);
         }
@@ -69,11 +71,11 @@ class JiraTicketService
 
     /**
      * Searches for Jira tickets using JQL.
-     * 
-     * @param string $jql JQL query string
-     * @param array $fields Fields to return
-     * @param int $limit Maximum number of results
-     * 
+     *
+     * @param string $jql    JQL query string
+     * @param array<string> $fields Fields to return
+     * @param int    $limit  Maximum number of results
+     *
      * @throws JiraApiException
      */
     public function searchTickets(string $jql, array $fields = [], int $limit = 1): mixed
@@ -101,6 +103,7 @@ class JiraTicketService
 
         try {
             $this->httpClient->get(sprintf('issue/%s', $ticketKey));
+
             return true;
         } catch (JiraApiException) {
             return false;
@@ -109,10 +112,10 @@ class JiraTicketService
 
     /**
      * Gets subtasks for a Jira ticket.
-     * 
-     * @return array Array of subtask data
-     * 
+     *
      * @throws JiraApiException
+     *
+     * @return array<int, array{key: string, summary: string, status: string, assignee: string|null}>
      */
     public function getSubtickets(string $ticketKey): array
     {
@@ -122,13 +125,13 @@ class JiraTicketService
 
         try {
             $issue = $this->httpClient->get(sprintf('issue/%s', $ticketKey));
-            
-            if (!isset($issue->fields->subtasks)) {
+
+            if (!is_object($issue) || !property_exists($issue, 'fields') || !property_exists($issue->fields, 'subtasks')) {
                 return [];
             }
 
             $subtasks = [];
-            
+
             foreach ($issue->fields->subtasks as $subtask) {
                 $subtasks[] = [
                     'key' => $subtask->key ?? '',
@@ -139,19 +142,15 @@ class JiraTicketService
             }
 
             return $subtasks;
-            
         } catch (JiraApiException $e) {
-            throw new JiraApiException(
-                sprintf('Failed to get subtasks for ticket %s: %s', $ticketKey, $e->getMessage()),
-                $e->getCode(),
-                $e
-            );
+            throw new JiraApiException(sprintf('Failed to get subtasks for ticket %s: %s', $ticketKey, $e->getMessage()), $e->getCode(), null);
         }
     }
 
     /**
      * Gets ticket details from Jira.
-     * 
+     *
+     * @param array<string> $fields
      * @throws JiraApiException
      */
     public function getTicket(string $ticketKey, array $fields = []): mixed
@@ -161,7 +160,7 @@ class JiraTicketService
         }
 
         $url = sprintf('issue/%s', $ticketKey);
-        
+
         if (!empty($fields)) {
             $url .= '?fields=' . implode(',', $fields);
         }
@@ -171,7 +170,8 @@ class JiraTicketService
 
     /**
      * Updates a Jira ticket.
-     * 
+     *
+     * @param array<string, mixed> $updateData
      * @throws JiraApiException
      */
     public function updateTicket(string $ticketKey, array $updateData): mixed
@@ -185,7 +185,7 @@ class JiraTicketService
 
     /**
      * Adds a comment to a Jira ticket.
-     * 
+     *
      * @throws JiraApiException
      */
     public function addComment(string $ticketKey, string $comment): mixed
@@ -200,14 +200,14 @@ class JiraTicketService
 
         return $this->httpClient->post(
             sprintf('issue/%s/comment', $ticketKey),
-            ['body' => $comment]
+            ['body' => $comment],
         );
     }
 
     /**
      * Gets transitions available for a ticket.
-     * 
-     * @throws JiraApiException
+     *
+     * @return array<int, array{id: string, name: string, to: array{id: string, name: string}}>
      */
     public function getTransitions(string $ticketKey): array
     {
@@ -217,26 +217,29 @@ class JiraTicketService
 
         try {
             $response = $this->httpClient->get(sprintf('issue/%s/transitions', $ticketKey));
-            
-            if (!isset($response->transitions)) {
+
+            if (!is_object($response) || !property_exists($response, 'transitions')) {
                 return [];
             }
 
             $transitions = [];
-            
+
             foreach ($response->transitions as $transition) {
+                if (!is_object($transition)) {
+                    continue;
+                }
+                $to = $transition->to ?? null;
                 $transitions[] = [
-                    'id' => $transition->id ?? '',
-                    'name' => $transition->name ?? '',
+                    'id' => property_exists($transition, 'id') ? (string) ($transition->id ?? '') : '',
+                    'name' => property_exists($transition, 'name') ? (string) ($transition->name ?? '') : '',
                     'to' => [
-                        'id' => $transition->to->id ?? '',
-                        'name' => $transition->to->name ?? '',
+                        'id' => (is_object($to) && property_exists($to, 'id')) ? (string) ($to->id ?? '') : '',
+                        'name' => (is_object($to) && property_exists($to, 'name')) ? (string) ($to->name ?? '') : '',
                     ],
                 ];
             }
 
             return $transitions;
-            
         } catch (JiraApiException) {
             return [];
         }
@@ -244,7 +247,8 @@ class JiraTicketService
 
     /**
      * Transitions a ticket to a new status.
-     * 
+     *
+     * @param array<string, mixed> $fields
      * @throws JiraApiException
      */
     public function transitionTicket(string $ticketKey, string $transitionId, array $fields = []): void
@@ -276,17 +280,17 @@ class JiraTicketService
     private function generateTicketSummary(Entry $entry): string
     {
         $parts = [];
-        
+
         $customer = $entry->getCustomer();
         if ($customer) {
             $parts[] = $customer->getName();
         }
-        
+
         $project = $entry->getProject();
         if ($project) {
             $parts[] = $project->getName();
         }
-        
+
         $activity = $entry->getActivity();
         if ($activity) {
             $parts[] = $activity->getName();
@@ -306,18 +310,18 @@ class JiraTicketService
     {
         // This could be configurable per project or activity
         $activity = $entry->getActivity();
-        
+
         if ($activity) {
             $activityName = strtolower($activity->getName());
-            
+
             if (str_contains($activityName, 'bug') || str_contains($activityName, 'fix')) {
                 return 'Bug';
             }
-            
+
             if (str_contains($activityName, 'feature') || str_contains($activityName, 'development')) {
                 return 'Story';
             }
-            
+
             if (str_contains($activityName, 'support') || str_contains($activityName, 'maintenance')) {
                 return 'Task';
             }
@@ -328,17 +332,17 @@ class JiraTicketService
 
     /**
      * Gets custom fields for ticket creation.
+     *
+     * @return array<string, mixed>
      */
     private function getCustomFields(Entry $entry): array
     {
-        $customFields = [];
-        
+        return [];
+
         // Add any custom field mappings here
         // Example:
         // if ($entry->getPriority()) {
         //     $customFields['customfield_10001'] = $entry->getPriority();
         // }
-        
-        return $customFields;
     }
 }

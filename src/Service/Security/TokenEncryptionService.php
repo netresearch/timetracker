@@ -1,13 +1,19 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service\Security;
 
+use RuntimeException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+
+use function strlen;
+
+use const OPENSSL_RAW_DATA;
 
 /**
  * Service for encrypting and decrypting sensitive tokens
- * Uses AES-256-GCM for authenticated encryption
+ * Uses AES-256-GCM for authenticated encryption.
  */
 class TokenEncryptionService
 {
@@ -19,20 +25,25 @@ class TokenEncryptionService
     {
         // Get encryption key from environment or generate if not set
         $key = $parameterBag->get('app.encryption_key') ?? $parameterBag->get('APP_SECRET');
-        if (!$key) {
-            throw new \RuntimeException('Encryption key not configured. Set APP_ENCRYPTION_KEY in environment.');
-        }
         
+        // Ensure we have a valid key
+        if (!is_string($key) || $key === '') {
+            throw new RuntimeException('Encryption key not configured. Set APP_ENCRYPTION_KEY in environment.');
+        }
+
         // Derive a proper encryption key from the secret
-        $this->encryptionKey = hash('sha256', (string) $key, true);
+        // hash() with binary=true and valid algorithm always returns string
+        $this->encryptionKey = hash('sha256', $key, true);
     }
 
     /**
-     * Encrypts a token using AES-256-GCM
-     * 
+     * Encrypts a token using AES-256-GCM.
+     *
      * @param string $token The plain text token to encrypt
+     *
+     * @throws RuntimeException If encryption fails
+     *
      * @return string Base64 encoded encrypted token with IV and auth tag
-     * @throws \RuntimeException If encryption fails
      */
     public function encryptToken(string $token): string
     {
@@ -42,13 +53,14 @@ class TokenEncryptionService
 
         // Generate a random IV for each encryption
         $ivLength = openssl_cipher_iv_length(self::CIPHER_METHOD);
-        if ($ivLength === false) {
-            throw new \RuntimeException('Failed to get IV length for cipher method');
+        if (false === $ivLength) {
+            throw new RuntimeException('Failed to get IV length for cipher method');
         }
-        
+
         $iv = openssl_random_pseudo_bytes($ivLength);
-        if ($iv === false) {
-            throw new \RuntimeException('Failed to generate IV');
+        // openssl_random_pseudo_bytes returns string in PHP 8+
+        if ($iv === '') {
+            throw new RuntimeException('Failed to generate IV');
         }
 
         // Encrypt the token
@@ -59,26 +71,28 @@ class TokenEncryptionService
             $this->encryptionKey,
             OPENSSL_RAW_DATA,
             $iv,
-            $tag
+            $tag,
         );
 
-        if ($encrypted === false) {
-            throw new \RuntimeException('Token encryption failed');
+        if (false === $encrypted) {
+            throw new RuntimeException('Token encryption failed');
         }
 
         // Combine IV, tag and encrypted data
         $combined = $iv . $tag . $encrypted;
-        
+
         // Return base64 encoded for safe storage
         return base64_encode($combined);
     }
 
     /**
-     * Decrypts a token encrypted with encryptToken
-     * 
+     * Decrypts a token encrypted with encryptToken.
+     *
      * @param string $encryptedToken Base64 encoded encrypted token
+     *
+     * @throws RuntimeException If decryption fails
+     *
      * @return string The decrypted plain text token
-     * @throws \RuntimeException If decryption fails
      */
     public function decryptToken(string $encryptedToken): string
     {
@@ -88,18 +102,18 @@ class TokenEncryptionService
 
         // Decode from base64
         $combined = base64_decode($encryptedToken, true);
-        if ($combined === false) {
-            throw new \RuntimeException('Invalid encrypted token format');
+        if (false === $combined) {
+            throw new RuntimeException('Invalid encrypted token format');
         }
 
         $ivLength = openssl_cipher_iv_length(self::CIPHER_METHOD);
-        if ($ivLength === false) {
-            throw new \RuntimeException('Failed to get IV length for cipher method');
+        if (false === $ivLength) {
+            throw new RuntimeException('Failed to get IV length for cipher method');
         }
 
         // Extract IV, tag and encrypted data
         if (strlen($combined) < $ivLength + self::TAG_LENGTH) {
-            throw new \RuntimeException('Encrypted token too short');
+            throw new RuntimeException('Encrypted token too short');
         }
 
         $iv = substr($combined, 0, $ivLength);
@@ -113,11 +127,11 @@ class TokenEncryptionService
             $this->encryptionKey,
             OPENSSL_RAW_DATA,
             $iv,
-            $tag
+            $tag,
         );
 
-        if ($decrypted === false) {
-            throw new \RuntimeException('Token decryption failed - token may be corrupted or tampered');
+        if (false === $decrypted) {
+            throw new RuntimeException('Token decryption failed - token may be corrupted or tampered');
         }
 
         return $decrypted;
@@ -125,14 +139,16 @@ class TokenEncryptionService
 
     /**
      * Rotates an encrypted token with a new IV while keeping the same content
-     * Useful for periodic token rotation for security
-     * 
+     * Useful for periodic token rotation for security.
+     *
      * @param string $encryptedToken The current encrypted token
+     *
      * @return string The newly encrypted token with fresh IV
      */
     public function rotateToken(string $encryptedToken): string
     {
         $plainToken = $this->decryptToken($encryptedToken);
+
         return $this->encryptToken($plainToken);
     }
 }

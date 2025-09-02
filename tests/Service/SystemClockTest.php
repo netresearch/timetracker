@@ -5,16 +5,22 @@ declare(strict_types=1);
 namespace Tests\Service;
 
 use App\Service\SystemClock;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
-class SystemClockTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class SystemClockTest extends TestCase
 {
     public function testNowReturnsDateTimeImmutable(): void
     {
         $systemClock = new SystemClock();
         $now = $systemClock->now();
 
-        $this->assertInstanceOf(\DateTimeImmutable::class, $now);
+        self::assertInstanceOf(DateTimeImmutable::class, $now);
     }
 
     public function testTodayReturnsMidnight(): void
@@ -22,7 +28,7 @@ class SystemClockTest extends TestCase
         $systemClock = new SystemClock();
         $today = $systemClock->today();
 
-        $this->assertInstanceOf(\DateTimeImmutable::class, $today);
-        $this->assertSame('00:00:00', $today->format('H:i:s'));
+        self::assertInstanceOf(DateTimeImmutable::class, $today);
+        self::assertSame('00:00:00', $today->format('H:i:s'));
     }
 }

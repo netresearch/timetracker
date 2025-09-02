@@ -1,16 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
+use Exception;
 use Tests\AbstractWebTestCase;
 
-class InterpretationControllerTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class InterpretationControllerTest extends AbstractWebTestCase
 {
     public function testGetLastEntriesAction(): void
     {
         $parameter = [
-            'user' => 1,    //req
-            'ticket' => 'testGetLastEntriesAction',    //req
+            'user' => 1,    // req
+            'ticket' => 'testGetLastEntriesAction',    // req
         ];
 
         $expectedJson = [
@@ -58,9 +66,9 @@ class InterpretationControllerTest extends AbstractWebTestCase
     public function testGroupByWorktimeAction(): void
     {
         $parameter = [
-            'user' => 1,    //req
-            'datestart' => '1000-01-29',    //opt
-            'dateend' => '1000-01-30',  //opt
+            'user' => 1,    // req
+            'datestart' => '1000-01-29',    // opt
+            'dateend' => '1000-01-30',  // opt
         ];
 
         $expectedJson = [
@@ -86,7 +94,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
     public function testGroupByActivityAction(): void
     {
         $parameter = [
-            'user' => 3,    //req
+            'user' => 3,    // req
         ];
         $expectedJson = [
             0 => [
@@ -115,7 +123,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'datestart=not a date',
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
-        $this->assertStatusCode(406);
+        $this->assertStatusCode(422);
         $this->assertJsonStructure([
             'message' => 'Failed to parse time string (not a date) at position 0 (n): The timezone could not be found in the database',
         ]);
@@ -127,7 +135,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'dateend=1',
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
-        $this->assertStatusCode(406);
+        $this->assertStatusCode(422);
         $this->assertJsonStructure([
             'message' => 'Failed to parse time string (1) at position 0 (1): Unexpected character',
         ]);
@@ -248,8 +256,8 @@ class InterpretationControllerTest extends AbstractWebTestCase
             $this->assertLength(7, 'data');
             $this->assertJsonStructure($expectedLinks);
             $this->assertJsonStructure($expectedData);
-        } catch (\Exception $exception) {
-            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
+        } catch (Exception $exception) {
+            self::markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
         }
     }
 
@@ -318,8 +326,8 @@ class InterpretationControllerTest extends AbstractWebTestCase
             $this->assertLength(3, 'data');
             $this->assertJsonStructure($expectedLinks);
             $this->assertJsonStructure($expectedData);
-        } catch (\Exception $exception) {
-            $this->markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
+        } catch (Exception $exception) {
+            self::markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
         }
     }
 
@@ -330,7 +338,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(400);
-        $this->assertJsonStructure(['message' => 'page can not be negative.',]);
+        $this->assertJsonStructure(['message' => 'page can not be negative.']);
     }
 
     public function testGetAllEntriesActionReturnLinksNoParameter(): void
@@ -354,8 +362,8 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'page=0',
         ];
         $expectedData['data'] = [
-            ['id' => 7,],
-            ['id' => 6,],
+            ['id' => 7],
+            ['id' => 6],
         ];
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?maxResults=2&page=0',
@@ -377,8 +385,8 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'page=1',
         ];
         $expectedData['data'] = [
-            ['id' => 5,],
-            ['id' => 4,],
+            ['id' => 5],
+            ['id' => 4],
         ];
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?maxResults=2&page=1',
@@ -400,7 +408,7 @@ class InterpretationControllerTest extends AbstractWebTestCase
             'page=3',
         ];
         $expectedData['data'] = [
-            ['id' => 1,],
+            ['id' => 1],
         ];
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?maxResults=2&page=3',

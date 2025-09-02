@@ -7,8 +7,11 @@ namespace App\Service\Response;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
+use Exception;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function sprintf;
 
 /**
  * Factory for creating standardized API responses.
@@ -23,19 +26,21 @@ class ResponseFactory
 
     /**
      * Creates a successful JSON response.
+     *
+     * @param array<string, mixed> $data
      */
     public function success(array $data = [], ?string $alert = null): JsonResponse
     {
         $responseData = ['success' => true];
-        
+
         if (!empty($data)) {
             $responseData = array_merge($responseData, $data);
         }
-        
-        if ($alert !== null) {
+
+        if (null !== $alert) {
             $responseData['alert'] = $alert;
         }
-        
+
         return new JsonResponse($responseData);
     }
 
@@ -45,10 +50,10 @@ class ResponseFactory
     public function error(
         string $message,
         int $statusCode = HttpResponse::HTTP_BAD_REQUEST,
-        ?string $redirectUrl = null
+        ?string $redirectUrl = null,
     ): Error {
         $translatedMessage = $this->translator->trans($message);
-        
+
         return new Error($translatedMessage, $statusCode, $redirectUrl);
     }
 
@@ -78,20 +83,22 @@ class ResponseFactory
 
     /**
      * Creates a validation error response.
+     *
+     * @param array<string, string> $errors
      */
     public function validationError(array $errors): Error
     {
         $message = $this->translator->trans('Validation failed');
-        
+
         if (!empty($errors)) {
             $errorMessages = array_map(
-                fn($field, $error) => sprintf('%s: %s', $field, $error),
+                static fn ($field, $error) => sprintf('%s: %s', $field, $error),
                 array_keys($errors),
-                array_values($errors)
+                array_values($errors),
             );
             $message .= ': ' . implode(', ', $errorMessages);
         }
-        
+
         return $this->error($message, HttpResponse::HTTP_UNPROCESSABLE_ENTITY);
     }
 
@@ -121,13 +128,15 @@ class ResponseFactory
 
     /**
      * Creates a paginated response.
+     *
+     * @param list<mixed> $items
      */
     public function paginated(
         array $items,
         int $page,
         int $totalPages,
         int $totalItems,
-        int $itemsPerPage
+        int $itemsPerPage,
     ): JsonResponse {
         return $this->success([
             'items' => $items,
@@ -144,6 +153,9 @@ class ResponseFactory
 
     /**
      * Creates a response with additional metadata.
+     *
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $metadata
      */
     public function withMetadata(array $data, array $metadata): JsonResponse
     {
@@ -157,19 +169,20 @@ class ResponseFactory
      * Creates a response for JIRA API errors.
      */
     public function jiraApiError(
-        \Exception $exception,
-        string $fallbackMessage = 'JIRA API error occurred'
+        Exception $exception,
+        string $fallbackMessage = 'JIRA API error occurred',
     ): Error {
         if ($exception instanceof \App\Exception\Integration\Jira\JiraApiUnauthorizedException) {
             return $this->forbidden($exception->getMessage(), $exception->getRedirectUrl());
         }
-        
+
         if ($exception instanceof \App\Exception\Integration\Jira\JiraApiException) {
-            $message = $exception->getMessage() . '<br />' . 
+            $message = $exception->getMessage() . '<br />' .
                       $this->translator->trans('Dataset was modified in Timetracker anyway');
+
             return $this->error($message, HttpResponse::HTTP_BAD_GATEWAY);
         }
-        
+
         return $this->serverError($fallbackMessage);
     }
 }

@@ -1,11 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
 
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 final class GetCustomersAction extends BaseController
 {
@@ -24,5 +24,3 @@ final class GetCustomersAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-

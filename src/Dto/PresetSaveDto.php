@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Dto;
@@ -37,8 +38,7 @@ final class PresetSaveDto
         $self->project = null !== $request->request->get('project') ? (int) $request->request->get('project') : null;
         $self->activity = null !== $request->request->get('activity') ? (int) $request->request->get('activity') : null;
         $self->description = (string) ($request->request->get('description') ?? '');
+
         return $self;
     }
 }
-
-

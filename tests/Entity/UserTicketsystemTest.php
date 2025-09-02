@@ -9,7 +9,12 @@ use App\Entity\User;
 use App\Entity\UserTicketsystem;
 use PHPUnit\Framework\TestCase;
 
-class UserTicketsystemTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class UserTicketsystemTest extends TestCase
 {
     public function testGettersAndSetters(): void
     {
@@ -17,19 +22,20 @@ class UserTicketsystemTest extends TestCase
         $userTicketsystem->setId(42)
             ->setAccessToken('tok')
             ->setTokenSecret('sec')
-            ->setAvoidConnection(true);
+            ->setAvoidConnection(true)
+        ;
 
-        $this->assertSame(42, $userTicketsystem->getId());
-        $this->assertSame('tok', $userTicketsystem->getAccessToken());
-        $this->assertSame('sec', $userTicketsystem->getTokenSecret());
-        $this->assertTrue($userTicketsystem->getAvoidConnection());
+        self::assertSame(42, $userTicketsystem->getId());
+        self::assertSame('tok', $userTicketsystem->getAccessToken());
+        self::assertSame('sec', $userTicketsystem->getTokenSecret());
+        self::assertTrue($userTicketsystem->getAvoidConnection());
 
         $ts = $this->createMock(TicketSystem::class);
         $user = $this->createMock(User::class);
         $userTicketsystem->setTicketSystem($ts);
         $userTicketsystem->setUser($user);
 
-        $this->assertSame($ts, $userTicketsystem->getTicketSystem());
-        $this->assertSame($user, $userTicketsystem->getUser());
+        self::assertSame($ts, $userTicketsystem->getTicketSystem());
+        self::assertSame($user, $userTicketsystem->getUser());
     }
 }

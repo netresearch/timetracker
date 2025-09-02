@@ -1,13 +1,15 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use DateTime;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
-use App\Service\Integration\Jira\JiraOAuthApiFactory;
 
 final class SyncJiraEntriesAction extends BaseController
 {
@@ -20,8 +22,8 @@ final class SyncJiraEntriesAction extends BaseController
 
         $from = $request->query->get('from');
         $to = $request->query->get('to');
-        null !== $from ? new \DateTime((string) $from) : (new \DateTime())->modify('-3 days');
-        null !== $to ? new \DateTime((string) $to) : new \DateTime();
+        null !== $from ? new DateTime((string) $from) : (new DateTime())->modify('-3 days');
+        null !== $to ? new DateTime((string) $to) : new DateTime();
 
         // Use current user as admin context if available
         $userId = $this->getUserId($request);
@@ -49,6 +51,3 @@ final class SyncJiraEntriesAction extends BaseController
         $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
     }
 }
-
-
-

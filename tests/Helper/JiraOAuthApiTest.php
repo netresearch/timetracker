@@ -6,12 +6,12 @@ namespace Tests\Integration\Jira;
 
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
-use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 /**
  * Test proxy exposing protected API for assertions.
@@ -21,7 +21,12 @@ interface JiraOAuthApiTestProxy
     public function callGetResponse(string $method, string $url, array $data = []): object;
 }
 
-class JiraOAuthApiTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class JiraOAuthApiTest extends TestCase
 {
     /**
      * @return JiraOAuthApi&JiraOAuthApiTestProxy
@@ -42,7 +47,7 @@ class JiraOAuthApiTest extends TestCase
         $router->method('generate')->willReturn('http://localhost/jiraoauthcallback');
 
         // Fake client that invokes provided handler
-        $fakeClient = new class ($requestHandler) extends \GuzzleHttp\Client {
+        $fakeClient = new class($requestHandler) extends \GuzzleHttp\Client {
             public function __construct(private $handler)
             {
             }
@@ -50,12 +55,13 @@ class JiraOAuthApiTest extends TestCase
             public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
             {
                 $fn = $this->handler;
+
                 return $fn($method, $uri, $options);
             }
         };
 
         // Subclass to expose getResponse and return fake client
-        return new class ($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
+        return new class($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
             public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, private $client)
             {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
@@ -78,12 +84,12 @@ class JiraOAuthApiTest extends TestCase
         // Force getClient('user') to return a client that triggers 401 on request
         $request = new Request('GET', 'https://jira.example');
         $requestException = new RequestException('Unauthorized', $request, new Response(401));
-        $jiraOAuthApi = $this->makeSubject(function ($method, $url, $opts) use ($requestException): void {
+        $jiraOAuthApi = $this->makeSubject(static function ($method, $url, $opts) use ($requestException): void {
             throw $requestException;
         }, true);
 
         // Also stub fetchOAuthRequestToken path to avoid nested failures in throwUnauthorizedRedirect
-        $reflectionClass = new \ReflectionClass($jiraOAuthApi);
+        $reflectionClass = new ReflectionClass($jiraOAuthApi);
         $reflectionClass->getMethod('fetchOAuthRequestToken');
         // Hack via closure binding to override protected method call using runkit-like approach is not available;
         // instead, expect generic JiraApiException as fallback which still exercises error path.
@@ -95,7 +101,7 @@ class JiraOAuthApiTest extends TestCase
     {
         $request = new Request('GET', 'https://jira.example');
         $requestException = new RequestException('Not found', $request, new Response(404));
-        $jiraOAuthApi = $this->makeSubject(function () use ($requestException): void { throw $requestException; });
+        $jiraOAuthApi = $this->makeSubject(static function () use ($requestException): void { throw $requestException; });
         $this->expectException(JiraApiInvalidResourceException::class);
         $jiraOAuthApi->callGetResponse('GET', 'https://jira.example/rest/api/unknown');
     }
@@ -104,7 +110,7 @@ class JiraOAuthApiTest extends TestCase
     {
         $request = new Request('GET', 'https://jira.example');
         $requestException = new RequestException('Other error', $request);
-        $jiraOAuthApi = $this->makeSubject(function () use ($requestException): void { throw $requestException; });
+        $jiraOAuthApi = $this->makeSubject(static function () use ($requestException): void { throw $requestException; });
         $this->expectException(JiraApiException::class);
         $jiraOAuthApi->callGetResponse('GET', 'https://jira.example/rest/api');
     }

@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace App\Service\Ldap;
 
+use App\Service\TypeSafety\ArrayTypeHelper;
+use InvalidArgumentException;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+
+use function count;
+use function is_scalar;
+use function sprintf;
+use function strlen;
 
 /**
  * Modern LDAP service with improved encapsulation and configuration management.
@@ -15,9 +22,10 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
  */
 class ModernLdapService
 {
+    /** @var array<string, mixed> */
     private readonly array $config;
     private ?Ldap $ldapConnection = null;
-    
+
     public function __construct(
         private readonly ParameterBagInterface $params,
         private readonly ?LoggerInterface $logger = null,
@@ -27,36 +35,36 @@ class ModernLdapService
 
     /**
      * Authenticates a user against LDAP.
-     * 
+     *
      * @throws LdapException
      */
     public function authenticate(string $username, string $password): bool
     {
         $this->validateInput($username, $password);
-        
+
         try {
             $ldap = $this->getConnection();
-            
+
             // Sanitize username to prevent LDAP injection
             $username = $this->sanitizeLdapInput($username);
-            
+
             // Build DN for authentication
             $dn = $this->buildUserDn($username);
-            
+
             $this->log('Attempting LDAP authentication', ['username' => $username]);
-            
+
             // Attempt to bind with user credentials
             $ldap->bind($dn, $password);
-            
+
             $this->log('LDAP authentication successful', ['username' => $username]);
-            
+
             return true;
         } catch (LdapException $e) {
             $this->log('LDAP authentication failed', [
                 'username' => $username,
                 'error' => $e->getMessage(),
             ], 'warning');
-            
+
             return false;
         } finally {
             $this->disconnect();
@@ -65,33 +73,38 @@ class ModernLdapService
 
     /**
      * Searches for a user in LDAP directory.
-     * 
+     *
      * @throws LdapException
+     *
+     * @return array<string, mixed>|null
      */
     public function findUser(string $username): ?array
     {
         $username = $this->sanitizeLdapInput($username);
-        
+
         try {
             $ldap = $this->getConnectionWithServiceAccount();
-            
-            $filter = sprintf('(%s=%s)', $this->config['userNameField'], $username);
-            $result = $ldap->search($this->config['baseDn'], $filter);
-            
-            if ($result->count() === 0) {
+
+            $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid');
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
+            $filter = sprintf('(%s=%s)', $userNameField, $username);
+            $result = $ldap->search($filter, $baseDn);
+
+            if (0 === $result->count()) {
                 $this->log('User not found in LDAP', ['username' => $username]);
+
                 return null;
             }
-            
+
             $entry = $result->current();
-            
+
             return $this->normalizeUserData($entry);
         } catch (LdapException $e) {
             $this->log('LDAP search failed', [
                 'username' => $username,
                 'error' => $e->getMessage(),
             ], 'error');
-            
+
             throw $e;
         } finally {
             $this->disconnect();
@@ -100,40 +113,44 @@ class ModernLdapService
 
     /**
      * Searches for users by filter criteria.
-     * 
+     *
+     * @param array<string, string> $criteria
+     *
      * @throws LdapException
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function searchUsers(array $criteria, int $limit = 100): array
     {
         try {
             $ldap = $this->getConnectionWithServiceAccount();
-            
+
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
             $filter = $this->buildSearchFilter($criteria);
             $result = $ldap->search(
-                $this->config['baseDn'],
                 $filter,
-                [],
+                $baseDn,
                 Ldap::SEARCH_SCOPE_SUB,
-                $limit
+                [],
             );
-            
+
             $users = [];
             foreach ($result as $entry) {
                 $users[] = $this->normalizeUserData($entry);
             }
-            
+
             $this->log('LDAP search completed', [
                 'filter' => $filter,
                 'results' => count($users),
             ]);
-            
+
             return $users;
         } catch (LdapException $e) {
             $this->log('LDAP search failed', [
                 'criteria' => $criteria,
                 'error' => $e->getMessage(),
             ], 'error');
-            
+
             throw $e;
         } finally {
             $this->disconnect();
@@ -142,24 +159,27 @@ class ModernLdapService
 
     /**
      * Gets user groups from LDAP.
-     * 
+     *
      * @throws LdapException
+     *
+     * @return array<int, array<string, string>>
      */
     public function getUserGroups(string $username): array
     {
         $username = $this->sanitizeLdapInput($username);
-        
+
         try {
             $ldap = $this->getConnectionWithServiceAccount();
-            
+
             $userDn = $this->getUserDn($username);
             if (!$userDn) {
                 return [];
             }
-            
+
             $filter = sprintf('(&(objectClass=group)(member=%s))', $userDn);
-            $result = $ldap->search($this->config['baseDn'], $filter, ['cn', 'description']);
-            
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
+            $result = $ldap->search($filter, $baseDn, Ldap::SEARCH_SCOPE_SUB, ['cn', 'description']);
+
             $groups = [];
             foreach ($result as $entry) {
                 $groups[] = [
@@ -167,14 +187,14 @@ class ModernLdapService
                     'description' => $entry['description'][0] ?? '',
                 ];
             }
-            
+
             return $groups;
         } catch (LdapException $e) {
             $this->log('Failed to get user groups', [
                 'username' => $username,
                 'error' => $e->getMessage(),
             ], 'error');
-            
+
             throw $e;
         } finally {
             $this->disconnect();
@@ -188,21 +208,21 @@ class ModernLdapService
     {
         try {
             $ldap = $this->getConnectionWithServiceAccount();
-            
+
             // Try a simple search to verify connection
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
             $result = $ldap->search(
-                $this->config['baseDn'],
                 '(objectClass=*)',
-                [],
-                Ldap::SEARCH_SCOPE_BASE
+                $baseDn,
+                Ldap::SEARCH_SCOPE_BASE,
             );
-            
+
             $this->log('LDAP connection test successful');
-            
+
             return $result->count() > 0;
         } catch (LdapException $e) {
             $this->log('LDAP connection test failed', ['error' => $e->getMessage()], 'error');
-            
+
             return false;
         } finally {
             $this->disconnect();
@@ -211,31 +231,33 @@ class ModernLdapService
 
     /**
      * Gets LDAP connection with user credentials.
-     * 
+     *
      * @throws LdapException
      */
     private function getConnection(): Ldap
     {
-        if ($this->ldapConnection === null) {
+        if (null === $this->ldapConnection) {
             $options = $this->buildLdapOptions();
             $this->ldapConnection = new Ldap($options);
         }
-        
+
         return $this->ldapConnection;
     }
 
     /**
      * Gets LDAP connection with service account.
-     * 
+     *
      * @throws LdapException
      */
     private function getConnectionWithServiceAccount(): Ldap
     {
         $ldap = $this->getConnection();
-        
+
         // Bind with service account for searches
-        $ldap->bind($this->config['readUser'], $this->config['readPass']);
-        
+        $readUser = ArrayTypeHelper::getString($this->config, 'readUser', '');
+        $readPass = ArrayTypeHelper::getString($this->config, 'readPass', '');
+        $ldap->bind($readUser, $readPass);
+
         return $ldap;
     }
 
@@ -244,7 +266,7 @@ class ModernLdapService
      */
     private function disconnect(): void
     {
-        if ($this->ldapConnection !== null) {
+        if (null !== $this->ldapConnection) {
             $this->ldapConnection->disconnect();
             $this->ldapConnection = null;
         }
@@ -252,6 +274,8 @@ class ModernLdapService
 
     /**
      * Builds LDAP connection options.
+     *
+     * @return array<string, mixed>
      */
     private function buildLdapOptions(): array
     {
@@ -261,11 +285,11 @@ class ModernLdapService
             'baseDn' => $this->config['baseDn'],
             'useSsl' => $this->config['useSsl'],
         ];
-        
+
         if ($this->config['useSsl']) {
             $options['useStartTls'] = false;
         }
-        
+
         return $options;
     }
 
@@ -274,11 +298,13 @@ class ModernLdapService
      */
     private function buildUserDn(string $username): string
     {
+        $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid');
+        $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
         return sprintf(
             '%s=%s,%s',
-            $this->config['userNameField'],
+            $userNameField,
             $username,
-            $this->config['baseDn']
+            $baseDn,
         );
     }
 
@@ -288,21 +314,23 @@ class ModernLdapService
     private function getUserDn(string $username): ?string
     {
         $user = $this->findUser($username);
-        
-        return $user['dn'] ?? null;
+
+        return is_array($user) ? ArrayTypeHelper::getString($user, 'dn') : null;
     }
 
     /**
      * Builds LDAP search filter from criteria.
+     *
+     * @param array<string, string> $criteria
      */
     private function buildSearchFilter(array $criteria): string
     {
         $filters = [];
-        
+
         foreach ($criteria as $field => $value) {
             $field = $this->sanitizeLdapInput($field);
             $value = $this->sanitizeLdapInput($value);
-            
+
             // Support wildcards
             if (str_contains($value, '*')) {
                 $filters[] = sprintf('(%s=%s)', $field, $value);
@@ -310,28 +338,34 @@ class ModernLdapService
                 $filters[] = sprintf('(%s=*%s*)', $field, $value);
             }
         }
-        
-        if (count($filters) === 1) {
+
+        if (1 === count($filters)) {
             return $filters[0];
         }
-        
+
         return '(&' . implode('', $filters) . ')';
     }
 
     /**
      * Normalizes LDAP user data to consistent format.
+     *
+     * @param array<string, mixed> $entry
+     *
+     * @return array<string, mixed>
      */
     private function normalizeUserData(array $entry): array
     {
+        $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid');
+        
         return [
-            'dn' => $entry['dn'] ?? '',
-            'username' => $entry[$this->config['userNameField']][0] ?? '',
-            'email' => $entry['mail'][0] ?? '',
-            'firstName' => $entry['givenName'][0] ?? '',
-            'lastName' => $entry['sn'][0] ?? '',
-            'displayName' => $entry['displayName'][0] ?? '',
-            'department' => $entry['department'][0] ?? '',
-            'title' => $entry['title'][0] ?? '',
+            'dn' => ArrayTypeHelper::getString($entry, 'dn', ''),
+            'username' => is_array($entry[$userNameField] ?? null) ? ($entry[$userNameField][0] ?? '') : '',
+            'email' => is_array($entry['mail'] ?? null) ? ($entry['mail'][0] ?? '') : '',
+            'firstName' => is_array($entry['givenName'] ?? null) ? ($entry['givenName'][0] ?? '') : '',
+            'lastName' => is_array($entry['sn'] ?? null) ? ($entry['sn'][0] ?? '') : '',
+            'displayName' => is_array($entry['displayName'] ?? null) ? ($entry['displayName'][0] ?? '') : '',
+            'department' => is_array($entry['department'] ?? null) ? ($entry['department'][0] ?? '') : '',
+            'title' => is_array($entry['title'] ?? null) ? ($entry['title'][0] ?? '') : '',
         ];
     }
 
@@ -349,11 +383,11 @@ class ModernLdapService
             "\x00" => '\00',
             '/' => '\2f',
         ];
-        
+
         return str_replace(
             array_keys($metaChars),
             array_values($metaChars),
-            $input
+            $input,
         );
     }
 
@@ -363,45 +397,55 @@ class ModernLdapService
     private function validateInput(string $username, string $password): void
     {
         if (empty($username)) {
-            throw new \InvalidArgumentException('Username cannot be empty');
+            throw new InvalidArgumentException('Username cannot be empty');
         }
-        
+
         if (empty($password)) {
-            throw new \InvalidArgumentException('Password cannot be empty');
+            throw new InvalidArgumentException('Password cannot be empty');
         }
-        
+
         if (strlen($username) > 255) {
-            throw new \InvalidArgumentException('Username is too long');
+            throw new InvalidArgumentException('Username is too long');
         }
     }
 
     /**
      * Loads configuration from parameters.
+     *
+     * @return array<string, mixed>
      */
     private function loadConfiguration(): array
     {
+        $port = $this->params->get('ldap_port');
+        $portValue = is_scalar($port) ? (int) $port : 389;
+
+        $useSsl = $this->params->get('ldap_usessl');
+        $useSslValue = is_scalar($useSsl) ? (bool) $useSsl : false;
+
         return [
-            'host' => $this->params->get('ldap_host') ?: 'localhost',
-            'port' => (int) ($this->params->get('ldap_port') ?: 389),
-            'readUser' => $this->params->get('ldap_readuser') ?: '',
-            'readPass' => $this->params->get('ldap_readpass') ?: '',
-            'baseDn' => $this->params->get('ldap_basedn') ?: '',
-            'userNameField' => $this->params->get('ldap_usernamefield') ?: 'uid',
-            'useSsl' => (bool) ($this->params->get('ldap_usessl') ?: false),
+            'host' => (string) ($this->params->get('ldap_host') ?: 'localhost'),
+            'port' => $portValue,
+            'readUser' => (string) ($this->params->get('ldap_readuser') ?: ''),
+            'readPass' => (string) ($this->params->get('ldap_readpass') ?: ''),
+            'baseDn' => (string) ($this->params->get('ldap_basedn') ?: ''),
+            'userNameField' => (string) ($this->params->get('ldap_usernamefield') ?: 'uid'),
+            'useSsl' => $useSslValue,
         ];
     }
 
     /**
      * Logs messages with context.
+     *
+     * @param array<string, mixed> $context
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
         if (!$this->logger) {
             return;
         }
-        
+
         $context['service'] = 'ModernLdapService';
-        
+
         match ($level) {
             'error' => $this->logger->error($message, $context),
             'warning' => $this->logger->warning($message, $context),

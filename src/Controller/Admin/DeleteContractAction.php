@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -8,8 +9,12 @@ use App\Dto\IdDto;
 use App\Entity\Contract;
 use App\Model\JsonResponse;
 use App\Response\Error;
+use Exception;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+
+use function sprintf;
 
 final class DeleteContractAction extends BaseController
 {
@@ -25,16 +30,17 @@ final class DeleteContractAction extends BaseController
             $doctrine = $this->doctrineRegistry;
 
             $contract = $doctrine->getRepository(Contract::class)
-                ->find($id);
+                ->find($id)
+            ;
 
             $em = $this->doctrineRegistry->getManager();
-            if ($contract instanceof \App\Entity\Contract) {
+            if ($contract instanceof Contract) {
                 $em->remove($contract);
                 $em->flush();
             } else {
-                throw new \RuntimeException('Already deleted');
+                throw new RuntimeException('Already deleted');
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -48,6 +54,3 @@ final class DeleteContractAction extends BaseController
         return new JsonResponse(['success' => true]);
     }
 }
-
-
-

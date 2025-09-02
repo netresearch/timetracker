@@ -9,7 +9,9 @@ use App\Entity\UserTicketsystem;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
+use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
@@ -18,6 +20,14 @@ use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Throwable;
+use UnexpectedValueException;
+
+use function is_object;
+use function is_string;
+use function sprintf;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Jira OAuth API service responsible for OAuth handshake and Jira REST operations.
@@ -88,10 +98,10 @@ class JiraOAuthApiService
         } elseif ('request' === $tokenMode) {
             $oAuthTokenSecret = '';
         } else {
-            throw new \UnexpectedValueException('Invalid token mode: '.$tokenMode);
+            throw new UnexpectedValueException('Invalid token mode: ' . $tokenMode);
         }
 
-        $key = $oAuthToken.$oAuthTokenSecret;
+        $key = $oAuthToken . $oAuthTokenSecret;
 
         if (isset($this->clients[$key])) {
             return $this->clients[$key];
@@ -140,7 +150,7 @@ class JiraOAuthApiService
             return $this->getTempKeyFile($certificate);
         }
 
-        throw new JiraApiException('Invalid certificate, fix your certificate information in ticket system settings for: "'.$this->ticketSystem->getName().'"', 1541160391);
+        throw new JiraApiException('Invalid certificate, fix your certificate information in ticket system settings for: "' . $this->ticketSystem->getName() . '"', 1541160391);
     }
 
     /**
@@ -160,7 +170,7 @@ class JiraOAuthApiService
     protected function getTempFile(): string
     {
         $tmp = tempnam(sys_get_temp_dir(), 'TTT');
-        if ($tmp === false) {
+        if (false === $tmp) {
             throw new JiraApiException('Failed to create temporary file');
         }
 
@@ -179,11 +189,11 @@ class JiraOAuthApiService
                 $this->deleteTokens();
             } else {
                 $response = $this->getFetchAccessTokenClient($oAuthRequestToken)->post(
-                    $this->getOAuthAccessUrl().'?oauth_verifier='.urlencode($oAuthVerifier)
+                    $this->getOAuthAccessUrl() . '?oauth_verifier=' . urlencode($oAuthVerifier),
                 );
                 $this->extractTokens($response);
             }
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             throw new JiraApiException($throwable->getMessage(), (int) $throwable->getCode());
         }
     }
@@ -205,13 +215,13 @@ class JiraOAuthApiService
     {
         try {
             $response = $this->getFetchRequestTokenClient()->post(
-                $this->getOAuthRequestUrl().'?oauth_callback='.urlencode($this->getOAuthCallbackUrl())
+                $this->getOAuthRequestUrl() . '?oauth_callback=' . urlencode($this->getOAuthCallbackUrl()),
             );
 
             $token = $this->extractTokens($response);
 
             return $this->getOAuthAuthUrl($token['oauth_token']);
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             throw new JiraApiException($throwable->getMessage(), (int) $throwable->getCode(), null, $throwable);
         }
     }
@@ -265,7 +275,7 @@ class JiraOAuthApiService
             try {
                 $this->updateEntryJiraWorkLog($entry);
                 $objectManager->persist($entry);
-            } catch (\Exception) {
+            } catch (Exception) {
             } finally {
                 $objectManager->flush();
             }
@@ -293,7 +303,7 @@ class JiraOAuthApiService
             return;
         }
 
-        if ($entry->getDuration() === 0) {
+        if (0 === $entry->getDuration()) {
             // delete possible old work log entry
             $this->deleteEntryJiraWorkLog($entry);
 
@@ -315,7 +325,7 @@ class JiraOAuthApiService
             $workLogId = (int) $entry->getWorklogId();
             $workLog = $this->put(
                 sprintf('issue/%s/worklog/%d', $sTicket, $workLogId),
-                $arData
+                $arData,
             );
         } else {
             $workLog = $this->post(sprintf('issue/%s/worklog', $sTicket), $arData);
@@ -354,7 +364,7 @@ class JiraOAuthApiService
             $this->delete(sprintf(
                 'issue/%s/worklog/%d',
                 $sTicket,
-                $workLogId
+                $workLogId,
             ));
 
             $entry->setWorklogId(null);
@@ -386,17 +396,17 @@ class JiraOAuthApiService
                         'name' => 'Task',
                     ],
                 ],
-            ]
+            ],
         );
     }
 
     /**
      * we use POST to support very large queries.
      *
+     * @param array<int, string> $fields
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     *
-     * @param array<int, string> $fields
      */
     public function searchTicket(string $jql, array $fields, int $limit = 1): mixed
     {
@@ -406,7 +416,7 @@ class JiraOAuthApiService
                 'jql' => $jql,
                 'fields' => $fields,
                 'maxResults' => $limit,
-            ]
+            ],
         );
     }
 
@@ -431,19 +441,51 @@ class JiraOAuthApiService
             return [];
         }
 
-        $ticket = $this->get('issue/'.$sTicket);
-
-        $subtickets = [];
-        foreach ($ticket->fields->subtasks as $subtask) {
-            $subtickets[] = $subtask->key;
+        $ticket = $this->get('issue/' . $sTicket);
+        
+        // Ensure ticket response is an object with expected structure
+        if (!is_object($ticket) || !isset($ticket->fields)) {
+            return [];
         }
 
-        if ('epic' === strtolower((string) $ticket->fields->issuetype->name)) {
-            $epicSubs = $this->searchTicket('"Epic Link" = '.$sTicket, ['key', 'subtasks'], 100);
-            foreach ($epicSubs->issues as $epicSubtask) {
-                $subtickets[] = $epicSubtask->key;
-                foreach ($epicSubtask->fields->subtasks as $subtask) {
+        $subtickets = [];
+        
+        // Check if subtasks exist and is iterable
+        if (isset($ticket->fields->subtasks) && is_iterable($ticket->fields->subtasks)) {
+            foreach ($ticket->fields->subtasks as $subtask) {
+                if (is_object($subtask) && isset($subtask->key)) {
                     $subtickets[] = $subtask->key;
+                }
+            }
+        }
+
+        // Check for epic type tickets
+        if (isset($ticket->fields->issuetype) && 
+            is_object($ticket->fields->issuetype) && 
+            isset($ticket->fields->issuetype->name) &&
+            'epic' === strtolower((string) $ticket->fields->issuetype->name)) {
+            
+            $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
+            
+            // Ensure epic search results have expected structure
+            if (is_object($epicSubs) && isset($epicSubs->issues) && is_iterable($epicSubs->issues)) {
+                foreach ($epicSubs->issues as $epicSubtask) {
+                    if (is_object($epicSubtask) && isset($epicSubtask->key)) {
+                        $subtickets[] = $epicSubtask->key;
+                        
+                        // Check for nested subtasks
+                        if (isset($epicSubtask->fields) && 
+                            is_object($epicSubtask->fields) && 
+                            isset($epicSubtask->fields->subtasks) && 
+                            is_iterable($epicSubtask->fields->subtasks)) {
+                            
+                            foreach ($epicSubtask->fields->subtasks as $subtask) {
+                                if (is_object($subtask) && isset($subtask->key)) {
+                                    $subtickets[] = $subtask->key;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -491,10 +533,10 @@ class JiraOAuthApiService
     /**
      * Execute POST request and return response as simple object.
      *
+     * @param array<string, mixed> $data
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     *
-     * @param array<string, mixed> $data
      */
     protected function post(string $url, array $data = []): object
     {
@@ -504,10 +546,10 @@ class JiraOAuthApiService
     /**
      * Execute PUT request and return response as simple object.
      *
+     * @param array<string, mixed> $data
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     *
-     * @param array<string, mixed> $data
      */
     protected function put(string $url, array $data = []): object
     {
@@ -526,10 +568,10 @@ class JiraOAuthApiService
     /**
      * Get Response of Jira-API request.
      *
+     * @param array<string, mixed> $data
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
-     *
-     * @param array<string, mixed> $data
      */
     protected function getResponse(string $method, string $url, array $data = []): object
     {
@@ -549,10 +591,10 @@ class JiraOAuthApiService
             if (401 === $guzzleException->getCode()) {
                 $this->throwUnauthorizedRedirect(null);
             } elseif (404 === $guzzleException->getCode()) {
-                $message = '404 - Resource is not available: ('.$url.')';
+                $message = '404 - Resource is not available: (' . $url . ')';
                 throw new JiraApiInvalidResourceException($message, 404, null, $guzzleException);
             } else {
-                throw new JiraApiException('Unknown Guzzle exception: '.$guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
+                throw new JiraApiException('Unknown Guzzle exception: ' . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
             }
         }
 
@@ -576,17 +618,20 @@ class JiraOAuthApiService
             ->findOneBy([
                 'user' => $this->user,
                 'ticketSystem' => $this->ticketSystem,
-            ]);
+            ])
+        ;
 
         if (!$userTicketSystem) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($this->user)
-                ->setTicketSystem($this->ticketSystem);
+                ->setTicketSystem($this->ticketSystem)
+            ;
         }
 
         $userTicketSystem->setTokenSecret($tokenSecret)
             ->setAccessToken($accessToken)
-            ->setAvoidConnection($avoidConnection);
+            ->setAvoidConnection($avoidConnection)
+        ;
 
         $objectManager = $this->managerRegistry->getManager();
         $objectManager->persist($userTicketSystem);
@@ -615,27 +660,27 @@ class JiraOAuthApiService
 
     protected function getJiraApiUrl(): string
     {
-        return $this->getJiraBaseUrl().$this->jiraApiUrl;
+        return $this->getJiraBaseUrl() . $this->jiraApiUrl;
     }
 
     protected function getOAuthRequestUrl(): string
     {
-        return $this->getJiraBaseUrl().$this->oAuthRequestUrl;
+        return $this->getJiraBaseUrl() . $this->oAuthRequestUrl;
     }
 
     protected function getOAuthCallbackUrl(): string
     {
-        return $this->oAuthCallbackUrl.'?tsid='.$this->ticketSystem->getId();
+        return $this->oAuthCallbackUrl . '?tsid=' . $this->ticketSystem->getId();
     }
 
     protected function getOAuthAccessUrl(): string
     {
-        return $this->getJiraBaseUrl().$this->oAuthAccessUrl;
+        return $this->getJiraBaseUrl() . $this->oAuthAccessUrl;
     }
 
     protected function getOAuthAuthUrl(string $oAuthToken): string
     {
-        return $this->getJiraBaseUrl().$this->oAuthAuthUrl.'?oauth_token='.$oAuthToken;
+        return $this->getJiraBaseUrl() . $this->oAuthAuthUrl . '?oauth_token=' . $oAuthToken;
     }
 
     protected function getOAuthConsumerSecret(): string
@@ -658,11 +703,11 @@ class JiraOAuthApiService
             : 'no activity specified';
 
         $description = $entry->getDescription();
-        if ($description === '' || $description === '0') {
+        if ('' === $description || '0' === $description) {
             $description = 'no description given';
         }
 
-        return '#'.$entry->getId().': '.$activity.': '.$description;
+        return '#' . $entry->getId() . ': ' . $activity . ': ' . $description;
     }
 
     /**
@@ -671,10 +716,10 @@ class JiraOAuthApiService
      */
     protected function getTicketSystemWorkLogStartDate(Entry $entry): string
     {
-        $startDate = \DateTime::createFromInterface($entry->getDay());
+        $startDate = DateTime::createFromInterface($entry->getDay());
         $startDate->setTime(
             (int) $entry->getStart()->format('H'),
-            (int) $entry->getStart()->format('i')
+            (int) $entry->getStart()->format('i'),
         );
 
         return $startDate->format('Y-m-d\TH:i:s.000O');
@@ -691,7 +736,8 @@ class JiraOAuthApiService
             ->findOneBy([
                 'user' => $this->user,
                 'ticketSystem' => $this->ticketSystem,
-            ]);
+            ])
+        ;
 
         return $this->ticketSystem->getBookTime()
             && (!$userTicketSystem || !$userTicketSystem->getAvoidConnection());
@@ -704,15 +750,15 @@ class JiraOAuthApiService
      *
      * @return never
      */
-    protected function throwUnauthorizedRedirect(?\Throwable $throwable = null)
+    protected function throwUnauthorizedRedirect(?Throwable $throwable = null)
     {
         try {
             $oauthAuthUrl = $this->fetchOAuthRequestToken();
         } catch (JiraApiException $jiraApiException) {
-            throw new JiraApiException('Failed to fetch OAuth URL: '.($jiraApiException->getPrevious()?->getMessage() ?? $jiraApiException->getMessage()), 400, null, $jiraApiException);
+            throw new JiraApiException('Failed to fetch OAuth URL: ' . ($jiraApiException->getPrevious()?->getMessage() ?? $jiraApiException->getMessage()), 400, null, $jiraApiException);
         }
 
-        $message = '401 - Unauthorized. Please authorize: '.$oauthAuthUrl;
+        $message = '401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
         throw new JiraApiUnauthorizedException($message, 401, $oauthAuthUrl, $throwable);
     }
 }

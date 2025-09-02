@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Controlling;
@@ -9,10 +10,13 @@ use App\Entity\Entry;
 use App\Model\Response;
 use App\Service\ExportService as Export;
 use App\Util\PhpSpreadsheet\LOReadFilter;
+use DateTimeInterface;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+
+use const STR_PAD_LEFT;
 
 final class ExportAction extends BaseController
 {
@@ -25,14 +29,16 @@ final class ExportAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\\d+', 'userid' => '\\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
+    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
     public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
         // Map legacy path parameters to query parameters for backward compatibility
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
         foreach ($attributeKeysToMap as $attributeKeyToMap) {
             if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
-                $request->query->set($attributeKeyToMap, (string) $request->attributes->get($attributeKeyToMap));
+                $attributeValue = $request->attributes->get($attributeKeyToMap);
+                $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
+                $request->query->set($attributeKeyToMap, $stringValue);
             }
         }
 
@@ -52,7 +58,7 @@ final class ExportAction extends BaseController
                 'user.username' => true,
                 'entry.day' => true,
                 'entry.start' => true,
-            ]
+            ],
         );
 
         $showBillableField = $this->params->has('app_show_billable_field_in_export')
@@ -63,24 +69,24 @@ final class ExportAction extends BaseController
                 $entries,
                 $showBillableField,
                 $exportQueryDto->billable,
-                $exportQueryDto->tickettitles
+                $exportQueryDto->tickettitles,
             );
         }
 
         $username = (string) $service->getUsername($exportQueryDto->userid);
 
         $filename = strtolower(
-            $exportQueryDto->year.'_'
-            .str_pad((string) $exportQueryDto->month, 2, '0', STR_PAD_LEFT)
-            .'_'
-            .str_replace(' ', '-', $username)
+            $exportQueryDto->year . '_'
+            . str_pad((string) $exportQueryDto->month, 2, '0', STR_PAD_LEFT)
+            . '_'
+            . str_replace(' ', '-', $username),
         );
 
         $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
         $reader->setReadFilter(new LOReadFilter());
 
         $spreadsheet = $reader->load(
-            $this->kernel->getProjectDir().'/public/template.xlsx'
+            $this->kernel->getProjectDir() . '/public/template.xlsx',
         );
 
         $sheet = $spreadsheet->getSheet(0);
@@ -112,7 +118,7 @@ final class ExportAction extends BaseController
             }
 
             $activity = $entry->getActivity();
-            if (!is_null($activity)) {
+            if (null !== $activity) {
                 if ($activity->isHoliday()) {
                     ++$stats[$abbr]['holidays'];
                 }
@@ -126,15 +132,15 @@ final class ExportAction extends BaseController
                 $activity = ' ';
             }
 
-            if ($entry->getDay() instanceof \DateTimeInterface) {
+            if ($entry->getDay() instanceof DateTimeInterface) {
                 self::setCellDate($sheet, 'A', $lineNumber, $entry->getDay());
             }
 
-            if ($entry->getStart() instanceof \DateTimeInterface) {
+            if ($entry->getStart() instanceof DateTimeInterface) {
                 self::setCellHours($sheet, 'B', $lineNumber, $entry->getStart());
             }
 
-            if ($entry->getEnd() instanceof \DateTimeInterface) {
+            if ($entry->getEnd() instanceof DateTimeInterface) {
                 self::setCellHours($sheet, 'C', $lineNumber, $entry->getEnd());
             }
 
@@ -148,28 +154,28 @@ final class ExportAction extends BaseController
                     $customerName = (string) $projectEntity->getCustomer()->getName();
                 }
             }
-            $sheet->setCellValue('D'.$lineNumber, $customerName);
+            $sheet->setCellValue('D' . $lineNumber, $customerName);
 
             $projectName = '';
             $projectEntity = $entry->getProject();
             if ($projectEntity instanceof \App\Entity\Project) {
                 $projectName = (string) $projectEntity->getName();
             }
-            $sheet->setCellValue('E'.$lineNumber, $projectName);
-            $sheet->setCellValue('F'.$lineNumber, $activity);
-            $sheet->setCellValue('G'.$lineNumber, $entry->getDescription());
-            $sheet->setCellValue('H'.$lineNumber, $entry->getTicket());
-            $sheet->setCellValue('I'.$lineNumber, '=C'.$lineNumber.'-B'.$lineNumber);
-            $sheet->setCellValue('J'.$lineNumber, $abbr);
-            $sheet->setCellValue('K'.$lineNumber, $entry->getExternalReporter());
-            $sheet->setCellValue('L'.$lineNumber, $entry->getExternalSummary());
-            $sheet->setCellValue('M'.$lineNumber, implode(', ', $entry->getExternalLabels()));
+            $sheet->setCellValue('E' . $lineNumber, $projectName);
+            $sheet->setCellValue('F' . $lineNumber, $activity);
+            $sheet->setCellValue('G' . $lineNumber, $entry->getDescription());
+            $sheet->setCellValue('H' . $lineNumber, $entry->getTicket());
+            $sheet->setCellValue('I' . $lineNumber, '=C' . $lineNumber . '-B' . $lineNumber);
+            $sheet->setCellValue('J' . $lineNumber, $abbr);
+            $sheet->setCellValue('K' . $lineNumber, $entry->getExternalReporter());
+            $sheet->setCellValue('L' . $lineNumber, $entry->getExternalSummary());
+            $sheet->setCellValue('M' . $lineNumber, implode(', ', $entry->getExternalLabels()));
             if ($showBillableField) {
-                $sheet->setCellValue('N'.$lineNumber, (int) ((bool) $entry->getBillable()));
+                $sheet->setCellValue('N' . $lineNumber, (int) ((bool) $entry->getBillable()));
             }
 
             if ($exportQueryDto->tickettitles) {
-                $sheet->setCellValue('O'.$lineNumber, $entry->getTicketTitle());
+                $sheet->setCellValue('O' . $lineNumber, $entry->getTicketTitle());
             }
 
             ++$lineNumber;
@@ -179,18 +185,19 @@ final class ExportAction extends BaseController
         $lineNumber = 2;
         ksort($stats);
         foreach ($stats as $user => $userStats) {
-            $sheet->setCellValue('A'.$lineNumber, $user);
-            $sheet->setCellValue('B'.$lineNumber, $exportQueryDto->month);
-            $sheet->setCellValue('D'.$lineNumber, '=SUMIF(ZE!$J$1:$J$5000,A'.$lineNumber.',ZE!$I$1:$I$5000)');
-            $sheet->getStyle('D'.$lineNumber)
+            $sheet->setCellValue('A' . $lineNumber, $user);
+            $sheet->setCellValue('B' . $lineNumber, $exportQueryDto->month);
+            $sheet->setCellValue('D' . $lineNumber, '=SUMIF(ZE!$J$1:$J$5000,A' . $lineNumber . ',ZE!$I$1:$I$5000)');
+            $sheet->getStyle('D' . $lineNumber)
                 ->getNumberFormat()
-                ->setFormatCode('[HH]:MM');
+                ->setFormatCode('[HH]:MM')
+            ;
             if ($userStats['holidays'] > 0) {
-                $sheet->setCellValue('E'.$lineNumber, $userStats['holidays']);
+                $sheet->setCellValue('E' . $lineNumber, $userStats['holidays']);
             }
 
             if ($userStats['sickdays'] > 0) {
-                $sheet->setCellValue('F'.$lineNumber, $userStats['sickdays']);
+                $sheet->setCellValue('F' . $lineNumber, $userStats['sickdays']);
             }
 
             ++$lineNumber;
@@ -199,41 +206,42 @@ final class ExportAction extends BaseController
         $tmp = tempnam(sys_get_temp_dir(), 'ttt-export-');
         $filePath = false !== $tmp
             ? $tmp
-            : $this->kernel->getProjectDir().'/var/tmp/'.uniqid('ttt-export-', true).'.xlsx';
+            : $this->kernel->getProjectDir() . '/var/tmp/' . uniqid('ttt-export-', true) . '.xlsx';
 
         $xlsx = new Xlsx($spreadsheet);
         $xlsx->save($filePath);
 
         $response = new Response();
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        $response->headers->set('Content-disposition', 'attachment;filename='.$filename.'.xlsx');
+        $response->headers->set('Content-disposition', 'attachment;filename=' . $filename . '.xlsx');
 
         $content = file_get_contents($filePath) ?: '';
         $response->setContent($content);
         unlink($filePath);
+
         return $response;
     }
 
-    protected static function setCellDate(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD): void
+    protected static function setCellDate(Worksheet $worksheet, string $column, int $row, DateTimeInterface $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD): void
     {
         $worksheet->setCellValue(
-            $column.$row,
-            \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date)
+            $column . $row,
+            \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date),
         );
-        $worksheet->getStyle($column.$row)
+        $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode($format);
+            ->setFormatCode($format)
+        ;
     }
 
-    protected static function setCellHours(Worksheet $worksheet, string $column, int $row, \DateTimeInterface $date): void
+    protected static function setCellHours(Worksheet $worksheet, string $column, int $row, DateTimeInterface $date): void
     {
         $dateValue = (float) \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
-        $worksheet->setCellValue($column.$row, $hourValue);
-        $worksheet->getStyle($column.$row)
+        $worksheet->setCellValue($column . $row, $hourValue);
+        $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode('HH:MM');
+            ->setFormatCode('HH:MM')
+        ;
     }
 }
-
-

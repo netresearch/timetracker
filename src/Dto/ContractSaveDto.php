@@ -1,16 +1,21 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Validator\Constraints\ContractDatesValid;
+use App\Validator\Constraints\ValidUser;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ContractDatesValid]
 final class ContractSaveDto
 {
     public int $id = 0;
 
     #[Assert\Positive(message: 'Please enter a valid user.')]
+    #[ValidUser]
     public int $user_id = 0;
 
     #[Assert\NotBlank(message: 'Please enter a valid contract start.')]
@@ -53,6 +58,3 @@ final class ContractSaveDto
         return $self;
     }
 }
-
-
-

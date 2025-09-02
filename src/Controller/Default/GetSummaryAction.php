@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -7,8 +8,8 @@ use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Model\JsonResponse;
 use App\Response\Error;
-use Symfony\Component\HttpFoundation\Request;
 use App\Service\Util\TimeCalculationService;
+use Symfony\Component\HttpFoundation\Request;
 
 final class GetSummaryAction extends BaseController
 {
@@ -45,6 +46,7 @@ final class GetSummaryAction extends BaseController
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         if (!$objectRepository->find($entryId)) {
             $message = $this->translator->trans('No entry for id.');
+
             return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 
@@ -53,12 +55,10 @@ final class GetSummaryAction extends BaseController
         if ($data['project']['estimation']) {
             $data['project']['quota'] = $this->timeCalculationService->formatQuota(
                 $data['project']['total'],
-                $data['project']['estimation']
+                $data['project']['estimation'],
             );
         }
 
         return new JsonResponse($data);
     }
 }
-
-

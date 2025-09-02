@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Status;
@@ -6,11 +7,9 @@ namespace App\Controller\Status;
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class CheckStatusAction extends BaseController
 {
-
     #[\Symfony\Component\Routing\Attribute\Route(path: '/status/check', name: 'check_status', methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse
     {
@@ -19,5 +18,3 @@ final class CheckStatusAction extends BaseController
         return new JsonResponse(['loginStatus' => $login]);
     }
 }
-
-

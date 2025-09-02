@@ -1,19 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Model;
 
-use Tests\AbstractWebTestCase;
 use App\Model\Base;
+use Tests\AbstractWebTestCase;
+
+use function array_key_exists;
+use function count;
 
 class TestModel extends Base
 {
-    protected $name         = 'Name';
+    protected $name = 'Name';
 
-    protected $id           = 500;
+    protected $id = 500;
 
-    protected $workspace    = 'internal';
+    protected $workspace = 'internal';
 
-    protected $active       = true;
+    protected $active = true;
 
     public function getName()
     {
@@ -36,16 +41,21 @@ class TestModel extends Base
     }
 }
 
-class BaseTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class BaseTest extends AbstractWebTestCase
 {
     public function testBaseModelByTestModel(): void
     {
         $testModel = new TestModel();
         $result = $testModel->toArray();
 
-        $this->assertEquals(4, count($result));
-        $this->assertEquals(true, array_key_exists('id', $result));
-        $this->assertEquals(500, $result['id']);
-        $this->assertEquals(true, $result['active']);
+        self::assertSame(4, count($result));
+        self::assertTrue(array_key_exists('id', $result));
+        self::assertSame(500, $result['id']);
+        self::assertTrue($result['active']);
     }
 }

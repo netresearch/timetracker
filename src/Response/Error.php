@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -8,6 +9,10 @@ declare(strict_types=1);
 namespace App\Response;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Throwable;
+
+use function ini_get;
+use function is_string;
 
 /**
  * Class Error.
@@ -16,13 +21,14 @@ class Error extends JsonResponse
 {
     /**
      * Error constructor.
+     *
      * @psalm-suppress PropertyNotSetInConstructor
      */
     public function __construct(
         string $errorMessage,
         int $statusCode,
         ?string $forwardUrl = null,
-        ?\Throwable $throwable = null,
+        ?Throwable $throwable = null,
     ) {
         $message = ['message' => $errorMessage];
 
@@ -40,7 +46,7 @@ class Error extends JsonResponse
     /**
      * @return array{
      *   message: string,
-     *   class: class-string<\Throwable>,
+     *   class: class-string<Throwable>,
      *   code: int|string,
      *   file: string,
      *   line: int,
@@ -48,9 +54,9 @@ class Error extends JsonResponse
      *   previous: array<string, mixed>|null
      * }|null
      */
-    protected function getExceptionAsArray(?\Throwable $throwable = null): ?array
+    protected function getExceptionAsArray(?Throwable $throwable = null): ?array
     {
-        if (!$throwable instanceof \Throwable) {
+        if (!$throwable instanceof Throwable) {
             return null;
         }
 

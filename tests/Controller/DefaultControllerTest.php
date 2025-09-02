@@ -1,14 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
+use App\Service\ClockInterface;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Tests\AbstractWebTestCase;
 use Tests\Service\TestClock;
-use App\Service\ClockInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use PHPUnit\Framework\Attributes\DataProvider;
 
-class DefaultControllerTest extends AbstractWebTestCase
+use function count;
+use function sprintf;
+
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class DefaultControllerTest extends AbstractWebTestCase
 {
     private ?TestClock $testClock = null;
 
@@ -29,11 +40,11 @@ class DefaultControllerTest extends AbstractWebTestCase
             }
         }
 
-        if (!$this->testClock instanceof \Tests\Service\TestClock) {
-            $this->fail('Could not retrieve TestClock service. Ensure it is registered and public in the test environment.');
+        if (!$this->testClock instanceof TestClock) {
+            self::fail('Could not retrieve TestClock service. Ensure it is registered and public in the test environment.');
         }
 
-        $this->testClock->setTestNow(new \DateTimeImmutable('2023-10-24 12:00:00'));
+        $this->testClock->setTestNow(new DateTimeImmutable('2023-10-24 12:00:00'));
     }
 
     protected function tearDown(): void
@@ -44,7 +55,7 @@ class DefaultControllerTest extends AbstractWebTestCase
     /**
      * AdminController and DefaultController both have a function
      * with the name getCustomersAction()
-     * To differentiate them we give this one the suffix Default
+     * To differentiate them we give this one the suffix Default.
      */
     public function testGetCustomersActionDefault(): void
     {
@@ -113,25 +124,23 @@ class DefaultControllerTest extends AbstractWebTestCase
                     'internal_jira_ticket_system' => 0,
                     'estimationText' => '0m',
                 ],
-            ]
+            ],
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllProjects', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
-        $this->assertLength(2); //2 Projects for customer 1 in Database
+        $this->assertLength(2); // 2 Projects for customer 1 in Database
     }
 
     /**
      * Without parameter customer, the response will contain
      *  all project belonging to the
      * customer belonging to the teams of the current user +
-     * all projects of global customers
+     * all projects of global customers.
      *
      * With a customer the response contains from the
      * above projects the ones with global project
      * status + the one belonging to the customer
-     *
-     *
      */
     public function testGetProjectsAction(): void
     {
@@ -248,7 +257,7 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure($expectedJson);
     }
 
-    //-------------- activities routes ----------------------------------------
+    // -------------- activities routes ----------------------------------------
     public function testGetActivitiesAction(): void
     {
         $expectedJson = [
@@ -267,9 +276,9 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure($expectedJson);
     }
 
-    //-------------- users routes ----------------------------------------
+    // -------------- users routes ----------------------------------------
     /**
-     * Returns all users
+     * Returns all users.
      */
     public function testGetUsersAction(): void
     {
@@ -297,7 +306,7 @@ class DefaultControllerTest extends AbstractWebTestCase
     }
 
     /**
-     * Returns the user logged in seassion
+     * Returns the user logged in seassion.
      */
     public function testGetUsersActionDev(): void
     {
@@ -317,7 +326,7 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure($expectedJson);
     }
 
-    //-------------- data routes ----------------------------------------
+    // -------------- data routes ----------------------------------------
     public function testGetDataActionDefaultParameter(): void
     {
         // Clock is mocked to 2023-10-24 (Tuesday) in setUp.
@@ -365,45 +374,12 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertLength(2); // Assert exactly 2 entries are returned
     }
 
-    /**
-     * Data provider for testGetDataActionForParameter
-     *
-     * Provides different scenarios: a non-Monday workday and a Monday.
-     *
-     * @return array<string, array{mockDate: string, daysParam: int, expectedCount: int, expectedDate: string}>
-     */
-    public static function getDataActionParameterProvider(): array
-    {
-        // Correction: Monday 1 day -> count is 2, most recent date is 24/10/2023
-        // Let's adjust the provider data
-        return [
-            'tuesday_1_day' => [
-                'mockDate' => '2023-10-24 10:00:00',
-                'daysParam' => 1,
-                'expectedCount' => 1,
-                'expectedDate' => '24/10/2023'
-            ],
-            'monday_1_day' => [
-                'mockDate' => '2023-10-23 10:00:00',
-                'daysParam' => 1,
-                'expectedCount' => 2,
-                'expectedDate' => '24/10/2023' // Entry 4 is most recent in results (ORDER BY day DESC)
-            ],
-            'monday_3_days' => [
-                'mockDate' => '2023-10-23 10:00:00',
-                'daysParam' => 3,
-                'expectedCount' => 2,
-                'expectedDate' => '24/10/2023'
-            ],
-        ];
-    }
-
-    #[DataProvider('getDataActionParameterProvider')]
+    #[DataProvider('provideGetDataActionForParameterCases')]
     public function testGetDataActionForParameter(string $mockDate, int $daysParam, int $expectedCount, string $expectedDate): void
     {
         // Set the clock to the date provided by the data provider
-        $this->assertNotNull($this->testClock, 'TestClock was not initialized in setUp');
-        $this->testClock->setTestNow(new \DateTimeImmutable($mockDate));
+        self::assertNotNull($this->testClock, 'TestClock was not initialized in setUp');
+        $this->testClock->setTestNow(new DateTimeImmutable($mockDate));
 
         $parameter = [
             'days' => $daysParam,
@@ -413,75 +389,107 @@ class DefaultControllerTest extends AbstractWebTestCase
         $expectedEntryKeys = [
             'id', 'date', 'start', 'end', 'user', 'customer', 'project',
             'activity', 'description', 'ticket', 'class', 'duration',
-            'extTicket', 'extTicketUrl'
+            'extTicket', 'extTicketUrl',
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getData/days/' . $parameter['days']);
         $this->assertStatusCode(200);
 
         $responseData = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($responseData);
+        self::assertIsArray($responseData);
 
         // Assert the exact count of entries returned
-        $this->assertCount($expectedCount, $responseData, sprintf('Failed asserting that count %d matches expected %d for date %s / days %d', count($responseData), $expectedCount, $mockDate, $daysParam));
+        self::assertCount($expectedCount, $responseData, sprintf('Failed asserting that count %d matches expected %d for date %s / days %d', count($responseData), $expectedCount, $mockDate, $daysParam));
 
         // Only perform structure checks if we expect results
         if ($expectedCount > 0) {
             // Loop through returned entries and check structure
-            for ($i = 0; $i < $expectedCount; $i++) {
-                $this->assertArrayHasKey($i, $responseData, 'Response missing index ' . $i);
-                $this->assertArrayHasKey('entry', $responseData[$i], sprintf("Response item %d missing 'entry' key.", $i));
+            for ($i = 0; $i < $expectedCount; ++$i) {
+                self::assertArrayHasKey($i, $responseData, 'Response missing index ' . $i);
+                self::assertArrayHasKey('entry', $responseData[$i], sprintf("Response item %d missing 'entry' key.", $i));
                 $entry = $responseData[$i]['entry'];
-                $this->assertIsArray($entry, sprintf("Response item %d['entry'] is not an array.", $i));
+                self::assertIsArray($entry, sprintf("Response item %d['entry'] is not an array.", $i));
 
                 // Check if all expected keys exist in the entry
                 foreach ($expectedEntryKeys as $expectedEntryKey) {
-                    $this->assertArrayHasKey($expectedEntryKey, $entry, sprintf("Response item %d['entry'] missing key '%s'.", $i, $expectedEntryKey));
+                    self::assertArrayHasKey($expectedEntryKey, $entry, sprintf("Response item %d['entry'] missing key '%s'.", $i, $expectedEntryKey));
                 }
             }
 
             // Assert the date of the *first* entry (most recent due to ORDER BY)
-            $this->assertSame($expectedDate, $responseData[0]['entry']['date'], 'Date in first response entry does not match expected most recent date.');
-        } else {
-            // If no count expected, ensure response is empty (already handled by assertCount)
-            // $this->assertEmpty($responseData, 'Expected empty response but got content.');
+            self::assertSame($expectedDate, $responseData[0]['entry']['date'], 'Date in first response entry does not match expected most recent date.');
         }
+        // If no count expected, ensure response is empty (already handled by assertCount)
+        // $this->assertEmpty($responseData, 'Expected empty response but got content.');
     }
 
-    //-------------- summary routes ----------------------------------------
+    /**
+     * Data provider for testGetDataActionForParameter.
+     *
+     * Provides different scenarios: a non-Monday workday and a Monday.
+     *
+     * @return array<string, array{mockDate: string, daysParam: int, expectedCount: int, expectedDate: string}>
+     */
+    public static function provideGetDataActionForParameterCases(): iterable
+    {
+        // Correction: Monday 1 day -> count is 2, most recent date is 24/10/2023
+        // Let's adjust the provider data
+        return [
+            'tuesday_1_day' => [
+                'mockDate' => '2023-10-24 10:00:00',
+                'daysParam' => 1,
+                'expectedCount' => 1,
+                'expectedDate' => '24/10/2023',
+            ],
+            'monday_1_day' => [
+                'mockDate' => '2023-10-23 10:00:00',
+                'daysParam' => 1,
+                'expectedCount' => 2,
+                'expectedDate' => '24/10/2023', // Entry 4 is most recent in results (ORDER BY day DESC)
+            ],
+            'monday_3_days' => [
+                'mockDate' => '2023-10-23 10:00:00',
+                'daysParam' => 3,
+                'expectedCount' => 2,
+                'expectedDate' => '24/10/2023',
+            ],
+        ];
+    }
+
+    // -------------- summary routes ----------------------------------------
     public function testGetSummaryAction(): void
     {
         // Find an existing entry to test with
-        $entityManager = static::getContainer()->get('doctrine')->getManager();
+        $entityManager = self::getContainer()->get('doctrine')->getManager();
         $entry = $entityManager->getRepository(\App\Entity\Entry::class)->findOneBy([]);
 
         if (!$entry) {
-            $this->markTestSkipped('No entries found in the database.');
+            self::markTestSkipped('No entries found in the database.');
         }
 
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_POST,
             '/getSummary',
-            ['id' => $entry->getId()]
+            ['id' => $entry->getId()],
         );
 
         $this->assertStatusCode(200);
 
         // Verify we have data in the expected format
         $response = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertArrayHasKey('customer', $response);
-        $this->assertArrayHasKey('project', $response);
-        $this->assertArrayHasKey('activity', $response);
-        $this->assertArrayHasKey('ticket', $response);
+        self::assertArrayHasKey('customer', $response);
+        self::assertArrayHasKey('project', $response);
+        self::assertArrayHasKey('activity', $response);
+        self::assertArrayHasKey('ticket', $response);
 
         // Check structure of each section
         foreach (['customer', 'project', 'activity', 'ticket'] as $section) {
-            $this->assertArrayHasKey('scope', $response[$section]);
-            $this->assertArrayHasKey('name', $response[$section]);
-            $this->assertArrayHasKey('entries', $response[$section]);
-            $this->assertArrayHasKey('total', $response[$section]);
-            $this->assertArrayHasKey('own', $response[$section]);
-            $this->assertArrayHasKey('estimation', $response[$section]);
+            self::assertArrayHasKey('scope', $response[$section]);
+            self::assertArrayHasKey('name', $response[$section]);
+            self::assertArrayHasKey('entries', $response[$section]);
+            self::assertArrayHasKey('total', $response[$section]);
+            self::assertArrayHasKey('own', $response[$section]);
+            self::assertArrayHasKey('estimation', $response[$section]);
         }
     }
 
@@ -489,7 +497,7 @@ class DefaultControllerTest extends AbstractWebTestCase
     {
         // test for non existent id
         $parameter = [
-            'id' => 999,  //req
+            'id' => 999,  // req
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/getSummary', $parameter);
         $this->assertStatusCode(404, 'Second delete did not return expected 404');
@@ -506,16 +514,16 @@ class DefaultControllerTest extends AbstractWebTestCase
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
         // Check structure
-        $this->assertArrayHasKey('today', $response);
-        $this->assertArrayHasKey('week', $response);
-        $this->assertArrayHasKey('month', $response);
+        self::assertArrayHasKey('today', $response);
+        self::assertArrayHasKey('week', $response);
+        self::assertArrayHasKey('month', $response);
 
         // Check data types
         foreach (['today', 'week', 'month'] as $period) {
-            $this->assertArrayHasKey('duration', $response[$period]);
-            $this->assertIsNumeric($response[$period]['duration']);
-            $this->assertArrayHasKey('count', $response[$period]);
-            $this->assertIsBool($response[$period]['count']);
+            self::assertArrayHasKey('duration', $response[$period]);
+            self::assertIsNumeric($response[$period]['duration']);
+            self::assertArrayHasKey('count', $response[$period]);
+            self::assertIsBool($response[$period]['count']);
         }
     }
 
@@ -528,17 +536,17 @@ class DefaultControllerTest extends AbstractWebTestCase
 
         // Check that the page contains expected elements
         $content = $response->getContent();
-        $this->assertStringContainsString('<title>', $content);
-        #$this->assertStringContainsString($this->getParameter('app_title'), $content);
+        self::assertStringContainsString('<title>', $content);
+        // $this->assertStringContainsString($this->getParameter('app_title'), $content);
 
         // Check for the main application structure
-        $this->assertStringContainsString('let projectsData = ', $content);
+        self::assertStringContainsString('let projectsData = ', $content);
     }
 
     public function testIndexActionWithoutAuthenticationRedirectsToLogin(): void
     {
         $this->ensureKernelShutdown();
-        $this->client = static::createClient();
+        $this->client = self::createClient();
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
@@ -563,15 +571,15 @@ class DefaultControllerTest extends AbstractWebTestCase
         $data = json_decode($content, true);
 
         // Verify basic structure
-        $this->assertIsArray($data);
+        self::assertIsArray($data);
 
         // Verify entries structure if there are any entries
-        if ($data !== []) {
+        if ([] !== $data) {
             $entry = reset($data)['entry'];
-            $this->assertArrayHasKey('id', $entry);
-            $this->assertArrayHasKey('customer', $entry);
-            $this->assertArrayHasKey('project', $entry);
-            $this->assertArrayHasKey('activity', $entry);
+            self::assertArrayHasKey('id', $entry);
+            self::assertArrayHasKey('customer', $entry);
+            self::assertArrayHasKey('project', $entry);
+            self::assertArrayHasKey('activity', $entry);
         }
     }
 
@@ -587,15 +595,15 @@ class DefaultControllerTest extends AbstractWebTestCase
         $data = json_decode($content, true);
 
         // Verify structure
-        $this->assertIsArray($data);
+        self::assertIsArray($data);
 
         // Check that at least one customer exists
-        $this->assertGreaterThan(0, count($data));
+        self::assertGreaterThan(0, count($data));
 
         // Check structure of first customer
         $customer = reset($data)['customer'];
-        $this->assertArrayHasKey('id', $customer);
-        $this->assertArrayHasKey('name', $customer);
+        self::assertArrayHasKey('id', $customer);
+        self::assertArrayHasKey('name', $customer);
     }
 
     public function testGetTrackingActivitiesAction(): void
@@ -610,15 +618,15 @@ class DefaultControllerTest extends AbstractWebTestCase
         $data = json_decode($content, true);
 
         // Verify structure
-        $this->assertIsArray($data);
+        self::assertIsArray($data);
 
         // Check that at least one activity exists
-        $this->assertGreaterThan(0, count($data));
+        self::assertGreaterThan(0, count($data));
 
         // Check structure of first activity
         $activity = reset($data)['activity'];
-        $this->assertArrayHasKey('id', $activity);
-        $this->assertArrayHasKey('name', $activity);
+        self::assertArrayHasKey('id', $activity);
+        self::assertArrayHasKey('name', $activity);
     }
 
     public function testGetHolidaysAction(): void
@@ -631,9 +639,9 @@ class DefaultControllerTest extends AbstractWebTestCase
             [
                 'holiday' => [
                     'date' => true,
-                    'name' => true
-                ]
-            ]
+                    'name' => true,
+                ],
+            ],
         ];
 
         // Verify the JSON structure if there are holiday entries
@@ -641,7 +649,7 @@ class DefaultControllerTest extends AbstractWebTestCase
         if (!empty($responseContent)) {
             $this->assertJsonStructure($expectedJson);
         } else {
-            $this->assertIsArray($responseContent);
+            self::assertIsArray($responseContent);
         }
     }
 
@@ -652,10 +660,10 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         // CSV export should contain specific headers
         $content = $this->client->getResponse()->getContent();
-        $this->assertStringContainsString('Datum', $content);
-        $this->assertStringContainsString('Kunde', $content);
-        $this->assertStringContainsString('Projekt', $content);
-        $this->assertStringContainsString('Tätigkeit', $content);
+        self::assertStringContainsString('Datum', $content);
+        self::assertStringContainsString('Kunde', $content);
+        self::assertStringContainsString('Projekt', $content);
+        self::assertStringContainsString('Tätigkeit', $content);
     }
 
     public function testGetTicketTimeSummaryJsAction(): void
@@ -665,13 +673,13 @@ class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         $raw = $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($raw);
+        self::assertNotEmpty($raw);
         $json = json_decode($raw, true);
-        $this->assertIsString($json);
+        self::assertIsString($json);
 
         // The endpoint injects absolute TT base URL
-        $this->assertStringContainsString('http://localhost/', $json);
-        $this->assertStringContainsString('/getTicketTimeSummary/', $json);
+        self::assertStringContainsString('http://localhost/', $json);
+        self::assertStringContainsString('/getTicketTimeSummary/', $json);
     }
 
     public function testJiraOAuthCallbackAction(): void
@@ -685,6 +693,6 @@ class DefaultControllerTest extends AbstractWebTestCase
 
         // We accept either 200 text response or redirect back to start, depending on the mocked services
         $status = $this->client->getResponse()->getStatusCode();
-        $this->assertContains($status, [200, 302, 500], 'Status not in expected set');
+        self::assertContains($status, [200, 302, 500], 'Status not in expected set');
     }
 }

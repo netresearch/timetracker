@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -16,13 +17,20 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Dto\DatabaseResultDto;
 use App\Entity\Entry;
 use App\Entity\User;
-use App\Service\Util\TimeCalculationService;
 use App\Service\ClockInterface;
+use App\Service\TypeSafety\ArrayTypeHelper;
+use App\Service\Util\TimeCalculationService;
+use DateInterval;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
+
+use function sprintf;
 
 /**
  * Class EntryRepository.
@@ -52,7 +60,7 @@ class EntryRepository extends ServiceEntityRepository
         $date = $this->clock->today();
         while ($workingDays > 0) {
             ++$days;
-            $date = $date->sub(new \DateInterval('P1D'));
+            $date = $date->sub(new DateInterval('P1D'));
             $dayOfWeek = (int) $date->format('N'); // 1 (Mon) .. 7 (Sun)
             if ($dayOfWeek < 6) {
                 --$workingDays;
@@ -77,7 +85,7 @@ class EntryRepository extends ServiceEntityRepository
      * Returns work log entries for user and recent days.
      * Uses DQL.
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return array<int, Entry>
      */
@@ -86,27 +94,31 @@ class EntryRepository extends ServiceEntityRepository
         $today = $this->clock->today();
         $calendarDays = $this->getCalendarDaysByWorkDays($days);
 
-        $fromDate = $calendarDays <= 0 ? $today : $today->sub(new \DateInterval('P'.$calendarDays.'D'));
+        $fromDate = $calendarDays <= 0 ? $today : $today->sub(new DateInterval('P' . $calendarDays . 'D'));
 
         $entityManager = $this->getEntityManager();
         $query = $entityManager->createQuery(
             'SELECT e FROM App\Entity\Entry e'
-            .' WHERE e.user = :user_id AND e.day >= :fromDate'
-            .' ORDER BY e.day, e.start ASC'
+            . ' WHERE e.user = :user_id AND e.day >= :fromDate'
+            . ' ORDER BY e.day, e.start ASC',
         )->setParameter('user_id', $user->getId(), \Doctrine\DBAL\ParameterType::INTEGER)
-         ->setParameter('fromDate', $fromDate);
+            ->setParameter('fromDate', $fromDate)
+        ;
 
-        return $query->getResult();
+        /** @var Entry[] $result */
+        $result = $query->getResult();
+        
+        return $result;
     }
 
     /**
      * get all entries of a user in a given year and month.
      *
-     * @param int   $userId     Filter entries by user
-     * @param int   $year       Filter entries by year
-     * @param int   $month      Filter entries by month
-     * @param int   $projectId  Filter entries by project
-     * @param int   $customerId Filter entries by customer
+     * @param int                      $userId     Filter entries by user
+     * @param int                      $year       Filter entries by year
+     * @param int                      $month      Filter entries by month
+     * @param int                      $projectId  Filter entries by project
+     * @param int                      $customerId Filter entries by customer
      * @param array<string, bool>|null $arSort
      *
      * @return array<int, Entry>
@@ -124,7 +136,8 @@ class EntryRepository extends ServiceEntityRepository
 
         $queryBuilder->select('entry')
             ->from(Entry::class, 'entry')
-            ->leftJoin('entry.user', 'user');
+            ->leftJoin('entry.user', 'user')
+        ;
 
         foreach ($arSort as $strField => $bAsc) {
             $queryBuilder->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
@@ -147,12 +160,16 @@ class EntryRepository extends ServiceEntityRepository
 
         if (0 < $year) {
             $queryBuilder->andWhere(
-                $queryBuilder->expr()->like('entry.day', ':month')
+                $queryBuilder->expr()->like('entry.day', ':month'),
             );
             $queryBuilder->setParameter('month', sprintf('%04d-%02d-%%', $year, $month ?? 0), \Doctrine\DBAL\ParameterType::STRING);
         }
 
-        return $queryBuilder->getQuery()->getResult();
+        /** @var Entry[] $result */
+        $result = $queryBuilder->getQuery()->getResult();
+        
+        // Doctrine guarantees Entry[] when querying Entry repository
+        return $result;
     }
 
     /**
@@ -169,15 +186,16 @@ class EntryRepository extends ServiceEntityRepository
 
         $query = $entityManager->createQuery(
             'SELECT e FROM App\Entity\Entry e'
-            .' WHERE e.user = :user_id'
-            .' AND e.day = :day'
-            .' ORDER BY e.start ASC, e.end ASC, e.id ASC'
+            . ' WHERE e.user = :user_id'
+            . ' AND e.day = :day'
+            . ' ORDER BY e.start ASC, e.end ASC, e.id ASC',
         )->setParameter('user_id', $userId, \Doctrine\DBAL\ParameterType::INTEGER)
-            ->setParameter('day', $day);
+            ->setParameter('day', $day)
+        ;
 
-        /** @var array<int, Entry> $result */
+        /** @var Entry[] $result */
         $result = $query->getResult();
-
+        
         return $result;
     }
 
@@ -201,7 +219,7 @@ class EntryRepository extends ServiceEntityRepository
         $params = [
             'userId' => $userId,
             // Format date for SQL parameter binding
-            'fromDate' => $today->sub(new \DateInterval('P'.$calendarDays.'D'))->format('Y-m-d'),
+            'fromDate' => $today->sub(new DateInterval('P' . $calendarDays . 'D'))->format('Y-m-d'),
         ];
 
         $sql = [];
@@ -242,14 +260,13 @@ class EntryRepository extends ServiceEntityRepository
         $result = $statement->executeQuery()->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
 
         $data = [];
-        foreach ($result as &$line) {
-            $line['user'] = (int) $line['user'];
-            $line['customer'] = (int) $line['customer'];
-            $line['project'] = (int) $line['project'];
-            $line['activity'] = (int) $line['activity'];
-            $line['duration'] = $this->timeCalculationService->formatDuration((int) $line['duration']);
-            $line['class'] = (int) $line['class'];
-            $data[] = ['entry' => $line];
+        foreach ($result as $line) {
+            // Type-safe transformation using DTO
+            $transformedLine = DatabaseResultDto::transformEntryRow($line);
+            // Ensure duration is numeric (int or float) for formatDuration
+            $duration = is_numeric($transformedLine['duration']) ? (float) $transformedLine['duration'] : 0;
+            $transformedLine['duration'] = $this->timeCalculationService->formatDuration($duration);
+            $data[] = ['entry' => $transformedLine];
         }
 
         return $data;
@@ -259,10 +276,8 @@ class EntryRepository extends ServiceEntityRepository
      * Get array of entries of given user and ticketsystem which should be synced to the ticketsystem.
      * Ordered by date, starttime desc.
      *
-     * @param int $userId
-     * @param int $ticketSystemId
-     * @param int $maxResults     (optional) max number of results to be returned
-     *                            if null: no result limitation
+     * @param int $maxResults (optional) max number of results to be returned
+     *                        if null: no result limitation
      *
      * @return Entry[]
      */
@@ -282,22 +297,27 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('user_id', $userId)
             ->setParameter('ticket_system_id', $ticketSystemId)
             ->orderBy('e.day', 'DESC')
-            ->addOrderBy('e.start', 'DESC');
+            ->addOrderBy('e.start', 'DESC')
+        ;
 
         if ((int) $maxResults > 0) {
             $queryBuilder->setMaxResults((int) $maxResults);
         }
 
-        return $queryBuilder->getQuery()->getResult();
+        /** @var Entry[] $result */
+        $result = $queryBuilder->getQuery()->getResult();
+        
+        // Doctrine guarantees Entry[] when querying Entry repository
+        return $result;
     }
 
     /**
      * Query summary information regarding the current entry for the following
      * scopes: customer, project, activity, ticket.
      *
-     * @throws \Doctrine\DBAL\Exception
-     *
      * @param array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}> $data
+     *
+     * @throws \Doctrine\DBAL\Exception
      *
      * @return array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}>
      */
@@ -375,7 +395,7 @@ class EntryRepository extends ServiceEntityRepository
 
         // Prepare parameters for binding
         $params = ['userId' => $userId];
-        
+
         if ($entry->getCustomer() instanceof \App\Entity\Customer) {
             $params['customerId'] = $entry->getCustomer()->getId();
         }
@@ -388,53 +408,33 @@ class EntryRepository extends ServiceEntityRepository
         if ('' !== $entry->getTicket()) {
             $params['ticketName'] = $entry->getTicket();
         }
-        
+
         // Build and execute the UNION query with prepared statements
         $fullQuery = implode(' ', $sql['customer'])
-            .' UNION '.implode(' ', $sql['project'])
-            .' UNION '.implode(' ', $sql['activity'])
-            .' UNION '.implode(' ', $sql['ticket']);
-        
+            . ' UNION ' . implode(' ', $sql['project'])
+            . ' UNION ' . implode(' ', $sql['activity'])
+            . ' UNION ' . implode(' ', $sql['ticket']);
+
         $statement = $connection->prepare($fullQuery);
         foreach ($params as $key => $value) {
             $statement->bindValue($key, $value);
         }
-        
+
         $result = $statement->executeQuery()->fetchAllAssociative();
 
-        // ensure consistent array shapes with correct scalar casts
-        $data['customer'] = isset($result[0]) ? [
-            'scope' => (string) $result[0]['scope'],
-            'name' => (string) ($result[0]['name'] ?? ''),
-            'entries' => (int) ($result[0]['entries'] ?? 0),
-            'total' => (int) ($result[0]['total'] ?? 0),
-            'own' => (int) ($result[0]['own'] ?? 0),
-            'estimation' => (int) ($result[0]['estimation'] ?? 0),
-        ] : ['scope' => 'customer', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
-        $data['project'] = isset($result[1]) ? [
-            'scope' => (string) $result[1]['scope'],
-            'name' => (string) ($result[1]['name'] ?? ''),
-            'entries' => (int) ($result[1]['entries'] ?? 0),
-            'total' => (int) ($result[1]['total'] ?? 0),
-            'own' => (int) ($result[1]['own'] ?? 0),
-            'estimation' => (int) ($result[1]['estimation'] ?? 0),
-        ] : ['scope' => 'project', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
-        $data['activity'] = isset($result[2]) ? [
-            'scope' => (string) $result[2]['scope'],
-            'name' => (string) ($result[2]['name'] ?? ''),
-            'entries' => (int) ($result[2]['entries'] ?? 0),
-            'total' => (int) ($result[2]['total'] ?? 0),
-            'own' => (int) ($result[2]['own'] ?? 0),
-            'estimation' => (int) ($result[2]['estimation'] ?? 0),
-        ] : ['scope' => 'activity', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
-        $data['ticket'] = isset($result[3]) ? [
-            'scope' => (string) $result[3]['scope'],
-            'name' => (string) ($result[3]['name'] ?? ''),
-            'entries' => (int) ($result[3]['entries'] ?? 0),
-            'total' => (int) ($result[3]['total'] ?? 0),
-            'own' => (int) ($result[3]['own'] ?? 0),
-            'estimation' => (int) ($result[3]['estimation'] ?? 0),
-        ] : ['scope' => 'ticket', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
+        // ensure consistent array shapes using DTO transformations
+        $data['customer'] = isset($result[0]) 
+            ? DatabaseResultDto::transformScopeRow($result[0], 'customer')
+            : ['scope' => 'customer', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
+        $data['project'] = isset($result[1]) 
+            ? DatabaseResultDto::transformScopeRow($result[1], 'project')
+            : ['scope' => 'project', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
+        $data['activity'] = isset($result[2]) 
+            ? DatabaseResultDto::transformScopeRow($result[2], 'activity')
+            : ['scope' => 'activity', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
+        $data['ticket'] = isset($result[3]) 
+            ? DatabaseResultDto::transformScopeRow($result[3], 'ticket')
+            : ['scope' => 'ticket', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
 
         return $data;
     }
@@ -512,95 +512,120 @@ class EntryRepository extends ServiceEntityRepository
      *           [maxResults]       => int max number of returned datasets
      *           [visibility_user]  => user_id restricts entry visibility by users teams
      *
-     * @throws \Exception
-     *
      * @param array<string, mixed> $arFilter
+     *
+     * @throws Exception
      */
     /**
      * @param array<string, mixed> $arFilter
+     *
      * @return \Doctrine\ORM\Query<int, Entry>
      */
     public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\Query
     {
         $queryBuilder = $this->createQueryBuilder('e');
 
-        if (isset($arFilter['customer']) && !is_null($arFilter['customer'])) {
+        $customerId = ArrayTypeHelper::getInt($arFilter, 'customer');
+        if ($customerId !== null) {
             $queryBuilder
                 ->andWhere('e.customer = :customer')
-                ->setParameter('customer', (int) $arFilter['customer']);
+                ->setParameter('customer', $customerId)
+            ;
         }
 
-        if (isset($arFilter['project']) && !is_null($arFilter['project'])) {
+        $projectId = ArrayTypeHelper::getInt($arFilter, 'project');
+        if ($projectId !== null) {
             $queryBuilder
                 ->andWhere('e.project = :project')
-                ->setParameter('project', (int) $arFilter['project']);
+                ->setParameter('project', $projectId)
+            ;
         }
 
-        if (isset($arFilter['user']) && !is_null($arFilter['user'])) {
+        $userId = ArrayTypeHelper::getInt($arFilter, 'user');
+        if ($userId !== null) {
             $queryBuilder
                 ->andWhere('e.user = :user')
-                ->setParameter('user', (int) $arFilter['user']);
+                ->setParameter('user', $userId)
+            ;
         }
 
-        if (isset($arFilter['teams']) && !is_null($arFilter['teams'])) {
+        $teamId = ArrayTypeHelper::getInt($arFilter, 'teams');
+        if ($teamId !== null) {
             $queryBuilder
                 ->join('e.user', 'u')
                 ->join('u.teams', 't')
                 ->andWhere('t.id = :team')
-                ->setParameter('team', (int) $arFilter['teams']);
+                ->setParameter('team', $teamId)
+            ;
         }
 
-        if (isset($arFilter['datestart']) && !is_null($arFilter['datestart'])) {
-            $date = new \DateTime($arFilter['datestart']);
+        $dateStart = ArrayTypeHelper::getString($arFilter, 'datestart');
+        if ($dateStart !== null) {
+            $date = new DateTime($dateStart);
             $queryBuilder->andWhere('e.day >= :start')
-                ->setParameter('start', $date->format('Y-m-d'));
+                ->setParameter('start', $date->format('Y-m-d'))
+            ;
         }
 
-        if (isset($arFilter['dateend']) && !is_null($arFilter['dateend'])) {
-            $date = new \DateTime($arFilter['dateend']);
+        $dateEnd = ArrayTypeHelper::getString($arFilter, 'dateend');
+        if ($dateEnd !== null) {
+            $date = new DateTime($dateEnd);
             $queryBuilder->andWhere('e.day <= :end')
-                ->setParameter('end', $date->format('Y-m-d'));
+                ->setParameter('end', $date->format('Y-m-d'))
+            ;
         }
 
-        if (isset($arFilter['activity']) && !is_null($arFilter['activity'])) {
+        $activityId = ArrayTypeHelper::getInt($arFilter, 'activity');
+        if ($activityId !== null) {
             $queryBuilder
                 ->andWhere('e.activity = :activity')
-                ->setParameter('activity', (int) $arFilter['activity']);
+                ->setParameter('activity', $activityId)
+            ;
         }
 
-        if (isset($arFilter['ticket']) && !is_null($arFilter['ticket'])) {
+        $ticket = ArrayTypeHelper::getString($arFilter, 'ticket');
+        if ($ticket !== null) {
             $queryBuilder
                 ->andWhere('e.ticket LIKE :ticket')
-                ->setParameter('ticket', $arFilter['ticket']);
+                ->setParameter('ticket', $ticket)
+            ;
         }
 
-        if (isset($arFilter['description']) && !is_null($arFilter['description'])) {
+        $description = ArrayTypeHelper::getString($arFilter, 'description');
+        if ($description !== null) {
             $queryBuilder
                 ->andWhere('e.description LIKE :description')
-                ->setParameter('description', '%'.$arFilter['description'].'%');
+                ->setParameter('description', '%' . $description . '%')
+            ;
         }
 
-        if (isset($arFilter['maxResults']) && (int) $arFilter['maxResults'] > 0) {
+        $maxResults = ArrayTypeHelper::getInt($arFilter, 'maxResults');
+        if ($maxResults !== null && $maxResults > 0) {
             $queryBuilder
                 ->orderBy('e.id', 'DESC')
-                ->setMaxResults((int) $arFilter['maxResults']);
+                ->setMaxResults($maxResults)
+            ;
         }
 
         // pagination offset
-        if (isset($arFilter['page']) && isset($arFilter['maxResults'])) {
+        $page = ArrayTypeHelper::getInt($arFilter, 'page');
+        $maxResultsForPagination = ArrayTypeHelper::getInt($arFilter, 'maxResults');
+        if ($page !== null && $maxResultsForPagination !== null) {
             $queryBuilder
-                ->setFirstResult((int) $arFilter['page'] * $arFilter['maxResults']);
+                ->setFirstResult($page * $maxResultsForPagination)
+            ;
         }
 
-        if (isset($arFilter['visibility_user']) && !is_null($arFilter['visibility_user'])) {
+        $visibilityUser = ArrayTypeHelper::getInt($arFilter, 'visibility_user');
+        if ($visibilityUser !== null) {
             $queryBuilder
                 ->andWhere('e.user = :vis_user')
-                ->setParameter('vis_user', (int) $arFilter['visibility_user']);
+                ->setParameter('vis_user', $visibilityUser)
+            ;
         }
 
-        /** @var \Doctrine\ORM\Query<int, Entry> $query */
-        $query = $queryBuilder->getQuery();
-        return $query;
+        /** @var \Doctrine\ORM\Query<int, Entry> */
+        return $queryBuilder->getQuery();
     }
 
     /**
@@ -620,12 +645,13 @@ class EntryRepository extends ServiceEntityRepository
      *           [maxResults]       => int max number of returned datasets
      *           [visibility_user]  => user_id restricts entry visibility by users teams
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return array<int, Entry>
      */
     /**
      * @param array<string, mixed> $arFilter
+     *
      * @return array<int, Entry>
      */
     public function findByFilterArray(array $arFilter = []): array
@@ -659,7 +685,7 @@ class EntryRepository extends ServiceEntityRepository
                 'name' => $row['name'] ?? null,
                 'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
             ],
-            $rows
+            $rows,
         );
     }
 
@@ -688,7 +714,7 @@ class EntryRepository extends ServiceEntityRepository
                 'username' => $row['username'],
                 'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
             ],
-            $rows
+            $rows,
         );
     }
 }

@@ -1,9 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
 
 use App\Model\Base;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -15,21 +17,21 @@ class Holiday extends Base
 {
     #[ORM\Id]
     #[ORM\Column(name: 'day', type: 'date')]
-    private \DateTime $day;
+    private DateTime $day;
 
     #[ORM\Column(name: 'name', type: 'string', length: 255)]
     private string $name;
 
-    public function __construct(string|\DateTime $day, string $name)
+    public function __construct(string|DateTime $day, string $name)
     {
         $this->setDay($day);
         $this->setName($name);
     }
 
-    public function setDay(string|\DateTime $day): static
+    public function setDay(string|DateTime $day): static
     {
-        if (!$day instanceof \DateTime) {
-            $day = new \DateTime($day);
+        if (!$day instanceof DateTime) {
+            $day = new DateTime($day);
         }
 
         $this->day = $day;
@@ -40,7 +42,7 @@ class Holiday extends Base
     /**
      * Get day.
      */
-    public function getDay(): ?\DateTime
+    public function getDay(): ?DateTime
     {
         return $this->day;
     }
@@ -71,7 +73,7 @@ class Holiday extends Base
     public function toArray(): array
     {
         return [
-            'day' => $this->getDay() instanceof \DateTime ? $this->getDay()->format('d/m/Y') : null,
+            'day' => $this->getDay() instanceof DateTime ? $this->getDay()->format('d/m/Y') : null,
             'description' => $this->getName(),
         ];
     }

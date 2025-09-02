@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -27,6 +28,10 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Throwable;
+
+use function is_array;
+use function is_string;
 
 /**
  * BaseController.php.
@@ -55,7 +60,7 @@ class BaseController extends AbstractController
         ManagerRegistry $managerRegistry,
         ParameterBagInterface $parameterBag,
         TranslatorInterface $translator,
-        KernelInterface $kernel
+        KernelInterface $kernel,
     ): void {
         $this->managerRegistry = $managerRegistry;
         $this->doctrineRegistry = $managerRegistry; // BC for legacy usages
@@ -103,7 +108,7 @@ class BaseController extends AbstractController
                                 $user = $candidate;
                             }
                         }
-                    } catch (\Throwable) {
+                    } catch (Throwable) {
                         // ignore and fall through
                     }
                 }
@@ -202,8 +207,9 @@ class BaseController extends AbstractController
             return '' !== $token;
         }
         if (is_array($token)) {
-            return $token !== [];
+            return [] !== $token;
         }
+
         return true;
     }
 
@@ -248,11 +254,10 @@ class BaseController extends AbstractController
     /**
      * helper method to shorten the usage of the translator in the controllers.
      *
-     * @param string $id         translation identifier
+     * @param string               $id         translation identifier
      * @param array<string, mixed> $parameters
-     * @param string $domain     translation file domain
-     * @param null   $locale     translation locale
-
+     * @param string               $domain     translation file domain
+     * @param null                 $locale     translation locale
      */
     protected function translate(
         string $id,

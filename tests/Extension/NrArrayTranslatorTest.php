@@ -1,36 +1,45 @@
 <?php
+
+declare(strict_types=1);
 /**
- * UnitTest for the json array translator for twig-templates
+ * UnitTest for the json array translator for twig-templates.
  *
  * PHP version 5
  *
  * @category  Twig_Extension
- * @package   App\Extension
+ *
  * @author    Norman Kante <norman.kante@netresearch.de>
  * @copyright 2013 Netresearch App Factory AG
  * @license   No license
- * @link      http://www.netresearch.de
+ *
+ * @see      http://www.netresearch.de
  */
 
 namespace Tests\Extension;
 
 use App\Extension\NrArrayTranslator;
-use Tests\AbstractWebTestCase;
-use PHPUnit_Framework_TestCase;
 use Symfony\Component\Translation\Translator;
+use Tests\AbstractWebTestCase;
+
+use function array_key_exists;
+use function is_array;
 
 /**
- * Class NrArrayTranslatorTest
+ * Class NrArrayTranslatorTest.
  *
  * @category Twig_Extenstion
- * @package  App\Tests\Extension
+ *
  * @author   Norman Kante <norman.kante@netresearch.de>
  * @license  No license
- * @link     http://www.netresearch.de
+ *
+ * @see     http://www.netresearch.de
+ *
+ * @internal
+ *
+ * @coversNothing
  */
-class NrArrayTranslatorTest extends AbstractWebTestCase
+final class NrArrayTranslatorTest extends AbstractWebTestCase
 {
-
     /**
      * @var Translator symfony translator
      */
@@ -42,7 +51,7 @@ class NrArrayTranslatorTest extends AbstractWebTestCase
     protected $nrArrayTranslator;
 
     /**
-     * setup the symfony translator and the NrArrayTranslator for this test
+     * setup the symfony translator and the NrArrayTranslator for this test.
      */
     protected function setUp(): void
     {
@@ -51,75 +60,75 @@ class NrArrayTranslatorTest extends AbstractWebTestCase
     }
 
     /**
-     * check the name value of the extension
+     * check the name value of the extension.
      */
     public function testGetName(): void
     {
-        $this->assertEquals(
+        self::assertSame(
             $this->nrArrayTranslator->getName(),
-            'nr_array_translator'
+            'nr_array_translator',
         );
     }
 
     /**
-     * checks the getFilters
+     * checks the getFilters.
      */
     public function testGetFilters(): void
     {
         $filters = $this->nrArrayTranslator->getFilters();
-        $this->assertTrue(is_array($filters));
-        $this->assertTrue(array_key_exists('nr_array_translator', $filters));
-        $this->assertTrue(
-            $filters['nr_array_translator'] instanceof \Twig\TwigFilter
+        self::assertTrue(is_array($filters));
+        self::assertTrue(array_key_exists('nr_array_translator', $filters));
+        self::assertTrue(
+            $filters['nr_array_translator'] instanceof \Twig\TwigFilter,
         );
     }
 
     /**
-     * check te filterArray() functionality
+     * check te filterArray() functionality.
      */
     public function testFilterArray(): void
     {
         $dataToTranslate = [];
         $dataToTranslate[]['activity'] = [
-            'id' => 1, 'name' => 'Entwicklung'
+            'id' => 1, 'name' => 'Entwicklung',
         ];
         $dataToTranslate[]['activity'] = [
-            'id' => 2, 'name' => 'QA'
+            'id' => 2, 'name' => 'QA',
         ];
         $dataToTranslate[]['activity'] = [
-            'id' => 3, 'name' => 'Administration'
+            'id' => 3, 'name' => 'Administration',
         ];
         $dataToTranslate[]['ignoreMe'] = [
-            'id' => 3, 'name' => 'Administration'
+            'id' => 3, 'name' => 'Administration',
         ];
 
         $dataToTranslateJson = json_encode($dataToTranslate);
 
-        $this->assertEquals(
+        self::assertSame(
             $dataToTranslateJson,
             $this->nrArrayTranslator->filterArray(
                 $dataToTranslateJson,
                 'activity',
                 'activities',
-                ['name']
-            )
+                ['name'],
+            ),
         );
 
-        $this->assertEquals(
+        self::assertSame(
             $dataToTranslateJson,
             $this->nrArrayTranslator->filterArray(
                 $dataToTranslateJson,
                 'activity',
-                'activities'
-            )
+                'activities',
+            ),
         );
 
-        $this->assertEquals(
+        self::assertSame(
             $dataToTranslateJson,
             $this->nrArrayTranslator->filterArray(
                 $dataToTranslateJson,
-                'activity'
-            )
+                'activity',
+            ),
         );
     }
 }

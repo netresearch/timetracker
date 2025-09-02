@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -9,6 +10,7 @@ use App\Entity\TicketSystem;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
@@ -45,7 +47,7 @@ final class SaveTicketSystemAction extends BaseController
         // Basic length validation handled by DTO constraints via MapRequestPayload (422)
 
         $sameNamedSystem = $objectRepository->findOneByName($ticketSystemSaveDto->name);
-        if ($sameNamedSystem instanceof TicketSystem && $ticketSystem->getId() != $sameNamedSystem->getId()) {
+        if ($sameNamedSystem instanceof TicketSystem && $ticketSystem->getId() !== $sameNamedSystem->getId()) {
             $response = new Response($this->translate('The ticket system name provided already exists.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -58,8 +60,8 @@ final class SaveTicketSystemAction extends BaseController
             $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);
             $em->flush();
-        } catch (\Exception $exception) {
-            $response = new Response($this->translate('Error on save').': '.$exception->getMessage());
+        } catch (Exception $exception) {
+            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 
             return $response;
@@ -68,6 +70,3 @@ final class SaveTicketSystemAction extends BaseController
         return new JsonResponse($ticketSystem->toArray());
     }
 }
-
-
-

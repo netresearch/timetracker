@@ -1,11 +1,15 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Repository;
 
 use App\Entity\Project;
+use App\Service\TypeSafety\ArrayTypeHelper;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+
+use function is_array;
 
 /**
  * @extends ServiceEntityRepository<\App\Entity\Project>
@@ -20,7 +24,7 @@ class ProjectRepository extends ServiceEntityRepository
     /**
      * Returns an array structure with keys of customer IDs and an "all" key.
      * Values are arrays of associative project arrays (id, name, jiraId, active).
-     * 
+     *
      * @param array<int, array{customer: array{id:int}}|array<string, mixed>> $customers
      *
      * @return array<int|string, array<int, array{id:int, name:string, jiraId:string|null, active?:bool}>>
@@ -33,13 +37,22 @@ class ProjectRepository extends ServiceEntityRepository
 
         $projects = [];
         foreach ($customers as $customer) {
+            $customerData = $customer['customer'] ?? null;
+            if (!is_array($customerData)) {
+                continue;
+            }
+            $customerId = ArrayTypeHelper::getInt((array) $customerData, 'id');
+            if ($customerId === null) {
+                continue;
+            }
+            
             foreach ($userProjects as $userProject) {
                 $up = $userProject['project'] ?? null;
-                if (is_array($up) && ($customer['customer']['id'] === ($up['customer'] ?? null))) {
-                    $projects[$customer['customer']['id']][] = [
-                        'id' => (int) ($up['id'] ?? 0),
-                        'name' => (string) ($up['name'] ?? ''),
-                        'jiraId' => $up['jiraId'] ?? null,
+                if (is_array($up) && ($customerId === ArrayTypeHelper::getInt((array) $up, 'customer'))) {
+                    $projects[$customerId][] = [
+                        'id' => ArrayTypeHelper::getInt($up, 'id', 0) ?? 0,
+                        'name' => ArrayTypeHelper::getString($up, 'name', '') ?? '',
+                        'jiraId' => ArrayTypeHelper::getString($up, 'jiraId'),
                         'active' => (bool) ($up['active'] ?? false),
                     ];
                 }
@@ -47,9 +60,9 @@ class ProjectRepository extends ServiceEntityRepository
 
             foreach ($globalProjects as $globalProject) {
                 if ($globalProject instanceof Project) {
-                    $projects[$customer['customer']['id']][] = [
-                        'id' => (int) $globalProject->getId(),
-                        'name' => (string) $globalProject->getName(),
+                    $projects[$customerId][] = [
+                        'id' => $globalProject->getId(),
+                        'name' => $globalProject->getName(),
                         'jiraId' => $globalProject->getJiraId(),
                         'active' => (bool) $globalProject->getActive(),
                     ];
@@ -61,13 +74,13 @@ class ProjectRepository extends ServiceEntityRepository
             $up = $userProject['project'] ?? null;
             if (is_array($up)) {
                 $projects['all'][] = [
-                    'id' => (int) ($up['id'] ?? 0),
-                    'name' => (string) ($up['name'] ?? ''),
+                    'id' => ArrayTypeHelper::getInt($up, 'id', 0),
+                    'name' => ArrayTypeHelper::getString($up, 'name', ''),
                     'active' => (bool) ($up['active'] ?? false),
-                    'customer' => (int) ($up['customer'] ?? 0),
+                    'customer' => ArrayTypeHelper::getInt($up, 'customer', 0),
                     'global' => (bool) ($up['global'] ?? false),
-                    'jiraId' => $up['jiraId'] ?? null,
-                    'jira_id' => $up['jiraId'] ?? null,
+                    'jiraId' => ArrayTypeHelper::getString($up, 'jiraId'),
+                    'jira_id' => ArrayTypeHelper::getString($up, 'jiraId'),
                     'subtickets' => [],
                     'entries' => [],
                     'projectLead' => $up['projectLead'] ?? null,
@@ -90,7 +103,7 @@ class ProjectRepository extends ServiceEntityRepository
 
         foreach ($projects as &$project) {
             // Both branches construct arrays; phpstan knows they are arrays
-            usort($project, static fn(array $a, array $b): int => strcmp($a['name'], $b['name']));
+            usort($project, static fn (array $a, array $b): int => strcmp($a['name'] ?? '', $b['name'] ?? ''));
         }
 
         return $projects;
@@ -103,11 +116,13 @@ class ProjectRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('project')
             ->where('customer.global = 1 OR user.id = :userId')
-            ->setParameter('userId', $userId);
+            ->setParameter('userId', $userId)
+        ;
 
         if ($customerId > 0) {
             $queryBuilder->andWhere('project.global = 1 OR customer.id = :customerId')
-                ->setParameter('customerId', $customerId);
+                ->setParameter('customerId', $customerId)
+            ;
         }
 
         /** @var Project[] $result */
@@ -115,7 +130,8 @@ class ProjectRepository extends ServiceEntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
 
         $data = [];
         foreach ($result as $project) {
@@ -132,7 +148,7 @@ class ProjectRepository extends ServiceEntityRepository
      */
     public function findByCustomer(int $customerId = 0): array
     {
-        /** @var array<int, Project> $result */
+        /** @var array<int, Project> */
         $result = $this->createQueryBuilder('project')
             ->where('project.global = 1 OR customer.id = :customerId')
             ->setParameter('customerId', $customerId)
@@ -141,8 +157,8 @@ class ProjectRepository extends ServiceEntityRepository
             ->leftJoin('team.users', 'user')
             ->getQuery()
             ->execute();
-
-        return $result;
+        return $result
+        ;
     }
 
     public function isValidJiraPrefix(string $jiraId): int

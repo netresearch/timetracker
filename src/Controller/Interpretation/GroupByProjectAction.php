@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
+
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GroupByProjectAction extends BaseInterpretationController
@@ -26,16 +29,19 @@ final class GroupByProjectAction extends BaseInterpretationController
 
         try {
             $entries = $this->getEntries($request);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
         $projects = [];
         foreach ($entries as $entry) {
             $projectEntity = $entry->getProject();
-            if (!$projectEntity) { continue; }
+            if (!$projectEntity) {
+                continue;
+            }
 
             $pid = $projectEntity->getId();
             if (!isset($projects[$pid])) {
@@ -45,14 +51,17 @@ final class GroupByProjectAction extends BaseInterpretationController
             $projects[$pid]['hours'] += $entry->getDuration() / 60;
         }
 
-        $sum = 0; foreach ($projects as $p) { $sum += $p['hours']; }
+        $sum = 0;
+        foreach ($projects as $p) {
+            $sum += $p['hours'];
+        }
 
-        foreach ($projects as &$project) { $project['quota'] = $this->timeCalculationService->formatQuota($project['hours'], $sum); }
+        foreach ($projects as &$project) {
+            $project['quota'] = $this->timeCalculationService->formatQuota($project['hours'], $sum);
+        }
 
         usort($projects, $this->sortByName(...));
 
         return new JsonResponse($projects);
     }
 }
-
-

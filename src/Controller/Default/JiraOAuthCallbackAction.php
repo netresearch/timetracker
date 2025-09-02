@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -7,8 +8,10 @@ use App\Controller\BaseController;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
-use Symfony\Component\HttpFoundation\Request;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use Symfony\Component\HttpFoundation\Request;
+
+use function is_string;
 
 final class JiraOAuthCallbackAction extends BaseController
 {
@@ -49,5 +52,3 @@ final class JiraOAuthCallbackAction extends BaseController
         }
     }
 }
-
-

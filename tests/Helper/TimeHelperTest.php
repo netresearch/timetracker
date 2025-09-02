@@ -1,21 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Service\Util;
 
 use App\Service\Util\TimeCalculationService;
-use Tests\AbstractWebTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\AbstractWebTestCase;
 
-class TimeHelperTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class TimeHelperTest extends AbstractWebTestCase
 {
-    #[DataProvider('readable2MinutesDataProvider')]
+    #[DataProvider('provideReadable2MinutesCases')]
     public function testReadable2Minutes(int $minutes, string $readable): void
     {
         $timeCalculationService = new TimeCalculationService();
-        $this->assertEquals($minutes, $timeCalculationService->readableToMinutes($readable));
+        self::assertSame($minutes, (int) $timeCalculationService->readableToMinutes($readable));
     }
 
-    public static function readable2MinutesDataProvider(): array
+    public static function provideReadable2MinutesCases(): iterable
     {
         return [
             [0, ''],
@@ -32,9 +39,9 @@ class TimeHelperTest extends AbstractWebTestCase
             [150, '2h 30m'],
             [135, '2h 15'],
 
-            [8*60, '1d'],
-            [9*60, '1,125d'],
-            [16*60, '2d'],
+            [8 * 60, '1d'],
+            [9 * 60, '1,125d'],
+            [16 * 60, '2d'],
 
             [16 * 60 + 120, '2d 2h'],
             [16 * 60 + 122, '2d 2h 2m'],
@@ -43,20 +50,20 @@ class TimeHelperTest extends AbstractWebTestCase
             [5 * 8 * 60, '1w'],
             [10 * 8 * 60, '2w'],
 
-            [10 * 8 * 60 + 16*60, '2w 2d'],
-            [10 * 8 * 60 + 16*60 + 120, '2w 2d 2h'],
-            [10 * 8 * 60 + 16*60 + 122, '2w 2d 2h 2m']
+            [10 * 8 * 60 + 16 * 60, '2w 2d'],
+            [10 * 8 * 60 + 16 * 60 + 120, '2w 2d 2h'],
+            [10 * 8 * 60 + 16 * 60 + 122, '2w 2d 2h 2m'],
         ];
     }
 
-    #[DataProvider('minutes2ReadableDataProvider')]
-    public function testMinutes2Readable(string $readable, int $minutes, bool $useWeeks= true): void
+    #[DataProvider('provideMinutes2ReadableCases')]
+    public function testMinutes2Readable(string $readable, int $minutes, bool $useWeeks = true): void
     {
         $timeCalculationService = new TimeCalculationService();
-        $this->assertEquals($readable, $timeCalculationService->minutesToReadable($minutes, $useWeeks));
+        self::assertSame($readable, $timeCalculationService->minutesToReadable($minutes, $useWeeks));
     }
 
-    public static function minutes2ReadableDataProvider(): array
+    public static function provideMinutes2ReadableCases(): iterable
     {
         return [
             ['0m', 0],
@@ -74,64 +81,64 @@ class TimeHelperTest extends AbstractWebTestCase
             ['1w', 5 * 8 * 60],
             ['2w', 10 * 8 * 60],
 
-            ['2w 2d', 10 * 8 * 60 + 16*60],
-            ['2w 2d 2h', 10 * 8 * 60 + 16*60 + 120],
-            ['2w 2d 2h 2m', 10 * 8 * 60 + 16*60 + 122],
+            ['2w 2d', 10 * 8 * 60 + 16 * 60],
+            ['2w 2d 2h', 10 * 8 * 60 + 16 * 60 + 120],
+            ['2w 2d 2h 2m', 10 * 8 * 60 + 16 * 60 + 122],
 
-            ['12d', 10 * 8 * 60 + 16*60, false],
-            ['12d 2h', 10 * 8 * 60 + 16*60 + 120, false],
-            ['12d 2h 2m', 10 * 8 * 60 + 16*60 + 122, false]
+            ['12d', 10 * 8 * 60 + 16 * 60, false],
+            ['12d 2h', 10 * 8 * 60 + 16 * 60 + 120, false],
+            ['12d 2h 2m', 10 * 8 * 60 + 16 * 60 + 122, false],
         ];
     }
 
-    #[DataProvider('formatDurationDataProvider')]
+    #[DataProvider('provideFormatDurationCases')]
     public function testFormatDuration(int|float $duration, bool $inDays, string $value): void
     {
         $timeCalculationService = new TimeCalculationService();
-        $this->assertEquals($value, $timeCalculationService->formatDuration($duration, $inDays));
+        self::assertSame($value, $timeCalculationService->formatDuration($duration, $inDays));
     }
 
-    public static function formatDurationDataProvider(): array
+    public static function provideFormatDurationCases(): iterable
     {
         return [
-             [0, false, '00:00'],
-             [0, true, '00:00'],
-             [30, false, '00:30'],
-             [30, true, '00:30'],
-             [90, false, '01:30'],
-             [90, true, '01:30'],
-             [60 * 10, false, '10:00'],
-             [60 * 10, true, '10:00 (1.25 PT)'],
-             [60 * 8 * 42.5 + 15, false, '340:15'],
-             [60 * 8 * 42.5 + 15, true, '340:15 (42.53 PT)']
+            [0, false, '00:00'],
+            [0, true, '00:00'],
+            [30, false, '00:30'],
+            [30, true, '00:30'],
+            [90, false, '01:30'],
+            [90, true, '01:30'],
+            [60 * 10, false, '10:00'],
+            [60 * 10, true, '10:00 (1.25 PT)'],
+            [60 * 8 * 42.5 + 15, false, '340:15'],
+            [60 * 8 * 42.5 + 15, true, '340:15 (42.53 PT)'],
         ];
     }
 
-    #[DataProvider('dataProviderTestFormatQuota')]
+    #[DataProvider('provideFormatQuotaCases')]
     public function testFormatQuota(int|float $amount, int $sum, string $value): void
     {
         $timeCalculationService = new TimeCalculationService();
-        $this->assertEquals($value, $timeCalculationService->formatQuota($amount, $sum));
+        self::assertSame($value, $timeCalculationService->formatQuota($amount, $sum));
     }
 
-    public static function dataProviderTestFormatQuota(): array
+    public static function provideFormatQuotaCases(): iterable
     {
         return [
-             [0, 100, '0.00%'],
-             [100, 0, '0.00%'],
-             [100, 100, '100.00%'],
-             [45.67, 100, '45.67%']
+            [0, 100, '0.00%'],
+            [100, 0, '0.00%'],
+            [100, 100, '100.00%'],
+            [45.67, 100, '45.67%'],
         ];
     }
 
     public function testGetMinutesByLetter(): void
     {
         $timeCalculationService = new TimeCalculationService();
-        $this->assertEquals(0, $timeCalculationService->getMinutesByLetter('f'));
-        $this->assertEquals(1, $timeCalculationService->getMinutesByLetter(''));
-        $this->assertEquals(1, $timeCalculationService->getMinutesByLetter('m'));
-        $this->assertEquals(60, $timeCalculationService->getMinutesByLetter('h'));
-        $this->assertEquals(60 * 8, $timeCalculationService->getMinutesByLetter('d'));
-        $this->assertEquals(60 * 8 * 5, $timeCalculationService->getMinutesByLetter('w'));
+        self::assertSame(0, $timeCalculationService->getMinutesByLetter('f'));
+        self::assertSame(1, $timeCalculationService->getMinutesByLetter(''));
+        self::assertSame(1, $timeCalculationService->getMinutesByLetter('m'));
+        self::assertSame(60, $timeCalculationService->getMinutesByLetter('h'));
+        self::assertSame(60 * 8, $timeCalculationService->getMinutesByLetter('d'));
+        self::assertSame(60 * 8 * 5, $timeCalculationService->getMinutesByLetter('w'));
     }
 }

@@ -1,10 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
-class StatusControllerTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class StatusControllerTest extends AbstractWebTestCase
 {
     public function testCheckAction(): void
     {
@@ -26,27 +33,27 @@ class StatusControllerTest extends AbstractWebTestCase
         $content = $response->getContent();
 
         // Just verify we got HTML with expected content
-        $this->assertStringContainsString('<!DOCTYPE HTML>', $content);
-        $this->assertStringContainsString('<html>', $content);
-        $this->assertStringContainsString('Login-Status', $content);
-        $this->assertStringContainsString('class="status_active"', $content);
+        self::assertStringContainsString('<!DOCTYPE HTML>', $content);
+        self::assertStringContainsString('<html>', $content);
+        self::assertStringContainsString('Login-Status', $content);
+        self::assertStringContainsString('class="status_active"', $content);
     }
 
     public function testPageActionWithLoggedInUserReturnsActiveStatus(): void
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/page');
         $this->assertStatusCode(200);
-        $this->assertStringContainsString('class="status_active"', $this->client->getResponse()->getContent());
+        self::assertStringContainsString('class="status_active"', $this->client->getResponse()->getContent());
     }
 
     public function testPageActionWithLoggedOutUserReturnsInactiveStatus(): void
     {
         $this->ensureKernelShutdown();
-        $this->client = static::createClient();
+        $this->client = self::createClient();
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/page');
         $this->assertStatusCode(200);
-        $this->assertStringContainsString('class="status_inactive"', $this->client->getResponse()->getContent());
+        self::assertStringContainsString('class="status_inactive"', $this->client->getResponse()->getContent());
     }
 
     public function testCheckActionWithLoggedInUserReturnsActiveStatus(): void
@@ -61,7 +68,7 @@ class StatusControllerTest extends AbstractWebTestCase
     public function testCheckActionWithLoggedOutUserReturnsInactiveStatus(): void
     {
         $this->ensureKernelShutdown();
-        $this->client = static::createClient();
+        $this->client = self::createClient();
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
         $this->assertStatusCode(200);
@@ -69,6 +76,4 @@ class StatusControllerTest extends AbstractWebTestCase
             'loginStatus' => false,
         ]);
     }
-
-
 }

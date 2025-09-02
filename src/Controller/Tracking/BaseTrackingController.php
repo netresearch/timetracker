@@ -1,22 +1,25 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Tracking;
 
 use App\Controller\BaseController;
-use App\Entity\Activity;
-use App\Entity\Contract;
-use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
-use App\Model\Response;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Util\TicketService;
-use App\Util\RequestEntityHelper;
+use DateTime;
+use Exception;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
+
+use function count;
+use function is_object;
+use function sprintf;
 
 abstract class BaseTrackingController extends BaseController
 {
@@ -70,7 +73,7 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        if (!$ticketSystem->getBookTime() || 'JIRA' != $ticketSystem->getType()) {
+        if (!$ticketSystem->getBookTime() || 'JIRA' !== $ticketSystem->getType()) {
             return;
         }
 
@@ -103,7 +106,7 @@ abstract class BaseTrackingController extends BaseController
         }
 
         $entry = $entries[0];
-        if (Entry::CLASS_DAYBREAK != $entry->getClass()) {
+        if (Entry::CLASS_DAYBREAK !== $entry->getClass()) {
             $entry->setClass(Entry::CLASS_DAYBREAK);
             $objectManager->persist($entry);
             $objectManager->flush();
@@ -115,11 +118,11 @@ abstract class BaseTrackingController extends BaseController
             $entry = $entries[$c];
             $previous = $entries[$c - 1];
 
-            if (($entry->getStart() instanceof \DateTime)
-                && ($previous->getEnd() instanceof \DateTime)
+            if (($entry->getStart() instanceof DateTime)
+                && ($previous->getEnd() instanceof DateTime)
                 && ($entry->getStart()->format('H:i') > $previous->getEnd()->format('H:i'))
             ) {
-                if (Entry::CLASS_PAUSE != $entry->getClass()) {
+                if (Entry::CLASS_PAUSE !== $entry->getClass()) {
                     $entry->setClass(Entry::CLASS_PAUSE);
                     $objectManager->persist($entry);
                     $objectManager->flush();
@@ -128,11 +131,11 @@ abstract class BaseTrackingController extends BaseController
                 continue;
             }
 
-            if (($entry->getStart() instanceof \DateTime)
-                && ($previous->getEnd() instanceof \DateTime)
+            if (($entry->getStart() instanceof DateTime)
+                && ($previous->getEnd() instanceof DateTime)
                 && ($entry->getStart()->format('H:i') < $previous->getEnd()->format('H:i'))
             ) {
-                if (Entry::CLASS_OVERLAP != $entry->getClass()) {
+                if (Entry::CLASS_OVERLAP !== $entry->getClass()) {
                     $entry->setClass(Entry::CLASS_OVERLAP);
                     $objectManager->persist($entry);
                     $objectManager->flush();
@@ -141,7 +144,7 @@ abstract class BaseTrackingController extends BaseController
                 continue;
             }
 
-            if (Entry::CLASS_PLAIN != $entry->getClass()) {
+            if (Entry::CLASS_PLAIN !== $entry->getClass()) {
                 $entry->setClass(Entry::CLASS_PLAIN);
                 $objectManager->persist($entry);
                 $objectManager->flush();
@@ -152,44 +155,44 @@ abstract class BaseTrackingController extends BaseController
     /**
      * Ensures valid ticket number format.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function requireValidTicketFormat(string $ticket): void
     {
-        if (strlen($ticket) < 1) {
+        if ('' === $ticket) {
             return;
         }
 
         if ($this->ticketService && !$this->ticketService->checkFormat($ticket)) {
             $message = $this->translator->trans("The ticket's format is not recognized.");
-            throw new \Exception($message);
+            throw new Exception($message);
         }
     }
 
     /**
      * TTT-199: check if ticket prefix matches project's Jira id.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function requireValidTicketPrefix(Project $project, string $ticket): void
     {
-        if (strlen($ticket) < 1) {
+        if ('' === $ticket) {
             return;
         }
 
-        if (strlen((string) $project->getJiraId()) < 1) {
+        if ('' === (string) $project->getJiraId()) {
             return;
         }
 
         if ($this->ticketService && !$this->ticketService->checkFormat($ticket)) {
             $message = $this->translator->trans("The ticket's format is not recognized.");
-            throw new \Exception($message);
+            throw new Exception($message);
         }
 
-        $jiraId = $this->ticketService instanceof \App\Service\Util\TicketService ? $this->ticketService->getPrefix($ticket) : null;
+        $jiraId = $this->ticketService instanceof TicketService ? $this->ticketService->getPrefix($ticket) : null;
         if (null === $jiraId) {
             $message = $this->translator->trans("The ticket's format is not recognized.");
-            throw new \Exception($message);
+            throw new Exception($message);
         }
 
         $projectIds = explode(',', (string) $project->getJiraId());
@@ -202,10 +205,10 @@ abstract class BaseTrackingController extends BaseController
 
         $message = $this->translator->trans(
             "The ticket's Jira ID '%ticket_jira_id%' does not match the project's Jira ID '%project_jira_id%'.",
-            ['%ticket_jira_id%' => $jiraId, '%project_jira_id%' => $project->getJiraId()]
+            ['%ticket_jira_id%' => $jiraId, '%project_jira_id%' => $project->getJiraId()],
         );
 
-        throw new \Exception($message);
+        throw new Exception($message);
     }
 
     /**
@@ -245,7 +248,7 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        if (!$ticketSystem->getBookTime() || 'JIRA' != $ticketSystem->getType()) {
+        if (!$ticketSystem->getBookTime() || 'JIRA' !== $ticketSystem->getType()) {
             return;
         }
 
@@ -301,11 +304,11 @@ abstract class BaseTrackingController extends BaseController
         $internalJiraTicketSystem = $project->getInternalJiraTicketSystem();
         $internalJiraProjectKey = $project->getInternalJiraProjectKey();
 
-        if ($internalJiraTicketSystem === null || $internalJiraTicketSystem === '' || $internalJiraTicketSystem === '0') {
+        if (null === $internalJiraTicketSystem || '' === $internalJiraTicketSystem || '0' === $internalJiraTicketSystem) {
             return;
         }
 
-        if ($internalJiraProjectKey === null || $internalJiraProjectKey === '' || $internalJiraProjectKey === '0') {
+        if (null === $internalJiraProjectKey || '' === $internalJiraProjectKey || '0' === $internalJiraProjectKey) {
             return;
         }
 
@@ -320,8 +323,9 @@ abstract class BaseTrackingController extends BaseController
         }
 
         $internalJiraTicketSystem = $this->managerRegistry
-                ->getRepository(TicketSystem::class)
-                ->find($internalJiraTicketSystem);
+            ->getRepository(TicketSystem::class)
+            ->find($internalJiraTicketSystem)
+        ;
 
         if (!$internalJiraTicketSystem instanceof TicketSystem) {
             return;
@@ -336,21 +340,26 @@ abstract class BaseTrackingController extends BaseController
             sprintf(
                 'project = %s AND summary ~ %s',
                 $project->getInternalJiraProjectKey(),
-                $strTicket
+                $strTicket,
             ),
             ['key', 'summary'],
-            1
+            1,
         );
 
-        if (count($searchResult->issues) > 0) {
-            $issue = reset($searchResult->issues);
+        // Type-safe check for search results
+        $issues = [];
+        if (is_object($searchResult) && isset($searchResult->issues)) {
+            $issues = $searchResult->issues;
+        }
+        if (is_array($issues) && count($issues) > 0) {
+            $issue = reset($issues);
         } else {
             $issue = $this->createTicket($entry, $internalJiraTicketSystem);
         }
 
         $entry->setInternalJiraTicketOriginalKey($strTicket);
         if (!is_object($issue) || !property_exists($issue, 'key')) {
-            throw new \RuntimeException('Invalid issue response');
+            throw new RuntimeException('Invalid issue response');
         }
 
         $entry->setTicket($issue->key);
@@ -360,7 +369,7 @@ abstract class BaseTrackingController extends BaseController
         $this->updateJiraWorklog(
             $entry,
             $oldEntry,
-            $internalJiraTicketSystem
+            $internalJiraTicketSystem,
         );
     }
 
@@ -377,5 +386,3 @@ abstract class BaseTrackingController extends BaseController
         return !$bIsCurrentTicketOriginalTicket && $bDifferentTickets;
     }
 }
-
-

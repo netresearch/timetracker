@@ -6,16 +6,21 @@ namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
-class ApiSmokeTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ApiSmokeTest extends AbstractWebTestCase
 {
     public function testGetActivities(): void
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getActivities');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        if ($data !== []) {
-            $this->assertArrayHasKey('activity', $data[0]);
+        self::assertIsArray($data);
+        if ([] !== $data) {
+            self::assertArrayHasKey('activity', $data[0]);
         }
     }
 
@@ -24,9 +29,9 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllCustomers');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        if ($data !== []) {
-            $this->assertArrayHasKey('customer', $data[0]);
+        self::assertIsArray($data);
+        if ([] !== $data) {
+            self::assertArrayHasKey('customer', $data[0]);
         }
     }
 
@@ -35,9 +40,9 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllProjects');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        if ($data !== []) {
-            $this->assertArrayHasKey('project', $data[0]);
+        self::assertIsArray($data);
+        if ([] !== $data) {
+            self::assertArrayHasKey('project', $data[0]);
         }
     }
 
@@ -46,9 +51,9 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllTeams');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        if ($data !== []) {
-            $this->assertArrayHasKey('team', $data[0]);
+        self::assertIsArray($data);
+        if ([] !== $data) {
+            self::assertArrayHasKey('team', $data[0]);
         }
     }
 
@@ -57,9 +62,9 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        if ($data !== []) {
-            $this->assertArrayHasKey('user', $data[0]);
+        self::assertIsArray($data);
+        if ([] !== $data) {
+            self::assertArrayHasKey('user', $data[0]);
         }
     }
 
@@ -68,9 +73,9 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getContracts');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        if ($data !== []) {
-            $this->assertArrayHasKey('contract', $data[0]);
+        self::assertIsArray($data);
+        if ([] !== $data) {
+            self::assertArrayHasKey('contract', $data[0]);
         }
     }
 
@@ -79,7 +84,7 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getCustomers');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
+        self::assertIsArray($data);
     }
 
     public function testGetData(): void
@@ -87,7 +92,7 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getData');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
+        self::assertIsArray($data);
     }
 
     public function testGetDataDays(): void
@@ -95,7 +100,7 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getData/days/3');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
+        self::assertIsArray($data);
     }
 
     public function testGetTicketSystems(): void
@@ -103,7 +108,7 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getTicketSystems');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
+        self::assertIsArray($data);
     }
 
     public function testGetTimeSummary(): void
@@ -111,17 +116,17 @@ class ApiSmokeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getTimeSummary');
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        $this->assertArrayHasKey('today', $data);
-        $this->assertArrayHasKey('week', $data);
-        $this->assertArrayHasKey('month', $data);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('today', $data);
+        self::assertArrayHasKey('week', $data);
+        self::assertArrayHasKey('month', $data);
     }
 
     public function testGetTicketTimeSummary(): void
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getTicketTimeSummary/TIM-1');
         $status = $this->client->getResponse()->getStatusCode();
-        $this->assertContains($status, [200, 404], 'Status not in expected set');
+        self::assertContains($status, [200, 404], 'Status not in expected set');
     }
 
     public function testInterpretationEndpoints(): void
@@ -138,7 +143,7 @@ class ApiSmokeTest extends AbstractWebTestCase
         foreach ($paths as $path) {
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, $path);
             $status = $this->client->getResponse()->getStatusCode();
-            $this->assertContains($status, [200, 406], 'Status not in expected set');
+            self::assertContains($status, [200, 406], 'Status not in expected set');
         }
     }
 

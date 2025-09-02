@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Repository;
@@ -33,7 +34,8 @@ class ContractRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('contracts')
             ->join('contracts.user', 'users')
             ->orderBy('users.username', 'ASC')
-            ->addOrderBy('contracts.start', 'ASC');
+            ->addOrderBy('contracts.start', 'ASC')
+        ;
 
         /** @var \Doctrine\ORM\Query<array-key, mixed> $query */
         $query = $queryBuilder->getQuery();

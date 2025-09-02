@@ -1,15 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
 use App\Dto\AdminSyncDto;
-use App\Entity\Project;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Response\Error;
 use App\Service\SubticketSyncService;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 
@@ -39,12 +40,10 @@ final class SyncProjectSubticketsAction extends BaseController
                 [
                     'success' => true,
                     'subtickets' => $subtickets,
-                ]
+                ],
             );
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return new Error($exception->getMessage(), (int) ($exception->getCode() ?: 500));
         }
     }
 }
-
-

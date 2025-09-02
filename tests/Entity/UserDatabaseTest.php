@@ -1,17 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
-use App\Entity\User;
-use App\Entity\Team;
-use App\Entity\Entry;
 use App\Entity\Contract;
+use App\Entity\Entry;
+use App\Entity\Team;
 use App\Entity\TicketSystem;
+use App\Entity\User;
 use App\Entity\UserTicketsystem;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Tests\AbstractWebTestCase;
 
-class UserDatabaseTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class UserDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
@@ -29,9 +37,9 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setAbbr('TSU');
         $user->setType('DEV');
         $user->setLocale('de');
-        $user->setShowEmptyLine(0);
-        $user->setSuggestTime(1);
-        $user->setShowFuture(1);
+        $user->setShowEmptyLine(false);
+        $user->setSuggestTime(true);
+        $user->setShowFuture(true);
 
         // Persist to database
         $this->entityManager->persist($user);
@@ -39,19 +47,19 @@ class UserDatabaseTest extends AbstractWebTestCase
 
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $user->getId();
-        $this->assertNotNull($id, 'User ID should not be null after persist');
+        self::assertNotNull($id, 'User ID should not be null after persist');
         $this->entityManager->clear();
 
         // Fetch from database and verify
         $fetchedUser = $this->entityManager->getRepository(User::class)->find($id);
-        $this->assertNotNull($fetchedUser, 'User was not found in database');
-        $this->assertEquals('test_user', $fetchedUser->getUsername());
-        $this->assertEquals('TSU', $fetchedUser->getAbbr());
-        $this->assertEquals('DEV', $fetchedUser->getType());
-        $this->assertEquals('de', $fetchedUser->getLocale());
-        $this->assertEquals(0, $fetchedUser->getShowEmptyLine());
-        $this->assertEquals(1, $fetchedUser->getSuggestTime());
-        $this->assertEquals(1, $fetchedUser->getShowFuture());
+        self::assertNotNull($fetchedUser, 'User was not found in database');
+        self::assertSame('test_user', $fetchedUser->getUsername());
+        self::assertSame('TSU', $fetchedUser->getAbbr());
+        self::assertSame('DEV', $fetchedUser->getType());
+        self::assertSame('de', $fetchedUser->getLocale());
+        self::assertFalse($fetchedUser->getShowEmptyLine());
+        self::assertTrue($fetchedUser->getSuggestTime());
+        self::assertTrue($fetchedUser->getShowFuture());
 
         // Clean up - remove the test entity
         $this->entityManager->remove($fetchedUser);
@@ -66,9 +74,9 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setAbbr('UTU');
         $user->setType('DEV');
         $user->setLocale('de');
-        $user->setShowEmptyLine(0);
-        $user->setSuggestTime(1);
-        $user->setShowFuture(1);
+        $user->setShowEmptyLine(false);
+        $user->setSuggestTime(true);
+        $user->setShowFuture(true);
 
         // Persist to database
         $this->entityManager->persist($user);
@@ -81,23 +89,23 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setAbbr('UPU');
         $user->setType('PL');
         $user->setLocale('en');
-        $user->setShowEmptyLine(1);
-        $user->setSuggestTime(0);
-        $user->setShowFuture(0);
+        $user->setShowEmptyLine(true);
+        $user->setSuggestTime(false);
+        $user->setShowFuture(false);
 
         $this->entityManager->flush();
         $this->entityManager->clear();
 
         // Fetch and verify updates
         $updatedUser = $this->entityManager->getRepository(User::class)->find($id);
-        $this->assertEquals('updated_user', $updatedUser->getUserIdentifier());
-        $this->assertEquals('UPU', $updatedUser->getAbbr());
-        $this->assertEquals('PL', $updatedUser->getType());
-        $this->assertEquals('en', $updatedUser->getLocale());
+        self::assertSame('updated_user', $updatedUser->getUserIdentifier());
+        self::assertSame('UPU', $updatedUser->getAbbr());
+        self::assertSame('PL', $updatedUser->getType());
+        self::assertSame('en', $updatedUser->getLocale());
 
-        $this->assertEquals(1, $updatedUser->getShowEmptyLine());
-        $this->assertEquals(0, $updatedUser->getSuggestTime());
-        $this->assertEquals(0, $updatedUser->getShowFuture());
+        self::assertTrue($updatedUser->getShowEmptyLine());
+        self::assertFalse($updatedUser->getSuggestTime());
+        self::assertFalse($updatedUser->getShowFuture());
 
         // Clean up
         $this->entityManager->remove($updatedUser);
@@ -128,7 +136,7 @@ class UserDatabaseTest extends AbstractWebTestCase
 
         // Verify user is deleted
         $deletedUser = $this->entityManager->getRepository(User::class)->find($id);
-        $this->assertNull($deletedUser, 'User should be deleted from database');
+        self::assertNull($deletedUser, 'User should be deleted from database');
     }
 
     public function testTeamRelationship(): void
@@ -168,7 +176,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $fetchedUser = $this->entityManager->find(User::class, $userId);
 
         // Test team relationship
-        $this->assertCount(2, $fetchedUser->getTeams());
+        self::assertCount(2, $fetchedUser->getTeams());
 
         // Clean up
         $teams = $fetchedUser->getTeams()->toArray();
@@ -199,8 +207,8 @@ class UserDatabaseTest extends AbstractWebTestCase
         // Create contracts
         $contract1 = new Contract();
         $contract1->setUser($user);
-        $contract1->setStart(new \DateTime('2022-01-01'));
-        $contract1->setEnd(new \DateTime('2022-12-31'));
+        $contract1->setStart(new DateTime('2022-01-01'));
+        $contract1->setEnd(new DateTime('2022-12-31'));
         $contract1->setHours0(0);
         $contract1->setHours1(8);
         $contract1->setHours2(8);
@@ -211,7 +219,7 @@ class UserDatabaseTest extends AbstractWebTestCase
 
         $contract2 = new Contract();
         $contract2->setUser($user);
-        $contract2->setStart(new \DateTime('2023-01-01'));
+        $contract2->setStart(new DateTime('2023-01-01'));
         $contract2->setEnd(null);
         $contract2->setHours0(0);
         $contract2->setHours1(8);
@@ -232,7 +240,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $fetchedUser = $this->entityManager->find(User::class, $userId);
 
         // Test contract relationship
-        $this->assertCount(2, $fetchedUser->getContracts());
+        self::assertCount(2, $fetchedUser->getContracts());
 
         // Clean up
         $contracts = $fetchedUser->getContracts();
@@ -292,7 +300,7 @@ class UserDatabaseTest extends AbstractWebTestCase
         $fetchedUser = $this->entityManager->find(User::class, $userId);
 
         // Test entry relationship
-        $this->assertCount(2, $fetchedUser->getEntries());
+        self::assertCount(2, $fetchedUser->getEntries());
 
         // Clean up
         $entries = $fetchedUser->getEntries();
@@ -315,9 +323,9 @@ class UserDatabaseTest extends AbstractWebTestCase
         $user->setAbbr('TSU');
         $user->setType('DEV');
         $user->setLocale('de');
-        $user->setShowEmptyLine(0);
-        $user->setSuggestTime(1);
-        $user->setShowFuture(1);
+        $user->setShowEmptyLine(false);
+        $user->setSuggestTime(true);
+        $user->setShowFuture(true);
 
         $this->entityManager->persist($user);
 
@@ -356,17 +364,17 @@ class UserDatabaseTest extends AbstractWebTestCase
         $fetchedTicketSystem = $this->entityManager->find(TicketSystem::class, $ticketSystemId);
 
         // Test ticket system relationship
-        $this->assertCount(1, $fetchedUser->getUserTicketsystems());
+        self::assertCount(1, $fetchedUser->getUserTicketsystems());
         $userTs = $fetchedUser->getUserTicketsystems()->first();
-        $this->assertEquals('test-token', $userTs->getAccessToken());
-        $this->assertEquals('Test Ticket System', $userTs->getTicketSystem()->getName());
+        self::assertSame('test-token', $userTs->getAccessToken());
+        self::assertSame('Test Ticket System', $userTs->getTicketSystem()->getName());
 
         // Clean up
         $this->entityManager->remove($userTs);
         $this->entityManager->flush();
 
         $this->entityManager->remove($fetchedUser);
-        if ($fetchedTicketSystem instanceof \App\Entity\TicketSystem) {
+        if ($fetchedTicketSystem instanceof TicketSystem) {
             $this->entityManager->remove($fetchedTicketSystem);
         }
 
@@ -402,14 +410,14 @@ class UserDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Check roles - The implementation only adds ROLE_USER and ROLE_ADMIN roles
-        $this->assertContains('ROLE_USER', $devUser->getRoles(), 'Missing ROLE_USER for dev');
-        $this->assertNotContains('ROLE_ADMIN', $devUser->getRoles());
+        self::assertContains('ROLE_USER', $devUser->getRoles(), 'Missing ROLE_USER for dev');
+        self::assertNotContains('ROLE_ADMIN', $devUser->getRoles());
 
-        $this->assertContains('ROLE_USER', $plUser->getRoles(), 'Missing ROLE_USER for pl');
-        $this->assertNotContains('ROLE_ADMIN', $plUser->getRoles());
+        self::assertContains('ROLE_USER', $plUser->getRoles(), 'Missing ROLE_USER for pl');
+        self::assertNotContains('ROLE_ADMIN', $plUser->getRoles());
 
-        $this->assertContains('ROLE_USER', $adminUser->getRoles(), 'Missing ROLE_USER for admin');
-        $this->assertContains('ROLE_ADMIN', $adminUser->getRoles(), 'Missing ROLE_ADMIN for admin');
+        self::assertContains('ROLE_USER', $adminUser->getRoles(), 'Missing ROLE_USER for admin');
+        self::assertContains('ROLE_ADMIN', $adminUser->getRoles(), 'Missing ROLE_ADMIN for admin');
 
         // Clean up
         $this->entityManager->remove($devUser);

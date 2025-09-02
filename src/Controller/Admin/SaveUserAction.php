@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -13,13 +14,13 @@ use App\Response\Error;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
-use App\Service\Validation\UserValidator;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+
+use function sprintf;
 
 final class SaveUserAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper, UserValidator $userValidator, ValidatorInterface $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -33,24 +34,8 @@ final class SaveUserAction extends BaseController
             return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 
-        $name = $userSaveDto->username;
-        $abbr = $userSaveDto->abbr;
-        $type = $userSaveDto->type;
-
-        // uniqueness checks remain
-        if (!$userValidator->isUsernameUnique($name, $user->getId())) {
-            $response = new Response($this->translate('The user name provided already exists.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
-
-        if (!$userValidator->isAbbrUnique($abbr, $user->getId())) {
-            $response = new Response($this->translate('The user name abreviation provided already exists.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
+        // Validation is now handled by the DTO with MapRequestPayload
+        // Uniqueness checks are performed via custom validators
 
         $objectMapper->map($userSaveDto, $user);
 
@@ -71,22 +56,14 @@ final class SaveUserAction extends BaseController
             }
         }
 
-        if (0 == $user->getTeams()->count()) {
-            $response = new Response($this->translate('Every user must belong to at least one team'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-            return $response;
-        }
+        // Team validation is handled by the DTO callback
 
         $objectManager = $this->doctrineRegistry->getManager();
         $objectManager->persist($user);
         $objectManager->flush();
 
-        $data = [$user->getId(), $name, $abbr, $type];
+        $data = [$user->getId(), $userSaveDto->username, $userSaveDto->abbr, $userSaveDto->type];
 
         return new JsonResponse($data);
     }
 }
-
-
-

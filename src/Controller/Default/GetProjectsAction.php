@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -26,5 +27,3 @@ final class GetProjectsAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-

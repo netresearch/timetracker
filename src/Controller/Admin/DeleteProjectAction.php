@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -8,8 +9,12 @@ use App\Dto\IdDto;
 use App\Entity\Project;
 use App\Model\JsonResponse;
 use App\Response\Error;
+use Exception;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+
+use function sprintf;
 
 final class DeleteProjectAction extends BaseController
 {
@@ -27,13 +32,13 @@ final class DeleteProjectAction extends BaseController
             $project = $doctrine->getRepository(Project::class)->find($id);
 
             $em = $doctrine->getManager();
-            if ($project instanceof \App\Entity\Project) {
+            if ($project instanceof Project) {
                 $em->remove($project);
                 $em->flush();
             } else {
-                throw new \RuntimeException('Already deleted');
+                throw new RuntimeException('Already deleted');
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $reason = '';
             if (str_contains($exception->getMessage(), 'Integrity constraint violation')) {
                 $reason = $this->translate('Other datasets refer to this one.');
@@ -47,6 +52,3 @@ final class DeleteProjectAction extends BaseController
         return new JsonResponse(['success' => true]);
     }
 }
-
-
-

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -21,10 +22,10 @@ final class GetUsersAction extends BaseController
             /** @var \App\Repository\UserRepository $userRepo */
             $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
             $current = $userRepo->find($userId);
-            $isDev = $current && method_exists($current, 'getType') && $current->getType() === 'DEV';
+            $isDev = $current && method_exists($current, 'getType') && 'DEV' === $current->getType();
         } else {
             $userId = (int) $user->getId();
-            $isDev = $user->getType() === 'DEV';
+            $isDev = 'DEV' === $user->getType();
         }
 
         /** @var \App\Repository\UserRepository $userRepo */
@@ -34,5 +35,3 @@ final class GetUsersAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-

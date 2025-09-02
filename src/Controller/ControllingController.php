@@ -1,8 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
 
+use DateTimeInterface;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
@@ -18,16 +20,17 @@ class ControllingController extends BaseController
         Worksheet $worksheet,
         string $column,
         int $row,
-        \DateTimeInterface $date,
+        DateTimeInterface $date,
         string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD,
     ): void {
         $worksheet->setCellValue(
-            $column.$row,
-            \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date)
+            $column . $row,
+            \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date),
         );
-        $worksheet->getStyle($column.$row)
+        $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode($format);
+            ->setFormatCode($format)
+        ;
     }
 
     /**
@@ -37,15 +40,14 @@ class ControllingController extends BaseController
         Worksheet $worksheet,
         string $column,
         int $row,
-        \DateTimeInterface $date,
+        DateTimeInterface $date,
     ): void {
         $dateValue = (float) \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
-        $worksheet->setCellValue($column.$row, $hourValue);
-        $worksheet->getStyle($column.$row)
+        $worksheet->setCellValue($column . $row, $hourValue);
+        $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode('HH:MM');
+            ->setFormatCode('HH:MM')
+        ;
     }
 }
-
-

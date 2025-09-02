@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -9,6 +10,7 @@ use App\Entity\Activity;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
@@ -60,8 +62,8 @@ final class SaveActivityAction extends BaseController
             $em = $this->doctrineRegistry->getManager();
             $em->persist($activity);
             $em->flush();
-        } catch (\Exception $exception) {
-            $response = new Response($this->translate('Error on save').': '.$exception->getMessage());
+        } catch (Exception $exception) {
+            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 
             return $response;
@@ -72,6 +74,3 @@ final class SaveActivityAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-
-

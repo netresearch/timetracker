@@ -1,14 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
 
 use App\Entity\Project;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 
 class SubticketSyncService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly \App\Service\Integration\Jira\JiraOAuthApiFactory $jiraOAuthApiFactory)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly Integration\Jira\JiraOAuthApiFactory $jiraOAuthApiFactory)
     {
     }
 
@@ -17,8 +19,8 @@ class SubticketSyncService
      *
      * The project lead user's Jira tokens are used for access.
      *
-     * @throws \Exception When something goes wrong.
-     *                    Exception codes are sensible HTTP status codes
+     * @throws Exception When something goes wrong.
+     *                   Exception codes are sensible HTTP status codes
      *
      * @return (mixed|string)[] Array of subticket keys
      *
@@ -31,16 +33,17 @@ class SubticketSyncService
         } else {
             $project = $this->managerRegistry
                 ->getRepository(Project::class)
-                ->find($projectOrProjectId);
+                ->find($projectOrProjectId)
+            ;
         }
 
         if (!$project instanceof Project) {
-            throw new \Exception('Project does not exist', 404);
+            throw new Exception('Project does not exist', 404);
         }
 
         $ticketSystem = $project->getTicketSystem();
         if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
-            throw new \Exception('No ticket system configured for project', 400);
+            throw new Exception('No ticket system configured for project', 400);
         }
 
         $mainTickets = $project->getJiraTicket();
@@ -58,12 +61,12 @@ class SubticketSyncService
 
         $userWithJiraAccess = $project->getProjectLead();
         if (!$userWithJiraAccess instanceof \App\Entity\User) {
-            throw new \Exception('Project has no lead user: '.$project->getName(), 400);
+            throw new Exception('Project has no lead user: ' . $project->getName(), 400);
         }
 
         $token = $userWithJiraAccess->getTicketSystemAccessToken($ticketSystem);
         if (!$token) {
-            throw new \Exception('Project user has no token for ticket system: '.$userWithJiraAccess->getUsername().'@'.$project->getName(), 400);
+            throw new Exception('Project user has no token for ticket system: ' . $userWithJiraAccess->getUsername() . '@' . $project->getName(), 400);
         }
 
         // Create the Jira API service with our service's dependencies
@@ -77,7 +80,7 @@ class SubticketSyncService
             $allSubtickets[] = $mainTicket;
             $allSubtickets = array_merge(
                 $allSubtickets,
-                $jiraOAuthApiService->getSubtickets($mainTicket)
+                $jiraOAuthApiService->getSubtickets($mainTicket),
             );
         }
 

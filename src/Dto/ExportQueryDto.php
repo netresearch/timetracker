@@ -1,9 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Dto;
 
 use Symfony\Component\HttpFoundation\Request;
+
+use function in_array;
+use function is_bool;
 
 final class ExportQueryDto
 {
@@ -37,16 +41,20 @@ final class ExportQueryDto
 
     private static function toInt(mixed $value): int
     {
-        if ($value === null || $value === '') {
+        if (null === $value || '' === $value) {
             return 0;
         }
 
-        return (int) $value;
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return 0;
     }
 
     private static function toBool(mixed $value): bool
     {
-        if ($value === null) {
+        if (null === $value) {
             return false;
         }
 
@@ -54,9 +62,11 @@ final class ExportQueryDto
             return $value;
         }
 
-        $normalized = strtolower(trim((string) $value));
-        return in_array($normalized, ['1','true','on','yes'], true);
+        if (is_scalar($value)) {
+            $normalized = strtolower(trim((string) $value));
+            return in_array($normalized, ['1', 'true', 'on', 'yes'], true);
+        }
+
+        return false;
     }
 }
-
-

@@ -7,7 +7,12 @@ namespace Tests\Controller;
 use App\Entity\Entry;
 use Tests\AbstractWebTestCase;
 
-class DefaultControllerSummaryTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class DefaultControllerSummaryTest extends AbstractWebTestCase
 {
     public function testGetSummaryActionWithProjectEstimationComputesQuota(): void
     {
@@ -15,7 +20,7 @@ class DefaultControllerSummaryTest extends AbstractWebTestCase
         $em = $container->get('doctrine')->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
         if (!$entry) {
-            $this->markTestSkipped('No entries found in the database.');
+            self::markTestSkipped('No entries found in the database.');
         }
 
         $project = $entry->getProject();
@@ -29,13 +34,13 @@ class DefaultControllerSummaryTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($response);
-        $this->assertArrayHasKey('project', $response);
-        $this->assertArrayHasKey('quota', $response['project']);
+        self::assertIsArray($response);
+        self::assertArrayHasKey('project', $response);
+        self::assertArrayHasKey('quota', $response['project']);
         $quota = $response['project']['quota'];
         // When estimation is set, quota should be a percentage string
-        $this->assertIsString($quota);
-        $this->assertStringEndsWith('%', $quota);
+        self::assertIsString($quota);
+        self::assertStringEndsWith('%', $quota);
     }
 
     public function testGetSummaryActionWithoutEstimationLeavesZeroQuota(): void
@@ -44,7 +49,7 @@ class DefaultControllerSummaryTest extends AbstractWebTestCase
         $em = $container->get('doctrine')->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
         if (!$entry) {
-            $this->markTestSkipped('No entries found in the database.');
+            self::markTestSkipped('No entries found in the database.');
         }
 
         $project = $entry->getProject();
@@ -58,9 +63,9 @@ class DefaultControllerSummaryTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($response);
-        $this->assertArrayHasKey('project', $response);
+        self::assertIsArray($response);
+        self::assertArrayHasKey('project', $response);
         // Without estimation set, quota remains numeric zero according to default data
-        $this->assertSame(0, $response['project']['quota'] ?? 0);
+        self::assertSame(0, $response['project']['quota'] ?? 0);
     }
 }

@@ -7,7 +7,12 @@ namespace Tests\Entity;
 use App\Entity\Ticket;
 use PHPUnit\Framework\TestCase;
 
-class TicketTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class TicketTest extends TestCase
 {
     public function testGettersAndSetters(): void
     {
@@ -19,11 +24,11 @@ class TicketTest extends TestCase
         $ticket->setParentTicketNumber('ABC-1');
         $ticket->setTicketId(99);
 
-        $this->assertSame('ABC-123', $ticket->getName());
-        $this->assertSame('ABC-123', $ticket->getTicketNumber());
-        $this->assertSame(5, $ticket->getTicketSystemId());
-        $this->assertSame(120, $ticket->getEstimatedDuration());
-        $this->assertSame('ABC-1', $ticket->getParentTicketNumber());
-        $this->assertSame(99, $ticket->getTicketId());
+        self::assertSame('ABC-123', $ticket->getName());
+        self::assertSame('ABC-123', $ticket->getTicketNumber());
+        self::assertSame(5, $ticket->getTicketSystemId());
+        self::assertSame(120, $ticket->getEstimatedDuration());
+        self::assertSame('ABC-1', $ticket->getParentTicketNumber());
+        self::assertSame(99, $ticket->getTicketId());
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -11,9 +12,10 @@ use App\Entity\Preset;
 use App\Entity\Project;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 
 final class SavePresetAction extends BaseController
 {
@@ -35,20 +37,20 @@ final class SavePresetAction extends BaseController
 
         if (0 !== $id) {
             $preset = $objectRepository->find($id);
-            if (!$preset instanceof \App\Entity\Preset) {
+            if (!$preset instanceof Preset) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            // $preset is already instance of Preset due to the check above
+        // $preset is already instance of Preset due to the check above
         } else {
             $preset = new Preset();
         }
 
         try {
             if (!$customer instanceof Customer || !$project instanceof Project || !$activity instanceof Activity) {
-                throw new \Exception('Please choose a customer, a project and an activity.');
+                throw new Exception('Please choose a customer, a project and an activity.');
             }
 
             // Map scalar fields (name, description)
@@ -56,12 +58,13 @@ final class SavePresetAction extends BaseController
             // Relations set explicitly
             $preset->setCustomer($customer)
                 ->setProject($project)
-                ->setActivity($activity);
+                ->setActivity($activity)
+            ;
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($preset);
             $em->flush();
-        } catch (\Exception) {
+        } catch (Exception) {
             $response = new Response($this->translate('Please choose a customer, a project and an activity.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 
@@ -71,6 +74,3 @@ final class SavePresetAction extends BaseController
         return new JsonResponse($preset->toArray());
     }
 }
-
-
-

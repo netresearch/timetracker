@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -9,6 +10,8 @@ use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Service\Util\TimeCalculationService;
 use Symfony\Component\HttpFoundation\Request;
+
+use function count;
 
 final class GetTicketTimeSummaryAction extends BaseController
 {
@@ -29,12 +32,13 @@ final class GetTicketTimeSummaryAction extends BaseController
         }
 
         $attributes = $request->attributes;
-        $name = $attributes->has('ticket') ? $attributes->get('ticket') : null;
+        $ticket = $attributes->has('ticket') ? $attributes->get('ticket') : null;
+        $name = is_string($ticket) ? $ticket : '';
 
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        $activities = $objectRepository->getActivitiesWithTime($name ?? '');
-        $users = $objectRepository->getUsersWithTime($name ?? '');
+        $activities = $objectRepository->getActivitiesWithTime($name);
+        $users = $objectRepository->getUsersWithTime($name);
 
         if (0 === count($users)) {
             return new Response('There is no information available about this ticket.', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
@@ -61,5 +65,3 @@ final class GetTicketTimeSummaryAction extends BaseController
         return new JsonResponse($time);
     }
 }
-
-

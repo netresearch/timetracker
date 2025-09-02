@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Settings;
@@ -76,5 +77,3 @@ final class SaveSettingsAction extends BaseController
         $this->localizationService = $localizationService;
     }
 }
-
-

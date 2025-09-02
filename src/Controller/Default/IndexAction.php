@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -7,14 +8,13 @@ use App\Controller\BaseController;
 use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\User;
-use Symfony\Component\HttpFoundation\Request;
 
 final class IndexAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -46,5 +46,3 @@ final class IndexAction extends BaseController
         ]);
     }
 }
-
-

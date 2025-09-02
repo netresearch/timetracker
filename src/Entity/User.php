@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -92,7 +93,6 @@ class User implements UserInterface
     /**
      * Set username.
      *
-     *
      * @return $this
      */
     public function setUsername(string $username): static
@@ -138,7 +138,6 @@ class User implements UserInterface
 
     /**
      * Set type.
-     *
      *
      * @return $this
      */
@@ -358,7 +357,7 @@ class User implements UserInterface
     public function getUserIdentifier(): string
     {
         // Guarantee non-empty string as required by Symfony contracts
-        return $this->username !== '' ? $this->username : '_';
+        return '' !== $this->username ? $this->username : '_';
     }
 
     public function eraseCredentials(): void

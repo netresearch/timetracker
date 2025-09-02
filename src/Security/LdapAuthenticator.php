@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Security;
@@ -6,6 +7,7 @@ namespace App\Security;
 use App\Entity\Team;
 use App\Entity\User;
 use App\Service\Ldap\LdapClientService;
+use BackedEnum;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -21,6 +23,13 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\CustomCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Throwable;
+
+use function is_int;
+use function is_scalar;
+use function is_string;
+use function sprintf;
+use function strlen;
 
 class LdapAuthenticator extends AbstractLoginFormAuthenticator
 {
@@ -70,7 +79,8 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                     ->setUserPass($this->currentPassword ?? '')
                     ->setUseSSL((bool) ($this->parameterBag->get('ldap_usessl') ?? false))
                     ->setUserNameField((string) (is_scalar($this->parameterBag->get('ldap_usernamefield')) ? $this->parameterBag->get('ldap_usernamefield') : ''))
-                    ->login();
+                    ->login()
+                ;
 
                 $this->logger->info('LDAP authentication successful.', ['username' => $userIdentifier]);
 
@@ -86,7 +96,8 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 $newUser = (new User())
                     ->setUsername($userIdentifier)
                     ->setType('DEV')
-                    ->setLocale('de');
+                    ->setLocale('de')
+                ;
 
                 if (!empty($this->ldapClientService->getTeams())) {
                     $teamRepo = $this->entityManager->getRepository(Team::class);
@@ -107,21 +118,21 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 $this->logger->error('LDAP authentication error', [
                     'username' => substr($userIdentifier, 0, 3) . '***',
                     'error_code' => $ldapException->getCode(),
-                    'error_type' => get_class($ldapException)
+                    'error_type' => $ldapException::class,
                 ]);
-                
+
                 // Don't expose LDAP-specific errors to the user
                 throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.');
             } catch (UserNotFoundException $userException) {
                 // User not found and creation disabled
                 $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
                 throw $userException;
-            } catch (\Throwable $throwable) {
+            } catch (Throwable $throwable) {
                 // Generic error handling
                 $this->logger->error('Unexpected authentication error', [
                     'username' => substr($userIdentifier, 0, 3) . '***',
                     'error' => $throwable->getMessage(),
-                    'trace' => $throwable->getTraceAsString()
+                    'trace' => $throwable->getTraceAsString(),
                 ]);
                 throw new CustomUserMessageAuthenticationException('An unexpected error occurred during authentication.');
             }
@@ -132,11 +143,11 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
 
         return new Passport(
             new UserBadge($username, $userLoader),
-            new CustomCredentials(fn (): true => true, ['username' => $username]),
+            new CustomCredentials(static fn (): true => true, ['username' => $username]),
             [
                 new CsrfTokenBadge('authenticate', $csrfToken),
                 new RememberMeBadge(),
-            ]
+            ],
         );
     }
 
@@ -166,7 +177,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
             return (int) $value;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             return (int) $value->value;
         }
 
@@ -175,7 +186,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
 
     /**
      * Sanitizes LDAP input to prevent injection attacks
-     * Escapes special characters according to RFC 4515
+     * Escapes special characters according to RFC 4515.
      */
     private function sanitizeLdapInput(string $input): string
     {
@@ -186,19 +197,19 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
             '(' => '\28',
             ')' => '\29',
             "\x00" => '\00',
-            '/' => '\2f'
+            '/' => '\2f',
         ];
-        
+
         // Replace each special character with its escaped version
         return str_replace(
             array_keys($metaChars),
             array_values($metaChars),
-            $input
+            $input,
         );
     }
 
     /**
-     * Validates username format to prevent injection attacks
+     * Validates username format to prevent injection attacks.
      */
     private function isValidUsername(string $username): bool
     {
@@ -207,8 +218,8 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         if (strlen($username) > 256) {
             return false;
         }
-        
+
         // Check for basic valid characters
-        return preg_match('/^[a-zA-Z0-9._@-]+$/', $username) === 1;
+        return 1 === preg_match('/^[a-zA-Z0-9._@-]+$/', $username);
     }
 }

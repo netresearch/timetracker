@@ -1,14 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
+use App\Entity\Customer;
 use App\Entity\Team;
 use App\Entity\User;
-use App\Entity\Customer;
 use Doctrine\ORM\EntityManagerInterface;
+use Tests\AbstractWebTestCase;
 
-class TeamDatabaseTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class TeamDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
@@ -30,13 +37,13 @@ class TeamDatabaseTest extends AbstractWebTestCase
 
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $team->getId();
-        $this->assertNotNull($id, 'Team ID should not be null after persist');
+        self::assertNotNull($id, 'Team ID should not be null after persist');
         $this->entityManager->clear();
 
         // Fetch from database and verify
         $fetchedTeam = $this->entityManager->getRepository(Team::class)->find($id);
-        $this->assertNotNull($fetchedTeam, 'Team was not found in database');
-        $this->assertEquals('Test Database Team', $fetchedTeam->getName());
+        self::assertNotNull($fetchedTeam, 'Team was not found in database');
+        self::assertSame('Test Database Team', $fetchedTeam->getName());
 
         // Clean up - remove the test entity
         $this->entityManager->remove($fetchedTeam);
@@ -62,7 +69,7 @@ class TeamDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedTeam = $this->entityManager->getRepository(Team::class)->find($id);
-        $this->assertEquals('Updated Team', $updatedTeam->getName());
+        self::assertSame('Updated Team', $updatedTeam->getName());
 
         // Clean up
         $this->entityManager->remove($updatedTeam);
@@ -87,7 +94,7 @@ class TeamDatabaseTest extends AbstractWebTestCase
 
         // Verify team is deleted
         $deletedTeam = $this->entityManager->getRepository(Team::class)->find($id);
-        $this->assertNull($deletedTeam, 'Team should be deleted from database');
+        self::assertNull($deletedTeam, 'Team should be deleted from database');
     }
 
     public function testLeadUserRelationship(): void
@@ -115,8 +122,8 @@ class TeamDatabaseTest extends AbstractWebTestCase
         $fetchedTeam = $this->entityManager->find(Team::class, $teamId);
 
         // Test lead user relationship
-        $this->assertNotNull($fetchedTeam->getLeadUser());
-        $this->assertEquals('lead_user', $fetchedTeam->getLeadUser()->getUsername());
+        self::assertNotNull($fetchedTeam->getLeadUser());
+        self::assertSame('lead_user', $fetchedTeam->getLeadUser()->getUsername());
 
         // Clean up
         $this->entityManager->remove($fetchedTeam);
@@ -166,10 +173,11 @@ class TeamDatabaseTest extends AbstractWebTestCase
             ->where('t.id = :teamId')
             ->setParameter('teamId', $teamId)
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
 
         // Test user relationship
-        $this->assertCount(2, $users);
+        self::assertCount(2, $users);
 
         // Clean up
         $this->entityManager->remove($team);
@@ -215,7 +223,7 @@ class TeamDatabaseTest extends AbstractWebTestCase
         $fetchedTeam = $this->entityManager->find(Team::class, $teamId);
 
         // Test customer relationship
-        $this->assertCount(2, $fetchedTeam->getCustomers());
+        self::assertCount(2, $fetchedTeam->getCustomers());
 
         // Clean up
         $customers = $fetchedTeam->getCustomers()->toArray();

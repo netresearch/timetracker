@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Repository;
@@ -6,6 +7,7 @@ namespace App\Repository;
 use App\Entity\TicketSystem;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use ReflectionException;
 
 /**
  * @extends ServiceEntityRepository<\App\Entity\TicketSystem>
@@ -16,11 +18,11 @@ class TicketSystemRepository extends ServiceEntityRepository
     {
         parent::__construct($managerRegistry, TicketSystem::class);
     }
-    
+
     /**
      * get all ticket systems.
      *
-     * @throws \ReflectionException
+     * @throws ReflectionException
      *
      * @return array<int, array{ticketSystem: array<string, mixed>}>
      */

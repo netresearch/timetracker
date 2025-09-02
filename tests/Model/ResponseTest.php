@@ -7,7 +7,12 @@ namespace Tests\Model;
 use App\Model\Response;
 use PHPUnit\Framework\TestCase;
 
-class ResponseTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ResponseTest extends TestCase
 {
     public function testSendSetsCorsHeaders(): void
     {
@@ -17,8 +22,8 @@ class ResponseTest extends TestCase
         $this->expectOutputString('ok');
         $response->send();
 
-        $this->assertSame('*', $response->headers->get('Access-Control-Allow-Origin'));
-        $this->assertSame('GET, OPTIONS', $response->headers->get('Access-Control-Allow-Methods'));
-        $this->assertSame('3600', $response->headers->get('Access-Control-Max-Age'));
+        self::assertSame('*', $response->headers->get('Access-Control-Allow-Origin'));
+        self::assertSame('GET, OPTIONS', $response->headers->get('Access-Control-Allow-Methods'));
+        self::assertSame('3600', $response->headers->get('Access-Control-Max-Age'));
     }
 }

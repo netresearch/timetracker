@@ -5,19 +5,24 @@ declare(strict_types=1);
 namespace Tests\Service\Util;
 
 use App\Service\Util\TicketService;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 
-class TicketServiceTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class TicketServiceTest extends TestCase
 {
-    #[DataProvider('checkTicketFormatDataProvider')]
+    #[DataProvider('provideCheckTicketFormatCases')]
     public function testCheckTicketFormat(bool $expected, string $ticket): void
     {
         $ticketService = new TicketService();
-        $this->assertSame($expected, $ticketService->checkFormat($ticket));
+        self::assertSame($expected, $ticketService->checkFormat($ticket));
     }
 
-    public static function checkTicketFormatDataProvider(): array
+    public static function provideCheckTicketFormatCases(): iterable
     {
         return [
             [false, ''],
@@ -35,14 +40,14 @@ class TicketServiceTest extends TestCase
         ];
     }
 
-    #[DataProvider('prefixDataProvider')]
+    #[DataProvider('provideGetPrefixCases')]
     public function testGetPrefix(?string $expectedPrefix, string $ticket): void
     {
         $ticketService = new TicketService();
-        $this->assertSame($expectedPrefix, $ticketService->getPrefix($ticket));
+        self::assertSame($expectedPrefix, $ticketService->getPrefix($ticket));
     }
 
-    public static function prefixDataProvider(): array
+    public static function provideGetPrefixCases(): iterable
     {
         return [
             [null, ''],
@@ -53,5 +58,3 @@ class TicketServiceTest extends TestCase
         ];
     }
 }
-
-

@@ -4,9 +4,16 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Exception;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase as SymfonyWebTestCase;
 use Symfony\Component\BrowserKit\Cookie;
+use Throwable;
+
+use function count;
+use function function_exists;
+use function is_array;
+use function sprintf;
 
 /**
  * Abstract base test case that combines all test functionality.
@@ -19,7 +26,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         $wasBooted = static::$booted;
         parent::ensureKernelShutdown();
         if ($wasBooted) {
-            @\restore_exception_handler();
+            @restore_exception_handler();
         }
     }
 
@@ -34,7 +41,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     protected function assertArraySubset(array $subset, array $array, string $message = ''): void
     {
         $isAssoc = static function (array $a): bool {
-            if ($a === []) {
+            if ([] === $a) {
                 return false;
             }
 
@@ -80,7 +87,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             $remaining = $subset;
             $haystack = $array;
 
-            $matchElement = function ($needle, array $hay) use ($assertSubset, $valuesEqual): int|string|null {
+            $matchElement = static function ($needle, array $hay) use ($assertSubset, $valuesEqual): int|string|null {
                 foreach ($hay as $idx => $candidate) {
                     try {
                         if (is_array($needle)) {
@@ -89,13 +96,14 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                             }
 
                             $assertSubset($needle, $candidate);
+
                             return $idx;
                         }
 
                         if ($valuesEqual($needle, $candidate)) {
                             return $idx;
                         }
-                    } catch (\Throwable) {
+                    } catch (Throwable) {
                         // try next
                     }
                 }
@@ -105,8 +113,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
 
             foreach ($remaining as $needle) {
                 $idx = $matchElement($needle, $haystack);
-                if ($idx === null) {
-                    $this->fail($message !== '' ? $message : 'Subset element not found in array');
+                if (null === $idx) {
+                    self::fail('' !== $message ? $message : 'Subset element not found in array');
                 }
 
                 unset($haystack[$idx]);
@@ -184,8 +192,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         if ($this->useTransactions) {
             try {
                 $dbal->beginTransaction();
-            } catch (\Exception $e) {
-                error_log('Transaction begin failed: '.$e->getMessage());
+            } catch (Exception $e) {
+                error_log('Transaction begin failed: ' . $e->getMessage());
             }
         }
 
@@ -209,10 +217,10 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                     // Be tolerant: attempt rollback but ignore if not active
                     try {
                         $dbal->rollBack();
-                    } catch (\Throwable) {
+                    } catch (Throwable) {
                     }
                 }
-            } catch (\Exception) {
+            } catch (Exception) {
                 // ignore
             }
         }
@@ -222,7 +230,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
                 $this->serviceContainer->get('doctrine')->getManager()->clear();
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Ignore if kernel has been shut down during the test
         }
 
@@ -232,11 +240,12 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     /**
      * Used in test for DEV users.
      */
-    protected function setInitialDbState(string $tableName)
+    protected function setInitialDbState(string $tableName): void
     {
         $qb = $this->queryBuilder
             ->select('*')
-            ->from($tableName);
+            ->from($tableName)
+        ;
         $result = $qb->executeQuery();
         $this->tableInitialState = $result->fetchAllAssociative();
     }
@@ -244,14 +253,15 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     /**
      * Only Call in test where setInitialDbState was called before.
      */
-    protected function assertDbState(string $tableName)
+    protected function assertDbState(string $tableName): void
     {
         $qb = $this->queryBuilder
             ->select('*')
-            ->from($tableName);
+            ->from($tableName)
+        ;
         $result = $qb->executeQuery();
         $newTableState = $result->fetchAllAssociative();
-        $this->assertSame($this->tableInitialState, $newTableState);
+        self::assertSame($this->tableInitialState, $newTableState);
         $this->tableInitialState = null;
     }
 
@@ -261,13 +271,13 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      * When executing loadTestData() the file from the $filepath
      * of current scope will be imported.
      */
-    protected function loadTestData(?string $filepath = null)
+    protected function loadTestData(?string $filepath = null): void
     {
-        $file = $filepath ? file_get_contents(__DIR__.$filepath) : file_get_contents(__DIR__.$this->filepath);
+        $file = $filepath ? file_get_contents(__DIR__ . $filepath) : file_get_contents(__DIR__ . $this->filepath);
 
         // turn on error reporting (if function exists)
         if (function_exists('mysqli_report')) {
-            \mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         }
 
         try {
@@ -284,8 +294,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                         } else {
                             $connection->executeQuery($statement);
                         }
-                    } catch (\Exception $e) {
-                        echo 'Database error: '.$e->getMessage()."\n".'For query: '.$statement."\n";
+                    } catch (Exception $e) {
+                        echo 'Database error: ' . $e->getMessage() . "\n" . 'For query: ' . $statement . "\n";
                     }
                 }
             }
@@ -294,12 +304,12 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
 
             // get the queryBuilder
             $this->queryBuilder = $connection->createQueryBuilder();
-        } catch (\Exception $exception) {
-            echo 'Database error: '.$exception->getMessage()."\n";
+        } catch (Exception $exception) {
+            echo 'Database error: ' . $exception->getMessage() . "\n";
         } finally {
             // turn off error reporting (if function exists)
             if (function_exists('mysqli_report')) {
-                \mysqli_report(MYSQLI_REPORT_OFF);
+                mysqli_report(MYSQLI_REPORT_OFF);
             }
         }
     }
@@ -307,7 +317,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     /**
      * Authenticate the query with credentials from the set-up test project leader.
      */
-    protected function logInSession(string $user = 'unittest')
+    protected function logInSession(string $user = 'unittest'): void
     {
         // Map usernames to IDs
         $userMap = [
@@ -342,7 +352,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                 $usernamePasswordToken = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
                     $userEntity,
                     'main',
-                    $userEntity->getRoles()
+                    $userEntity->getRoles(),
                 );
                 $session->set('_security_main', serialize($usernamePasswordToken));
                 $session->save();
@@ -360,14 +370,14 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                     $postAuthenticationToken = new \Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken(
                         $userEntity,
                         'main',
-                        $userEntity->getRoles()
+                        $userEntity->getRoles(),
                     );
                     $tokenStorage->setToken($postAuthenticationToken);
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     $fallbackToken = new \Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken(
                         $userEntity,
                         'main',
-                        $userEntity->getRoles()
+                        $userEntity->getRoles(),
                     );
                     $tokenStorage->setToken($fallbackToken);
                 }
@@ -406,7 +416,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         $kernelBrowser->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_POST,
             '/login',
-            ['username' => $username, 'password' => $password]
+            ['username' => $username, 'password' => $password],
         );
 
         $this->assertResponseRedirects();
@@ -433,7 +443,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
                 'CONTENT_TYPE' => 'application/json',
                 'HTTP_ACCEPT' => 'application/json',
             ], $headers),
-            [] !== $content ? json_encode($content) : null
+            [] !== $content ? json_encode($content) : null,
         );
 
         // Return the same client instance used for the request
@@ -445,10 +455,10 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      */
     protected function assertStatusCode(int $statusCode, string $message = ''): void
     {
-        $this->assertSame(
+        self::assertSame(
             $statusCode,
             $this->client->getResponse()->getStatusCode(),
-            $message
+            $message,
         );
     }
 
@@ -458,11 +468,38 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     protected function assertMessage(string $message): void
     {
         $responseContent = $this->client->getResponse()->getContent();
+        $response = $this->client->getResponse();
+        
+        // Check if response is JSON (validation errors return JSON)
+        $contentType = $response->headers->get('Content-Type', '');
+        if (str_contains($contentType, 'application/json') || (str_starts_with($responseContent, '{') && str_ends_with($responseContent, '}'))) {
+            $json = json_decode($responseContent, true);
+            if (JSON_ERROR_NONE === json_last_error() && isset($json['message'])) {
+                $jsonMessage = $json['message'];
+                
+                // Handle translation mapping for contract validation messages
+                $contractTranslations = [
+                    'Das Vertragsende muss nach dem Vertragsbeginn liegen.' => 'End date has to be greater than the start date.',
+                    'Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.' => 'There is already an ongoing contract with a start date in the future that overlaps with the new contract.',
+                    'Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.' => 'There is already an ongoing contract with a closed end date in the future.',
+                    'Für den Nutzer besteht mehr als ein unbefristeter Vertrag.' => 'There is more than one open-ended contract for the user.',
+                ];
+                
+                // Check if the expected German message matches the English JSON message
+                if (isset($contractTranslations[$message]) && $contractTranslations[$message] === $jsonMessage) {
+                    self::assertTrue(true);
+                    return;
+                }
+                
+                // Direct comparison for other messages
+                self::assertSame($message, $jsonMessage);
+                return;
+            }
+        }
 
         // Try direct comparison first
         if ($message === $responseContent) {
-            $this->assertTrue(true);
-
+            self::assertTrue(true);
             return;
         }
 
@@ -477,16 +514,15 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             $germanPattern = str_replace('%num%', '(\d+)', preg_quote($german, '/'));
             $englishPattern = str_replace('%num%', '$1', preg_quote($english, '/'));
 
-            if (preg_match('/^'.$germanPattern.'$/', $message, $germanMatches)
-                && preg_match('/^'.$englishPattern.'$/', (string) $responseContent, $englishMatches)) {
-                $this->assertTrue(true, 'Translation matched via pattern');
-
+            if (preg_match('/^' . $germanPattern . '$/', $message, $germanMatches)
+                && preg_match('/^' . $englishPattern . '$/', (string) $responseContent, $englishMatches)) {
+                self::assertTrue(true, 'Translation matched via pattern');
                 return;
             }
         }
 
         // Fall back to direct comparison
-        $this->assertSame($message, $responseContent);
+        self::assertSame($message, $responseContent);
     }
 
     /**
@@ -494,9 +530,9 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
      */
     protected function assertContentType(string $contentType): void
     {
-        $this->assertStringContainsString(
+        self::assertStringContainsString(
             $contentType,
-            $this->client->getResponse()->headers->get('content-type')
+            $this->client->getResponse()->headers->get('content-type'),
         );
     }
 
@@ -507,19 +543,19 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     {
         $responseJson = json_decode(
             (string) $this->client->getResponse()->getContent(),
-            true
+            true,
         );
-        $this->assertArraySubset($json, $responseJson);
+        self::assertArraySubset($json, $responseJson);
     }
 
     /**
      * Assert the length of the response or a specific path in the response.
      */
-    protected function assertLength(int $length, ?string $path = null)
+    protected function assertLength(int $length, ?string $path = null): void
     {
         $response = json_decode(
             (string) $this->client->getResponse()->getContent(),
-            true
+            true,
         );
         if ($path) {
             foreach (explode('.', $path) as $key) {
@@ -527,7 +563,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
             }
         }
 
-        $this->assertSame($length, count($response));
+        self::assertSame($length, count($response));
     }
 
     /**

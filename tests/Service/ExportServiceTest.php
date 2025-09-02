@@ -8,14 +8,19 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Repository\EntryRepository;
-use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use App\Service\ExportService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\RouterInterface;
 
-class ExportServiceTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ExportServiceTest extends TestCase
 {
     private function makeSubject(
         array $entries,
@@ -33,12 +38,12 @@ class ExportServiceTest extends TestCase
         $currentUser = new User();
         $mock = $this->getMockBuilder(\Doctrine\Persistence\ObjectRepository::class)->getMock();
         $mock->method('find')->willReturn($currentUser);
-        $doctrine->method('getRepository')->willReturnCallback(function (string $class) use ($repo, $mock): \PHPUnit\Framework\MockObject\MockObject {
-            if ($class === \App\Entity\Entry::class) {
+        $doctrine->method('getRepository')->willReturnCallback(static function (string $class) use ($repo, $mock): \PHPUnit\Framework\MockObject\MockObject {
+            if (Entry::class === $class) {
                 return $repo;
             }
 
-            if ($class === \App\Entity\User::class) {
+            if (User::class === $class) {
                 return $mock;
             }
 
@@ -53,15 +58,15 @@ class ExportServiceTest extends TestCase
         $dummyUser = $currentUser;
         $dummyTs = new TicketSystem();
         $router->method('generate')->willReturn('/oauth-callback');
-        $jiraApi = new class ($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
+        $jiraApi = new class($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
             public function __construct(
                 User $user,
                 TicketSystem $ticketSystem,
                 ManagerRegistry $managerRegistry,
-                \Symfony\Component\Routing\RouterInterface $router,
+                RouterInterface $router,
                 private readonly array $keys,
                 private array $labels,
-                private array $summaries
+                private array $summaries,
             ) {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
             }
@@ -96,7 +101,7 @@ class ExportServiceTest extends TestCase
         $entries = [new Entry(), new Entry()];
         $exportService = $this->makeSubject($entries);
         $result = $exportService->exportEntries(1, 2025, 8, null, null, null);
-        $this->assertSame($entries, $result);
+        self::assertSame($entries, $result);
     }
 
     public function testEnrichEntriesSetsBillableAndSummary(): void
@@ -109,19 +114,21 @@ class ExportServiceTest extends TestCase
         $entry1 = (new Entry())
             ->setUser($user)
             ->setProject((new \App\Entity\Project())->setTicketSystem($ticketSystem))
-            ->setTicket('TT-123');
+            ->setTicket('TT-123')
+        ;
         $entry2 = (new Entry())
             ->setUser($user)
             ->setProject((new \App\Entity\Project())->setTicketSystem($ticketSystem))
-            ->setTicket('TT-999');
+            ->setTicket('TT-999')
+        ;
 
         $exportService = $this->makeSubject([$entry1, $entry2], ['TT-123', 'TT-999'], ['TT-123' => ['billable']], ['TT-123' => 'Summary 1']);
 
         $result = $exportService->enrichEntriesWithTicketInformation(1, [$entry1, $entry2], true, false, true);
 
-        $this->assertTrue($result[0]->getBillable());
-        $this->assertSame('Summary 1', $result[0]->getTicketTitle());
-        $this->assertNull($result[1]->getBillable());
-        $this->assertNull($result[1]->getTicketTitle());
+        self::assertTrue($result[0]->getBillable());
+        self::assertSame('Summary 1', $result[0]->getTicketTitle());
+        self::assertNull($result[1]->getBillable());
+        self::assertNull($result[1]->getTicketTitle());
     }
 }

@@ -1,21 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Entity\Project;
-use App\Entity\User;
-use App\Entity\Customer;
 use App\Entity\TicketSystem;
+use App\Entity\User;
+use Tests\AbstractWebTestCase;
 
-class ProjectTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ProjectTest extends AbstractWebTestCase
 {
     public function testFluentInterface(): void
     {
         $project = new Project();
 
-        $this->assertEquals(
+        self::assertSame(
             $project,
             $project
                 ->setId(null)
@@ -26,7 +31,7 @@ class ProjectTest extends AbstractWebTestCase
                 ->setOffer(null)
                 ->setGlobal(null)
                 ->setCostCenter(null)
-                ->setBilling(null)
+                ->setBilling(null),
         );
     }
 
@@ -35,75 +40,75 @@ class ProjectTest extends AbstractWebTestCase
         $project = new Project();
 
         // test id
-        $this->assertEquals(null, $project->getId());
+        self::assertNull($project->getId());
         $project->setId(17);
-        $this->assertEquals(17, $project->getId());
+        self::assertSame(17, $project->getId());
 
         // test name
-        $this->assertEquals(null, $project->getName());
+        self::assertSame('', $project->getName());
         $project->setName('Test-Project');
-        $this->assertEquals('Test-Project', $project->getName());
+        self::assertSame('Test-Project', $project->getName());
 
         // test ticket prefix
-        $this->assertEquals(null, $project->getJiraId());
+        self::assertNull($project->getJiraId());
         $project->setJiraId('ABC');
-        $this->assertEquals('ABC', $project->getJiraId());
+        self::assertSame('ABC', $project->getJiraId());
 
         // test active
-        $this->assertEquals(null, $project->getActive());
+        self::assertFalse($project->getActive());
         $project->setActive(true);
-        $this->assertEquals(true, $project->getActive());
+        self::assertTrue($project->getActive());
 
         // test global
-        $this->assertEquals(null, $project->getGlobal());
+        self::assertFalse($project->getGlobal());
         $project->setGlobal(true);
-        $this->assertEquals(true, $project->getGlobal());
+        self::assertTrue($project->getGlobal());
 
         // test estimation
-        $this->assertEquals(null, $project->getEstimation());
+        self::assertNull($project->getEstimation());
         $project->setEstimation(120);
-        $this->assertEquals(120, $project->getEstimation());
+        self::assertSame(120, $project->getEstimation());
 
         // test offer
-        $this->assertEquals(null, $project->getOffer());
+        self::assertNull($project->getOffer());
         $project->setOffer('12-UF9182-4');
-        $this->assertEquals('12-UF9182-4', $project->getOffer());
+        self::assertSame('12-UF9182-4', $project->getOffer());
 
         // test cost center
-        $this->assertEquals(null, $project->getCostCenter());
+        self::assertNull($project->getCostCenter());
         $project->setCostCenter('12345');
-        $this->assertEquals('12345', $project->getCostCenter());
+        self::assertSame('12345', $project->getCostCenter());
 
         // test billing
-        $this->assertEquals(null, $project->getBilling());
+        self::assertSame(0, $project->getBilling());
         $project->setBilling(Project::BILLING_TM);
-        $this->assertEquals(Project::BILLING_TM, $project->getBilling());
+        self::assertSame(Project::BILLING_TM, $project->getBilling());
 
         // test invoice
-        $this->assertEquals(null, $project->getInvoice());
+        self::assertNull($project->getInvoice());
         $project->setInvoice('20130122456');
-        $this->assertEquals('20130122456', $project->getInvoice());
+        self::assertSame('20130122456', $project->getInvoice());
 
         // test ticket system
-        $this->assertEquals(null, $project->getTicketSystem());
+        self::assertNull($project->getTicketSystem());
         $ticketSystem = new TicketSystem();
         $project->setTicketSystem($ticketSystem);
-        $this->assertEquals($ticketSystem, $project->getTicketSystem());
+        self::assertSame($ticketSystem, $project->getTicketSystem());
         $project->setTicketSystem(null);
-        $this->assertEquals(null, $project->getTicketSystem());
+        self::assertNull($project->getTicketSystem());
 
         // test project and technical lead
-        $this->assertEquals(null, $project->getProjectLead());
-        $this->assertEquals(null, $project->getTechnicalLead());
+        self::assertNull($project->getProjectLead());
+        self::assertNull($project->getTechnicalLead());
         $projectLead = new User();
         $project->setProjectLead($projectLead);
-        $this->assertEquals($projectLead, $project->getProjectLead());
+        self::assertSame($projectLead, $project->getProjectLead());
         $technicalLead = new User();
         $project->setTechnicalLead($technicalLead);
-        $this->assertEquals($technicalLead, $project->getTechnicalLead());
+        self::assertSame($technicalLead, $project->getTechnicalLead());
         $project->setProjectLead(null);
-        $this->assertEquals(null, $project->getProjectLead());
+        self::assertNull($project->getProjectLead());
         $project->setTechnicalLead(null);
-        $this->assertEquals(null, $project->getTechnicalLead());
+        self::assertNull($project->getTechnicalLead());
     }
 }

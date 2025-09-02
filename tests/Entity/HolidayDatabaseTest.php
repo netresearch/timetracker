@@ -1,12 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
 use App\Entity\Holiday;
-use Doctrine\ORM\EntityManagerInterface;
+use DateTime;
+use Tests\AbstractWebTestCase;
 
-class HolidayDatabaseTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class HolidayDatabaseTest extends AbstractWebTestCase
 {
     protected function setUp(): void
     {
@@ -20,8 +27,8 @@ class HolidayDatabaseTest extends AbstractWebTestCase
         $conn->insert('holidays', ['day' => $day, 'name' => 'Christmas']);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
-        $this->assertNotEmpty($row);
-        $this->assertSame('Christmas', $row['name']);
+        self::assertNotEmpty($row);
+        self::assertSame('Christmas', $row['name']);
 
         // Clean up
         $conn->delete('holidays', ['day' => $day]);
@@ -35,7 +42,7 @@ class HolidayDatabaseTest extends AbstractWebTestCase
         $conn->update('holidays', ['name' => 'Updated Holiday'], ['day' => $day]);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
-        $this->assertSame('Updated Holiday', $row['name']);
+        self::assertSame('Updated Holiday', $row['name']);
         $conn->delete('holidays', ['day' => $day]);
     }
 
@@ -47,7 +54,7 @@ class HolidayDatabaseTest extends AbstractWebTestCase
         $conn->delete('holidays', ['day' => $day]);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
-        $this->assertFalse((bool) $row, 'Holiday should be deleted from database');
+        self::assertFalse((bool) $row, 'Holiday should be deleted from database');
     }
 
     public function testFindByYear(): void
@@ -58,27 +65,31 @@ class HolidayDatabaseTest extends AbstractWebTestCase
             ['day' => '2023-01-01', 'name' => 'New Year 2023'],
             ['day' => '2023-12-25', 'name' => 'Christmas 2023'],
         ];
-        foreach ($rows as $r) { $conn->insert('holidays', $r); }
+        foreach ($rows as $r) {
+            $conn->insert('holidays', $r);
+        }
 
         $result = $conn->fetchAllAssociative(
             'SELECT * FROM holidays WHERE day BETWEEN ? AND ? ORDER BY day ASC',
-            ['2023-01-01', '2023-12-31']
+            ['2023-01-01', '2023-12-31'],
         );
-        $this->assertCount(2, $result);
+        self::assertCount(2, $result);
 
-        foreach ($rows as $row) { $conn->delete('holidays', ['day' => $row['day']]); }
+        foreach ($rows as $row) {
+            $conn->delete('holidays', ['day' => $row['day']]);
+        }
     }
 
     public function testToArray(): void
     {
         // Create a new Holiday
-        $day = new \DateTime('2023-12-25');
+        $day = new DateTime('2023-12-25');
         $holiday = new Holiday($day, 'Christmas');
 
         // Test toArray() method
         $array = $holiday->toArray();
-        $this->assertEquals('25/12/2023', $array['day']);
-        $this->assertEquals('Christmas', $array['description']);
+        self::assertSame('25/12/2023', $array['day']);
+        self::assertSame('Christmas', $array['description']);
 
         // No need to persist for this test
     }

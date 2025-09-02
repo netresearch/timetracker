@@ -1,10 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
-class SettingsControllerTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class SettingsControllerTest extends AbstractWebTestCase
 {
     public function testSaveAction(): void
     {
@@ -32,7 +39,8 @@ class SettingsControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder->select('*')
             ->from('users')->where('id = :userId')
-            ->setParameter('userId', 1);
+            ->setParameter('userId', 1)
+        ;
         $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
@@ -45,7 +53,7 @@ class SettingsControllerTest extends AbstractWebTestCase
                 'locale' => 'de',
             ],
         ];
-        $this->assertArraySubset($expectedDbEntry, $result);
+        self::assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testSaveActionRejectsGet(): void
@@ -58,7 +66,7 @@ class SettingsControllerTest extends AbstractWebTestCase
     {
         // Reboot client without session to simulate unauthenticated
         $this->ensureKernelShutdown();
-        $this->client = static::createClient();
+        $this->client = self::createClient();
 
         $parameter = [
             'locale' => 'de',
@@ -68,7 +76,7 @@ class SettingsControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', $parameter);
         // Unauthenticated returns 404 or 302 depending on security setup; assert not 200
-        $this->assertNotSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertNotSame(\Symfony\Component\HttpFoundation\Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
     }
 
     public function testSaveActionNormalizesLocale(): void
@@ -82,7 +90,7 @@ class SettingsControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', $parameter);
         $this->assertStatusCode(200);
         $response = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertEquals('en', $response['locale']);
-        $this->assertEquals('en', $response['settings']['locale']);
+        self::assertSame('en', $response['locale']);
+        self::assertSame('en', $response['settings']['locale']);
     }
 }

@@ -9,7 +9,11 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
+use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
+
+use function sprintf;
 
 /**
  * Manages Jira work log synchronization.
@@ -40,7 +44,7 @@ class JiraWorkLogService
     public function updateEntriesWorkLogsLimited(
         User $user,
         TicketSystem $ticketSystem,
-        ?int $entryLimit = null
+        ?int $entryLimit = null,
     ): void {
         if (!$this->authService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
@@ -48,24 +52,24 @@ class JiraWorkLogService
 
         $em = $this->managerRegistry->getManager();
         $entryRepository = $this->managerRegistry->getRepository(Entry::class);
-        
+
         $entries = $entryRepository->findByUserAndTicketSystemToSync(
             (int) $user->getId(),
             (int) $ticketSystem->getId(),
-            $entryLimit
+            $entryLimit,
         );
 
         foreach ($entries as $entry) {
             try {
                 $this->updateEntryWorkLog($entry);
                 $em->persist($entry);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Log error but continue with other entries
                 // This prevents one failed entry from blocking all others
                 error_log(sprintf(
                     'Failed to sync work log for entry %d: %s',
                     $entry->getId(),
-                    $e->getMessage()
+                    $e->getMessage(),
                 ));
             } finally {
                 $em->flush();
@@ -75,14 +79,14 @@ class JiraWorkLogService
 
     /**
      * Creates or updates a Jira work log entry.
-     * 
+     *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
     public function updateEntryWorkLog(Entry $entry): void
     {
         $ticket = $entry->getTicket();
-        
+
         // Skip entries without ticket
         if ('' === $ticket || '0' === $ticket) {
             return;
@@ -90,13 +94,13 @@ class JiraWorkLogService
 
         $user = $entry->getUser();
         $project = $entry->getProject();
-        
+
         if (!$user || !$project) {
             return;
         }
 
         $ticketSystem = $project->getTicketSystem();
-        
+
         if (!$ticketSystem) {
             return;
         }
@@ -111,8 +115,9 @@ class JiraWorkLogService
         }
 
         // Handle zero duration entries
-        if ($entry->getDuration() === 0) {
+        if (0 === $entry->getDuration()) {
             $this->deleteEntryWorkLog($entry);
+
             return;
         }
 
@@ -142,32 +147,32 @@ class JiraWorkLogService
 
     /**
      * Deletes a Jira work log entry.
-     * 
+     *
      * @throws JiraApiException
      */
     public function deleteEntryWorkLog(Entry $entry): void
     {
         $ticket = $entry->getTicket();
-        
+
         if ('' === $ticket || '0' === $ticket) {
             return;
         }
 
         $workLogId = $entry->getWorklogId();
-        
+
         if (!$workLogId) {
             return;
         }
 
         $user = $entry->getUser();
         $project = $entry->getProject();
-        
+
         if (!$user || !$project) {
             return;
         }
 
         $ticketSystem = $project->getTicketSystem();
-        
+
         if (!$ticketSystem) {
             return;
         }
@@ -179,6 +184,7 @@ class JiraWorkLogService
         // Only delete if work log exists
         if (!$this->doesWorkLogExist($ticket, $workLogId)) {
             $entry->setWorklogId(null);
+
             return;
         }
 
@@ -199,12 +205,14 @@ class JiraWorkLogService
     private function doesWorkLogExist(string $ticket, int $workLogId): bool
     {
         return $this->httpClient->doesResourceExist(
-            sprintf('issue/%s/worklog/%d', $ticket, $workLogId)
+            sprintf('issue/%s/worklog/%d', $ticket, $workLogId),
         );
     }
 
     /**
      * Creates new work log in Jira.
+     *
+     * @param array<string, mixed> $data
      */
     private function createWorkLog(string $ticket, array $data): object
     {
@@ -213,6 +221,8 @@ class JiraWorkLogService
 
     /**
      * Updates existing work log in Jira.
+     *
+     * @param array<string, mixed> $data
      */
     private function updateWorkLog(string $ticket, int $workLogId, array $data): object
     {
@@ -221,6 +231,8 @@ class JiraWorkLogService
 
     /**
      * Prepares work log data for Jira API.
+     *
+     * @return array<string, mixed>
      */
     private function prepareWorkLogData(Entry $entry): array
     {
@@ -239,27 +251,27 @@ class JiraWorkLogService
         $customer = $entry->getCustomer();
         $project = $entry->getProject();
         $activity = $entry->getActivity();
-        
+
         $description = (string) $entry->getDescription();
-        
+
         if ('' === $description) {
             $description = 'no description';
         }
 
         $parts = [];
-        
+
         if ($customer) {
             $parts[] = $customer->getName();
         }
-        
+
         if ($project) {
             $parts[] = $project->getName();
         }
-        
+
         if ($activity) {
             $parts[] = $activity->getName();
         }
-        
+
         $parts[] = $description;
 
         return implode(' | ', $parts);
@@ -272,15 +284,33 @@ class JiraWorkLogService
     {
         $day = $entry->getDay();
         $start = $entry->getStart();
-        
-        if (!$day || !$start) {
-            throw new JiraApiException('Entry missing required day or start time', 400);
-        }
+
+        // $day and $start are non-nullable per Entity definition, so no null checks needed
 
         // Combine date and time
-        $dateTime = new \DateTime($day->format('Y-m-d') . ' ' . $start->format('H:i:s'));
-        
+        $dateTime = new DateTime($day->format('Y-m-d') . ' ' . $start->format('H:i:s'));
+
         // Format for Jira API (ISO 8601)
         return $dateTime->format('Y-m-d\TH:i:s.vO');
+    }
+
+    /**
+     * Sync worklog for an entry with JIRA.
+     * 
+     * @param User $user
+     * @param TicketSystem $ticketSystem
+     * @param Entry $entry
+     * @param array<string, mixed> $worklogData
+     * @return array{worklogId: int|null}
+     */
+    public function syncWorkLog(User $user, TicketSystem $ticketSystem, Entry $entry, array $worklogData): array
+    {
+        // Update the entry's worklog
+        $this->updateEntryWorkLog($entry);
+        
+        // Return the worklog ID if it exists
+        return [
+            'worklogId' => $entry->getWorklogId(),
+        ];
     }
 }

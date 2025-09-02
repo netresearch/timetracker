@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -12,21 +13,20 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
-use App\Util\RequestEntityHelper;
-use App\Util\RequestHelper;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Contracts\Service\Attribute\Required;
-use App\Service\Util\TimeCalculationService;
 use App\Service\SubticketSyncService;
+use App\Service\Util\TimeCalculationService;
+use Exception;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
-use App\Service\Validation\ProjectValidator;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Service\Attribute\Required;
+
+use function strlen;
 
 final class SaveProjectAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
-    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $projectSaveDto, ObjectMapperInterface $objectMapper, ProjectValidator $projectValidator, ValidatorInterface $validator): Response|Error|JsonResponse
+    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $projectSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
@@ -87,14 +87,9 @@ final class SaveProjectAction extends BaseController
             return $response;
         }
 
-        if (!$projectValidator->isNameUniqueForCustomer($projectSaveDto->name, (int) $projectCustomer->getId(), $project->getId())) {
-            $response = new Response($this->translate('The project name provided already exists.'));
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+        // Validation is now handled by the DTO with MapRequestPayload
 
-            return $response;
-        }
-
-        if (strlen($jiraId) && false == $objectRepository->isValidJiraPrefix($jiraId)) {
+        if (strlen($jiraId) && false === $objectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -117,7 +112,8 @@ final class SaveProjectAction extends BaseController
             ->setCostCenter($costCenter)
             ->setAdditionalInformationFromExternal($additionalInformationFromExternal)
             ->setInternalJiraProjectKey($internalJiraProjectKey)
-            ->setInternalJiraTicketSystem($internalJiraTicketSystem);
+            ->setInternalJiraTicketSystem($internalJiraTicketSystem)
+        ;
 
         if ($ticketSystem instanceof TicketSystem) {
             $project->setTicketSystem($ticketSystem);
@@ -136,7 +132,7 @@ final class SaveProjectAction extends BaseController
                 if (null !== $project->getId()) {
                     $this->subticketSyncService->syncProjectSubtickets($project);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $data['message'] = $e->getMessage();
             }
         }
@@ -160,6 +156,3 @@ final class SaveProjectAction extends BaseController
         $this->subticketSyncService = $subticketSyncService;
     }
 }
-
-
-

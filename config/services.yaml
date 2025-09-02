@@ -120,7 +120,6 @@ services:
         arguments:
             $managerRegistry: '@doctrine'
             $clock: '@App\Service\ClockInterface'
-            $timeCalculationService: '@App\Service\Util\TimeCalculationService'
             $cache: '@?cache.app'
         tags:
             - { name: 'doctrine.repository_service' }
@@ -153,16 +152,10 @@ services:
         tags:
             - { name: monolog.logger, channel: ldap }
 
-    # Validation Service
-    App\Service\Validation\ValidationService:
-        arguments:
-            $validator: '@validator'
-
 
     # Exception Subscriber for global error handling
     App\EventSubscriber\ExceptionSubscriber:
         arguments:
-            $responseFactory: '@App\Service\Response\ResponseFactory'
             $logger: '@?logger'
             $environment: '%kernel.environment%'
         tags:

@@ -1,7 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service\Util;
+
+use function array_key_exists;
 
 class LocalizationService
 {

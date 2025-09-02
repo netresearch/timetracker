@@ -6,7 +6,12 @@ namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
-class AdminControllerNegativeTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class AdminControllerNegativeTest extends AbstractWebTestCase
 {
     public function testSaveCustomerDuplicateName(): void
     {
@@ -16,10 +21,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Der Bäcker von nebenan',
             'teams' => [1],
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
     }
 
     public function testSaveProjectDuplicateNameForCustomer(): void
@@ -30,10 +35,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Server attack',
             'customer' => 1,
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
     }
 
     public function testSaveTeamMissingLeadUser(): void
@@ -43,10 +48,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Team ohne Lead',
             // missing lead_user_id
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
     }
 
     public function testSaveActivityDuplicateName(): void
@@ -57,10 +62,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Backen',
             'factor' => 1,
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
     }
 
     public function testSaveTicketSystemDuplicateName(): void
@@ -74,10 +79,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'ticketUrl' => '',
         ];
         try {
-            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
-            $this->assertStatusCode(406);
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+            $this->assertStatusCode(422);
         } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException) {
-            $this->fail('Unexpected 422 for duplicate name; should be business-rule 406');
+            self::fail('Unexpected 422 for duplicate name; should be business-rule 406');
         }
     }
 
@@ -89,17 +94,17 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'abbr' => 'XY', // invalid length
             'teams' => ['1'],
             'locale' => 'de',
-            'type' => 'DEV'
+            'type' => 'DEV',
         ];
-        try {
-            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
-            $this->assertStatusCode(422);
-        } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException) {
-            $this->assertSame(422, $unprocessableEntityHttpException->getStatusCode());
-        }
-
-        // No further response assertions; exception path may bypass BrowserKit response population
-        $this->assertTrue(true);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertNotEmpty($content);
+        $data = json_decode($content, true);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('message', $data);
+        // Validation message may be localized, just ensure we got a validation error
+        self::assertMatchesRegularExpression('/Zeichen|characters|abbr/i', $data['message']);
     }
 
     public function testSaveUserDuplicateUsername(): void
@@ -110,12 +115,17 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'abbr' => 'DEV',
             'teams' => ['1'],
             'locale' => 'de',
-            'type' => 'DEV'
+            'type' => 'DEV',
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
+        $data = json_decode($content, true);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('message', $data);
+        // Validation message may be localized
+        self::assertMatchesRegularExpression('/exists|existiert|bereits/i', $data['message']);
     }
 
     public function testSaveUserNoTeams(): void
@@ -126,12 +136,17 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'abbr' => 'NU2',
             'teams' => [], // no team
             'locale' => 'de',
-            'type' => 'DEV'
+            'type' => 'DEV',
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
+        $data = json_decode($content, true);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('message', $data);
+        // Validation message may be localized
+        self::assertMatchesRegularExpression('/teams|Team|sollte nicht leer sein/i', $data['message']);
     }
 
     public function testSaveCustomerNoTeamsNotGlobal(): void
@@ -142,10 +157,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'global' => 0,
             'teams' => [],
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
     }
 
     public function testSaveTeamDuplicateName(): void
@@ -155,10 +170,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'name' => 'Hackerman', // exists in fixtures
             'lead_user_id' => 1,
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
     }
 
     public function testSaveProjectInvalidJiraPrefix(): void
@@ -169,10 +184,10 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'customer' => 1,
             'jiraId' => 'foo-', // invalid character (hyphen) remains after strtoupper
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
     }
 
     public function testSaveTicketSystemShortName(): void
@@ -185,12 +200,12 @@ class AdminControllerNegativeTest extends AbstractWebTestCase
             'ticketUrl' => '',
         ];
         try {
-            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter);
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
             $this->assertStatusCode(422);
             $content = (string) $this->client->getResponse()->getContent();
-            $this->assertNotEmpty($content);
+            self::assertNotEmpty($content);
         } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException) {
-            $this->assertSame(422, $unprocessableEntityHttpException->getStatusCode());
+            self::assertSame(422, $unprocessableEntityHttpException->getStatusCode());
         }
     }
 

@@ -1,25 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\Preset;
+use Tests\AbstractWebTestCase;
 
-class ActivityTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ActivityTest extends AbstractWebTestCase
 {
     public function testFluentInterface(): void
     {
         $activity = new Activity();
 
-        $this->assertEquals(
+        self::assertSame(
             $activity,
             $activity
                 ->setId(1)
                 ->setName('Test Activity')
                 ->setNeedsTicket(false)
-                ->setFactor(1.0)
+                ->setFactor(1.0),
         );
     }
 
@@ -28,49 +35,49 @@ class ActivityTest extends AbstractWebTestCase
         $activity = new Activity();
 
         // test id
-        $this->assertNull($activity->getId());
+        self::assertNull($activity->getId());
         $activity->setId(17);
-        $this->assertEquals(17, $activity->getId());
+        self::assertSame(17, $activity->getId());
 
         // test name
         $activity->setName('Test-Activity');
-        $this->assertEquals('Test-Activity', $activity->getName());
+        self::assertSame('Test-Activity', $activity->getName());
 
         // test needsTicket
         $activity->setNeedsTicket(true);
-        $this->assertTrue($activity->getNeedsTicket());
+        self::assertTrue($activity->getNeedsTicket());
         $activity->setNeedsTicket(false);
-        $this->assertFalse($activity->getNeedsTicket());
+        self::assertFalse($activity->getNeedsTicket());
 
         // test factor
         $activity->setFactor(1.5);
-        $this->assertEquals(1.5, $activity->getFactor());
+        self::assertSame(1.5, $activity->getFactor());
     }
 
     public function testConstantValues(): void
     {
-        $this->assertEquals('Krank', Activity::SICK);
-        $this->assertEquals('Urlaub', Activity::HOLIDAY);
+        self::assertSame('Krank', Activity::SICK);
+        self::assertSame('Urlaub', Activity::HOLIDAY);
     }
 
     public function testIsSick(): void
     {
         $activity = new Activity();
         $activity->setName('Regular');
-        $this->assertFalse($activity->isSick());
+        self::assertFalse($activity->isSick());
 
         $activity->setName(Activity::SICK);
-        $this->assertTrue($activity->isSick());
+        self::assertTrue($activity->isSick());
     }
 
     public function testIsHoliday(): void
     {
         $activity = new Activity();
         $activity->setName('Regular');
-        $this->assertFalse($activity->isHoliday());
+        self::assertFalse($activity->isHoliday());
 
         $activity->setName(Activity::HOLIDAY);
-        $this->assertTrue($activity->isHoliday());
+        self::assertTrue($activity->isHoliday());
     }
 
     public function testEntryRelationship(): void
@@ -79,17 +86,17 @@ class ActivityTest extends AbstractWebTestCase
         $entry = new Entry();
 
         // Test initial empty collection
-        $this->assertCount(0, $activity->getEntries());
+        self::assertCount(0, $activity->getEntries());
 
         // Test adding entry
         $activity->addEntry($entry);
-        $this->assertCount(1, $activity->getEntries());
-        $this->assertTrue($activity->getEntries()->contains($entry));
+        self::assertCount(1, $activity->getEntries());
+        self::assertTrue($activity->getEntries()->contains($entry));
 
         // Test removing entry
         $activity->removeEntry($entry);
-        $this->assertCount(0, $activity->getEntries());
-        $this->assertFalse($activity->getEntries()->contains($entry));
+        self::assertCount(0, $activity->getEntries());
+        self::assertFalse($activity->getEntries()->contains($entry));
     }
 
     public function testPresetRelationship(): void
@@ -98,16 +105,16 @@ class ActivityTest extends AbstractWebTestCase
         $preset = new Preset();
 
         // Test initial empty collection
-        $this->assertCount(0, $activity->getPresets());
+        self::assertCount(0, $activity->getPresets());
 
         // Test adding preset
         $activity->addPreset($preset);
-        $this->assertCount(1, $activity->getPresets());
-        $this->assertTrue($activity->getPresets()->contains($preset));
+        self::assertCount(1, $activity->getPresets());
+        self::assertTrue($activity->getPresets()->contains($preset));
 
         // Test removing preset
         $activity->removePreset($preset);
-        $this->assertCount(0, $activity->getPresets());
-        $this->assertFalse($activity->getPresets()->contains($preset));
+        self::assertCount(0, $activity->getPresets());
+        self::assertFalse($activity->getPresets()->contains($preset));
     }
 }

@@ -1,10 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Service\Util\TimeCalculationService;
 use App\Model\Base;
+use App\Service\Util\TimeCalculationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -167,7 +168,6 @@ class Project extends Base
     /**
      * Sets the additional Information.
      *
-     *
      * @return $this
      */
     public function setAdditionalInformationFromExternal(bool $additionalInformationFromExternal): static
@@ -247,8 +247,6 @@ class Project extends Base
     /**
      * Set id.
      *
-     * @param int $id
-     *
      * @return $this
      */
     public function setId(?int $id): static
@@ -260,8 +258,6 @@ class Project extends Base
 
     /**
      * Set name.
-     *
-     * @param string $name
      *
      * @return $this
      */
@@ -288,7 +284,6 @@ class Project extends Base
 
     /**
      * Set active.
-     *
      *
      * @return $this
      */
@@ -333,8 +328,6 @@ class Project extends Base
 
     /**
      * Set global.
-     *
-     * @param bool $global
      *
      * @return $this
      */
@@ -402,7 +395,7 @@ class Project extends Base
      */
     public function getSubtickets(): array
     {
-        if ('' == $this->subtickets) {
+        if ('' === $this->subtickets) {
             return [];
         }
 
@@ -433,8 +426,6 @@ class Project extends Base
 
     /**
      * Set the id of the ticket system that is associated with this project.
-     *
-     * @param TicketSystem $ticketSystem
      */
     public function setTicketSystem(?TicketSystem $ticketSystem): static
     {
@@ -529,8 +520,6 @@ class Project extends Base
 
     /**
      * Set internalReference.
-     *
-     * @param string $internalReference
      */
     public function setInternalReference(?string $internalReference): static
     {
@@ -549,8 +538,6 @@ class Project extends Base
 
     /**
      * Set externalReference.
-     *
-     * @param string $externalReference
      */
     public function setExternalReference(?string $externalReference): static
     {
@@ -601,6 +588,7 @@ class Project extends Base
     public function hasInternalJiraProjectKey(): bool
     {
         $key = $this->internalJiraProjectKey;
+
         return null !== $key && '' !== $key;
     }
 

@@ -13,6 +13,14 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
+use JsonException;
+use stdClass;
+use UnexpectedValueException;
+
+use function is_array;
+use function sprintf;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Manages HTTP clients for Jira API communication.
@@ -21,10 +29,10 @@ use GuzzleHttp\Subscriber\Oauth\Oauth1;
 class JiraHttpClientService
 {
     private string $jiraApiUrl = '/rest/api/latest/';
-    
+
     /** @var Client[] */
     private array $clients = [];
-    
+
     public function __construct(
         private readonly User $user,
         private readonly TicketSystem $ticketSystem,
@@ -34,10 +42,10 @@ class JiraHttpClientService
 
     /**
      * Gets configured HTTP client for different OAuth modes.
-     * 
-     * @param string $tokenMode user|new|request
+     *
+     * @param string      $tokenMode  user|new|request
      * @param string|null $oAuthToken Request token when supplied
-     * 
+     *
      * @throws JiraApiException
      */
     public function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): Client
@@ -50,7 +58,7 @@ class JiraHttpClientService
         }
 
         $this->clients[$key] = $this->createClient($tokens['token'], $tokens['secret']);
-        
+
         return $this->clients[$key];
     }
 
@@ -65,16 +73,17 @@ class JiraHttpClientService
                 if ('' === $tokens['token'] && '' === $tokens['secret']) {
                     $this->authService->throwUnauthorizedRedirect($this->ticketSystem);
                 }
+
                 return $tokens;
-                
+
             case 'new':
                 return ['token' => '', 'secret' => ''];
-                
+
             case 'request':
                 return ['token' => $oAuthToken ?? '', 'secret' => ''];
-                
+
             default:
-                throw new \UnexpectedValueException('Invalid token mode: ' . $tokenMode);
+                throw new UnexpectedValueException('Invalid token mode: ' . $tokenMode);
         }
     }
 
@@ -110,7 +119,7 @@ class JiraHttpClientService
 
     /**
      * Performs GET request to Jira API.
-     * 
+     *
      * @throws JiraApiException
      */
     public function get(string $url): mixed
@@ -120,37 +129,37 @@ class JiraHttpClientService
 
     /**
      * Performs POST request to Jira API.
-     * 
+     *
      * @throws JiraApiException
      */
-    public function post(string $url, array $data = []): object
+    public function post(string $url, array $data = []): mixed
     {
         return $this->sendRequest('POST', $url, $data);
     }
 
     /**
      * Performs PUT request to Jira API.
-     * 
+     *
      * @throws JiraApiException
      */
-    public function put(string $url, array $data = []): object
+    public function put(string $url, array $data = []): mixed
     {
         return $this->sendRequest('PUT', $url, $data);
     }
 
     /**
      * Performs DELETE request to Jira API.
-     * 
+     *
      * @throws JiraApiException
      */
-    public function delete(string $url): object
+    public function delete(string $url): mixed
     {
         return $this->sendRequest('DELETE', $url);
     }
 
     /**
      * Sends HTTP request to Jira API.
-     * 
+     *
      * @throws JiraApiException
      */
     private function sendRequest(string $method, string $url, array $data = []): mixed
@@ -158,7 +167,7 @@ class JiraHttpClientService
         try {
             $client = $this->getClient();
             $fullUrl = $this->jiraApiUrl . ltrim($url, '/');
-            
+
             $options = ['auth' => 'oauth'];
             if (!empty($data)) {
                 $options['json'] = $data;
@@ -166,21 +175,16 @@ class JiraHttpClientService
 
             $response = $client->request($method, $fullUrl, $options);
             $body = (string) $response->getBody();
-            
+
             if ('' === $body) {
-                return new \stdClass();
+                return new stdClass();
             }
-            
+
             return json_decode($body, false, 512, JSON_THROW_ON_ERROR);
-            
         } catch (GuzzleException $e) {
             $this->handleGuzzleException($e, $url);
-        } catch (\JsonException $e) {
-            throw new JiraApiException(
-                'Invalid JSON response from Jira: ' . $e->getMessage(),
-                500,
-                $e
-            );
+        } catch (JsonException $e) {
+            throw new JiraApiException('Invalid JSON response from Jira: ' . $e->getMessage(), 500, null, $e);
         }
     }
 
@@ -192,11 +196,10 @@ class JiraHttpClientService
         try {
             $client = $this->getClient();
             $fullUrl = $this->jiraApiUrl . ltrim($url, '/');
-            
+
             $response = $client->request('HEAD', $fullUrl, ['auth' => 'oauth']);
-            
-            return $response->getStatusCode() === 200;
-            
+
+            return 200 === $response->getStatusCode();
         } catch (GuzzleException) {
             return false;
         }
@@ -204,43 +207,35 @@ class JiraHttpClientService
 
     /**
      * Handles Guzzle exceptions and converts to Jira exceptions.
-     * 
+     *
      * @throws JiraApiException
      */
     private function handleGuzzleException(GuzzleException $e, string $url): never
     {
-        $response = $e->getResponse();
-        
+        // Check if this is a RequestException with a response
+        $response = null;
+        if ($e instanceof \GuzzleHttp\Exception\RequestException) {
+            $response = $e->getResponse();
+        }
+
         if (!$response) {
-            throw new JiraApiException(
-                'Network error connecting to Jira: ' . $e->getMessage(),
-                500,
-                $e
-            );
+            throw new JiraApiException('Network error connecting to Jira: ' . $e->getMessage(), 500, null, $e);
         }
 
         $statusCode = $response->getStatusCode();
         $body = (string) $response->getBody();
-        
+
         $errorMessage = $this->extractErrorMessage($body);
 
         switch ($statusCode) {
             case 401:
                 $this->authService->throwUnauthorizedRedirect($this->ticketSystem, $e);
-                
+
+                // no break
             case 404:
-                throw new JiraApiInvalidResourceException(
-                    sprintf('Resource not found: %s', $url),
-                    404,
-                    $e
-                );
-                
+                throw new JiraApiInvalidResourceException(sprintf('Resource not found: %s', $url), 404, null, $e);
             default:
-                throw new JiraApiException(
-                    sprintf('Jira API error [%d]: %s', $statusCode, $errorMessage),
-                    $statusCode,
-                    $e
-                );
+                throw new JiraApiException(sprintf('Jira API error [%d]: %s', $statusCode, $errorMessage), $statusCode, null, $e);
         }
     }
 
@@ -255,18 +250,21 @@ class JiraHttpClientService
 
         try {
             $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-            
+
+            if (!is_array($data)) {
+                return $body;
+            }
+
             if (isset($data['errorMessages']) && is_array($data['errorMessages'])) {
                 return implode(', ', $data['errorMessages']);
             }
-            
+
             if (isset($data['errors']) && is_array($data['errors'])) {
                 return implode(', ', array_values($data['errors']));
             }
-            
+
             return $body;
-            
-        } catch (\JsonException) {
+        } catch (JsonException) {
             return $body;
         }
     }
@@ -276,8 +274,8 @@ class JiraHttpClientService
      */
     private function getPrivateKeyFile(): string
     {
-        $certificate = $this->ticketSystem->getOauthKey();
-        
+        $certificate = $this->ticketSystem->getPrivateKey();
+
         if (!$certificate) {
             throw new JiraApiException('OAuth private key not configured', 500);
         }
@@ -291,11 +289,11 @@ class JiraHttpClientService
     private function getTempKeyFile(string $certificate): string
     {
         $tempFile = $this->getTempFile();
-        
+
         if (false === file_put_contents($tempFile, $certificate)) {
             throw new JiraApiException('Could not write private key to temp file', 500);
         }
-        
+
         return $tempFile;
     }
 
@@ -305,18 +303,18 @@ class JiraHttpClientService
     private function getTempFile(): string
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'jira_oauth_');
-        
+
         if (false === $tempFile) {
             throw new JiraApiException('Could not create temp file', 500);
         }
-        
+
         // Register cleanup on shutdown
-        register_shutdown_function(function () use ($tempFile) {
+        register_shutdown_function(static function () use ($tempFile): void {
             if (file_exists($tempFile)) {
                 unlink($tempFile);
             }
         });
-        
+
         return $tempFile;
     }
 

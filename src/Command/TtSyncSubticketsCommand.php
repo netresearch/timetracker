@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Command;
@@ -12,6 +13,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+use function count;
+use function is_scalar;
+
 #[\Symfony\Component\Console\Attribute\AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
 class TtSyncSubticketsCommand extends Command
 {
@@ -23,7 +27,8 @@ class TtSyncSubticketsCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('project', InputArgument::OPTIONAL, 'Single project ID to update');
+            ->addArgument('project', InputArgument::OPTIONAL, 'Single project ID to update')
+        ;
     }
 
     /**
@@ -37,7 +42,8 @@ class TtSyncSubticketsCommand extends Command
         $projectId = is_scalar($projectArg) ? (string) $projectArg : null;
 
         $entityRepository = $this->entityManager
-            ->getRepository(\App\Entity\Project::class);
+            ->getRepository(\App\Entity\Project::class)
+        ;
         if (null !== $projectId && '' !== $projectId) {
             $project = $entityRepository->find($projectId);
             if (!$project instanceof \App\Entity\Project) {
@@ -51,34 +57,35 @@ class TtSyncSubticketsCommand extends Command
             $projects = $entityRepository->createQueryBuilder('p')
                 ->where('p.ticketSystem IS NOT NULL')
                 ->getQuery()
-                ->getResult();
+                ->getResult()
+            ;
         }
 
         /** @var array<int, \App\Entity\Project> $projects */
         $count = count($projects);
         $output->writeln(
-            'Found '.$count.' projects with ticket system',
-            OutputInterface::VERBOSITY_VERBOSE
+            'Found ' . $count . ' projects with ticket system',
+            OutputInterface::VERBOSITY_VERBOSE,
         );
         foreach ($projects as $projectEntity) {
             $output->writeln(
-                'Syncing '.$projectEntity->getId().' '.$projectEntity->getName(),
-                OutputInterface::VERBOSITY_VERBOSE
+                'Syncing ' . $projectEntity->getId() . ' ' . $projectEntity->getName(),
+                OutputInterface::VERBOSITY_VERBOSE,
             );
             try {
                 $subtickets = $this->subticketSyncService->syncProjectSubtickets($projectEntity);
             } catch (JiraApiUnauthorizedException $e) {
-                throw new JiraApiUnauthorizedException($e->getMessage().' - project '.$projectEntity->getName(), $e->getCode(), $e->getRedirectUrl(), $e);
+                throw new JiraApiUnauthorizedException($e->getMessage() . ' - project ' . $projectEntity->getName(), $e->getCode(), $e->getRedirectUrl(), $e);
             }
 
             $output->writeln(
-                ' '.count($subtickets).' subtickets found',
-                OutputInterface::VERBOSITY_VERBOSE
+                ' ' . count($subtickets) . ' subtickets found',
+                OutputInterface::VERBOSITY_VERBOSE,
             );
             if ([] !== $subtickets) {
                 $output->writeln(
-                    ' '.implode(',', $subtickets),
-                    OutputInterface::VERBOSITY_VERY_VERBOSE
+                    ' ' . implode(',', $subtickets),
+                    OutputInterface::VERBOSITY_VERY_VERBOSE,
                 );
             }
         }

@@ -1,11 +1,17 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
 
 use App\Entity\Entry;
-use Doctrine\Persistence\ManagerRegistry;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use Doctrine\Persistence\ManagerRegistry;
+
+use function in_array;
+use function is_array;
+use function is_object;
+use function is_string;
 
 class ExportService
 {
@@ -40,7 +46,8 @@ class ExportService
             /** @var \App\Entity\User $user */
             $user = $this->managerRegistry
                 ->getRepository(\App\Entity\User::class)
-                ->find($userId);
+                ->find($userId)
+            ;
             if (null !== $user) {
                 $username = (string) $user->getUsername();
             }
@@ -75,11 +82,11 @@ class ExportService
         $arTickets = [];
         $arApi = [];
         foreach ($entries as $entry) {
-            if (strlen($entry->getTicket()) > 0
+            if ('' !== $entry->getTicket()
                 && $entry->getProject()
                 && $entry->getProject()->getTicketSystem()
                 && $entry->getProject()->getTicketSystem()->getBookTime()
-                && 'JIRA' == $entry->getProject()->getTicketSystem()->getType()
+                && 'JIRA' === $entry->getProject()->getTicketSystem()->getType()
             ) {
                 $ticketSystem = $entry->getProject()->getTicketSystem();
 
@@ -99,7 +106,7 @@ class ExportService
             $ticketSystemIssuesTotal = array_unique($arTickets[$idx]);
             $ticketSystemIssuesTotalChunks = array_chunk(
                 $ticketSystemIssuesTotal,
-                $maxRequestsElements
+                $maxRequestsElements,
             );
 
             $jiraFields = [];
@@ -113,12 +120,13 @@ class ExportService
 
             foreach ($ticketSystemIssuesTotalChunks as $ticketSystemIssueTotalChunk) {
                 $ret = $jiraApi->searchTicket(
-                    'IssueKey in ('.implode(',', $ticketSystemIssueTotalChunk).')',
+                    'IssueKey in (' . implode(',', $ticketSystemIssueTotalChunk) . ')',
                     $jiraFields,
-                    500
+                    500,
                 );
 
-                if (isset($ret->issues) && is_iterable($ret->issues)) {
+                // Type-safe check for search results
+                if (is_object($ret) && isset($ret->issues) && is_iterable($ret->issues)) {
                     foreach ($ret->issues as $issue) {
                         $issueKey = is_object($issue) && isset($issue->key) ? (string) $issue->key : null;
                         $issueFields = is_object($issue) && isset($issue->fields) ? $issue->fields : null;

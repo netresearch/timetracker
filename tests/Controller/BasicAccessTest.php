@@ -1,20 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
 use Symfony\Component\BrowserKit\Cookie;
 use Tests\AbstractWebTestCase;
 
-class BasicAccessTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class BasicAccessTest extends AbstractWebTestCase
 {
     /**
-     * Test based on SecurityControllerTest which works correctly
+     * Test based on SecurityControllerTest which works correctly.
      */
     public function testLoginThenAccessEndpoint(): void
     {
         // Use the working test approach from SecurityControllerTest
         // Reset database to ensure clean state
-        #$this->resetDatabase();
+        // $this->resetDatabase();
 
         // Clear session first
         $this->client->getContainer()->get('session')->clear();

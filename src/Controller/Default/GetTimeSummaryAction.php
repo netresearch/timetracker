@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -7,7 +8,6 @@ use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Model\JsonResponse;
 use App\Repository\EntryRepository;
-use Symfony\Component\HttpFoundation\Request;
 
 final class GetTimeSummaryAction extends BaseController
 {
@@ -34,5 +34,3 @@ final class GetTimeSummaryAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-

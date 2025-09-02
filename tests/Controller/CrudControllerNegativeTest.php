@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use App\Controller\CrudController;
-use App\Entity\Activity;
-use App\Entity\Customer;
 use App\Entity\Project;
-use App\Entity\User;
-use App\Service\Integration\Jira\JiraOAuthApiFactory;
-use PHPUnit\Framework\MockObject\MockObject;
 
-class CrudControllerNegativeTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class CrudControllerNegativeTest extends AbstractWebTestCase
 {
     /**
      * Invalid ticket format should return 406.
@@ -27,18 +26,18 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
             'start' => '09:00:00',
             'end' => '10:00:00',
             'date' => '2024-01-02',
-            'project' => 1,
-            'customer' => 1,
-            'activity' => 1,
+            'project_id' => 1,
+            'customer_id' => 1,
+            'activity_id' => 1,
             'ticket' => 'invalid-ticket',
         ];
 
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        $this->assertArrayHasKey('message', $data);
-        $this->assertNotEmpty($data['message']);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('message', $data);
+        self::assertNotEmpty($data['message']);
     }
 
     /**
@@ -53,18 +52,18 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
             'start' => '09:00:00',
             'end' => '10:00:00',
             'date' => '2024-01-03',
-            'project' => 1,
-            'customer' => 1,
-            'activity' => 1,
+            'project_id' => 1,
+            'customer_id' => 1,
+            'activity_id' => 1,
             'ticket' => 'WRONG-123',
         ];
 
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        $this->assertArrayHasKey('message', $data);
-        $this->assertNotEmpty($data['message']);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('message', $data);
+        self::assertNotEmpty($data['message']);
         // Depending on data, it might reach prefix check; format check comes first in controller
     }
 
@@ -80,16 +79,16 @@ class CrudControllerNegativeTest extends AbstractWebTestCase
             'start' => '09:00:00',
             'end' => '10:00:00',
             'date' => '2024-01-04',
-            'project' => 2,
-            'customer' => 1,
-            'activity' => 1,
+            'project_id' => 2,
+            'customer_id' => 1,
+            'activity_id' => 1,
         ];
 
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
-        $this->assertStatusCode(406);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($data);
-        $this->assertArrayHasKey('message', $data);
-        $this->assertNotEmpty($data['message']);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('message', $data);
+        self::assertNotEmpty($data['message']);
     }
 }

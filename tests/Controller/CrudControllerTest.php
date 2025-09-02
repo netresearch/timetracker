@@ -1,23 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
-class CrudControllerTest extends AbstractWebTestCase
+use function count;
+
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class CrudControllerTest extends AbstractWebTestCase
 {
     public function testSaveAction(): void
     {
         $parameter = [
             'start' => '09:25:00',
-            'project' => 1, //req
-            'customer' => 1,    //req->must be given, but can be ''
-            'activity' => 1,    //req->-||-
+            'project_id' => 1, // req
+            'customer_id' => 1,    // req->must be given, but can be ''
+            'activity_id' => 1,    // req->-||-
             'end' => '09:55:00',
             'date' => '2024-01-01',
         ];
 
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
 
         $expectedJson = [
             'result' => [
@@ -51,9 +60,9 @@ class CrudControllerTest extends AbstractWebTestCase
                 'duration' => '30',
                 'user_id' => '1',
                 'class' => '2',
-            ]
+            ],
         ];
-        $this->assertArraySubset($expectedDbEntry, $result);
+        self::assertArraySubset($expectedDbEntry, $result);
     }
 
     public function testSaveAndDeleteWorkLog(): void
@@ -68,7 +77,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'date' => '2024-01-01',
         ];
 
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
 
         // Get the created entry ID
@@ -85,7 +94,7 @@ class CrudControllerTest extends AbstractWebTestCase
         // Verify entry is deleted
         $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
         $result = $this->connection->executeQuery($query)->fetchAssociative();
-        $this->assertEquals(0, (int) $result['count'], "Entry was not deleted from database");
+        self::assertSame(0, (int) $result['count'], 'Entry was not deleted from database');
 
         // Try to delete again and expect 404
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
@@ -93,15 +102,15 @@ class CrudControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
 
-    //-------------- Bulkentry routes ----------------------------------------
+    // -------------- Bulkentry routes ----------------------------------------
 
     public function testBulkentryActionNonExistendPreset(): void
     {
         $parameter = [
-            'preset' => 42,   //req
+            'preset' => 42,   // req
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
-        $this->assertStatusCode(406);
+        $this->assertStatusCode(422);
         $this->assertMessage('Preset not found');
     }
 
@@ -109,22 +118,22 @@ class CrudControllerTest extends AbstractWebTestCase
     {
         // test duration = 0
         $parameter = [
-            'preset' => 1,   //req
-            'starttime' => '08:00:00',    //req
-            'endtime' => '08:00:00',    //opt
+            'preset' => 1,   // req
+            'starttime' => '08:00:00',    // req
+            'endtime' => '08:00:00',    // opt
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
-        $this->assertStatusCode(406);
+        $this->assertStatusCode(422);
         $this->assertMessage('Die Aktivität muss mindestens eine Minute angedauert haben!');
     }
 
     public function testBulkentryAction(): void
     {
         $parameter = [
-            'startdate' => '2020-01-25',    //opt
-            'enddate' => '2020-02-06',  //opt
-            'preset' => 1,   //req
-            'usecontract' => 1,   //opt
+            'startdate' => '2020-01-25',    // opt
+            'enddate' => '2020-02-06',  // opt
+            'preset' => 1,   // req
+            'usecontract' => 1,   // opt
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
@@ -138,7 +147,7 @@ class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        $this->assertSame(10, count($results));
+        self::assertSame(10, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -164,21 +173,21 @@ class CrudControllerTest extends AbstractWebTestCase
         ];
         $counter = count($results);
 
-        for ($i = 0; $i < $counter; $i++) {
-            $this->assertArraySubset($staticExpected, $results[$i]);
-            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        for ($i = 0; $i < $counter; ++$i) {
+            self::assertArraySubset($staticExpected, $results[$i]);
+            self::assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
     public function testBulkentryActionCustomTime(): void
     {
         $parameter = [
-            'startdate' => '2024-01-01',    //opt
-            'enddate' => '2024-01-10',  //opt
-            'starttime' => '08:00:00',    //req
-            'endtime' => '10:00:00',    //opt
-            'preset' => 1,   //req
-            'skipweekend' => 1,   //opt
+            'startdate' => '2024-01-01',    // opt
+            'enddate' => '2024-01-10',  // opt
+            'starttime' => '08:00:00',    // req
+            'endtime' => '10:00:00',    // opt
+            'preset' => 1,   // req
+            'skipweekend' => 1,   // opt
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
@@ -191,7 +200,7 @@ class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
-        $this->assertSame(8, count($results));
+        self::assertSame(8, count($results));
 
         // Assert days for the expected entries
         $staticExpected = [
@@ -208,31 +217,31 @@ class CrudControllerTest extends AbstractWebTestCase
 
         // We'll just validate the first 8 entries since that's what's in the test
         $variableExpected = [
-            ['day' => '2024-01-01',],
-            ['day' => '2024-01-02',],
-            ['day' => '2024-01-03',],
-            ['day' => '2024-01-04',],
-            ['day' => '2024-01-05',],
-            ['day' => '2024-01-08',],
-            ['day' => '2024-01-09',],
-            ['day' => '2024-01-10',],
+            ['day' => '2024-01-01'],
+            ['day' => '2024-01-02'],
+            ['day' => '2024-01-03'],
+            ['day' => '2024-01-04'],
+            ['day' => '2024-01-05'],
+            ['day' => '2024-01-08'],
+            ['day' => '2024-01-09'],
+            ['day' => '2024-01-10'],
         ];
         $counter = count($results);
 
-        for ($i = 0; $i < $counter; $i++) {
-            $this->assertArraySubset($staticExpected, $results[$i]);
-            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        for ($i = 0; $i < $counter; ++$i) {
+            self::assertArraySubset($staticExpected, $results[$i]);
+            self::assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
     public function testBulkentryActionSkipWeekend(): void
     {
         $parameter = [
-            'startdate' => '2020-02-07',    //opt
-            'enddate' => '2020-02-10',  //opt
-            'preset' => 1,   //req
-            'usecontract' => 1,   //opt
-            'skipweekend' => 1,   //opt
+            'startdate' => '2020-02-07',    // opt
+            'enddate' => '2020-02-10',  // opt
+            'preset' => 1,   // req
+            'usecontract' => 1,   // opt
+            'skipweekend' => 1,   // opt
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
@@ -245,9 +254,9 @@ class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-02-10"
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
-        $this->assertSame(2, count($results));
+        self::assertSame(2, count($results));
 
-        $staticExpected =  [
+        $staticExpected = [
             'start' => '08:00:00',
             'customer_id' => '1',
             'project_id' => '1',
@@ -263,9 +272,9 @@ class CrudControllerTest extends AbstractWebTestCase
         ];
         $counter = count($results);
 
-        for ($i = 0; $i < $counter; $i++) {
-            $this->assertArraySubset($staticExpected, $results[$i]);
-            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        for ($i = 0; $i < $counter; ++$i) {
+            self::assertArraySubset($staticExpected, $results[$i]);
+            self::assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
@@ -275,24 +284,24 @@ class CrudControllerTest extends AbstractWebTestCase
         $this->logInSession('noContract');
 
         $parameter = [
-            'startdate' => '2020-01-25',    //opt
-            'enddate' => '2020-02-06',  //opt
-            'preset' => 1,   //req
-            'usecontract' => 1,   //opt
+            'startdate' => '2020-01-25',    // opt
+            'enddate' => '2020-02-06',  // opt
+            'preset' => 1,   // req
+            'usecontract' => 1,   // opt
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
-        $this->assertStatusCode(406);
+        $this->assertStatusCode(422);
         $this->assertMessage('Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.');
     }
 
     public function testBulkentryActionContractEnddateIsNull(): void
     {
         $parameter = [
-            'startdate' => '2020-02-10',    //opt
-            'enddate' => '2020-02-20',  //opt
-            'preset' => 1,   //req
-            'usecontract' => 1,   //opt
+            'startdate' => '2020-02-10',    // opt
+            'enddate' => '2020-02-20',  // opt
+            'preset' => 1,   // req
+            'usecontract' => 1,   // opt
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
@@ -306,7 +315,7 @@ class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        $this->assertSame(10, count($results));
+        self::assertSame(10, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -333,9 +342,9 @@ class CrudControllerTest extends AbstractWebTestCase
         ];
         $counter = count($results);
 
-        for ($i = 0; $i < $counter; $i++) {
-            $this->assertArraySubset($staticExpected, $results[$i]);
-            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        for ($i = 0; $i < $counter; ++$i) {
+            self::assertArraySubset($staticExpected, $results[$i]);
+            self::assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
@@ -344,10 +353,10 @@ class CrudControllerTest extends AbstractWebTestCase
         $this->logInSession('developer');
 
         $parameter = [
-            'startdate' => '0020-02-10',    //opt
-            'enddate' => '0020-02-20',  //opt
-            'preset' => 1,   //req
-            'usecontract' => 1,   //opt
+            'startdate' => '0020-02-10',    // opt
+            'enddate' => '0020-02-20',  // opt
+            'preset' => 1,   // req
+            'usecontract' => 1,   // opt
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
@@ -361,7 +370,7 @@ class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        $this->assertSame(0, count($results));
+        self::assertSame(0, count($results));
     }
 
     public function testBulkentryActionContractEndedDuringBulkentry(): void
@@ -369,10 +378,10 @@ class CrudControllerTest extends AbstractWebTestCase
         $this->logInSession('developer');
 
         $parameter = [
-            'startdate' => '2019-12-29',    //opt
-            'enddate' => '2020-01-05',  //opt
-            'preset' => 1,   //req
-            'usecontract' => 1,   //opt
+            'startdate' => '2019-12-29',    // opt
+            'enddate' => '2020-01-05',  // opt
+            'preset' => 1,   // req
+            'usecontract' => 1,   // opt
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter);
@@ -386,7 +395,7 @@ class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        $this->assertSame(4, count($results));
+        self::assertSame(4, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -397,7 +406,7 @@ class CrudControllerTest extends AbstractWebTestCase
             'user_id' => '2',
             'class' => '2',
             'end' => '09:00:00',
-            'duration' => '60'
+            'duration' => '60',
         ];
 
         $variableExpected = [
@@ -408,9 +417,9 @@ class CrudControllerTest extends AbstractWebTestCase
         ];
         $counter = count($results);
 
-        for ($i = 0; $i < $counter; $i++) {
-            $this->assertArraySubset($staticExpected, $results[$i]);
-            $this->assertArraySubset($variableExpected[$i], $results[$i]);
+        for ($i = 0; $i < $counter; ++$i) {
+            self::assertArraySubset($staticExpected, $results[$i]);
+            self::assertArraySubset($variableExpected[$i], $results[$i]);
         }
     }
 
@@ -418,16 +427,16 @@ class CrudControllerTest extends AbstractWebTestCase
     {
         $parameter = [
             'start' => '08:00:00',
-            'project' => 1,  // req
-            'customer' => 1, // req->must be given, but can be ''
-            'activity' => 1, // req->-||-
+            'project_id' => 1,  // req
+            'customer_id' => 1, // req->must be given, but can be ''
+            'activity_id' => 1, // req->-||-
             'end' => '09:00:00',
             'date' => '2024-01-15',
             'ticket' => 'SA-123', // Using a ticket that matches the project's Jira ID
-            'description' => 'Test ticket entry'
+            'description' => 'Test ticket entry',
         ];
 
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter);
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
 
         $expectedJson = [
             'result' => [
@@ -442,7 +451,7 @@ class CrudControllerTest extends AbstractWebTestCase
                 'durationString' => '01:00',
                 'class' => 2,
                 'ticket' => 'SA-123',
-                'description' => 'Test ticket entry'
+                'description' => 'Test ticket entry',
             ],
         ];
 
@@ -465,9 +474,9 @@ class CrudControllerTest extends AbstractWebTestCase
                 'user_id' => '1',
                 'class' => '2',
                 'ticket' => 'SA-123',
-                'description' => 'Test ticket entry'
-            ]
+                'description' => 'Test ticket entry',
+            ],
         ];
-        $this->assertArraySubset($expectedDbEntry, $result);
+        self::assertArraySubset($expectedDbEntry, $result);
     }
 }

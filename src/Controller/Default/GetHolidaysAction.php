@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -18,5 +19,3 @@ final class GetHolidaysAction extends BaseController
         return new JsonResponse($holidays);
     }
 }
-
-

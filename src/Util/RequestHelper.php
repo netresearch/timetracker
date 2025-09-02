@@ -6,6 +6,9 @@ namespace App\Util;
 
 use Symfony\Component\HttpFoundation\Request;
 
+use function in_array;
+use function is_bool;
+
 final class RequestHelper
 {
     public static function string(Request $request, string $key, string $default = ''): string

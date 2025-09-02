@@ -1,16 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
 use App\Entity\Customer;
 use App\Entity\Project;
-use App\Entity\Entry;
-use App\Entity\Preset;
 use App\Entity\Team;
 use Doctrine\ORM\EntityManagerInterface;
+use Tests\AbstractWebTestCase;
 
-class CustomerDatabaseTest extends AbstractWebTestCase
+use function count;
+
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class CustomerDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
@@ -34,15 +41,15 @@ class CustomerDatabaseTest extends AbstractWebTestCase
 
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $customer->getId();
-        $this->assertNotNull($id, 'Customer ID should not be null after persist');
+        self::assertNotNull($id, 'Customer ID should not be null after persist');
         $this->entityManager->clear();
 
         // Fetch from database and verify
         $fetchedCustomer = $this->entityManager->getRepository(Customer::class)->find($id);
-        $this->assertNotNull($fetchedCustomer, 'Customer was not found in database');
-        $this->assertEquals('Test Database Customer', $fetchedCustomer->getName());
-        $this->assertTrue($fetchedCustomer->getActive());
-        $this->assertFalse($fetchedCustomer->getGlobal());
+        self::assertNotNull($fetchedCustomer, 'Customer was not found in database');
+        self::assertSame('Test Database Customer', $fetchedCustomer->getName());
+        self::assertTrue($fetchedCustomer->getActive());
+        self::assertFalse($fetchedCustomer->getGlobal());
 
         // Clean up - remove the test entity
         $this->entityManager->remove($fetchedCustomer);
@@ -73,9 +80,9 @@ class CustomerDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedCustomer = $this->entityManager->getRepository(Customer::class)->find($id);
-        $this->assertEquals('Updated Customer', $updatedCustomer->getName());
-        $this->assertFalse($updatedCustomer->getActive());
-        $this->assertTrue($updatedCustomer->getGlobal());
+        self::assertSame('Updated Customer', $updatedCustomer->getName());
+        self::assertFalse($updatedCustomer->getActive());
+        self::assertTrue($updatedCustomer->getGlobal());
 
         // Clean up
         $this->entityManager->remove($updatedCustomer);
@@ -102,7 +109,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
 
         // Verify customer is deleted
         $deletedCustomer = $this->entityManager->getRepository(Customer::class)->find($id);
-        $this->assertNull($deletedCustomer, 'Customer should be deleted from database');
+        self::assertNull($deletedCustomer, 'Customer should be deleted from database');
     }
 
     public function testProjectRelationship(): void
@@ -147,7 +154,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
 
         // Test project relationship
-        $this->assertCount(2, $fetchedCustomer->getProjects());
+        self::assertCount(2, $fetchedCustomer->getProjects());
 
         // Clean up
         $projects = $fetchedCustomer->getProjects();
@@ -196,7 +203,7 @@ class CustomerDatabaseTest extends AbstractWebTestCase
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
 
         // Test team relationship
-        $this->assertCount(2, $fetchedCustomer->getTeams());
+        self::assertCount(2, $fetchedCustomer->getTeams());
 
         // Clean up
         $teams = $fetchedCustomer->getTeams()->toArray(); // Convert to array to avoid modification during iteration
@@ -233,14 +240,14 @@ class CustomerDatabaseTest extends AbstractWebTestCase
 
         // Test findAll
         $allCustomers = $entityRepository->findAll();
-        $this->assertGreaterThanOrEqual(2, count($allCustomers));
+        self::assertGreaterThanOrEqual(2, count($allCustomers));
 
         // Test findBy with criteria
         $activeCustomers = $entityRepository->findBy(['active' => true]);
-        $this->assertGreaterThanOrEqual(1, count($activeCustomers));
+        self::assertGreaterThanOrEqual(1, count($activeCustomers));
 
         $globalCustomers = $entityRepository->findBy(['global' => true]);
-        $this->assertGreaterThanOrEqual(1, count($globalCustomers));
+        self::assertGreaterThanOrEqual(1, count($globalCustomers));
 
         // Clean up
         $this->entityManager->remove($customer1);

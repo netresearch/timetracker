@@ -1,16 +1,15 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Tracking;
 
+use App\Entity\Entry;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
-use Symfony\Component\HttpFoundation\Request;
 use App\Util\RequestEntityHelper;
-use App\Entity\Entry;
-use App\Entity\TicketSystem;
-use App\Entity\User;
+use Symfony\Component\HttpFoundation\Request;
 
 final class DeleteEntryAction extends BaseTrackingController
 {
@@ -39,7 +38,7 @@ final class DeleteEntryAction extends BaseTrackingController
             } catch (\App\Exception\Integration\Jira\JiraApiUnauthorizedException $e) {
                 return new Error($e->getMessage(), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN, $e->getRedirectUrl());
             } catch (\App\Exception\Integration\Jira\JiraApiException $e) {
-                $alert = $e->getMessage().'<br />'.
+                $alert = $e->getMessage() . '<br />' .
                     $this->translator->trans('Dataset was modified in Timetracker anyway');
             }
 
@@ -54,5 +53,3 @@ final class DeleteEntryAction extends BaseTrackingController
         return new JsonResponse(['success' => true, 'alert' => $alert]);
     }
 }
-
-

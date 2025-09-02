@@ -8,10 +8,13 @@ declare(strict_types=1);
 
 namespace App\Exception\Integration\Jira;
 
+use Exception;
+use Throwable;
+
 /**
  * Class JiraApiException.
  */
-class JiraApiException extends \Exception
+class JiraApiException extends Exception
 {
     /**
      * JiraApiException constructor.
@@ -20,10 +23,10 @@ class JiraApiException extends \Exception
         string $message,
         int $code = 0,
         protected ?string $redirectUrl = null,
-        ?\Throwable $throwable = null,
+        ?Throwable $throwable = null,
     ) {
         if (!str_starts_with($message, 'Jira:')) {
-            $message = 'Jira: '.$message;
+            $message = 'Jira: ' . $message;
         }
 
         parent::__construct($message, $code, $throwable);

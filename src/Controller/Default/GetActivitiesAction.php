@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -24,5 +25,3 @@ final class GetActivitiesAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-

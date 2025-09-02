@@ -1,13 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
 use App\Entity\Account;
 use App\Entity\Entry;
 use Doctrine\ORM\EntityManagerInterface;
+use Tests\AbstractWebTestCase;
 
-class AccountDatabaseTest extends AbstractWebTestCase
+use function count;
+
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class AccountDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
@@ -29,13 +38,13 @@ class AccountDatabaseTest extends AbstractWebTestCase
 
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $account->getId();
-        $this->assertNotNull($id, 'Account ID should not be null after persist');
+        self::assertNotNull($id, 'Account ID should not be null after persist');
         $this->entityManager->clear();
 
         // Fetch from database and verify
         $fetchedAccount = $this->entityManager->getRepository(Account::class)->find($id);
-        $this->assertNotNull($fetchedAccount, 'Account was not found in database');
-        $this->assertEquals('Test Database Account', $fetchedAccount->getName());
+        self::assertNotNull($fetchedAccount, 'Account was not found in database');
+        self::assertSame('Test Database Account', $fetchedAccount->getName());
 
         // Clean up - remove the test entity
         $this->entityManager->remove($fetchedAccount);
@@ -61,7 +70,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedAccount = $this->entityManager->getRepository(Account::class)->find($id);
-        $this->assertEquals('Updated Account', $updatedAccount->getName());
+        self::assertSame('Updated Account', $updatedAccount->getName());
 
         // Clean up
         $this->entityManager->remove($updatedAccount);
@@ -86,7 +95,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
 
         // Verify account is deleted
         $deletedAccount = $this->entityManager->getRepository(Account::class)->find($id);
-        $this->assertNull($deletedAccount, 'Account should be deleted from database');
+        self::assertNull($deletedAccount, 'Account should be deleted from database');
     }
 
     public function testEntryRelationship(): void
@@ -129,7 +138,7 @@ class AccountDatabaseTest extends AbstractWebTestCase
         $fetchedAccount = $this->entityManager->find(Account::class, $accountId);
 
         // Test entry relationship
-        $this->assertCount(2, $fetchedAccount->getEntries());
+        self::assertCount(2, $fetchedAccount->getEntries());
         $entries = $fetchedAccount->getEntries();
         $entryIds = [];
         foreach ($entries as $entry) {
@@ -165,11 +174,11 @@ class AccountDatabaseTest extends AbstractWebTestCase
 
         // Test findAll
         $allAccounts = $entityRepository->findAll();
-        $this->assertGreaterThanOrEqual(2, count($allAccounts));
+        self::assertGreaterThanOrEqual(2, count($allAccounts));
 
         // Test findBy with criteria
         $matchingAccounts = $entityRepository->findBy(['name' => 'Account1']);
-        $this->assertCount(1, $matchingAccounts);
+        self::assertCount(1, $matchingAccounts);
 
         // Clean up
         $this->entityManager->remove($account1);

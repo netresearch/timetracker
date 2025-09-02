@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
+
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GroupByTicketAction extends BaseInterpretationController
@@ -26,16 +29,17 @@ final class GroupByTicketAction extends BaseInterpretationController
 
         try {
             $entries = $this->getEntries($request);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
         $tickets = [];
         foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
-            if ($ticket !== '' && $ticket !== '-') {
+            if ('' !== $ticket && '-' !== $ticket) {
                 if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = ['id' => $entry->getId(), 'name' => $ticket, 'hours' => 0, 'quota' => 0];
                 }
@@ -44,14 +48,17 @@ final class GroupByTicketAction extends BaseInterpretationController
             }
         }
 
-        $sum = 0; foreach ($tickets as $t) { $sum += $t['hours']; }
+        $sum = 0;
+        foreach ($tickets as $t) {
+            $sum += $t['hours'];
+        }
 
-        foreach ($tickets as &$ticket) { $ticket['quota'] = $this->timeCalculationService->formatQuota($ticket['hours'], $sum); }
+        foreach ($tickets as &$ticket) {
+            $ticket['quota'] = $this->timeCalculationService->formatQuota($ticket['hours'], $sum);
+        }
 
         usort($tickets, $this->sortByName(...));
 
         return new JsonResponse($tickets);
     }
 }
-
-

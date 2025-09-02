@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace Tests\Security;
 
 use App\Security\LdapAuthenticator;
+use App\Service\Ldap\LdapClientService;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use App\Service\Ldap\LdapClientService;
 
-class LdapAuthenticatorTest extends TestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class LdapAuthenticatorTest extends TestCase
 {
     private function makeSubject(?ParameterBagInterface $parameterBag = null): LdapAuthenticator
     {
@@ -29,6 +33,7 @@ class LdapAuthenticatorTest extends TestCase
         $parameterBag ??= $this->getMockBuilder(ParameterBagInterface::class)->disableOriginalConstructor()->getMock();
         /** @var LdapClientService&\PHPUnit\Framework\MockObject\MockObject $ldapClient */
         $ldapClient = $this->getMockBuilder(LdapClientService::class)->disableOriginalConstructor()->getMock();
+
         return new LdapAuthenticator($mock, $router, $parameterBag, $logger, $ldapClient);
     }
 
@@ -37,9 +42,9 @@ class LdapAuthenticatorTest extends TestCase
         $ldapAuthenticator = $this->makeSubject();
         $request = new Request([], [], ['_route' => '_login']);
         $request->setMethod('GET');
-        $this->assertFalse($ldapAuthenticator->supports($request));
+        self::assertFalse($ldapAuthenticator->supports($request));
         $request->setMethod('POST');
-        $this->assertTrue($ldapAuthenticator->supports($request));
+        self::assertTrue($ldapAuthenticator->supports($request));
     }
 
     public function testAuthenticateValidation(): void
@@ -61,6 +66,6 @@ class LdapAuthenticatorTest extends TestCase
         $mock->method('getUsername')->willReturn('dev');
         $tokenStub = new \Tests\Fixtures\TokenStub($mock);
         $redirectResponse = $ldapAuthenticator->onAuthenticationSuccess($request, $tokenStub, 'main');
-        $this->assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_FOUND, $redirectResponse->getStatusCode(), (string) $redirectResponse->getContent());
+        self::assertSame(\Symfony\Component\HttpFoundation\Response::HTTP_FOUND, $redirectResponse->getStatusCode(), (string) $redirectResponse->getContent());
     }
 }

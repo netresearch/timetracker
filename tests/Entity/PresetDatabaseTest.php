@@ -1,15 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
-use App\Entity\Preset;
-use App\Entity\Customer;
-use App\Entity\Project;
 use App\Entity\Activity;
+use App\Entity\Customer;
+use App\Entity\Preset;
+use App\Entity\Project;
 use Doctrine\ORM\EntityManagerInterface;
+use Tests\AbstractWebTestCase;
 
-class PresetDatabaseTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class PresetDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
@@ -40,24 +47,24 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $preset->getId();
-        $this->assertNotNull($id, 'Preset ID should not be null after persist');
+        self::assertNotNull($id, 'Preset ID should not be null after persist');
         $this->entityManager->clear();
 
         // Re-fetch the preset to ensure it's managed
         $fetchedPreset = $this->entityManager->getRepository(Preset::class)->find($id);
-        $this->assertNotNull($fetchedPreset, 'Preset was not found in database');
-        $this->assertEquals('Test Database Preset', $fetchedPreset->getName());
-        $this->assertEquals('Test Description', $fetchedPreset->getDescription());
+        self::assertNotNull($fetchedPreset, 'Preset was not found in database');
+        self::assertSame('Test Database Preset', $fetchedPreset->getName());
+        self::assertSame('Test Description', $fetchedPreset->getDescription());
 
         // Test relationships
-        $this->assertNotNull($fetchedPreset->getCustomer());
-        $this->assertEquals($customer->getId(), $fetchedPreset->getCustomerId());
+        self::assertNotNull($fetchedPreset->getCustomer());
+        self::assertSame($customer->getId(), $fetchedPreset->getCustomerId());
 
-        $this->assertNotNull($fetchedPreset->getProject());
-        $this->assertEquals($project->getId(), $fetchedPreset->getProjectId());
+        self::assertNotNull($fetchedPreset->getProject());
+        self::assertSame($project->getId(), $fetchedPreset->getProjectId());
 
-        $this->assertNotNull($fetchedPreset->getActivity());
-        $this->assertEquals($activity->getId(), $fetchedPreset->getActivityId());
+        self::assertNotNull($fetchedPreset->getActivity());
+        self::assertSame($activity->getId(), $fetchedPreset->getActivityId());
 
         // Clean up - re-fetch related entities to ensure they are managed
         $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
@@ -102,8 +109,8 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch the preset to ensure it's managed
         $updatedPreset = $this->entityManager->getRepository(Preset::class)->find($id);
-        $this->assertEquals('Updated Preset', $updatedPreset->getName());
-        $this->assertEquals('Updated Description', $updatedPreset->getDescription());
+        self::assertSame('Updated Preset', $updatedPreset->getName());
+        self::assertSame('Updated Description', $updatedPreset->getDescription());
 
         // Clean up - re-fetch related entities to ensure they are managed
         $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
@@ -144,7 +151,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch the preset to ensure it's managed
         $presetToDelete = $this->entityManager->getRepository(Preset::class)->find($id);
-        $this->assertNotNull($presetToDelete, 'Preset should exist before deletion');
+        self::assertNotNull($presetToDelete, 'Preset should exist before deletion');
 
         // Remove the test entities
         $this->entityManager->remove($presetToDelete);
@@ -152,7 +159,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         // Verify preset is deleted
         $deletedPreset = $this->entityManager->getRepository(Preset::class)->find($id);
-        $this->assertNull($deletedPreset, 'Preset should be deleted from database');
+        self::assertNull($deletedPreset, 'Preset should be deleted from database');
 
         // Clean up remaining entities
         $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($activity->getId());
@@ -186,12 +193,12 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         // Test toArray() method
         $array = $preset->toArray();
-        $this->assertEquals($preset->getId(), $array['id']);
-        $this->assertEquals('Array Test Preset', $array['name']);
-        $this->assertEquals('Test Description', $array['description']);
-        $this->assertEquals($customer->getId(), $array['customer']);
-        $this->assertEquals($project->getId(), $array['project']);
-        $this->assertEquals($activity->getId(), $array['activity']);
+        self::assertSame($preset->getId(), $array['id']);
+        self::assertSame('Array Test Preset', $array['name']);
+        self::assertSame('Test Description', $array['description']);
+        self::assertSame($customer->getId(), $array['customer']);
+        self::assertSame($project->getId(), $array['project']);
+        self::assertSame($activity->getId(), $array['activity']);
 
         // Clear the EntityManager to simulate a fresh state
         $this->entityManager->clear();
@@ -220,6 +227,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->persist($customer);
         $this->entityManager->flush();
+
         return $customer;
     }
 
@@ -237,6 +245,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->persist($project);
         $this->entityManager->flush();
+
         return $project;
     }
 
@@ -249,6 +258,7 @@ class PresetDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->persist($activity);
         $this->entityManager->flush();
+
         return $activity;
     }
 }

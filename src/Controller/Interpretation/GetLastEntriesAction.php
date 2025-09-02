@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
+
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GetLastEntriesAction extends BaseInterpretationController
@@ -26,9 +29,10 @@ final class GetLastEntriesAction extends BaseInterpretationController
 
         try {
             $entries = $this->getEntries($request, 50);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
@@ -44,5 +48,3 @@ final class GetLastEntriesAction extends BaseInterpretationController
         return new JsonResponse($entryList);
     }
 }
-
-

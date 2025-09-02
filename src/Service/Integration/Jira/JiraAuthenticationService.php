@@ -11,9 +11,13 @@ use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Security\TokenEncryptionService;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Throwable;
+
+use function sprintf;
 
 /**
  * Handles Jira OAuth authentication flow and token management.
@@ -32,15 +36,15 @@ class JiraAuthenticationService
         private readonly TokenEncryptionService $tokenEncryption,
     ) {
         $this->oAuthCallbackUrl = $router->generate(
-            'jiraOAuthCallback', 
-            [], 
-            UrlGeneratorInterface::ABSOLUTE_URL
+            'jiraOAuthCallback',
+            [],
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
     }
 
     /**
      * Initiates OAuth request token flow.
-     * 
+     *
      * @throws JiraApiException
      */
     public function fetchOAuthRequestToken(JiraHttpClientService $clientService): string
@@ -48,7 +52,7 @@ class JiraAuthenticationService
         $client = $clientService->getClient('new');
         $response = $client->post(
             $this->getOAuthRequestUrl($clientService->getTicketSystem()),
-            ['auth' => 'oauth']
+            ['auth' => 'oauth'],
         );
 
         $tokens = $this->extractTokens($response);
@@ -62,7 +66,7 @@ class JiraAuthenticationService
             $clientService->getTicketSystem(),
             '',
             $tokens['oauth_token'],
-            true
+            true,
         );
 
         return $tokens['oauth_token'];
@@ -70,22 +74,22 @@ class JiraAuthenticationService
 
     /**
      * Exchanges request token for access token.
-     * 
+     *
      * @throws JiraApiException
      */
     public function fetchOAuthAccessToken(
         JiraHttpClientService $clientService,
         string $oAuthRequestToken,
-        string $oAuthVerifier
+        string $oAuthVerifier,
     ): void {
         $client = $clientService->getClient('request', $oAuthRequestToken);
-        
+
         $response = $client->post(
             $this->getOAuthAccessUrl($clientService->getTicketSystem()),
             [
                 'auth' => 'oauth',
                 'form_params' => ['oauth_verifier' => $oAuthVerifier],
-            ]
+            ],
         );
 
         $tokens = $this->extractTokens($response);
@@ -98,7 +102,7 @@ class JiraAuthenticationService
             $clientService->getUser(),
             $clientService->getTicketSystem(),
             $tokens['oauth_token_secret'],
-            $tokens['oauth_token']
+            $tokens['oauth_token'],
         );
     }
 
@@ -108,7 +112,7 @@ class JiraAuthenticationService
     private function extractTokens(ResponseInterface $response): array
     {
         $responseBody = (string) $response->getBody();
-        
+
         if ('' === $responseBody) {
             throw new JiraApiException('Empty response from Jira OAuth endpoint', 500);
         }
@@ -117,10 +121,7 @@ class JiraAuthenticationService
         parse_str($responseBody, $tokens);
 
         if (isset($tokens['oauth_problem'])) {
-            throw new JiraApiException(
-                sprintf('OAuth problem: %s', $tokens['oauth_problem']),
-                401
-            );
+            throw new JiraApiException(sprintf('OAuth problem: %s', $tokens['oauth_problem']), 401);
         }
 
         return $tokens;
@@ -134,10 +135,10 @@ class JiraAuthenticationService
         TicketSystem $ticketSystem,
         string $tokenSecret,
         string $accessToken = 'token_request_unfinished',
-        bool $avoidConnection = false
+        bool $avoidConnection = false,
     ): array {
         $em = $this->managerRegistry->getManager();
-        
+
         $userTicketSystem = $em->getRepository(UserTicketsystem::class)->findOneBy([
             'user' => $user,
             'ticketSystem' => $ticketSystem,
@@ -152,10 +153,11 @@ class JiraAuthenticationService
         // Encrypt tokens before storage
         $encryptedSecret = $this->tokenEncryption->encryptToken($tokenSecret);
         $encryptedToken = $this->tokenEncryption->encryptToken($accessToken);
-        
+
         $userTicketSystem->setTokenSecret($encryptedSecret)
             ->setAccessToken($encryptedToken)
-            ->setAvoidConnection($avoidConnection);
+            ->setAvoidConnection($avoidConnection)
+        ;
 
         $em->persist($userTicketSystem);
         $em->flush();
@@ -172,7 +174,7 @@ class JiraAuthenticationService
     public function getTokens(User $user, TicketSystem $ticketSystem): array
     {
         $em = $this->managerRegistry->getManager();
-        
+
         $userTicketSystem = $em->getRepository(UserTicketsystem::class)->findOneBy([
             'user' => $user,
             'ticketSystem' => $ticketSystem,
@@ -187,7 +189,7 @@ class JiraAuthenticationService
                 'token' => $this->tokenEncryption->decryptToken($userTicketSystem->getAccessToken()),
                 'secret' => $this->tokenEncryption->decryptToken($userTicketSystem->getTokenSecret()),
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Handle legacy unencrypted tokens
             return [
                 'token' => $userTicketSystem->getAccessToken(),
@@ -202,7 +204,7 @@ class JiraAuthenticationService
     public function deleteTokens(User $user, TicketSystem $ticketSystem): void
     {
         $em = $this->managerRegistry->getManager();
-        
+
         $userTicketSystem = $em->getRepository(UserTicketsystem::class)->findOneBy([
             'user' => $user,
             'ticketSystem' => $ticketSystem,
@@ -224,7 +226,8 @@ class JiraAuthenticationService
             ->findOneBy([
                 'user' => $user,
                 'ticketSystem' => $ticketSystem,
-            ]);
+            ])
+        ;
 
         return $userTicketSystem && !$userTicketSystem->getAvoidConnection();
     }
@@ -254,7 +257,7 @@ class JiraAuthenticationService
             '%s%s?oauth_token=%s',
             $ticketSystem->getUrl(),
             $this->oAuthAuthUrl,
-            $oAuthToken
+            $oAuthToken,
         );
     }
 
@@ -271,13 +274,8 @@ class JiraAuthenticationService
      */
     public function throwUnauthorizedRedirect(
         TicketSystem $ticketSystem,
-        ?\Throwable $throwable = null
+        ?Throwable $throwable = null,
     ): never {
-        throw new JiraApiUnauthorizedException(
-            'Unauthorized. Redirecting to Jira OAuth.',
-            $this->getOAuthAuthUrl($ticketSystem, ''),
-            401,
-            $throwable
-        );
+        throw new JiraApiUnauthorizedException('Unauthorized. Redirecting to Jira OAuth.', 401, $this->getOAuthAuthUrl($ticketSystem, ''), $throwable);
     }
 }

@@ -1,10 +1,14 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
+
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
+use DateTimeInterface;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GroupByWorktimeAction extends BaseInterpretationController
@@ -26,16 +30,19 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
         try {
             $entries = $this->getEntries($request);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
         $times = [];
         foreach ($entries as $entry) {
             $day = $entry->getDay();
-            if (!$day instanceof \DateTimeInterface) { continue; }
+            if (!$day instanceof DateTimeInterface) {
+                continue;
+            }
 
             $key = $day->format('y-m-d');
             if (!isset($times[$key])) {
@@ -45,7 +52,10 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             $times[$key]['minutes'] += $entry->getDuration();
         }
 
-        $totalMinutes = 0.0; foreach ($times as $t) { $totalMinutes += $t['minutes']; }
+        $totalMinutes = 0.0;
+        foreach ($times as $t) {
+            $totalMinutes += $t['minutes'];
+        }
 
         foreach ($times as &$time) {
             $minutes = $time['minutes'];
@@ -55,13 +65,12 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         }
 
         usort($times, $this->sortByName(...));
-        $prepared = array_map(static fn(array $t): array => [
+        $prepared = array_map(static fn (array $t): array => [
             'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'quota' => (string) $t['quota'],
         ], $times);
 
         $prepared = array_reverse($prepared);
+
         return new JsonResponse($prepared);
     }
 }
-
-

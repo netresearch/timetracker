@@ -1,17 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
-use App\Entity\Project;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Preset;
+use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Tests\AbstractWebTestCase;
 
-class ProjectDatabaseTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ProjectDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
@@ -49,22 +56,22 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $project->getId();
         $customerId = $customer->getId();
-        $this->assertNotNull($id, 'Project ID should not be null after persist');
+        self::assertNotNull($id, 'Project ID should not be null after persist');
         $this->entityManager->clear();
 
         // Fetch from database and verify
         $fetchedProject = $this->entityManager->getRepository(Project::class)->find($id);
-        $this->assertNotNull($fetchedProject, 'Project was not found in database');
-        $this->assertEquals('Test Database Project', $fetchedProject->getName());
-        $this->assertTrue($fetchedProject->getActive());
-        $this->assertFalse($fetchedProject->getGlobal());
-        $this->assertEquals('TEST-OFFER', $fetchedProject->getOffer());
-        $this->assertEquals(Project::BILLING_TM, $fetchedProject->getBilling());
-        $this->assertEquals(120, $fetchedProject->getEstimation());
+        self::assertNotNull($fetchedProject, 'Project was not found in database');
+        self::assertSame('Test Database Project', $fetchedProject->getName());
+        self::assertTrue($fetchedProject->getActive());
+        self::assertFalse($fetchedProject->getGlobal());
+        self::assertSame('TEST-OFFER', $fetchedProject->getOffer());
+        self::assertSame(Project::BILLING_TM, $fetchedProject->getBilling());
+        self::assertSame(120, $fetchedProject->getEstimation());
 
         // Check customer relationship
-        $this->assertNotNull($fetchedProject->getCustomer());
-        $this->assertEquals('Test Customer', $fetchedProject->getCustomer()->getName());
+        self::assertNotNull($fetchedProject->getCustomer());
+        self::assertSame('Test Customer', $fetchedProject->getCustomer()->getName());
 
         // Clean up - remove the test entities
         $this->entityManager->remove($fetchedProject);
@@ -72,7 +79,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch customer to ensure it's managed
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
-        if ($fetchedCustomer instanceof \App\Entity\Customer) {
+        if ($fetchedCustomer instanceof Customer) {
             $this->entityManager->remove($fetchedCustomer);
             $this->entityManager->flush();
         }
@@ -119,12 +126,12 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedProject = $this->entityManager->getRepository(Project::class)->find($id);
-        $this->assertEquals('Updated Project', $updatedProject->getName());
-        $this->assertFalse($updatedProject->getActive());
-        $this->assertTrue($updatedProject->getGlobal());
-        $this->assertEquals('OFFER-UPDATED', $updatedProject->getOffer());
-        $this->assertEquals(Project::BILLING_FP, $updatedProject->getBilling());
-        $this->assertEquals(200, $updatedProject->getEstimation());
+        self::assertSame('Updated Project', $updatedProject->getName());
+        self::assertFalse($updatedProject->getActive());
+        self::assertTrue($updatedProject->getGlobal());
+        self::assertSame('OFFER-UPDATED', $updatedProject->getOffer());
+        self::assertSame(Project::BILLING_FP, $updatedProject->getBilling());
+        self::assertSame(200, $updatedProject->getEstimation());
 
         // Clean up
         $this->entityManager->remove($updatedProject);
@@ -132,7 +139,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch customer to ensure it's managed
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
-        if ($fetchedCustomer instanceof \App\Entity\Customer) {
+        if ($fetchedCustomer instanceof Customer) {
             $this->entityManager->remove($fetchedCustomer);
             $this->entityManager->flush();
         }
@@ -171,7 +178,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch the project to ensure it's managed
         $projectToDelete = $this->entityManager->find(Project::class, $id);
-        $this->assertNotNull($projectToDelete, 'Project should exist before deletion');
+        self::assertNotNull($projectToDelete, 'Project should exist before deletion');
 
         // Delete project
         $this->entityManager->remove($projectToDelete);
@@ -179,11 +186,11 @@ class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Verify project is deleted
         $deletedProject = $this->entityManager->getRepository(Project::class)->find($id);
-        $this->assertNull($deletedProject, 'Project should be deleted from database');
+        self::assertNull($deletedProject, 'Project should be deleted from database');
 
         // Clean up customer - re-fetch to ensure it's managed
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
-        if ($fetchedCustomer instanceof \App\Entity\Customer) {
+        if ($fetchedCustomer instanceof Customer) {
             $this->entityManager->remove($fetchedCustomer);
             $this->entityManager->flush();
         }
@@ -244,7 +251,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
 
         // Test entry relationship
-        $this->assertCount(2, $fetchedProject->getEntries());
+        self::assertCount(2, $fetchedProject->getEntries());
 
         // Clean up
         $entries = $fetchedProject->getEntries();
@@ -312,11 +319,11 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
 
         // Test relationships
-        $this->assertNotNull($fetchedProject->getProjectLead());
-        $this->assertEquals('project_lead', $fetchedProject->getProjectLead()->getUsername());
+        self::assertNotNull($fetchedProject->getProjectLead());
+        self::assertSame('project_lead', $fetchedProject->getProjectLead()->getUsername());
 
-        $this->assertNotNull($fetchedProject->getTechnicalLead());
-        $this->assertEquals('technical_lead', $fetchedProject->getTechnicalLead()->getUsername());
+        self::assertNotNull($fetchedProject->getTechnicalLead());
+        self::assertSame('technical_lead', $fetchedProject->getTechnicalLead()->getUsername());
 
         // Clean up - remove the re-fetched project first
         $this->entityManager->remove($fetchedProject);
@@ -327,15 +334,15 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedTechnicalLead = $this->entityManager->find(User::class, $technicalLeadId);
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
 
-        if ($fetchedProjectLead instanceof \App\Entity\User) {
+        if ($fetchedProjectLead instanceof User) {
             $this->entityManager->remove($fetchedProjectLead);
         }
 
-        if ($fetchedTechnicalLead instanceof \App\Entity\User) {
+        if ($fetchedTechnicalLead instanceof User) {
             $this->entityManager->remove($fetchedTechnicalLead);
         }
 
-        if ($fetchedCustomer instanceof \App\Entity\Customer) {
+        if ($fetchedCustomer instanceof Customer) {
             $this->entityManager->remove($fetchedCustomer);
         }
 
@@ -388,9 +395,9 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
 
         // Test ticket system relationship
-        $this->assertNotNull($fetchedProject->getTicketSystem());
-        $this->assertEquals('Test Ticket System', $fetchedProject->getTicketSystem()->getName());
-        $this->assertEquals('TEST', $fetchedProject->getJiraId());
+        self::assertNotNull($fetchedProject->getTicketSystem());
+        self::assertSame('Test Ticket System', $fetchedProject->getTicketSystem()->getName());
+        self::assertSame('TEST', $fetchedProject->getJiraId());
 
         // Clean up - remove the re-fetched project first
         $this->entityManager->remove($fetchedProject);
@@ -400,11 +407,11 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedTicketSystem = $this->entityManager->find(TicketSystem::class, $ticketSystemId);
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
 
-        if ($fetchedTicketSystem instanceof \App\Entity\TicketSystem) {
+        if ($fetchedTicketSystem instanceof TicketSystem) {
             $this->entityManager->remove($fetchedTicketSystem);
         }
 
-        if ($fetchedCustomer instanceof \App\Entity\Customer) {
+        if ($fetchedCustomer instanceof Customer) {
             $this->entityManager->remove($fetchedCustomer);
         }
 
@@ -470,7 +477,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
 
         // Test presets relationship
-        $this->assertCount(2, $fetchedProject->getPresets());
+        self::assertCount(2, $fetchedProject->getPresets());
 
         // Clean up presets first
         foreach ($fetchedProject->getPresets() as $preset) {
@@ -491,7 +498,7 @@ class ProjectDatabaseTest extends AbstractWebTestCase
             $this->entityManager->remove($fetchedActivity);
         }
 
-        if ($fetchedCustomer instanceof \App\Entity\Customer) {
+        if ($fetchedCustomer instanceof Customer) {
             $this->entityManager->remove($fetchedCustomer);
         }
 

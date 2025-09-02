@@ -18,6 +18,9 @@ class EntryEvent extends Event
     public const SYNCED = 'entry.synced';
     public const SYNC_FAILED = 'entry.sync_failed';
 
+    /**
+     * @param array<string, mixed>|null $context
+     */
     public function __construct(
         private readonly Entry $entry,
         private readonly ?array $context = null,
@@ -29,6 +32,9 @@ class EntryEvent extends Event
         return $this->entry;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getContext(): ?array
     {
         return $this->context;

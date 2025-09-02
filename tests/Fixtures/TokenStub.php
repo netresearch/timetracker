@@ -7,6 +7,8 @@ namespace Tests\Fixtures;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
+use function array_key_exists;
+
 class TokenStub implements TokenInterface
 {
     private array $attributes = [];

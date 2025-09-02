@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Repository;
@@ -32,7 +33,8 @@ class CustomerRepository extends ServiceEntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute();
+            ->execute()
+        ;
 
         $data = [];
         foreach ($result as $customer) {
@@ -46,8 +48,8 @@ class CustomerRepository extends ServiceEntityRepository
         return $data;
     }
 
-    /*
-     * Returns an array of all available customers
+    /**
+     * Returns an array of all available customers.
      *
      * @return array<int, array{customer: array{id:int, name:string, active:bool, global:bool, teams: array<int, int>}}>
      */
@@ -59,7 +61,7 @@ class CustomerRepository extends ServiceEntityRepository
         /** @var Customer[] $customers */
         $customers = $this->findBy(
             [],
-            ['name' => 'ASC']
+            ['name' => 'ASC'],
         );
 
         $data = [];

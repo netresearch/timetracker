@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Controller;
 
 use App\Controller\ControllingController;
@@ -8,12 +10,19 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Service\ExportService as Export;
+use DateTime;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PHPUnit\Framework\MockObject\MockObject;
+use ReflectionClass;
 use Tests\AbstractWebTestCase;
 
-class ControllingControllerTest extends AbstractWebTestCase
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ControllingControllerTest extends AbstractWebTestCase
 {
     public function testExportActionRequiresLogin(): void
     {
@@ -38,7 +47,7 @@ class ControllingControllerTest extends AbstractWebTestCase
 
         // Verify it's redirecting to the login page
         $response = $this->client->getResponse();
-        $this->assertStringContainsString('/login', $response->headers->get('Location'));
+        self::assertStringContainsString('/login', $response->headers->get('Location'));
     }
 
     public function testExportActionWithLoggedInUser(): void
@@ -60,8 +69,8 @@ class ControllingControllerTest extends AbstractWebTestCase
                 'project' => 0,
                 'customer' => 0,
                 'billable' => 0,
-                'tickettitles' => 0
-            ]
+                'tickettitles' => 0,
+            ],
         );
 
         // Check the response status code
@@ -71,25 +80,25 @@ class ControllingControllerTest extends AbstractWebTestCase
         $response = $this->client->getResponse();
 
         // Verify response is an Excel file with correct MIME type
-        $this->assertEquals(
+        self::assertSame(
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            $response->headers->get('Content-Type')
+            $response->headers->get('Content-Type'),
         );
 
         // Verify content disposition header has attachment type and correct filename pattern
         $contentDisposition = $response->headers->get('Content-disposition');
-        $this->assertStringStartsWith('attachment;', $contentDisposition);
-        $this->assertStringContainsString(
+        self::assertStringStartsWith('attachment;', $contentDisposition);
+        self::assertStringContainsString(
             'attachment;filename=2023_06_',
-            $contentDisposition
+            $contentDisposition,
         );
 
         // Verify response has content
         $content = $response->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
 
         // Verify the content is valid Excel data (starts with Excel file signature)
-        $this->assertStringStartsWith('PK', $content, 'Response content should be a valid Excel file (XLSX)');
+        self::assertStringStartsWith('PK', $content, 'Response content should be a valid Excel file (XLSX)');
     }
 
     public function testSetCellDateAndSetCellHours(): void
@@ -101,29 +110,29 @@ class ControllingControllerTest extends AbstractWebTestCase
         $worksheet = $spreadsheet->getActiveSheet();
 
         // Get the reflection class to access protected methods
-        $reflectionClass = new \ReflectionClass(ControllingController::class);
+        $reflectionClass = new ReflectionClass(ControllingController::class);
 
         // Test setCellDate method
         $reflectionMethod = $reflectionClass->getMethod('setCellDate');
 
-        $testDate = new \DateTime('2025-03-30');
+        $testDate = new DateTime('2025-03-30');
         $reflectionMethod->invokeArgs(null, [$worksheet, 'A', 1, $testDate]);
 
         // Test setCellHours method
         $setCellHoursMethod = $reflectionClass->getMethod('setCellHours');
 
-        $testTime = new \DateTime('2025-03-30 14:30:00');
+        $testTime = new DateTime('2025-03-30 14:30:00');
         $setCellHoursMethod->invokeArgs(null, [$worksheet, 'B', 1, $testTime]);
 
         // Verify cell formats
-        $this->assertEquals(
+        self::assertSame(
             \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD,
-            $worksheet->getStyle('A1')->getNumberFormat()->getFormatCode()
+            $worksheet->getStyle('A1')->getNumberFormat()->getFormatCode(),
         );
 
-        $this->assertEquals(
+        self::assertSame(
             'HH:MM',
-            $worksheet->getStyle('B1')->getNumberFormat()->getFormatCode()
+            $worksheet->getStyle('B1')->getNumberFormat()->getFormatCode(),
         );
     }
 
@@ -141,37 +150,40 @@ class ControllingControllerTest extends AbstractWebTestCase
         // Real Entry objects with necessary data
         $entry1 = (new Entry())
             ->setId(4)
-            ->setDay(new \DateTime('2023-10-24'))
-            ->setStart(new \DateTime('2023-10-24 09:00:00'))
-            ->setEnd(new \DateTime('2023-10-24 10:00:00'))
+            ->setDay(new DateTime('2023-10-24'))
+            ->setStart(new DateTime('2023-10-24 09:00:00'))
+            ->setEnd(new DateTime('2023-10-24 10:00:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
             ->setTicket('TKT-1')
-            ->setDescription('Real Desc 1');
+            ->setDescription('Real Desc 1')
+        ;
         // ->setActivity(null) // Assuming default is fine or set if needed
 
         $entry2 = (new Entry())
             ->setId(5)
-            ->setDay(new \DateTime('2023-10-20'))
-            ->setStart(new \DateTime('2023-10-20 11:00:00'))
-            ->setEnd(new \DateTime('2023-10-20 12:30:00'))
+            ->setDay(new DateTime('2023-10-20'))
+            ->setStart(new DateTime('2023-10-20 11:00:00'))
+            ->setEnd(new DateTime('2023-10-20 12:30:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
             ->setTicket('TKT-2')
-            ->setDescription('Real Desc 2');
+            ->setDescription('Real Desc 2')
+        ;
         // --- End of real entity prep --- //
 
         // Mock exportEntries - return the REAL entries
-        $exportServiceMock->expects($this->once())
+        $exportServiceMock->expects(self::once())
             ->method('exportEntries')
-            ->willReturn([$entry1, $entry2]);
+            ->willReturn([$entry1, $entry2])
+        ;
 
         // Mock enrichEntries - expect it called, use callback to call setters on REAL entries
-        $exportServiceMock->expects($this->once())
+        $exportServiceMock->expects(self::once())
             ->method('enrichEntriesWithTicketInformation')
-            ->willReturnCallback(function ($userId, array $entries, $showBillable, $onlyBillable, $showTicketTitles): array {
+            ->willReturnCallback(static function ($userId, array $entries, $showBillable, $onlyBillable, $showTicketTitles): array {
                 foreach ($entries as $entry) {
                     // Use setters ON THE REAL Entry objects
                     if ($showBillable && method_exists($entry, 'setBillable')) {
@@ -184,18 +196,20 @@ class ControllingControllerTest extends AbstractWebTestCase
                 }
 
                 return $entries;
-            });
+            })
+        ;
 
         // Mock getUsername - expect it called for filename generation
-        $exportServiceMock->expects($this->once())
+        $exportServiceMock->expects(self::once())
             ->method('getUsername')
-            ->willReturn('unittestmock');
+            ->willReturn('unittestmock')
+        ;
 
         // Ensure kernel is shut down before creating client
-        static::ensureKernelShutdown();
+        self::ensureKernelShutdown();
 
         // 2. Create client (boots kernel)
-        $client = static::createClient();
+        $client = self::createClient();
         $this->client = $client;
 
         $this->serviceContainer = $this->client->getContainer();
@@ -219,8 +233,8 @@ class ControllingControllerTest extends AbstractWebTestCase
                 'project' => 0,
                 'customer' => 0,
                 'billable' => 1,
-                'tickettitles' => 1
-            ]
+                'tickettitles' => 1,
+            ],
         );
 
         // 5. Assertions
@@ -228,10 +242,10 @@ class ControllingControllerTest extends AbstractWebTestCase
         $response = $this->client->getResponse();
         // ... (other header assertions)
         $contentDisposition = $response->headers->get('Content-disposition');
-        $this->assertStringStartsWith('attachment;', $contentDisposition);
-        $this->assertStringContainsString(
+        self::assertStringStartsWith('attachment;', $contentDisposition);
+        self::assertStringContainsString(
             'attachment;filename=2023_10_unittestmock.xlsx', // Expect mocked username
-            $contentDisposition
+            $contentDisposition,
         );
         // ... (rest of assertions)
     }
@@ -243,8 +257,8 @@ class ControllingControllerTest extends AbstractWebTestCase
     {
         $_ENV['APP_SHOW_BILLABLE_FIELD_IN_EXPORT'] = 'false';
 
-        static::ensureKernelShutdown(); // Ensure clean state
-        $client = static::createClient(); // Create client AFTER setting $_ENV
+        self::ensureKernelShutdown(); // Ensure clean state
+        $client = self::createClient(); // Create client AFTER setting $_ENV
         $this->client = $client;
 
         $this->serviceContainer = $this->client->getContainer();
@@ -265,14 +279,14 @@ class ControllingControllerTest extends AbstractWebTestCase
                 'project' => 0,
                 'customer' => 0,
                 'billable' => 0,
-                'tickettitles' => 0
-            ]
+                'tickettitles' => 0,
+            ],
         );
 
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
         $content = $response->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
 
         $tempFilePath = tempnam(sys_get_temp_dir(), 'export_test_nobill_') . '.xlsx';
         file_put_contents($tempFilePath, $content);
@@ -283,14 +297,13 @@ class ControllingControllerTest extends AbstractWebTestCase
 
             // Assert that N2 (where 'billable' header would be) is empty or different
             $headerValueN2 = $sheet->getCell('N2')->getValue();
-            $this->assertNotEquals('billable', $headerValueN2, 'Cell N2 should not contain "billable" header when APP_SHOW_BILLABLE_FIELD_IN_EXPORT is false/unset.');
+            self::assertNotSame('billable', $headerValueN2, 'Cell N2 should not contain "billable" header when APP_SHOW_BILLABLE_FIELD_IN_EXPORT is false/unset.');
             // Optionally, assert it's null or empty if the template guarantees it:
             // $this->assertNull($headerValueN2, 'Cell N2 should be empty when billable field is not configured.');
 
             // Assert that N3 (where billable data would be) is empty
             $dataValueN3 = $sheet->getCell('N3')->getValue();
-            $this->assertNull($dataValueN3, 'Cell N3 should be empty when billable field is not configured.');
-
+            self::assertNull($dataValueN3, 'Cell N3 should be empty when billable field is not configured.');
         } finally {
             if (file_exists($tempFilePath)) {
                 unlink($tempFilePath);
@@ -318,14 +331,14 @@ class ControllingControllerTest extends AbstractWebTestCase
                 'project' => 0,
                 'customer' => 0,
                 'billable' => 0,
-                'tickettitles' => 0 // Explicitly request NO ticket titles
-            ]
+                'tickettitles' => 0, // Explicitly request NO ticket titles
+            ],
         );
 
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
         $content = $response->getContent();
-        $this->assertNotEmpty($content);
+        self::assertNotEmpty($content);
 
         $tempFilePath = tempnam(sys_get_temp_dir(), 'export_test_notitle_') . '.xlsx';
         file_put_contents($tempFilePath, $content);
@@ -336,14 +349,13 @@ class ControllingControllerTest extends AbstractWebTestCase
 
             // Assert that O2 (where 'Tickettitel' header would be) is empty or different
             $headerValueO2 = $sheet->getCell('O2')->getValue();
-            $this->assertNotEquals('Tickettitel', $headerValueO2, 'Cell O2 should not contain "Tickettitel" header when tickettitles=0.');
+            self::assertNotSame('Tickettitel', $headerValueO2, 'Cell O2 should not contain "Tickettitel" header when tickettitles=0.');
             // Optionally, assert it's null or empty if the template guarantees it:
             // $this->assertNull($headerValueO2, 'Cell O2 should be empty when ticket titles are not requested.');
 
             // Assert that O3 (where ticket title data would be) is empty
             $dataValueO3 = $sheet->getCell('O3')->getValue();
-            $this->assertNull($dataValueO3, 'Cell O3 should be empty when ticket titles are not requested.');
-
+            self::assertNull($dataValueO3, 'Cell O3 should be empty when ticket titles are not requested.');
         } finally {
             if (file_exists($tempFilePath)) {
                 unlink($tempFilePath);

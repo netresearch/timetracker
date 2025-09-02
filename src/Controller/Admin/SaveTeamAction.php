@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -9,13 +10,13 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 
 final class SaveTeamAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
-    #[\Symfony\Component\Security\Http\Attribute\IsGranted('ROLE_PL')]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
@@ -31,7 +32,7 @@ final class SaveTeamAction extends BaseController
 
         $id = $teamSaveDto->id;
         $name = $teamSaveDto->name;
-        $teamLead = $teamSaveDto->lead_user_id !== 0
+        $teamLead = 0 !== $teamSaveDto->lead_user_id
             ? $this->doctrineRegistry->getRepository(User::class)->find($teamSaveDto->lead_user_id)
             : null;
 
@@ -68,13 +69,14 @@ final class SaveTeamAction extends BaseController
         try {
             $team
                 ->setName($name)
-                ->setLeadUser($teamLead);
+                ->setLeadUser($teamLead)
+            ;
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($team);
             $em->flush();
-        } catch (\Exception $exception) {
-            $response = new Response($this->translate('Error on save').': '.$exception->getMessage());
+        } catch (Exception $exception) {
+            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 
             return $response;
@@ -85,6 +87,3 @@ final class SaveTeamAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-
-

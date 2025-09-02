@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -22,7 +23,9 @@ final class GetDataAction extends BaseController
         $userId = $this->getUserId($request);
         $user = $this->managerRegistry->getRepository(User::class)->find($userId);
 
-        $days = $request->attributes->has('days') ? (int) $request->attributes->get('days') : 3;
+        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days')) 
+            ? (int) $request->attributes->get('days') 
+            : 3;
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         if (!$user instanceof User) {
@@ -34,5 +37,3 @@ final class GetDataAction extends BaseController
         return new JsonResponse($data);
     }
 }
-
-

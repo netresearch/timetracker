@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -23,6 +24,3 @@ final class GetPresetsAction extends BaseController
         return new JsonResponse($objectRepository->getAllPresets());
     }
 }
-
-
-

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
@@ -24,6 +25,3 @@ final class GetContractsAction extends BaseController
         return new JsonResponse($objectRepository->getContracts());
     }
 }
-
-
-

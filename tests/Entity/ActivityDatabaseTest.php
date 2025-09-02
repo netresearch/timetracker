@@ -1,16 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Entity;
 
-use Tests\AbstractWebTestCase;
 use App\Entity\Activity;
+use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Preset;
-use App\Entity\Customer;
 use App\Entity\Project;
 use Doctrine\ORM\EntityManagerInterface;
+use Tests\AbstractWebTestCase;
 
-class ActivityDatabaseTest extends AbstractWebTestCase
+use function count;
+
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
+final class ActivityDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
@@ -34,15 +43,15 @@ class ActivityDatabaseTest extends AbstractWebTestCase
 
         // Get ID and clear entity manager to ensure fetch from DB
         $id = $activity->getId();
-        $this->assertNotNull($id, 'Activity ID should not be null after persist');
+        self::assertNotNull($id, 'Activity ID should not be null after persist');
         $this->entityManager->clear();
 
         // Fetch from database and verify
         $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($id);
-        $this->assertNotNull($fetchedActivity, 'Activity was not found in database');
-        $this->assertEquals('Test Database Activity', $fetchedActivity->getName());
-        $this->assertTrue($fetchedActivity->getNeedsTicket());
-        $this->assertEquals(1.25, $fetchedActivity->getFactor());
+        self::assertNotNull($fetchedActivity, 'Activity was not found in database');
+        self::assertSame('Test Database Activity', $fetchedActivity->getName());
+        self::assertTrue($fetchedActivity->getNeedsTicket());
+        self::assertSame(1.25, $fetchedActivity->getFactor());
 
         // Clean up - remove the test entity
         $this->entityManager->remove($fetchedActivity);
@@ -73,9 +82,9 @@ class ActivityDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedActivity = $this->entityManager->getRepository(Activity::class)->find($id);
-        $this->assertEquals('Updated Activity', $updatedActivity->getName());
-        $this->assertTrue($updatedActivity->getNeedsTicket());
-        $this->assertEquals(2.0, $updatedActivity->getFactor());
+        self::assertSame('Updated Activity', $updatedActivity->getName());
+        self::assertTrue($updatedActivity->getNeedsTicket());
+        self::assertSame(2.0, $updatedActivity->getFactor());
 
         // Clean up
         $this->entityManager->remove($updatedActivity);
@@ -102,7 +111,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
 
         // Verify activity is deleted
         $deletedActivity = $this->entityManager->getRepository(Activity::class)->find($id);
-        $this->assertNull($deletedActivity, 'Activity should be deleted from database');
+        self::assertNull($deletedActivity, 'Activity should be deleted from database');
     }
 
     public function testFindByName(): void
@@ -129,10 +138,10 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $foundHoliday = $entityRepository->findOneBy(['name' => Activity::HOLIDAY]);
 
         // Verify activities found
-        $this->assertNotNull($foundSick, 'Sick activity should be found');
-        $this->assertNotNull($foundHoliday, 'Holiday activity should be found');
-        $this->assertTrue($foundSick->isSick(), 'Activity should be identified as sick');
-        $this->assertTrue($foundHoliday->isHoliday(), 'Activity should be identified as holiday');
+        self::assertNotNull($foundSick, 'Sick activity should be found');
+        self::assertNotNull($foundHoliday, 'Holiday activity should be found');
+        self::assertTrue($foundSick->isSick(), 'Activity should be identified as sick');
+        self::assertTrue($foundHoliday->isHoliday(), 'Activity should be identified as holiday');
 
         // Clean up
         $this->entityManager->remove($foundSick);
@@ -182,7 +191,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $fetchedActivity = $this->entityManager->find(Activity::class, $activityId);
 
         // Test entry relationship
-        $this->assertCount(2, $fetchedActivity->getEntries());
+        self::assertCount(2, $fetchedActivity->getEntries());
         $entries = $fetchedActivity->getEntries();
         $entryIds = [];
         foreach ($entries as $entry) {
@@ -256,7 +265,7 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $fetchedActivity = $this->entityManager->find(Activity::class, $activityId);
 
         // Test preset relationship
-        $this->assertCount(2, $fetchedActivity->getPresets());
+        self::assertCount(2, $fetchedActivity->getPresets());
         $presets = $fetchedActivity->getPresets();
         $presetIds = [];
         foreach ($presets as $preset) {
@@ -276,12 +285,12 @@ class ActivityDatabaseTest extends AbstractWebTestCase
         $customerId = $customer->getId();
         $project = $this->entityManager->find(Project::class, $projectId);
         $customer = $this->entityManager->find(Customer::class, $customerId);
-        if ($project instanceof \App\Entity\Project) {
+        if ($project instanceof Project) {
             $this->entityManager->remove($project);
             $this->entityManager->flush();
         }
 
-        if ($customer instanceof \App\Entity\Customer) {
+        if ($customer instanceof Customer) {
             $this->entityManager->remove($customer);
             $this->entityManager->flush();
         }
@@ -310,11 +319,11 @@ class ActivityDatabaseTest extends AbstractWebTestCase
 
         // Test findAll
         $allActivities = $entityRepository->findAll();
-        $this->assertGreaterThanOrEqual(2, count($allActivities));
+        self::assertGreaterThanOrEqual(2, count($allActivities));
 
         // Test findBy with criteria
         $ticketActivities = $entityRepository->findBy(['needsTicket' => true]);
-        $this->assertGreaterThanOrEqual(1, count($ticketActivities));
+        self::assertGreaterThanOrEqual(1, count($ticketActivities));
 
         // Clean up
         $this->entityManager->remove($activity1);

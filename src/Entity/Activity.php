@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -12,13 +13,13 @@ use Doctrine\ORM\Mapping as ORM;
 class Activity
 {
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Entry>
+     * @var Collection<int, Entry>
      */
     #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'activity')]
     protected $entriesRelation;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Preset>
+     * @var Collection<int, Preset>
      */
     #[ORM\OneToMany(targetEntity: Preset::class, mappedBy: 'activity')]
     protected $presetsRelation;

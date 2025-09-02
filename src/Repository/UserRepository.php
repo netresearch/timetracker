@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Repository;
@@ -38,7 +39,7 @@ class UserRepository extends ServiceEntityRepository
         /** @var User[] $users */
         $users = $this->findBy(
             [],
-            ['username' => 'ASC']
+            ['username' => 'ASC'],
         );
 
         $data = [];
@@ -48,7 +49,7 @@ class UserRepository extends ServiceEntityRepository
                 continue;
             }
 
-            if ($currentUserId == $user->getId()) {
+            if ($currentUserId === $user->getId()) {
                 // Set current user on top
                 array_unshift($data, ['user' => [
                     'id' => (int) $user->getId(),
@@ -79,7 +80,7 @@ class UserRepository extends ServiceEntityRepository
         /** @var User[] $users */
         $users = $this->findBy(
             [],
-            ['username' => 'ASC']
+            ['username' => 'ASC'],
         );
 
         $data = [];

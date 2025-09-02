@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
@@ -6,12 +7,17 @@ namespace App\Controller\Interpretation;
 use App\Controller\BaseController;
 use App\Dto\InterpretationFiltersDto;
 use App\Entity\Entry;
+use DateInterval;
+use DateTime;
+use Exception;
 
 abstract class BaseInterpretationController extends BaseController
 {
     /**
      * @param Entry[] $entries
+     *
      * @psalm-param array<Entry> $entries
+     *
      * @psalm-return int<min, max>
      */
     protected function calculateSum(array &$entries): int
@@ -29,19 +35,24 @@ abstract class BaseInterpretationController extends BaseController
      *
      * @param array<string,mixed> $a
      * @param array<string,mixed> $b
+     *
      * @psalm-return int<-1,1>
      */
     protected function sortByName(array $a, array $b): int
     {
-        return strcmp((string) $b['name'], (string) $a['name']);
+        $nameA = isset($a['name']) && is_string($a['name']) ? $a['name'] : '';
+        $nameB = isset($b['name']) && is_string($b['name']) ? $b['name'] : '';
+        return strcmp($nameB, $nameA);
     }
 
     /**
      * Get entries by request parameter.
      *
+     * @throws Exception
+     *
      * @return Entry[]
+     *
      * @psalm-return array<int, Entry>
-     * @throws \Exception
      */
     protected function getEntries(\Symfony\Component\HttpFoundation\Request $request, ?int $maxResults = null): array
     {
@@ -52,23 +63,23 @@ abstract class BaseInterpretationController extends BaseController
         if (null !== $year) {
             $month = $interpretationFiltersDto->month;
             if (null !== $month) {
-                $datestart = $year.'-'.$month.'-01';
-                $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
+                $datestart = $year . '-' . $month . '-01';
+                $dateend = DateTime::createFromFormat('Y-m-d', $datestart);
                 if (false === $dateend) {
-                    throw new \Exception('Invalid date');
+                    throw new Exception('Invalid date');
                 }
 
-                $dateend->add(new \DateInterval('P1M'));
-                $dateend->sub(new \DateInterval('P1D'));
+                $dateend->add(new DateInterval('P1M'));
+                $dateend->sub(new DateInterval('P1D'));
             } else {
-                $datestart = $year.'-01-01';
-                $dateend = \DateTime::createFromFormat('Y-m-d', $datestart);
+                $datestart = $year . '-01-01';
+                $dateend = DateTime::createFromFormat('Y-m-d', $datestart);
                 if (false === $dateend) {
-                    throw new \Exception('Invalid date');
+                    throw new Exception('Invalid date');
                 }
 
-                $dateend->add(new \DateInterval('P1Y'));
-                $dateend->sub(new \DateInterval('P1D'));
+                $dateend->add(new DateInterval('P1Y'));
+                $dateend->sub(new DateInterval('P1D'));
             }
 
             $arParams['datestart'] = $datestart;
@@ -76,13 +87,12 @@ abstract class BaseInterpretationController extends BaseController
         }
 
         if (!$arParams['customer'] && !$arParams['project'] && !$arParams['user'] && !$arParams['ticket']) {
-            throw new \Exception($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
+            throw new Exception($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+
         return $objectRepository->findByFilterArray($arParams);
     }
 }
-
-

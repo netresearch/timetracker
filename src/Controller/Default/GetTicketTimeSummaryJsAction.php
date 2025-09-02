@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Default;
@@ -6,6 +7,8 @@ namespace App\Controller\Default;
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+
+use function sprintf;
 
 final class GetTicketTimeSummaryJsAction extends BaseController
 {
@@ -18,5 +21,3 @@ final class GetTicketTimeSummaryJsAction extends BaseController
         return new JsonResponse($inline);
     }
 }
-
-

@@ -6,24 +6,26 @@ namespace App\Repository;
 
 use App\Entity\Entry;
 use App\Entity\User;
-use App\Service\Cache\QueryCacheService;
-use App\Service\Util\TimeCalculationService;
 use App\Service\ClockInterface;
+use App\Service\TypeSafety\ArrayTypeHelper;
+use DateInterval;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Cache\CacheItemPoolInterface;
 
+use function sprintf;
+
 /**
  * Optimized Entry Repository with performance improvements.
- * 
+ *
  * Key improvements:
  * - Query result caching
  * - Optimized query builders
  * - Reduced N+1 queries through eager loading
  * - Extracted complex query logic into dedicated methods
- * 
+ *
  * @extends ServiceEntityRepository<Entry>
  */
 class OptimizedEntryRepository extends ServiceEntityRepository
@@ -31,17 +33,16 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     public const int PERIOD_DAY = 1;
     public const int PERIOD_WEEK = 2;
     public const int PERIOD_MONTH = 3;
-    
+
     private const string CACHE_PREFIX = 'entry_repo_';
     private const int CACHE_TTL = 300; // 5 minutes
-    
+
     private ?CacheItemPoolInterface $cache = null;
 
     public function __construct(
         ManagerRegistry $managerRegistry,
         private readonly ClockInterface $clock,
-        private readonly TimeCalculationService $timeCalculationService,
-        ?CacheItemPoolInterface $cache = null
+        ?CacheItemPoolInterface $cache = null,
     ) {
         parent::__construct($managerRegistry, Entry::class);
         $this->cache = $cache;
@@ -49,36 +50,42 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     /**
      * Returns work log entries for user and recent days with optimized query.
-     * 
+     *
      * @return array<int, Entry>
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
         $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId(), $days);
-        
+
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
+            /** @var array<int, Entry> $cachedResult */
             return $cachedResult;
         }
 
         $fromDate = $this->calculateFromDate($days);
-        
+
         $qb = $this->createOptimizedQueryBuilder('e')
             ->where('e.user = :user')
             ->andWhere('e.day >= :fromDate')
             ->setParameter('user', $user)
             ->setParameter('fromDate', $fromDate)
             ->orderBy('e.day', 'ASC')
-            ->addOrderBy('e.start', 'ASC');
-        
+            ->addOrderBy('e.start', 'ASC')
+        ;
+
+        /** @var array<int, Entry> $result */
         $result = $qb->getQuery()->getResult();
-        
+
         $this->setCached($cacheKey, $result);
-        
+
         return $result;
     }
 
     /**
      * Finds entries by date with optimized joins and eager loading.
+     * 
+     * @param array<string, string>|null $arSort
+     * @return array<int, Entry>
      */
     public function findByDate(
         int $userId,
@@ -86,36 +93,43 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         ?int $month = null,
         ?int $projectId = null,
         ?int $customerId = null,
-        ?array $arSort = null
+        ?array $arSort = null,
     ): array {
         $qb = $this->createOptimizedQueryBuilder('e')
             ->where('e.user = :userId')
             ->andWhere('YEAR(e.day) = :year')
             ->setParameter('userId', $userId)
-            ->setParameter('year', $year);
-        
+            ->setParameter('year', $year)
+        ;
+
         if (null !== $month) {
             $qb->andWhere('MONTH(e.day) = :month')
-               ->setParameter('month', $month);
+                ->setParameter('month', $month)
+            ;
         }
-        
+
         if (null !== $projectId) {
             $qb->andWhere('e.project = :projectId')
-               ->setParameter('projectId', $projectId);
+                ->setParameter('projectId', $projectId)
+            ;
         }
-        
+
         if (null !== $customerId) {
             $qb->andWhere('e.customer = :customerId')
-               ->setParameter('customerId', $customerId);
+                ->setParameter('customerId', $customerId)
+            ;
         }
-        
+
         $this->applySort($qb, $arSort);
-        
+
+        /** @var array<int, Entry> */
         return $qb->getQuery()->getResult();
     }
 
     /**
      * Gets entry summary with optimized single query instead of multiple UNION queries.
+     * 
+     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     public function getEntrySummaryOptimized(int $entryId, int $userId): array
     {
@@ -125,13 +139,14 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         }
 
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
-        
+
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
+            /** @var array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
             return $cachedResult;
         }
 
         $conn = $this->getEntityManager()->getConnection();
-        
+
         // Use a single query with conditional aggregation instead of UNION
         $sql = "
             SELECT 
@@ -162,107 +177,126 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             FROM entries e
             WHERE (e.customer_id = :customerId OR e.project_id = :projectId OR e.activity_id = :activityId OR e.ticket = :ticket)
         ";
-        
+
         $params = [
             'userId' => $userId,
             'customerId' => $entry->getCustomer()?->getId() ?? 0,
             'projectId' => $entry->getProject()?->getId() ?? 0,
             'activityId' => $entry->getActivity()?->getId() ?? 0,
-            'ticket' => $entry->getTicket() ?? '',
+            'ticket' => $entry->getTicket(),
         ];
-        
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->executeQuery($params)->fetchAssociative();
-        
-        $data = $this->formatSummaryData($result, $entry);
-        
+
+        $result = $conn->executeQuery($sql, $params)->fetchAssociative();
+
+        $data = $this->formatSummaryData($result ?: null, $entry);
+
         $this->setCached($cacheKey, $data);
-        
+
         return $data;
     }
 
     /**
      * Gets work by user for period with query optimization.
+     * 
+     * @return array{duration: int, count: int}
      */
     public function getWorkByUserOptimized(int $userId, int $period = self::PERIOD_DAY): array
     {
         $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period);
-        
+
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
+            /** @var array{duration: int, count: int} $cachedResult */
             return $cachedResult;
         }
 
         $qb = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, SUM(e.duration) as duration')
             ->where('e.user = :userId')
-            ->setParameter('userId', $userId);
-        
+            ->setParameter('userId', $userId)
+        ;
+
         $this->applyPeriodFilter($qb, $period);
-        
+
         $result = $qb->getQuery()->getSingleResult();
-        
+
+        if (!is_array($result)) {
+            $result = ['duration' => 0, 'count' => 0];
+        }
+
         $data = [
-            'duration' => (int) ($result['duration'] ?? 0),
-            'count' => (int) ($result['count'] ?? 0),
+            'duration' => ArrayTypeHelper::getInt($result, 'duration', 0) ?? 0,
+            'count' => ArrayTypeHelper::getInt($result, 'count', 0) ?? 0,
         ];
-        
+
         $this->setCached($cacheKey, $data, 60); // Shorter cache for work stats
-        
+
         return $data;
     }
 
     /**
      * Finds entries with optimized query using indexes.
+     *
+     * @param array<string, mixed> $filter
+     * @return array<int, Entry>
      */
     public function findByFilterArrayOptimized(array $filter = []): array
     {
         $qb = $this->createOptimizedQueryBuilder('e');
-        
+
         // Apply filters with index-aware ordering
         if (isset($filter['user_id'])) {
             $qb->andWhere('e.user = :user_id')
-               ->setParameter('user_id', $filter['user_id']);
+                ->setParameter('user_id', $filter['user_id'])
+            ;
         }
-        
+
         if (isset($filter['customer_id'])) {
             $qb->andWhere('e.customer = :customer_id')
-               ->setParameter('customer_id', $filter['customer_id']);
+                ->setParameter('customer_id', $filter['customer_id'])
+            ;
         }
-        
+
         if (isset($filter['project_id'])) {
             $qb->andWhere('e.project = :project_id')
-               ->setParameter('project_id', $filter['project_id']);
+                ->setParameter('project_id', $filter['project_id'])
+            ;
         }
-        
+
         if (isset($filter['activity_id'])) {
             $qb->andWhere('e.activity = :activity_id')
-               ->setParameter('activity_id', $filter['activity_id']);
+                ->setParameter('activity_id', $filter['activity_id'])
+            ;
         }
-        
+
         if (isset($filter['date_from'])) {
             $qb->andWhere('e.day >= :date_from')
-               ->setParameter('date_from', $filter['date_from']);
+                ->setParameter('date_from', $filter['date_from'])
+            ;
         }
-        
+
         if (isset($filter['date_to'])) {
             $qb->andWhere('e.day <= :date_to')
-               ->setParameter('date_to', $filter['date_to']);
+                ->setParameter('date_to', $filter['date_to'])
+            ;
         }
-        
+
         if (isset($filter['ticket'])) {
             $qb->andWhere('e.ticket = :ticket')
-               ->setParameter('ticket', $filter['ticket']);
+                ->setParameter('ticket', $filter['ticket'])
+            ;
         }
-        
+
         // Optimize sorting for indexed columns
         $qb->orderBy('e.day', 'DESC')
-           ->addOrderBy('e.start', 'DESC');
-        
+            ->addOrderBy('e.start', 'DESC')
+        ;
+
         // Add limit if specified
         if (isset($filter['limit'])) {
-            $qb->setMaxResults((int) $filter['limit']);
+            $qb->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
         }
-        
+
+        /** @var array<int, Entry> */
         return $qb->getQuery()->getResult();
     }
 
@@ -276,7 +310,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->leftJoin($alias . '.user', 'u')
             ->leftJoin($alias . '.customer', 'c')
             ->leftJoin($alias . '.project', 'p')
-            ->leftJoin($alias . '.activity', 'a');
+            ->leftJoin($alias . '.activity', 'a')
+        ;
     }
 
     /**
@@ -285,46 +320,53 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     private function applyPeriodFilter(QueryBuilder $qb, int $period): void
     {
         $today = $this->clock->today();
-        
+
         switch ($period) {
             case self::PERIOD_DAY:
                 $qb->andWhere('e.day = :today')
-                   ->setParameter('today', $today);
+                    ->setParameter('today', $today)
+                ;
                 break;
-                
+
             case self::PERIOD_WEEK:
                 $startOfWeek = clone $today;
-                $startOfWeek->modify('monday this week');
+                $startOfWeek = $startOfWeek->modify('monday this week') ?: $startOfWeek;
                 $endOfWeek = clone $startOfWeek;
-                $endOfWeek->modify('+6 days');
-                
+                $endOfWeek = $endOfWeek->modify('+6 days') ?: $endOfWeek;
+
                 $qb->andWhere('e.day BETWEEN :start AND :end')
-                   ->setParameter('start', $startOfWeek)
-                   ->setParameter('end', $endOfWeek);
+                    ->setParameter('start', $startOfWeek)
+                    ->setParameter('end', $endOfWeek)
+                ;
                 break;
-                
+
             case self::PERIOD_MONTH:
                 $qb->andWhere('YEAR(e.day) = :year')
-                   ->andWhere('MONTH(e.day) = :month')
-                   ->setParameter('year', $today->format('Y'))
-                   ->setParameter('month', $today->format('m'));
+                    ->andWhere('MONTH(e.day) = :month')
+                    ->setParameter('year', $today->format('Y'))
+                    ->setParameter('month', $today->format('m'))
+                ;
                 break;
         }
     }
 
     /**
      * Applies sorting to query builder.
+     *
+     * @param array<string, string>|null $sort
      */
     private function applySort(QueryBuilder $qb, ?array $sort): void
     {
         if (empty($sort)) {
             $qb->orderBy('e.day', 'DESC')
-               ->addOrderBy('e.start', 'DESC');
+                ->addOrderBy('e.start', 'DESC')
+            ;
+
             return;
         }
-        
+
         foreach ($sort as $field => $direction) {
-            $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
+            $direction = 'ASC' === strtoupper($direction) ? 'ASC' : 'DESC';
             $qb->addOrderBy('e.' . $field, $direction);
         }
     }
@@ -332,18 +374,18 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Calculates from date based on working days.
      */
-    private function calculateFromDate(int $workingDays): \DateTimeInterface
+    private function calculateFromDate(int $workingDays): DateTimeInterface
     {
         $today = $this->clock->today();
-        
+
         if ($workingDays <= 0) {
             return $today;
         }
-        
+
         $date = clone $today;
         $daysToSubtract = $this->getCalendarDaysByWorkDays($workingDays);
-        $date->sub(new \DateInterval('P' . $daysToSubtract . 'D'));
-        
+        $date->sub(new DateInterval('P' . $daysToSubtract . 'D'));
+
         return $date;
     }
 
@@ -358,14 +400,14 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $days = 0;
         $date = clone $this->clock->today();
-        
+
         while ($workingDays > 0) {
-            $days++;
-            $date->sub(new \DateInterval('P1D'));
+            ++$days;
+            $date->sub(new DateInterval('P1D'));
             $dayOfWeek = (int) $date->format('N');
-            
+
             if ($dayOfWeek < 6) { // Monday to Friday
-                $workingDays--;
+                --$workingDays;
             }
         }
 
@@ -374,46 +416,49 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     /**
      * Formats summary data from query result.
+     * 
+     * @param array<string, mixed>|null $result
+     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function formatSummaryData(?array $result, Entry $entry): array
     {
         if (!$result) {
             return $this->getEmptySummaryData();
         }
-        
+
         $project = $entry->getProject();
-        
+
         return [
             'customer' => [
                 'scope' => 'customer',
-                'name' => (string) ($result['customer_name'] ?? ''),
-                'entries' => (int) ($result['customer_entries'] ?? 0),
-                'total' => (int) ($result['customer_total'] ?? 0),
-                'own' => (int) ($result['customer_own'] ?? 0),
+                'name' => ArrayTypeHelper::getString($result, 'customer_name', '') ?? '',
+                'entries' => ArrayTypeHelper::getInt($result, 'customer_entries', 0) ?? 0,
+                'total' => ArrayTypeHelper::getInt($result, 'customer_total', 0) ?? 0,
+                'own' => ArrayTypeHelper::getInt($result, 'customer_own', 0) ?? 0,
                 'estimation' => 0,
             ],
             'project' => [
                 'scope' => 'project',
-                'name' => (string) ($result['project_name'] ?? ''),
-                'entries' => (int) ($result['project_entries'] ?? 0),
-                'total' => (int) ($result['project_total'] ?? 0),
-                'own' => (int) ($result['project_own'] ?? 0),
+                'name' => ArrayTypeHelper::getString($result, 'project_name', '') ?? '',
+                'entries' => ArrayTypeHelper::getInt($result, 'project_entries', 0) ?? 0,
+                'total' => ArrayTypeHelper::getInt($result, 'project_total', 0) ?? 0,
+                'own' => ArrayTypeHelper::getInt($result, 'project_own', 0) ?? 0,
                 'estimation' => $project?->getEstimation() ?? 0,
             ],
             'activity' => [
                 'scope' => 'activity',
-                'name' => (string) ($result['activity_name'] ?? ''),
-                'entries' => (int) ($result['activity_entries'] ?? 0),
-                'total' => (int) ($result['activity_total'] ?? 0),
-                'own' => (int) ($result['activity_own'] ?? 0),
+                'name' => ArrayTypeHelper::getString($result, 'activity_name', '') ?? '',
+                'entries' => ArrayTypeHelper::getInt($result, 'activity_entries', 0) ?? 0,
+                'total' => ArrayTypeHelper::getInt($result, 'activity_total', 0) ?? 0,
+                'own' => ArrayTypeHelper::getInt($result, 'activity_own', 0) ?? 0,
                 'estimation' => 0,
             ],
             'ticket' => [
                 'scope' => 'ticket',
-                'name' => $entry->getTicket() ?? '',
-                'entries' => (int) ($result['ticket_entries'] ?? 0),
-                'total' => (int) ($result['ticket_total'] ?? 0),
-                'own' => (int) ($result['ticket_own'] ?? 0),
+                'name' => $entry->getTicket() ?: '',
+                'entries' => ArrayTypeHelper::getInt($result, 'ticket_entries', 0) ?? 0,
+                'total' => ArrayTypeHelper::getInt($result, 'ticket_total', 0) ?? 0,
+                'own' => ArrayTypeHelper::getInt($result, 'ticket_own', 0) ?? 0,
                 'estimation' => 0,
             ],
         ];
@@ -421,11 +466,13 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     /**
      * Returns empty summary data structure.
+     * 
+     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function getEmptySummaryData(): array
     {
         $empty = ['scope' => '', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
-        
+
         return [
             'customer' => array_merge($empty, ['scope' => 'customer']),
             'project' => array_merge($empty, ['scope' => 'project']),
@@ -442,9 +489,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         if (!$this->cache) {
             return null;
         }
-        
+
         $item = $this->cache->getItem($key);
-        
+
         return $item->isHit() ? $item->get() : null;
     }
 
@@ -456,11 +503,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         if (!$this->cache) {
             return;
         }
-        
+
         $item = $this->cache->getItem($key);
         $item->set($data);
         $item->expiresAfter($ttl);
-        
+
         $this->cache->save($item);
     }
 }

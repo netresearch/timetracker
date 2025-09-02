@@ -1,10 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
 
 use App\Model\Base;
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
+
+use function sprintf;
 
 #[ORM\Entity(repositoryClass: \App\Repository\EntryRepository::class)]
 #[ORM\Table(name: 'entries')]
@@ -53,13 +59,13 @@ class Entry extends Base
     protected string $description = '';
 
     #[ORM\Column(type: 'date', nullable: false)]
-    protected \DateTimeInterface $day;
+    protected DateTimeInterface $day;
 
     #[ORM\Column(type: 'time', nullable: false)]
-    protected \DateTimeInterface $start;
+    protected DateTimeInterface $start;
 
     #[ORM\Column(type: 'time', nullable: false)]
-    protected \DateTimeInterface $end;
+    protected DateTimeInterface $end;
 
     #[ORM\Column(type: 'integer')]
     protected int $duration = 0;
@@ -168,14 +174,14 @@ class Entry extends Base
     protected $externalReporter = '';
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return $this
      */
     public function validateDuration(): static
     {
         if ($this->end->getTimestamp() <= $this->start->getTimestamp()) {
-            throw new \Exception('Duration must be greater than 0!');
+            throw new Exception('Duration must be greater than 0!');
         }
 
         return $this;
@@ -297,10 +303,10 @@ class Entry extends Base
         return $this->description;
     }
 
-    public function setDay(\DateTimeInterface|string $day): static
+    public function setDay(DateTimeInterface|string $day): static
     {
-        if (!$day instanceof \DateTimeInterface) {
-            $day = new \DateTime($day);
+        if (!$day instanceof DateTimeInterface) {
+            $day = new DateTime($day);
         }
 
         $this->day = $day;
@@ -308,15 +314,15 @@ class Entry extends Base
         return $this;
     }
 
-    public function getDay(): \DateTimeInterface
+    public function getDay(): DateTimeInterface
     {
         return $this->day;
     }
 
-    public function setStart(\DateTimeInterface|string $start): static
+    public function setStart(DateTimeInterface|string $start): static
     {
-        if (!$start instanceof \DateTimeInterface) {
-            $start = new \DateTime($start);
+        if (!$start instanceof DateTimeInterface) {
+            $start = new DateTime($start);
             $dayObj = $this->getDay();
             [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
             $start->setDate((int) $year, (int) $month, (int) $day);
@@ -328,15 +334,15 @@ class Entry extends Base
         return $this;
     }
 
-    public function getStart(): \DateTimeInterface
+    public function getStart(): DateTimeInterface
     {
         return $this->start;
     }
 
-    public function setEnd(\DateTimeInterface|string $end): static
+    public function setEnd(DateTimeInterface|string $end): static
     {
-        if (!$end instanceof \DateTimeInterface) {
-            $end = new \DateTime($end);
+        if (!$end instanceof DateTimeInterface) {
+            $end = new DateTime($end);
             $dayObj = $this->getDay();
             [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
             $end->setDate((int) $year, (int) $month, (int) $day);
@@ -353,7 +359,7 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
-        /**
+        /*
          * Guard for partially initialized entity during construction/hydration.
          *
          * @psalm-suppress RedundantPropertyInitializationCheck
@@ -370,7 +376,7 @@ class Entry extends Base
         return $this;
     }
 
-    public function getEnd(): \DateTimeInterface
+    public function getEnd(): DateTimeInterface
     {
         return $this->end;
     }
@@ -453,6 +459,7 @@ class Entry extends Base
      * @return (int|string|null)[]
      *
      * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string|null}
+     *
      * @psalm-suppress RedundantPropertyInitializationCheck
      */
     public function toArray(): array
@@ -471,7 +478,8 @@ class Entry extends Base
         /** @psalm-suppress RedundantPropertyInitializationCheck */
         $userEntity = $this->getUser();
         $activityEntity = $this->getActivity();
-        /** @psalm-suppress RedundantPropertyInitializationCheck */
+
+        /* @psalm-suppress RedundantPropertyInitializationCheck */
         return [
             'id' => $this->getId(),
             'date' => isset($this->day) ? $this->getDay()->format('d/m/Y') : null,
@@ -494,11 +502,11 @@ class Entry extends Base
     /**
      * Calculate difference between start and end.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function calcDuration(float $factor = 1.0): static
     {
-        /**
+        /*
          * Guard for partially initialized entity during construction/hydration.
          *
          * @psalm-suppress RedundantPropertyInitializationCheck
@@ -506,11 +514,12 @@ class Entry extends Base
          */
         if (!isset($this->start) || !isset($this->end)) {
             $this->setDuration(0);
+
             return $this;
         }
 
-        $start = new \DateTime($this->start->format('H:i'));
-        $end = new \DateTime($this->end->format('H:i'));
+        $start = new DateTime($this->start->format('H:i'));
+        $end = new DateTime($this->end->format('H:i'));
 
         $difference = ($end->getTimestamp() - $start->getTimestamp()) * $factor / 60;
         $this->setDuration((int) round($difference));

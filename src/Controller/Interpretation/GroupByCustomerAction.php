@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
+
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GroupByCustomerAction extends BaseInterpretationController
@@ -26,16 +29,19 @@ final class GroupByCustomerAction extends BaseInterpretationController
 
         try {
             $entries = $this->getEntries($request);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
             return $response;
         }
 
         $customers = [];
         foreach ($entries as $entry) {
             $customerEntity = $entry->getCustomer();
-            if (!$customerEntity) { continue; }
+            if (!$customerEntity) {
+                continue;
+            }
 
             $cid = $customerEntity->getId();
             if (!isset($customers[$cid])) {
@@ -45,14 +51,17 @@ final class GroupByCustomerAction extends BaseInterpretationController
             $customers[$cid]['hours'] += $entry->getDuration() / 60;
         }
 
-        $sum = 0; foreach ($customers as $c) { $sum += $c['hours']; }
+        $sum = 0;
+        foreach ($customers as $c) {
+            $sum += $c['hours'];
+        }
 
-        foreach ($customers as &$customer) { $customer['quota'] = $this->timeCalculationService->formatQuota($customer['hours'], $sum); }
+        foreach ($customers as &$customer) {
+            $customer['quota'] = $this->timeCalculationService->formatQuota($customer['hours'], $sum);
+        }
 
         usort($customers, $this->sortByName(...));
 
         return new JsonResponse($customers);
     }
 }
-
-

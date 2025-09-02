@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -6,6 +7,12 @@ declare(strict_types=1);
  */
 
 namespace App\Model;
+
+use ReflectionClass;
+use ReflectionException;
+use ReflectionProperty;
+
+use function is_object;
 
 /*
  * Base model
@@ -19,18 +26,18 @@ class Base
     /**
      * Returns array representation of call class properties (e.g. for json_encode).
      *
-     * @throws \ReflectionException
+     * @throws ReflectionException
      *
      * @psalm-return array<string, mixed>
      */
     public function toArray(): array
     {
-        $reflectionClass = new \ReflectionClass($this);
+        $reflectionClass = new ReflectionClass($this);
 
         $data = [];
-        foreach ($reflectionClass->getProperties(\ReflectionProperty::IS_PROTECTED) as $reflectionProperty) {
-            $method = 'get'.ucwords($reflectionProperty->getName());
-            $value = $this->$method();
+        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $reflectionProperty) {
+            $method = 'get' . ucwords($reflectionProperty->getName());
+            $value = $this->{$method}();
             if (is_object($value) && method_exists($value, 'getId')) {
                 $value = $value->getId();
             }

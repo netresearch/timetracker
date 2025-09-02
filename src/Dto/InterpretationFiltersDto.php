@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Dto;
@@ -13,17 +14,17 @@ final class InterpretationFiltersDto
     public ?int $customer = null;
 
     public ?int $customer_id = null;
-     // legacy alias support
+    // legacy alias support
     public ?int $project = null;
 
     public ?int $project_id = null;
-     // legacy alias support
+    // legacy alias support
     public ?int $user = null;
 
     public ?int $activity = null;
 
     public ?int $activity_id = null;
-     // legacy alias support
+    // legacy alias support
     public ?int $team = null;
 
     public ?string $ticket = null;
@@ -94,7 +95,7 @@ final class InterpretationFiltersDto
 
     private static function toNullableInt(mixed $value): ?int
     {
-        if ($value === null || $value === '') {
+        if (null === $value || '' === $value) {
             return null;
         }
 
@@ -107,13 +108,15 @@ final class InterpretationFiltersDto
 
     private static function toNullableString(mixed $value): ?string
     {
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 
-        $s = trim((string) $value);
-        return $s === '' ? null : $s;
+        if (is_scalar($value)) {
+            $s = trim((string) $value);
+            return '' === $s ? null : $s;
+        }
+
+        return null;
     }
 }
-
-

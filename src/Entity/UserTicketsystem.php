@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -28,14 +29,14 @@ class UserTicketsystem extends Base
 
     /**
      * @var string
-     * Encrypted OAuth access token
+     *             Encrypted OAuth access token
      */
     #[ORM\Column(name: 'accesstoken', type: 'text')]
     protected $accessToken;
 
     /**
      * @var string
-     * Encrypted OAuth token secret
+     *             Encrypted OAuth token secret
      */
     #[ORM\Column(name: 'tokensecret', type: 'text')]
     protected $tokenSecret;

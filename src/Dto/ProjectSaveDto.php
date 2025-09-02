@@ -1,13 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Validator\Constraints\UniqueProjectNameForCustomer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[Map(target: \App\Entity\Project::class)]
+#[UniqueProjectNameForCustomer]
 final class ProjectSaveDto
 {
     public int $id = 0;
@@ -20,6 +23,7 @@ final class ProjectSaveDto
     public ?int $customer = null;
 
     #[Map(transform: 'strtoupper')]
+    #[Assert\Regex(pattern: '/^[A-Z]+$/', message: 'The Jira prefix must contain only uppercase letters.', normalizer: 'trim')]
     public ?string $jiraId = null;
 
     #[Map(transform: 'strtoupper')]
@@ -59,24 +63,23 @@ final class ProjectSaveDto
         $self->id = (int) ($request->request->get('id') ?? 0);
         $self->name = (string) ($request->request->get('name') ?? '');
         $self->customer = null !== $request->request->get('customer') ? (int) $request->request->get('customer') : null;
-        $self->jiraId = ($request->request->get('jiraId') !== null) ? (string) $request->request->get('jiraId') : null;
-        $self->jiraTicket = ($request->request->get('jiraTicket') !== null) ? (string) $request->request->get('jiraTicket') : null;
+        $self->jiraId = (null !== $request->request->get('jiraId')) ? (string) $request->request->get('jiraId') : null;
+        $self->jiraTicket = (null !== $request->request->get('jiraTicket')) ? (string) $request->request->get('jiraTicket') : null;
         $self->active = (bool) $request->request->get('active');
         $self->global = (bool) $request->request->get('global');
         $self->estimation = (string) ($request->request->get('estimation') ?? '0m');
         $self->billing = (int) ($request->request->get('billing') ?? 0);
-        $self->cost_center = $request->request->get('cost_center') !== null ? (string) $request->request->get('cost_center') : null;
-        $self->offer = $request->request->get('offer') !== null ? (string) $request->request->get('offer') : null;
-        $self->project_lead = $request->request->get('project_lead') !== null ? (int) $request->request->get('project_lead') : null;
-        $self->technical_lead = $request->request->get('technical_lead') !== null ? (int) $request->request->get('technical_lead') : null;
-        $self->ticket_system = $request->request->get('ticket_system') !== null ? (string) $request->request->get('ticket_system') : null;
+        $self->cost_center = null !== $request->request->get('cost_center') ? (string) $request->request->get('cost_center') : null;
+        $self->offer = null !== $request->request->get('offer') ? (string) $request->request->get('offer') : null;
+        $self->project_lead = null !== $request->request->get('project_lead') ? (int) $request->request->get('project_lead') : null;
+        $self->technical_lead = null !== $request->request->get('technical_lead') ? (int) $request->request->get('technical_lead') : null;
+        $self->ticket_system = null !== $request->request->get('ticket_system') ? (string) $request->request->get('ticket_system') : null;
         $self->additionalInformationFromExternal = (bool) $request->request->get('additionalInformationFromExternal');
 
         $internal = $request->request->get('internalJiraTicketSystem');
-        $self->internalJiraTicketSystem = ($internal === '' || $internal === null) ? null : (string) $internal;
+        $self->internalJiraTicketSystem = ('' === $internal || null === $internal) ? null : (string) $internal;
         $self->internalJiraProjectKey = (string) $request->request->get('internalJiraProjectKey', '');
+
         return $self;
     }
 }
-
-

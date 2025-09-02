@@ -6,14 +6,13 @@ namespace App\EventSubscriber;
 
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
-use App\Service\Response\ResponseFactory;
-use App\Service\Validation\ValidationException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Throwable;
 
 /**
  * Global exception handler for converting exceptions to appropriate responses.
@@ -21,7 +20,6 @@ use Symfony\Component\HttpKernel\KernelEvents;
 class ExceptionSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly ResponseFactory $responseFactory,
         private readonly ?LoggerInterface $logger = null,
         private readonly string $environment = 'prod',
     ) {
@@ -43,8 +41,8 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $this->logException($exception, $request->getPathInfo());
 
         // Determine if we should return JSON response
-        $acceptsJson = str_contains($request->headers->get('Accept', ''), 'application/json') ||
-                      str_contains($request->getPathInfo(), '/api/');
+        $acceptsJson = str_contains($request->headers->get('Accept', ''), 'application/json')
+                      || str_contains($request->getPathInfo(), '/api/');
 
         if (!$acceptsJson) {
             // Let Symfony handle HTML error pages
@@ -53,22 +51,11 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
         // Convert exception to appropriate response
         $response = $this->createResponseFromException($exception);
-        
-        if ($response instanceof JsonResponse) {
-            $event->setResponse($response);
-        }
+        $event->setResponse($response);
     }
 
-    private function createResponseFromException(\Throwable $exception): ?JsonResponse
+    private function createResponseFromException(Throwable $exception): JsonResponse
     {
-        // Handle validation exceptions
-        if ($exception instanceof ValidationException) {
-            return new JsonResponse([
-                'error' => 'Validation failed',
-                'errors' => $exception->getErrorsByField(),
-            ], 422);
-        }
-
         // Handle JIRA API exceptions
         if ($exception instanceof JiraApiUnauthorizedException) {
             return new JsonResponse([
@@ -97,11 +84,11 @@ class ExceptionSubscriber implements EventSubscriberInterface
         }
 
         // Handle generic exceptions (only show details in dev mode)
-        if ($this->environment === 'dev') {
+        if ('dev' === $this->environment) {
             return new JsonResponse([
                 'error' => 'Internal server error',
                 'message' => $exception->getMessage(),
-                'exception' => get_class($exception),
+                'exception' => $exception::class,
                 'file' => $exception->getFile(),
                 'line' => $exception->getLine(),
                 'trace' => $exception->getTraceAsString(),
@@ -153,14 +140,14 @@ class ExceptionSubscriber implements EventSubscriberInterface
         };
     }
 
-    private function logException(\Throwable $exception, string $path): void
+    private function logException(Throwable $exception, string $path): void
     {
         if (!$this->logger) {
             return;
         }
 
         $context = [
-            'exception' => get_class($exception),
+            'exception' => $exception::class,
             'message' => $exception->getMessage(),
             'path' => $path,
             'file' => $exception->getFile(),
@@ -175,10 +162,6 @@ class ExceptionSubscriber implements EventSubscriberInterface
             } elseif ($statusCode >= 400) {
                 $this->logger->warning('Client error occurred', $context);
             }
-        } elseif ($exception instanceof ValidationException) {
-            $this->logger->info('Validation failed', array_merge($context, [
-                'errors' => $exception->getErrors(),
-            ]));
         } else {
             $this->logger->error('Unexpected exception occurred', $context);
         }
