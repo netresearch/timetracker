@@ -12,8 +12,12 @@ services:
     # Alias ClockInterface to TestClock for the test environment
     App\Service\ClockInterface: '@Tests\Service\TestClock'
 
-    # You might need to explicitly declare EntryRepository here if autowiring
-    # doesn't pick up the test alias correctly, although it usually does.
-    # App\Repository\EntryRepository:
-    #     # Arguments will likely be autowired correctly, including the aliased ClockInterface
-    #     # public: true # Ensure it's public if needed by other test services
+    # Ensure EntryRepository is properly configured for tests
+    App\Repository\EntryRepository:
+        arguments:
+            $managerRegistry: '@doctrine'
+            $clock: '@App\Service\ClockInterface'
+            $timeCalculationService: '@App\Service\Util\TimeCalculationService'
+        tags:
+            - { name: 'doctrine.repository_service' }
+        public: true
