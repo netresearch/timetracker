@@ -7,14 +7,14 @@ namespace Tests\Entity;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\Preset;
-use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
  *
  * @coversNothing
  */
-final class ActivityTest extends AbstractWebTestCase
+final class ActivityTest extends TestCase
 {
     public function testFluentInterface(): void
     {

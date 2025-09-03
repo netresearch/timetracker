@@ -11,7 +11,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
 use Exception;
-use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\TestCase;
 
 use function is_array;
 
@@ -20,7 +20,7 @@ use function is_array;
  *
  * @coversNothing
  */
-final class EntryTest extends AbstractWebTestCase
+final class EntryTest extends TestCase
 {
     public function testGetterSetter(): void
     {

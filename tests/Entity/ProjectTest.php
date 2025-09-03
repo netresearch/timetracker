@@ -7,14 +7,14 @@ namespace Tests\Entity;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
-use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
  *
  * @coversNothing
  */
-final class ProjectTest extends AbstractWebTestCase
+final class ProjectTest extends TestCase
 {
     public function testFluentInterface(): void
     {

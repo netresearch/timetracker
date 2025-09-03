@@ -6,14 +6,14 @@ namespace Tests\Service\Util;
 
 use App\Service\Util\TimeCalculationService;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
  *
  * @coversNothing
  */
-final class TimeHelperTest extends AbstractWebTestCase
+final class TimeHelperTest extends TestCase
 {
     #[DataProvider('provideReadable2MinutesCases')]
     public function testReadable2Minutes(int $minutes, string $readable): void

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Model;
 
 use App\Model\Base;
-use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\TestCase;
 
 use function array_key_exists;
 use function count;
@@ -46,7 +46,7 @@ class TestModel extends Base
  *
  * @coversNothing
  */
-final class BaseTest extends AbstractWebTestCase
+final class BaseTest extends TestCase
 {
     public function testBaseModelByTestModel(): void
     {

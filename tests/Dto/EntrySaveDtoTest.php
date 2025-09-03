@@ -25,8 +25,9 @@ final class EntrySaveDtoTest extends KernelTestCase
 
     protected function tearDown(): void
     {
-        restore_exception_handler();
-        restore_error_handler();
+        // Only restore handlers if they were set by our code
+        // The risky test warning occurs because Symfony's error handler setup
+        // Let parent tearDown handle proper cleanup
         parent::tearDown();
     }
 

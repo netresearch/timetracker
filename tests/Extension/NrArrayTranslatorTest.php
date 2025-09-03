@@ -19,7 +19,7 @@ namespace Tests\Extension;
 
 use App\Extension\NrArrayTranslator;
 use Symfony\Component\Translation\Translator;
-use Tests\AbstractWebTestCase;
+use PHPUnit\Framework\TestCase;
 
 use function array_key_exists;
 use function is_array;
@@ -38,7 +38,7 @@ use function is_array;
  *
  * @coversNothing
  */
-final class NrArrayTranslatorTest extends AbstractWebTestCase
+final class NrArrayTranslatorTest extends TestCase
 {
     /**
      * @var Translator symfony translator

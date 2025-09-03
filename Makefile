@@ -40,31 +40,31 @@ sh:
 install: composer-install npm-install
 
 composer-install:
-	docker compose run --rm app composer install
+	docker compose -f compose.yml -f compose.dev.yml run --rm app composer install
 
 composer-update:
-	docker compose run --rm app composer update
+	docker compose -f compose.yml -f compose.dev.yml run --rm app composer update
 
 npm-install:
-	docker compose run --rm app npm install --legacy-peer-deps
+	docker compose -f compose.yml -f compose.dev.yml run --rm app npm install --legacy-peer-deps
 
 npm-build:
-	docker compose run --rm app npm run build
+	docker compose -f compose.yml -f compose.dev.yml run --rm app npm run build
 
 npm-dev:
-	docker compose run --rm app npm run dev
+	docker compose -f compose.yml -f compose.dev.yml run --rm app npm run dev
 
 npm-watch:
-	docker compose run --rm app npm run watch
+	docker compose -f compose.yml -f compose.dev.yml run --rm app npm run watch
 
 test:
-	docker compose run --rm -e APP_ENV=test app php -d memory_limit=512M bin/phpunit
+	docker compose -f compose.yml -f compose.dev.yml run --rm -e APP_ENV=test app php -d memory_limit=512M ./bin/phpunit
 
 test-parallel:
-	    docker compose run --rm -e APP_ENV=test app vendor/bin/paratest --processes=$$(nproc) --testsuite=unit
+	docker compose -f compose.yml -f compose.dev.yml run --rm -e APP_ENV=test app ./bin/paratest --processes=$$(nproc) --testsuite=unit
 
 coverage:
-	docker compose run --rm -e APP_ENV=test app php -d memory_limit=512M bin/phpunit --coverage-html var/coverage
+	docker compose -f compose.yml -f compose.dev.yml run --rm -e APP_ENV=test app php -d memory_limit=512M ./bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:
@@ -95,5 +95,3 @@ cache-clear:
 
 swagger:
 	@echo "Open Swagger UI at http://localhost:8765/docs/swagger/index.html"
-
-
