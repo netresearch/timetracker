@@ -138,13 +138,13 @@ class BaseController extends AbstractController
     }
 
     /**
-     * checks the user type to be PL.
+     * Check if the current user has a specific user type.
      */
-    protected function isPl(Request $request): bool
+    protected function hasUserType(Request $request, string $userType): bool
     {
         $currentUser = $this->getUser();
         if ($currentUser instanceof User) {
-            return 'PL' === $currentUser->getType();
+            return $userType === $currentUser->getType();
         }
 
         $userId = $this->getUserId($request);
@@ -152,7 +152,15 @@ class BaseController extends AbstractController
         $objectRepository = $this->managerRegistry->getRepository(User::class);
         $user = $objectRepository->find($userId);
 
-        return $user instanceof User && 'PL' === $user->getType();
+        return $user instanceof User && $userType === $user->getType();
+    }
+
+    /**
+     * checks the user type to be PL.
+     */
+    protected function isPl(Request $request): bool
+    {
+        return $this->hasUserType($request, 'PL');
     }
 
     /**
@@ -160,17 +168,7 @@ class BaseController extends AbstractController
      */
     protected function isDEV(Request $request): bool
     {
-        $currentUser = $this->getUser();
-        if ($currentUser instanceof User) {
-            return 'DEV' === $currentUser->getType();
-        }
-
-        $userId = $this->getUserId($request);
-        /** @var \App\Repository\UserRepository $objectRepository */
-        $objectRepository = $this->managerRegistry->getRepository(User::class);
-        $user = $objectRepository->find($userId);
-
-        return $user instanceof User && 'DEV' === $user->getType();
+        return $this->hasUserType($request, 'DEV');
     }
 
     /**
