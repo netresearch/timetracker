@@ -8,6 +8,7 @@ use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Enum\EntryClass;
+use App\Enum\TicketSystemType;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -74,7 +75,7 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        if (!$ticketSystem->getBookTime() || 'JIRA' !== $ticketSystem->getType()) {
+        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
             return;
         }
 
@@ -98,105 +99,156 @@ abstract class BaseTrackingController extends BaseController
         $managerRegistry = $this->managerRegistry;
         $objectManager = $managerRegistry->getManager();
         /** @var \App\Repository\EntryRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(Entry::class);
-        /** @var Entry[] $entries */
-        $entries = $objectRepository->findByDay($userId, $day);
+        $objectRepository = $objectManager->getRepository(Entry::class);
+        $entries = $objectRepository->getEntriesByUserAndDay($userId, $day);
 
-        if (!count($entries)) {
+        if (0 === count($entries)) {
             return;
         }
 
-        $entry = $entries[0];
-        if (EntryClass::DAYBREAK !== $entry->getClass()) {
-            $entry->setClass(EntryClass::DAYBREAK);
-            $objectManager->persist($entry);
-            $objectManager->flush();
+        $normalizedEntries = [];
+        foreach ($entries as $entry) {
+            if ($entry instanceof Entry) {
+                $normalizedEntries[] = [
+                    'id' => (int) $entry->getId(),
+                    'start' => $entry->getStart(),
+                    'end' => $entry->getEnd(),
+                ];
+            }
         }
 
-        $counter = count($entries);
+        if (0 === count($normalizedEntries)) {
+            return;
+        }
 
-        for ($c = 1; $c < $counter; ++$c) {
-            $entry = $entries[$c];
-            $previous = $entries[$c - 1];
+        // Sort by start time
+        usort($normalizedEntries, static function (array $a, array $b): int {
+            return $a['start'] <=> $b['start'];
+        });
 
-            if (($entry->getStart() instanceof DateTime)
-                && ($previous->getEnd() instanceof DateTime)
-                && ($entry->getStart()->format('H:i') > $previous->getEnd()->format('H:i'))
-            ) {
-                if (EntryClass::PAUSE !== $entry->getClass()) {
-                    $entry->setClass(EntryClass::PAUSE);
-                    $objectManager->persist($entry);
-                    $objectManager->flush();
+        // Calculate overlaps
+        for ($i = 0; $i < count($normalizedEntries); $i++) {
+            for ($j = $i + 1; $j < count($normalizedEntries); $j++) {
+                if ($normalizedEntries[$i]['end'] > $normalizedEntries[$j]['start']) {
+                    // Mark both as overlapping
+                    $this->addEntryClass($normalizedEntries[$i]['id'], EntryClass::OVERLAPPING);
+                    $this->addEntryClass($normalizedEntries[$j]['id'], EntryClass::OVERLAPPING);
                 }
-
-                continue;
             }
+        }
 
-            if (($entry->getStart() instanceof DateTime)
-                && ($previous->getEnd() instanceof DateTime)
-                && ($entry->getStart()->format('H:i') < $previous->getEnd()->format('H:i'))
-            ) {
-                if (EntryClass::OVERLAP !== $entry->getClass()) {
-                    $entry->setClass(EntryClass::OVERLAP);
-                    $objectManager->persist($entry);
-                    $objectManager->flush();
+        // Calculate pauses and day breaks
+        for ($i = 0; $i < count($normalizedEntries) - 1; $i++) {
+            $current = $normalizedEntries[$i];
+            $next = $normalizedEntries[$i + 1];
+
+            $pauseMinutes = ($next['start']->getTimestamp() - $current['end']->getTimestamp()) / 60;
+
+            if ($pauseMinutes > 0) {
+                if ($pauseMinutes >= 60) {  // 1 hour or more
+                    $this->addEntryClass($current['id'], EntryClass::DAYBREAK);
+                } else {
+                    $this->addEntryClass($current['id'], EntryClass::PAUSE);
                 }
-
-                continue;
-            }
-
-            if (EntryClass::PLAIN !== $entry->getClass()) {
-                $entry->setClass(EntryClass::PLAIN);
-                $objectManager->persist($entry);
-                $objectManager->flush();
             }
         }
     }
 
     /**
-     * Ensures valid ticket number format.
-     *
-     * @throws Exception
+     * Add a rendering class to an entry.
      */
-    protected function requireValidTicketFormat(string $ticket): void
+    private function addEntryClass(int $entryId, EntryClass $class): void
     {
-        if ('' === $ticket) {
-            return;
-        }
-
-        if ($this->ticketService && !$this->ticketService->checkFormat($ticket)) {
-            $message = $this->translator->trans("The ticket's format is not recognized.");
-            throw new Exception($message);
+        $entry = $this->managerRegistry->getRepository(Entry::class)->find($entryId);
+        if ($entry instanceof Entry) {
+            $entry->addClass($class);
+            $this->managerRegistry->getManager()->flush();
         }
     }
 
     /**
-     * TTT-199: check if ticket prefix matches project's Jira id.
+     * Creates a work log entry in a remote JIRA installation.
+     * JIRA instance is defined by ticket system in project.
      *
-     * @throws Exception
+     * @throws JiraApiException
      */
-    protected function requireValidTicketPrefix(Project $project, string $ticket): void
+    protected function createJiraEntry(Entry $entry, User $user): void
     {
+        $project = $entry->getProject();
+
+        if (!$project instanceof Project) {
+            return;
+        }
+
+        if ('' === $entry->getTicket()) {
+            return;
+        }
+
+        $ticketSystem = $project->getTicketSystem();
+
+        // Support for internal jira project and ticket system
+        if ($project && $project->hasInternalJiraProjectKey()) {
+            $this->validateTicketProjectMatch($entry, $project);
+
+            /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
+            $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
+            $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
+        }
+
+        if (!$ticketSystem instanceof TicketSystem) {
+            return;
+        }
+
+        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
+            return;
+        }
+
+        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory) {
+            return;
+        }
+
+        try {
+            $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
+            $jiraOAuthApiService->createEntryJiraWorkLog($entry);
+        } catch (Exception $exception) {
+            if ($this->logger instanceof LoggerInterface) {
+                $this->logger->error('Failed to create JIRA work log', [
+                    'entry_id' => $entry->getId(),
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0, $exception);
+        }
+    }
+
+    /**
+     * Validates that the ticket project matches the project JIRA ID.
+     * Extracts the project key from the ticket and validates against project JIRA IDs.
+     *
+     * @throws Exception when ticket project doesn't match
+     */
+    protected function validateTicketProjectMatch(Entry $entry, Project $project): void
+    {
+        $ticket = $entry->getTicket();
         if ('' === $ticket) {
             return;
         }
 
-        if ('' === (string) $project->getJiraId()) {
+        if (!$this->ticketService instanceof TicketService) {
+            throw new RuntimeException('Ticket service not available');
+        }
+
+        $jiraId = $this->ticketService->extractJiraId($ticket);
+        if ('' === $jiraId) {
             return;
         }
 
-        if ($this->ticketService && !$this->ticketService->checkFormat($ticket)) {
-            $message = $this->translator->trans("The ticket's format is not recognized.");
-            throw new Exception($message);
+        $projectJiraId = $project->getJiraId();
+        if ('' === $projectJiraId) {
+            return;
         }
 
-        $jiraId = $this->ticketService instanceof TicketService ? $this->ticketService->getPrefix($ticket) : null;
-        if (null === $jiraId) {
-            $message = $this->translator->trans("The ticket's format is not recognized.");
-            throw new Exception($message);
-        }
-
-        $projectIds = explode(',', (string) $project->getJiraId());
+        $projectIds = explode(',', $projectJiraId);
 
         foreach ($projectIds as $projectId) {
             if (trim($projectId) === $jiraId || $project->matchesInternalJiraProject($jiraId)) {
@@ -249,7 +301,7 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        if (!$ticketSystem->getBookTime() || 'JIRA' !== $ticketSystem->getType()) {
+        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
             return;
         }
 
@@ -298,92 +350,107 @@ abstract class BaseTrackingController extends BaseController
     {
         $project = $entry->getProject();
 
-        if (!$project instanceof Project) {
+        if (!$project instanceof Project || !$project->hasInternalJiraProjectKey()) {
             return;
         }
 
-        $internalJiraTicketSystem = $project->getInternalJiraTicketSystem();
-        $internalJiraProjectKey = $project->getInternalJiraProjectKey();
+        /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
+        $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
+        $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
 
-        if (null === $internalJiraTicketSystem || '' === $internalJiraTicketSystem || '0' === $internalJiraTicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return;
         }
 
-        if (null === $internalJiraProjectKey || '' === $internalJiraProjectKey || '0' === $internalJiraProjectKey) {
-            return;
-        }
-
-        $strTicket = $entry->getTicket();
-        if ($entry->hasInternalJiraTicketOriginalKey()) {
-            $strTicket = $entry->getInternalJiraTicketOriginalKey();
-        }
-
-        $strOdlEntryTicket = $oldEntry->getTicket();
-        if ($oldEntry->hasInternalJiraTicketOriginalKey()) {
-            $strOdlEntryTicket = $oldEntry->getInternalJiraTicketOriginalKey();
-        }
-
-        $internalJiraTicketSystem = $this->managerRegistry
-            ->getRepository(TicketSystem::class)
-            ->find($internalJiraTicketSystem)
-        ;
-
-        if (!$internalJiraTicketSystem instanceof TicketSystem) {
-            return;
-        }
-
-        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
-            return;
-        }
-
-        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $internalJiraTicketSystem);
-        $searchResult = $jiraOAuthApiService->searchTicket(
-            sprintf(
-                'project = %s AND summary ~ %s',
-                $project->getInternalJiraProjectKey(),
-                $strTicket,
-            ),
-            ['key', 'summary'],
-            1,
-        );
-
-        // Type-safe check for search results
-        $issues = [];
-        if (is_object($searchResult) && isset($searchResult->issues)) {
-            $issues = $searchResult->issues;
-        }
-        if (is_array($issues) && count($issues) > 0) {
-            $issue = reset($issues);
+        if ('' === $oldEntry->getTicket()) {
+            $this->createJiraEntry($entry, $entry->getUser());
         } else {
-            $issue = $this->createTicket($entry, $internalJiraTicketSystem);
+            $this->updateJiraWorklog($entry, $oldEntry, $ticketSystem);
         }
-
-        $entry->setInternalJiraTicketOriginalKey($strTicket);
-        if (!is_object($issue) || !property_exists($issue, 'key')) {
-            throw new RuntimeException('Invalid issue response');
-        }
-
-        $entry->setTicket($issue->key);
-        $oldEntry->setTicket($issue->key);
-        $oldEntry->setInternalJiraTicketOriginalKey($strOdlEntryTicket);
-
-        $this->updateJiraWorklog(
-            $entry,
-            $oldEntry,
-            $internalJiraTicketSystem,
-        );
     }
 
     /**
-     * Returns true, if the ticket should be deleted.
+     * Determines whether the old entry ticket should be deleted.
      */
     protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry): bool
     {
-        $bDifferentTickets
-            = $oldEntry->getTicket() !== $entry->getTicket();
-        $bIsCurrentTicketOriginalTicket
-            = $entry->getInternalJiraTicketOriginalKey() === $entry->getTicket();
+        // Delete if ticket is removed or changed
+        return '' !== $oldEntry->getTicket() && $entry->getTicket() !== $oldEntry->getTicket();
+    }
 
-        return !$bIsCurrentTicketOriginalTicket && $bDifferentTickets;
+    /**
+     * Gets a DateTime object from a date string or returns null.
+     */
+    protected function getDateTimeFromString(?string $dateString): ?DateTime
+    {
+        if (null === $dateString || '' === $dateString) {
+            return null;
+        }
+
+        try {
+            return new DateTime($dateString);
+        } catch (Exception) {
+            return null;
+        }
+    }
+
+    /**
+     * Validates entry date and time values.
+     *
+     * @throws Exception when validation fails
+     */
+    protected function validateEntryDateTime(Entry $entry): void
+    {
+        $start = $entry->getStart();
+        $end = $entry->getEnd();
+
+        if (!$start instanceof DateTime || !$end instanceof DateTime) {
+            throw new Exception('Entry must have valid start and end times');
+        }
+
+        if ($start >= $end) {
+            throw new Exception('Entry start time must be before end time');
+        }
+
+        $maxDuration = new \DateInterval('PT23H59M');
+        $duration = $start->diff($end);
+        
+        if ($duration->days > 0 || $duration->h > 23) {
+            throw new Exception('Entry duration cannot exceed 24 hours');
+        }
+    }
+
+    /**
+     * Calculates the duration of an entry in minutes.
+     */
+    protected function calculateDurationMinutes(Entry $entry): int
+    {
+        $start = $entry->getStart();
+        $end = $entry->getEnd();
+
+        if (!$start instanceof DateTime || !$end instanceof DateTime) {
+            return 0;
+        }
+
+        return (int) (($end->getTimestamp() - $start->getTimestamp()) / 60);
+    }
+
+    /**
+     * Formats duration in minutes to human readable format.
+     */
+    protected function formatDuration(int $minutes): string
+    {
+        if ($minutes < 60) {
+            return sprintf('%dm', $minutes);
+        }
+
+        $hours = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+
+        if ($mins === 0) {
+            return sprintf('%dh', $hours);
+        }
+
+        return sprintf('%dh %dm', $hours, $mins);
     }
 }

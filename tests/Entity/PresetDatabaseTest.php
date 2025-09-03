@@ -8,6 +8,7 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Preset;
 use App\Entity\Project;
+use App\Enum\BillingType;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
 
@@ -239,7 +240,7 @@ final class PresetDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('OFFER-PRESET');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
 

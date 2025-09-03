@@ -6,9 +6,12 @@ namespace Tests\Entity;
 
 use App\Entity\Contract;
 use App\Entity\Entry;
+use App\Enum\EntryClass;
 use App\Entity\Team;
 use App\Entity\TicketSystem;
+use App\Enum\TicketSystemType;
 use App\Entity\User;
+use App\Enum\UserType;
 use App\Entity\UserTicketsystem;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,7 +38,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $user = new User();
         $user->setUsername('test_user');
         $user->setAbbr('TSU');
-        $user->setType('DEV');
+        $user->setType(UserType::DEV);
         $user->setLocale('de');
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
@@ -55,7 +58,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         self::assertNotNull($fetchedUser, 'User was not found in database');
         self::assertSame('test_user', $fetchedUser->getUsername());
         self::assertSame('TSU', $fetchedUser->getAbbr());
-        self::assertSame('DEV', $fetchedUser->getType());
+        self::assertSame(UserType::DEV, $fetchedUser->getType());
         self::assertSame('de', $fetchedUser->getLocale());
         self::assertFalse($fetchedUser->getShowEmptyLine());
         self::assertTrue($fetchedUser->getSuggestTime());
@@ -72,7 +75,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $user = new User();
         $user->setUsername('user_to_update');
         $user->setAbbr('UTU');
-        $user->setType('DEV');
+        $user->setType(UserType::DEV);
         $user->setLocale('de');
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
@@ -87,7 +90,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Update user
         $user->setUsername('updated_user');
         $user->setAbbr('UPU');
-        $user->setType('PL');
+        $user->setType(UserType::PL);
         $user->setLocale('en');
         $user->setShowEmptyLine(true);
         $user->setSuggestTime(false);
@@ -100,7 +103,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $updatedUser = $this->entityManager->getRepository(User::class)->find($id);
         self::assertSame('updated_user', $updatedUser->getUserIdentifier());
         self::assertSame('UPU', $updatedUser->getAbbr());
-        self::assertSame('PL', $updatedUser->getType());
+        self::assertSame(UserType::PL, $updatedUser->getType());
         self::assertSame('en', $updatedUser->getLocale());
 
         self::assertTrue($updatedUser->getShowEmptyLine());
@@ -118,7 +121,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $user = new User();
         $user->setUsername('user_to_delete');
         $user->setAbbr('UTD');
-        $user->setType('DEV');
+        $user->setType(UserType::DEV);
         $user->setLocale('de');
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
@@ -145,7 +148,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $user = new User();
         $user->setUsername('team_user');
         $user->setAbbr('TMU');
-        $user->setType('DEV');
+        $user->setType(UserType::DEV);
         $user->setLocale('de');
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
@@ -196,7 +199,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $user = new User();
         $user->setUsername('contract_user');
         $user->setAbbr('CNU');
-        $user->setType('DEV');
+        $user->setType(UserType::DEV);
         $user->setLocale('de');
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
@@ -260,7 +263,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $user = new User();
         $user->setUsername('entry_user');
         $user->setAbbr('ENU');
-        $user->setType('DEV');
+        $user->setType(UserType::DEV);
         $user->setLocale('de');
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
@@ -277,7 +280,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $entry1->setDuration(60);
         $entry1->setTicket('TEST-001');
         $entry1->setDescription('Test entry 1');
-        $entry1->setClass(Entry::CLASS_PLAIN);
+        $entry1->setClass(EntryClass::PLAIN);
 
         $entry2 = new Entry();
         $entry2->setUser($user);
@@ -287,7 +290,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $entry2->setDuration(120);
         $entry2->setTicket('TEST-002');
         $entry2->setDescription('Test entry 2');
-        $entry2->setClass(Entry::CLASS_PLAIN);
+        $entry2->setClass(EntryClass::PLAIN);
 
         $this->entityManager->persist($entry1);
         $this->entityManager->persist($entry2);
@@ -321,7 +324,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $user = new User();
         $user->setUsername('ticketsystem_user');
         $user->setAbbr('TSU');
-        $user->setType('DEV');
+        $user->setType(UserType::DEV);
         $user->setLocale('de');
         $user->setShowEmptyLine(false);
         $user->setSuggestTime(true);
@@ -331,7 +334,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
 
         $ticketSystem = new TicketSystem();
         $ticketSystem->setName('Test Ticket System');
-        $ticketSystem->setType('jira');
+        $ticketSystem->setType(TicketSystemType::JIRA);
         $ticketSystem->setBookTime(true);
         $ticketSystem->setUrl('https://jira.example.com');
         $ticketSystem->setLogin('test_login');
@@ -386,7 +389,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Create a new User with DEV type
         $devUser = new User();
         $devUser->setUsername('dev_user');
-        $devUser->setType('DEV');
+        $devUser->setType(UserType::DEV);
         $devUser->setLocale('de');
 
         $this->entityManager->persist($devUser);
@@ -394,7 +397,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Create a new User with PL type
         $plUser = new User();
         $plUser->setUsername('pl_user');
-        $plUser->setType('PL');
+        $plUser->setType(UserType::PL);
         $plUser->setLocale('de');
 
         $this->entityManager->persist($plUser);
@@ -402,7 +405,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Create a new User with ADMIN type
         $adminUser = new User();
         $adminUser->setUsername('admin_user');
-        $adminUser->setType('ADMIN');
+        $adminUser->setType(UserType::ADMIN);
         $adminUser->setLocale('de');
 
         $this->entityManager->persist($adminUser);

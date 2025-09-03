@@ -10,6 +10,7 @@ use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
+use App\Enum\EntryClass;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
@@ -45,8 +46,8 @@ final class EntryTest extends TestCase
         self::assertSame('ABCDE-12345678', $entry->getTicket());
 
         // test class
-        $entry->setClass(Entry::CLASS_OVERLAP);
-        self::assertSame(Entry::CLASS_OVERLAP, $entry->getClass());
+        $entry->setClass(EntryClass::OVERLAP);
+        self::assertSame(EntryClass::OVERLAP, $entry->getClass());
 
         // test user
         self::assertNull($entry->getUser());

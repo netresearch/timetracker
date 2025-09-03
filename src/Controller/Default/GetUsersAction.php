@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Default;
 
 use App\Controller\BaseController;
+use App\Enum\UserType;
 use App\Model\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -22,10 +23,10 @@ final class GetUsersAction extends BaseController
             /** @var \App\Repository\UserRepository $userRepo */
             $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
             $current = $userRepo->find($userId);
-            $isDev = $current && method_exists($current, 'getType') && 'DEV' === $current->getType();
+            $isDev = $current && method_exists($current, 'getType') && UserType::DEV === $current->getType();
         } else {
             $userId = (int) $user->getId();
-            $isDev = 'DEV' === $user->getType();
+            $isDev = UserType::DEV === $user->getType();
         }
 
         /** @var \App\Repository\UserRepository $userRepo */

@@ -54,7 +54,7 @@ class UserRepository extends ServiceEntityRepository
                 array_unshift($data, ['user' => [
                     'id' => (int) $user->getId(),
                     'username' => (string) $user->getUsername(),
-                    'type' => (string) $user->getType(),
+                    'type' => $user->getType()->value,
                     'abbr' => (string) $user->getAbbr(),
                     'locale' => $user->getLocale(),
                 ]]);
@@ -62,7 +62,7 @@ class UserRepository extends ServiceEntityRepository
                 $data[] = ['user' => [
                     'id' => (int) $user->getId(),
                     'username' => (string) $user->getUsername(),
-                    'type' => (string) $user->getType(),
+                    'type' => $user->getType()->value,
                     'abbr' => (string) $user->getAbbr(),
                     'locale' => $user->getLocale(),
                 ]];
@@ -97,7 +97,7 @@ class UserRepository extends ServiceEntityRepository
             $data[] = ['user' => [
                 'id' => (int) $user->getId(),
                 'username' => (string) $user->getUsername(),
-                'type' => (string) $user->getType(),
+                'type' => $user->getType()->value,
                 'abbr' => (string) $user->getAbbr(),
                 'locale' => $user->getLocale(),
                 'teams' => $teams,
@@ -127,7 +127,7 @@ class UserRepository extends ServiceEntityRepository
             $data[] = ['user' => [
                 'id' => (int) $user->getId(),
                 'username' => (string) $user->getUsername(),
-                'type' => (string) $user->getType(),
+                'type' => $user->getType()->value,
                 'abbr' => (string) $user->getAbbr(),
                 'locale' => $user->getLocale(),
             ]];

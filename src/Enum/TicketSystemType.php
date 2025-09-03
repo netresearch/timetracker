@@ -9,6 +9,7 @@ namespace App\Enum;
  */
 enum TicketSystemType: string
 {
+    case UNKNOWN = '';
     case JIRA = 'JIRA';
     case OTRS = 'OTRS';
 
@@ -18,6 +19,7 @@ enum TicketSystemType: string
     public function getDisplayName(): string
     {
         return match ($this) {
+            self::UNKNOWN => 'Unknown/Not Configured',
             self::JIRA => 'Atlassian JIRA',
             self::OTRS => 'OTRS (Open Ticket Request System)',
         };
@@ -29,6 +31,7 @@ enum TicketSystemType: string
     public function getDefaultUrlPattern(): string
     {
         return match ($this) {
+            self::UNKNOWN => '',
             self::JIRA => 'https://jira.company.com/browse/%s',
             self::OTRS => 'https://otrs.company.com/otrs/index.pl?Action=AgentTicketZoom;TicketNumber=%s',
         };
@@ -40,6 +43,7 @@ enum TicketSystemType: string
     public function getApiEndpointPattern(): string
     {
         return match ($this) {
+            self::UNKNOWN => '',
             self::JIRA => '/rest/api/2/issue/%s',
             self::OTRS => '/otrs/nph-genericinterface.pl/Webservice/GenericTicketConnector/Ticket/%s',
         };
@@ -51,6 +55,7 @@ enum TicketSystemType: string
     public function supportsOAuth(): bool
     {
         return match ($this) {
+            self::UNKNOWN => false,
             self::JIRA => true,
             self::OTRS => false,
         };
@@ -62,6 +67,7 @@ enum TicketSystemType: string
     public function supportsTimeTracking(): bool
     {
         return match ($this) {
+            self::UNKNOWN => false,
             self::JIRA => true,
             self::OTRS => false,
         };
@@ -75,6 +81,7 @@ enum TicketSystemType: string
     public function getRequiredAuthFields(): array
     {
         return match ($this) {
+            self::UNKNOWN => [],
             self::JIRA => ['username', 'api_token'],
             self::OTRS => ['username', 'password'],
         };
@@ -86,6 +93,7 @@ enum TicketSystemType: string
     public function getTicketPattern(): string
     {
         return match ($this) {
+            self::UNKNOWN => '/^.*$/',
             self::JIRA => '/^([A-Z]+)-(\d+)$/',
             self::OTRS => '/^(\d{4,})$/',
         };
@@ -109,5 +117,13 @@ enum TicketSystemType: string
     public static function withTimeTracking(): array
     {
         return array_filter(self::cases(), fn(self $type) => $type->supportsTimeTracking());
+    }
+
+    /**
+     * Check if this is a valid configured system.
+     */
+    public function isConfigured(): bool
+    {
+        return $this !== self::UNKNOWN;
     }
 }

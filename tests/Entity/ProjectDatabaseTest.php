@@ -6,10 +6,14 @@ namespace Tests\Entity;
 
 use App\Entity\Customer;
 use App\Entity\Entry;
+use App\Enum\EntryClass;
 use App\Entity\Preset;
 use App\Entity\Project;
+use App\Enum\BillingType;
 use App\Entity\TicketSystem;
+use App\Enum\TicketSystemType;
 use App\Entity\User;
+use App\Enum\UserType;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
 
@@ -45,7 +49,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('TEST-OFFER');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(120);
         $project->setAdditionalInformationFromExternal(false);
 
@@ -66,7 +70,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         self::assertTrue($fetchedProject->getActive());
         self::assertFalse($fetchedProject->getGlobal());
         self::assertSame('TEST-OFFER', $fetchedProject->getOffer());
-        self::assertSame(Project::BILLING_TM, $fetchedProject->getBilling());
+        self::assertSame(BillingType::TIME_AND_MATERIAL, $fetchedProject->getBilling());
         self::assertSame(120, $fetchedProject->getEstimation());
 
         // Check customer relationship
@@ -102,7 +106,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('OFFER-ORIG');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
 
@@ -118,7 +122,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setActive(false);
         $project->setGlobal(true);
         $project->setOffer('OFFER-UPDATED');
-        $project->setBilling(Project::BILLING_FP);
+        $project->setBilling(BillingType::FIXED_PRICE);
         $project->setEstimation(200);
 
         $this->entityManager->flush();
@@ -130,7 +134,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         self::assertFalse($updatedProject->getActive());
         self::assertTrue($updatedProject->getGlobal());
         self::assertSame('OFFER-UPDATED', $updatedProject->getOffer());
-        self::assertSame(Project::BILLING_FP, $updatedProject->getBilling());
+        self::assertSame(BillingType::FIXED_PRICE, $updatedProject->getBilling());
         self::assertSame(200, $updatedProject->getEstimation());
 
         // Clean up
@@ -162,7 +166,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('OFFER-DELETE');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
 
@@ -213,7 +217,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('OFFER-ENTRIES');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
 
@@ -228,7 +232,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $entry1->setDuration(60);
         $entry1->setTicket('TEST-001');
         $entry1->setDescription('Test entry 1');
-        $entry1->setClass(Entry::CLASS_PLAIN);
+        $entry1->setClass(EntryClass::PLAIN);
 
         $entry2 = new Entry();
         $entry2->setProject($project);
@@ -238,7 +242,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $entry2->setDuration(120);
         $entry2->setTicket('TEST-002');
         $entry2->setDescription('Test entry 2');
-        $entry2->setClass(Entry::CLASS_PLAIN);
+        $entry2->setClass(EntryClass::PLAIN);
 
         $this->entityManager->persist($entry1);
         $this->entityManager->persist($entry2);
@@ -281,14 +285,14 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
 
         $projectLead = new User();
         $projectLead->setUsername('project_lead');
-        $projectLead->setType('PL');
+        $projectLead->setType(UserType::PL);
         $projectLead->setLocale('de');
 
         $this->entityManager->persist($projectLead);
 
         $technicalLead = new User();
         $technicalLead->setUsername('technical_lead');
-        $technicalLead->setType('DEV');
+        $technicalLead->setType(UserType::DEV);
         $technicalLead->setLocale('de');
 
         $this->entityManager->persist($technicalLead);
@@ -300,7 +304,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('OFFER-LEADS');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
         $project->setProjectLead($projectLead);
@@ -361,7 +365,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
 
         $ticketSystem = new TicketSystem();
         $ticketSystem->setName('Test Ticket System');
-        $ticketSystem->setType('jira');
+        $ticketSystem->setType(TicketSystemType::JIRA);
         $ticketSystem->setBookTime(true);
         $ticketSystem->setUrl('https://jira.example.com');
         $ticketSystem->setLogin('test_login');
@@ -377,7 +381,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('OFFER-TICKET');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
         $project->setTicketSystem($ticketSystem);
@@ -443,7 +447,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $project->setGlobal(false);
         $project->setCustomer($customer);
         $project->setOffer('OFFER-PRESETS');
-        $project->setBilling(Project::BILLING_TM);
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
         $project->setEstimation(100);
         $project->setAdditionalInformationFromExternal(false);
 

@@ -6,6 +6,7 @@ namespace Tests\Entity;
 
 use App\Entity\Account;
 use App\Entity\Entry;
+use App\Enum\EntryClass;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
 
@@ -115,7 +116,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         $entry1->setDuration(60);
         $entry1->setTicket('TEST-001');
         $entry1->setDescription('Test entry 1');
-        $entry1->setClass(Entry::CLASS_PLAIN);
+        $entry1->setClass(EntryClass::PLAIN);
 
         $entry2 = new Entry();
         $entry2->setAccount($account);
@@ -125,7 +126,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         $entry2->setDuration(120);
         $entry2->setTicket('TEST-002');
         $entry2->setDescription('Test entry 2');
-        $entry2->setClass(Entry::CLASS_PLAIN);
+        $entry2->setClass(EntryClass::PLAIN);
 
         $this->entityManager->persist($entry1);
         $this->entityManager->persist($entry2);

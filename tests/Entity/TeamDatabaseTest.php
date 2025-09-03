@@ -7,6 +7,7 @@ namespace Tests\Entity;
 use App\Entity\Customer;
 use App\Entity\Team;
 use App\Entity\User;
+use App\Enum\UserType;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
 
@@ -102,7 +103,7 @@ final class TeamDatabaseTest extends AbstractWebTestCase
         // Create lead user
         $leadUser = new User();
         $leadUser->setUsername('lead_user');
-        $leadUser->setType('PL');
+        $leadUser->setType(UserType::PL);
         $leadUser->setLocale('de');
 
         $this->entityManager->persist($leadUser);
@@ -139,14 +140,14 @@ final class TeamDatabaseTest extends AbstractWebTestCase
         // Create users
         $user1 = new User();
         $user1->setUsername('team_user1');
-        $user1->setType('DEV');
+        $user1->setType(UserType::DEV);
         $user1->setLocale('de');
 
         $this->entityManager->persist($user1);
 
         $user2 = new User();
         $user2->setUsername('team_user2');
-        $user2->setType('DEV');
+        $user2->setType(UserType::DEV);
         $user2->setLocale('de');
 
         $this->entityManager->persist($user2);

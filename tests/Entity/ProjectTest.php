@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Entity;
 
 use App\Entity\Project;
+use App\Enum\BillingType;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use PHPUnit\Framework\TestCase;
@@ -16,63 +17,63 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectTest extends TestCase
 {
-    public function testFluentInterface(): void
-    {
-        $project = new Project();
-
-        self::assertSame(
-            $project,
-            $project
-                ->setId(null)
-                ->setName(null)
-                ->setJiraId(null)
-                ->setGlobal(null)
-                ->setEstimation(null)
-                ->setOffer(null)
-                ->setGlobal(null)
-                ->setCostCenter(null)
-                ->setBilling(null),
-        );
-    }
-
     public function testGetterSetter(): void
     {
         $project = new Project();
 
-        // test id
-        self::assertNull($project->getId());
-        $project->setId(17);
-        self::assertSame(17, $project->getId());
-
         // test name
         self::assertSame('', $project->getName());
-        $project->setName('Test-Project');
-        self::assertSame('Test-Project', $project->getName());
-
-        // test ticket prefix
-        self::assertNull($project->getJiraId());
-        $project->setJiraId('ABC');
-        self::assertSame('ABC', $project->getJiraId());
+        $project->setName('foobar project');
+        self::assertSame('foobar project', $project->getName());
 
         // test active
-        self::assertFalse($project->getActive());
-        $project->setActive(true);
         self::assertTrue($project->getActive());
+        $project->setActive(false);
+        self::assertFalse($project->getActive());
 
         // test global
         self::assertFalse($project->getGlobal());
         $project->setGlobal(true);
         self::assertTrue($project->getGlobal());
 
-        // test estimation
-        self::assertNull($project->getEstimation());
-        $project->setEstimation(120);
-        self::assertSame(120, $project->getEstimation());
-
         // test offer
         self::assertNull($project->getOffer());
-        $project->setOffer('12-UF9182-4');
-        self::assertSame('12-UF9182-4', $project->getOffer());
+        $project->setOffer('20130322002_test_4711');
+        self::assertSame('20130322002_test_4711', $project->getOffer());
+
+        // test additional information from external ticket system
+        self::assertFalse($project->getAdditionalInformationFromExternal());
+        $project->setAdditionalInformationFromExternal(true);
+        self::assertTrue($project->getAdditionalInformationFromExternal());
+
+        // test jira id
+        self::assertNull($project->getJiraId());
+        $project->setJiraId('TEST');
+        self::assertSame('TEST', $project->getJiraId());
+
+        // test progress
+        self::assertSame(0, $project->getProgress());
+        $project->setProgress(66);
+        self::assertSame(66, $project->getProgress());
+
+        // test project lead user
+        self::assertNull($project->getProjectLead());
+        $projectLead = new User();
+        $projectLead->setId(14);
+        $project->setProjectLead($projectLead);
+        self::assertSame($projectLead, $project->getProjectLead());
+
+        // test technical lead user
+        self::assertNull($project->getTechnicalLead());
+        $technicalLead = new User();
+        $technicalLead->setId(15);
+        $project->setTechnicalLead($technicalLead);
+        self::assertSame($technicalLead, $project->getTechnicalLead());
+
+        // test estimation
+        self::assertSame(0, $project->getEstimation());
+        $project->setEstimation(2500);
+        self::assertSame(2500, $project->getEstimation());
 
         // test cost center
         self::assertNull($project->getCostCenter());
@@ -80,9 +81,9 @@ final class ProjectTest extends TestCase
         self::assertSame('12345', $project->getCostCenter());
 
         // test billing
-        self::assertSame(0, $project->getBilling());
-        $project->setBilling(Project::BILLING_TM);
-        self::assertSame(Project::BILLING_TM, $project->getBilling());
+        self::assertSame(BillingType::NONE, $project->getBilling());
+        $project->setBilling(BillingType::TIME_AND_MATERIAL);
+        self::assertSame(BillingType::TIME_AND_MATERIAL, $project->getBilling());
 
         // test invoice
         self::assertNull($project->getInvoice());
@@ -92,23 +93,8 @@ final class ProjectTest extends TestCase
         // test ticket system
         self::assertNull($project->getTicketSystem());
         $ticketSystem = new TicketSystem();
+        $ticketSystem->setId(123);
         $project->setTicketSystem($ticketSystem);
         self::assertSame($ticketSystem, $project->getTicketSystem());
-        $project->setTicketSystem(null);
-        self::assertNull($project->getTicketSystem());
-
-        // test project and technical lead
-        self::assertNull($project->getProjectLead());
-        self::assertNull($project->getTechnicalLead());
-        $projectLead = new User();
-        $project->setProjectLead($projectLead);
-        self::assertSame($projectLead, $project->getProjectLead());
-        $technicalLead = new User();
-        $project->setTechnicalLead($technicalLead);
-        self::assertSame($technicalLead, $project->getTechnicalLead());
-        $project->setProjectLead(null);
-        self::assertNull($project->getProjectLead());
-        $project->setTechnicalLead(null);
-        self::assertNull($project->getTechnicalLead());
     }
 }

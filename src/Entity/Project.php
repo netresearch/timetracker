@@ -229,21 +229,23 @@ class Project extends Base
     }
 
     /**
-     * Get id.
+     * Retrieve the id from the object, useful for hydration, etc.
      *
-     * @return int|null $id
+     * @return mixed the id
      */
-    public function getId(): ?int
+    public function getId()
     {
         return $this->id;
     }
 
     /**
-     * Set id.
+     * Set the id of the object, useful for hydration, etc.
+     *
+     * @param mixed $id the new id
      *
      * @return $this
      */
-    public function setId(?int $id): static
+    public function setId($id): static
     {
         $this->id = $id;
 
@@ -251,33 +253,43 @@ class Project extends Base
     }
 
     /**
-     * Set name.
+     * Returns the project's name.
+     *
+     * @return string the name
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Sets the project's name.
+     *
+     * @param string $name the name to be set
      *
      * @return $this
      */
-    public function setName(?string $name): static
+    public function setName(string $name): static
     {
-        if (null === $name) {
-            $name = '';
-        }
-
         $this->name = $name;
 
         return $this;
     }
 
     /**
-     * Get name.
+     * Returns the project's active status.
      *
-     * @return string|null $name
+     * @return bool active or not
      */
-    public function getName(): ?string
+    public function getActive(): bool
     {
-        return $this->name;
+        return $this->active;
     }
 
     /**
-     * Set active.
+     * Sets the project's active status.
+     *
+     * @param bool $active the status to be set
      *
      * @return $this
      */
@@ -289,31 +301,9 @@ class Project extends Base
     }
 
     /**
-     * Get active.
+     * Returns the project's customer.
      *
-     * @return bool|null $active
-     */
-    public function getActive(): ?bool
-    {
-        return $this->active;
-    }
-
-    /**
-     * Set customer.
-     *
-     * @return $this
-     */
-    public function setCustomer(Customer $customer): static
-    {
-        $this->customer = $customer;
-
-        return $this;
-    }
-
-    /**
-     * Get customer.
-     *
-     * @return Customer|null $customer
+     * @return Customer|null the customer
      */
     public function getCustomer(): ?Customer
     {
@@ -321,44 +311,60 @@ class Project extends Base
     }
 
     /**
-     * Set global.
+     * Sets the project's customer.
+     *
+     * @param Customer|null $customer the customer to be set
      *
      * @return $this
      */
-    public function setGlobal(?bool $global): static
+    public function setCustomer(?Customer $customer): static
     {
-        $this->global = (bool) $global;
+        $this->customer = $customer;
 
         return $this;
     }
 
     /**
-     * Get global.
+     * Returns the project's global status.
      *
-     * @return bool|null $global
+     * @return bool global or not
      */
-    public function getGlobal(): ?bool
+    public function getGlobal(): bool
     {
         return $this->global;
     }
 
     /**
-     * Get entries.
+     * Sets the project's global status.
      *
-     * @return \Doctrine\Common\Collections\Collection $entries
+     * @param bool $global the status to be set
      *
-     * @psalm-return \Doctrine\Common\Collections\Collection<int, Entry>
+     * @return $this
      */
-    public function getEntries(): \Doctrine\Common\Collections\Collection
+    public function setGlobal(bool $global): static
     {
-        return $this->entries;
+        $this->global = $global;
+
+        return $this;
     }
 
+    /**
+     * Returns the project's jira ID.
+     *
+     * @return string|null the jira ID
+     */
     public function getJiraId(): ?string
     {
         return $this->jiraId;
     }
 
+    /**
+     * Sets the project's Jira ID.
+     *
+     * @param string|null $jiraId the Jira ID to be set
+     *
+     * @return $this
+     */
     public function setJiraId(?string $jiraId): static
     {
         $this->jiraId = $jiraId;
@@ -366,52 +372,58 @@ class Project extends Base
         return $this;
     }
 
+    /**
+     * Returns the project's jira ticket.
+     *
+     * @return string|null the jira ticket
+     */
     public function getJiraTicket(): ?string
     {
         return $this->jiraTicket;
     }
 
-    public function setJiraTicket(string $jiraTicket): static
+    /**
+     * Sets the project's jira ticket.
+     *
+     * @param string|null $jiraTicket the jira ticket to be set
+     *
+     * @return $this
+     */
+    public function setJiraTicket(?string $jiraTicket): static
     {
-        if ('' === $jiraTicket) {
-            $jiraTicket = null;
-        }
-
         $this->jiraTicket = $jiraTicket;
 
         return $this;
     }
 
     /**
-     * @return string[]
+     * Returns the project's subtickets.
      *
-     * @psalm-return list<string>
+     * @return string|null the subtickets
      */
-    public function getSubtickets(): array
+    public function getSubtickets(): ?string
     {
-        if ('' === $this->subtickets) {
-            return [];
-        }
-
-        return explode(',', (string) $this->subtickets);
+        return $this->subtickets;
     }
 
     /**
-     * @param (mixed|string)[] $subtickets
+     * Sets the project's subtickets.
      *
-     * @psalm-param array<mixed|string> $subtickets
+     * @param string|null $subtickets the subtickets to be set
+     *
+     * @return $this
      */
-    public function setSubtickets(array $subtickets): static
+    public function setSubtickets(?string $subtickets): static
     {
-        $subtickets = implode(',', $subtickets);
-
         $this->subtickets = $subtickets;
 
         return $this;
     }
 
     /**
-     * @return TicketSystem|null $ticketSystem
+     * Returns the project's ticketSystem.
+     *
+     * @return TicketSystem|null the ticketSystem
      */
     public function getTicketSystem(): ?TicketSystem
     {
@@ -419,7 +431,11 @@ class Project extends Base
     }
 
     /**
-     * Set the id of the ticket system that is associated with this project.
+     * Sets the project's ticketSystem.
+     *
+     * @param TicketSystem|null $ticketSystem the ticketSystem to be set
+     *
+     * @return $this
      */
     public function setTicketSystem(?TicketSystem $ticketSystem): static
     {
@@ -428,11 +444,28 @@ class Project extends Base
         return $this;
     }
 
+    public function getEntries(): \Doctrine\Common\Collections\Collection
+    {
+        return $this->entries;
+    }
+
+    /**
+     * Returns the project's estimated duration.
+     *
+     * @return int|null the estimation in minutes
+     */
     public function getEstimation(): ?int
     {
         return $this->estimation;
     }
 
+    /**
+     * Sets the project's estimated duration.
+     *
+     * @param int|null $estimation the estimation in minutes
+     *
+     * @return $this
+     */
     public function setEstimation(?int $estimation): static
     {
         $this->estimation = $estimation;
@@ -440,11 +473,23 @@ class Project extends Base
         return $this;
     }
 
+    /**
+     * Returns the project's offer number.
+     *
+     * @return string|null the offer number
+     */
     public function getOffer(): ?string
     {
         return $this->offer;
     }
 
+    /**
+     * Sets the project's offer number.
+     *
+     * @param string|null $offer the offer number
+     *
+     * @return $this
+     */
     public function setOffer(?string $offer): static
     {
         $this->offer = $offer;
@@ -452,23 +497,47 @@ class Project extends Base
         return $this;
     }
 
-    public function getBilling(): ?BillingType
+    /**
+     * Returns the project's billing method.
+     *
+     * @return BillingType the billing method
+     */
+    public function getBilling(): BillingType
     {
-        return $this->billing;
+        return $this->billing ?? BillingType::NONE;
     }
 
-    public function setBilling(?BillingType $billing): static
+    /**
+     * Sets the project's billing method.
+     *
+     * @param BillingType $billing the billing method
+     *
+     * @return $this
+     */
+    public function setBilling(BillingType $billing): static
     {
         $this->billing = $billing;
 
         return $this;
     }
 
+    /**
+     * Returns the project's cost center.
+     *
+     * @return string|null the cost center
+     */
     public function getCostCenter(): ?string
     {
         return $this->costCenter;
     }
 
+    /**
+     * Sets the project's cost center.
+     *
+     * @param string|null $costCenter the cost center
+     *
+     * @return $this
+     */
     public function setCostCenter(?string $costCenter): static
     {
         $this->costCenter = $costCenter;
@@ -476,44 +545,22 @@ class Project extends Base
         return $this;
     }
 
-    public function getInvoice(): ?string
+    /**
+     * Returns the project's internal reference number.
+     *
+     * @return string|null the internal reference number
+     */
+    public function getInternalReference(): ?string
     {
-        return $this->invoice;
-    }
-
-    public function setInvoice(?string $invoice): static
-    {
-        $this->invoice = $invoice;
-
-        return $this;
-    }
-
-    public function setProjectLead(?User $user): static
-    {
-        $this->projectLead = $user;
-
-        return $this;
-    }
-
-    public function getProjectLead(): ?User
-    {
-        return $this->projectLead;
-    }
-
-    public function setTechnicalLead(?User $user): static
-    {
-        $this->technicalLead = $user;
-
-        return $this;
-    }
-
-    public function getTechnicalLead(): ?User
-    {
-        return $this->technicalLead;
+        return $this->internalReference;
     }
 
     /**
-     * Set internalReference.
+     * Sets the project's internal reference number.
+     *
+     * @param string|null $internalReference the internal reference number
+     *
+     * @return $this
      */
     public function setInternalReference(?string $internalReference): static
     {
@@ -523,15 +570,21 @@ class Project extends Base
     }
 
     /**
-     * Get internalReference.
+     * Returns the project's external reference number.
+     *
+     * @return string|null the external reference number
      */
-    public function getInternalReference(): ?string
+    public function getExternalReference(): ?string
     {
-        return $this->internalReference;
+        return $this->externalReference;
     }
 
     /**
-     * Set externalReference.
+     * Sets the project's external reference number.
+     *
+     * @param string|null $externalReference the external reference number
+     *
+     * @return $this
      */
     public function setExternalReference(?string $externalReference): static
     {
@@ -541,35 +594,81 @@ class Project extends Base
     }
 
     /**
-     * Get externalReference.
+     * Returns the project lead user.
+     *
+     * @return User|null the project lead
      */
-    public function getExternalReference(): ?string
+    public function getProjectLead(): ?User
     {
-        return $this->externalReference;
+        return $this->projectLead;
     }
 
     /**
-     * Add entry.
+     * Sets the project lead user.
+     *
+     * @param User|null $projectLead the project lead
+     *
+     * @return $this
      */
-    public function addEntry(Entry $entry): static
+    public function setProjectLead(?User $projectLead): static
     {
-        $this->entries[] = $entry;
+        $this->projectLead = $projectLead;
 
         return $this;
     }
 
     /**
-     * Remove entry.
+     * Returns the technical lead user.
+     *
+     * @return User|null the technical lead
      */
-    public function removeEntry(Entry $entry): void
+    public function getTechnicalLead(): ?User
     {
-        $this->entries->removeElement($entry);
+        return $this->technicalLead;
     }
 
     /**
-     * Returns the current defined InternalJiraProjectKey.
+     * Sets the technical lead user.
      *
-     * @return string|null e.g. OPSA
+     * @param User|null $technicalLead the technical lead
+     *
+     * @return $this
+     */
+    public function setTechnicalLead(?User $technicalLead): static
+    {
+        $this->technicalLead = $technicalLead;
+
+        return $this;
+    }
+
+    /**
+     * Returns the project's invoice number.
+     *
+     * @return string|null the invoice number
+     */
+    public function getInvoice(): ?string
+    {
+        return $this->invoice;
+    }
+
+    /**
+     * Sets the project's invoice number.
+     *
+     * @param string|null $invoice the invoice number
+     *
+     * @return $this
+     */
+    public function setInvoice(?string $invoice): static
+    {
+        $this->invoice = $invoice;
+
+        return $this;
+    }
+
+    /**
+     * Get internal Jira project key.
+     *
+     * @return string|null $internalJiraProjectKey
      */
     public function getInternalJiraProjectKey(): ?string
     {
@@ -577,61 +676,45 @@ class Project extends Base
     }
 
     /**
-     * Returns true, if a internJiraProjectKey is configured.
-     */
-    public function hasInternalJiraProjectKey(): bool
-    {
-        $key = $this->internalJiraProjectKey;
-
-        return null !== $key && '' !== $key;
-    }
-
-    /**
-     * Returns the id of the internal JIRA ticket system.
+     * Get internal Jira ticket system.
+     *
+     * @return string|null $internalJiraTicketSystem
      */
     public function getInternalJiraTicketSystem(): ?string
     {
-        $value = $this->internalJiraTicketSystem;
-        if (null === $value || '' === $value) {
-            return null;
+        return $this->internalJiraTicketSystem;
+    }
+
+    /**
+     * Check if this project has an internal JIRA project key configured.
+     */
+    public function hasInternalJiraProjectKey(): bool
+    {
+        return !empty($this->internalJiraProjectKey) && !empty($this->internalJiraTicketSystem);
+    }
+
+    /**
+     * Check if a given JIRA project key matches the internal JIRA project configuration.
+     */
+    public function matchesInternalJiraProject(string $jiraId): bool
+    {
+        if (!$this->hasInternalJiraProjectKey()) {
+            return false;
         }
 
-        return (string) $value;
+        $internalKey = $this->getInternalJiraProjectKey();
+        if (null === $internalKey) {
+            return false;
+        }
+
+        // Support comma-separated list of project keys
+        $projectKeys = array_map('trim', explode(',', $internalKey));
+        
+        return in_array($jiraId, $projectKeys, true);
     }
 
-    /**
-     * Returns true, if the passed project key matches the configured internal project key.
-     */
-    public function matchesInternalJiraProject(string $projectKey): bool
-    {
-        return $projectKey === $this->getInternalJiraProjectKey();
-    }
-
-    /**
-     * Get presets.
-     *
-     * @psalm-return \Doctrine\Common\Collections\Collection<int, Preset>
-     */
     public function getPresets(): \Doctrine\Common\Collections\Collection
     {
         return $this->presets;
-    }
-
-    /**
-     * Add preset.
-     */
-    public function addPreset(Preset $preset): static
-    {
-        $this->presets[] = $preset;
-
-        return $this;
-    }
-
-    /**
-     * Remove preset.
-     */
-    public function removePreset(Preset $preset): void
-    {
-        $this->presets->removeElement($preset);
     }
 }

@@ -6,6 +6,7 @@ namespace Tests\Service;
 
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
+use App\Enum\TicketSystemType;
 use App\Entity\User;
 use App\Repository\EntryRepository;
 use App\Service\ExportService;
@@ -109,7 +110,7 @@ final class ExportServiceTest extends TestCase
         $user = new User();
         $ticketSystem = new TicketSystem();
         $ticketSystem->setBookTime(true);
-        $ticketSystem->setType('JIRA');
+        $ticketSystem->setType(TicketSystemType::JIRA);
 
         $entry1 = (new Entry())
             ->setUser($user)

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Entry;
+use App\Enum\TicketSystemType;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -24,152 +25,130 @@ class ExportService
      *
      * @param array<string, bool>|null $arSort
      *
-     * @return Entry[]
-     *
-     * @psalm-return array<int, Entry>
+     * @return array<string, mixed>
      */
-    public function exportEntries(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, ?array $arSort = null): array
+    public function getEntries(\App\Entity\User $currentUser, array $arSort = null, string $strStart = '', string $strEnd = '', array $arProjects = null, array $arUsers = null): array
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
-        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
 
-        return $objectRepository->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
-    }
+        $arFilter = [];
 
-    /**
-     * Returns user name for given user ID.
-     */
-    public function getUsername(?int $userId = null): ?string
-    {
-        $username = 'all';
-        if (0 < (int) $userId) {
-            /** @var \App\Entity\User $user */
-            $user = $this->managerRegistry
-                ->getRepository(\App\Entity\User::class)
-                ->find($userId)
-            ;
-            if (null !== $user) {
-                $username = (string) $user->getUsername();
-            }
+        if ('' !== $strStart) {
+            $arFilter['start'] = $strStart;
         }
 
-        return $username;
-    }
+        if ('' !== $strEnd) {
+            $arFilter['end'] = $strEnd;
+        }
 
-    /**
-     * Adds billable (boolean) property to entries depending on the existence of a "billable" label
-     * in associated JIRA issues and optionally adds ticket titles.
-     *
-     * @param Entry[] $entries
-     *
-     * @return Entry[]
-     *
-     * @psalm-return array<Entry>
-     */
-    public function enrichEntriesWithTicketInformation(
-        int $currentUserId,
-        array $entries,
-        bool $showBillableField,
-        bool $removeNotBillable = false,
-        bool $showTicketTitles = false,
-    ): array {
-        $doctrine = $this->managerRegistry;
-        /** @var \App\Repository\UserRepository $objectRepository */
-        $objectRepository = $doctrine->getRepository(\App\Entity\User::class);
-        /** @var \App\Entity\User $currentUser */
-        $currentUser = $objectRepository->find($currentUserId);
+        if (is_array($arProjects) && [] !== $arProjects) {
+            $arFilter['projects'] = $arProjects;
+        }
 
-        $arTickets = [];
+        if (is_array($arUsers) && [] !== $arUsers) {
+            $arFilter['users'] = $arUsers;
+        }
+
+        $arEntries = $entryRepo->getEntries(
+            $currentUser->getId(),
+            $arSort,
+            $arFilter,
+        );
+
         $arApi = [];
-        foreach ($entries as $entry) {
-            if ('' !== $entry->getTicket()
-                && $entry->getProject()
-                && $entry->getProject()->getTicketSystem()
-                && $entry->getProject()->getTicketSystem()->getBookTime()
-                && 'JIRA' === $entry->getProject()->getTicketSystem()->getType()
-            ) {
-                $ticketSystem = $entry->getProject()->getTicketSystem();
 
-                if (!isset($arApi[$ticketSystem->getId()])) {
-                    $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
-                }
+        $arReturn = [];
+        foreach ($arEntries as $entry) {
+            if (!$entry instanceof Entry) {
+                continue;
+            }
 
-                $arTickets[$ticketSystem->getId()][] = $entry->getTicket();
+            $arReturn[] = [
+                'id' => $entry->getId(),
+                'user' => $entry->getUser() ? $entry->getUser()->getName() : '',
+                'customer' => $entry->getCustomer() ? $entry->getCustomer()->getName() : '',
+                'project' => $entry->getProject() ? $entry->getProject()->getName() : '',
+                'activity' => $entry->getActivity() ? $entry->getActivity()->getName() : '',
+                'description' => $entry->getDescription(),
+                'start' => $entry->getStart() ? $entry->getStart()->format('Y-m-d H:i:s') : '',
+                'end' => $entry->getEnd() ? $entry->getEnd()->format('Y-m-d H:i:s') : '',
+                'ticket' => $entry->getTicket(),
+                'ticket_url' => $this->getTicketUrl($entry),
+                'worklog_url' => $this->getWorklogUrl($entry, $arApi, $currentUser),
+            ];
+        }
+
+        return $arReturn;
+    }
+
+    private function getTicketUrl(Entry $entry): string
+    {
+        if ('' === $entry->getTicket()) {
+            return '';
+        }
+
+        $project = $entry->getProject();
+        if (!$project) {
+            return '';
+        }
+
+        $ticketSystem = $project->getTicketSystem();
+        if (!$ticketSystem) {
+            return '';
+        }
+
+        if ('' !== $entry->getTicket()
+            && $entry->getProject()
+            && $entry->getProject()->getTicketSystem()
+            && $entry->getProject()->getTicketSystem()->getBookTime()
+            && TicketSystemType::JIRA === $entry->getProject()->getTicketSystem()->getType()
+        ) {
+            $ticketSystem = $entry->getProject()->getTicketSystem();
+
+            if (!isset($arApi[$ticketSystem->getId()])) {
+                $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
+            }
+
+            if (isset($arApi[$ticketSystem->getId()])) {
+                return $arApi[$ticketSystem->getId()]->getTicketUrl($entry->getTicket());
             }
         }
 
-        $maxRequestsElements = 500;
-        $arBillable = [];
-        $arTicketTitles = [];
+        return sprintf($ticketSystem->getTicketUrl(), $entry->getTicket());
+    }
 
-        foreach ($arApi as $idx => $jiraApi) {
-            $ticketSystemIssuesTotal = array_unique($arTickets[$idx]);
-            $ticketSystemIssuesTotalChunks = array_chunk(
-                $ticketSystemIssuesTotal,
-                $maxRequestsElements,
-            );
-
-            $jiraFields = [];
-            if ($showBillableField) {
-                $jiraFields[] = 'labels';
-            }
-
-            if ($showTicketTitles) {
-                $jiraFields[] = 'summary';
-            }
-
-            foreach ($ticketSystemIssuesTotalChunks as $ticketSystemIssueTotalChunk) {
-                $ret = $jiraApi->searchTicket(
-                    'IssueKey in (' . implode(',', $ticketSystemIssueTotalChunk) . ')',
-                    $jiraFields,
-                    500,
-                );
-
-                // Type-safe check for search results
-                if (is_object($ret) && isset($ret->issues) && is_iterable($ret->issues)) {
-                    foreach ($ret->issues as $issue) {
-                        $issueKey = is_object($issue) && isset($issue->key) ? (string) $issue->key : null;
-                        $issueFields = is_object($issue) && isset($issue->fields) ? $issue->fields : null;
-
-                        if (null !== $issueKey && $showBillableField && is_object($issueFields)) {
-                            $labels = $issueFields->labels ?? null;
-                            if (is_array($labels) && in_array('billable', $labels, true)) {
-                                $arBillable[] = $issueKey;
-                            }
-                        }
-
-                        if (null !== $issueKey && $showTicketTitles && is_object($issueFields)) {
-                            $summary = $issueFields->summary ?? null;
-                            if (is_string($summary)) {
-                                $arTicketTitles[$issueKey] = $summary;
-                            }
-                        }
-                    }
-                }
-            }
+    /**
+     * @param array<int, mixed> $arApi
+     */
+    private function getWorklogUrl(Entry $entry, array &$arApi, \App\Entity\User $currentUser): string
+    {
+        if ('' === $entry->getTicket() || !$entry->getWorklogId()) {
+            return '';
         }
 
-        foreach ($entries as $key => $entry) {
-            if ($showBillableField) {
-                $billable = in_array($entry->getTicket(), $arBillable, true);
-                if (!$billable) {
-                    if ($removeNotBillable) {
-                        unset($entries[$key]);
-                        continue;
-                    }
-
-                // leave billable as-is (e.g., null) when not billable
-                } else {
-                    $entry->setBillable(true);
-                }
-            }
-
-            if ($showTicketTitles && method_exists($entry, 'setTicketTitle')) {
-                $ticketKey = $entry->getTicket();
-                $entry->setTicketTitle($arTicketTitles[$ticketKey] ?? null);
-            }
+        $project = $entry->getProject();
+        if (!$project) {
+            return '';
         }
 
-        return $entries;
+        $ticketSystem = $project->getTicketSystem();
+        if (!$ticketSystem) {
+            return '';
+        }
+
+        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
+            return '';
+        }
+
+        if (!isset($arApi[$ticketSystem->getId()])) {
+            $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
+        }
+
+        if (!isset($arApi[$ticketSystem->getId()])) {
+            return '';
+        }
+
+        return $arApi[$ticketSystem->getId()]->getWorklogUrl($entry->getTicket(), $entry->getWorklogId());
     }
 }

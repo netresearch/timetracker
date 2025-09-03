@@ -40,7 +40,7 @@ class TicketSystem extends Base
      * @var TicketSystemType $type;
      */
     #[ORM\Column(type: 'string', length: 15, enumType: TicketSystemType::class)]
-    protected TicketSystemType $type;
+    protected TicketSystemType $type = TicketSystemType::JIRA;
 
     /**
      * @var string $url
@@ -139,13 +139,17 @@ class TicketSystem extends Base
     /**
      * Set type.
      *
-     * @param string $type
+     * @param TicketSystemType|string $type
      *
      * @return $this
      */
-    public function setType(TicketSystemType $type): static
+    public function setType(TicketSystemType|string $type): static
     {
-        $this->type = $type;
+        if (is_string($type)) {
+            $this->type = TicketSystemType::from($type);
+        } else {
+            $this->type = $type;
+        }
 
         return $this;
     }

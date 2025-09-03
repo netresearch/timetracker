@@ -140,11 +140,17 @@ class User implements UserInterface
     /**
      * Set type.
      *
+     * @param UserType|string $type
+     *
      * @return $this
      */
-    public function setType(UserType $type): static
+    public function setType(UserType|string $type): static
     {
-        $this->type = $type;
+        if (is_string($type)) {
+            $this->type = UserType::from($type);
+        } else {
+            $this->type = $type;
+        }
 
         return $this;
     }

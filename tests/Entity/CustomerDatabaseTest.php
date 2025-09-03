@@ -6,6 +6,7 @@ namespace Tests\Entity;
 
 use App\Entity\Customer;
 use App\Entity\Project;
+use App\Enum\BillingType;
 use App\Entity\Team;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
@@ -129,7 +130,7 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
         $project1->setGlobal(false);
         $project1->setCustomer($customer);
         $project1->setOffer('');
-        $project1->setBilling(0);
+        $project1->setBilling(BillingType::NONE);
         $project1->setEstimation(0);
         $project1->setAdditionalInformationFromExternal(false);
 
@@ -139,7 +140,7 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
         $project2->setGlobal(false);
         $project2->setCustomer($customer);
         $project2->setOffer('');
-        $project2->setBilling(0);
+        $project2->setBilling(BillingType::NONE);
         $project2->setEstimation(0);
         $project2->setAdditionalInformationFromExternal(false);
 

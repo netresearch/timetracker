@@ -6,6 +6,7 @@ namespace App\Controller\Default;
 
 use App\Controller\BaseController;
 use App\Entity\Entry;
+use App\Enum\Period;
 use App\Model\JsonResponse;
 use App\Repository\EntryRepository;
 
@@ -21,9 +22,9 @@ final class GetTimeSummaryAction extends BaseController
         $userId = (int) $user->getId();
         /** @var EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        $today = $objectRepository->getWorkByUser($userId, EntryRepository::PERIOD_DAY);
-        $week = $objectRepository->getWorkByUser($userId, EntryRepository::PERIOD_WEEK);
-        $month = $objectRepository->getWorkByUser($userId, EntryRepository::PERIOD_MONTH);
+        $today = $objectRepository->getWorkByUser($userId, Period::DAY);
+        $week = $objectRepository->getWorkByUser($userId, Period::WEEK);
+        $month = $objectRepository->getWorkByUser($userId, Period::MONTH);
 
         $data = [
             'today' => $today,

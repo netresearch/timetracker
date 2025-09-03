@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use App\Entity\Entry;
+use App\Enum\TicketSystemType;
 use App\Event\EntryEvent;
 use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraIntegrationService;
@@ -169,7 +170,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         // Check if ticket system has auto-sync enabled
         return $ticketSystem->getBookTime()
-               && 'JIRA' === $ticketSystem->getType()
+               && TicketSystemType::JIRA === $ticketSystem->getType()
                && !empty($entry->getTicket());
     }
 

@@ -8,6 +8,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\TicketSystemType;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Repository\TicketSystemRepository;
@@ -30,109 +31,60 @@ class JiraIntegrationService
     }
 
     /**
-     * Deletes a work log entry in JIRA if applicable.
+     * Saves or updates a worklog entry in JIRA.
      *
      * @throws JiraApiException
      * @throws JiraApiUnauthorizedException
      */
-    public function deleteWorklog(Entry $entry, ?TicketSystem $ticketSystem = null): void
+    public function saveWorklog(Entry $entry): bool
     {
-        $ticketSystem = $this->resolveTicketSystem($entry, $ticketSystem);
+        $project = $entry->getProject();
+        if (!$project instanceof Project) {
+            $this->log('No project associated with entry', ['entry_id' => $entry->getId()], 'warning');
+            return false;
+        }
 
+        $ticketSystem = $this->getTicketSystem($project);
         if (!$this->shouldSyncWithJira($ticketSystem, $entry)) {
-            $this->log('Skipping JIRA worklog deletion - sync not required', [
+            $this->log('Entry should not sync with JIRA', [
                 'entry_id' => $entry->getId(),
-                'ticket_system' => $ticketSystem?->getId(),
-            ]);
-
-            return;
-        }
-
-        $user = $entry->getUser();
-        if (!$user instanceof User) {
-            $this->log('Cannot delete JIRA worklog - no user associated with entry', [
-                'entry_id' => $entry->getId(),
-            ]);
-
-            return;
-        }
-
-        // We already checked that ticketSystem is not null in shouldSyncWithJira
-        if (!$ticketSystem) {
-            return;
-        }
-
-        try {
-            // Use the workLogService directly instead of the deprecated API factory
-            $this->workLogService->deleteEntryWorkLog($entry);
-            $this->log('JIRA worklog deleted successfully', [
-                'entry_id' => $entry->getId(),
-                'worklog_id' => $entry->getWorklogId(),
+                'project_id' => $project->getId(),
                 'ticket' => $entry->getTicket(),
             ]);
-        } catch (JiraApiException $e) {
-            $this->log('Failed to delete JIRA worklog', [
-                'entry_id' => $entry->getId(),
-                'error' => $e->getMessage(),
-            ], 'error');
-            throw $e;
-        }
-    }
-
-    /**
-     * Saves or updates a work log entry in JIRA if applicable.
-     *
-     * @throws JiraApiException
-     * @throws JiraApiUnauthorizedException
-     */
-    public function saveWorklog(Entry $entry, ?TicketSystem $ticketSystem = null): void
-    {
-        $ticketSystem = $this->resolveTicketSystem($entry, $ticketSystem);
-
-        if (!$this->shouldSyncWithJira($ticketSystem, $entry)) {
-            $this->log('Skipping JIRA worklog save - sync not required', [
-                'entry_id' => $entry->getId(),
-                'ticket_system' => $ticketSystem?->getId(),
-            ]);
-
-            return;
+            return false;
         }
 
         $user = $entry->getUser();
         if (!$user instanceof User) {
-            $this->log('Cannot save JIRA worklog - no user associated with entry', [
-                'entry_id' => $entry->getId(),
-            ]);
-
-            return;
-        }
-
-        // We already checked that ticketSystem is not null in shouldSyncWithJira
-        if (!$ticketSystem) {
-            return;
+            throw new JiraApiException('Entry has no associated user');
         }
 
         try {
-            $worklogData = $this->prepareWorklogData($entry);
-            $result = $this->workLogService->syncWorkLog($user, $ticketSystem, $entry, $worklogData);
-
-            if (isset($result['worklogId'])) {
-                // syncWorkLog returns int|null
-                $entry->setWorklogId($result['worklogId']);
-                $entry->setSyncedToTicketsystem(true);
-
-                $em = $this->managerRegistry->getManager();
-                $em->persist($entry);
-                $em->flush();
-
-                $this->log('JIRA worklog saved successfully', [
+            if ($entry->getWorklogId()) {
+                // Update existing worklog
+                $this->workLogService->updateWorklog($entry, $user, $ticketSystem);
+                $this->log('JIRA worklog updated', [
                     'entry_id' => $entry->getId(),
-                    'worklog_id' => $result['worklogId'],
-                    'ticket' => $entry->getTicket(),
+                    'worklog_id' => $entry->getWorklogId(),
+                ]);
+            } else {
+                // Create new worklog
+                $worklogId = $this->workLogService->createWorklog($entry, $user, $ticketSystem);
+                $entry->setWorklogId($worklogId);
+                $entry->setSyncedToTicketsystem(true);
+                
+                $this->managerRegistry->getManager()->persist($entry);
+                $this->managerRegistry->getManager()->flush();
+
+                $this->log('JIRA worklog created', [
+                    'entry_id' => $entry->getId(),
+                    'worklog_id' => $worklogId,
                 ]);
             }
-        } catch (JiraApiException $e) {
-            $this->log('Failed to save JIRA worklog', [
+
+            return true;
+        } catch (Exception $e) {
+            $this->log('JIRA sync failed', [
                 'entry_id' => $entry->getId(),
                 'error' => $e->getMessage(),
             ], 'error');
@@ -141,29 +93,77 @@ class JiraIntegrationService
     }
 
     /**
-     * Bulk syncs multiple entries with JIRA.
+     * Deletes a worklog entry from JIRA.
+     *
+     * @throws JiraApiException
+     */
+    public function deleteWorklog(Entry $entry): bool
+    {
+        if (!$entry->getWorklogId()) {
+            $this->log('Entry has no worklog ID to delete', ['entry_id' => $entry->getId()]);
+            return false;
+        }
+
+        $project = $entry->getProject();
+        if (!$project instanceof Project) {
+            throw new JiraApiException('Entry has no associated project');
+        }
+
+        $ticketSystem = $this->getTicketSystem($project);
+        if (!$ticketSystem instanceof TicketSystem) {
+            throw new JiraApiException('Project has no ticket system configured');
+        }
+
+        $user = $entry->getUser();
+        if (!$user instanceof User) {
+            throw new JiraApiException('Entry has no associated user');
+        }
+
+        try {
+            $this->workLogService->deleteWorklog($entry, $user, $ticketSystem);
+            
+            // Clear worklog reference
+            $entry->setWorklogId(null);
+            $entry->setSyncedToTicketsystem(false);
+            
+            $this->managerRegistry->getManager()->persist($entry);
+            $this->managerRegistry->getManager()->flush();
+
+            $this->log('JIRA worklog deleted', ['entry_id' => $entry->getId()]);
+            
+            return true;
+        } catch (Exception $e) {
+            $this->log('JIRA worklog deletion failed', [
+                'entry_id' => $entry->getId(),
+                'error' => $e->getMessage(),
+            ], 'error');
+            throw $e;
+        }
+    }
+
+    /**
+     * Syncs multiple entries to JIRA in batch.
      *
      * @param Entry[] $entries
-     *
-     * @return array<int, array{success: bool, message: string}>
+     * @return array<int, bool> Entry ID => success status
      */
-    public function bulkSyncEntries(array $entries, ?TicketSystem $ticketSystem = null): array
+    public function batchSyncWorkLogs(array $entries): array
     {
         $results = [];
 
         foreach ($entries as $entry) {
-            $entryId = (int) $entry->getId();
+            if (!$entry instanceof Entry) {
+                continue;
+            }
+
             try {
-                $this->saveWorklog($entry, $ticketSystem);
-                $results[$entryId] = [
-                    'success' => true,
-                    'message' => 'Synced successfully',
-                ];
+                $results[$entry->getId()] = $this->saveWorklog($entry);
             } catch (Exception $e) {
-                $results[$entryId] = [
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                ];
+                $results[$entry->getId()] = false;
+                $this->log('Batch sync failed for entry', [
+                    'entry_id' => $entry->getId(),
+                    'error' => $e->getMessage(),
+                ], 'error');
             }
         }
 
@@ -171,41 +171,67 @@ class JiraIntegrationService
     }
 
     /**
-     * Checks if an entry needs JIRA synchronization.
+     * Gets entries that need to be synced to JIRA.
+     *
+     * @return Entry[]
      */
-    public function needsSync(Entry $entry): bool
+    public function getEntriesNeedingSync(?User $user = null, ?DateTime $since = null): array
     {
-        if ($entry->getSyncedToTicketsystem()) {
-            return false;
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+
+        $criteria = [
+            'syncedToTicketsystem' => false,
+        ];
+
+        if ($user instanceof User) {
+            $criteria['user'] = $user;
         }
 
-        $ticketSystem = $this->resolveTicketSystem($entry);
+        $entries = $entryRepo->findBy($criteria);
+        
+        // Filter entries that should sync with JIRA
+        $syncableEntries = [];
+        foreach ($entries as $entry) {
+            if (!$entry instanceof Entry) {
+                continue;
+            }
 
-        return $this->shouldSyncWithJira($ticketSystem, $entry);
+            if ($since instanceof DateTime && $entry->getStart() < $since) {
+                continue;
+            }
+
+            $project = $entry->getProject();
+            if (!$project instanceof Project) {
+                continue;
+            }
+
+            $ticketSystem = $this->getTicketSystem($project);
+            if ($this->shouldSyncWithJira($ticketSystem, $entry)) {
+                $syncableEntries[] = $entry;
+            }
+        }
+
+        return $syncableEntries;
     }
 
     /**
-     * Resolves the ticket system for an entry.
+     * Determines the appropriate ticket system for a project.
      */
-    private function resolveTicketSystem(Entry $entry, ?TicketSystem $ticketSystem = null): ?TicketSystem
+    private function getTicketSystem(Project $project): ?TicketSystem
     {
-        if ($ticketSystem instanceof TicketSystem) {
-            return $ticketSystem;
-        }
-
-        $project = $entry->getProject();
-        if (!$project instanceof Project) {
-            return null;
-        }
-
         // Check for internal JIRA project configuration
         if ($project->hasInternalJiraProjectKey()) {
             /** @var TicketSystemRepository $ticketSystemRepo */
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-
-            return $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
+            $internalTicketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
+            
+            if ($internalTicketSystem instanceof TicketSystem) {
+                return $internalTicketSystem;
+            }
         }
 
+        // Fall back to project's default ticket system
         return $project->getTicketSystem();
     }
 
@@ -218,16 +244,23 @@ class JiraIntegrationService
             return false;
         }
 
-        if (!$ticketSystem->getBookTime() || 'JIRA' !== $ticketSystem->getType()) {
+        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
             return false;
         }
 
+        // Entry must have a ticket number
         if (empty($entry->getTicket())) {
             return false;
         }
 
-        // Don't sync if duration is 0
-        if ($entry->getDuration() <= 0) {
+        // Entry must have valid time data
+        if (!$entry->getStart() instanceof DateTime || !$entry->getEnd() instanceof DateTime) {
+            return false;
+        }
+
+        // Calculate duration - must be greater than 0
+        $duration = $entry->getEnd()->getTimestamp() - $entry->getStart()->getTimestamp();
+        if ($duration <= 0) {
             return false;
         }
 
@@ -235,35 +268,13 @@ class JiraIntegrationService
     }
 
     /**
-     * Prepares worklog data for JIRA API.
-     *
-     * @return array<string, mixed>
-     */
-    private function prepareWorklogData(Entry $entry): array
-    {
-        $startTime = $entry->getStart();
-        $day = $entry->getDay();
-
-        // Combine date and time for JIRA timestamp
-        $timestamp = new DateTime($day->format('Y-m-d') . ' ' . $startTime->format('H:i:s'));
-
-        return [
-            'ticket' => $entry->getTicket(),
-            'comment' => $entry->getDescription() ?: 'Time tracked via Timetracker',
-            'timeSpentSeconds' => $entry->getDuration() * 60, // Convert minutes to seconds
-            'started' => $timestamp->format('Y-m-d\TH:i:s.000O'),
-            'worklogId' => $entry->getWorklogId(),
-        ];
-    }
-
-    /**
-     * Logs messages with context.
+     * Helper method for logging.
      *
      * @param array<string, mixed> $context
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
-        if (!$this->logger) {
+        if (!$this->logger instanceof LoggerInterface) {
             return;
         }
 
@@ -275,5 +286,50 @@ class JiraIntegrationService
             'debug' => $this->logger->debug($message, $context),
             default => $this->logger->info($message, $context),
         };
+    }
+
+    /**
+     * Validates JIRA connection for a ticket system.
+     */
+    public function validateJiraConnection(TicketSystem $ticketSystem, User $user): bool
+    {
+        if (TicketSystemType::JIRA !== $ticketSystem->getType()) {
+            return false;
+        }
+
+        try {
+            return $this->workLogService->validateConnection($user, $ticketSystem);
+        } catch (Exception $e) {
+            $this->log('JIRA connection validation failed', [
+                'ticket_system_id' => $ticketSystem->getId(),
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage(),
+            ], 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Gets JIRA project information.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getJiraProjectInfo(string $projectKey, TicketSystem $ticketSystem, User $user): ?array
+    {
+        if (TicketSystemType::JIRA !== $ticketSystem->getType()) {
+            return null;
+        }
+
+        try {
+            return $this->workLogService->getProjectInfo($projectKey, $user, $ticketSystem);
+        } catch (Exception $e) {
+            $this->log('Failed to get JIRA project info', [
+                'project_key' => $projectKey,
+                'ticket_system_id' => $ticketSystem->getId(),
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage(),
+            ], 'error');
+            return null;
+        }
     }
 }

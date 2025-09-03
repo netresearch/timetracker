@@ -9,6 +9,7 @@ namespace App\Enum;
  */
 enum UserType: string
 {
+    case UNKNOWN = '';
     case USER = 'USER';
     case DEV = 'DEV';
     case PL = 'PL';
@@ -22,6 +23,7 @@ enum UserType: string
     public function getRoles(): array
     {
         return match ($this) {
+            self::UNKNOWN => ['ROLE_USER'],
             self::USER, self::DEV => ['ROLE_USER'],
             self::PL => ['ROLE_USER', 'ROLE_PL'],
             self::ADMIN => ['ROLE_USER', 'ROLE_ADMIN'],
@@ -58,6 +60,7 @@ enum UserType: string
     public function getDisplayName(): string
     {
         return match ($this) {
+            self::UNKNOWN => 'Unknown/Not Configured',
             self::USER => 'User',
             self::DEV => 'Developer',
             self::PL => 'Project Lead',
@@ -73,5 +76,13 @@ enum UserType: string
     public static function all(): array
     {
         return self::cases();
+    }
+
+    /**
+     * Check if this is a valid configured user type.
+     */
+    public function isConfigured(): bool
+    {
+        return $this !== self::UNKNOWN;
     }
 }
