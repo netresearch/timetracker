@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\EntryClass;
 use App\Model\Base;
 use DateTime;
 use DateTimeInterface;
@@ -16,13 +17,6 @@ use function sprintf;
 #[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
-    public const int CLASS_PLAIN = 1;
-
-    public const int CLASS_DAYBREAK = 2;
-
-    public const int CLASS_PAUSE = 4;
-
-    public const int CLASS_OVERLAP = 8;
 
     /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.
@@ -94,10 +88,10 @@ class Entry extends Base
     protected ?Activity $activity = null;
 
     /**
-     * @var int
+     * @var EntryClass
      */
-    #[ORM\Column(name: 'class', type: 'smallint', nullable: false, options: ['unsigned' => true, 'default' => 0])]
-    protected $class = self::CLASS_PLAIN;
+    #[ORM\Column(name: 'class', type: 'smallint', nullable: false, options: ['unsigned' => true, 'default' => 1], enumType: EntryClass::class)]
+    protected EntryClass $class = EntryClass::PLAIN;
 
     /**
      * holds summary from external ticket system; no mapping for ORM required (yet).
@@ -493,7 +487,7 @@ class Entry extends Base
             'ticket' => $this->getTicket(),
             'duration' => $this->getDuration(),
             'durationString' => $this->getDurationString(),
-            'class' => $this->getClass(),
+            'class' => $this->getClass()->value,
             'worklog' => $this->getWorklogId(),
             'extTicket' => $this->getInternalJiraTicketOriginalKey(),
         ];
@@ -541,14 +535,14 @@ class Entry extends Base
         return $this->customer;
     }
 
-    public function setClass(int $class): static
+    public function setClass(EntryClass $class): static
     {
         $this->class = $class;
 
         return $this;
     }
 
-    public function getClass(): int
+    public function getClass(): EntryClass
     {
         return $this->class;
     }

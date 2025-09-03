@@ -20,6 +20,7 @@ namespace App\Repository;
 use App\Dto\DatabaseResultDto;
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\Period;
 use App\Service\ClockInterface;
 use App\Service\TypeSafety\ArrayTypeHelper;
 use App\Service\Util\TimeCalculationService;
@@ -75,11 +76,6 @@ class EntryRepository extends ServiceEntityRepository
         parent::__construct($managerRegistry, Entry::class);
     }
 
-    public const int PERIOD_DAY = 1;
-
-    public const int PERIOD_WEEK = 2;
-
-    public const int PERIOD_MONTH = 3;
 
     /**
      * Returns work log entries for user and recent days.
@@ -447,7 +443,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array{duration: int|mixed, count: bool}
      */
-    public function getWorkByUser(int $userId, int $period = self::PERIOD_DAY): array
+    public function getWorkByUser(int $userId, Period $period = Period::DAY): array
     {
         $today = $this->clock->today();
         $connection = $this->getEntityManager()->getConnection();
@@ -460,12 +456,12 @@ class EntryRepository extends ServiceEntityRepository
         $sql['where_user'] = 'WHERE user_id = :userId';
 
         switch ($period) {
-            case self::PERIOD_DAY:
+            case Period::DAY:
                 // Modified: Use parameter binding for today's date
                 $sql['where_day'] = 'AND day = :todayDate';
                 $params['todayDate'] = $today->format('Y-m-d');
                 break;
-            case self::PERIOD_WEEK:
+            case Period::WEEK:
                 // Modified: Use parameter binding for year and week
                 $sql['where_year'] = 'AND YEAR(day) = :year';
                 // Assuming WEEK(day, 1) aligns with ISO-8601 week (starts Monday) like PHP 'W'
@@ -473,7 +469,7 @@ class EntryRepository extends ServiceEntityRepository
                 $params['year'] = $today->format('Y');
                 $params['week'] = $today->format('W');
                 break;
-            case self::PERIOD_MONTH:
+            case Period::MONTH:
                 // Modified: Use parameter binding for year and month
                 $sql['where_year'] = 'AND YEAR(day) = :year';
                 $sql['where_month'] = 'AND MONTH(day) = :month';

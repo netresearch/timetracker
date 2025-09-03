@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\Period;
 use App\Service\ClockInterface;
 use App\Service\TypeSafety\ArrayTypeHelper;
 use DateInterval;
@@ -30,9 +31,6 @@ use function sprintf;
  */
 class OptimizedEntryRepository extends ServiceEntityRepository
 {
-    public const int PERIOD_DAY = 1;
-    public const int PERIOD_WEEK = 2;
-    public const int PERIOD_MONTH = 3;
 
     private const string CACHE_PREFIX = 'entry_repo_';
     private const int CACHE_TTL = 300; // 5 minutes
@@ -200,9 +198,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      * 
      * @return array{duration: int, count: int}
      */
-    public function getWorkByUserOptimized(int $userId, int $period = self::PERIOD_DAY): array
+    public function getWorkByUserOptimized(int $userId, Period $period = Period::DAY): array
     {
-        $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period);
+        $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
             /** @var array{duration: int, count: int} $cachedResult */
@@ -322,13 +320,13 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $today = $this->clock->today();
 
         switch ($period) {
-            case self::PERIOD_DAY:
+            case Period::DAY:
                 $qb->andWhere('e.day = :today')
                     ->setParameter('today', $today)
                 ;
                 break;
 
-            case self::PERIOD_WEEK:
+            case Period::WEEK:
                 $startOfWeek = clone $today;
                 $startOfWeek = $startOfWeek->modify('monday this week') ?: $startOfWeek;
                 $endOfWeek = clone $startOfWeek;
@@ -340,7 +338,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 ;
                 break;
 
-            case self::PERIOD_MONTH:
+            case Period::MONTH:
                 $qb->andWhere('YEAR(e.day) = :year')
                     ->andWhere('MONTH(e.day) = :month')
                     ->setParameter('year', $today->format('Y'))

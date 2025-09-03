@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Enum\UserType;
 use App\Model\Response;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -140,7 +141,7 @@ class BaseController extends AbstractController
     /**
      * Check if the current user has a specific user type.
      */
-    protected function hasUserType(Request $request, string $userType): bool
+    protected function hasUserType(Request $request, UserType $userType): bool
     {
         $currentUser = $this->getUser();
         if ($currentUser instanceof User) {
@@ -160,7 +161,7 @@ class BaseController extends AbstractController
      */
     protected function isPl(Request $request): bool
     {
-        return $this->hasUserType($request, 'PL');
+        return $this->hasUserType($request, UserType::PL);
     }
 
     /**
@@ -168,7 +169,7 @@ class BaseController extends AbstractController
      */
     protected function isDEV(Request $request): bool
     {
-        return $this->hasUserType($request, 'DEV');
+        return $this->hasUserType($request, UserType::DEV);
     }
 
     /**

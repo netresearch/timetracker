@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\BillingType;
 use App\Model\Base;
 use App\Service\Util\TimeCalculationService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -13,13 +14,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'projects')]
 class Project extends Base
 {
-    public const int BILLING_NONE = 0;
-
-    public const int BILLING_TM = 1;
-
-    public const int BILLING_FP = 2;
-
-    public const int BILLING_MIXED = 3;
 
     /**
      * @var int|null
@@ -101,8 +95,8 @@ class Project extends Base
     /**
      * Used billing method.
      */
-    #[ORM\Column(type: 'smallint', name: 'billing', nullable: true, options: ['default' => 0])]
-    protected ?int $billing = 0;
+    #[ORM\Column(type: 'smallint', name: 'billing', nullable: true, options: ['default' => 0], enumType: BillingType::class)]
+    protected ?BillingType $billing = BillingType::NONE;
 
     /**
      * cost center (number or name).
@@ -458,12 +452,12 @@ class Project extends Base
         return $this;
     }
 
-    public function getBilling(): ?int
+    public function getBilling(): ?BillingType
     {
         return $this->billing;
     }
 
-    public function setBilling(?int $billing): static
+    public function setBilling(?BillingType $billing): static
     {
         $this->billing = $billing;
 

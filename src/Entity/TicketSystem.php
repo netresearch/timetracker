@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\TicketSystemType;
 use App\Model\Base;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -14,9 +15,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {
-    public const string TYPE_JIRA = 'JIRA';
-
-    public const string TYPE_OTRS = 'OTRS';
 
     /**
      * @var int $id
@@ -39,10 +37,10 @@ class TicketSystem extends Base
     protected $bookTime = false;
 
     /**
-     * @var string $type;
+     * @var TicketSystemType $type;
      */
-    #[ORM\Column(type: 'string', length: 15)]
-    protected $type;
+    #[ORM\Column(type: 'string', length: 15, enumType: TicketSystemType::class)]
+    protected TicketSystemType $type;
 
     /**
      * @var string $url
@@ -145,7 +143,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setType($type): static
+    public function setType(TicketSystemType $type): static
     {
         $this->type = $type;
 
@@ -155,9 +153,9 @@ class TicketSystem extends Base
     /**
      * Get type.
      *
-     * @return string $type
+     * @return TicketSystemType $type
      */
-    public function getType()
+    public function getType(): TicketSystemType
     {
         return $this->type;
     }

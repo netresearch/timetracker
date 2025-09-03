@@ -7,6 +7,7 @@ namespace App\Controller\Tracking;
 use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\Project;
+use App\Enum\EntryClass;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -106,8 +107,8 @@ abstract class BaseTrackingController extends BaseController
         }
 
         $entry = $entries[0];
-        if (Entry::CLASS_DAYBREAK !== $entry->getClass()) {
-            $entry->setClass(Entry::CLASS_DAYBREAK);
+        if (EntryClass::DAYBREAK !== $entry->getClass()) {
+            $entry->setClass(EntryClass::DAYBREAK);
             $objectManager->persist($entry);
             $objectManager->flush();
         }
@@ -122,8 +123,8 @@ abstract class BaseTrackingController extends BaseController
                 && ($previous->getEnd() instanceof DateTime)
                 && ($entry->getStart()->format('H:i') > $previous->getEnd()->format('H:i'))
             ) {
-                if (Entry::CLASS_PAUSE !== $entry->getClass()) {
-                    $entry->setClass(Entry::CLASS_PAUSE);
+                if (EntryClass::PAUSE !== $entry->getClass()) {
+                    $entry->setClass(EntryClass::PAUSE);
                     $objectManager->persist($entry);
                     $objectManager->flush();
                 }
@@ -135,8 +136,8 @@ abstract class BaseTrackingController extends BaseController
                 && ($previous->getEnd() instanceof DateTime)
                 && ($entry->getStart()->format('H:i') < $previous->getEnd()->format('H:i'))
             ) {
-                if (Entry::CLASS_OVERLAP !== $entry->getClass()) {
-                    $entry->setClass(Entry::CLASS_OVERLAP);
+                if (EntryClass::OVERLAP !== $entry->getClass()) {
+                    $entry->setClass(EntryClass::OVERLAP);
                     $objectManager->persist($entry);
                     $objectManager->flush();
                 }
@@ -144,8 +145,8 @@ abstract class BaseTrackingController extends BaseController
                 continue;
             }
 
-            if (Entry::CLASS_PLAIN !== $entry->getClass()) {
-                $entry->setClass(Entry::CLASS_PLAIN);
+            if (EntryClass::PLAIN !== $entry->getClass()) {
+                $entry->setClass(EntryClass::PLAIN);
                 $objectManager->persist($entry);
                 $objectManager->flush();
             }

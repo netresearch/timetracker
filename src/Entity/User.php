@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\UserType;
 use App\Service\Util\LocalizationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -30,8 +31,8 @@ class User implements UserInterface
     #[ORM\Column(type: 'string', length: 3, nullable: true)]
     protected $abbr;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    protected string $type = '';
+    #[ORM\Column(type: 'string', length: 255, enumType: UserType::class)]
+    protected UserType $type = UserType::USER;
 
     #[ORM\Column(name: 'jira_token', type: 'string', length: 255, nullable: true)]
     protected ?string $jiraToken = null;
@@ -141,7 +142,7 @@ class User implements UserInterface
      *
      * @return $this
      */
-    public function setType(string $type): static
+    public function setType(UserType $type): static
     {
         $this->type = $type;
 
@@ -151,9 +152,9 @@ class User implements UserInterface
     /**
      * Get type.
      *
-     * @return string|null $type
+     * @return UserType $type
      */
-    public function getType(): ?string
+    public function getType(): UserType
     {
         return $this->type;
     }
@@ -295,7 +296,7 @@ class User implements UserInterface
             'show_future' => $this->getShowFuture(),
             'user_id' => $this->getId() ?? 0,
             'user_name' => $this->getUsername() ?? '',
-            'type' => $this->getType() ?? '',
+            'type' => $this->getType()->value,
             'locale' => (new LocalizationService())->normalizeLocale($this->getLocale()),
         ];
     }
@@ -343,15 +344,7 @@ class User implements UserInterface
      */
     public function getRoles(): array
     {
-        $roles = ['ROLE_USER'];
-        if ('ADMIN' === $this->type) {
-            $roles[] = 'ROLE_ADMIN';
-        }
-        if ('PL' === $this->type) {
-            $roles[] = 'ROLE_PL';
-        }
-
-        return array_unique($roles);
+        return $this->type->getRoles();
     }
 
     public function getUserIdentifier(): string
