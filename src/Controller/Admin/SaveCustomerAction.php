@@ -54,16 +54,30 @@ final class SaveCustomerAction extends BaseController
         $objectMapper->map($customerSaveDto, $customer);
 
         $customer->resetTeams();
-        foreach ($teamIds as $teamId) {
-            if (!$teamId) {
-                continue;
-            }
-
-            $team = $this->doctrineRegistry->getRepository(Team::class)->find((int) $teamId);
-            if ($team instanceof Team) {
+        
+        // Filter out empty team IDs
+        $validTeamIds = array_filter(
+            array_map(static fn($id) => (int) $id, $teamIds),
+            static fn($id) => $id > 0
+        );
+        
+        if (!empty($validTeamIds)) {
+            // Fetch all teams in a single query to avoid N+1 problem
+            $teams = $this->doctrineRegistry->getRepository(Team::class)->findBy(['id' => $validTeamIds]);
+            $foundTeamIds = [];
+            
+            foreach ($teams as $team) {
                 $customer->addTeam($team);
-            } else {
-                $response = new Response(sprintf($this->translate('Could not find team with ID %s.'), (int) $teamId));
+                $foundTeamIds[] = $team->getId();
+            }
+            
+            // Check if any requested teams were not found
+            $missingTeamIds = array_diff($validTeamIds, $foundTeamIds);
+            if (!empty($missingTeamIds)) {
+                $response = new Response(sprintf(
+                    $this->translate('Could not find team(s) with ID(s): %s.'), 
+                    implode(', ', $missingTeamIds)
+                ));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
                 return $response;
