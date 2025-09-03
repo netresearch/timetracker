@@ -9,34 +9,36 @@ use Symfony\Component\HttpFoundation\Request;
 use function in_array;
 use function is_bool;
 
-final class ExportQueryDto
+final readonly class ExportQueryDto
 {
-    public int $userid = 0;
-
-    public int $year = 0;
-
-    public int $month = 0;
-
-    public int $project = 0;
-
-    public int $customer = 0;
-
-    public bool $billable = false;
-
-    public bool $tickettitles = false;
+    public function __construct(
+        public int $userid = 0,
+        
+        public int $year = 0,
+        
+        public int $month = 0,
+        
+        public int $project = 0,
+        
+        public int $customer = 0,
+        
+        public bool $billable = false,
+        
+        public bool $tickettitles = false,
+    ) {
+    }
 
     public static function fromRequest(Request $request): self
     {
-        $self = new self();
-        $self->userid = self::toInt($request->query->get('userid'));
-        $self->year = self::toInt($request->query->get('year'));
-        $self->month = self::toInt($request->query->get('month'));
-        $self->project = self::toInt($request->query->get('project'));
-        $self->customer = self::toInt($request->query->get('customer'));
-        $self->billable = self::toBool($request->query->get('billable'));
-        $self->tickettitles = self::toBool($request->query->get('tickettitles'));
-
-        return $self;
+        return new self(
+            userid: self::toInt($request->query->get('userid')),
+            year: self::toInt($request->query->get('year')),
+            month: self::toInt($request->query->get('month')),
+            project: self::toInt($request->query->get('project')),
+            customer: self::toInt($request->query->get('customer')),
+            billable: self::toBool($request->query->get('billable')),
+            tickettitles: self::toBool($request->query->get('tickettitles')),
+        );
     }
 
     private static function toInt(mixed $value): int

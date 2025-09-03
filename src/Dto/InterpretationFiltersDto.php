@@ -9,64 +9,63 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Data-transfer object for interpretation query filters.
  */
-final class InterpretationFiltersDto
+final readonly class InterpretationFiltersDto
 {
-    public ?int $customer = null;
-
-    public ?int $customer_id = null;
-    // legacy alias support
-    public ?int $project = null;
-
-    public ?int $project_id = null;
-    // legacy alias support
-    public ?int $user = null;
-
-    public ?int $activity = null;
-
-    public ?int $activity_id = null;
-    // legacy alias support
-    public ?int $team = null;
-
-    public ?string $ticket = null;
-
-    public ?string $description = null;
-
-    public ?string $datestart = null;
-
-    public ?string $dateend = null;
-
-    public ?string $year = null;
-
-    public ?string $month = null;
-
-    public ?int $maxResults = null;
-
-    public ?int $page = null;
+    public function __construct(
+        public ?int $customer = null,
+        
+        public ?int $customer_id = null, // legacy alias support
+        
+        public ?int $project = null,
+        
+        public ?int $project_id = null, // legacy alias support
+        
+        public ?int $user = null,
+        
+        public ?int $activity = null,
+        
+        public ?int $activity_id = null, // legacy alias support
+        
+        public ?int $team = null,
+        
+        public ?string $ticket = null,
+        
+        public ?string $description = null,
+        
+        public ?string $datestart = null,
+        
+        public ?string $dateend = null,
+        
+        public ?string $year = null,
+        
+        public ?string $month = null,
+        
+        public ?int $maxResults = null,
+        
+        public ?int $page = null,
+    ) {
+    }
 
     public static function fromRequest(Request $request): self
     {
-        $self = new self();
-
-        $self->customer = self::toNullableInt($request->query->get('customer'));
-        $self->customer_id = self::toNullableInt($request->query->get('customer_id'));
-        $self->project = self::toNullableInt($request->query->get('project'));
-        $self->project_id = self::toNullableInt($request->query->get('project_id'));
-        $self->user = self::toNullableInt($request->query->get('user'));
-        $self->activity = self::toNullableInt($request->query->get('activity'));
-        $self->activity_id = self::toNullableInt($request->query->get('activity_id'));
-        $self->team = self::toNullableInt($request->query->get('team'));
-
-        $self->ticket = self::toNullableString($request->query->get('ticket'));
-        $self->description = self::toNullableString($request->query->get('description'));
-        $self->datestart = self::toNullableString($request->query->get('datestart'));
-        $self->dateend = self::toNullableString($request->query->get('dateend'));
-        $self->year = self::toNullableString($request->query->get('year'));
-        $self->month = self::toNullableString($request->query->get('month'));
-
-        $self->maxResults = self::toNullableInt($request->query->get('maxResults'));
-        $self->page = self::toNullableInt($request->query->get('page'));
-
-        return $self;
+        return new self(
+            customer: self::toNullableInt($request->query->get('customer')),
+            customer_id: self::toNullableInt($request->query->get('customer_id')),
+            project: self::toNullableInt($request->query->get('project')),
+            project_id: self::toNullableInt($request->query->get('project_id')),
+            user: self::toNullableInt($request->query->get('user')),
+            activity: self::toNullableInt($request->query->get('activity')),
+            activity_id: self::toNullableInt($request->query->get('activity_id')),
+            team: self::toNullableInt($request->query->get('team')),
+            ticket: self::toNullableString($request->query->get('ticket')),
+            description: self::toNullableString($request->query->get('description')),
+            datestart: self::toNullableString($request->query->get('datestart')),
+            dateend: self::toNullableString($request->query->get('dateend')),
+            year: self::toNullableString($request->query->get('year')),
+            month: self::toNullableString($request->query->get('month')),
+            maxResults: self::toNullableInt($request->query->get('maxResults')),
+            page: self::toNullableInt($request->query->get('page')),
+        );
     }
 
     /**
