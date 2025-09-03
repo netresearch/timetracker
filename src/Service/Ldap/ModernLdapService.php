@@ -422,13 +422,28 @@ class ModernLdapService
         $useSsl = $this->params->get('ldap_usessl');
         $useSslValue = is_scalar($useSsl) ? (bool) $useSsl : false;
 
+        $host = $this->params->get('ldap_host');
+        $hostValue = is_scalar($host) ? (string) $host : 'localhost';
+
+        $readUser = $this->params->get('ldap_readuser');
+        $readUserValue = is_scalar($readUser) ? (string) $readUser : '';
+
+        $readPass = $this->params->get('ldap_readpass');
+        $readPassValue = is_scalar($readPass) ? (string) $readPass : '';
+
+        $baseDn = $this->params->get('ldap_basedn');
+        $baseDnValue = is_scalar($baseDn) ? (string) $baseDn : '';
+
+        $userNameField = $this->params->get('ldap_usernamefield');
+        $userNameFieldValue = is_scalar($userNameField) ? (string) $userNameField : 'uid';
+
         return [
-            'host' => (string) ($this->params->get('ldap_host') ?: 'localhost'),
+            'host' => $hostValue,
             'port' => $portValue,
-            'readUser' => (string) ($this->params->get('ldap_readuser') ?: ''),
-            'readPass' => (string) ($this->params->get('ldap_readpass') ?: ''),
-            'baseDn' => (string) ($this->params->get('ldap_basedn') ?: ''),
-            'userNameField' => (string) ($this->params->get('ldap_usernamefield') ?: 'uid'),
+            'readUser' => $readUserValue,
+            'readPass' => $readPassValue,
+            'baseDn' => $baseDnValue,
+            'userNameField' => $userNameFieldValue,
             'useSsl' => $useSslValue,
         ];
     }
