@@ -22,8 +22,9 @@ final readonly class PaginationLinkService
         $route = $request->getUriForPath($request->getPathInfo()) . '?';
         $queryParams = [];
         
-        if ($request->getQueryString()) {
-            parse_str($request->getQueryString(), $queryParams);
+        $queryString = $request->getQueryString();
+        if ($queryString !== null && $queryString !== '') {
+            parse_str($queryString, $queryParams);
             unset($queryParams['page']); // Remove existing page parameter
             // Ensure query params are string-keyed mixed values for type safety
             /** @var array<string, mixed> $queryParams */

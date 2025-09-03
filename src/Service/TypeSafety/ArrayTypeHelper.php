@@ -17,6 +17,8 @@ final class ArrayTypeHelper
      * @param string $key
      * @param int|null $default
      * @return int|null
+     * 
+     * @psalm-suppress PossiblyUnusedMethod - Utility method for safe array access
      */
     public static function getInt(array $array, string $key, ?int $default = null): ?int
     {
@@ -24,6 +26,7 @@ final class ArrayTypeHelper
             return $default;
         }
 
+        /** @var mixed $value */
         $value = $array[$key];
         
         if ($value === null) {
@@ -55,6 +58,7 @@ final class ArrayTypeHelper
             return $default;
         }
 
+        /** @var mixed $value */
         $value = $array[$key];
         
         if ($value === null) {
@@ -78,6 +82,8 @@ final class ArrayTypeHelper
      * @param array<string, mixed> $array
      * @param string $key
      * @return bool
+     * 
+     * @psalm-suppress PossiblyUnusedMethod - Utility method for safe array checking
      */
     public static function hasValue(array $array, string $key): bool
     {

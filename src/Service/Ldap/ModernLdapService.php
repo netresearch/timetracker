@@ -85,8 +85,8 @@ class ModernLdapService
         try {
             $ldap = $this->getConnectionWithServiceAccount();
 
-            $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid');
-            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
+            $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid') ?? 'uid';
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '') ?? '';
             $filter = sprintf('(%s=%s)', $userNameField, $username);
             $result = $ldap->search($filter, $baseDn);
 
@@ -125,7 +125,7 @@ class ModernLdapService
         try {
             $ldap = $this->getConnectionWithServiceAccount();
 
-            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '') ?? '';
             $filter = $this->buildSearchFilter($criteria);
             $result = $ldap->search(
                 $filter,
@@ -177,7 +177,7 @@ class ModernLdapService
             }
 
             $filter = sprintf('(&(objectClass=group)(member=%s))', $userDn);
-            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '') ?? '';
             $result = $ldap->search($filter, $baseDn, Ldap::SEARCH_SCOPE_SUB, ['cn', 'description']);
 
             $groups = [];
@@ -210,7 +210,7 @@ class ModernLdapService
             $ldap = $this->getConnectionWithServiceAccount();
 
             // Try a simple search to verify connection
-            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
+            $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '') ?? '';
             $result = $ldap->search(
                 '(objectClass=*)',
                 $baseDn,
@@ -254,8 +254,8 @@ class ModernLdapService
         $ldap = $this->getConnection();
 
         // Bind with service account for searches
-        $readUser = ArrayTypeHelper::getString($this->config, 'readUser', '');
-        $readPass = ArrayTypeHelper::getString($this->config, 'readPass', '');
+        $readUser = ArrayTypeHelper::getString($this->config, 'readUser', '') ?? '';
+        $readPass = ArrayTypeHelper::getString($this->config, 'readPass', '') ?? '';
         $ldap->bind($readUser, $readPass);
 
         return $ldap;
@@ -298,8 +298,8 @@ class ModernLdapService
      */
     private function buildUserDn(string $username): string
     {
-        $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid');
-        $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '');
+        $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid') ?? 'uid';
+        $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '') ?? '';
         return sprintf(
             '%s=%s,%s',
             $userNameField,
@@ -355,7 +355,7 @@ class ModernLdapService
      */
     private function normalizeUserData(array $entry): array
     {
-        $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid');
+        $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid') ?? 'uid';
         
         return [
             'dn' => ArrayTypeHelper::getString($entry, 'dn', ''),
