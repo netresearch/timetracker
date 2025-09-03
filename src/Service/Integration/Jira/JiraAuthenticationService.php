@@ -32,6 +32,7 @@ class JiraAuthenticationService
 
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
+        /** @phpstan-ignore-next-line */
         private readonly RouterInterface $router,
         private readonly TokenEncryptionService $tokenEncryption,
     ) {
@@ -108,6 +109,8 @@ class JiraAuthenticationService
 
     /**
      * Extracts OAuth tokens from response.
+     * 
+     * @return array<string, string>
      */
     private function extractTokens(ResponseInterface $response): array
     {
@@ -121,14 +124,27 @@ class JiraAuthenticationService
         parse_str($responseBody, $tokens);
 
         if (isset($tokens['oauth_problem'])) {
-            throw new JiraApiException(sprintf('OAuth problem: %s', $tokens['oauth_problem']), 401);
+            $problem = is_array($tokens['oauth_problem']) 
+                ? implode(', ', $tokens['oauth_problem']) 
+                : (string) $tokens['oauth_problem'];
+            throw new JiraApiException(sprintf('OAuth problem: %s', $problem), 401);
         }
 
-        return $tokens;
+        // Normalize to string values
+        $result = [];
+        foreach ($tokens as $key => $value) {
+            if (is_string($key)) {
+                $result[$key] = is_array($value) ? implode(',', $value) : (string) $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
      * Stores OAuth tokens for user and ticket system.
+     * 
+     * @return array{oauth_token_secret: string, oauth_token: string}
      */
     private function storeToken(
         User $user,
@@ -170,6 +186,8 @@ class JiraAuthenticationService
 
     /**
      * Retrieves and decrypts OAuth tokens for user.
+     * 
+     * @return array{token: string, secret: string}
      */
     public function getTokens(User $user, TicketSystem $ticketSystem): array
     {

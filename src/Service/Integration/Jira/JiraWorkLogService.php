@@ -136,11 +136,12 @@ class JiraWorkLogService
             $workLog = $this->createWorkLog($ticket, $workLogData);
         }
 
-        if (!isset($workLog->id)) {
+        if (!is_object($workLog) || !property_exists($workLog, 'id')) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
         // Update entry with work log ID
+        /** @var object{id: int|string} $workLog */
         $entry->setWorklogId((int) $workLog->id);
         $entry->setSyncedToTicketsystem(true);
     }
@@ -214,9 +215,15 @@ class JiraWorkLogService
      *
      * @param array<string, mixed> $data
      */
-    private function createWorkLog(string $ticket, array $data): object
+    private function createWorkLog(string $ticket, array $data): mixed
     {
-        return $this->httpClient->post(sprintf('issue/%s/worklog', $ticket), $data);
+        $response = $this->httpClient->post(sprintf('issue/%s/worklog', $ticket), $data);
+        
+        if (!is_object($response)) {
+            throw new JiraApiException('Invalid response from Jira API when creating work log', 500);
+        }
+        
+        return $response;
     }
 
     /**
@@ -224,9 +231,15 @@ class JiraWorkLogService
      *
      * @param array<string, mixed> $data
      */
-    private function updateWorkLog(string $ticket, int $workLogId, array $data): object
+    private function updateWorkLog(string $ticket, int $workLogId, array $data): mixed
     {
-        return $this->httpClient->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
+        $response = $this->httpClient->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
+        
+        if (!is_object($response)) {
+            throw new JiraApiException('Invalid response from Jira API when updating work log', 500);
+        }
+        
+        return $response;
     }
 
     /**

@@ -27,7 +27,7 @@ class ProjectRepository extends ServiceEntityRepository
      *
      * @param array<int, array{customer: array{id:int}}|array<string, mixed>> $customers
      *
-     * @return array<int|string, array<int, array{id:int, name:string, jiraId:string|null, active?:bool}>>
+     * @return array<int|string, list<array<string, mixed>>>
      */
     public function getProjectStructure(int $userId, array $customers): array
     {
@@ -41,14 +41,15 @@ class ProjectRepository extends ServiceEntityRepository
             if (!is_array($customerData)) {
                 continue;
             }
-            $customerId = ArrayTypeHelper::getInt((array) $customerData, 'id');
+            /** @var array<string, mixed> $customerData */
+            $customerId = ArrayTypeHelper::getInt($customerData, 'id');
             if ($customerId === null) {
                 continue;
             }
             
             foreach ($userProjects as $userProject) {
                 $up = $userProject['project'] ?? null;
-                if (is_array($up) && ($customerId === ArrayTypeHelper::getInt((array) $up, 'customer'))) {
+                if (is_array($up) && ($customerId === ArrayTypeHelper::getInt($up, 'customer'))) {
                     $projects[$customerId][] = [
                         'id' => ArrayTypeHelper::getInt($up, 'id', 0) ?? 0,
                         'name' => ArrayTypeHelper::getString($up, 'name', '') ?? '',

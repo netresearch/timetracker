@@ -62,7 +62,7 @@ class JiraTicketService
 
         $response = $this->httpClient->post('issue', $ticketData);
 
-        if (!isset($response->key)) {
+        if (!is_object($response) || !property_exists($response, 'key')) {
             throw new JiraApiException('Failed to create Jira ticket', 500);
         }
 

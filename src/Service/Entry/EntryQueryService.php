@@ -32,23 +32,23 @@ final readonly class EntryQueryService
         $searchArray = $this->buildSearchArray($filters);
         
         $query = $this->entryRepository->queryByFilterArray($searchArray);
-        if (!$query instanceof Query) {
-            $query = $query->getQuery();
-        }
-
+        // queryByFilterArray always returns Query, no need for instanceof check
+        
         $paginator = new Paginator($query);
         
         /** @var Entry[] $entries */
         $entries = $paginator->getQuery()->getResult();
         
-        // Filter to ensure we only have Entry instances (defensive programming)
-        $validEntries = array_filter($entries, fn($entry) => $entry instanceof Entry);
-
+        // No need to filter Entry instances - getResult() always returns Entry[]
+        
+        /** @var int $maxResults */
+        $maxResults = $searchArray['maxResults'];
+        
         return new PaginatedEntryCollection(
-            entries: $validEntries,
+            entries: $entries,
             totalCount: $paginator->count(),
             currentPage: $filters->page ?? 0,
-            maxResults: $searchArray['maxResults'],
+            maxResults: $maxResults,
         );
     }
 
