@@ -46,12 +46,12 @@ class JsonResponse extends Response
         $this->statusText = '';
         $this->charset = 'UTF-8';
 
-        if (null !== $content) {
-            $encoded = json_encode($content);
-            parent::setContent(false !== $encoded ? $encoded : 'null');
-        } else {
-            parent::setContent('null');
-        }
+        $encoded = match ($content) {
+            null => 'null',
+            default => json_encode($content) ?: 'null',
+        };
+        
+        parent::setContent($encoded);
     }
 
     /**
