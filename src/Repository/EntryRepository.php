@@ -310,7 +310,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Execute raw SQL with optimized direct connection approach
      */
-    public function getRawData(string $startDate, string $endDate, int $userId = null): array
+    public function getRawData(string $startDate, string $endDate, ?int $userId = null): array
     {
         $connection = $this->getEntityManager()->getConnection();
         
@@ -469,8 +469,8 @@ class EntryRepository extends ServiceEntityRepository
     public function getTimeSummaryByPeriod(
         string $period,
         array $filters = [],
-        string $startDate = null,
-        string $endDate = null
+        ?string $startDate = null,
+        ?string $endDate = null
     ): array {
         $connection = $this->getEntityManager()->getConnection();
         $functions = $this->getDatabaseSpecificFunctions();
@@ -624,7 +624,7 @@ class EntryRepository extends ServiceEntityRepository
         string $day,
         string $start,
         string $end,
-        int $excludeId = null
+        ?int $excludeId = null
     ): array {
         $qb = $this->createQueryBuilder('e')
             ->where('e.user = :user')
@@ -860,11 +860,24 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         $days = 0;
-        $date = clone $this->clock->today();
+        $date = $this->clock->today();
+        $currentDayOfWeek = (int) $date->format('N');
+        
+        // For Monday (1), we need to count back through the weekend
+        // to reach the previous Friday for the first working day
+        if ($currentDayOfWeek === 1 && $workingDays > 0) {
+            // Count the weekend (Saturday and Sunday) as calendar days
+            $days = 2;
+            // Move date to previous Friday
+            $date = $date->sub(new \DateInterval('P3D'));
+            --$workingDays;
+            ++$days; // Count Friday as well
+        }
 
+        // Now handle the remaining working days
         while ($workingDays > 0) {
+            $date = $date->sub(new \DateInterval('P1D'));
             ++$days;
-            $date->sub(new \DateInterval('P1D'));
             $dayOfWeek = (int) $date->format('N');
 
             if ($dayOfWeek < 6) { // Monday to Friday
