@@ -18,6 +18,10 @@ final class GetTeamsAction extends BaseController
             return $this->getFailedLoginResponse();
         }
 
+        if (false === $this->isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
         /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(\App\Entity\Team::class);
 
