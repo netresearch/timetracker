@@ -445,6 +445,9 @@ class Project extends Base
         return $this;
     }
 
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, \App\Entity\Entry>
+     */
     public function getEntries(): \Doctrine\Common\Collections\Collection
     {
         return $this->entries;
@@ -714,6 +717,9 @@ class Project extends Base
         return in_array($jiraId, $projectKeys, true);
     }
 
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, \App\Entity\Preset>
+     */
     public function getPresets(): \Doctrine\Common\Collections\Collection
     {
         return $this->presets;

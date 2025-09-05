@@ -162,6 +162,9 @@ class ProjectRepository extends ServiceEntityRepository
         ;
     }
 
+    /**
+     * @return array<int, array{id: int, name: string, customerId: int, customerName: string}>
+     */
     public function getAllProjectsForAdmin(): array
     {
         $queryBuilder = $this->createQueryBuilder('p')

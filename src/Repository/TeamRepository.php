@@ -34,7 +34,7 @@ class TeamRepository extends ServiceEntityRepository
             $data[] = ['team' => [
                 'id' => (int) ($team->getId() ?? 0),
                 'name' => (string) ($team->getName() ?? ''),
-                'leadUserId' => (int) ($team->getLeadUser() ? $team->getLeadUser()->getId() : 0),
+                'lead_user_id' => (int) ($team->getLeadUser() ? $team->getLeadUser()->getId() : 0),
             ]];
         }
 
