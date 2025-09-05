@@ -79,7 +79,7 @@ final class SaveEntryAction extends BaseTrackingController
             // Use project's jira_id as the expected prefix if it exists
             $prefix = $project->getJiraId();
             
-            if (!empty($prefix) && null !== $prefix) {
+            if (!empty($prefix)) {
                 if (!str_starts_with($dto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
                 }
@@ -198,7 +198,7 @@ final class SaveEntryAction extends BaseTrackingController
                     'activity' => $activity->getId(),
                     'duration' => $entry->getDuration(),
                     'durationString' => sprintf('%02d:%02d', intval($entry->getDuration() / 60), $entry->getDuration() % 60),
-                    'class' => $entry->getClass() !== null ? $entry->getClass()->value : EntryClass::PLAIN->value,
+                    'class' => $entry->getClass()->value,
                 ],
             ];
             
