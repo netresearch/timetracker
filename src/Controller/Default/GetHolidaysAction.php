@@ -6,6 +6,7 @@ namespace App\Controller\Default;
 
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -27,6 +28,7 @@ final class GetHolidaysAction extends BaseController
         $filterMonth = $month !== null ? (int) $month : 1;
 
         // Direct SQL query to avoid Holiday entity hydration issues with SQLite
+        /** @var Connection $connection */
         $connection = $this->managerRegistry->getConnection();
         
         // Use database-agnostic date filtering
