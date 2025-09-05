@@ -70,8 +70,8 @@ final class SubticketSyncServiceTest extends TestCase
         $project = $this->createMock(Project::class);
         $project->method('getTicketSystem')->willReturn($this->createMock(TicketSystem::class));
         $project->method('getJiraTicket')->willReturn(null);
-        $project->method('getSubtickets')->willReturn(['something']);
-        $project->expects(self::once())->method('setSubtickets')->with([]);
+        $project->method('getSubtickets')->willReturn('something');
+        $project->expects(self::once())->method('setSubtickets')->with('');
 
         $repo = $this->createMock(ObjectRepository::class);
         $repo->method('find')->willReturn($project);
@@ -151,13 +151,13 @@ final class SubticketSyncServiceTest extends TestCase
         $mock->method('getTicketSystem')->willReturn($ticketSystem);
         $mock->method('getJiraTicket')->willReturn('DEF-2, ABC-1');
         $mock->method('getProjectLead')->willReturn($user);
-        $mock->expects(self::once())->method('setSubtickets')->with(self::callback(static function (array $arg): bool {
+        $mock->expects(self::once())->method('setSubtickets')->with(self::callback(static function (string $arg): bool {
             $expected = ['ABC-1', 'ABC-2', 'DEF-2'];
             sort($expected);
-            $copy = $arg;
-            sort($copy);
+            $actualArray = explode(',', $arg);
+            sort($actualArray);
 
-            return $expected === $copy;
+            return $expected === $actualArray;
         }));
 
         $repo = $this->createMock(ObjectRepository::class);

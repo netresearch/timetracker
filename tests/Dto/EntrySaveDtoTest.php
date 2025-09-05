@@ -17,7 +17,7 @@ final class EntrySaveDtoTest extends KernelTestCase
 {
     private ValidatorInterface $validator;
 
-    protected function setUp(): void
+    public function setUp(): void
     {
         self::bootKernel();
         $this->validator = self::getContainer()->get('validator');

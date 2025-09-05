@@ -48,8 +48,8 @@ class SubticketSyncService
 
         $mainTickets = $project->getJiraTicket();
         if (null === $mainTickets) {
-            if ([] !== $project->getSubtickets()) {
-                $project->setSubtickets([]);
+            if ('' !== ($project->getSubtickets() ?? '')) {
+                $project->setSubtickets('');
 
                 $em = $this->managerRegistry->getManager();
                 $em->persist($project);
@@ -86,7 +86,8 @@ class SubticketSyncService
 
         natcasesort($allSubtickets);
 
-        $project->setSubtickets($allSubtickets);
+        // Convert array to comma-separated string for storage
+        $project->setSubtickets(implode(',', $allSubtickets));
         $em = $this->managerRegistry->getManager();
         $em->persist($project);
         $em->flush();

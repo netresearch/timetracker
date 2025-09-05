@@ -1,6 +1,11 @@
 services:
+  # Configure metadata factory for ObjectMapper
+  Symfony\Component\ObjectMapper\Metadata\ObjectMapperMetadataFactoryInterface:
+    class: Symfony\Component\ObjectMapper\Metadata\ReflectionObjectMapperMetadataFactory
+
+  # Configure ObjectMapper with proper metadata factory
   Symfony\Component\ObjectMapper\ObjectMapperInterface:
     class: Symfony\Component\ObjectMapper\ObjectMapper
     arguments:
-      - null # default metadata factory
+      - '@Symfony\Component\ObjectMapper\Metadata\ObjectMapperMetadataFactoryInterface'
       - '@property_accessor' # use PropertyAccessor for reading/writing

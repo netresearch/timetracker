@@ -76,12 +76,21 @@ final class ExportServiceTest extends TestCase
             {
                 $issues = [];
                 foreach ($this->keys as $key) {
+                    $fieldsObj = (object) [];
+                    
+                    // Only set labels field if it exists in the mock data
+                    if (array_key_exists($key, $this->labels)) {
+                        $fieldsObj->labels = $this->labels[$key];
+                    }
+                    
+                    // Only set summary field if it exists in the mock data
+                    if (array_key_exists($key, $this->summaries)) {
+                        $fieldsObj->summary = $this->summaries[$key];
+                    }
+                    
                     $issue = (object) [
                         'key' => $key,
-                        'fields' => (object) [
-                            'labels' => $this->labels[$key] ?? [],
-                            'summary' => $this->summaries[$key] ?? null,
-                        ],
+                        'fields' => $fieldsObj,
                     ];
                     $issues[] = $issue;
                 }
@@ -125,7 +134,7 @@ final class ExportServiceTest extends TestCase
 
         $exportService = $this->makeSubject([$entry1, $entry2], ['TT-123', 'TT-999'], ['TT-123' => ['billable']], ['TT-123' => 'Summary 1']);
 
-        $result = $exportService->enrichEntriesWithTicketInformation(1, [$entry1, $entry2], true, false, true);
+        $result = $exportService->enrichEntriesWithTicketInformation(1, [$entry1, $entry2], true, true, true);
 
         self::assertTrue($result[0]->getBillable());
         self::assertSame('Summary 1', $result[0]->getTicketTitle());

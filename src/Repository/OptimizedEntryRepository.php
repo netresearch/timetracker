@@ -94,27 +94,27 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         ?array $arSort = null,
     ): array {
         $qb = $this->createOptimizedQueryBuilder('e')
-            ->where('e.user = :userId')
-            ->andWhere('YEAR(e.day) = :year')
-            ->setParameter('userId', $userId)
+            ->where('e.user = :user')
+            ->andWhere($this->generateYearExpression('e.day') . ' = :year')
+            ->setParameter('user', $userId)
             ->setParameter('year', $year)
         ;
 
         if (null !== $month) {
-            $qb->andWhere('MONTH(e.day) = :month')
+            $qb->andWhere($this->generateMonthExpression('e.day') . ' = :month')
                 ->setParameter('month', $month)
             ;
         }
 
         if (null !== $projectId) {
-            $qb->andWhere('e.project = :projectId')
-                ->setParameter('projectId', $projectId)
+            $qb->andWhere('e.project = :project')
+                ->setParameter('project', $projectId)
             ;
         }
 
         if (null !== $customerId) {
-            $qb->andWhere('e.customer = :customerId')
-                ->setParameter('customerId', $customerId)
+            $qb->andWhere('e.customer = :customer')
+                ->setParameter('customer', $customerId)
             ;
         }
 
@@ -145,6 +145,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $conn = $this->getEntityManager()->getConnection();
 
+        // Build database-agnostic project name concatenation
+        $projectNameExpr = $this->generateConcatExpression("p.name", "' (Est: '", "p.estimation", "')'");
+        
         // Use a single query with conditional aggregation instead of UNION
         $sql = "
             SELECT 
@@ -170,7 +173,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 
                 -- Get names in subqueries for efficiency
                 (SELECT name FROM customers WHERE id = :customerId LIMIT 1) as customer_name,
-                (SELECT CONCAT(p.name, ' (Est: ', p.estimation, ')') FROM projects p WHERE id = :projectId LIMIT 1) as project_name,
+                (SELECT $projectNameExpr FROM projects p WHERE id = :projectId LIMIT 1) as project_name,
                 (SELECT name FROM activities WHERE id = :activityId LIMIT 1) as activity_name
             FROM entries e
             WHERE (e.customer_id = :customerId OR e.project_id = :projectId OR e.activity_id = :activityId OR e.ticket = :ticket)
@@ -209,8 +212,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $qb = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, SUM(e.duration) as duration')
-            ->where('e.user = :userId')
-            ->setParameter('userId', $userId)
+            ->where('e.user = :user')
+            ->setParameter('user', $userId)
         ;
 
         $this->applyPeriodFilter($qb, $period);
@@ -243,26 +246,26 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         // Apply filters with index-aware ordering
         if (isset($filter['user_id'])) {
-            $qb->andWhere('e.user = :user_id')
-                ->setParameter('user_id', $filter['user_id'])
+            $qb->andWhere('e.user = :user')
+                ->setParameter('user', $filter['user_id'])
             ;
         }
 
         if (isset($filter['customer_id'])) {
-            $qb->andWhere('e.customer = :customer_id')
-                ->setParameter('customer_id', $filter['customer_id'])
+            $qb->andWhere('e.customer = :customer')
+                ->setParameter('customer', $filter['customer_id'])
             ;
         }
 
         if (isset($filter['project_id'])) {
-            $qb->andWhere('e.project = :project_id')
-                ->setParameter('project_id', $filter['project_id'])
+            $qb->andWhere('e.project = :project')
+                ->setParameter('project', $filter['project_id'])
             ;
         }
 
         if (isset($filter['activity_id'])) {
-            $qb->andWhere('e.activity = :activity_id')
-                ->setParameter('activity_id', $filter['activity_id'])
+            $qb->andWhere('e.activity = :activity')
+                ->setParameter('activity', $filter['activity_id'])
             ;
         }
 
@@ -315,7 +318,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Applies period filter to query builder.
      */
-    private function applyPeriodFilter(QueryBuilder $qb, int $period): void
+    private function applyPeriodFilter(QueryBuilder $qb, Period $period): void
     {
         $today = $this->clock->today();
 
@@ -339,8 +342,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 break;
 
             case Period::MONTH:
-                $qb->andWhere('YEAR(e.day) = :year')
-                    ->andWhere('MONTH(e.day) = :month')
+                $qb->andWhere($this->generateYearExpression('e.day') . ' = :year')
+                    ->andWhere($this->generateMonthExpression('e.day') . ' = :month')
                     ->setParameter('year', $today->format('Y'))
                     ->setParameter('month', $today->format('m'))
                 ;
@@ -477,6 +480,49 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             'activity' => array_merge($empty, ['scope' => 'activity']),
             'ticket' => array_merge($empty, ['scope' => 'ticket']),
         ];
+    }
+
+    /**
+     * Generate database-agnostic YEAR expression
+     */
+    private function generateYearExpression(string $field): string
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+        
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
+            return "YEAR($field)";
+        }
+        
+        return "strftime('%Y', $field)";
+    }
+
+    /**
+     * Generate database-agnostic MONTH expression  
+     */
+    private function generateMonthExpression(string $field): string
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+        
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
+            return "MONTH($field)";
+        }
+        
+        return "strftime('%m', $field)";
+    }
+
+    /**
+     * Generate database-agnostic CONCAT expression
+     */
+    private function generateConcatExpression(string ...$fields): string
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+        
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
+            return 'CONCAT(' . implode(', ', $fields) . ')';
+        }
+        
+        // SQLite: use || operator
+        return '(' . implode(' || ', $fields) . ')';
     }
 
     /**

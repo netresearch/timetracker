@@ -83,8 +83,8 @@ class Project extends Base
     /**
      * Estimated project duration in minutes.
      */
-    #[ORM\Column(type: 'integer', name: 'estimation', nullable: true)]
-    protected ?int $estimation = null;
+    #[ORM\Column(type: 'integer', name: 'estimation', options: ['default' => 0])]
+    protected int $estimation = 0;
 
     /**
      * Offer number.
@@ -223,7 +223,7 @@ class Project extends Base
     public function toArray(): array
     {
         $data = parent::toArray();
-        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable($this->getEstimation() ?? 0, false);
+        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable($this->getEstimation(), false);
 
         return $data;
     }
@@ -348,6 +348,7 @@ class Project extends Base
         return $this;
     }
 
+
     /**
      * Returns the project's jira ID.
      *
@@ -452,9 +453,9 @@ class Project extends Base
     /**
      * Returns the project's estimated duration.
      *
-     * @return int|null the estimation in minutes
+     * @return int the estimation in minutes
      */
-    public function getEstimation(): ?int
+    public function getEstimation(): int
     {
         return $this->estimation;
     }
@@ -462,11 +463,11 @@ class Project extends Base
     /**
      * Sets the project's estimated duration.
      *
-     * @param int|null $estimation the estimation in minutes
+     * @param int $estimation the estimation in minutes
      *
      * @return $this
      */
-    public function setEstimation(?int $estimation): static
+    public function setEstimation(int $estimation): static
     {
         $this->estimation = $estimation;
 
@@ -682,7 +683,7 @@ class Project extends Base
      */
     public function getInternalJiraTicketSystem(): ?string
     {
-        return $this->internalJiraTicketSystem;
+        return $this->internalJiraTicketSystem !== null ? (string) $this->internalJiraTicketSystem : null;
     }
 
     /**

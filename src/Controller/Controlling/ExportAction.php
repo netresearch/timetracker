@@ -46,6 +46,16 @@ final class ExportAction extends BaseController
             return $this->login($request);
         }
 
+        // Validate month parameter
+        if ($exportQueryDto->month < 0 || $exportQueryDto->month > 12) {
+            return new Response('Month must be between 0 and 12 (0 means all months)', 422);
+        }
+
+        // Validate year parameter (reasonable range)
+        if ($exportQueryDto->year < 1900 || $exportQueryDto->year > 2100) {
+            return new Response('Year must be between 1900 and 2100', 422);
+        }
+
         $service = $this->export;
         /** @var array<int, Entry> $entries */
         $entries = $service->exportEntries(

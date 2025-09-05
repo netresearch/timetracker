@@ -22,17 +22,53 @@ final class GetDataAction extends BaseController
 
         $userId = $this->getUserId($request);
         $user = $this->managerRegistry->getRepository(User::class)->find($userId);
-
-        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days')) 
-            ? (int) $request->attributes->get('days') 
-            : 3;
-        /** @var \App\Repository\EntryRepository $objectRepository */
-        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        
         if (!$user instanceof User) {
             return new JsonResponse([]);
         }
 
-        $data = $objectRepository->getEntriesByUser($userId, $days, $user->getShowFuture());
+        /** @var \App\Repository\EntryRepository $entryRepository */
+        $entryRepository = $this->managerRegistry->getRepository(Entry::class);
+
+        // Check if this is a filtered request (with year/month/user/customer/project parameters)
+        $year = $request->query->get('year');
+        $month = $request->query->get('month');
+        $userParam = $request->query->get('user');
+        $customer = $request->query->get('customer');
+        $project = $request->query->get('project');
+
+        if ($year !== null) {
+            // Filtered request - use findByDate and calculate totalWorkTime
+            // If no user parameter provided, use 0 to search all users
+            $filterUserId = $userParam !== null ? (int) $userParam : 0;
+            $filterYear = (int) $year;
+            $filterMonth = $month !== null ? (int) $month : null;
+            $filterProject = $project !== null ? (int) $project : null;
+            $filterCustomer = $customer !== null ? (int) $customer : null;
+
+            $entries = $entryRepository->findByDate(
+                $filterUserId, 
+                $filterYear, 
+                $filterMonth, 
+                $filterProject, 
+                $filterCustomer
+            );
+
+            // Calculate total work time from filtered entries
+            $totalWorkTime = 0;
+            foreach ($entries as $entry) {
+                $totalWorkTime += $entry->getDuration();
+            }
+
+            return new JsonResponse(['totalWorkTime' => $totalWorkTime]);
+        }
+
+        // Default behavior - return entries for recent days
+        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days')) 
+            ? (int) $request->attributes->get('days') 
+            : 3;
+
+        $data = $entryRepository->getEntriesByUser($userId, $days, $user->getShowFuture());
 
         return new JsonResponse($data);
     }

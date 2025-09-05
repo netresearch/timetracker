@@ -37,6 +37,7 @@ final readonly class ProjectSaveDto
         #[Map(if: false)]
         public string $estimation = '0m',
         
+        #[Map(if: false)]
         public int $billing = 0,
         
         public ?string $cost_center = null,

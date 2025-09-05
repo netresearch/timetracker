@@ -10,6 +10,7 @@ use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\BillingType;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
@@ -46,7 +47,7 @@ final class SaveProjectAction extends BaseController
         $active = $projectSaveDto->active;
         $global = $projectSaveDto->global;
         $estimation = $this->timeCalculationService->readableToFullMinutes($projectSaveDto->estimation);
-        $billing = $projectSaveDto->billing;
+        $billing = BillingType::from($projectSaveDto->billing); // Convert int to enum
         $costCenter = $projectSaveDto->cost_center;
         $offer = $projectSaveDto->offer;
         $additionalInformationFromExternal = $projectSaveDto->additionalInformationFromExternal;
@@ -96,9 +97,9 @@ final class SaveProjectAction extends BaseController
             return $response;
         }
 
-        // Map scalar fields from DTO to entity
+        // Map scalar fields from DTO to entity - but skip the billing field since we need enum conversion
         $objectMapper->map($projectSaveDto, $project);
-        // Then set computed/relations
+        // Then set computed/relations and the converted billing enum
         $project
             ->setJiraId($jiraId)
             ->setJiraTicket($jiraTicket)
@@ -107,7 +108,7 @@ final class SaveProjectAction extends BaseController
             ->setEstimation($estimation)
             ->setProjectLead($projectLead)
             ->setTechnicalLead($technicalLead)
-            ->setBilling($billing)
+            ->setBilling($billing) // Use the converted enum
             ->setOffer($offer)
             ->setCostCenter($costCenter)
             ->setAdditionalInformationFromExternal($additionalInformationFromExternal)
