@@ -36,7 +36,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return Entry[]
      */
-    public function getEntriesForDay($user, string $day): array
+    public function getEntriesForDay(User $user, string $day): array
     {
         return $this->createQueryBuilder('e')
             ->where('e.user = :user')
@@ -52,7 +52,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return Entry[]
      */
-    public function getEntriesForMonth($user, string $startDate, string $endDate): array
+    public function getEntriesForMonth(User $user, string $startDate, string $endDate): array
     {
         return $this->createQueryBuilder('e')
             ->where('e.user = :user')
@@ -70,7 +70,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Count entries for a specific user.
      */
-    public function getCountByUser($user): int
+    public function getCountByUser(User $user): int
     {
         return (int) $this->createQueryBuilder('e')
             ->select('COUNT(e.id)')
@@ -83,7 +83,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Delete entries for a specific user.
      */
-    public function deleteByUserId($user): void
+    public function deleteByUserId(User $user): void
     {
         $this->createQueryBuilder('e')
             ->delete()
@@ -96,7 +96,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Delete entries for a specific activity.
      */
-    public function deleteByActivityId($activity): void
+    public function deleteByActivityId(Activity $activity): void
     {
         $this->createQueryBuilder('e')
             ->delete()
@@ -109,7 +109,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Delete entries for a specific project.
      */
-    public function deleteByProjectId($project): void
+    public function deleteByProjectId(Project $project): void
     {
         $this->createQueryBuilder('e')
             ->delete()
@@ -122,7 +122,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Delete entries for a specific customer.
      */
-    public function deleteByCustomerId($customer): void
+    public function deleteByCustomerId(Customer $customer): void
     {
         $this->createQueryBuilder('e')
             ->delete()
@@ -652,7 +652,7 @@ class EntryRepository extends ServiceEntityRepository
      * 
      * @return array<int, Entry>
      */
-    public function getEntriesByUser($user, int $days, bool $showFuture = false): array
+    public function getEntriesByUser(User $user, int $days, bool $showFuture = false): array
     {
         $qb = $this->createQueryBuilder('e')
             ->leftJoin('e.user', 'u')
@@ -930,7 +930,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return Entry[]
      */
-    public function findByRecentDaysOfUser($user, int $days = 3): array
+    public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
         $fromDate = $this->calculateFromDate($days);
 

@@ -344,7 +344,7 @@ class User implements UserInterface
     }
 
     /**
-     * @return string[]
+     * @return array<int<0, 2>, 'ROLE_ADMIN'|'ROLE_PL'|'ROLE_USER'>
      *
      * @psalm-return array<int<0, 2>, 'ROLE_ADMIN'|'ROLE_PL'|'ROLE_USER'>
      */

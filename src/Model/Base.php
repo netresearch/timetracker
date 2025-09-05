@@ -33,7 +33,7 @@ class Base
             }
 
             // Handle enums by converting to their backing value
-            if (is_object($value) && enum_exists($value::class)) {
+            if (is_object($value) && enum_exists($value::class) && property_exists($value, 'value')) {
                 $value = $value->value;
             }
 
