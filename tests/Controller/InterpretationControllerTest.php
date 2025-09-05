@@ -68,13 +68,6 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', $parameter);
         $this->assertStatusCode(200);
         
-        // Debug: Print actual response to understand structure mismatch
-        $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
-        echo "\nDebug - testGetLastEntriesAction response:\n";
-        echo "Count: " . count($data) . "\n";
-        echo "Structure: " . json_encode($data, JSON_PRETTY_PRINT) . "\n";
-        
         $this->assertJsonStructure($expectedJson);
     }
 
@@ -422,12 +415,6 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         
-        // Debug: Print actual response for page 1
-        $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
-        echo "\nDebug - Page 1 response:\n";
-        echo "Data entries: " . json_encode($data['data'] ?? [], JSON_PRETTY_PRINT) . "\n";
-        
         $this->assertLength(2, 'data');
         $this->assertJsonStructure($expectedLinks);
         $this->assertJsonStructure($expectedData);
@@ -451,12 +438,6 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
-        
-        // Debug: Print actual response for page 3 (last page)
-        $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
-        echo "\nDebug - Last page (page 3) response:\n";
-        echo "Data entries: " . json_encode($data['data'] ?? [], JSON_PRETTY_PRINT) . "\n";
         
         $this->assertLength(2, 'data'); // Last page actually has 2 entries based on test results
         $this->assertJsonStructure($expectedLinks);

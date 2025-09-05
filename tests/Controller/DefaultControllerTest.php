@@ -186,11 +186,6 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $response = $this->client->getResponse();
         $data = json_decode($response->getContent() ?: '', true);
         
-        // Debug: Print actual response to understand structure mismatch
-        echo "\nDebug - testGetProjectsAction response:\n";
-        echo "Count: " . count($data) . "\n";
-        echo "Structure: " . json_encode($data, JSON_PRETTY_PRINT) . "\n";
-        
         $this->assertJsonStructure($expectedJson);
         self::assertCount(3, $data); // Updated to match actual response (3 projects)
     }
@@ -206,11 +201,6 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
         $data = json_decode($response->getContent() ?: '', true);
-        
-        // Debug: Print actual response to understand count mismatch
-        echo "\nDebug - testGetProjectsActionWithActivity response:\n";
-        echo "Count: " . count($data) . " (expected 2)\n";
-        echo "Projects: " . json_encode(array_column($data, 'name'), JSON_PRETTY_PRINT) . "\n";
         
         self::assertCount(3, $data); // Updated to match actual response (3 projects)
     }
