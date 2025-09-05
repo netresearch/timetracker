@@ -23,11 +23,9 @@ final readonly class ProjectSaveDto
         #[Map(if: false)]
         public ?int $customer = null,
         
-        #[Map(transform: 'strtoupper')]
         #[Assert\Regex(pattern: '/^[A-Z]+$/', message: 'The Jira prefix must contain only uppercase letters.', normalizer: 'trim')]
         public ?string $jiraId = null,
         
-        #[Map(transform: 'strtoupper')]
         public ?string $jiraTicket = null,
         
         public bool $active = false,
