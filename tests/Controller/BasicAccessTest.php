@@ -31,9 +31,15 @@ final class BasicAccessTest extends AbstractWebTestCase
             $this->client->getContainer()->get('security.token_storage')->setToken(null);
         }
 
-        // Try to access protected route - should fail
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
-        $this->assertStatusCode(302); // Should redirect to login
+        // Try to access protected route - should fail (with browser headers)
+        $this->client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            '/getAllUsers',
+            [],
+            [],
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+        );
+        $this->assertStatusCode(403); // Should return forbidden (improved security behavior)
 
         // Use the Base class login functionality to authenticate
         $this->logInSession('i.myself');
@@ -49,8 +55,14 @@ final class BasicAccessTest extends AbstractWebTestCase
         $this->logInSession('i.myself');
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
 
-        // Now try the AdminController endpoint
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
+        // Now try the AdminController endpoint with browser headers
+        $this->client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            '/getAllUsers',
+            [],
+            [],
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+        );
 
         // Assert we get a successful response, not a redirect
         $this->assertStatusCode(200);
