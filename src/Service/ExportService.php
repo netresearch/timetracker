@@ -27,7 +27,7 @@ class ExportService
      *
      * @return array<string, mixed>
      */
-    public function getEntries(\App\Entity\User $currentUser, array $arSort = null, string $strStart = '', string $strEnd = '', array $arProjects = null, array $arUsers = null): array
+    public function getEntries(\App\Entity\User $currentUser, ?array $arSort = null, string $strStart = '', string $strEnd = '', ?array $arProjects = null, ?array $arUsers = null): array
     {
         /** @var \App\Repository\EntryRepository $entryRepo */
         $entryRepo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
