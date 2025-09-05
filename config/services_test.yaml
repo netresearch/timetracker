@@ -12,11 +12,10 @@ services:
     # Alias ClockInterface to TestClock for the test environment
     App\Service\ClockInterface: '@Tests\Service\TestClock'
 
-    # Ensure EntryRepository is properly configured for tests
+    # Ensure EntryRepository is properly configured for tests with correct parameters
     App\Repository\EntryRepository:
         arguments:
-            $managerRegistry: '@doctrine'
-            $clock: '@App\Service\ClockInterface'
+            $registry: '@doctrine'
             $timeCalculationService: '@App\Service\Util\TimeCalculationService'
         tags:
             - { name: 'doctrine.repository_service' }

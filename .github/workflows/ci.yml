@@ -22,51 +22,50 @@ jobs:
           docker --version
           docker compose version
 
-      - name: Prepare config files
+      - name: Prepare config files and SQL
         run: |
           # Ensure PHPStan config exists
           if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
           # Ensure PHPUnit config exists
           if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
+          # Generate unittest SQL file (matches local development)
+          sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
 
-      - name: Install dependencies (Composer)
+      - name: Set up development environment
+        env:
+          COMPOSE_PROFILES: dev
         run: |
-          docker compose -f compose.yml -f compose.dev.yml run --rm app composer install --no-interaction --prefer-dist
-
-      - name: Prepare test database
-        run: |
-          # Start DB container
-          docker compose -f compose.yml -f compose.dev.yml up -d db_unittest
-
-          # Wait until DB is ready using unittest credentials (align with local dev)
-          for i in {1..60}; do
-            docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest -e "SELECT 1"' && break || sleep 2;
-          done
-
-          # Manually import full structure and unittest data from host
-          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/full.sql
-          docker compose -f compose.yml -f compose.dev.yml exec -T db_unittest sh -c 'mariadb -h 127.0.0.1 -uunittest -punittest unittest' < sql/unittest/002_testdata.sql
+          # Use profile-based setup matching local development
+          make install
 
       - name: Static analysis (PHPStan)
+        env:
+          COMPOSE_PROFILES: dev
         run: |
-          docker compose -f compose.yml -f compose.dev.yml run --rm app composer analyze
+          make stan
 
       - name: Static analysis (Psalm)
+        env:
+          COMPOSE_PROFILES: dev
         run: |
-          docker compose -f compose.yml -f compose.dev.yml run --rm app composer psalm
+          make psalm
 
       - name: Code style (PHP_CodeSniffer)
+        env:
+          COMPOSE_PROFILES: dev
         run: |
-          docker compose -f compose.yml -f compose.dev.yml run --rm app composer cs-check
+          make cs-check
 
       - name: Lint Twig templates
+        env:
+          COMPOSE_PROFILES: dev
         run: |
-          docker compose -f compose.yml -f compose.dev.yml run --rm app composer twig:lint
+          make twig-lint
 
       - name: Run tests (PHPUnit)
         env:
-          APP_ENV: test
+          COMPOSE_PROFILES: dev
         run: |
-          docker compose -f compose.yml -f compose.dev.yml run --rm -e APP_ENV=test app bin/phpunit
+          make test
 
 

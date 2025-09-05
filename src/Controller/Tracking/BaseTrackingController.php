@@ -100,7 +100,7 @@ abstract class BaseTrackingController extends BaseController
         $objectManager = $managerRegistry->getManager();
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $objectManager->getRepository(Entry::class);
-        $entries = $objectRepository->getEntriesByUserAndDay($userId, $day);
+        $entries = $objectRepository->findByDay($userId, $day);
 
         if (0 === count($entries)) {
             return;

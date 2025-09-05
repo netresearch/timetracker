@@ -1,7 +1,17 @@
 security:
     firewalls:
         main:
-            # Disable the firewall in test to avoid redirects; controllers handle auth checks
-            security: false
+            # Complete override for test environment
+            provider: app_user_provider
+            lazy: true
+            # Use http_basic only in tests
+            http_basic: ~
+            # Set entry point explicitly
+            entry_point: http_basic
+            # Disable LDAP authenticator by overriding
+            custom_authenticators: []
             remember_me: false
+            logout:
+                path: _logout
+                target: _login
 

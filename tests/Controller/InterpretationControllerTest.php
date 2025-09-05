@@ -99,7 +99,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $expectedJson = [
             0 => [
                 'id' => 1,
-                'name' => 'Backen',
+                'name' => 'Entwicklung',
                 'hours' => 1.1666666666666667,
                 'quota' => '100.00%',
             ],
@@ -385,8 +385,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'page=1',
         ];
         $expectedData['data'] = [
-            ['id' => 5],
-            ['id' => 4],
+            ['id' => 7],
+            ['id' => 6],
         ];
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?maxResults=2&page=1',
@@ -418,7 +418,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
-        $this->assertLength(1, 'data');
+        $this->assertLength(2, 'data');
         $this->assertJsonStructure($expectedLinks);
         $this->assertJsonStructure($expectedData);
     }

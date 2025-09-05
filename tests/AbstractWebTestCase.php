@@ -323,7 +323,8 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         $userMap = [
             'unittest' => '1',
             'developer' => '2',
-            'noContract' => '4',
+            'i.myself' => '3',
+            'noContract' => '5',
         ];
 
         $userId = $userMap[$user] ?? '1';

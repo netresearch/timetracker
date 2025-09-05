@@ -30,9 +30,9 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
     public function testSaveProjectDuplicateNameForCustomer(): void
     {
         $this->logInSession('unittest');
-        // For customer 1, project 'Server attack' already exists
+        // For customer 1, project 'Das Kuchenbacken' already exists
         $parameter = [
-            'name' => 'Server attack',
+            'name' => 'Das Kuchenbacken',
             'customer' => 1,
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
@@ -57,9 +57,9 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
     public function testSaveActivityDuplicateName(): void
     {
         $this->logInSession('unittest');
-        // 'Backen' exists
+        // 'Entwicklung' exists
         $parameter = [
-            'name' => 'Backen',
+            'name' => 'Entwicklung',
             'factor' => 1,
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);

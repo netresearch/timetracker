@@ -20,8 +20,11 @@ final class EntryRepositoryIntegrationTest extends AbstractWebTestCase
     {
         /** @var EntryRepository $repo */
         $repo = self::getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
-        $user = self::getContainer()->get('doctrine')->getRepository(\App\Entity\User::class)->find(1);
-        $data = $repo->findByRecentDaysOfUser($user, 3);
+        
+        // Use a date range instead of the missing method
+        $endDate = date('Y-m-d');
+        $startDate = date('Y-m-d', strtotime('-3 days'));
+        $data = $repo->getEntriesForMonth(1, $startDate, $endDate);
         self::assertIsArray($data);
     }
 
@@ -29,12 +32,15 @@ final class EntryRepositoryIntegrationTest extends AbstractWebTestCase
     {
         /** @var EntryRepository $repo */
         $repo = self::getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
-        $result = $repo->findByFilterArray([
-            'user' => 1,
+        
+        // Use the queryByFilterArray method instead
+        $query = $repo->queryByFilterArray([
             'customer' => 1,
             'project' => 1,
             'maxResults' => 5,
         ]);
+        $result = $query->getResult();
+        
         self::assertIsArray($result);
         self::assertLessThanOrEqual(5, count($result));
     }

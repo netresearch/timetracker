@@ -19,7 +19,7 @@ class Account
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    #[ORM\Column(type: 'string', length: 50)]
+    #[ORM\Column(name: 'name', type: 'string', length: 50)]
     protected string $name = '';
 
     /**
@@ -45,7 +45,7 @@ class Account
         return $this;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -55,6 +55,17 @@ class Account
         $this->name = $name;
 
         return $this;
+    }
+
+    // Legacy methods for backward compatibility with tests
+    public function getAccountName(): string
+    {
+        return $this->getName();
+    }
+
+    public function setAccountName(string $accountName): static
+    {
+        return $this->setName($accountName);
     }
 
     /**

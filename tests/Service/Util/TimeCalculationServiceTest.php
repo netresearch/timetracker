@@ -16,7 +16,7 @@ final class TimeCalculationServiceTest extends TestCase
 {
     private TimeCalculationService $timeCalculationService;
 
-    protected function setUp(): void
+    public function setUp(): void
     {
         $this->timeCalculationService = new TimeCalculationService();
     }

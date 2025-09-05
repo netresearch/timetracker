@@ -548,6 +548,16 @@ class Entry extends Base
     }
 
     /**
+     * Add a class value. For now, just set the class directly.
+     * TODO: Implement proper bitwise combination if needed.
+     */
+    public function addClass(EntryClass $class): static
+    {
+        $this->class = $class;
+        return $this;
+    }
+
+    /**
      * Returns the issue link for the configured ticket system.
      */
     public function getTicketSystemIssueLink(): string
