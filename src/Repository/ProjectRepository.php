@@ -162,6 +162,34 @@ class ProjectRepository extends ServiceEntityRepository
         ;
     }
 
+    public function getAllProjectsForAdmin(): array
+    {
+        $queryBuilder = $this->createQueryBuilder('p')
+            ->leftJoin('p.customer', 'c')
+            ->orderBy('p.name', 'ASC');
+
+        /** @var Project[] $projects */
+        $projects = $queryBuilder->getQuery()->execute();
+
+        $data = [];
+        foreach ($projects as $project) {
+            $customer = $project->getCustomer();
+            $data[] = [
+                'project' => [
+                    'id' => (int) ($project->getId() ?? 0),
+                    'name' => (string) ($project->getName() ?? ''),
+                    'jiraId' => (string) ($project->getJiraId() ?? ''),
+                    'active' => (bool) $project->getActive(),
+                    'global' => (bool) $project->getGlobal(),
+                    'customerId' => $customer ? (int) $customer->getId() : 0,
+                    'customerName' => $customer ? (string) $customer->getName() : '',
+                ],
+            ];
+        }
+
+        return $data;
+    }
+
     public function isValidJiraPrefix(string $jiraId): int
     {
         return (int) preg_match('/^([A-Z]+[A-Z0-9]*[, ]*)*$/', $jiraId);
