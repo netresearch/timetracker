@@ -198,20 +198,16 @@ final class ControllingControllerTest extends AbstractWebTestCase
             ->willReturn([$entry1])
         ;
 
-        // Mock enrichEntries - callback does NOT set billable (since feature is off)
-        $exportServiceMock->expects(self::once())
-            ->method('enrichEntriesWithTicketInformation')
-            ->willReturnCallback(static function ($userId, array $entries, $includeBillable, $includeTicketTitle, $searchTickets): array {
-                // $includeBillable should be false here so nothing gets set
-                foreach ($entries as $entry) {
-                    if ($includeTicketTitle && method_exists($entry, 'setTicketTitle')) {
-                        $entry->setTicketTitle('Mocked Title for ' . $entry->getTicket());
-                    }
-                    // Note: NOT setting billable here because includeBillable should be false
-                }
+        // Since showBillableField=false and tickettitles is not requested, 
+        // enrichEntriesWithTicketInformation should NOT be called
+        $exportServiceMock->expects(self::never())
+            ->method('enrichEntriesWithTicketInformation');
 
-                return $entries;
-            })
+        // Mock getUsername method used for filename generation
+        $exportServiceMock->expects(self::once())
+            ->method('getUsername')
+            ->with(1) // userid from the request
+            ->willReturn('unittest')
         ;
 
         // Ensure kernel is shut down before creating client
