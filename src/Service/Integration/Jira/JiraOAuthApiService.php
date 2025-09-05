@@ -340,6 +340,15 @@ class JiraOAuthApiService
     }
 
     /**
+     * Creates a work log entry for the given entry in JIRA.
+     * This is an alias for updateEntryJiraWorkLog to maintain backward compatibility.
+     */
+    public function createEntryJiraWorkLog(Entry $entry): void
+    {
+        $this->updateEntryJiraWorkLog($entry);
+    }
+
+    /**
      * Removes Jira workLog entry.
      *
      * @throws JiraApiException

@@ -131,8 +131,8 @@ abstract class BaseTrackingController extends BaseController
             for ($j = $i + 1; $j < count($normalizedEntries); $j++) {
                 if ($normalizedEntries[$i]['end'] > $normalizedEntries[$j]['start']) {
                     // Mark both as overlapping
-                    $this->addEntryClass($normalizedEntries[$i]['id'], EntryClass::OVERLAPPING);
-                    $this->addEntryClass($normalizedEntries[$j]['id'], EntryClass::OVERLAPPING);
+                    $this->addEntryClass($normalizedEntries[$i]['id'], EntryClass::OVERLAP);
+                    $this->addEntryClass($normalizedEntries[$j]['id'], EntryClass::OVERLAP);
                 }
             }
         }
@@ -187,7 +187,7 @@ abstract class BaseTrackingController extends BaseController
         $ticketSystem = $project->getTicketSystem();
 
         // Support for internal jira project and ticket system
-        if ($project && $project->hasInternalJiraProjectKey()) {
+        if ($project->hasInternalJiraProjectKey()) {
             $this->validateTicketProjectMatch($entry, $project);
 
             /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
@@ -217,7 +217,7 @@ abstract class BaseTrackingController extends BaseController
                     'error' => $exception->getMessage(),
                 ]);
             }
-            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0, $exception);
+            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0, null);
         }
     }
 
@@ -244,7 +244,7 @@ abstract class BaseTrackingController extends BaseController
         }
 
         $projectJiraId = $project->getJiraId();
-        if ('' === $projectJiraId) {
+        if ('' === $projectJiraId || null === $projectJiraId) {
             return;
         }
 
@@ -363,7 +363,10 @@ abstract class BaseTrackingController extends BaseController
         }
 
         if ('' === $oldEntry->getTicket()) {
-            $this->createJiraEntry($entry, $entry->getUser());
+            $user = $entry->getUser();
+            if ($user instanceof User) {
+                $this->createJiraEntry($entry, $user);
+            }
         } else {
             $this->updateJiraWorklog($entry, $oldEntry, $ticketSystem);
         }

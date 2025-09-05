@@ -21,4 +21,9 @@ class TicketService
 
         return $matches[1];
     }
+
+    public function extractJiraId(string $ticket): string
+    {
+        return $this->getPrefix($ticket) ?? '';
+    }
 }

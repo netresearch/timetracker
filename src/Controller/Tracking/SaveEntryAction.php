@@ -79,7 +79,7 @@ final class SaveEntryAction extends BaseTrackingController
             // Use project's jira_id as the expected prefix if it exists
             $prefix = $project->getJiraId();
             
-            if (!empty($prefix)) {
+            if (!empty($prefix) && null !== $prefix) {
                 if (!str_starts_with($dto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
                 }
@@ -173,18 +173,32 @@ final class SaveEntryAction extends BaseTrackingController
             $entityManager->flush();
 
             // Return JSON response matching test expectations
+            $day = $entry->getDay();
+            $start = $entry->getStart();
+            $end = $entry->getEnd();
+            $user = $entry->getUser();
+            $customer = $entry->getCustomer();
+            $project = $entry->getProject();
+            $activity = $entry->getActivity();
+            
+            if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime ||
+                !$user instanceof User || !$customer instanceof Customer || 
+                !$project instanceof Project || !$activity instanceof Activity) {
+                return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+            
             $data = [
                 'result' => [
-                    'date' => $entry->getDay()->format('d/m/Y'),
-                    'start' => $entry->getStart()->format('H:i'),
-                    'end' => $entry->getEnd()->format('H:i'),
-                    'user' => $entry->getUser()->getId(),
-                    'customer' => $entry->getCustomer()->getId(),
-                    'project' => $entry->getProject()->getId(),
-                    'activity' => $entry->getActivity()->getId(),
+                    'date' => $day->format('d/m/Y'),
+                    'start' => $start->format('H:i'),
+                    'end' => $end->format('H:i'),
+                    'user' => $user->getId(),
+                    'customer' => $customer->getId(),
+                    'project' => $project->getId(),
+                    'activity' => $activity->getId(),
                     'duration' => $entry->getDuration(),
                     'durationString' => sprintf('%02d:%02d', intval($entry->getDuration() / 60), $entry->getDuration() % 60),
-                    'class' => $entry->getClass()->value,
+                    'class' => $entry->getClass() !== null ? $entry->getClass()->value : EntryClass::PLAIN->value,
                 ],
             ];
             

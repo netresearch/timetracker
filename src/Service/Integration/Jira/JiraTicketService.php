@@ -143,7 +143,7 @@ class JiraTicketService
 
             return $subtasks;
         } catch (JiraApiException $e) {
-            throw new JiraApiException(sprintf('Failed to get subtasks for ticket %s: %s', $ticketKey, $e->getMessage()), $e->getCode(), null);
+            throw new JiraApiException(sprintf('Failed to get subtasks for ticket %s: %s', $ticketKey, $e->getMessage()), $e->getCode(), null, $e);
         }
     }
 
