@@ -75,14 +75,11 @@ final class SaveEntryAction extends BaseTrackingController
         $entryId = $dto->id;
 
         // Should we check if the ticket belongs to the project
-        if (null !== $project->getTicketSystem()) {
-            $ticketRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-
-            $ticketSystemDb = $ticketRepo->findOneById($project->getTicketSystem());
-
-            if ($ticketSystemDb instanceof TicketSystem && !empty($dto->ticket)) {
-                $prefix = $ticketSystemDb->getTicketPrefix();
-
+        if (!empty($dto->ticket)) {
+            // Use project's jira_id as the expected prefix if it exists
+            $prefix = $project->getJiraId();
+            
+            if (!empty($prefix)) {
                 if (!str_starts_with($dto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
                 }
