@@ -175,7 +175,7 @@ final class ExportAction extends BaseController
             $projectName = '';
             $projectEntity = $entry->getProject();
             if ($projectEntity instanceof \App\Entity\Project) {
-                $projectName = (string) $projectEntity->getName();
+                $projectName = $projectEntity->getName();
             }
             $sheet->setCellValue('E' . $lineNumber, $projectName);
             $sheet->setCellValue('F' . $lineNumber, $activity);

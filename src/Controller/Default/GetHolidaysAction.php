@@ -7,6 +7,7 @@ namespace App\Controller\Default;
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -14,6 +15,10 @@ use function sprintf;
 
 final class GetHolidaysAction extends BaseController
 {
+    /**
+     * @throws Exception When database operations fail
+     * @throws \InvalidArgumentException When request parameters are invalid
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse|RedirectResponse
     {

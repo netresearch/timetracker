@@ -12,6 +12,9 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class GetDataAction extends BaseController
 {
+    /**
+     * @throws \InvalidArgumentException When query parameters are invalid
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getData', name: '_getData_attr', methods: ['GET', 'POST'])]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getData/days/{days}', name: '_getDataDays_attr', defaults: ['days' => 3], methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse
