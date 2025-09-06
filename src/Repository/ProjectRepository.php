@@ -22,6 +22,16 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
+     * Priority 2: Add explicit type-safe repository method for mixed type handling.
+     */
+    public function findOneById(int $id): ?Project
+    {
+        $result = $this->find($id);
+        
+        return $result instanceof Project ? $result : null;
+    }
+
+    /**
      * Returns an array structure with keys of customer IDs and an "all" key.
      * Values are arrays of associative project arrays (id, name, jiraId, active).
      *

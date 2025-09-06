@@ -33,13 +33,15 @@ final class GetTicketTimeSummaryAction extends BaseController
         }
 
         $attributes = $request->attributes;
-        $ticket = $attributes->has('ticket') ? $attributes->get('ticket') : null;
-        $name = is_string($ticket) ? $ticket : '';
+        
+        // Priority 1: Fix MixedAssignment with proper type assertion
+        $ticketParam = $attributes->has('ticket') ? $attributes->get('ticket') : null;
+        $ticket = is_string($ticketParam) ? $ticketParam : '';
 
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        $activities = $objectRepository->getActivitiesWithTime($name);
-        $users = $objectRepository->getUsersWithTime($name);
+        $activities = $objectRepository->getActivitiesWithTime($ticket);
+        $users = $objectRepository->getUsersWithTime($ticket);
 
         if (0 === count($users)) {
             return new Response('There is no information available about this ticket.', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
@@ -49,15 +51,17 @@ final class GetTicketTimeSummaryAction extends BaseController
         foreach ($activities as $activity) {
             $total = $activity['total_time'];
             $key = $activity['name'] ?? 'No activity';
-            $time['activities'][$key]['seconds'] = (int) $total * 60;
-            $time['activities'][$key]['time'] = $this->timeCalculationService->minutesToReadable((int) $total);
+            // Priority 3: Remove redundant cast - total_time is already int from repository
+            $time['activities'][$key]['seconds'] = $total * 60;
+            $time['activities'][$key]['time'] = $this->timeCalculationService->minutesToReadable($total);
         }
 
         foreach ($users as $user) {
-            $time['total_time']['time'] += (int) $user['total_time'];
+            $time['total_time']['time'] += $user['total_time'];
             $key = $user['username'];
-            $time['users'][$key]['seconds'] = (int) $user['total_time'] * 60;
-            $time['users'][$key]['time'] = $this->timeCalculationService->minutesToReadable((int) $user['total_time']);
+            // Priority 3: Remove redundant cast - total_time is already int from repository
+            $time['users'][$key]['seconds'] = $user['total_time'] * 60;
+            $time['users'][$key]['time'] = $this->timeCalculationService->minutesToReadable($user['total_time']);
         }
 
         $time['total_time']['seconds'] = $time['total_time']['time'] * 60;

@@ -19,6 +19,16 @@ class ActivityRepository extends ServiceEntityRepository
     }
 
     /**
+     * Priority 2: Add explicit type-safe repository method for mixed type handling.
+     */
+    public function findOneById(int $id): ?Activity
+    {
+        $result = $this->find($id);
+        
+        return $result instanceof Activity ? $result : null;
+    }
+
+    /**
      * @return array<int, array{activity: array{id:int, name:string, needsTicket:bool, factor:float|string}}>
      */
     public function getActivities(): array
