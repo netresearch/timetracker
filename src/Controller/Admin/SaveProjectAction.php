@@ -42,8 +42,8 @@ final class SaveProjectAction extends BaseController
         $projectLead = null !== $projectSaveDto->project_lead ? $this->doctrineRegistry->getRepository(User::class)->find($projectSaveDto->project_lead) : null;
         $technicalLead = null !== $projectSaveDto->technical_lead ? $this->doctrineRegistry->getRepository(User::class)->find($projectSaveDto->technical_lead) : null;
 
-        $jiraId = $projectSaveDto->jiraId ? strtoupper($projectSaveDto->jiraId) : '';
-        $jiraTicket = $projectSaveDto->jiraTicket ? strtoupper($projectSaveDto->jiraTicket) : '';
+        $jiraId = null !== $projectSaveDto->jiraId && '' !== $projectSaveDto->jiraId ? strtoupper($projectSaveDto->jiraId) : '';
+        $jiraTicket = null !== $projectSaveDto->jiraTicket && '' !== $projectSaveDto->jiraTicket ? strtoupper($projectSaveDto->jiraTicket) : '';
         $active = $projectSaveDto->active;
         $global = $projectSaveDto->global;
         $estimation = $this->timeCalculationService->readableToFullMinutes($projectSaveDto->estimation);

@@ -20,6 +20,9 @@ use function count;
 
 final class SaveContractAction extends BaseController
 {
+    /**
+     * @throws InvalidArgumentException
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|\App\Response\Error
     {
