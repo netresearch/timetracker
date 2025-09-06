@@ -10,6 +10,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
+use function is_string;
+
 #[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
 #[ORM\Table(name: 'users')]
 class User implements UserInterface
@@ -139,8 +141,6 @@ class User implements UserInterface
 
     /**
      * Set type.
-     *
-     * @param UserType|string $type
      *
      * @return $this
      */
@@ -350,7 +350,11 @@ class User implements UserInterface
      */
     public function getRoles(): array
     {
-        return $this->type->getRoles();
+        $roles = $this->type->getRoles();
+
+        // Convert to array with numeric keys as expected by Symfony
+        /* @phpstan-ignore-next-line */
+        return array_values($roles);
     }
 
     public function getUserIdentifier(): string

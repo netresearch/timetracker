@@ -16,6 +16,8 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Cache\CacheItemPoolInterface;
 
+use function assert;
+use function is_array;
 use function sprintf;
 
 /**
@@ -31,7 +33,6 @@ use function sprintf;
  */
 class OptimizedEntryRepository extends ServiceEntityRepository
 {
-
     private const string CACHE_PREFIX = 'entry_repo_';
     private const int CACHE_TTL = 300; // 5 minutes
 
@@ -56,7 +57,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId(), $days);
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
-            /** @var array<int, Entry> $cachedResult */
+            assert(is_array($cachedResult) && array_is_list($cachedResult));
+
             return $cachedResult;
         }
 
@@ -71,8 +73,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->addOrderBy('e.start', 'ASC')
         ;
 
-        /** @var array<int, Entry> $result */
         $result = $qb->getQuery()->getResult();
+
+        assert(is_array($result) && array_is_list($result));
 
         $this->setCached($cacheKey, $result);
 
@@ -81,8 +84,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     /**
      * Finds entries by date with optimized joins and eager loading.
-     * 
+     *
      * @param array<string, string>|null $arSort
+     *
      * @return array<int, Entry>
      */
     public function findByDate(
@@ -120,13 +124,16 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $this->applySort($qb, $arSort);
 
-        /** @var array<int, Entry> */
-        return $qb->getQuery()->getResult();
+        $result = $qb->getQuery()->getResult();
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
     }
 
     /**
      * Gets entry summary with optimized single query instead of multiple UNION queries.
-     * 
+     *
      * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     public function getEntrySummaryOptimized(int $entryId, int $userId): array
@@ -139,15 +146,17 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
-            /** @var array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
+            assert(is_array($cachedResult));
+
+            /* @phpstan-ignore-next-line */
             return $cachedResult;
         }
 
         $conn = $this->getEntityManager()->getConnection();
 
         // Build database-agnostic project name concatenation
-        $projectNameExpr = $this->generateConcatExpression("p.name", "' (Est: '", "p.estimation", "')'");
-        
+        $projectNameExpr = $this->generateConcatExpression('p.name', "' (Est: '", 'p.estimation', "')'");
+
         // Use a single query with conditional aggregation instead of UNION
         $sql = "
             SELECT 
@@ -173,7 +182,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 
                 -- Get names in subqueries for efficiency
                 (SELECT name FROM customers WHERE id = :customerId LIMIT 1) as customer_name,
-                (SELECT $projectNameExpr FROM projects p WHERE id = :projectId LIMIT 1) as project_name,
+                (SELECT {$projectNameExpr} FROM projects p WHERE id = :projectId LIMIT 1) as project_name,
                 (SELECT name FROM activities WHERE id = :activityId LIMIT 1) as activity_name
             FROM entries e
             WHERE (e.customer_id = :customerId OR e.project_id = :projectId OR e.activity_id = :activityId OR e.ticket = :ticket)
@@ -198,7 +207,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     /**
      * Gets work by user for period with query optimization.
-     * 
+     *
      * @return array{duration: int, count: int}
      */
     public function getWorkByUserOptimized(int $userId, Period $period = Period::DAY): array
@@ -206,7 +215,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
-            /** @var array{duration: int, count: int} $cachedResult */
+            assert(is_array($cachedResult));
+
+            /* @phpstan-ignore-next-line */
             return $cachedResult;
         }
 
@@ -238,6 +249,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      * Finds entries with optimized query using indexes.
      *
      * @param array<string, mixed> $filter
+     *
      * @return array<int, Entry>
      */
     public function findByFilterArrayOptimized(array $filter = []): array
@@ -297,8 +309,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             $qb->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
         }
 
-        /** @var array<int, Entry> */
-        return $qb->getQuery()->getResult();
+        $result = $qb->getQuery()->getResult();
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
     }
 
     /**
@@ -417,8 +432,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     /**
      * Formats summary data from query result.
-     * 
+     *
      * @param array<string, mixed>|null $result
+     *
      * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function formatSummaryData(?array $result, Entry $entry): array
@@ -467,7 +483,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     /**
      * Returns empty summary data structure.
-     * 
+     *
      * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function getEmptySummaryData(): array
@@ -483,44 +499,44 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Generate database-agnostic YEAR expression
+     * Generate database-agnostic YEAR expression.
      */
     private function generateYearExpression(string $field): string
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
-        
+
         if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
-            return "YEAR($field)";
+            return "YEAR({$field})";
         }
-        
-        return "strftime('%Y', $field)";
+
+        return "strftime('%Y', {$field})";
     }
 
     /**
-     * Generate database-agnostic MONTH expression  
+     * Generate database-agnostic MONTH expression.
      */
     private function generateMonthExpression(string $field): string
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
-        
+
         if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
-            return "MONTH($field)";
+            return "MONTH({$field})";
         }
-        
-        return "strftime('%m', $field)";
+
+        return "strftime('%m', {$field})";
     }
 
     /**
-     * Generate database-agnostic CONCAT expression
+     * Generate database-agnostic CONCAT expression.
      */
     private function generateConcatExpression(string ...$fields): string
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
-        
+
         if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
             return 'CONCAT(' . implode(', ', $fields) . ')';
         }
-        
+
         // SQLite: use || operator
         return '(' . implode(' || ', $fields) . ')';
     }
