@@ -50,7 +50,7 @@ class JsonResponse extends Response
             null => 'null',
             default => json_encode($content) ?: 'null',
         };
-        
+
         parent::setContent($encoded);
     }
 

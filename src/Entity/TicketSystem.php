@@ -8,6 +8,8 @@ use App\Enum\TicketSystemType;
 use App\Model\Base;
 use Doctrine\ORM\Mapping as ORM;
 
+use function is_string;
+
 /**
  * App\Entity\TicketSystem.
  */
@@ -15,7 +17,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {
-
     /**
      * @var int $id
      */
@@ -36,9 +37,6 @@ class TicketSystem extends Base
     #[ORM\Column(name: 'book_time', type: 'boolean', nullable: false, options: ['default' => 0])]
     protected $bookTime = false;
 
-    /**
-     * @var TicketSystemType $type;
-     */
     #[ORM\Column(type: 'string', length: 15, enumType: TicketSystemType::class)]
     protected TicketSystemType $type = TicketSystemType::JIRA;
 
@@ -138,8 +136,6 @@ class TicketSystem extends Base
 
     /**
      * Set type.
-     *
-     * @param TicketSystemType|string $type
      *
      * @return $this
      */

@@ -22,7 +22,7 @@ final class GetDataAction extends BaseController
 
         $userId = $this->getUserId($request);
         $user = $this->managerRegistry->getRepository(User::class)->find($userId);
-        
+
         if (!$user instanceof User) {
             return new JsonResponse([]);
         }
@@ -37,21 +37,21 @@ final class GetDataAction extends BaseController
         $customer = $request->query->get('customer');
         $project = $request->query->get('project');
 
-        if ($year !== null) {
+        if (null !== $year) {
             // Filtered request - use findByDate and calculate totalWorkTime
             // If no user parameter provided, use 0 to search all users
-            $filterUserId = $userParam !== null ? (int) $userParam : 0;
+            $filterUserId = null !== $userParam ? (int) $userParam : 0;
             $filterYear = (int) $year;
-            $filterMonth = $month !== null ? (int) $month : null;
-            $filterProject = $project !== null ? (int) $project : null;
-            $filterCustomer = $customer !== null ? (int) $customer : null;
+            $filterMonth = null !== $month ? (int) $month : null;
+            $filterProject = null !== $project ? (int) $project : null;
+            $filterCustomer = null !== $customer ? (int) $customer : null;
 
             $entries = $entryRepository->findByDate(
-                $filterUserId, 
-                $filterYear, 
-                $filterMonth, 
-                $filterProject, 
-                $filterCustomer
+                $filterUserId,
+                $filterYear,
+                $filterMonth,
+                $filterProject,
+                $filterCustomer,
             );
 
             // Calculate total work time from filtered entries
@@ -64,11 +64,11 @@ final class GetDataAction extends BaseController
         }
 
         // Default behavior - return entries for recent days
-        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days')) 
-            ? (int) $request->attributes->get('days') 
+        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days'))
+            ? (int) $request->attributes->get('days')
             : 3;
 
-        $data = $entryRepository->getEntriesByUser($userId, $days, $user->getShowFuture());
+        $data = $entryRepository->getEntriesByUser($user, $days, $user->getShowFuture());
 
         return new JsonResponse($data);
     }

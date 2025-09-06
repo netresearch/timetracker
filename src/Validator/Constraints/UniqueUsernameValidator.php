@@ -30,7 +30,7 @@ class UniqueUsernameValidator extends ConstraintValidator
         // Get the current user ID from the context object (the DTO)
         $dto = $this->context->getObject();
         $userId = 0;
-        
+
         if ($dto instanceof \App\Dto\UserSaveDto) {
             $userId = $dto->id;
         }

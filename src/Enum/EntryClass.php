@@ -45,7 +45,7 @@ enum EntryClass: int
      */
     public function isRegularWork(): bool
     {
-        return $this === self::PLAIN;
+        return self::PLAIN === $this;
     }
 
     /**
@@ -53,7 +53,7 @@ enum EntryClass: int
      */
     public function isNonWork(): bool
     {
-        return $this === self::PAUSE || $this === self::DAYBREAK;
+        return self::PAUSE === $this || self::DAYBREAK === $this;
     }
 
     /**
@@ -61,7 +61,7 @@ enum EntryClass: int
      */
     public function isConflict(): bool
     {
-        return $this === self::OVERLAP;
+        return self::OVERLAP === $this;
     }
 
     /**

@@ -21,11 +21,22 @@ final class EntryRepositoryIntegrationTest extends AbstractWebTestCase
         /** @var EntryRepository $repo */
         $repo = self::getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
         
-        // Use a date range instead of the missing method
+        // Get the User entity from the repository instead of passing raw ID
+        $userRepository = self::getContainer()->get('doctrine')->getRepository(\App\Entity\User::class);
+        $user = $userRepository->find(1);
+        self::assertNotNull($user, 'User with ID 1 should exist');
+        
+        // Use a date range to test the getEntriesForMonth method
         $endDate = date('Y-m-d');
         $startDate = date('Y-m-d', strtotime('-3 days'));
-        $data = $repo->getEntriesForMonth(1, $startDate, $endDate);
+        $data = $repo->getEntriesForMonth($user, $startDate, $endDate);
         self::assertIsArray($data);
+        
+        // Verify each entry in the result is an Entry entity
+        foreach ($data as $entry) {
+            self::assertInstanceOf(\App\Entity\Entry::class, $entry);
+            self::assertSame($user, $entry->getUser());
+        }
     }
 
     public function testFindByFilterArrayBasicFilters(): void

@@ -16,7 +16,7 @@ use function sprintf;
 /**
  * Factory for creating standardized API responses.
  * Centralizes response creation logic and provides consistent error handling.
- * 
+ *
  * @psalm-suppress UnusedClass - Infrastructure class for future API development
  */
 class ResponseFactory

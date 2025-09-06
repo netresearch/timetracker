@@ -7,20 +7,20 @@ namespace App\Controller\Tracking;
 use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\Project;
-use App\Enum\EntryClass;
-use App\Enum\TicketSystemType;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\EntryClass;
+use App\Enum\TicketSystemType;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Util\TicketService;
+use DateInterval;
 use DateTime;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 use function count;
-use function is_object;
 use function sprintf;
 
 abstract class BaseTrackingController extends BaseController
@@ -122,13 +122,11 @@ abstract class BaseTrackingController extends BaseController
         }
 
         // Sort by start time
-        usort($normalizedEntries, static function (array $a, array $b): int {
-            return $a['start'] <=> $b['start'];
-        });
+        usort($normalizedEntries, static fn (array $a, array $b): int => $a['start'] <=> $b['start']);
 
         // Calculate overlaps
-        for ($i = 0; $i < count($normalizedEntries); $i++) {
-            for ($j = $i + 1; $j < count($normalizedEntries); $j++) {
+        for ($i = 0; $i < count($normalizedEntries); ++$i) {
+            for ($j = $i + 1; $j < count($normalizedEntries); ++$j) {
                 if ($normalizedEntries[$i]['end'] > $normalizedEntries[$j]['start']) {
                     // Mark both as overlapping
                     $this->addEntryClass($normalizedEntries[$i]['id'], EntryClass::OVERLAP);
@@ -138,7 +136,7 @@ abstract class BaseTrackingController extends BaseController
         }
 
         // Calculate pauses and day breaks
-        for ($i = 0; $i < count($normalizedEntries) - 1; $i++) {
+        for ($i = 0; $i < count($normalizedEntries) - 1; ++$i) {
             $current = $normalizedEntries[$i];
             $next = $normalizedEntries[$i + 1];
 
@@ -415,9 +413,9 @@ abstract class BaseTrackingController extends BaseController
             throw new Exception('Entry start time must be before end time');
         }
 
-        $maxDuration = new \DateInterval('PT23H59M');
+        $maxDuration = new DateInterval('PT23H59M');
         $duration = $start->diff($end);
-        
+
         if ($duration->days > 0 || $duration->h > 23) {
             throw new Exception('Entry duration cannot exceed 24 hours');
         }
@@ -450,7 +448,7 @@ abstract class BaseTrackingController extends BaseController
         $hours = intdiv($minutes, 60);
         $mins = $minutes % 60;
 
-        if ($mins === 0) {
+        if (0 === $mins) {
             return sprintf('%dh', $hours);
         }
 

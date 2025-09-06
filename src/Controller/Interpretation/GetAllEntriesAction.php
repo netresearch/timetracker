@@ -41,6 +41,7 @@ final class GetAllEntriesAction extends BaseController
             } else {
                 $statusCode = \Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE; // 406
             }
+
             return new Error($this->translate($exception->getMessage()), $statusCode);
         }
 

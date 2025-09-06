@@ -7,6 +7,7 @@ namespace App\Service\Integration\Jira;
 use App\Entity\Entry;
 use App\Exception\Integration\Jira\JiraApiException;
 
+use function is_object;
 use function sprintf;
 
 /**
@@ -72,9 +73,9 @@ class JiraTicketService
     /**
      * Searches for Jira tickets using JQL.
      *
-     * @param string $jql    JQL query string
+     * @param string        $jql    JQL query string
      * @param array<string> $fields Fields to return
-     * @param int    $limit  Maximum number of results
+     * @param int           $limit  Maximum number of results
      *
      * @throws JiraApiException
      */
@@ -151,6 +152,7 @@ class JiraTicketService
      * Gets ticket details from Jira.
      *
      * @param array<string> $fields
+     *
      * @throws JiraApiException
      */
     public function getTicket(string $ticketKey, array $fields = []): mixed
@@ -172,6 +174,7 @@ class JiraTicketService
      * Updates a Jira ticket.
      *
      * @param array<string, mixed> $updateData
+     *
      * @throws JiraApiException
      */
     public function updateTicket(string $ticketKey, array $updateData): mixed
@@ -249,6 +252,7 @@ class JiraTicketService
      * Transitions a ticket to a new status.
      *
      * @param array<string, mixed> $fields
+     *
      * @throws JiraApiException
      */
     public function transitionTicket(string $ticketKey, string $transitionId, array $fields = []): void

@@ -18,8 +18,8 @@ final class ExportCsvAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
     public function __invoke(Request $request): Response
     {
-        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days')) 
-            ? (int) $request->attributes->get('days') 
+        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days'))
+            ? (int) $request->attributes->get('days')
             : 10000;
 
         $user = $this->managerRegistry

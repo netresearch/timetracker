@@ -16,6 +16,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 
+use function is_scalar;
+
 use const STR_PAD_LEFT;
 
 final class ExportAction extends BaseController
@@ -65,9 +67,9 @@ final class ExportAction extends BaseController
             $exportQueryDto->project,
             $exportQueryDto->customer,
             [
-                'user.username' => true,
-                'entry.day' => true,
-                'entry.start' => true,
+                'user.username' => 'ASC',
+                'entry.day' => 'DESC',
+                'entry.start' => 'DESC',
             ],
         );
 

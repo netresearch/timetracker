@@ -12,6 +12,7 @@ use App\Service\Util\TimeCalculationService;
 use Symfony\Component\HttpFoundation\Request;
 
 use function count;
+use function is_string;
 
 final class GetTicketTimeSummaryAction extends BaseController
 {

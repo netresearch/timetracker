@@ -53,9 +53,11 @@ final class GetSummaryAction extends BaseController
         $data = $objectRepository->getEntrySummary((int) $entryId, $userId, $data);
 
         if ($data['project']['estimation']) {
+            $total = is_numeric($data['project']['total']) ? (float) $data['project']['total'] : 0.0;
+            $estimation = is_numeric($data['project']['estimation']) ? (float) $data['project']['estimation'] : 0.0;
             $data['project']['quota'] = $this->timeCalculationService->formatQuota(
-                $data['project']['total'],
-                $data['project']['estimation'],
+                $total,
+                $estimation,
             );
         }
 

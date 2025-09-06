@@ -269,7 +269,7 @@ class JiraOAuthApiService
         $objectManager = $this->managerRegistry->getManager();
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        $entries = $objectRepository->findByUserAndTicketSystemToSync((int) $this->user->getId(), (int) $this->ticketSystem->getId(), $entryLimit);
+        $entries = $objectRepository->findByUserAndTicketSystemToSync((int) $this->user->getId(), (int) $this->ticketSystem->getId(), $entryLimit ?? 50);
 
         foreach ($entries as $entry) {
             try {
@@ -451,14 +451,14 @@ class JiraOAuthApiService
         }
 
         $ticket = $this->get('issue/' . $sTicket);
-        
+
         // Ensure ticket response is an object with expected structure
         if (!is_object($ticket) || !isset($ticket->fields)) {
             return [];
         }
 
         $subtickets = [];
-        
+
         // Check if subtasks exist and is iterable
         if (isset($ticket->fields->subtasks) && is_iterable($ticket->fields->subtasks)) {
             foreach ($ticket->fields->subtasks as $subtask) {
@@ -469,25 +469,23 @@ class JiraOAuthApiService
         }
 
         // Check for epic type tickets
-        if (isset($ticket->fields->issuetype) && 
-            is_object($ticket->fields->issuetype) && 
-            isset($ticket->fields->issuetype->name) &&
-            'epic' === strtolower((string) $ticket->fields->issuetype->name)) {
-            
+        if (isset($ticket->fields->issuetype)
+            && is_object($ticket->fields->issuetype)
+            && isset($ticket->fields->issuetype->name)
+            && 'epic' === strtolower((string) $ticket->fields->issuetype->name)) {
             $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
-            
+
             // Ensure epic search results have expected structure
             if (is_object($epicSubs) && isset($epicSubs->issues) && is_iterable($epicSubs->issues)) {
                 foreach ($epicSubs->issues as $epicSubtask) {
                     if (is_object($epicSubtask) && isset($epicSubtask->key)) {
                         $subtickets[] = $epicSubtask->key;
-                        
+
                         // Check for nested subtasks
-                        if (isset($epicSubtask->fields) && 
-                            is_object($epicSubtask->fields) && 
-                            isset($epicSubtask->fields->subtasks) && 
-                            is_iterable($epicSubtask->fields->subtasks)) {
-                            
+                        if (isset($epicSubtask->fields)
+                            && is_object($epicSubtask->fields)
+                            && isset($epicSubtask->fields->subtasks)
+                            && is_iterable($epicSubtask->fields->subtasks)) {
                             foreach ($epicSubtask->fields->subtasks as $subtask) {
                                 if (is_object($subtask) && isset($subtask->key)) {
                                     $subtickets[] = $subtask->key;

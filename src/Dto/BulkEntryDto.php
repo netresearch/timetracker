@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use DateTime;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -61,13 +62,14 @@ final readonly class BulkEntryDto
     {
         // Only validate time range if not using contract
         if (!$this->isUseContract() && !empty($this->starttime) && !empty($this->endtime)) {
-            $startDateTime = \DateTime::createFromFormat('H:i:s', $this->starttime);
-            $endDateTime = \DateTime::createFromFormat('H:i:s', $this->endtime);
+            $startDateTime = DateTime::createFromFormat('H:i:s', $this->starttime);
+            $endDateTime = DateTime::createFromFormat('H:i:s', $this->endtime);
 
             if ($startDateTime && $endDateTime && $startDateTime >= $endDateTime) {
                 $context->buildViolation('Die Aktivität muss mindestens eine Minute angedauert haben!')
                     ->atPath('endtime')
-                    ->addViolation();
+                    ->addViolation()
+                ;
             }
         }
     }
@@ -76,13 +78,14 @@ final readonly class BulkEntryDto
     public function validateDateRange(ExecutionContextInterface $context): void
     {
         if (!empty($this->startdate) && !empty($this->enddate)) {
-            $startDate = \DateTime::createFromFormat('Y-m-d', $this->startdate);
-            $endDate = \DateTime::createFromFormat('Y-m-d', $this->enddate);
+            $startDate = DateTime::createFromFormat('Y-m-d', $this->startdate);
+            $endDate = DateTime::createFromFormat('Y-m-d', $this->enddate);
 
             if ($startDate && $endDate && $startDate > $endDate) {
                 $context->buildViolation('Start date must be before or equal to end date')
                     ->atPath('enddate')
-                    ->addViolation();
+                    ->addViolation()
+                ;
             }
         }
     }

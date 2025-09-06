@@ -64,7 +64,7 @@ class JiraHttpClientService
 
     /**
      * Resolves OAuth tokens based on mode.
-     * 
+     *
      * @return array{token: string, secret: string}
      */
     private function resolveTokens(string $tokenMode, ?string $oAuthToken): array
@@ -133,6 +133,7 @@ class JiraHttpClientService
      * Performs POST request to Jira API.
      *
      * @param array<string, mixed> $data
+     *
      * @throws JiraApiException
      */
     public function post(string $url, array $data = []): mixed
@@ -144,6 +145,7 @@ class JiraHttpClientService
      * Performs PUT request to Jira API.
      *
      * @param array<string, mixed> $data
+     *
      * @throws JiraApiException
      */
     public function put(string $url, array $data = []): mixed
@@ -165,6 +167,7 @@ class JiraHttpClientService
      * Sends HTTP request to Jira API.
      *
      * @param array<string, mixed> $data
+     *
      * @throws JiraApiException
      */
     private function sendRequest(string $method, string $url, array $data = []): mixed

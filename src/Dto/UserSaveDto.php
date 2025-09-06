@@ -17,21 +17,21 @@ final readonly class UserSaveDto
 {
     public function __construct(
         public int $id = 0,
-        
+
         #[Assert\NotBlank(message: 'Please provide a valid user name with at least 3 letters.')]
         #[Assert\Length(min: 3, minMessage: 'Please provide a valid user name with at least 3 letters.')]
         #[UniqueUsername]
         public string $username = '',
-        
+
         #[Assert\NotBlank(message: 'Please provide a valid user name abbreviation with 3 letters.')]
         #[Assert\Length(min: 3, max: 3, minMessage: 'Please provide a valid user name abbreviation with 3 letters.', maxMessage: 'Please provide a valid user name abbreviation with 3 letters.')]
         #[UniqueUserAbbr]
         public string $abbr = '',
-        
+
         public string $type = '',
-        
+
         public string $locale = '',
-        
+
         /** @var list<int|string> */
         #[Map(if: false)]
         public array $teams = [],
@@ -42,7 +42,7 @@ final readonly class UserSaveDto
     {
         /** @var list<int|string> $teams */
         $teams = $request->request->all('teams') ?: [];
-        
+
         return new self(
             id: (int) ($request->request->get('id') ?? 0),
             username: (string) ($request->request->get('username') ?? ''),

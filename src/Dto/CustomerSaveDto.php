@@ -16,16 +16,16 @@ final readonly class CustomerSaveDto
 {
     public function __construct(
         public int $id = 0,
-        
+
         #[Assert\NotBlank(message: 'Please provide a valid customer name with at least 3 letters.')]
         #[Assert\Length(min: 3, minMessage: 'Please provide a valid customer name with at least 3 letters.')]
         #[UniqueCustomerName]
         public string $name = '',
-        
+
         public bool $active = false,
-        
+
         public bool $global = false,
-        
+
         /** @var list<int|string> */
         #[Map(if: false)]
         public array $teams = [],
@@ -36,7 +36,7 @@ final readonly class CustomerSaveDto
     {
         /** @var list<int|string> $teams */
         $teams = $request->request->all('teams') ?: [];
-        
+
         return new self(
             id: (int) ($request->request->get('id') ?? 0),
             name: (string) ($request->request->get('name') ?? ''),

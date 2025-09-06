@@ -23,7 +23,7 @@ class QueryCacheService
 
     /**
      * Cache invalidation tags for group invalidation.
-     * 
+     *
      * @var array<string, array<string>>
      */
     private array $tags = [];

@@ -17,7 +17,6 @@ use function sprintf;
 #[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
-
     /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.
      */
@@ -87,9 +86,6 @@ class Entry extends Base
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected ?Activity $activity = null;
 
-    /**
-     * @var EntryClass
-     */
     #[ORM\Column(name: 'class', type: 'smallint', nullable: false, options: ['unsigned' => true, 'default' => 1], enumType: EntryClass::class)]
     protected EntryClass $class = EntryClass::PLAIN;
 
@@ -203,11 +199,11 @@ class Entry extends Base
         return 0;
     }
 
-    public function getProjectId(): ?int
+    public function getProjectId(): int
     {
         $project = $this->getProject();
         if ($project instanceof Project) {
-            return $project->getId();
+            return $project->getId() ?? 0;
         }
 
         return 0;
@@ -481,7 +477,7 @@ class Entry extends Base
             'end' => isset($this->end) ? $this->getEnd()->format('H:i') : null,
             'user' => $userEntity instanceof User ? $userEntity->getId() : null,
             'customer' => $customer,
-            'project' => $projectEntity instanceof Project ? $projectEntity->getId() : null,
+            'project' => $projectEntity instanceof Project ? ($projectEntity->getId() ?? 0) : null,
             'activity' => $activityEntity instanceof Activity ? $activityEntity->getId() : null,
             'description' => $this->getDescription(),
             'ticket' => $this->getTicket(),
@@ -554,6 +550,7 @@ class Entry extends Base
     public function addClass(EntryClass $class): static
     {
         $this->class = $class;
+
         return $this;
     }
 

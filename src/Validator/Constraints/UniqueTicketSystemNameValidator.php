@@ -9,6 +9,8 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
+use function is_string;
+
 class UniqueTicketSystemNameValidator extends ConstraintValidator
 {
     public function __construct(
@@ -36,7 +38,7 @@ class UniqueTicketSystemNameValidator extends ConstraintValidator
         if (null !== $existingSystem) {
             // Check if we're updating an existing ticket system
             $object = $this->context->getObject();
-            
+
             // Type-safe check for TicketSystemSaveDto
             if ($object instanceof \App\Dto\TicketSystemSaveDto && $object->id > 0) {
                 if ($existingSystem->getId() === $object->id) {
