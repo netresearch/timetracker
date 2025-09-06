@@ -9,6 +9,8 @@ use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+use function assert;
+use function is_array;
 use function sprintf;
 
 /**
@@ -31,8 +33,7 @@ class HolidayRepository extends ServiceEntityRepository
         $from = new DateTime(sprintf('%04d-%02d-01', $year, $month));
         $to = (clone $from)->modify('first day of next month');
 
-        /** @var array<int, Holiday> */
-        return $this->createQueryBuilder('h')
+        $result = $this->createQueryBuilder('h')
             ->where('h.day >= :from')
             ->andWhere('h.day < :to')
             ->setParameter('from', $from)
@@ -41,5 +42,9 @@ class HolidayRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
     }
 }
