@@ -18,6 +18,7 @@ final class GetHolidaysAction extends BaseController
     /**
      * @throws Exception When database operations fail
      * @throws \InvalidArgumentException When request parameters are invalid
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are malformed
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse|RedirectResponse
@@ -58,8 +59,8 @@ final class GetHolidaysAction extends BaseController
         foreach ($result as $row) {
             $data[] = [
                 'holiday' => [
-                    'name' => $row['name'],
-                    'date' => $row['day'], // Should already be in Y-m-d format from database
+                    'name' => $row['name'] ?? '',
+                    'date' => $row['day'] ?? '', // Should already be in Y-m-d format from database
                 ],
             ];
         }
