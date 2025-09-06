@@ -19,6 +19,10 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 
 final class SavePresetAction extends BaseController
 {
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \Exception
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] PresetSaveDto $presetSaveDto, ObjectMapperInterface $objectMapper): Response|JsonResponse|\App\Response\Error
     {

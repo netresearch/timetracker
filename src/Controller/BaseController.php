@@ -73,6 +73,8 @@ class BaseController extends AbstractController
     /**
      * Check if user is logged in.
      * Prefer Symfony Security, but fall back to session token in tests.
+     *
+     * @throws \Exception
      */
     protected function isLoggedIn(Request $request): bool
     {
@@ -88,7 +90,8 @@ class BaseController extends AbstractController
      *
      * @return int User ID
      *
-     * @throw AccessDeniedException
+     * @throws AccessDeniedException
+     * @throws \Exception
      */
     protected function getUserId(Request $request): int
     {
@@ -126,6 +129,8 @@ class BaseController extends AbstractController
 
     /**
      * Redirects to the login page.
+     *
+     * @throws \Exception
      */
     protected function login(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|Response
     {
@@ -214,6 +219,8 @@ class BaseController extends AbstractController
 
     /**
      * Provide a standard response for cases where the login failed.
+     *
+     * @throws \Exception
      */
     protected function getFailedLoginResponse(): Response
     {
@@ -226,6 +233,8 @@ class BaseController extends AbstractController
 
     /**
      * returns an error message for not allowed actions.
+     *
+     * @throws \Exception
      */
     protected function getFailedAuthorizationResponse(): Response
     {
@@ -244,6 +253,8 @@ class BaseController extends AbstractController
      * @param array<string, mixed> $parameters
      * @param string               $domain     translation file domain
      * @param null                 $locale     translation locale
+     *
+     * @throws \Exception
      */
     protected function translate(
         string $id,
