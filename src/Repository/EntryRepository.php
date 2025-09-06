@@ -8,6 +8,10 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\QueryBuilder;
 use App\Entity\Entry;
+use App\Entity\User;
+use App\Entity\Activity;
+use App\Entity\Project;
+use App\Entity\Customer;
 use App\Service\Util\TimeCalculationService;
 use App\Dto\DatabaseResultDto;
 use App\Enum\Period;
@@ -38,13 +42,15 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function getEntriesForDay(User $user, string $day): array
     {
-        return $this->createQueryBuilder('e')
+        /** @var Entry[] $result */
+        $result = $this->createQueryBuilder('e')
             ->where('e.user = :user')
             ->andWhere('e.day = :day')
             ->setParameter('user', $user)
             ->setParameter('day', $day)
             ->getQuery()
             ->getResult();
+        return $result;
     }
 
     /**
@@ -54,7 +60,8 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function getEntriesForMonth(User $user, string $startDate, string $endDate): array
     {
-        return $this->createQueryBuilder('e')
+        /** @var Entry[] $result */
+        $result = $this->createQueryBuilder('e')
             ->where('e.user = :user')
             ->andWhere('e.day >= :startDate')
             ->andWhere('e.day <= :endDate')
@@ -65,6 +72,7 @@ class EntryRepository extends ServiceEntityRepository
             ->addOrderBy('e.start', 'ASC')
             ->getQuery()
             ->getResult();
+        return $result;
     }
 
     /**
@@ -134,6 +142,8 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Get entries with related entities for efficient data loading.
+     *
+     * @param array<string, mixed> $conditions
      */
     public function findEntriesWithRelations(array $conditions = []): QueryBuilder
     {
@@ -164,15 +174,19 @@ class EntryRepository extends ServiceEntityRepository
             return [];
         }
 
-        return $this->createQueryBuilder('e')
+        /** @var Entry[] $result */
+        $result = $this->createQueryBuilder('e')
             ->where('e.id IN (:ids)')
             ->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();
+        return $result;
     }
 
     /**
      * Get total duration for entries matching conditions.
+     *
+     * @param array<string, mixed> $conditions
      */
     public function getTotalDuration(array $conditions = []): float
     {
@@ -189,6 +203,8 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Check if entry exists with given conditions.
+     *
+     * @param array<string, mixed> $conditions
      */
     public function existsWithConditions(array $conditions): bool
     {
@@ -262,7 +278,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Generate database-agnostic YEAR expression
      */
-    private function generateYearExpression(string $field): string
+    protected function generateYearExpression(string $field): string
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
         
@@ -278,7 +294,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Generate database-agnostic MONTH expression  
      */
-    private function generateMonthExpression(string $field): string
+    protected function generateMonthExpression(string $field): string
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
         
@@ -294,7 +310,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Generate database-agnostic WEEK expression
      */
-    private function generateWeekExpression(string $field): string
+    protected function generateWeekExpression(string $field): string
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
         
@@ -309,6 +325,8 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Execute raw SQL with optimized direct connection approach
+     *
+     * @return list<array<string, mixed>>
      */
     public function getRawData(string $startDate, string $endDate, ?int $userId = null): array
     {
@@ -377,6 +395,9 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Get entries with pagination and filtering
+     *
+     * @param array<string, mixed> $filters
+     * @return array<int, \App\Entity\Entry>
      */
     public function getFilteredEntries(
         array $filters = [],
@@ -420,11 +441,16 @@ class EntryRepository extends ServiceEntityRepository
             $qb->setFirstResult($offset);
         }
 
-        return $qb->getQuery()->getResult();
+        /** @var array<int, Entry> $result */
+        $result = $qb->getQuery()->getResult();
+        return $result;
     }
 
     /**
      * Get summary data for reporting
+     *
+     * @param array<string, mixed> $filters
+     * @return array<string, mixed>
      */
     public function getSummaryData(array $filters = []): array
     {
@@ -451,20 +477,33 @@ class EntryRepository extends ServiceEntityRepository
             }
         }
 
-        $result = $qb->getQuery()->getSingleResult();
+        $rawResult = $qb->getQuery()->getSingleResult();
+        
+        /** @var array<string, mixed> $result */
+        $result = is_array($rawResult) ? $rawResult : [];
 
-        // Ensure numeric values
+        // Ensure numeric values with safe access
+        $entryCountValue = $result['entryCount'] ?? 0;
+        $entryCount = is_numeric($entryCountValue) ? (int) $entryCountValue : 0;
+        $totalDurationValue = $result['totalDuration'] ?? 0;
+        $totalDuration = is_numeric($totalDurationValue) ? (float) $totalDurationValue : 0.0;
+        $avgDurationValue = $result['avgDuration'] ?? 0;
+        $avgDuration = is_numeric($avgDurationValue) ? (float) $avgDurationValue : 0.0;
+        
         return [
-            'entryCount' => (int) $result['entryCount'],
-            'totalDuration' => (float) ($result['totalDuration'] ?? 0),
-            'avgDuration' => (float) ($result['avgDuration'] ?? 0),
-            'minDate' => $result['minDate'],
-            'maxDate' => $result['maxDate']
+            'entryCount' => $entryCount,
+            'totalDuration' => $totalDuration,
+            'avgDuration' => $avgDuration,
+            'minDate' => $result['minDate'] ?? null,
+            'maxDate' => $result['maxDate'] ?? null
         ];
     }
 
     /**
      * Get time summary grouped by criteria (for charts/reports)
+     *
+     * @param array<string, mixed> $filters
+     * @return list<array<string, mixed>>
      */
     public function getTimeSummaryByPeriod(
         string $period,
@@ -527,6 +566,9 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Bulk update entries
+     *
+     * @param array<int> $entryIds
+     * @param array<string, mixed> $updateData
      */
     public function bulkUpdate(array $entryIds, array $updateData): int
     {
@@ -544,14 +586,15 @@ class EntryRepository extends ServiceEntityRepository
                 ->setParameter($field, $value);
         }
 
-        return $qb->getQuery()->execute();
+        $result = $qb->getQuery()->execute();
+        return is_numeric($result) ? (int) $result : 0;
     }
 
     /**
      * Query entries by filter array for pagination
      * 
      * @param array<string, mixed> $arFilter
-     * @return \Doctrine\ORM\Query<int, Entry>
+     * @phpstan-return \Doctrine\ORM\Query<int, \App\Entity\Entry>
      */
     public function queryByFilterArray(array $arFilter): \Doctrine\ORM\Query
     {
@@ -563,7 +606,7 @@ class EntryRepository extends ServiceEntityRepository
             ;
 
         // Apply filters
-        if (isset($arFilter['customer']) && null !== $arFilter['customer']) {
+        if (isset($arFilter['customer']) && $arFilter['customer'] !== '') {
             if (is_object($arFilter['customer'])) {
                 $queryBuilder->andWhere('e.customer = :customer')
                     ->setParameter('customer', $arFilter['customer']);
@@ -573,7 +616,7 @@ class EntryRepository extends ServiceEntityRepository
             }
         }
 
-        if (isset($arFilter['project']) && null !== $arFilter['project']) {
+        if (isset($arFilter['project']) && $arFilter['project'] !== '') {
             if (is_object($arFilter['project'])) {
                 $queryBuilder->andWhere('e.project = :project')
                     ->setParameter('project', $arFilter['project']);
@@ -583,7 +626,7 @@ class EntryRepository extends ServiceEntityRepository
             }
         }
 
-        if (isset($arFilter['activity']) && null !== $arFilter['activity']) {
+        if (isset($arFilter['activity']) && $arFilter['activity'] !== '') {
             if (is_object($arFilter['activity'])) {
                 $queryBuilder->andWhere('e.activity = :activity')
                     ->setParameter('activity', $arFilter['activity']);
@@ -593,19 +636,19 @@ class EntryRepository extends ServiceEntityRepository
             }
         }
 
-        if (isset($arFilter['datestart']) && null !== $arFilter['datestart']) {
+        if (isset($arFilter['datestart']) && $arFilter['datestart'] !== '') {
             $queryBuilder->andWhere('e.day >= :datestart')
                 ->setParameter('datestart', $arFilter['datestart']);
         }
 
-        if (isset($arFilter['dateend']) && null !== $arFilter['dateend']) {
+        if (isset($arFilter['dateend']) && $arFilter['dateend'] !== '') {
             $queryBuilder->andWhere('e.day <= :dateend')
                 ->setParameter('dateend', $arFilter['dateend']);
         }
 
-        // Apply pagination
-        $maxResults = isset($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
-        $page = isset($arFilter['page']) ? (int) $arFilter['page'] : 0;
+        // Apply pagination with safe casting
+        $maxResults = isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
+        $page = isset($arFilter['page']) && is_numeric($arFilter['page']) ? (int) $arFilter['page'] : 0;
         $offset = $page * $maxResults;
 
         $queryBuilder->setMaxResults($maxResults)
@@ -613,14 +656,17 @@ class EntryRepository extends ServiceEntityRepository
             ->orderBy('e.day', 'DESC')
             ->addOrderBy('e.start', 'DESC');
 
+        /** @phpstan-ignore-next-line */
         return $queryBuilder->getQuery();
     }
 
     /**
      * Find overlapping entries for validation
+     * @param \App\Entity\User $user
+     * @return array<int, \App\Entity\Entry>
      */
     public function findOverlappingEntries(
-        $user,
+        \App\Entity\User $user,
         string $day,
         string $start,
         string $end,
@@ -644,13 +690,15 @@ class EntryRepository extends ServiceEntityRepository
                 ->setParameter('excludeId', $excludeId);
         }
 
-        return $qb->getQuery()->getResult();
+        /** @var array<int, Entry> $result */
+        $result = $qb->getQuery()->getResult();
+        return $result;
     }
 
     /**
      * Get entries by user for specified days
      * 
-     * @return array<int, Entry>
+     * @return array<int, \App\Entity\Entry>
      */
     public function getEntriesByUser(User $user, int $days, bool $showFuture = false): array
     {
@@ -678,21 +726,24 @@ class EntryRepository extends ServiceEntityRepository
                ->setParameter('endDate', $today->format('Y-m-d'));
         }
 
-        return $qb->getQuery()->getResult();
+        $result = $qb->getQuery()->getResult();
+        assert(is_array($result) && array_is_list($result));
+        /** @var array<int, Entry> $result */
+        return $result;
     }
 
     /**
      * Find entries by date with filter support
      * 
      * @param array<string, string>|null $arSort
-     * @return array<int, Entry>
+     * @return array<int, \App\Entity\Entry>
      */
     public function findByDate(
-        $user,
+        int $user,
         int $year,
         ?int $month = null,
-        $project = null,
-        $customer = null,
+        ?int $project = null,
+        ?int $customer = null,
         ?array $arSort = null
     ): array {
         $qb = $this->createQueryBuilder('e')
@@ -709,7 +760,7 @@ class EntryRepository extends ServiceEntityRepository
            ->setParameter('startOfYear', $startOfYear)
            ->setParameter('endOfYear', $endOfYear);
 
-        if ($user !== 0 && $user !== null) {
+        if ($user !== 0) {
             $qb->andWhere('e.user = :user')
                ->setParameter('user', $user);
         }
@@ -761,7 +812,10 @@ class EntryRepository extends ServiceEntityRepository
                ->addOrderBy('e.start', 'DESC');
         }
 
-        return $qb->getQuery()->getResult();
+        $result = $qb->getQuery()->getResult();
+        assert(is_array($result) && array_is_list($result));
+        /** @var array<int, Entry> $result */
+        return $result;
     }
 
     /**
@@ -784,9 +838,15 @@ class EntryRepository extends ServiceEntityRepository
             return ['duration' => 0, 'count' => 0];
         }
 
+        $duration = $result['duration'] ?? 0;
+        $count = $result['count'] ?? 0;
+        
+        assert(is_numeric($duration));
+        assert(is_numeric($count));
+
         return [
-            'duration' => (int) ($result['duration'] ?? 0),
-            'count' => (int) ($result['count'] ?? 0),
+            'duration' => (int) $duration,
+            'count' => (int) $count,
         ];
     }
 
@@ -813,9 +873,12 @@ class EntryRepository extends ServiceEntityRepository
         $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
         
         return array_map(function (array $row): array {
+            $name = $row['name'];
+            $totalTime = $row['total_time'];
+            
             return [
-                'name' => $row['name'] ?? '',
-                'total_time' => (int) ($row['total_time'] ?? 0),
+                'name' => is_string($name) ? $name : '',
+                'total_time' => is_numeric($totalTime) ? (int) $totalTime : 0,
             ];
         }, $result);
     }
@@ -843,9 +906,12 @@ class EntryRepository extends ServiceEntityRepository
         $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
         
         return array_map(function (array $row): array {
+            $username = $row['username'];
+            $totalTime = $row['total_time'];
+            
             return [
-                'username' => $row['username'] ?? '',
-                'total_time' => (int) ($row['total_time'] ?? 0),
+                'username' => is_string($username) ? $username : '',
+                'total_time' => is_numeric($totalTime) ? (int) $totalTime : 0,
             ];
         }, $result);
     }
@@ -865,7 +931,7 @@ class EntryRepository extends ServiceEntityRepository
         
         // For Monday (1), we need to count back through the weekend
         // to reach the previous Friday for the first working day
-        if ($currentDayOfWeek === 1 && $workingDays > 0) {
+        if ($currentDayOfWeek === 1) {
             // Count the weekend (Saturday and Sunday) as calendar days
             $days = 2;
             // Move date to previous Friday
@@ -934,7 +1000,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $fromDate = $this->calculateFromDate($days);
 
-        return $this->findEntriesWithRelations()
+        $result = $this->findEntriesWithRelations()
             ->andWhere('e.user = :user')
             ->andWhere('e.day >= :fromDate')
             ->setParameter('user', $user)
@@ -943,6 +1009,10 @@ class EntryRepository extends ServiceEntityRepository
             ->addOrderBy('e.start', 'ASC')
             ->getQuery()
             ->getResult();
+            
+        assert(is_array($result) && array_is_list($result));
+        /** @var array<Entry> $result */
+        return $result;
     }
 
     /**
@@ -952,7 +1022,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, int $limit = 50): array
     {
-        return $this->createQueryBuilder('e')
+        $result = $this->createQueryBuilder('e')
             ->leftJoin('e.user', 'u')
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
@@ -971,17 +1041,23 @@ class EntryRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+            
+        assert(is_array($result) && array_is_list($result));
+        /** @var array<Entry> $result */
+        return $result;
     }
 
     /**
      * Gets entry summary data for display.
      *
+     * @param array<string, mixed> $data
      * @return array<string, array<string, mixed>>
      */
     public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
         $entry = $this->find($entryId);
         if (!$entry instanceof Entry) {
+            /** @var array<string, array<string, mixed>> $data */
             return $data;
         }
 
@@ -998,12 +1074,20 @@ class EntryRepository extends ServiceEntityRepository
             
             $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId()])->fetchAssociative();
             if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
+                
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
+                
                 $data['customer'] = [
                     'scope' => 'customer',
                     'name' => $result['name'] ?? '',
-                    'entries' => (int) ($result['entries'] ?? 0),
-                    'total' => (int) ($result['total'] ?? 0),
-                    'own' => (int) ($result['own'] ?? 0),
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
                     'estimation' => 0,
                 ];
             }
@@ -1020,13 +1104,23 @@ class EntryRepository extends ServiceEntityRepository
             
             $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId()])->fetchAssociative();
             if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
+                $estimation = $result['estimation'] ?? 0;
+                
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
+                assert(is_numeric($estimation));
+                
                 $data['project'] = [
                     'scope' => 'project',
                     'name' => $result['name'] ?? '',
-                    'entries' => (int) ($result['entries'] ?? 0),
-                    'total' => (int) ($result['total'] ?? 0),
-                    'own' => (int) ($result['own'] ?? 0),
-                    'estimation' => (int) ($result['estimation'] ?? 0),
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
+                    'estimation' => (int) $estimation,
                 ];
             }
         }
@@ -1042,12 +1136,20 @@ class EntryRepository extends ServiceEntityRepository
             
             $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId()])->fetchAssociative();
             if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
+                
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
+                
                 $data['activity'] = [
                     'scope' => 'activity',
                     'name' => $result['name'] ?? '',
-                    'entries' => (int) ($result['entries'] ?? 0),
-                    'total' => (int) ($result['total'] ?? 0),
-                    'own' => (int) ($result['own'] ?? 0),
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
                     'estimation' => 0,
                 ];
             }
@@ -1062,17 +1164,26 @@ class EntryRepository extends ServiceEntityRepository
             
             $result = $connection->executeQuery($sql, [$userId, $entry->getTicket()])->fetchAssociative();
             if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
+                
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
+                
                 $data['ticket'] = [
                     'scope' => 'ticket',
                     'name' => $entry->getTicket(),
-                    'entries' => (int) ($result['entries'] ?? 0),
-                    'total' => (int) ($result['total'] ?? 0),
-                    'own' => (int) ($result['own'] ?? 0),
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
                     'estimation' => 0,
                 ];
             }
         }
 
+        /** @var array<string, array<string, mixed>> $data */
         return $data;
     }
 
@@ -1083,12 +1194,12 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function findByDay(int $userId, string $day): array
     {
-        return $this->createQueryBuilder('e')
+        /** @var array<Entry> $result */
+        $result = $this->createQueryBuilder('e')
             ->leftJoin('e.user', 'u')
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
             ->leftJoin('e.activity', 'a')
-            
             ->where('e.user = :userId')
             ->andWhere('e.day = :day')
             ->setParameter('userId', $userId)
@@ -1096,6 +1207,8 @@ class EntryRepository extends ServiceEntityRepository
             ->orderBy('e.start', 'ASC')
             ->getQuery()
             ->getResult();
+        
+        return $result;
     }
 
     /**
@@ -1127,45 +1240,45 @@ class EntryRepository extends ServiceEntityRepository
         $qb = $this->findEntriesWithRelations();
 
         // Apply filters similar to queryByFilterArray but return results directly
-        if (isset($arFilter['customer']) && null !== $arFilter['customer']) {
+        if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
             $qb->andWhere('e.customer = :customer')
                 ->setParameter('customer', $arFilter['customer']);
         }
 
-        if (isset($arFilter['project']) && null !== $arFilter['project']) {
+        if (isset($arFilter['project']) && $arFilter['project'] !== '') {
             $qb->andWhere('e.project = :project')
                 ->setParameter('project', $arFilter['project']);
         }
 
-        if (isset($arFilter['activity']) && null !== $arFilter['activity']) {
+        if (isset($arFilter['activity']) && $arFilter['activity'] !== '') {
             $qb->andWhere('e.activity = :activity')
                 ->setParameter('activity', $arFilter['activity']);
         }
 
-        if (isset($arFilter['user']) && null !== $arFilter['user']) {
+        if (isset($arFilter['user']) && '' !== $arFilter['user']) {
             $qb->andWhere('e.user = :user')
                 ->setParameter('user', $arFilter['user']);
         }
 
-        if (isset($arFilter['datestart']) && null !== $arFilter['datestart']) {
+        if (isset($arFilter['datestart']) && $arFilter['datestart'] !== '') {
             $qb->andWhere('e.day >= :datestart')
                 ->setParameter('datestart', $arFilter['datestart']);
         }
 
-        if (isset($arFilter['dateend']) && null !== $arFilter['dateend']) {
+        if (isset($arFilter['dateend']) && $arFilter['dateend'] !== '') {
             $qb->andWhere('e.day <= :dateend')
                 ->setParameter('dateend', $arFilter['dateend']);
         }
 
-        // Apply limit if specified
-        if (isset($arFilter['maxResults'])) {
+        // Apply limit if specified with safe casting
+        if (isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults'])) {
             $qb->setMaxResults((int) $arFilter['maxResults']);
         }
 
-        // Apply pagination
-        if (isset($arFilter['page'])) {
+        // Apply pagination with safe casting
+        if (isset($arFilter['page']) && is_numeric($arFilter['page'])) {
             $page = (int) $arFilter['page'];
-            $maxResults = isset($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
+            $maxResults = isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
             $offset = $page * $maxResults;
             $qb->setFirstResult($offset);
         }
@@ -1173,6 +1286,8 @@ class EntryRepository extends ServiceEntityRepository
         $qb->orderBy('e.day', 'DESC')
            ->addOrderBy('e.start', 'DESC');
 
-        return $qb->getQuery()->getResult();
+        /** @var array<Entry> $result */
+        $result = $qb->getQuery()->getResult();
+        return $result;
     }
 }
