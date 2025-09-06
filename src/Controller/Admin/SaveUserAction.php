@@ -19,6 +19,10 @@ use function sprintf;
 
 final class SaveUserAction extends BaseController
 {
+    /**
+     * @throws \InvalidArgumentException When team IDs are invalid or missing teams are found
+     * @throws \UnexpectedValueException When user data mapping fails or validation errors occur
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
