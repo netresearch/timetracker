@@ -19,6 +19,16 @@ class CustomerRepository extends ServiceEntityRepository
     }
 
     /**
+     * Priority 2: Add explicit type-safe repository method for mixed type handling.
+     */
+    public function findOneById(int $id): ?Customer
+    {
+        $result = $this->find($id);
+        
+        return $result instanceof Customer ? $result : null;
+    }
+
+    /**
      * Returns an array of customers available for current user.
      *
      * @return array<int, array{customer: array{id:int, name:string, active:bool}}>

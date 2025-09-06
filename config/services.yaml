@@ -22,6 +22,9 @@ parameters:
     ldap_usessl: '%env(bool:LDAP_USESSL)%'
     ldap_create_user: '%env(bool:LDAP_CREATE_USER)%'
 
+imports:
+    - { resource: services/object_mapper.yaml }
+
 services:
     # Default configuration for services in *this* file
     _defaults:
@@ -124,11 +127,10 @@ services:
         tags:
             - { name: 'doctrine.repository_service' }
 
-    # Configure EntryRepository with optimizations
+    # Configure EntryRepository with correct parameters
     App\Repository\EntryRepository:
         arguments:
-            $managerRegistry: '@doctrine'
-            $clock: '@App\Service\ClockInterface'
+            $registry: '@doctrine'
             $timeCalculationService: '@App\Service\Util\TimeCalculationService'
         tags:
             - { name: 'doctrine.repository_service' }
@@ -143,7 +145,6 @@ services:
         arguments:
             $translator: '@translator'
 
-
     # Modern LDAP Service
     App\Service\Ldap\ModernLdapService:
         arguments:
@@ -151,7 +152,6 @@ services:
             $logger: '@?logger'
         tags:
             - { name: monolog.logger, channel: ldap }
-
 
     # Exception Subscriber for global error handling
     App\EventSubscriber\ExceptionSubscriber:
@@ -161,4 +161,3 @@ services:
         tags:
             - { name: kernel.event_subscriber }
             - { name: monolog.logger, channel: exception }
-

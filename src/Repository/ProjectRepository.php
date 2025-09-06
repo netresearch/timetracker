@@ -22,6 +22,16 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
+     * Priority 2: Add explicit type-safe repository method for mixed type handling.
+     */
+    public function findOneById(int $id): ?Project
+    {
+        $result = $this->find($id);
+        
+        return $result instanceof Project ? $result : null;
+    }
+
+    /**
      * Returns an array structure with keys of customer IDs and an "all" key.
      * Values are arrays of associative project arrays (id, name, jiraId, active).
      *
@@ -43,10 +53,10 @@ class ProjectRepository extends ServiceEntityRepository
             }
             /** @var array<string, mixed> $customerData */
             $customerId = ArrayTypeHelper::getInt($customerData, 'id');
-            if ($customerId === null) {
+            if (null === $customerId) {
                 continue;
             }
-            
+
             foreach ($userProjects as $userProject) {
                 $up = $userProject['project'] ?? null;
                 if (is_array($up) && ($customerId === ArrayTypeHelper::getInt($up, 'customer'))) {
@@ -150,16 +160,42 @@ class ProjectRepository extends ServiceEntityRepository
     public function findByCustomer(int $customerId = 0): array
     {
         /** @var array<int, Project> */
-        $result = $this->createQueryBuilder('project')
+        return $this->createQueryBuilder('project')
             ->where('project.global = 1 OR customer.id = :customerId')
             ->setParameter('customerId', $customerId)
             ->leftJoin('project.customer', 'customer')
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute();
-        return $result
+            ->execute()
         ;
+    }
+
+    /**
+     * @return array<int, array{id: int, name: string, customerId: int, customerName: string}>
+     */
+    public function getAllProjectsForAdmin(): array
+    {
+        $queryBuilder = $this->createQueryBuilder('p')
+            ->leftJoin('p.customer', 'c')
+            ->orderBy('p.name', 'ASC')
+        ;
+
+        /** @var Project[] $projects */
+        $projects = $queryBuilder->getQuery()->execute();
+
+        $data = [];
+        foreach ($projects as $project) {
+            $customer = $project->getCustomer();
+            $data[] = [
+                'id' => (int) ($project->getId() ?? 0),
+                'name' => (string) ($project->getName() ?? ''),
+                'customerId' => $customer ? (int) $customer->getId() : 0,
+                'customerName' => $customer ? (string) $customer->getName() : '',
+            ];
+        }
+
+        return $data;
     }
 
     public function isValidJiraPrefix(string $jiraId): int

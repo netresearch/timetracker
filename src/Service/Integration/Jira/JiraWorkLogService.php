@@ -13,6 +13,7 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 
+use function is_object;
 use function sprintf;
 
 /**
@@ -56,7 +57,7 @@ class JiraWorkLogService
         $entries = $entryRepository->findByUserAndTicketSystemToSync(
             (int) $user->getId(),
             (int) $ticketSystem->getId(),
-            $entryLimit,
+            $entryLimit ?? 50,
         );
 
         foreach ($entries as $entry) {
@@ -141,7 +142,7 @@ class JiraWorkLogService
         }
 
         // Update entry with work log ID
-        /** @var object{id: int|string} $workLog */
+        /* @var object{id: int|string} $workLog */
         $entry->setWorklogId((int) $workLog->id);
         $entry->setSyncedToTicketsystem(true);
     }
@@ -218,11 +219,11 @@ class JiraWorkLogService
     private function createWorkLog(string $ticket, array $data): mixed
     {
         $response = $this->httpClient->post(sprintf('issue/%s/worklog', $ticket), $data);
-        
+
         if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when creating work log', 500);
         }
-        
+
         return $response;
     }
 
@@ -234,11 +235,11 @@ class JiraWorkLogService
     private function updateWorkLog(string $ticket, int $workLogId, array $data): mixed
     {
         $response = $this->httpClient->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
-        
+
         if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when updating work log', 500);
         }
-        
+
         return $response;
     }
 
@@ -309,21 +310,64 @@ class JiraWorkLogService
 
     /**
      * Sync worklog for an entry with JIRA.
-     * 
-     * @param User $user
-     * @param TicketSystem $ticketSystem
-     * @param Entry $entry
+     *
      * @param array<string, mixed> $worklogData
+     *
      * @return array{worklogId: int|null}
      */
     public function syncWorkLog(User $user, TicketSystem $ticketSystem, Entry $entry, array $worklogData): array
     {
         // Update the entry's worklog
         $this->updateEntryWorkLog($entry);
-        
+
         // Return the worklog ID if it exists
         return [
             'worklogId' => $entry->getWorklogId(),
         ];
+    }
+
+    /**
+     * Validates connection to JIRA with user credentials.
+     *
+     * @throws JiraApiException
+     */
+    public function validateConnection(User $user, TicketSystem $ticketSystem): bool
+    {
+        try {
+            $this->authService->authenticate($user, $ticketSystem);
+            // Try a simple API call to validate connection
+            $response = $this->httpClient->get('myself');
+
+            return is_object($response) && property_exists($response, 'name');
+        } catch (Exception $e) {
+            throw new JiraApiException('JIRA connection validation failed: ' . $e->getMessage(), 0, null, $e);
+        }
+    }
+
+    /**
+     * Gets project information from JIRA.
+     *
+     * @throws JiraApiException
+     *
+     * @return array<string, mixed>
+     */
+    public function getProjectInfo(string $projectKey, User $user, TicketSystem $ticketSystem): array
+    {
+        try {
+            $this->authService->authenticate($user, $ticketSystem);
+            $response = $this->httpClient->get(sprintf('project/%s', $projectKey));
+
+            if (!is_object($response)) {
+                return [];
+            }
+
+            return [
+                'key' => $response->key ?? '',
+                'name' => $response->name ?? '',
+                'id' => $response->id ?? '',
+            ];
+        } catch (Exception $e) {
+            throw new JiraApiException('Failed to get JIRA project info: ' . $e->getMessage(), 0, null, $e);
+        }
     }
 }

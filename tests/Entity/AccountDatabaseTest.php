@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Tests\Entity;
 
 use App\Entity\Account;
+use App\Entity\Activity;
+use App\Entity\Customer;
 use App\Entity\Entry;
+use App\Entity\Project;
+use App\Entity\User;
 use App\Enum\EntryClass;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
@@ -21,7 +25,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    protected function setUp(): void
+    public function setUp(): void
     {
         parent::setUp();
         $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
@@ -29,161 +33,160 @@ final class AccountDatabaseTest extends AbstractWebTestCase
 
     public function testPersistAndFind(): void
     {
-        // Create a new Account
-        $account = new Account();
-        $account->setName('Test Database Account');
+        // Test data
+        $accountData = [
+            'name' => 'Test Account',
+        ];
 
-        // Persist to database
+        // Create account
+        $account = new Account();
+        $account->setName($accountData['name']);
+
+        // Persist and flush
         $this->entityManager->persist($account);
         $this->entityManager->flush();
 
-        // Get ID and clear entity manager to ensure fetch from DB
-        $id = $account->getId();
-        self::assertNotNull($id, 'Account ID should not be null after persist');
-        $this->entityManager->clear();
+        // Verify ID was assigned
+        static::assertNotNull($account->getId());
 
-        // Fetch from database and verify
-        $fetchedAccount = $this->entityManager->getRepository(Account::class)->find($id);
-        self::assertNotNull($fetchedAccount, 'Account was not found in database');
-        self::assertSame('Test Database Account', $fetchedAccount->getName());
-
-        // Clean up - remove the test entity
-        $this->entityManager->remove($fetchedAccount);
-        $this->entityManager->flush();
+        // Find by ID
+        $foundAccount = $this->entityManager->find(Account::class, $account->getId());
+        static::assertNotNull($foundAccount);
+        static::assertEquals($accountData['name'], $foundAccount->getName());
+        
+        // Test legacy method still works
+        static::assertEquals($accountData['name'], $foundAccount->getAccountName());
     }
 
-    public function testUpdate(): void
+    public function testAccountEntryRelationship(): void
     {
-        // Create a new Account
+        // Create account
         $account = new Account();
-        $account->setName('Account To Update');
+        $account->setName('Test Account for Entry');
 
-        // Persist to database
         $this->entityManager->persist($account);
         $this->entityManager->flush();
 
-        $id = $account->getId();
+        // Get user from database
+        $userRepository = $this->entityManager->getRepository(User::class);
+        $user = $userRepository->find(1);
+        if (!$user) {
+            // Create a test user if it doesn't exist
+            $user = new User();
+            $user->setUsername('test_user');
+            $user->setType('DEV');
+            $user->setLocale('en');
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+        }
+        
+        // Create required entities for the entry
+        $customer = new Customer();
+        $customer->setName('Test Customer');
+        $customer->setActive(true);
+        $this->entityManager->persist($customer);
+        
+        $project = new Project();
+        $project->setName('Test Project');
+        $project->setCustomer($customer);
+        $project->setActive(true);
+        $this->entityManager->persist($project);
+        
+        $activity = new Activity();
+        $activity->setName('Development');
+        $activity->setNeedsTicket(false);
+        $activity->setFactor(1.0);
+        $this->entityManager->persist($activity);
+        
+        // Create entry associated with account
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setDay('2024-01-15');
+        $entry->setStart('09:00:00');
+        $entry->setEnd('10:00:00');
+        $entry->setDuration(60);
+        $entry->setDescription('Test entry for account');
+        $entry->setClass(EntryClass::PLAIN);
+        $entry->setCustomer($customer);
+        $entry->setProject($project);
+        $entry->setActivity($activity);
+        $entry->setAccount($account);
+        $account->addEntry($entry); // Establish bidirectional relationship
 
-        // Update account
-        $account->setName('Updated Account');
+        $this->entityManager->persist($entry);
         $this->entityManager->flush();
-        $this->entityManager->clear();
 
-        // Fetch and verify updates
-        $updatedAccount = $this->entityManager->getRepository(Account::class)->find($id);
-        self::assertSame('Updated Account', $updatedAccount->getName());
+        // Verify relationship
+        static::assertEquals($account->getId(), $entry->getAccount()->getId());
 
-        // Clean up
-        $this->entityManager->remove($updatedAccount);
-        $this->entityManager->flush();
+        // Test the relationship from account side
+        $refreshedAccount = $this->entityManager->find(Account::class, $account->getId());
+        $accountEntries = $refreshedAccount->getEntries();
+
+        static::assertCount(1, $accountEntries);
+        static::assertEquals($entry->getId(), $accountEntries->first()->getId());
     }
 
-    public function testDelete(): void
+    public function testFindByName(): void
     {
-        // Create a new Account
+        // Create test account
         $account = new Account();
-        $account->setName('Account To Delete');
+        $account->setName('Name Test Account');
 
-        // Persist to database
         $this->entityManager->persist($account);
         $this->entityManager->flush();
 
-        $id = $account->getId();
+        // Find by name
+        $repository = $this->entityManager->getRepository(Account::class);
+        $foundByName = $repository->findOneBy([
+            'name' => 'Name Test Account',
+        ]);
 
-        // Delete account
-        $this->entityManager->remove($account);
-        $this->entityManager->flush();
-
-        // Verify account is deleted
-        $deletedAccount = $this->entityManager->getRepository(Account::class)->find($id);
-        self::assertNull($deletedAccount, 'Account should be deleted from database');
+        static::assertNotNull($foundByName);
+        static::assertEquals('Name Test Account', $foundByName->getName());
     }
 
-    public function testEntryRelationship(): void
+    public function testAccountValidation(): void
     {
-        // Create and persist account
         $account = new Account();
-        $account->setName('Account With Entries');
 
-        $this->entityManager->persist($account);
+        // Test required fields
+        static::expectException(\TypeError::class);
+        $account->setName(null);
+    }
 
-        // Create and add entries
-        $entry1 = new Entry();
-        $entry1->setAccount($account);
-        $entry1->setDay('2023-01-01');
-        $entry1->setStart('09:00');
-        $entry1->setEnd('10:00');
-        $entry1->setDuration(60);
-        $entry1->setTicket('TEST-001');
-        $entry1->setDescription('Test entry 1');
-        $entry1->setClass(EntryClass::PLAIN);
+    public function testMultipleAccountsCreation(): void
+    {
+        $accountsData = [
+            ['name' => 'Account 1'],
+            ['name' => 'Account 2'],
+            ['name' => 'Account 3'],
+        ];
 
-        $entry2 = new Entry();
-        $entry2->setAccount($account);
-        $entry2->setDay('2023-01-02');
-        $entry2->setStart('14:00');
-        $entry2->setEnd('16:00');
-        $entry2->setDuration(120);
-        $entry2->setTicket('TEST-002');
-        $entry2->setDescription('Test entry 2');
-        $entry2->setClass(EntryClass::PLAIN);
+        $createdAccounts = [];
 
-        $this->entityManager->persist($entry1);
-        $this->entityManager->persist($entry2);
-        $this->entityManager->flush();
+        foreach ($accountsData as $data) {
+            $account = new Account();
+            $account->setName($data['name']);
 
-        $accountId = $account->getId();
-
-        // Clear entity manager and fetch from database
-        $this->entityManager->clear();
-        $fetchedAccount = $this->entityManager->find(Account::class, $accountId);
-
-        // Test entry relationship
-        self::assertCount(2, $fetchedAccount->getEntries());
-        $entries = $fetchedAccount->getEntries();
-        $entryIds = [];
-        foreach ($entries as $entry) {
-            $entryIds[] = $entry->getId();
+            $this->entityManager->persist($account);
+            $createdAccounts[] = $account;
         }
 
-        // Clean up
-        foreach ($entries as $entry) {
-            $this->entityManager->remove($entry);
+        $this->entityManager->flush();
+
+        // Verify all accounts were created
+        foreach ($createdAccounts as $account) {
+            static::assertNotNull($account->getId());
         }
 
-        $this->entityManager->flush();
-        $this->entityManager->remove($fetchedAccount);
-        $this->entityManager->flush();
-    }
+        // Verify count
+        $repository = $this->entityManager->getRepository(Account::class);
+        $totalCount = $repository->createQueryBuilder('a')
+            ->select('COUNT(a.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
 
-    public function testQueryMethodsInRepository(): void
-    {
-        // Create test accounts
-        $account1 = new Account();
-        $account1->setName('Account1');
-
-        $account2 = new Account();
-        $account2->setName('Account2');
-
-        // Persist to database
-        $this->entityManager->persist($account1);
-        $this->entityManager->persist($account2);
-        $this->entityManager->flush();
-
-        // Test repository methods
-        $entityRepository = $this->entityManager->getRepository(Account::class);
-
-        // Test findAll
-        $allAccounts = $entityRepository->findAll();
-        self::assertGreaterThanOrEqual(2, count($allAccounts));
-
-        // Test findBy with criteria
-        $matchingAccounts = $entityRepository->findBy(['name' => 'Account1']);
-        self::assertCount(1, $matchingAccounts);
-
-        // Clean up
-        $this->entityManager->remove($account1);
-        $this->entityManager->remove($account2);
-        $this->entityManager->flush();
+        static::assertGreaterThanOrEqual(count($accountsData), $totalCount);
     }
 }

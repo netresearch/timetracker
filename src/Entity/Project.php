@@ -10,11 +10,12 @@ use App\Service\Util\TimeCalculationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
+use function in_array;
+
 #[ORM\Entity(repositoryClass: \App\Repository\ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
 class Project extends Base
 {
-
     /**
      * @var int|null
      */
@@ -83,8 +84,8 @@ class Project extends Base
     /**
      * Estimated project duration in minutes.
      */
-    #[ORM\Column(type: 'integer', name: 'estimation', nullable: true)]
-    protected ?int $estimation = null;
+    #[ORM\Column(type: 'integer', name: 'estimation', options: ['default' => 0])]
+    protected int $estimation = 0;
 
     /**
      * Offer number.
@@ -223,29 +224,23 @@ class Project extends Base
     public function toArray(): array
     {
         $data = parent::toArray();
-        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable($this->getEstimation() ?? 0, false);
+        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable($this->getEstimation(), false);
 
         return $data;
     }
 
     /**
      * Retrieve the id from the object, useful for hydration, etc.
-     *
-     * @return mixed the id
      */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
     /**
      * Set the id of the object, useful for hydration, etc.
-     *
-     * @param mixed $id the new id
-     *
-     * @return $this
      */
-    public function setId($id): static
+    public function setId(?int $id): static
     {
         $this->id = $id;
 
@@ -444,6 +439,9 @@ class Project extends Base
         return $this;
     }
 
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     */
     public function getEntries(): \Doctrine\Common\Collections\Collection
     {
         return $this->entries;
@@ -452,9 +450,9 @@ class Project extends Base
     /**
      * Returns the project's estimated duration.
      *
-     * @return int|null the estimation in minutes
+     * @return int the estimation in minutes
      */
-    public function getEstimation(): ?int
+    public function getEstimation(): int
     {
         return $this->estimation;
     }
@@ -462,11 +460,11 @@ class Project extends Base
     /**
      * Sets the project's estimated duration.
      *
-     * @param int|null $estimation the estimation in minutes
+     * @param int $estimation the estimation in minutes
      *
      * @return $this
      */
-    public function setEstimation(?int $estimation): static
+    public function setEstimation(int $estimation): static
     {
         $this->estimation = $estimation;
 
@@ -682,7 +680,7 @@ class Project extends Base
      */
     public function getInternalJiraTicketSystem(): ?string
     {
-        return $this->internalJiraTicketSystem;
+        return null !== $this->internalJiraTicketSystem ? (string) $this->internalJiraTicketSystem : null;
     }
 
     /**
@@ -690,7 +688,8 @@ class Project extends Base
      */
     public function hasInternalJiraProjectKey(): bool
     {
-        return !empty($this->internalJiraProjectKey) && !empty($this->internalJiraTicketSystem);
+        return null !== $this->internalJiraProjectKey && '' !== $this->internalJiraProjectKey
+            && null !== $this->internalJiraTicketSystem && '' !== $this->internalJiraTicketSystem;
     }
 
     /**
@@ -709,10 +708,13 @@ class Project extends Base
 
         // Support comma-separated list of project keys
         $projectKeys = array_map('trim', explode(',', $internalKey));
-        
+
         return in_array($jiraId, $projectKeys, true);
     }
 
+    /**
+     * @return \Doctrine\Common\Collections\Collection<int, Preset>
+     */
     public function getPresets(): \Doctrine\Common\Collections\Collection
     {
         return $this->presets;

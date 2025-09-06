@@ -15,6 +15,8 @@ final class SettingsControllerTest extends AbstractWebTestCase
 {
     public function testSaveAction(): void
     {
+        $this->logInSession('i.myself');
+        
         $parameter = [
             'locale' => 'de',
             'show_empty_line' => 1,
@@ -39,7 +41,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure($expectedJson);
         $this->queryBuilder->select('*')
             ->from('users')->where('id = :userId')
-            ->setParameter('userId', 1)
+            ->setParameter('userId', 3)
         ;
         $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
         $expectedDbEntry = [

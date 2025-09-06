@@ -53,8 +53,8 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         }
 
         $project = $entry->getProject();
-        // Remove estimation
-        $project->setEstimation(null);
+        // Remove estimation (set to 0)
+        $project->setEstimation(0);
 
         $em->persist($project);
         $em->flush();

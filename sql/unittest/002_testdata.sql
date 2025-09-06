@@ -40,7 +40,9 @@ SET
 INSERT INTO
   `activities` (`id`, `name`, `needs_ticket`, `factor`)
 VALUES
-  (1, 'Backen', 0, 1);
+  (1, 'Entwicklung', 0, 1),
+  (2, 'Tests', 0, 1),
+  (3, 'Weinen', 0, 1);
 
 --
 -- users
@@ -58,10 +60,11 @@ INSERT INTO
     `locale`
   )
 VALUES
-  (1, 'i.myself', 'IMY', 'PL', NULL, 0, 1, 1, 'de'),
+  (1, 'unittest', 'UTE', 'PL', NULL, 0, 1, 1, 'de'),
   (2, 'developer', 'NPL', 'DEV', NULL, 0, 1, 1, 'de'),
+  (3, 'i.myself', 'IMY', 'PL', NULL, 0, 1, 1, 'de'),
   (
-    3,
+    4,
     'testGroupByActionUser',
     'NPL',
     'DEV',
@@ -71,7 +74,7 @@ VALUES
     1,
     'de'
   ),
-  (4, 'noContract', 'NCO', 'PL', NULL, 0, 1, 1, 'de');
+  (5, 'noContract', 'NCO', 'PL', NULL, 0, 1, 1, 'de');
 
 --
 -- user contracts
@@ -119,9 +122,9 @@ VALUES
   ),
   (
     3,
-    2,
-    '1020-01-01',
+    3,
     '2020-01-01',
+    '2021-01-01',
     1,
     1,
     1,
@@ -130,7 +133,7 @@ VALUES
     1,
     1
   ),
-  (4, 3, '700-01-01', NULL, 1, 2, 3, 4, 5, 5, 5);
+  (4, 2, '2020-01-01', NULL, 1, 2, 3, 4, 5, 5, 5);
 
 --
 -- teams
@@ -139,7 +142,7 @@ INSERT INTO
   `teams` (`id`, `name`, `lead_user_id`)
 VALUES
   (1, 'Kuchenbäcker', 1),
-  (2, 'Hackerman', 1);
+  (2, 'Hackerman', 2);
 
 --
 -- users-to-teams
@@ -147,7 +150,8 @@ VALUES
 INSERT INTO
   `teams_users` (`team_id`, `user_id`)
 VALUES
-  (1, 1);
+  (1, 1),
+  (2, 2);
 
 --
 -- customers
@@ -157,7 +161,7 @@ INSERT INTO
 VALUES
   (1, 'Der Bäcker von nebenan', 1, 0),
   (2, 'Der nebenan vom Bäcker', 0, 0),
-  (3, 'Der Globale Customer', 0, 1);
+  (3, 'Der Globale Customer', 1, 1);
 
 --
 -- customers-to-teams
@@ -197,7 +201,7 @@ VALUES
   (
     1,
     1,
-    'Server attack',
+    'Das Kuchenbacken',
     'SA',
     NULL,
     1,
@@ -272,6 +276,14 @@ INSERT INTO
   )
 VALUES
   (1, 'Urlaub', 1, 1, 1, 'Urlaub');
+
+--
+-- holidays for 2020 (using day as primary key, no id column)
+--
+INSERT INTO
+  `holidays` (`day`, `name`)
+VALUES
+  ('2020-01-01', 'Neujahr');
 
 --
 -- activity entries for first user for today
@@ -418,6 +430,25 @@ VALUES
     'testGroupByActivityAction',
     20,
     3,
+    1,
+    0,
+    ''
+  ),
+  -- Entry for user ID 2 (developer) in February 2020 for tests
+  (
+    8,
+    '2020-02-08',
+    '09:00:00',
+    '14:30:00',
+    1,
+    1,
+    NULL,
+    1,
+    'testGetDataActionForParameter',
+    NULL,
+    'Test entry for developer',
+    330,
+    2,
     1,
     0,
     ''

@@ -94,9 +94,6 @@
     </UnusedClass>
   </file>
   <file src="src/Controller/Admin/GetTicketSystemsAction.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[getAllTicketSystems]]></code>
-    </MissingThrowsDocblock>
     <UnusedClass>
       <code><![CDATA[GetTicketSystemsAction]]></code>
     </UnusedClass>
@@ -119,55 +116,22 @@
     </UnusedClass>
   </file>
   <file src="src/Controller/Admin/SaveContractAction.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[findBy]]></code>
-      <code><![CDATA[new DateInterval('P1D')]]></code>
-      <code><![CDATA[new Response($responseMessage)]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[trans]]></code>
-    </MissingThrowsDocblock>
     <UnusedClass>
       <code><![CDATA[SaveContractAction]]></code>
     </UnusedClass>
   </file>
   <file src="src/Controller/Admin/SaveCustomerAction.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[map]]></code>
-      <code><![CDATA[map]]></code>
-      <code><![CDATA[map]]></code>
-      <code><![CDATA[new Response($this->translate('Every customer must belong to at least one team if it is not global.'))]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[trans]]></code>
-      <code><![CDATA[trans]]></code>
-    </MissingThrowsDocblock>
     <UnusedClass>
       <code><![CDATA[SaveCustomerAction]]></code>
     </UnusedClass>
   </file>
   <file src="src/Controller/Admin/SavePresetAction.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[new Response($this->translate('Please choose a customer, a project and an activity.'))]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[toArray]]></code>
-      <code><![CDATA[trans]]></code>
     </MissingThrowsDocblock>
     <UnusedClass>
       <code><![CDATA[SavePresetAction]]></code>
     </UnusedClass>
   </file>
   <file src="src/Controller/Admin/SaveProjectAction.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[map]]></code>
-      <code><![CDATA[map]]></code>
-      <code><![CDATA[map]]></code>
-      <code><![CDATA[new Response($this->translate('Please choose a customer.'))]]></code>
-      <code><![CDATA[new Response($this->translate('Please choose a customer.'))]]></code>
-      <code><![CDATA[new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'))]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[trans]]></code>
-    </MissingThrowsDocblock>
     <TypeDoesNotContainType>
       <code><![CDATA[false === $objectRepository->isValidJiraPrefix($jiraId)]]></code>
     </TypeDoesNotContainType>
@@ -176,15 +140,6 @@
     </UnusedClass>
   </file>
   <file src="src/Controller/Admin/SaveTeamAction.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[new Response($this->translate('Error on save') . ': ' . $exception->getMessage())]]></code>
-      <code><![CDATA[new Response($this->translate('Please provide a valid user as team leader.'))]]></code>
-      <code><![CDATA[new Response($this->translate('The team name provided already exists.'))]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[trans]]></code>
-    </MissingThrowsDocblock>
     <PossiblyNullReference>
       <code><![CDATA[getId]]></code>
     </PossiblyNullReference>
@@ -243,22 +198,6 @@
     </UnusedClass>
   </file>
   <file src="src/Controller/BaseController.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[getUser]]></code>
-      <code><![CDATA[getUser]]></code>
-      <code><![CDATA[getUser]]></code>
-      <code><![CDATA[isGranted]]></code>
-      <code><![CDATA[isGranted]]></code>
-      <code><![CDATA[new Response($message)]]></code>
-      <code><![CDATA[new Response($message)]]></code>
-      <code><![CDATA[new Response($message)]]></code>
-      <code><![CDATA[new Response($this->generateUrl('_login'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN)]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[setStatusCode]]></code>
-      <code><![CDATA[throw new AccessDeniedException('No user logged in')]]></code>
-      <code><![CDATA[trans]]></code>
-    </MissingThrowsDocblock>
     <MixedAssignment>
       <code><![CDATA[$rawToken]]></code>
       <code><![CDATA[$session]]></code>
@@ -339,10 +278,6 @@
     </UnusedClass>
   </file>
   <file src="src/Controller/Default/ExportCsvAction.php">
-    <MissingThrowsDocblock>
-      <code><![CDATA[findByRecentDaysOfUser]]></code>
-      <code><![CDATA[new Response()]]></code>
-    </MissingThrowsDocblock>
     <UnusedClass>
       <code><![CDATA[ExportCsvAction]]></code>
     </UnusedClass>

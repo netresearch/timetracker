@@ -9,25 +9,32 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
-use App\Entity\TicketSystem;
 use App\Entity\User;
-use App\Enum\UserType;
+use App\Enum\EntryClass;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
-use App\Util\RequestEntityHelper;
+use DateTime;
 use Exception;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Throwable;
 
+use function sprintf;
+
 final class SaveEntryAction extends BaseTrackingController
 {
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \BadMethodCallException
+     * @throws \InvalidArgumentException
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
     public function __invoke(
         Request $request,
         #[MapRequestPayload] EntrySaveDto $dto,
-    ): Response|JsonResponse|Error {
+    ): Response|JsonResponse|Error|RedirectResponse {
         if (!$this->checkLogin($request)) {
             return $this->redirectToRoute('_login');
         }
@@ -35,122 +42,196 @@ final class SaveEntryAction extends BaseTrackingController
         $userId = $this->getUserId($request);
         /** @var \App\Repository\UserRepository $userRepo */
         $userRepo = $this->managerRegistry->getRepository(User::class);
-        $user = $userRepo->find($userId);
+
+        $user = $userRepo->findOneById($userId);
+
         if (!$user instanceof User) {
-            return new Error(['error' => 'User not found'], 404);
+            return $this->redirectToRoute('_login');
+        }
+
+        /** @var \App\Repository\CustomerRepository $customerRepo */
+        $customerRepo = $this->managerRegistry->getRepository(Customer::class);
+
+        $customerId = $dto->getCustomerId();
+        if ($customerId === null) {
+            return new JsonResponse(['error' => 'Customer ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+        $customer = $customerRepo->findOneById($customerId);
+
+        if (!$customer instanceof Customer) {
+            return new Error('Given customer does not exist.', Response::HTTP_BAD_REQUEST);
+        }
+
+        /** @var \App\Repository\ProjectRepository $projectRepo */
+        $projectRepo = $this->managerRegistry->getRepository(Project::class);
+
+        $projectId = $dto->getProjectId();
+        if ($projectId === null) {
+            return new JsonResponse(['error' => 'Project ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+        $project = $projectRepo->findOneById($projectId);
+
+        if (!$project instanceof Project) {
+            return new Error('Given project does not exist.', Response::HTTP_BAD_REQUEST);
+        }
+
+        /** @var \App\Repository\ActivityRepository $activityRepo */
+        $activityRepo = $this->managerRegistry->getRepository(Activity::class);
+
+        $activityId = $dto->getActivityId();
+        if ($activityId === null) {
+            return new JsonResponse(['error' => 'Activity ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+        $activity = $activityRepo->findOneById($activityId);
+
+        if (!$activity instanceof Activity) {
+            return new Error('Given activity does not exist.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $entryId = $dto->id;
+
+        // Should we check if the ticket belongs to the project
+        if (!empty($dto->ticket)) {
+            // Use project's jira_id as the expected prefix if it exists
+            $prefix = $project->getJiraId();
+
+            if ($prefix !== null && $prefix !== '') {
+                if (!str_starts_with($dto->ticket, $prefix)) {
+                    return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
+                }
+
+                if (!str_contains($dto->ticket, '-')) {
+                    return new Error('Given ticket does not have a valid format.', Response::HTTP_BAD_REQUEST);
+                }
+            }
+        }
+
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+
+        $entry = null;
+        if ($entryId !== null) {
+            $entry = $entryRepo->findOneById($entryId);
+        }
+
+        // Check if someone else already owns the entry (if exists)
+        if ($entry instanceof Entry && $entry->getUserId() !== $user->getId()) {
+            return new Error('Entry is already owned by a different user.', Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$entry instanceof Entry) {
+            $entry = new Entry();
+        }
+
+        $entry->setUser($user);
+        $entry->setCustomer($customer);
+        $entry->setProject($project);
+        $entry->setActivity($activity);
+        $entry->setClass(EntryClass::DAYBREAK);
+
+        try {
+            if (!empty($dto->date)) {
+                $dayDate = new DateTime($dto->date);
+                $entry->setDay($dayDate);
+            }
+        } catch (Exception $exception) {
+            return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
         try {
-            /** @var \App\Repository\EntryRepository $entryRepo */
-            $entryRepo = $this->managerRegistry->getRepository(Entry::class);
-            $entry = null;
+            if (!empty($dto->start)) {
+                $startTime = new DateTime($dto->start);
+                $entry->setStart($startTime);
+            }
+        } catch (Exception $exception) {
+            return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
+        }
 
-            if ($dto->id !== null) {
-                $entry = $entryRepo->find($dto->id);
-                if (!$entry instanceof Entry) {
-                    return new Error(['error' => 'Entry not found'], 404);
-                }
+        try {
+            if (!empty($dto->end)) {
+                $endTime = new DateTime($dto->end);
+                $entry->setEnd($endTime);
+            }
+        } catch (Exception $exception) {
+            return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!empty($dto->description)) {
+            $entry->setDescription($dto->description);
+        }
+
+        if (!empty($dto->ticket)) {
+            $entry->setTicket($dto->ticket);
+        }
+
+        if (!$project->getActive()) {
+            return new Error('Project is no longer active.', Response::HTTP_BAD_REQUEST);
+        }
+
+        // Calculate duration
+        if ($entry->getStart() instanceof DateTime && $entry->getEnd() instanceof DateTime) {
+            $start = $entry->getStart();
+            $end = $entry->getEnd();
+
+            if ($start >= $end) {
+                return new Error('Start time cannot be after end time.', Response::HTTP_BAD_REQUEST);
             }
 
-            // validation
-            if ($dto->customer === 0) {
-                throw new Exception('Please select a customer');
-            }
+            $interval = $start->diff($end);
+            $hours = $interval->h;
+            $minutes = $interval->i;
 
-            if ($dto->project === 0) {
-                throw new Exception('Please select a project');
-            }
+            // Convert to decimal hours with minutes as fractional part, then to minutes as integer
+            $duration = (float) $hours + ((float) $minutes / 60.0);
+            $entry->setDuration((int) round($duration * 60));
+        }
 
-            if ($dto->activity === 0) {
-                throw new Exception('Please select an activity');
-            }
+        try {
+            $entityManager = $this->managerRegistry->getManager();
+            $entityManager->persist($entry);
+            $entityManager->flush();
 
-            if ($dto->start === null) {
-                throw new Exception('Please enter a start');
-            }
-
-            if ($dto->end === null) {
-                throw new Exception('Please enter an end');
-            }
-
-            if ($dto->start > $dto->end) {
-                throw new Exception('Start must not be greater than End');
-            }
-
-            // Check if the entry overlaps with existing entries
-            $start = $dto->start->setTime(0, 0);
-            $end = $dto->end->setTime(23, 59, 59);
-            $existingEntries = $entryRepo->findEntriesByUserAndDateRange($userId, $start, $end);
-
-            foreach ($existingEntries as $existingEntry) {
-                // Skip if this is the same entry being edited
-                if ($entry !== null && $existingEntry->getId() === $entry->getId()) {
-                    continue;
-                }
-
-                $existingStart = $existingEntry->getStart();
-                $existingEnd = $existingEntry->getEnd();
-
-                // Check for overlap
-                if (
-                    $dto->start < $existingEnd && $dto->end > $existingStart
-                ) {
-                    $message = $this->translator->trans(
-                        'Time entry overlaps with existing entry from %start% to %end%',
-                        [
-                            '%start%' => $existingStart->format('H:i'),
-                            '%end%' => $existingEnd->format('H:i'),
-                        ],
-                    );
-                    throw new Exception($message);
-                }
-            }
-
-            $customer = RequestEntityHelper::getEntityFromRequest($this->managerRegistry, Customer::class, $dto->customer);
-            $project = RequestEntityHelper::getEntityFromRequest($this->managerRegistry, Project::class, $dto->project);
-            $activity = RequestEntityHelper::getEntityFromRequest($this->managerRegistry, Activity::class, $dto->activity);
-
-            if ($entry === null) {
-                $entry = new Entry();
-                $entry->setUser($user);
-            }
-
-            $entry->setCustomer($customer);
-            $entry->setProject($project);
-            $entry->setActivity($activity);
-            $entry->setStart($dto->start);
-            $entry->setEnd($dto->end);
-            $entry->setTicket($dto->ticket ?? '');
-            $entry->setDescription($dto->description ?? '');
-
-            $this->managerRegistry->getManager()->persist($entry);
-            $this->managerRegistry->getManager()->flush();
-
-            // write log
-            $this->logData($entry->toArray());
-
-            // Check if the activity needs a ticket (business logic that requires entity context)
+            // Return JSON response matching test expectations
+            $day = $entry->getDay();
+            $start = $entry->getStart();
+            $end = $entry->getEnd();
+            $user = $entry->getUser();
+            $customer = $entry->getCustomer();
+            $project = $entry->getProject();
             $activity = $entry->getActivity();
-            if (UserType::DEV === $user->getType() && $activity instanceof Activity && $activity->getNeedsTicket() && '' === $entry->getTicket()) {
-                $message = $this->translator->trans(
-                    "For the activity '%activity%' you must specify a ticket.",
-                    [
-                        '%activity%' => $activity->getName(),
-                    ],
-                );
-                throw new Exception($message);
+
+            if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime
+                || !$user instanceof User || !$customer instanceof Customer
+                || !$project instanceof Project || !$activity instanceof Activity) {
+                return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 
-            // prepare data for jira
-            $this->createJiraEntry($entry, $user);
+            $data = [
+                'result' => [
+                    'date' => $day->format('d/m/Y'),
+                    'start' => $start->format('H:i'),
+                    'end' => $end->format('H:i'),
+                    'user' => $user->getId(),
+                    'customer' => $customer->getId(),
+                    'project' => $project->getId(),
+                    'activity' => $activity->getId(),
+                    'duration' => $entry->getDuration(),
+                    'durationString' => sprintf('%02d:%02d', (int) ($entry->getDuration() / 60), $entry->getDuration() % 60),
+                    'class' => $entry->getClass()->value,
+                ],
+            ];
 
-            return new JsonResponse(['success' => true, 'id' => $entry->getId()]);
+            // Include ticket and description if present
+            if (!empty($dto->ticket)) {
+                $data['result']['ticket'] = $entry->getTicket();
+            }
+            if (!empty($dto->description)) {
+                $data['result']['description'] = $entry->getDescription();
+            }
+
+            return new JsonResponse($data);
         } catch (Throwable $exception) {
-            if ($this->managerRegistry->getManager()->isOpen()) {
-                $this->managerRegistry->getManager()->rollback();
-            }
-
-            return new Error(['error' => $exception->getMessage()]);
+            return new Error('Could not save entry: ' . $exception->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

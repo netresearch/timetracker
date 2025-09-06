@@ -74,6 +74,21 @@ Migration Notes
 - No change in intended status codes: authenticated PL users receive 200 on success; DTO validation stays 422; business-rule conflicts stay 406.
 - Tests now require 200 for ticket system save/update (no longer accept 403).
 
+## 2025-09-05 — Authorization bypass fixes and test environment improvements
+
+- Enhanced security posture: unauthorized access to protected routes now consistently returns 403 Forbidden instead of mixed redirect/error responses.
+- Test environment security configuration updated to use proper form_login authentication instead of disabled security.
+- Project save operations now handle null jiraId/jiraTicket values properly (previously defaulted to empty strings).
+
+### Impact
+- Applications relying on specific redirect behavior for unauthorized access may need to handle 403 responses.
+- Test suites now validate proper authorization behavior with session-based authentication.
+- Project jiraId and jiraTicket fields maintain their nullable database constraints correctly.
+
+### Technical Notes
+- Ticket validation in SaveEntryAction now uses project jira_id for prefix validation instead of non-existent ticket system prefix methods.
+- PHP 8.4 compatibility improvements: resolved nullable parameter deprecations and ObjectMapper transform issues.
+
 ## 2025-08-30 — Admin save endpoints: error codes unified
 
 - Unexpected exceptions during save now return 500 Internal Server Error (previously 403 Forbidden in some actions).

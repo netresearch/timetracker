@@ -41,7 +41,7 @@ final class DeleteUserAction extends BaseController
                 $reason = $this->translate('Other datasets refer to this one.');
             }
 
-            $msg = 'Der Datensatz konnte nicht enfernt werden! ';
+            $msg = 'Der Datensatz konnte nicht enfernt werden! ' . $reason;
 
             return new Error($msg, \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
         }

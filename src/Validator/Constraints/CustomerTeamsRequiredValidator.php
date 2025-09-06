@@ -8,8 +8,6 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
-use function is_object;
-
 class CustomerTeamsRequiredValidator extends ConstraintValidator
 {
     public function validate(mixed $value, Constraint $constraint): void

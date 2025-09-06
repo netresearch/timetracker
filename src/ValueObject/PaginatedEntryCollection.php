@@ -33,7 +33,7 @@ final readonly class PaginatedEntryCollection
         foreach ($this->entries as $entry) {
             $flatEntry = $entry->toArray();
             unset($flatEntry['class']);
-            
+
             // Add computed/formatted fields
             $flatEntry['date'] = $entry->getDay()->format('Y-m-d');
             $flatEntry['user_id'] = $flatEntry['user'];
@@ -41,16 +41,16 @@ final readonly class PaginatedEntryCollection
             $flatEntry['customer_id'] = $flatEntry['customer'];
             $flatEntry['activity_id'] = $flatEntry['activity'];
             $flatEntry['worklog_id'] = $flatEntry['worklog'];
-            
+
             // Remove original keys that were renamed
             unset(
-                $flatEntry['user'], 
-                $flatEntry['project'], 
-                $flatEntry['customer'], 
-                $flatEntry['activity'], 
-                $flatEntry['worklog']
+                $flatEntry['user'],
+                $flatEntry['project'],
+                $flatEntry['customer'],
+                $flatEntry['activity'],
+                $flatEntry['worklog'],
             );
-            
+
             $entryList[] = $flatEntry;
         }
 
@@ -62,10 +62,10 @@ final readonly class PaginatedEntryCollection
      */
     public function getLastPage(): int
     {
-        if ($this->totalCount === 0) {
+        if (0 === $this->totalCount) {
             return 0;
         }
-        
+
         return (int) ceil($this->totalCount / $this->maxResults) - 1;
     }
 

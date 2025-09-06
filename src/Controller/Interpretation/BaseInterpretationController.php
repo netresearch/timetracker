@@ -11,6 +11,8 @@ use DateInterval;
 use DateTime;
 use Exception;
 
+use function is_string;
+
 abstract class BaseInterpretationController extends BaseController
 {
     /**
@@ -42,6 +44,7 @@ abstract class BaseInterpretationController extends BaseController
     {
         $nameA = isset($a['name']) && is_string($a['name']) ? $a['name'] : '';
         $nameB = isset($b['name']) && is_string($b['name']) ? $b['name'] : '';
+
         return strcmp($nameB, $nameA);
     }
 

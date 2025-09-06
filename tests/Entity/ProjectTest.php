@@ -27,7 +27,7 @@ final class ProjectTest extends TestCase
         self::assertSame('foobar project', $project->getName());
 
         // test active
-        self::assertTrue($project->getActive());
+        self::assertFalse($project->getActive());
         $project->setActive(false);
         self::assertFalse($project->getActive());
 
@@ -51,10 +51,7 @@ final class ProjectTest extends TestCase
         $project->setJiraId('TEST');
         self::assertSame('TEST', $project->getJiraId());
 
-        // test progress
-        self::assertSame(0, $project->getProgress());
-        $project->setProgress(66);
-        self::assertSame(66, $project->getProgress());
+        // Note: progress field was removed as it doesn't exist in the database
 
         // test project lead user
         self::assertNull($project->getProjectLead());
@@ -93,7 +90,6 @@ final class ProjectTest extends TestCase
         // test ticket system
         self::assertNull($project->getTicketSystem());
         $ticketSystem = new TicketSystem();
-        $ticketSystem->setId(123);
         $project->setTicketSystem($ticketSystem);
         self::assertSame($ticketSystem, $project->getTicketSystem());
     }

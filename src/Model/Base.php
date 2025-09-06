@@ -2,10 +2,6 @@
 
 declare(strict_types=1);
 
-/**
- * Copyright (c) 2018. Netresearch GmbH & Co. KG | Netresearch DTT GmbH.
- */
-
 namespace App\Model;
 
 use ReflectionClass;
@@ -14,12 +10,8 @@ use ReflectionProperty;
 
 use function is_object;
 
-/*
- * Base model
- */
-
 /**
- * Class Base.
+ * Base model class with common functionality.
  */
 class Base
 {
@@ -40,6 +32,11 @@ class Base
             $value = $this->{$method}();
             if (is_object($value) && method_exists($value, 'getId')) {
                 $value = $value->getId();
+            }
+
+            // Handle enums by converting to their backing value
+            if (is_object($value) && enum_exists($value::class) && property_exists($value, 'value')) {
+                $value = $value->value;
             }
 
             $name = $reflectionProperty->getName();

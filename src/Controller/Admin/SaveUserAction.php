@@ -19,6 +19,10 @@ use function sprintf;
 
 final class SaveUserAction extends BaseController
 {
+    /**
+     * @throws \InvalidArgumentException When team IDs are invalid or missing teams are found
+     * @throws \UnexpectedValueException When user data mapping fails or validation errors occur
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
@@ -40,29 +44,29 @@ final class SaveUserAction extends BaseController
         $objectMapper->map($userSaveDto, $user);
 
         $user->resetTeams();
-        
+
         // Filter out empty team IDs
         $validTeamIds = array_filter(
-            array_map(static fn($id) => (int) $id, $userSaveDto->teams),
-            static fn($id) => $id > 0
+            array_map(static fn ($id) => (int) $id, $userSaveDto->teams),
+            static fn ($id) => $id > 0,
         );
-        
+
         if (!empty($validTeamIds)) {
             // Fetch all teams in a single query to avoid N+1 problem
             $teams = $this->doctrineRegistry->getRepository(Team::class)->findBy(['id' => $validTeamIds]);
             $foundTeamIds = [];
-            
+
             foreach ($teams as $team) {
                 $user->addTeam($team);
                 $foundTeamIds[] = $team->getId();
             }
-            
+
             // Check if any requested teams were not found
             $missingTeamIds = array_diff($validTeamIds, $foundTeamIds);
             if (!empty($missingTeamIds)) {
                 $response = new Response(sprintf(
-                    $this->translate('Could not find team(s) with ID(s): %s.'), 
-                    implode(', ', $missingTeamIds)
+                    $this->translate('Could not find team(s) with ID(s): %s.'),
+                    implode(', ', $missingTeamIds),
                 ));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 

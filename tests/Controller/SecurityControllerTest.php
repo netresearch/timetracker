@@ -13,7 +13,7 @@ use Tests\AbstractWebTestCase;
  */
 final class SecurityControllerTest extends AbstractWebTestCase
 {
-    public function testAccessToProtectedRouteRedirectsToLogin(): void
+    public function testAccessToProtectedRouteReturnsForbidden(): void
     {
         // Clear session to simulate not being logged in
         $session = $this->client->getContainer()->get('session');
@@ -25,13 +25,20 @@ final class SecurityControllerTest extends AbstractWebTestCase
             $this->client->getContainer()->get('security.token_storage')->setToken(null);
         }
 
-        // Try to access a protected route
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling/export');
+        // Try to access a protected route with only text/html accept header
+        $this->client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            '/controlling/export',
+            [],
+            [],
+            [
+                'HTTP_ACCEPT' => 'text/html',
+                'HTTP_USER_AGENT' => 'Mozilla/5.0',
+            ]
+        );
 
-        // Should redirect to login
-        $this->assertStatusCode(302);
-        $response = $this->client->getResponse();
-        self::assertStringContainsString('/login', $response->headers->get('Location'));
+        // Should return forbidden (improved security behavior)
+        $this->assertStatusCode(403);
     }
 
     public function testLoggedInUserCanAccessProtectedRoute(): void
@@ -70,7 +77,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Group('network')]
-    public function testLogoutReturnsToLogin(): void
+    public function testLogoutClearsAuthenticationAndReturnsForbidden(): void
     {
         // When a user is logged in
         $this->logInSession('unittest');
@@ -89,11 +96,16 @@ final class SecurityControllerTest extends AbstractWebTestCase
         $tokenStorage = $this->client->getContainer()->get('security.token_storage');
         self::assertNull($tokenStorage->getToken());
 
-        // Try to access a protected route again
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
+        // Try to access a protected route again with browser-like headers
+        $this->client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            '/getUsers',
+            [],
+            [],
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+        );
 
-        // Should be redirected to login
-        $this->assertStatusCode(302);
-        self::assertStringContainsString('/login', $this->client->getResponse()->headers->get('Location'));
+        // Should return forbidden (improved security behavior)
+        $this->assertStatusCode(403);
     }
 }

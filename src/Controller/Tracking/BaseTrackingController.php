@@ -7,20 +7,20 @@ namespace App\Controller\Tracking;
 use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\Project;
-use App\Enum\EntryClass;
-use App\Enum\TicketSystemType;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\EntryClass;
+use App\Enum\TicketSystemType;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Util\TicketService;
+use DateInterval;
 use DateTime;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 use function count;
-use function is_object;
 use function sprintf;
 
 abstract class BaseTrackingController extends BaseController
@@ -89,6 +89,8 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Set rendering classes for pause, overlap and daybreak.
+     *
+     * @throws Exception when database operations fail
      */
     protected function calculateClasses(int $userId, string $day): void
     {
@@ -100,7 +102,7 @@ abstract class BaseTrackingController extends BaseController
         $objectManager = $managerRegistry->getManager();
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $objectManager->getRepository(Entry::class);
-        $entries = $objectRepository->getEntriesByUserAndDay($userId, $day);
+        $entries = $objectRepository->findByDay($userId, $day);
 
         if (0 === count($entries)) {
             return;
@@ -108,37 +110,36 @@ abstract class BaseTrackingController extends BaseController
 
         $normalizedEntries = [];
         foreach ($entries as $entry) {
-            if ($entry instanceof Entry) {
-                $normalizedEntries[] = [
-                    'id' => (int) $entry->getId(),
-                    'start' => $entry->getStart(),
-                    'end' => $entry->getEnd(),
-                ];
-            }
+            // No need for instanceof check - findByDay always returns Entry[]
+            $normalizedEntries[] = [
+                'id' => (int) $entry->getId(),
+                'start' => $entry->getStart(),
+                'end' => $entry->getEnd(),
+            ];
         }
 
         if (0 === count($normalizedEntries)) {
             return;
         }
 
-        // Sort by start time
-        usort($normalizedEntries, static function (array $a, array $b): int {
-            return $a['start'] <=> $b['start'];
-        });
+        // Sort by start time - no isset check needed, structure is guaranteed
+        usort($normalizedEntries, static fn (array $a, array $b): int => 
+            $a['start'] <=> $b['start']
+        );
 
         // Calculate overlaps
-        for ($i = 0; $i < count($normalizedEntries); $i++) {
-            for ($j = $i + 1; $j < count($normalizedEntries); $j++) {
+        for ($i = 0; $i < count($normalizedEntries); ++$i) {
+            for ($j = $i + 1; $j < count($normalizedEntries); ++$j) {
                 if ($normalizedEntries[$i]['end'] > $normalizedEntries[$j]['start']) {
                     // Mark both as overlapping
-                    $this->addEntryClass($normalizedEntries[$i]['id'], EntryClass::OVERLAPPING);
-                    $this->addEntryClass($normalizedEntries[$j]['id'], EntryClass::OVERLAPPING);
+                    $this->addEntryClass($normalizedEntries[$i]['id'], EntryClass::OVERLAP);
+                    $this->addEntryClass($normalizedEntries[$j]['id'], EntryClass::OVERLAP);
                 }
             }
         }
 
         // Calculate pauses and day breaks
-        for ($i = 0; $i < count($normalizedEntries) - 1; $i++) {
+        for ($i = 0; $i < count($normalizedEntries) - 1; ++$i) {
             $current = $normalizedEntries[$i];
             $next = $normalizedEntries[$i + 1];
 
@@ -187,7 +188,7 @@ abstract class BaseTrackingController extends BaseController
         $ticketSystem = $project->getTicketSystem();
 
         // Support for internal jira project and ticket system
-        if ($project && $project->hasInternalJiraProjectKey()) {
+        if ($project->hasInternalJiraProjectKey()) {
             $this->validateTicketProjectMatch($entry, $project);
 
             /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
@@ -217,7 +218,7 @@ abstract class BaseTrackingController extends BaseController
                     'error' => $exception->getMessage(),
                 ]);
             }
-            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0, $exception);
+            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0, null);
         }
     }
 
@@ -226,6 +227,7 @@ abstract class BaseTrackingController extends BaseController
      * Extracts the project key from the ticket and validates against project JIRA IDs.
      *
      * @throws Exception when ticket project doesn't match
+     * @throws RuntimeException when ticket service is not available
      */
     protected function validateTicketProjectMatch(Entry $entry, Project $project): void
     {
@@ -244,7 +246,7 @@ abstract class BaseTrackingController extends BaseController
         }
 
         $projectJiraId = $project->getJiraId();
-        if ('' === $projectJiraId) {
+        if ('' === $projectJiraId || null === $projectJiraId) {
             return;
         }
 
@@ -320,6 +322,8 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Creates a Ticket in the given ticketSystem.
+     *
+     * @throws JiraApiException when ticket system configuration is invalid or API call fails
      */
     protected function createTicket(
         Entry $entry,
@@ -345,6 +349,8 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Handles the entry for the configured internal ticketsystem.
+     *
+     * @throws JiraApiException when JIRA API operations fail
      */
     protected function handleInternalJiraTicketSystem(Entry $entry, Entry $oldEntry): void
     {
@@ -363,7 +369,10 @@ abstract class BaseTrackingController extends BaseController
         }
 
         if ('' === $oldEntry->getTicket()) {
-            $this->createJiraEntry($entry, $entry->getUser());
+            $user = $entry->getUser();
+            if ($user instanceof User) {
+                $this->createJiraEntry($entry, $user);
+            }
         } else {
             $this->updateJiraWorklog($entry, $oldEntry, $ticketSystem);
         }
@@ -380,6 +389,7 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Gets a DateTime object from a date string or returns null.
+     * Catches parsing exceptions internally and returns null on failure.
      */
     protected function getDateTimeFromString(?string $dateString): ?DateTime
     {
@@ -412,9 +422,9 @@ abstract class BaseTrackingController extends BaseController
             throw new Exception('Entry start time must be before end time');
         }
 
-        $maxDuration = new \DateInterval('PT23H59M');
+        $maxDuration = new DateInterval('PT23H59M');
         $duration = $start->diff($end);
-        
+
         if ($duration->days > 0 || $duration->h > 23) {
             throw new Exception('Entry duration cannot exceed 24 hours');
         }
@@ -447,7 +457,7 @@ abstract class BaseTrackingController extends BaseController
         $hours = intdiv($minutes, 60);
         $mins = $minutes % 60;
 
-        if ($mins === 0) {
+        if (0 === $mins) {
             return sprintf('%dh', $hours);
         }
 

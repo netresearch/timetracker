@@ -53,7 +53,7 @@ final class NrArrayTranslatorTest extends TestCase
     /**
      * setup the symfony translator and the NrArrayTranslator for this test.
      */
-    protected function setUp(): void
+    public function setUp(): void
     {
         $this->translator = new Translator('de');
         $this->nrArrayTranslator = new NrArrayTranslator($this->translator);

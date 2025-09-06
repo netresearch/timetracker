@@ -15,7 +15,7 @@ use Tests\AbstractWebTestCase;
  */
 final class HolidayDatabaseTest extends AbstractWebTestCase
 {
-    protected function setUp(): void
+    public function setUp(): void
     {
         parent::setUp();
     }

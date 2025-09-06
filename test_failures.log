@@ -1,0 +1,187 @@
+Generating unittest SQL file from sql/full.sql
+sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
+docker compose run --rm -e APP_ENV=test app-dev php -d memory_limit=512M ./bin/phpunit
+ Container timetracker-db-test-1  Running
+ Container timetracker-db-1  Running
+PHPUnit 12.3.6 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.12
+Configuration: /var/www/html/phpunit.xml
+
+...............................................................  63 / 312 ( 20%)
+............................................................... 126 / 312 ( 40%)
+..........D.D.......FFF........................................ 189 / 312 ( 60%)
+........F..F......F....F...DD...............SSSSSSSSS....F.FF.. 252 / 312 ( 80%)
+..FF............F...................FFFFFFFSS..FF..........F    312 / 312 (100%)
+
+Time: 00:14.738, Memory: 82.50 MB
+
+There were 23 failures:
+
+1) Tests\Repository\EntryRepositoryTest::testGetCalendarDaysByWorkDaysAcrossWeekend
+Failed asserting that 1 is identical to 3.
+
+/var/www/html/tests/Repository/EntryRepositoryTest.php:42
+
+2) Tests\Repository\EntryRepositoryTest::testGetCalendarDaysByWorkDaysBasics
+Failed asserting that 5 is identical to 7.
+
+/var/www/html/tests/Repository/EntryRepositoryTest.php:70
+
+3) Tests\Repository\EntryRepositoryTest::testGetCalendarDaysByWorkDaysMondayEdge
+Failed asserting that 1 is identical to 3.
+
+/var/www/html/tests/Repository/EntryRepositoryTest.php:91
+
+4) Tests\Controller\AdminControllerTest::testGetTeamsAction
+Subset element not found in array
+
+/var/www/html/tests/AbstractWebTestCase.php:117
+/var/www/html/tests/AbstractWebTestCase.php:549
+/var/www/html/tests/Controller/AdminControllerTest.php:341
+
+5) Tests\Controller\AdminControllerTest::testGetTeamsActionWithNonPL
+Failed asserting that two strings are identical.
+--- Expected
++++ Actual
+@@ @@
+-'You are not allowed to perform this action.'
++'[{"team":{"id":2,"name":"Hackerman","lead_user_id":2}},{"team":{"id":1,"name":"Kuchenb\u00e4cker","lead_user_id":1}}]'
+
+/var/www/html/tests/AbstractWebTestCase.php:526
+/var/www/html/tests/Controller/AdminControllerTest.php:348
+
+6) Tests\Controller\AdminControllerTest::testGetProjectsActionWithNonPL
+Failed asserting that two strings are identical.
+--- Expected
++++ Actual
+@@ @@
+-'You are not allowed to perform this action.'
++'[{"project":{"id":3,"name":"GlobalProject","active":false,"customer":3,"global":false,"jiraId":"TIM-1","jira_id":"TIM-1","jiraTicket":null,"jira_ticket":null,"subtickets":"","ticketSystem":null,"ticket_system":null,"entries":{},"presets":{},"estimation":0,"offer":"0","billing":0,"costCenter":null,"cost_center":null,"internalReference":null,"internal_reference":null,"externalReference":null,"external_reference":null,"projectLead":null,"project_lead":null,"technicalLead":null,"technical_lead":null,"invoice":null,"additionalInformationFromExternal":false,"additional_information_from_external":false,"internalJiraProjectKey":"","internal_jira_project_key":"","internalJiraTicketSystem":"0","internal_jira_ticket_system":"0","estimationText":"0m"}}]'
+
+/var/www/html/tests/AbstractWebTestCase.php:526
+/var/www/html/tests/Controller/AdminControllerTest.php:247
+
+7) Tests\Controller\AdminControllerTest::testGetProjectsAction
+Subset element not found in array
+
+/var/www/html/tests/AbstractWebTestCase.php:117
+/var/www/html/tests/AbstractWebTestCase.php:549
+/var/www/html/tests/Controller/AdminControllerTest.php:240
+
+8) Tests\Controller\ControllingControllerTest::testExportActionHidesBillableFieldWhenNotConfigured
+Expectation failed for method name is "enrichEntriesWithTicketInformation" when invoked 1 time.
+Method was expected to be called 1 time, actually called 0 times.
+
+9) Tests\CrudControllerNegativeTest::testSaveActionInvalidTicketFormat
+Failed asserting that 200 is identical to 400.
+
+/var/www/html/tests/AbstractWebTestCase.php:459
+/var/www/html/tests/Controller/CrudControllerNegativeTest.php:36
+
+10) Tests\CrudControllerNegativeTest::testSaveActionInvalidTicketPrefix
+Failed asserting that 200 is identical to 400.
+
+/var/www/html/tests/AbstractWebTestCase.php:459
+/var/www/html/tests/Controller/CrudControllerNegativeTest.php:62
+
+11) Tests\Controller\CrudControllerTest::testBulkentryActionSkipWeekend
+Failed asserting that 3 is identical to 2.
+
+/var/www/html/tests/Controller/CrudControllerTest.php:276
+
+12) Tests\Controller\CrudControllerTest::testBulkentryActionContractEndedDuringBulkentry
+Value mismatch at key 'end'
+Failed asserting that false is true.
+
+/var/www/html/tests/AbstractWebTestCase.php:68
+/var/www/html/tests/AbstractWebTestCase.php:126
+/var/www/html/tests/Controller/CrudControllerTest.php:446
+
+13) Tests\Controller\DefaultControllerTest::testGetAllProjectsAction
+Subset element not found in array
+
+/var/www/html/tests/AbstractWebTestCase.php:117
+/var/www/html/tests/AbstractWebTestCase.php:549
+/var/www/html/tests/Controller/DefaultControllerTest.php:126
+
+14) Tests\Controller\InterpretationControllerTest::testGetLastEntriesAction
+Subset element not found in array
+
+/var/www/html/tests/AbstractWebTestCase.php:117
+/var/www/html/tests/AbstractWebTestCase.php:549
+/var/www/html/tests/Controller/InterpretationControllerTest.php:63
+
+15) Tests\Controller\InterpretationControllerTest::testGetAllEntriesActionReturnLinksNoParameter
+Failed asserting that 8 is identical to 7.
+
+/var/www/html/tests/AbstractWebTestCase.php:567
+/var/www/html/tests/Controller/InterpretationControllerTest.php:355
+
+16) Tests\Controller\InterpretationControllerTest::testGetAllEntriesActionWrongParameterDateAsInteger
+Failed asserting that 200 is identical to 422.
+
+/var/www/html/tests/AbstractWebTestCase.php:459
+/var/www/html/tests/Controller/InterpretationControllerTest.php:138
+
+17) Tests\Controller\InterpretationControllerTest::testGetAllEntriesActionWrongParameterDateAsString
+Failed asserting that 200 is identical to 422.
+
+/var/www/html/tests/AbstractWebTestCase.php:459
+/var/www/html/tests/Controller/InterpretationControllerTest.php:126
+
+18) Tests\Controller\InterpretationControllerTest::testGetAllEntriesActionReturnLinksPageOne
+Value mismatch at key 'id'
+Failed asserting that false is true.
+
+/var/www/html/tests/AbstractWebTestCase.php:68
+/var/www/html/tests/AbstractWebTestCase.php:77
+/var/www/html/tests/AbstractWebTestCase.php:66
+/var/www/html/tests/AbstractWebTestCase.php:126
+/var/www/html/tests/AbstractWebTestCase.php:549
+/var/www/html/tests/Controller/InterpretationControllerTest.php:378
+
+19) Tests\Controller\InterpretationControllerTest::testGetAllEntriesActionReturnLinksLastPage
+Value mismatch at key 'id'
+Failed asserting that false is true.
+
+/var/www/html/tests/AbstractWebTestCase.php:68
+/var/www/html/tests/AbstractWebTestCase.php:77
+/var/www/html/tests/AbstractWebTestCase.php:66
+/var/www/html/tests/AbstractWebTestCase.php:126
+/var/www/html/tests/AbstractWebTestCase.php:549
+/var/www/html/tests/Controller/InterpretationControllerTest.php:423
+
+20) Tests\Controller\InterpretationControllerTest::testGetAllEntriesActionReturnLinksPageTwo
+Value mismatch at key 'id'
+Failed asserting that false is true.
+
+/var/www/html/tests/AbstractWebTestCase.php:68
+/var/www/html/tests/AbstractWebTestCase.php:77
+/var/www/html/tests/AbstractWebTestCase.php:66
+/var/www/html/tests/AbstractWebTestCase.php:126
+/var/www/html/tests/AbstractWebTestCase.php:549
+/var/www/html/tests/Controller/InterpretationControllerTest.php:401
+
+21) Tests\Controller\SecurityControllerTest::testAccessToProtectedRouteRedirectsToLogin
+Failed asserting that 403 is identical to 302.
+
+/var/www/html/tests/AbstractWebTestCase.php:459
+/var/www/html/tests/Controller/SecurityControllerTest.php:32
+
+22) Tests\Controller\SecurityControllerTest::testLogoutReturnsToLogin
+Failed asserting that 403 is identical to 302.
+
+/var/www/html/tests/AbstractWebTestCase.php:459
+/var/www/html/tests/Controller/SecurityControllerTest.php:96
+
+23) Tests\Controller\BasicAccessTest::testLoginThenAccessEndpoint
+Failed asserting that 403 is identical to 302.
+
+/var/www/html/tests/AbstractWebTestCase.php:459
+/var/www/html/tests/Controller/BasicAccessTest.php:36
+
+FAILURES!
+Tests: 312, Assertions: 1843, Failures: 23, Deprecations: 8, Skipped: 11.
+
+make: *** [Makefile:73: test] Error 1

@@ -16,6 +16,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 
+use function is_scalar;
+
 use const STR_PAD_LEFT;
 
 final class ExportAction extends BaseController
@@ -28,6 +30,9 @@ final class ExportAction extends BaseController
         $this->export = $export;
     }
 
+    /**
+     * @throws \InvalidArgumentException When export parameters are invalid or file operations fail
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
     public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response|\Symfony\Component\HttpFoundation\RedirectResponse
@@ -36,6 +41,7 @@ final class ExportAction extends BaseController
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
         foreach ($attributeKeysToMap as $attributeKeyToMap) {
             if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
+                /** @var mixed $attributeValue */
                 $attributeValue = $request->attributes->get($attributeKeyToMap);
                 $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
                 $request->query->set($attributeKeyToMap, $stringValue);
@@ -44,6 +50,16 @@ final class ExportAction extends BaseController
 
         if (!$this->checkLogin($request)) {
             return $this->login($request);
+        }
+
+        // Validate month parameter
+        if ($exportQueryDto->month < 0 || $exportQueryDto->month > 12) {
+            return new Response('Month must be between 0 and 12 (0 means all months)', 422);
+        }
+
+        // Validate year parameter (reasonable range)
+        if ($exportQueryDto->year < 1900 || $exportQueryDto->year > 2100) {
+            return new Response('Year must be between 1900 and 2100', 422);
         }
 
         $service = $this->export;
@@ -55,9 +71,9 @@ final class ExportAction extends BaseController
             $exportQueryDto->project,
             $exportQueryDto->customer,
             [
-                'user.username' => true,
-                'entry.day' => true,
-                'entry.start' => true,
+                'user.username' => 'ASC',
+                'entry.day' => 'DESC',
+                'entry.start' => 'DESC',
             ],
         );
 
@@ -159,7 +175,7 @@ final class ExportAction extends BaseController
             $projectName = '';
             $projectEntity = $entry->getProject();
             if ($projectEntity instanceof \App\Entity\Project) {
-                $projectName = (string) $projectEntity->getName();
+                $projectName = $projectEntity->getName();
             }
             $sheet->setCellValue('E' . $lineNumber, $projectName);
             $sheet->setCellValue('F' . $lineNumber, $activity);

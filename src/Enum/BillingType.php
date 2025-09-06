@@ -68,7 +68,7 @@ enum BillingType: int
      */
     public function isBillable(): bool
     {
-        return $this !== self::NONE;
+        return self::NONE !== $this;
     }
 
     /**

@@ -18,11 +18,13 @@ final class GetProjectsAction extends BaseController
             return $this->redirectToRoute('_login');
         }
 
-        $customerId = (int) $request->query->get('customer');
-        $userId = (int) $user->getId();
+        if (false === $this->isPl($request)) {
+            return $this->getFailedAuthorizationResponse();
+        }
+
         /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Project::class);
-        $data = $objectRepository->getProjectsByUser($userId, $customerId);
+        $data = $objectRepository->getAllProjectsForAdmin();
 
         return new JsonResponse($data);
     }

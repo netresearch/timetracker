@@ -35,7 +35,7 @@ enum UserType: string
      */
     public function isAdmin(): bool
     {
-        return $this === self::ADMIN;
+        return self::ADMIN === $this;
     }
 
     /**
@@ -43,7 +43,7 @@ enum UserType: string
      */
     public function isPl(): bool
     {
-        return $this === self::PL;
+        return self::PL === $this;
     }
 
     /**
@@ -51,7 +51,7 @@ enum UserType: string
      */
     public function isDev(): bool
     {
-        return $this === self::DEV;
+        return self::DEV === $this;
     }
 
     /**
@@ -83,6 +83,6 @@ enum UserType: string
      */
     public function isConfigured(): bool
     {
-        return $this !== self::UNKNOWN;
+        return self::UNKNOWN !== $this;
     }
 }

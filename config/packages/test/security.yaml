@@ -1,7 +1,18 @@
 security:
     firewalls:
         main:
-            # Disable the firewall in test to avoid redirects; controllers handle auth checks
-            security: false
+            # Complete override for test environment
+            provider: app_user_provider
+            lazy: true
+            # Use form_login in tests to support redirects
+            form_login:
+                login_path: _login
+                check_path: _login
+                default_target_path: /
+            # Set form_login as the entry point for redirects
+            entry_point: form_login
             remember_me: false
+            logout:
+                path: _logout
+                target: _login
 

@@ -21,6 +21,10 @@ final class GetSummaryAction extends BaseController
         $this->timeCalculationService = $timeCalculationService;
     }
 
+    /**
+     * @throws \InvalidArgumentException When request parameters are invalid
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
     {
@@ -52,11 +56,27 @@ final class GetSummaryAction extends BaseController
 
         $data = $objectRepository->getEntrySummary((int) $entryId, $userId, $data);
 
-        if ($data['project']['estimation']) {
-            $data['project']['quota'] = $this->timeCalculationService->formatQuota(
-                $data['project']['total'],
-                $data['project']['estimation'],
-            );
+        // Priority 1: Fix PossiblyUndefinedArrayOffset with proper array access validation
+        if (isset($data['project']) && is_array($data['project']) && isset($data['project']['estimation']) && $data['project']['estimation']) {
+            // Safely access nested array values with null coalescing and type validation
+            $projectTotal = null;
+            $projectEstimation = null;
+            
+            if (isset($data['project']['total'])) {
+                $projectTotal = is_numeric($data['project']['total']) ? (float) $data['project']['total'] : 0.0;
+            }
+            
+            if (isset($data['project']['estimation'])) {
+                $projectEstimation = is_numeric($data['project']['estimation']) ? (float) $data['project']['estimation'] : 0.0;
+            }
+            
+            // Only calculate quota if both values are available and valid
+            if (null !== $projectTotal && null !== $projectEstimation) {
+                $data['project']['quota'] = $this->timeCalculationService->formatQuota(
+                    $projectTotal,
+                    $projectEstimation,
+                );
+            }
         }
 
         return new JsonResponse($data);

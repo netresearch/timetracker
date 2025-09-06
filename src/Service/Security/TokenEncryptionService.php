@@ -7,6 +7,7 @@ namespace App\Service\Security;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
+use function is_string;
 use function strlen;
 
 use const OPENSSL_RAW_DATA;
@@ -25,9 +26,9 @@ class TokenEncryptionService
     {
         // Get encryption key from environment or generate if not set
         $key = $parameterBag->get('app.encryption_key') ?? $parameterBag->get('APP_SECRET');
-        
+
         // Ensure we have a valid key
-        if (!is_string($key) || $key === '') {
+        if (!is_string($key) || '' === $key) {
             throw new RuntimeException('Encryption key not configured. Set APP_ENCRYPTION_KEY in environment.');
         }
 
@@ -59,7 +60,7 @@ class TokenEncryptionService
 
         $iv = openssl_random_pseudo_bytes($ivLength);
         // openssl_random_pseudo_bytes returns string in PHP 8+
-        if ($iv === '') {
+        if ('' === $iv) {
             throw new RuntimeException('Failed to generate IV');
         }
 

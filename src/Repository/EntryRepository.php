@@ -2,227 +2,388 @@
 
 declare(strict_types=1);
 
-/**
- * Netresearch Timetracker.
- *
- * PHP version 5
- *
- * @category   Netresearch
- *
- * @author     Various Artists <info@netresearch.de>
- * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
- *
- * @see       http://www.netresearch.de
- */
-
 namespace App\Repository;
 
 use App\Dto\DatabaseResultDto;
+use App\Entity\Activity;
+use App\Entity\Customer;
 use App\Entity\Entry;
+use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\Period;
 use App\Service\ClockInterface;
-use App\Service\TypeSafety\ArrayTypeHelper;
 use App\Service\Util\TimeCalculationService;
 use DateInterval;
 use DateTime;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Query\Expr\Join;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
-use Exception;
+use InvalidArgumentException;
 
+use function assert;
+use function in_array;
+use function is_array;
+use function is_bool;
+use function is_object;
+use function is_string;
 use function sprintf;
 
-/**
- * Class EntryRepository.
- *
- * @category   Netresearch
- *
- * @author     Various Artists <info@netresearch.de>
- * @license    http://www.gnu.org/licenses/agpl-3.0.html GNU AGPl 3
- *
- * @see       http://www.netresearch.de
- */
 /**
  * @extends ServiceEntityRepository<Entry>
  */
 class EntryRepository extends ServiceEntityRepository
 {
-    /**
-     * Convert N working days into calendar days by skipping weekends.
-     */
-    public function getCalendarDaysByWorkDays(int $workingDays): int
-    {
-        if ($workingDays <= 0) {
-            return 0;
-        }
+    private TimeCalculationService $timeCalculationService;
+    private ClockInterface $clock;
 
-        $days = 0;
-        $date = $this->clock->today();
-        while ($workingDays > 0) {
-            ++$days;
-            $date = $date->sub(new DateInterval('P1D'));
-            $dayOfWeek = (int) $date->format('N'); // 1 (Mon) .. 7 (Sun)
-            if ($dayOfWeek < 6) {
-                --$workingDays;
-            }
-        }
-
-        return $days;
+    public function __construct(
+        ManagerRegistry $registry,
+        TimeCalculationService $timeCalculationService,
+        ClockInterface $clock,
+    ) {
+        parent::__construct($registry, Entry::class);
+        $this->timeCalculationService = $timeCalculationService;
+        $this->clock = $clock;
     }
 
-    public function __construct(ManagerRegistry $managerRegistry, private readonly ClockInterface $clock, private readonly TimeCalculationService $timeCalculationService)
+    /**
+     * Priority 2: Add explicit type-safe repository method for mixed type handling.
+     */
+    public function findOneById(int $id): ?Entry
     {
-        parent::__construct($managerRegistry, Entry::class);
+        $result = $this->find($id);
+        
+        return $result instanceof Entry ? $result : null;
     }
 
-
     /**
-     * Returns work log entries for user and recent days.
-     * Uses DQL.
+     * Get all entries for specific day.
      *
-     * @throws Exception
-     *
-     * @return array<int, Entry>
+     * @return Entry[]
      */
-    public function findByRecentDaysOfUser(User $user, int $days = 3): array
+    public function getEntriesForDay(User $user, string $day): array
     {
-        $today = $this->clock->today();
-        $calendarDays = $this->getCalendarDaysByWorkDays($days);
-
-        $fromDate = $calendarDays <= 0 ? $today : $today->sub(new DateInterval('P' . $calendarDays . 'D'));
-
-        $entityManager = $this->getEntityManager();
-        $query = $entityManager->createQuery(
-            'SELECT e FROM App\Entity\Entry e'
-            . ' WHERE e.user = :user_id AND e.day >= :fromDate'
-            . ' ORDER BY e.day, e.start ASC',
-        )->setParameter('user_id', $user->getId(), \Doctrine\DBAL\ParameterType::INTEGER)
-            ->setParameter('fromDate', $fromDate)
+        $result = $this->createQueryBuilder('e')
+            ->where('e.user = :user')
+            ->andWhere('e.day = :day')
+            ->setParameter('user', $user)
+            ->setParameter('day', $day)
+            ->getQuery()
+            ->getResult()
         ;
 
-        /** @var Entry[] $result */
-        $result = $query->getResult();
-        
+        assert(is_array($result) && array_is_list($result));
+
         return $result;
     }
 
     /**
-     * get all entries of a user in a given year and month.
+     * Get entries for a specific month.
      *
-     * @param int                      $userId     Filter entries by user
-     * @param int                      $year       Filter entries by year
-     * @param int                      $month      Filter entries by month
-     * @param int                      $projectId  Filter entries by project
-     * @param int                      $customerId Filter entries by customer
-     * @param array<string, bool>|null $arSort
-     *
-     * @return array<int, Entry>
+     * @return Entry[]
      */
-    public function findByDate(int $userId, int $year, ?int $month = null, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null): array
+    public function getEntriesForMonth(User $user, string $startDate, string $endDate): array
     {
-        if (null === $arSort) {
-            $arSort = [
-                'entry.day' => true,
-                'entry.start' => true,
+        $result = $this->createQueryBuilder('e')
+            ->where('e.user = :user')
+            ->andWhere('e.day >= :startDate')
+            ->andWhere('e.day <= :endDate')
+            ->setParameter('user', $user)
+            ->setParameter('startDate', $startDate)
+            ->setParameter('endDate', $endDate)
+            ->orderBy('e.day', 'ASC')
+            ->addOrderBy('e.start', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
+    }
+
+    /**
+     * Count entries for a specific user.
+     */
+    public function getCountByUser(User $user): int
+    {
+        return (int) $this->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->where('e.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
+
+    /**
+     * Delete entries for a specific user.
+     */
+    public function deleteByUserId(User $user): void
+    {
+        $this->createQueryBuilder('e')
+            ->delete()
+            ->where('e.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
+    /**
+     * Delete entries for a specific activity.
+     */
+    public function deleteByActivityId(Activity $activity): void
+    {
+        $this->createQueryBuilder('e')
+            ->delete()
+            ->where('e.activity = :activity')
+            ->setParameter('activity', $activity)
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
+    /**
+     * Delete entries for a specific project.
+     */
+    public function deleteByProjectId(Project $project): void
+    {
+        $this->createQueryBuilder('e')
+            ->delete()
+            ->where('e.project = :project')
+            ->setParameter('project', $project)
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
+    /**
+     * Delete entries for a specific customer.
+     */
+    public function deleteByCustomerId(Customer $customer): void
+    {
+        $this->createQueryBuilder('e')
+            ->delete()
+            ->where('e.customer = :customer')
+            ->setParameter('customer', $customer)
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
+    /**
+     * Get entries with related entities for efficient data loading.
+     *
+     * @param array<string, mixed> $conditions
+     */
+    public function findEntriesWithRelations(array $conditions = []): QueryBuilder
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')
+            ->leftJoin('e.customer', 'c')
+            ->leftJoin('e.project', 'p')
+            ->leftJoin('e.activity', 'a')
+        ;
+
+        foreach ($conditions as $field => $value) {
+            $qb->andWhere("e.{$field} = :{$field}")
+                ->setParameter($field, $value)
+            ;
+        }
+
+        return $qb;
+    }
+
+    /**
+     * Find entries by multiple IDs efficiently.
+     *
+     * @param int[] $ids
+     *
+     * @return Entry[]
+     */
+    public function findByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        $result = $this->createQueryBuilder('e')
+            ->where('e.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult()
+        ;
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
+    }
+
+    /**
+     * Get total duration for entries matching conditions.
+     *
+     * @param array<string, mixed> $conditions
+     */
+    public function getTotalDuration(array $conditions = []): float
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->select('SUM(e.duration)')
+        ;
+
+        foreach ($conditions as $field => $value) {
+            $qb->andWhere("e.{$field} = :{$field}")
+                ->setParameter($field, $value)
+            ;
+        }
+
+        return (float) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Check if entry exists with given conditions.
+     *
+     * @param array<string, mixed> $conditions
+     */
+    public function existsWithConditions(array $conditions): bool
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->select('1')
+        ;
+
+        foreach ($conditions as $field => $value) {
+            $qb->andWhere("e.{$field} = :{$field}")
+                ->setParameter($field, $value)
+            ;
+        }
+
+        return null !== $qb->setMaxResults(1)->getQuery()->getOneOrNullResult();
+    }
+
+    /**
+     * Get database-agnostic date/time formatting functions.
+     *
+     * @return array{dateFormat: string, timeFormat: string}
+     */
+    private function getDateTimeFormats(): array
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+
+        // Check for MySQL/MariaDB platforms (MariaDB is detected as MySQL platform)
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
+            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+            return [
+                'dateFormat' => "DATE_FORMAT(e.day, '%d/%m/%Y')",
+                'timeFormat' => "DATE_FORMAT(e.{field},'%H:%i')",
             ];
         }
 
-        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
-
-        $queryBuilder->select('entry')
-            ->from(Entry::class, 'entry')
-            ->leftJoin('entry.user', 'user')
-        ;
-
-        foreach ($arSort as $strField => $bAsc) {
-            $queryBuilder->addOrderBy($strField, $bAsc ? 'ASC' : 'DESC');
-        }
-
-        if (0 < $userId) {
-            $queryBuilder->andWhere('entry.user = :user_id');
-            $queryBuilder->setParameter('user_id', $userId, \Doctrine\DBAL\ParameterType::INTEGER);
-        }
-
-        if (0 < (int) $projectId) {
-            $queryBuilder->andWhere('entry.project = :project_id');
-            $queryBuilder->setParameter('project_id', $projectId, \Doctrine\DBAL\ParameterType::INTEGER);
-        }
-
-        if (0 < (int) $customerId) {
-            $queryBuilder->andWhere('entry.customer = :customer_id');
-            $queryBuilder->setParameter('customer_id', $customerId, \Doctrine\DBAL\ParameterType::INTEGER);
-        }
-
-        if (0 < $year) {
-            $queryBuilder->andWhere(
-                $queryBuilder->expr()->like('entry.day', ':month'),
-            );
-            $queryBuilder->setParameter('month', sprintf('%04d-%02d-%%', $year, $month ?? 0), \Doctrine\DBAL\ParameterType::STRING);
-        }
-
-        /** @var Entry[] $result */
-        $result = $queryBuilder->getQuery()->getResult();
-        
-        // Doctrine guarantees Entry[] when querying Entry repository
-        return $result;
-    }
-
-    /**
-     * get all entries of a user on a specific day.
-     *
-     * @param int    $userId Filter by user ID
-     * @param string $day    Filter by date
-     *
-     * @return array<int, Entry>
-     */
-    public function findByDay(int $userId, string $day): array
-    {
-        $entityManager = $this->getEntityManager();
-
-        $query = $entityManager->createQuery(
-            'SELECT e FROM App\Entity\Entry e'
-            . ' WHERE e.user = :user_id'
-            . ' AND e.day = :day'
-            . ' ORDER BY e.start ASC, e.end ASC, e.id ASC',
-        )->setParameter('user_id', $userId, \Doctrine\DBAL\ParameterType::INTEGER)
-            ->setParameter('day', $day)
-        ;
-
-        /** @var Entry[] $result */
-        $result = $query->getResult();
-        
-        return $result;
-    }
-
-    /**
-     * Returns work log entries for a specific user within a time range.
-     * Uses raw SQL for performance/legacy reasons? Refactored to use prepared statements.
-     *
-     * This method retrieves entries based on working days rather than calendar days.
-     * It converts the requested number of working days to calendar days using getCalendarDaysByWorkDays().
-     *
-     * @throws \Doctrine\DBAL\Exception
-     *
-     * @return array<int, array{entry: array<string, mixed>}>
-     */
-    public function getEntriesByUser(int $userId, int $days = 3, bool $showFuture = true): array
-    {
-        $today = $this->clock->today();
-        $calendarDays = $this->getCalendarDaysByWorkDays($days);
-
-        $connection = $this->getEntityManager()->getConnection();
-        $params = [
-            'userId' => $userId,
-            // Format date for SQL parameter binding
-            'fromDate' => $today->sub(new DateInterval('P' . $calendarDays . 'D'))->format('Y-m-d'),
+        // SQLite and other databases
+        return [
+            'dateFormat' => "strftime('%d/%m/%Y', e.day)",
+            'timeFormat' => "strftime('%H:%M', e.{field})",
         ];
+    }
+
+    /**
+     * Get database-agnostic SQL functions for date/year/month operations.
+     *
+     * @return array{yearFunction: string, monthFunction: string, weekFunction: string, concatFunction: string, ifFunction: string}
+     */
+    private function getDatabaseSpecificFunctions(): array
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+
+        // Check for MySQL/MariaDB platforms
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
+            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+            return [
+                'yearFunction' => 'YEAR({field})',
+                'monthFunction' => 'MONTH({field})',
+                'weekFunction' => 'WEEK({field}, 1)',
+                'concatFunction' => 'CONCAT({fields})',
+                'ifFunction' => 'IF({condition}, {then}, {else})',
+            ];
+        }
+
+        // SQLite and other databases
+        return [
+            'yearFunction' => "strftime('%Y', {field})",
+            'monthFunction' => "strftime('%m', {field})",
+            'weekFunction' => "strftime('%W', {field})",
+            'concatFunction' => '({fields})',
+            'ifFunction' => 'CASE WHEN {condition} THEN {then} ELSE {else} END',
+        ];
+    }
+
+    /**
+     * Generate database-agnostic YEAR expression.
+     */
+    protected function generateYearExpression(string $field): string
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+
+        // Check for MySQL/MariaDB platforms
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
+            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+            return "YEAR({$field})";
+        }
+
+        return "strftime('%Y', {$field})";
+    }
+
+    /**
+     * Generate database-agnostic MONTH expression.
+     */
+    protected function generateMonthExpression(string $field): string
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+
+        // Check for MySQL/MariaDB platforms
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
+            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+            return "MONTH({$field})";
+        }
+
+        return "strftime('%m', {$field})";
+    }
+
+    /**
+     * Generate database-agnostic WEEK expression.
+     */
+    protected function generateWeekExpression(string $field): string
+    {
+        $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
+
+        // Check for MySQL/MariaDB platforms
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
+            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+            return "WEEK({$field}, 1)";
+        }
+
+        return "strftime('%W', {$field})";
+    }
+
+    /**
+     * Execute raw SQL with optimized direct connection approach.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getRawData(string $startDate, string $endDate, ?int $userId = null): array
+    {
+        $connection = $this->getEntityManager()->getConnection();
+
+        // Get database-agnostic date/time formatting functions
+        $formats = $this->getDateTimeFormats();
+        $startTimeFormat = str_replace('{field}', 'start', $formats['timeFormat']);
+        $endTimeFormat = str_replace('{field}', 'end', $formats['timeFormat']);
 
         $sql = [];
         $sql['select'] = "SELECT e.id,
-        	DATE_FORMAT(e.day, '%d/%m/%Y') AS `date`,
-        	DATE_FORMAT(e.start,'%H:%i') AS `start`,
-         	DATE_FORMAT(e.end,'%H:%i') AS `end`,
+        	{$formats['dateFormat']} AS `date`,
+        	{$startTimeFormat} AS `start`,
+         	{$endTimeFormat} AS `end`,
         	e.user_id AS user,
         	e.customer_id AS customer,
         	e.project_id AS project,
@@ -232,20 +393,26 @@ class EntryRepository extends ServiceEntityRepository
             e.class,
             e.duration,
             e.internal_jira_ticket_original_key as extTicket,
-            REPLACE(t.ticketurl,'%s',e.internal_jira_ticket_original_key) as extTicketUrl";
-        $sql['from'] = 'FROM entries e LEFT JOIN projects p ON e.project_id = p.id LEFT JOIN ticket_systems t ON p.ticket_system = t.id';
-        // Modified: Use parameter binding for start date
-        $sql['where_day'] = 'WHERE day >= :fromDate';
+            u.abbr AS userAbbr,
+            c.name AS customerName,
+            p.name AS projectName,
+            a.name AS activityName";
 
-        if (!$showFuture) {
-            // Modified: Use parameter binding for today's date
-            $sql['where_future'] = 'AND day <= :today';
-            $params['today'] = $today->format('Y-m-d');
+        $sql['from'] = 'FROM entries e';
+        $sql['joins'] = 'LEFT JOIN users u ON e.user_id = u.id
+                        LEFT JOIN customers c ON e.customer_id = c.id  
+                        LEFT JOIN projects p ON e.project_id = p.id
+                        LEFT JOIN activities a ON e.activity_id = a.id';
+
+        $sql['where'] = 'WHERE e.day >= ? AND e.day <= ?';
+        $sql['order'] = 'ORDER BY e.day ASC, e.start ASC';
+
+        $params = [1 => $startDate, 2 => $endDate];
+
+        if (null !== $userId) {
+            $sql['where'] .= ' AND e.user_id = ?';
+            $params[3] = $userId;
         }
-
-        // Modified: Use parameter binding for user ID
-        $sql['where_user'] = 'AND user_id = :userId';
-        $sql['order'] = 'ORDER BY day DESC, start DESC';
 
         // Modified: Use prepare and executeQuery with parameters
         $statement = $connection->prepare(implode(' ', $sql));
@@ -262,60 +429,719 @@ class EntryRepository extends ServiceEntityRepository
             // Ensure duration is numeric (int or float) for formatDuration
             $duration = is_numeric($transformedLine['duration']) ? (float) $transformedLine['duration'] : 0;
             $transformedLine['duration'] = $this->timeCalculationService->formatDuration($duration);
-            $data[] = ['entry' => $transformedLine];
+            $data[] = $transformedLine;
         }
 
         return $data;
     }
 
     /**
-     * Get array of entries of given user and ticketsystem which should be synced to the ticketsystem.
-     * Ordered by date, starttime desc.
+     * Get entries with pagination and filtering.
      *
-     * @param int $maxResults (optional) max number of results to be returned
-     *                        if null: no result limitation
+     * @param array<string, mixed> $filters
      *
-     * @return Entry[]
-     */
-    /**
      * @return array<int, Entry>
      */
-    public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, ?int $maxResults = null): array
-    {
-        $queryBuilder = $this->getEntityManager()->createQueryBuilder();
-        $queryBuilder
-            ->select('e')
-            ->from(Entry::class, 'e')
-            ->join(\App\Entity\Project::class, 'p', Join::WITH, 'e.project = p.id')
-            ->where('e.user = :user_id')
-            ->andWhere('e.syncedToTicketsystem = false')
-            ->andWhere('p.ticketSystem = :ticket_system_id')
-            ->setParameter('user_id', $userId)
-            ->setParameter('ticket_system_id', $ticketSystemId)
-            ->orderBy('e.day', 'DESC')
-            ->addOrderBy('e.start', 'DESC')
-        ;
+    public function getFilteredEntries(
+        array $filters = [],
+        int $offset = 0,
+        int $limit = 50,
+        string $orderBy = 'day',
+        string $orderDirection = 'DESC',
+    ): array {
+        $qb = $this->findEntriesWithRelations();
 
-        if ((int) $maxResults > 0) {
-            $queryBuilder->setMaxResults((int) $maxResults);
+        // Apply filters
+        foreach ($filters as $field => $value) {
+            if (null !== $value && '' !== $value) {
+                if (in_array($field, ['startDate', 'endDate'], true)) {
+                    $operator = 'startDate' === $field ? '>=' : '<=';
+                    $fieldName = 'day';
+                    $qb->andWhere("e.{$fieldName} {$operator} :{$field}")
+                        ->setParameter($field, $value)
+                    ;
+                } else {
+                    $qb->andWhere("e.{$field} = :{$field}")
+                        ->setParameter($field, $value)
+                    ;
+                }
+            }
         }
 
-        /** @var Entry[] $result */
-        $result = $queryBuilder->getQuery()->getResult();
-        
-        // Doctrine guarantees Entry[] when querying Entry repository
+        // Apply ordering
+        $validOrderFields = ['id', 'day', 'start', 'end', 'duration'];
+        if (in_array($orderBy, $validOrderFields, true)) {
+            $orderDirection = strtoupper($orderDirection);
+            if (!in_array($orderDirection, ['ASC', 'DESC'], true)) {
+                $orderDirection = 'DESC';
+            }
+            $qb->orderBy("e.{$orderBy}", $orderDirection);
+        }
+
+        // Apply pagination
+        if ($limit > 0) {
+            $qb->setMaxResults($limit);
+        }
+        if ($offset > 0) {
+            $qb->setFirstResult($offset);
+        }
+
+        $result = $qb->getQuery()->getResult();
+
+        assert(is_array($result) && array_is_list($result));
+
         return $result;
     }
 
     /**
-     * Query summary information regarding the current entry for the following
-     * scopes: customer, project, activity, ticket.
+     * Get summary data for reporting.
      *
-     * @param array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}> $data
+     * @param array<string, mixed> $filters
      *
-     * @throws \Doctrine\DBAL\Exception
+     * @return array<string, mixed>
+     */
+    public function getSummaryData(array $filters = []): array
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->select([
+                'COUNT(e.id) as entryCount',
+                'SUM(e.duration) as totalDuration',
+                'AVG(e.duration) as avgDuration',
+                'MIN(e.day) as minDate',
+                'MAX(e.day) as maxDate',
+            ])
+        ;
+
+        foreach ($filters as $field => $value) {
+            if (null !== $value && '' !== $value) {
+                if (in_array($field, ['startDate', 'endDate'], true)) {
+                    $operator = 'startDate' === $field ? '>=' : '<=';
+                    $fieldName = 'day';
+                    $qb->andWhere("e.{$fieldName} {$operator} :{$field}")
+                        ->setParameter($field, $value)
+                    ;
+                } else {
+                    $qb->andWhere("e.{$field} = :{$field}")
+                        ->setParameter($field, $value)
+                    ;
+                }
+            }
+        }
+
+        $rawResult = $qb->getQuery()->getSingleResult();
+
+        /** @var array<string, mixed> $result */
+        $result = is_array($rawResult) ? $rawResult : [];
+
+        // Ensure numeric values with safe access
+        $entryCountValue = $result['entryCount'] ?? 0;
+        $entryCount = is_numeric($entryCountValue) ? (int) $entryCountValue : 0;
+        $totalDurationValue = $result['totalDuration'] ?? 0;
+        $totalDuration = is_numeric($totalDurationValue) ? (float) $totalDurationValue : 0.0;
+        $avgDurationValue = $result['avgDuration'] ?? 0;
+        $avgDuration = is_numeric($avgDurationValue) ? (float) $avgDurationValue : 0.0;
+
+        return [
+            'entryCount' => $entryCount,
+            'totalDuration' => $totalDuration,
+            'avgDuration' => $avgDuration,
+            'minDate' => $result['minDate'] ?? null,
+            'maxDate' => $result['maxDate'] ?? null,
+        ];
+    }
+
+    /**
+     * Get time summary grouped by criteria (for charts/reports).
      *
-     * @return array<string, array{scope:string,name:string,entries:int,total:int,own:int,estimation:int}>
+     * @param array<string, mixed> $filters
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getTimeSummaryByPeriod(
+        string $period,
+        array $filters = [],
+        ?string $startDate = null,
+        ?string $endDate = null,
+    ): array {
+        $connection = $this->getEntityManager()->getConnection();
+        $functions = $this->getDatabaseSpecificFunctions();
+
+        // Period function mapping
+        $periodFunctions = [
+            'year' => $functions['yearFunction'],
+            'month' => $functions['monthFunction'],
+            'week' => $functions['weekFunction'],
+        ];
+
+        if (!isset($periodFunctions[$period])) {
+            throw new InvalidArgumentException("Invalid period: {$period}");
+        }
+
+        $groupByFunction = str_replace('{field}', 'e.day', $periodFunctions[$period]);
+
+        $sql = "SELECT {$groupByFunction} as period_value,
+                       SUM(e.duration) as total_duration,
+                       COUNT(e.id) as entry_count
+                FROM entries e
+                WHERE 1 = 1";
+
+        $params = [];
+        $paramCounter = 1;
+
+        // Add date range filters
+        if ($startDate) {
+            $sql .= ' AND e.day >= ?';
+            $params[$paramCounter++] = $startDate;
+        }
+        if ($endDate) {
+            $sql .= ' AND e.day <= ?';
+            $params[$paramCounter++] = $endDate;
+        }
+
+        // Add additional filters
+        foreach ($filters as $field => $value) {
+            if (null !== $value && '' !== $value) {
+                $sql .= " AND e.{$field} = ?";
+                $params[$paramCounter++] = $value;
+            }
+        }
+
+        $sql .= " GROUP BY {$groupByFunction} ORDER BY period_value";
+
+        $stmt = $connection->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        return $stmt->executeQuery()->fetchAllAssociative();
+    }
+
+    /**
+     * Bulk update entries.
+     *
+     * @param array<int>           $entryIds
+     * @param array<string, mixed> $updateData
+     */
+    public function bulkUpdate(array $entryIds, array $updateData): int
+    {
+        if (empty($entryIds) || empty($updateData)) {
+            return 0;
+        }
+
+        $qb = $this->getEntityManager()->createQueryBuilder()
+            ->update(Entry::class, 'e')
+            ->where('e.id IN (:ids)')
+            ->setParameter('ids', $entryIds)
+        ;
+
+        foreach ($updateData as $field => $value) {
+            $qb->set("e.{$field}", ":{$field}")
+                ->setParameter($field, $value)
+            ;
+        }
+
+        $result = $qb->getQuery()->execute();
+
+        return is_numeric($result) ? (int) $result : 0;
+    }
+
+    /**
+     * Query entries by filter array for pagination.
+     *
+     * @param array<string, mixed> $arFilter
+     *
+     * @phpstan-return \Doctrine\ORM\Query<int, Entry>
+     */
+    public function queryByFilterArray(array $arFilter): \Doctrine\ORM\Query
+    {
+        $queryBuilder = $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')
+            ->leftJoin('e.customer', 'c')
+            ->leftJoin('e.project', 'p')
+            ->leftJoin('e.activity', 'a')
+        ;
+
+        // Apply filters
+        if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
+            if (is_object($arFilter['customer'])) {
+                $queryBuilder->andWhere('e.customer = :customer')
+                    ->setParameter('customer', $arFilter['customer'])
+                ;
+            } else {
+                $queryBuilder->andWhere('IDENTITY(e.customer) = :customer')
+                    ->setParameter('customer', $arFilter['customer'])
+                ;
+            }
+        }
+
+        if (isset($arFilter['project']) && '' !== $arFilter['project']) {
+            if (is_object($arFilter['project'])) {
+                $queryBuilder->andWhere('e.project = :project')
+                    ->setParameter('project', $arFilter['project'])
+                ;
+            } else {
+                $queryBuilder->andWhere('IDENTITY(e.project) = :project')
+                    ->setParameter('project', $arFilter['project'])
+                ;
+            }
+        }
+
+        if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
+            if (is_object($arFilter['activity'])) {
+                $queryBuilder->andWhere('e.activity = :activity')
+                    ->setParameter('activity', $arFilter['activity'])
+                ;
+            } else {
+                $queryBuilder->andWhere('IDENTITY(e.activity) = :activity')
+                    ->setParameter('activity', $arFilter['activity'])
+                ;
+            }
+        }
+
+        if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
+            $queryBuilder->andWhere('e.day >= :datestart')
+                ->setParameter('datestart', $arFilter['datestart'])
+            ;
+        }
+
+        if (isset($arFilter['dateend']) && '' !== $arFilter['dateend']) {
+            $queryBuilder->andWhere('e.day <= :dateend')
+                ->setParameter('dateend', $arFilter['dateend'])
+            ;
+        }
+
+        // Apply pagination with safe casting
+        $maxResults = isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
+        $page = isset($arFilter['page']) && is_numeric($arFilter['page']) ? (int) $arFilter['page'] : 0;
+        $offset = $page * $maxResults;
+
+        $queryBuilder->setMaxResults($maxResults)
+            ->setFirstResult($offset)
+            ->orderBy('e.day', 'DESC')
+            ->addOrderBy('e.start', 'DESC')
+        ;
+
+        /* @phpstan-ignore-next-line */
+        return $queryBuilder->getQuery();
+    }
+
+    /**
+     * Find overlapping entries for validation.
+     *
+     * @return array<int, Entry>
+     */
+    public function findOverlappingEntries(
+        User $user,
+        string $day,
+        string $start,
+        string $end,
+        ?int $excludeId = null,
+    ): array {
+        $qb = $this->createQueryBuilder('e')
+            ->where('e.user = :user')
+            ->andWhere('e.day = :day')
+            ->andWhere('(
+                (e.start <= :start AND e.end > :start) OR
+                (e.start < :end AND e.end >= :end) OR
+                (e.start >= :start AND e.end <= :end)
+            )')
+            ->setParameter('user', $user)
+            ->setParameter('day', $day)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+        ;
+
+        if ($excludeId) {
+            $qb->andWhere('e.id != :excludeId')
+                ->setParameter('excludeId', $excludeId)
+            ;
+        }
+
+        $result = $qb->getQuery()->getResult();
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
+    }
+
+    /**
+     * Get entries by user for specified days.
+     *
+     * @return array<int, Entry>
+     */
+    public function getEntriesByUser(User $user, int $days, bool $showFuture = false): array
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')
+            ->leftJoin('e.customer', 'c')
+            ->leftJoin('e.project', 'p')
+            ->leftJoin('e.activity', 'a')
+
+            ->where('e.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('e.day', 'ASC')
+            ->addOrderBy('e.start', 'ASC')
+        ;
+
+        // Calculate date range
+        $today = new DateTime();
+        $startDate = clone $today;
+        $startDate->sub(new DateInterval('P' . $days . 'D'));
+
+        $qb->andWhere('e.day >= :startDate')
+            ->setParameter('startDate', $startDate->format('Y-m-d'))
+        ;
+
+        if (!$showFuture) {
+            $qb->andWhere('e.day <= :endDate')
+                ->setParameter('endDate', $today->format('Y-m-d'))
+            ;
+        }
+
+        $result = $qb->getQuery()->getResult();
+        assert(is_array($result) && array_is_list($result));
+
+        /* @var array<int, Entry> $result */
+        return $result;
+    }
+
+    /**
+     * Find entries by date with filter support.
+     *
+     * @param array<string, string>|null $arSort
+     *
+     * @return array<int, Entry>
+     */
+    public function findByDate(
+        int $user,
+        int $year,
+        ?int $month = null,
+        ?int $project = null,
+        ?int $customer = null,
+        ?array $arSort = null,
+    ): array {
+        $qb = $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')
+            ->leftJoin('e.customer', 'c')
+            ->leftJoin('e.project', 'p')
+            ->leftJoin('e.activity', 'a')
+        ;
+
+        // Use date range instead of YEAR function for DQL compatibility
+        $startOfYear = sprintf('%04d-01-01', $year);
+        $endOfYear = sprintf('%04d-12-31', $year);
+        $qb->andWhere('e.day >= :startOfYear')
+            ->andWhere('e.day <= :endOfYear')
+            ->setParameter('startOfYear', $startOfYear)
+            ->setParameter('endOfYear', $endOfYear)
+        ;
+
+        if (0 !== $user) {
+            $qb->andWhere('e.user = :user')
+                ->setParameter('user', $user)
+            ;
+        }
+
+        if (null !== $month && $month > 0) {
+            // Use date range instead of MONTH function for DQL compatibility
+            $startOfMonth = sprintf('%04d-%02d-01', $year, $month);
+            $lastDay = (new DateTime("{$year}-{$month}-01"))->format('t');
+            $endOfMonth = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
+            $qb->andWhere('e.day >= :startOfMonth')
+                ->andWhere('e.day <= :endOfMonth')
+                ->setParameter('startOfMonth', $startOfMonth)
+                ->setParameter('endOfMonth', $endOfMonth)
+            ;
+        }
+
+        if (null !== $project) {
+            $qb->andWhere('e.project = :project')
+                ->setParameter('project', $project)
+            ;
+        }
+
+        if (null !== $customer) {
+            $qb->andWhere('e.customer = :customer')
+                ->setParameter('customer', $customer)
+            ;
+        }
+
+        // Apply sorting
+        if (is_array($arSort) && !empty($arSort)) {
+            foreach ($arSort as $field => $direction) {
+                // Handle both string and boolean values for direction
+                if (is_bool($direction)) {
+                    $direction = $direction ? 'ASC' : 'DESC';
+                } else {
+                    $direction = 'ASC' === strtoupper((string) $direction) ? 'ASC' : 'DESC';
+                }
+
+                // Map logical field names to proper DQL expressions
+                $dqlField = match ($field) {
+                    'user.username' => 'u.username',
+                    'entry.day' => 'e.day',
+                    'entry.start' => 'e.start',
+                    'entry.end' => 'e.end',
+                    default => 'e.' . $field,
+                };
+
+                $qb->addOrderBy($dqlField, $direction);
+            }
+        } else {
+            $qb->orderBy('e.day', 'DESC')
+                ->addOrderBy('e.start', 'DESC')
+            ;
+        }
+
+        $result = $qb->getQuery()->getResult();
+        assert(is_array($result) && array_is_list($result));
+
+        /* @var array<int, Entry> $result */
+        return $result;
+    }
+
+    /**
+     * Gets work by user for period (ported from OptimizedEntryRepository).
+     *
+     * @return array{duration: int, count: int}
+     */
+    public function getWorkByUser(int $userId, Period $period = Period::DAY): array
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->select('COUNT(e.id) as count, COALESCE(SUM(e.duration), 0) as duration')
+            ->where('e.user = :user')
+            ->setParameter('user', $userId)
+        ;
+
+        $this->applyPeriodFilter($qb, $period);
+
+        $result = $qb->getQuery()->getSingleResult();
+
+        if (!is_array($result)) {
+            return ['duration' => 0, 'count' => 0];
+        }
+
+        $duration = $result['duration'] ?? 0;
+        $count = $result['count'] ?? 0;
+
+        assert(is_numeric($duration));
+        assert(is_numeric($count));
+
+        return [
+            'duration' => (int) $duration,
+            'count' => (int) $count,
+        ];
+    }
+
+    /**
+     * Gets activities with time for a specific ticket.
+     *
+     * @return array<int, array{name: string, total_time: int}>
+     */
+    public function getActivitiesWithTime(string $ticket): array
+    {
+        if (empty($ticket)) {
+            return [];
+        }
+
+        $connection = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT a.name, SUM(e.duration) as total_time
+                FROM entries e 
+                LEFT JOIN activities a ON e.activity_id = a.id
+                WHERE e.ticket = ?
+                GROUP BY e.activity_id, a.name
+                ORDER BY total_time DESC';
+
+        $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
+
+        return array_map(static function (array $row): array {
+            $name = $row['name'];
+            $totalTime = $row['total_time'];
+
+            return [
+                'name' => is_string($name) ? $name : '',
+                'total_time' => is_numeric($totalTime) ? (int) $totalTime : 0,
+            ];
+        }, $result);
+    }
+
+    /**
+     * Gets users with time for a specific ticket.
+     *
+     * @return array<int, array{username: string, total_time: int}>
+     */
+    public function getUsersWithTime(string $ticket): array
+    {
+        if (empty($ticket)) {
+            return [];
+        }
+
+        $connection = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT u.username, SUM(e.duration) as total_time
+                FROM entries e 
+                LEFT JOIN users u ON e.user_id = u.id
+                WHERE e.ticket = ?
+                GROUP BY e.user_id, u.username
+                ORDER BY total_time DESC';
+
+        $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
+
+        return array_map(static function (array $row): array {
+            $username = $row['username'];
+            $totalTime = $row['total_time'];
+
+            return [
+                'username' => is_string($username) ? $username : '',
+                'total_time' => is_numeric($totalTime) ? (int) $totalTime : 0,
+            ];
+        }, $result);
+    }
+
+    /**
+     * Converts working days to calendar days (ported from OptimizedEntryRepository).
+     */
+    public function getCalendarDaysByWorkDays(int $workingDays): int
+    {
+        if ($workingDays <= 0) {
+            return 0;
+        }
+
+        $days = 0;
+        $date = $this->clock->today();
+        $currentDayOfWeek = (int) $date->format('N');
+
+        // For Monday (1), we need to count back through the weekend
+        // to reach the previous Friday for the first working day
+        if (1 === $currentDayOfWeek) {
+            // Count the weekend (Saturday and Sunday) as calendar days
+            $days = 2;
+            // Move date to previous Friday
+            $date = $date->sub(new DateInterval('P3D'));
+            --$workingDays;
+            ++$days; // Count Friday as well
+        }
+
+        // Now handle the remaining working days
+        while ($workingDays > 0) {
+            $date = $date->sub(new DateInterval('P1D'));
+            ++$days;
+            $dayOfWeek = (int) $date->format('N');
+
+            if ($dayOfWeek < 6) { // Monday to Friday
+                --$workingDays;
+            }
+        }
+
+        return $days;
+    }
+
+    /**
+     * Applies period filter to query builder.
+     */
+    private function applyPeriodFilter(QueryBuilder $qb, Period $period): void
+    {
+        $today = $this->clock->today();
+
+        switch ($period) {
+            case Period::DAY:
+                $qb->andWhere('e.day = :today')
+                    ->setParameter('today', $today->format('Y-m-d'))
+                ;
+                break;
+
+            case Period::WEEK:
+                $startOfWeek = clone $today;
+                $startOfWeek = $startOfWeek->modify('monday this week') ?: $startOfWeek;
+                $endOfWeek = clone $startOfWeek;
+                $endOfWeek = $endOfWeek->modify('+6 days') ?: $endOfWeek;
+
+                $qb->andWhere('e.day BETWEEN :start AND :end')
+                    ->setParameter('start', $startOfWeek->format('Y-m-d'))
+                    ->setParameter('end', $endOfWeek->format('Y-m-d'))
+                ;
+                break;
+
+            case Period::MONTH:
+                $startOfMonth = $today->format('Y-m-01');
+                $lastDay = $today->format('t');
+                $endOfMonth = $today->format('Y-m-') . $lastDay;
+
+                $qb->andWhere('e.day >= :startOfMonth')
+                    ->andWhere('e.day <= :endOfMonth')
+                    ->setParameter('startOfMonth', $startOfMonth)
+                    ->setParameter('endOfMonth', $endOfMonth)
+                ;
+                break;
+        }
+    }
+
+    /**
+     * Finds entries by recent days of user (ported from OptimizedEntryRepository).
+     *
+     * @return Entry[]
+     */
+    public function findByRecentDaysOfUser(User $user, int $days = 3): array
+    {
+        $fromDate = $this->calculateFromDate($days);
+
+        $result = $this->findEntriesWithRelations()
+            ->andWhere('e.user = :user')
+            ->andWhere('e.day >= :fromDate')
+            ->setParameter('user', $user)
+            ->setParameter('fromDate', $fromDate->format('Y-m-d'))
+            ->orderBy('e.day', 'ASC')
+            ->addOrderBy('e.start', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+
+        assert(is_array($result) && array_is_list($result));
+
+        /* @var array<Entry> $result */
+        return $result;
+    }
+
+    /**
+     * Finds entries by user and ticket system for synchronization.
+     *
+     * @return Entry[]
+     */
+    public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, int $limit = 50): array
+    {
+        $result = $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')
+            ->leftJoin('e.customer', 'c')
+            ->leftJoin('e.project', 'p')
+            ->leftJoin('e.activity', 'a')
+
+            ->where('e.user = :userId')
+            ->andWhere('p.ticketSystem = :ticketSystemId')
+            ->andWhere('e.ticket IS NOT NULL')
+            ->andWhere('e.ticket != :emptyString')
+            ->andWhere('e.internalJiraTicketId IS NULL OR e.internalJiraTicketId = :emptyString')
+            ->setParameter('userId', $userId)
+            ->setParameter('ticketSystemId', $ticketSystemId)
+            ->setParameter('emptyString', '')
+            ->orderBy('e.day', 'DESC')
+            ->addOrderBy('e.start', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult()
+        ;
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
+    }
+
+    /**
+     * Gets entry summary data for display.
+     *
+     * @param array<string, array<string, mixed>> $data
+     *
+     * @return array<string, array<string, mixed>>
      */
     public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
@@ -326,391 +1152,242 @@ class EntryRepository extends ServiceEntityRepository
 
         $connection = $this->getEntityManager()->getConnection();
 
-        $sql = ['customer' => [], 'project' => [], 'ticket' => []];
+        // Get customer summary
+        if ($entry->getCustomer()) {
+            $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
+                          SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
+                          c.name as name
+                   FROM entries e 
+                   LEFT JOIN customers c ON e.customer_id = c.id
+                   WHERE e.customer_id = ?';
 
-        // customer total / customer total by current user
-        $sql['customer']['select'] = "SELECT 'customer' AS scope,
-            c.name AS name,
-            COUNT(e.id) AS entries,
-            SUM(e.duration) AS total,
-            SUM(IF(e.user_id = :userId , e.duration, 0)) AS own,
-            0 as estimation";
-        $sql['customer']['from'] = 'FROM entries e';
-        $sql['customer']['join_c'] = 'LEFT JOIN customers c ON c.id = e.customer_id';
-        if ($entry->getCustomer() instanceof \App\Entity\Customer) {
-            $sql['customer']['where_c'] = 'WHERE e.customer_id = :customerId';
-        } else {
-            $sql['customer']['where_c'] = '';
+            $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId()])->fetchAssociative();
+            if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
+
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
+
+                $data['customer'] = [
+                    'scope' => 'customer',
+                    'name' => $result['name'] ?? '',
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
+                    'estimation' => 0,
+                ];
+            }
         }
 
-        // project total / project total by current user
-        $sql['project']['select'] = "SELECT 'project' AS scope,
-            CONCAT(p.name) AS name,
-            COUNT(e.id) AS entries,
-            SUM(e.duration) AS total,
-            SUM(IF(e.user_id = :userId , e.duration, 0)) AS own,
-            p.estimation AS estimation";
-        $sql['project']['from'] = 'FROM entries e';
-        $sql['project']['join_c'] = 'LEFT JOIN customers c ON c.id = e.customer_id';
-        $sql['project']['join_p'] = 'LEFT JOIN projects p ON p.id=e.project_id';
-        $sql['project']['where_c'] = $entry->getCustomer() instanceof \App\Entity\Customer ? 'WHERE e.customer_id = :customerId' : '';
-        $sql['project']['where_p'] = $entry->getProject() instanceof \App\Entity\Project ? 'AND e.project_id = :projectId' : '';
+        // Get project summary
+        if ($entry->getProject()) {
+            $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
+                          SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
+                          p.name as name, p.estimation as estimation
+                   FROM entries e 
+                   LEFT JOIN projects p ON e.project_id = p.id
+                   WHERE e.project_id = ?';
 
-        // activity total / activity total by current user
-        if ($entry->getActivity() instanceof \App\Entity\Activity) {
-            $sql['activity']['select'] = "SELECT 'activity' AS scope,
-                CONCAT(a.name) AS name,
-                COUNT(e.id) AS entries,
-                SUM(e.duration) AS total,
-                SUM(IF(e.user_id = :userId , e.duration, 0)) AS own,
-                0 as estimation";
-            $sql['activity']['from'] = 'FROM entries e';
-            $sql['activity']['join_c'] = 'LEFT JOIN customers c ON c.id = e.customer_id';
-            $sql['activity']['join_p'] = 'LEFT JOIN projects p ON p.id=e.project_id';
-            $sql['activity']['join_a'] = 'LEFT JOIN activities a ON a.id=e.activity_id';
-            $sql['activity']['where_c'] = $entry->getCustomer() instanceof \App\Entity\Customer ? 'WHERE e.customer_id = :customerId' : '';
-            $sql['activity']['where_p'] = $entry->getProject() instanceof \App\Entity\Project ? 'AND e.project_id = :projectId' : '';
-            $sql['activity']['where_a'] = 'AND e.activity_id = :activityId';
-        } else {
-            $sql['activity']['select'] = "SELECT 'activity' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own";
+            $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId()])->fetchAssociative();
+            if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
+                $estimation = $result['estimation'] ?? 0;
+
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
+                assert(is_numeric($estimation));
+
+                $data['project'] = [
+                    'scope' => 'project',
+                    'name' => $result['name'] ?? '',
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
+                    'estimation' => (int) $estimation,
+                ];
+            }
         }
 
-        if ('' !== $entry->getTicket()) {
-            // ticket total / ticket total by current user
-            $sql['ticket']['select'] = "SELECT 'ticket' AS scope,
-                ticket AS name,
-                COUNT(id) AS entries,
-                SUM(duration) AS total,
-                SUM(IF(user_id = :userId, duration, 0)) AS own,
-                0 as estimation";
-            $sql['ticket']['from'] = 'FROM entries';
-            $sql['ticket']['where'] = 'WHERE ticket = :ticketName';
-        } else {
-            $sql['ticket']['select'] = "SELECT 'ticket' AS scope, '' AS name, 0 as entries, 0 as total, 0 as own, 0 AS estimation";
+        // Get activity summary
+        if ($entry->getActivity()) {
+            $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
+                          SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
+                          a.name as name
+                   FROM entries e 
+                   LEFT JOIN activities a ON e.activity_id = a.id
+                   WHERE e.activity_id = ?';
+
+            $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId()])->fetchAssociative();
+            if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
+
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
+
+                $data['activity'] = [
+                    'scope' => 'activity',
+                    'name' => $result['name'] ?? '',
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
+                    'estimation' => 0,
+                ];
+            }
         }
 
-        // Prepare parameters for binding
-        $params = ['userId' => $userId];
+        // Get ticket summary
+        if (!empty($entry->getTicket())) {
+            $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
+                          SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own
+                   FROM entries e 
+                   WHERE e.ticket = ?';
 
-        if ($entry->getCustomer() instanceof \App\Entity\Customer) {
-            $params['customerId'] = $entry->getCustomer()->getId();
-        }
-        if ($entry->getProject() instanceof \App\Entity\Project) {
-            $params['projectId'] = $entry->getProject()->getId();
-        }
-        if ($entry->getActivity() instanceof \App\Entity\Activity) {
-            $params['activityId'] = $entry->getActivity()->getId();
-        }
-        if ('' !== $entry->getTicket()) {
-            $params['ticketName'] = $entry->getTicket();
-        }
+            $result = $connection->executeQuery($sql, [$userId, $entry->getTicket()])->fetchAssociative();
+            if ($result) {
+                $entries = $result['entries'] ?? 0;
+                $total = $result['total'] ?? 0;
+                $own = $result['own'] ?? 0;
 
-        // Build and execute the UNION query with prepared statements
-        $fullQuery = implode(' ', $sql['customer'])
-            . ' UNION ' . implode(' ', $sql['project'])
-            . ' UNION ' . implode(' ', $sql['activity'])
-            . ' UNION ' . implode(' ', $sql['ticket']);
+                assert(is_numeric($entries));
+                assert(is_numeric($total));
+                assert(is_numeric($own));
 
-        $statement = $connection->prepare($fullQuery);
-        foreach ($params as $key => $value) {
-            $statement->bindValue($key, $value);
+                $data['ticket'] = [
+                    'scope' => 'ticket',
+                    'name' => $entry->getTicket(),
+                    'entries' => (int) $entries,
+                    'total' => (int) $total,
+                    'own' => (int) $own,
+                    'estimation' => 0,
+                ];
+            }
         }
-
-        $result = $statement->executeQuery()->fetchAllAssociative();
-
-        // ensure consistent array shapes using DTO transformations
-        $data['customer'] = isset($result[0]) 
-            ? DatabaseResultDto::transformScopeRow($result[0], 'customer')
-            : ['scope' => 'customer', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
-        $data['project'] = isset($result[1]) 
-            ? DatabaseResultDto::transformScopeRow($result[1], 'project')
-            : ['scope' => 'project', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
-        $data['activity'] = isset($result[2]) 
-            ? DatabaseResultDto::transformScopeRow($result[2], 'activity')
-            : ['scope' => 'activity', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
-        $data['ticket'] = isset($result[3]) 
-            ? DatabaseResultDto::transformScopeRow($result[3], 'ticket')
-            : ['scope' => 'ticket', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0];
 
         return $data;
     }
 
     /**
-     * Query the current user's work by given period.
-     * Uses raw SQL. Refactored to use prepared statements.
+     * Finds entries by day.
      *
-     * @throws \Doctrine\DBAL\Exception
-     *
-     * @return array{duration: int|mixed, count: bool}
+     * @return Entry[]
      */
-    public function getWorkByUser(int $userId, Period $period = Period::DAY): array
+    public function findByDay(int $userId, string $day): array
+    {
+        $result = $this->createQueryBuilder('e')
+            ->leftJoin('e.user', 'u')
+            ->leftJoin('e.customer', 'c')
+            ->leftJoin('e.project', 'p')
+            ->leftJoin('e.activity', 'a')
+            ->where('e.user = :userId')
+            ->andWhere('e.day = :day')
+            ->setParameter('userId', $userId)
+            ->setParameter('day', $day)
+            ->orderBy('e.start', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+
+        assert(is_array($result) && array_is_list($result));
+
+        return $result;
+    }
+
+    /**
+     * Calculates from date based on working days.
+     */
+    private function calculateFromDate(int $workingDays): DateTimeInterface
     {
         $today = $this->clock->today();
-        $connection = $this->getEntityManager()->getConnection();
-        $params = ['userId' => $userId];
 
-        $sql = [];
-        $sql['select'] = 'SELECT COUNT(id) AS count, SUM(duration) AS duration';
-        $sql['from'] = 'FROM entries';
-        // Modified: Use parameter binding for user ID
-        $sql['where_user'] = 'WHERE user_id = :userId';
-
-        switch ($period) {
-            case Period::DAY:
-                // Modified: Use parameter binding for today's date
-                $sql['where_day'] = 'AND day = :todayDate';
-                $params['todayDate'] = $today->format('Y-m-d');
-                break;
-            case Period::WEEK:
-                // Modified: Use parameter binding for year and week
-                $sql['where_year'] = 'AND YEAR(day) = :year';
-                // Assuming WEEK(day, 1) aligns with ISO-8601 week (starts Monday) like PHP 'W'
-                $sql['where_week'] = 'AND WEEK(day, 1) = :week';
-                $params['year'] = $today->format('Y');
-                $params['week'] = $today->format('W');
-                break;
-            case Period::MONTH:
-                // Modified: Use parameter binding for year and month
-                $sql['where_year'] = 'AND YEAR(day) = :year';
-                $sql['where_month'] = 'AND MONTH(day) = :month';
-                $params['year'] = $today->format('Y');
-                $params['month'] = $today->format('m');
-                break;
+        if ($workingDays <= 0) {
+            return $today;
         }
 
-        // Modified: Use prepare and executeQuery with parameters
-        $statement = $connection->prepare(implode(' ', $sql));
-        foreach ($params as $key => $value) {
-            $statement->bindValue($key, $value);
-        }
+        $date = clone $today;
+        $daysToSubtract = $this->getCalendarDaysByWorkDays($workingDays);
+        $date->sub(new DateInterval('P' . $daysToSubtract . 'D'));
 
-        $result = $statement->executeQuery()->fetchAllAssociative(); // Use fetchAllAssociative for DBAL 3+
-
-        // Original code returned false for count, keeping that behavior
-        return [
-            'duration' => $result[0]['duration'] ?? 0, // Handle potential empty result
-            'count' => false,
-        ];
+        return $date;
     }
 
     /**
-     * Get query of entries for given filter params.
-     *
-     *  $arFilter[customer]         => int customer_id
-     *           [project]          => int project_id
-     *           [user]             => int user_id
-     *           [activity]         => int activity_id
-     *           [team]             => int team_id
-     *           [datestart]        => string
-     *           [dateend]          => string
-     *           [ticket]           => string
-     *           [description]      => string
-     *           [maxResults]       => int max number of returned datasets
-     *           [visibility_user]  => user_id restricts entry visibility by users teams
+     * Finds entries by filter array.
      *
      * @param array<string, mixed> $arFilter
      *
-     * @throws Exception
+     * @return Entry[]
      */
-    /**
-     * @param array<string, mixed> $arFilter
-     *
-     * @return \Doctrine\ORM\Query<int, Entry>
-     */
-    public function queryByFilterArray(array $arFilter = []): \Doctrine\ORM\Query
+    public function findByFilterArray(array $arFilter): array
     {
-        $queryBuilder = $this->createQueryBuilder('e');
+        $qb = $this->findEntriesWithRelations();
 
-        $customerId = ArrayTypeHelper::getInt($arFilter, 'customer');
-        if ($customerId !== null) {
-            $queryBuilder
-                ->andWhere('e.customer = :customer')
-                ->setParameter('customer', $customerId)
+        // Apply filters similar to queryByFilterArray but return results directly
+        if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
+            $qb->andWhere('e.customer = :customer')
+                ->setParameter('customer', $arFilter['customer'])
             ;
         }
 
-        $projectId = ArrayTypeHelper::getInt($arFilter, 'project');
-        if ($projectId !== null) {
-            $queryBuilder
-                ->andWhere('e.project = :project')
-                ->setParameter('project', $projectId)
+        if (isset($arFilter['project']) && '' !== $arFilter['project']) {
+            $qb->andWhere('e.project = :project')
+                ->setParameter('project', $arFilter['project'])
             ;
         }
 
-        $userId = ArrayTypeHelper::getInt($arFilter, 'user');
-        if ($userId !== null) {
-            $queryBuilder
-                ->andWhere('e.user = :user')
-                ->setParameter('user', $userId)
+        if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
+            $qb->andWhere('e.activity = :activity')
+                ->setParameter('activity', $arFilter['activity'])
             ;
         }
 
-        $teamId = ArrayTypeHelper::getInt($arFilter, 'teams');
-        if ($teamId !== null) {
-            $queryBuilder
-                ->join('e.user', 'u')
-                ->join('u.teams', 't')
-                ->andWhere('t.id = :team')
-                ->setParameter('team', $teamId)
+        if (isset($arFilter['user']) && '' !== $arFilter['user']) {
+            $qb->andWhere('e.user = :user')
+                ->setParameter('user', $arFilter['user'])
             ;
         }
 
-        $dateStart = ArrayTypeHelper::getString($arFilter, 'datestart');
-        if ($dateStart !== null) {
-            $date = new DateTime($dateStart);
-            $queryBuilder->andWhere('e.day >= :start')
-                ->setParameter('start', $date->format('Y-m-d'))
+        if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
+            $qb->andWhere('e.day >= :datestart')
+                ->setParameter('datestart', $arFilter['datestart'])
             ;
         }
 
-        $dateEnd = ArrayTypeHelper::getString($arFilter, 'dateend');
-        if ($dateEnd !== null) {
-            $date = new DateTime($dateEnd);
-            $queryBuilder->andWhere('e.day <= :end')
-                ->setParameter('end', $date->format('Y-m-d'))
+        if (isset($arFilter['dateend']) && '' !== $arFilter['dateend']) {
+            $qb->andWhere('e.day <= :dateend')
+                ->setParameter('dateend', $arFilter['dateend'])
             ;
         }
 
-        $activityId = ArrayTypeHelper::getInt($arFilter, 'activity');
-        if ($activityId !== null) {
-            $queryBuilder
-                ->andWhere('e.activity = :activity')
-                ->setParameter('activity', $activityId)
-            ;
+        // Apply limit if specified with safe casting
+        if (isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults'])) {
+            $qb->setMaxResults((int) $arFilter['maxResults']);
         }
 
-        $ticket = ArrayTypeHelper::getString($arFilter, 'ticket');
-        if ($ticket !== null) {
-            $queryBuilder
-                ->andWhere('e.ticket LIKE :ticket')
-                ->setParameter('ticket', $ticket)
-            ;
+        // Apply pagination with safe casting
+        if (isset($arFilter['page']) && is_numeric($arFilter['page'])) {
+            $page = (int) $arFilter['page'];
+            $maxResults = isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
+            $offset = $page * $maxResults;
+            $qb->setFirstResult($offset);
         }
 
-        $description = ArrayTypeHelper::getString($arFilter, 'description');
-        if ($description !== null) {
-            $queryBuilder
-                ->andWhere('e.description LIKE :description')
-                ->setParameter('description', '%' . $description . '%')
-            ;
-        }
+        $qb->orderBy('e.day', 'DESC')
+            ->addOrderBy('e.start', 'DESC')
+        ;
 
-        $maxResults = ArrayTypeHelper::getInt($arFilter, 'maxResults');
-        if ($maxResults !== null && $maxResults > 0) {
-            $queryBuilder
-                ->orderBy('e.id', 'DESC')
-                ->setMaxResults($maxResults)
-            ;
-        }
+        $result = $qb->getQuery()->getResult();
 
-        // pagination offset
-        $page = ArrayTypeHelper::getInt($arFilter, 'page');
-        $maxResultsForPagination = ArrayTypeHelper::getInt($arFilter, 'maxResults');
-        if ($page !== null && $maxResultsForPagination !== null) {
-            $queryBuilder
-                ->setFirstResult($page * $maxResultsForPagination)
-            ;
-        }
+        assert(is_array($result) && array_is_list($result));
 
-        $visibilityUser = ArrayTypeHelper::getInt($arFilter, 'visibility_user');
-        if ($visibilityUser !== null) {
-            $queryBuilder
-                ->andWhere('e.user = :vis_user')
-                ->setParameter('vis_user', $visibilityUser)
-            ;
-        }
-
-        /** @var \Doctrine\ORM\Query<int, Entry> */
-        return $queryBuilder->getQuery();
-    }
-
-    /**
-     * Get array of entries for given filter params.
-     *
-     * @param array $arFilter every value is optional
-     *
-     *  $arFilter[customer]         => int customer_id
-     *           [project]          => int project_id
-     *           [user]             => int user_id
-     *           [activity]         => int activity_id
-     *           [team]             => int team_id
-     *           [datestart]        => string
-     *           [dateend]          => string
-     *           [ticket]           => string
-     *           [description]      => string
-     *           [maxResults]       => int max number of returned datasets
-     *           [visibility_user]  => user_id restricts entry visibility by users teams
-     *
-     * @throws Exception
-     *
-     * @return array<int, Entry>
-     */
-    /**
-     * @param array<string, mixed> $arFilter
-     *
-     * @return array<int, Entry>
-     */
-    public function findByFilterArray(array $arFilter = []): array
-    {
-        return $this->queryByFilterArray($arFilter)->getResult();
-    }
-
-    /**
-     * Get a list of activities with the total time booked on the ticket.
-     *
-     * @return array<int, array{name: string|null, total_time: int|string|null}>
-     */
-    public function getActivitiesWithTime(string $ticketname): array
-    {
-        $connection = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT name, SUM(duration) AS total_time
-                FROM entries
-                LEFT JOIN  activities
-                ON entries.activity_id = activities.id
-                WHERE entries.ticket = :ticketname
-                GROUP BY activity_id';
-
-        $statement = $connection->prepare($sql);
-        $statement->bindValue(':ticketname', $ticketname);
-
-        /** @var array<int, array{name: string|null, total_time: int|string|null}> $rows */
-        $rows = $statement->executeQuery()->fetchAllAssociative();
-
-        return array_map(
-            static fn (array $row): array => [
-                'name' => $row['name'] ?? null,
-                'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
-            ],
-            $rows,
-        );
-    }
-
-    /**
-     * Get a list of usernames that worked on the ticket and the total time they spent on it.
-     *
-     * @return array<int, array{username: string, total_time: int|string|null}>
-     */
-    public function getUsersWithTime(string $ticketname): array
-    {
-        $connection = $this->getEntityManager()->getConnection();
-        $sql = 'SELECT username, SUM(duration) AS total_time
-                FROM users, entries
-                WHERE entries.ticket = :ticketname
-                AND users.id = entries.user_id
-                GROUP BY username';
-
-        $statement = $connection->prepare($sql);
-        $statement->bindValue(':ticketname', $ticketname);
-
-        /** @var array<int, array{username: string, total_time: int|string|null}> $rows */
-        $rows = $statement->executeQuery()->fetchAllAssociative();
-
-        return array_map(
-            static fn (array $row): array => [
-                'username' => $row['username'],
-                'total_time' => isset($row['total_time']) ? (int) $row['total_time'] : null,
-            ],
-            $rows,
-        );
+        return $result;
     }
 }

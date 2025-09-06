@@ -47,10 +47,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         // Invalidate cache for user entries
         $user = $entry->getUser();
-        if ($user && null !== $user->getId()) {
+        $userId = $user?->getId();
+        if ($userId !== null) {
             $this->cacheService->invalidateEntity(
                 Entry::class,
-                $user->getId(),
+                $userId,
             );
         }
 
@@ -79,10 +80,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         // Invalidate cache
         $user = $entry->getUser();
-        if ($user && null !== $user->getId()) {
+        $userId = $user?->getId();
+        if ($userId !== null) {
             $this->cacheService->invalidateEntity(
                 Entry::class,
-                $user->getId(),
+                $userId,
             );
         }
 
@@ -108,10 +110,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         // Invalidate cache
         $user = $entry->getUser();
-        if ($user && null !== $user->getId()) {
+        $userId = $user?->getId();
+        if ($userId !== null) {
             $this->cacheService->invalidateEntity(
                 Entry::class,
-                $user->getId(),
+                $userId,
             );
         }
 

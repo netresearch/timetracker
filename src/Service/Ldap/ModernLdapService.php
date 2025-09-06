@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 use function count;
+use function is_array;
 use function is_scalar;
 use function sprintf;
 use function strlen;
@@ -300,6 +301,7 @@ class ModernLdapService
     {
         $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid') ?? 'uid';
         $baseDn = ArrayTypeHelper::getString($this->config, 'baseDn', '') ?? '';
+
         return sprintf(
             '%s=%s,%s',
             $userNameField,
@@ -356,7 +358,7 @@ class ModernLdapService
     private function normalizeUserData(array $entry): array
     {
         $userNameField = ArrayTypeHelper::getString($this->config, 'userNameField', 'uid') ?? 'uid';
-        
+
         return [
             'dn' => ArrayTypeHelper::getString($entry, 'dn', ''),
             'username' => is_array($entry[$userNameField] ?? null) ? ($entry[$userNameField][0] ?? '') : '',

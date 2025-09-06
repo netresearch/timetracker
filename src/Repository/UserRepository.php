@@ -22,6 +22,16 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
+     * Priority 2: Add explicit type-safe repository method for mixed type handling.
+     */
+    public function findOneById(int $id): ?User
+    {
+        $result = $this->find($id);
+        
+        return $result instanceof User ? $result : null;
+    }
+
+    /**
      * Find a user by username.
      */
     public function findOneByUsername(string $username): ?User

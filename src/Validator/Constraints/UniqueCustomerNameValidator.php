@@ -30,7 +30,7 @@ class UniqueCustomerNameValidator extends ConstraintValidator
         // Get the current customer ID from the context object (the DTO)
         $dto = $this->context->getObject();
         $customerId = 0;
-        
+
         if ($dto instanceof \App\Dto\CustomerSaveDto) {
             $customerId = $dto->id;
         }
