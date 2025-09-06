@@ -52,7 +52,11 @@ final class SaveEntryAction extends BaseTrackingController
         /** @var \App\Repository\CustomerRepository $customerRepo */
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);
 
-        $customer = $customerRepo->findOneById($dto->getCustomerId());
+        $customerId = $dto->getCustomerId();
+        if ($customerId === null) {
+            return new JsonResponse(['error' => 'Customer ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+        $customer = $customerRepo->findOneById($customerId);
 
         if (!$customer instanceof Customer) {
             return new Error('Given customer does not exist.', Response::HTTP_BAD_REQUEST);
@@ -61,7 +65,11 @@ final class SaveEntryAction extends BaseTrackingController
         /** @var \App\Repository\ProjectRepository $projectRepo */
         $projectRepo = $this->managerRegistry->getRepository(Project::class);
 
-        $project = $projectRepo->findOneById($dto->getProjectId());
+        $projectId = $dto->getProjectId();
+        if ($projectId === null) {
+            return new JsonResponse(['error' => 'Project ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+        $project = $projectRepo->findOneById($projectId);
 
         if (!$project instanceof Project) {
             return new Error('Given project does not exist.', Response::HTTP_BAD_REQUEST);
@@ -70,7 +78,11 @@ final class SaveEntryAction extends BaseTrackingController
         /** @var \App\Repository\ActivityRepository $activityRepo */
         $activityRepo = $this->managerRegistry->getRepository(Activity::class);
 
-        $activity = $activityRepo->findOneById($dto->getActivityId());
+        $activityId = $dto->getActivityId();
+        if ($activityId === null) {
+            return new JsonResponse(['error' => 'Activity ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+        $activity = $activityRepo->findOneById($activityId);
 
         if (!$activity instanceof Activity) {
             return new Error('Given activity does not exist.', Response::HTTP_BAD_REQUEST);
@@ -97,7 +109,10 @@ final class SaveEntryAction extends BaseTrackingController
         /** @var \App\Repository\EntryRepository $entryRepo */
         $entryRepo = $this->managerRegistry->getRepository(Entry::class);
 
-        $entry = $entryRepo->findOneById($entryId);
+        $entry = null;
+        if ($entryId !== null) {
+            $entry = $entryRepo->findOneById($entryId);
+        }
 
         // Check if someone else already owns the entry (if exists)
         if ($entry instanceof Entry && $entry->getUserId() !== $user->getId()) {
