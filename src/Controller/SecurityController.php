@@ -32,6 +32,10 @@ class SecurityController extends AbstractController
     /**
      * This is just a route target for the login form
      * The actual rendering is now handled by Symfony's form_login system.
+     * 
+     * @throws \Twig\Error\LoaderError When template loading fails
+     * @throws \Twig\Error\RuntimeError When template rendering fails
+     * @throws \Twig\Error\SyntaxError When template syntax is invalid
      */
     public function login(AuthenticationUtils $authenticationUtils): Response
     {

@@ -24,6 +24,8 @@ final class GetSummaryAction extends BaseController
     /**
      * @throws \InvalidArgumentException When request parameters are invalid
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Exception When time calculation operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error

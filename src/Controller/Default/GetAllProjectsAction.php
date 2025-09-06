@@ -11,6 +11,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class GetAllProjectsAction extends BaseController
 {
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \InvalidArgumentException When customer ID parameter is invalid
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse

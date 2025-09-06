@@ -24,6 +24,11 @@ final class GetTicketTimeSummaryAction extends BaseController
         $this->timeCalculationService = $timeCalculationService;
     }
 
+    /**
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When route parameters are invalid
+     * @throws \Exception When time calculation operations fail
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): Response|\Symfony\Component\HttpFoundation\RedirectResponse

@@ -42,6 +42,8 @@ class QueryCacheService
      * @param callable(): T $callback
      *
      * @return T
+     * @throws \Psr\Cache\InvalidArgumentException When cache key is invalid
+     * @throws \Exception When callback execution fails
      */
     public function remember(string $key, callable $callback, int $ttl = self::DEFAULT_TTL): mixed
     {

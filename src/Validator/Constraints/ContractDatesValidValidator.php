@@ -11,6 +11,10 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 class ContractDatesValidValidator extends ConstraintValidator
 {
+    /**
+     * @throws \Symfony\Component\Validator\Exception\UnexpectedTypeException When constraint type is invalid
+     * @throws \Exception When date parsing or validation context fails
+     */
     public function validate(mixed $value, Constraint $constraint): void
     {
         if (!$constraint instanceof ContractDatesValid) {

@@ -23,6 +23,12 @@ final class JiraOAuthCallbackAction extends BaseController
         $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
     }
 
+    /**
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
+     * @throws \App\Exception\Integration\Jira\JiraApiException When Jira API operations fail
+     * @throws \Exception When OAuth token operations or API calls fail
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/jiraoauthcallback', name: 'jiraOAuthCallback', methods: ['GET'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {

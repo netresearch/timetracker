@@ -11,6 +11,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class GetProjectsAction extends BaseController
 {
+    /**
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request is malformed
+     * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException When user lacks required permissions
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjects', name: '_getProjects_attr', methods: ['GET'])]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {

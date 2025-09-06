@@ -12,6 +12,10 @@ use App\Repository\EntryRepository;
 
 final class GetTimeSummaryAction extends BaseController
 {
+    /**
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Exception When user ID retrieval or time calculation fails
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
     {

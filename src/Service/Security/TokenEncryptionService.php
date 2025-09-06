@@ -145,6 +145,7 @@ class TokenEncryptionService
      * @param string $encryptedToken The current encrypted token
      *
      * @return string The newly encrypted token with fresh IV
+     * @throws RuntimeException If token decryption or re-encryption fails
      */
     public function rotateToken(string $encryptedToken): string
     {
