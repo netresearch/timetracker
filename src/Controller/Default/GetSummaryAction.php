@@ -56,13 +56,27 @@ final class GetSummaryAction extends BaseController
 
         $data = $objectRepository->getEntrySummary((int) $entryId, $userId, $data);
 
-        if (isset($data['project']['estimation']) && $data['project']['estimation']) {
-            $total = is_numeric($data['project']['total'] ?? null) ? (float) $data['project']['total'] : 0.0;
-            $estimation = is_numeric($data['project']['estimation'] ?? null) ? (float) $data['project']['estimation'] : 0.0;
-            $data['project']['quota'] = $this->timeCalculationService->formatQuota(
-                $total,
-                $estimation,
-            );
+        // Priority 1: Fix PossiblyUndefinedArrayOffset with proper array access validation
+        if (isset($data['project']) && is_array($data['project']) && isset($data['project']['estimation']) && $data['project']['estimation']) {
+            // Safely access nested array values with null coalescing and type validation
+            $projectTotal = null;
+            $projectEstimation = null;
+            
+            if (isset($data['project']['total'])) {
+                $projectTotal = is_numeric($data['project']['total']) ? (float) $data['project']['total'] : 0.0;
+            }
+            
+            if (isset($data['project']['estimation'])) {
+                $projectEstimation = is_numeric($data['project']['estimation']) ? (float) $data['project']['estimation'] : 0.0;
+            }
+            
+            // Only calculate quota if both values are available and valid
+            if (null !== $projectTotal && null !== $projectEstimation) {
+                $data['project']['quota'] = $this->timeCalculationService->formatQuota(
+                    $projectTotal,
+                    $projectEstimation,
+                );
+            }
         }
 
         return new JsonResponse($data);

@@ -48,6 +48,16 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Priority 2: Add explicit type-safe repository method for mixed type handling.
+     */
+    public function findOneById(int $id): ?Entry
+    {
+        $result = $this->find($id);
+        
+        return $result instanceof Entry ? $result : null;
+    }
+
+    /**
      * Get all entries for specific day.
      *
      * @return Entry[]
