@@ -147,8 +147,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
-
-            /* @phpstan-ignore-next-line */
+            /** @var array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
             return $cachedResult;
         }
 
@@ -216,8 +215,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
-
-            /* @phpstan-ignore-next-line */
+            /** @var array{duration: int, count: int} $cachedResult */
             return $cachedResult;
         }
 
