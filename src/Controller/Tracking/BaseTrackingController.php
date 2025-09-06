@@ -89,6 +89,8 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Set rendering classes for pause, overlap and daybreak.
+     *
+     * @throws Exception when database operations fail
      */
     protected function calculateClasses(int $userId, string $day): void
     {
@@ -122,7 +124,9 @@ abstract class BaseTrackingController extends BaseController
         }
 
         // Sort by start time
-        usort($normalizedEntries, static fn (array $a, array $b): int => $a['start'] <=> $b['start']);
+        usort($normalizedEntries, static fn (array $a, array $b): int => 
+            (isset($a['start'], $b['start'])) ? $a['start'] <=> $b['start'] : 0
+        );
 
         // Calculate overlaps
         for ($i = 0; $i < count($normalizedEntries); ++$i) {
@@ -224,6 +228,7 @@ abstract class BaseTrackingController extends BaseController
      * Extracts the project key from the ticket and validates against project JIRA IDs.
      *
      * @throws Exception when ticket project doesn't match
+     * @throws RuntimeException when ticket service is not available
      */
     protected function validateTicketProjectMatch(Entry $entry, Project $project): void
     {
@@ -318,6 +323,8 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Creates a Ticket in the given ticketSystem.
+     *
+     * @throws JiraApiException when ticket system configuration is invalid or API call fails
      */
     protected function createTicket(
         Entry $entry,
@@ -343,6 +350,8 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Handles the entry for the configured internal ticketsystem.
+     *
+     * @throws JiraApiException when JIRA API operations fail
      */
     protected function handleInternalJiraTicketSystem(Entry $entry, Entry $oldEntry): void
     {
@@ -381,6 +390,8 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Gets a DateTime object from a date string or returns null.
+     *
+     * @throws Exception when date parsing fails (caught internally)
      */
     protected function getDateTimeFromString(?string $dateString): ?DateTime
     {

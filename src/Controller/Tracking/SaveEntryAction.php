@@ -95,7 +95,7 @@ final class SaveEntryAction extends BaseTrackingController
             // Use project's jira_id as the expected prefix if it exists
             $prefix = $project->getJiraId();
 
-            if (!empty($prefix)) {
+            if ($prefix !== null && $prefix !== '') {
                 if (!str_starts_with($dto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
                 }
@@ -182,7 +182,7 @@ final class SaveEntryAction extends BaseTrackingController
             $minutes = $interval->i;
 
             // Convert to decimal hours with minutes as fractional part, then to minutes as integer
-            $duration = $hours + ($minutes / 60);
+            $duration = (float) $hours + ((float) $minutes / 60.0);
             $entry->setDuration((int) round($duration * 60));
         }
 

@@ -44,7 +44,7 @@ final readonly class EntryQueryService
         // No need to filter Entry instances - getResult() always returns Entry[]
 
         /** @var int $maxResults */
-        $maxResults = $searchArray['maxResults'];
+        $maxResults = $searchArray['maxResults'] ?? 50;
 
         return new PaginatedEntryCollection(
             entries: $entries,
