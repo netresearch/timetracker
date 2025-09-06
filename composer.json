@@ -72,6 +72,7 @@
   "require-dev": {
     "brianium/paratest": "^7.11",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.1",
+    "dg/bypass-finals": "*",
     "friendsofphp/php-cs-fixer": "*",
     "php-cs-fixer/shim": "^3.86",
     "phpstan/extension-installer": "^1.4",
