@@ -15,6 +15,9 @@ use function chr;
 
 final class ExportCsvAction extends BaseController
 {
+    /**
+     * @throws \Exception
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
     public function __invoke(Request $request): Response
     {

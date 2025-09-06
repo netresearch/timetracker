@@ -26,6 +26,10 @@ use function strlen;
 
 final class SaveProjectAction extends BaseController
 {
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \Exception
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $projectSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
