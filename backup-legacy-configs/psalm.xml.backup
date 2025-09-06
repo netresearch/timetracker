@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<psalm
+    phpVersion="8.4"
+    errorLevel="1"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    findUnusedBaselineEntry="true"
+    findUnusedCode="true"
+    findUnusedVariablesAndParams="true"
+    strictBinaryOperands="true"
+    rememberPropertyAssignmentsAfterCall="true"
+    checkForThrowsDocblock="true"
+    checkForThrowsInGlobalScope="true"
+    forbidEcho="false"
+    ensureArrayStringOffsetsExist="true"
+    ensureArrayIntOffsetsExist="true"
+    reportMixedIssues="true"
+    sealAllMethods="false"
+    sealAllProperties="false"
+    errorBaseline="psalm-baseline.xml"
+>
+    <projectFiles>
+        <directory name="src" />
+        <directory name="bin" />
+        <directory name="config" />
+        <ignoreFiles>
+            <directory name="vendor" />
+            <directory name="var" />
+            <directory name="tests" />
+        </ignoreFiles>
+    </projectFiles>
+
+    <plugins>
+        <pluginClass class="Psalm\SymfonyPsalmPlugin\Plugin" />
+    </plugins>
+
+    
+</psalm> 
