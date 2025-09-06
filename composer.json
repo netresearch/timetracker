@@ -11,7 +11,6 @@
     "sort-packages": true,
     "allow-plugins": {
       "composer/package-versions-deprecated": true,
-      "dealerdirect/phpcodesniffer-composer-installer": true,
       "ocramius/package-versions": true,
       "php-http/discovery": true,
       "phpstan/extension-installer": true,
@@ -72,27 +71,22 @@
   },
   "require-dev": {
     "brianium/paratest": "^7.11",
-    "dealerdirect/phpcodesniffer-composer-installer": "^1.1",
     "dg/bypass-finals": "*",
-    "friendsofphp/php-cs-fixer": "*",
-    "php-cs-fixer/shim": "^3.86",
+    "laravel/pint": "^1.18",
+    "phpat/phpat": "^0.11",
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan": "^2.1",
     "phpstan/phpstan-doctrine": "^2.0",
     "phpstan/phpstan-symfony": "^2.0",
     "phpunit/phpunit": "^12.3",
-    "psalm/plugin-symfony": "^5.2",
     "rector/rector": "^2.1",
-    "slevomat/coding-standard": "^8.20",
-    "squizlabs/php_codesniffer": "^3.13",
     "symfony/browser-kit": "^7.3",
     "symfony/css-selector": "^7.3",
     "symfony/debug-bundle": "^7.3",
     "symfony/maker-bundle": "^1.64",
     "symfony/phpunit-bridge": "^7.3",
     "symfony/web-profiler-bundle": "^7.3",
-    "symfony/webpack-encore-bundle": "^2.3",
-    "vimeo/psalm": "^6.5"
+    "symfony/webpack-encore-bundle": "^2.3"
   },
   "scripts": {
     "auto-scripts": {
@@ -105,11 +99,10 @@
     "post-update-cmd": [
       "@auto-scripts"
     ],
-    "cs-check": "phpcs",
-    "cs-fix": "php-cs-fixer fix src",
+    "cs-check": "vendor/laravel/pint/builds/pint --test",
+    "cs-fix": "vendor/laravel/pint/builds/pint",
     "analyze": "phpstan analyze --configuration=phpstan.neon --memory-limit=512M",
-    "psalm": "psalm",
-    "psalm:fix": "psalm --alter --issues=all",
+    "analyze:arch": "phpstan analyze --configuration=phpstan-phpat.neon --memory-limit=512M",
     "rector": "rector process src",
     "test": "APP_ENV=test php -d memory_limit=512M bin/phpunit",
     "test:unit": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit",
@@ -134,13 +127,12 @@
     "twig:lint": "php bin/console lint:twig templates --show-deprecations",
     "check:all": [
       "@analyze",
-      "@psalm",
+      "@analyze:arch",
       "@cs-check",
       "@twig:lint"
     ],
     "test:all": "APP_ENV=test php -d memory_limit=512M bin/phpunit && APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
     "fix:all": [
-      "@psalm:fix",
       "@cs-fix",
       "@rector"
     ]

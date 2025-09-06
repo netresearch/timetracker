@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan psalm cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -28,11 +28,11 @@ help:
 	@echo "  make test-parallel-all  # run all tests optimally (parallel + sequential)"
 	@echo "  make coverage         # run tests with coverage"
 	@echo "  make reset-test-db    # reset test database (for schema changes)"
-	@echo "  make stan|psalm       # static analysis"
+	@echo "  make stan|phpat       # static analysis & architecture"
 	@echo "  make cs-check|cs-fix  # coding standards"
-	@echo "  make check-all        # stan + psalm + phpcs"
+	@echo "  make check-all        # stan + phpat + pint + twig"
 	@echo "  make twig-lint        # lint twig templates"
-	@echo "  make fix-all          # psalm alter + cs-fixer + rector"
+	@echo "  make fix-all          # pint + rector (modern stack)"
 
 up:
 	docker compose up -d --build
@@ -107,8 +107,8 @@ coverage-sequential: prepare-test-sql
 stan:
 	docker compose run --rm app-dev composer analyze
 
-psalm:
-	docker compose run --rm app-dev composer psalm
+phpat:
+	docker compose run --rm app-dev composer analyze:arch
 
 cs-check:
 	docker compose run --rm app-dev composer cs-check

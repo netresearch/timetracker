@@ -44,13 +44,13 @@ jobs:
         run: |
           make stan
 
-      - name: Static analysis (Psalm)
+      - name: Architecture analysis (PHPat)
         env:
           COMPOSE_PROFILES: dev
         run: |
-          make psalm
+          make phpat
 
-      - name: Code style (PHP_CodeSniffer)
+      - name: Code style (Laravel Pint)
         env:
           COMPOSE_PROFILES: dev
         run: |
