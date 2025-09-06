@@ -19,11 +19,17 @@ use function is_scalar;
 #[\Symfony\Component\Console\Attribute\AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
 class TtSyncSubticketsCommand extends Command
 {
+    /**
+     * @throws \LogicException
+     */
     public function __construct(private readonly SubticketSyncService $subticketSyncService, private readonly EntityManagerInterface $entityManager)
     {
         parent::__construct();
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     protected function configure(): void
     {
         $this
@@ -33,6 +39,7 @@ class TtSyncSubticketsCommand extends Command
 
     /**
      * @psalm-return 0|1
+     * @throws \InvalidArgumentException
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

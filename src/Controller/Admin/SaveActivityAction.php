@@ -17,6 +17,10 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 
 final class SaveActivityAction extends BaseController
 {
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \Exception
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
