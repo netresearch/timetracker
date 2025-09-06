@@ -34,6 +34,7 @@
     "ext-date": "*",
     "ext-json": "*",
     "ext-ldap": "*",
+    "ext-mbstring": "*",
     "ext-pcre": "*",
     "ext-pdo": "*",
     "ext-reflection": "*",

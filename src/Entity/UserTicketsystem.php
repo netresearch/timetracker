@@ -12,6 +12,22 @@ use Doctrine\ORM\Mapping as ORM;
 class UserTicketsystem extends Base
 {
     /**
+     * Initialize a new UserTicketsystem with required properties.
+     *
+     * @param string $accessToken OAuth access token
+     * @param string $tokenSecret OAuth token secret
+     * @param bool $avoidConnection Whether to avoid connection (default: false)
+     */
+    public function __construct(
+        string $accessToken,
+        string $tokenSecret,
+        bool $avoidConnection = false
+    ) {
+        $this->accessToken = $accessToken;
+        $this->tokenSecret = $tokenSecret;
+        $this->avoidConnection = $avoidConnection;
+    }
+    /**
      * @var int|null
      */
     #[ORM\Id]

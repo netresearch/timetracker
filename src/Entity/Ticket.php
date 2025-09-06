@@ -36,6 +36,28 @@ use Doctrine\ORM\Mapping as ORM;
 class Ticket extends Base
 {
     /**
+     * Initialize a new Ticket with required properties.
+     *
+     * @param int $ticketSystemId The ticket system ID
+     * @param string $ticketNumber The ticket number/identifier
+     * @param string $name The ticket name/title
+     * @param int $estimatedDuration Estimated duration in minutes (default: 0)
+     * @param string $parentTicketNumber Parent ticket number (default: '')
+     */
+    public function __construct(
+        int $ticketSystemId,
+        string $ticketNumber,
+        string $name,
+        int $estimatedDuration = 0,
+        string $parentTicketNumber = ''
+    ) {
+        $this->ticketSystemId = $ticketSystemId;
+        $this->ticketNumber = $ticketNumber;
+        $this->name = $name;
+        $this->estimatedDuration = $estimatedDuration;
+        $this->parentTicketNumber = $parentTicketNumber;
+    }
+    /**
      * @var int
      */
     public $ticketId;
