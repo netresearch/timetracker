@@ -41,11 +41,11 @@ class LdapClientService
     /** @var string Accountname-Field in LDAP. */
     protected $_userNameField = 'sAMAccountName';
 
-    /** @var string LDAP user auth name. */
-    protected $_userName;
+    /** @var string LDAP user auth name - must be set before use */
+    protected string $_userName;
 
-    /** @var string LDAP user auth password */
-    protected $_userPass;
+    /** @var string LDAP user auth password - must be set before use */
+    protected string $_userPass;
 
     /** @var bool Use SSL for LDAP-connection. */
     protected $_useSSL = false;
@@ -55,6 +55,10 @@ class LdapClientService
 
     public function __construct(protected ?LoggerInterface $logger = null, protected string $projectDir = '')
     {
+        // Initialize security-sensitive properties to prevent accidental usage
+        // These MUST be explicitly set via setUserName() and setUserPass() before authentication
+        $this->_userName = '';
+        $this->_userPass = '';
     }
 
     /**
@@ -84,6 +88,11 @@ class LdapClientService
      */
     protected function verifyUsername()
     {
+        // Security check: ensure username is properly set
+        if ('' === $this->_userName) {
+            throw new Exception('LDAP username must be set via setUserName() before authentication');
+        }
+
         $ldapOptions = $this->getLdapOptions();
         $ldap = new Ldap($ldapOptions);
 
@@ -182,6 +191,11 @@ class LdapClientService
      */
     protected function verifyPassword(array $ldapEntry): bool
     {
+        // Security check: ensure password is properly set
+        if ('' === $this->_userPass) {
+            throw new Exception('LDAP password must be set via setUserPass() before authentication');
+        }
+
         $userDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? null);
         if (!$userDn) {
             if ($this->logger instanceof LoggerInterface) {

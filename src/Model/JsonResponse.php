@@ -35,23 +35,20 @@ class JsonResponse extends Response
 {
     /**
      * @param array<string, string|array<string>> $headers
-     *
-     * @psalm-suppress PropertyNotSetInConstructor
      */
     public function __construct(mixed $content = null, int $status = 200, array $headers = [])
     {
-        // Initialize base Response with sane defaults
-        parent::__construct('', $status, $headers);
-        $this->version = '1.1';
-        $this->statusText = '';
-        $this->charset = 'UTF-8';
-
+        // Encode content first to ensure we have a string for parent constructor
         $encoded = match ($content) {
             null => 'null',
             default => json_encode($content) ?: 'null',
         };
 
-        parent::setContent($encoded);
+        // Initialize base Response with proper content - this resolves PropertyNotSetInConstructor
+        parent::__construct($encoded, $status, $headers);
+
+        // Set additional properties that may be missing from parent initialization
+        $this->headers->set('Content-Type', 'application/json');
     }
 
     /**
@@ -59,7 +56,11 @@ class JsonResponse extends Response
      */
     public function send(bool $flush = true): static
     {
-        $this->headers->set('Content-Type', 'application/json');
+        // Ensure Content-Type is always set for JSON responses
+        if (!$this->headers->has('Content-Type')) {
+            $this->headers->set('Content-Type', 'application/json');
+        }
+        
         parent::send($flush);
 
         return $this;
