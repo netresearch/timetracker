@@ -12,6 +12,19 @@ use Doctrine\ORM\Mapping as ORM;
 class Preset extends Base
 {
     /**
+     * Initialize a new Preset with required properties.
+     *
+     * @param string $name The name of the preset
+     * @param string $description The description of the preset
+     */
+    public function __construct(
+        string $name,
+        string $description = ''
+    ) {
+        $this->name = $name;
+        $this->description = $description;
+    }
+    /**
      * @var int|null
      */
     #[ORM\Id]

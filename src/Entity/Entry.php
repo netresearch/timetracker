@@ -18,6 +18,34 @@ use function sprintf;
 class Entry extends Base
 {
     /**
+     * Initialize a new Entry with required properties.
+     *
+     * @param DateTimeInterface $day The date when the entry was made
+     * @param DateTimeInterface $start Start time of the entry
+     * @param DateTimeInterface $end End time of the entry
+     * @param string $description Description of the work done (default: '')
+     * @param string $ticket Ticket identifier (default: '')
+     */
+    public function __construct(
+        DateTimeInterface $day,
+        DateTimeInterface $start,
+        DateTimeInterface $end,
+        string $description = '',
+        string $ticket = ''
+    ) {
+        $this->day = $day;
+        $this->start = $start;
+        $this->end = $end;
+        $this->description = $description;
+        $this->ticket = $ticket;
+        $this->duration = 0;
+        $this->syncedToTicketsystem = false;
+        $this->class = EntryClass::PLAIN;
+        $this->externalSummary = '';
+        $this->externalReporter = '';
+        $this->externalLabels = [];
+    }
+    /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.
      */
     protected ?bool $billable = null;
