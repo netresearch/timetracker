@@ -14,6 +14,9 @@ use function count;
 
 final class GetTicketSystemsAction extends BaseController
 {
+    /**
+     * @throws \Exception
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTicketSystems', name: '_getTicketSystems_attr', methods: ['GET'])]
     public function __invoke(Request $request): Response|JsonResponse
     {
