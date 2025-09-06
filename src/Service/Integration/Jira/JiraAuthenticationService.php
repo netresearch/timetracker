@@ -113,6 +113,7 @@ class JiraAuthenticationService
      * Extracts OAuth tokens from response.
      *
      * @return array<string, string>
+     * @throws JiraApiException when response parsing fails or OAuth problems occur
      */
     private function extractTokens(ResponseInterface $response): array
     {
@@ -147,6 +148,7 @@ class JiraAuthenticationService
      * Stores OAuth tokens for user and ticket system.
      *
      * @return array{oauth_token_secret: string, oauth_token: string}
+     * @throws Exception when database operations fail
      */
     private function storeToken(
         User $user,
@@ -190,6 +192,7 @@ class JiraAuthenticationService
      * Retrieves and decrypts OAuth tokens for user.
      *
      * @return array{token: string, secret: string}
+     * @throws Exception when token decryption fails (handled internally for legacy tokens)
      */
     public function getTokens(User $user, TicketSystem $ticketSystem): array
     {
@@ -220,6 +223,8 @@ class JiraAuthenticationService
 
     /**
      * Deletes stored tokens for user.
+     *
+     * @throws Exception when database operations fail
      */
     public function deleteTokens(User $user, TicketSystem $ticketSystem): void
     {
@@ -291,6 +296,8 @@ class JiraAuthenticationService
 
     /**
      * Throws unauthorized exception with OAuth redirect.
+     *
+     * @throws JiraApiUnauthorizedException always
      */
     public function throwUnauthorizedRedirect(
         TicketSystem $ticketSystem,
@@ -303,6 +310,7 @@ class JiraAuthenticationService
      * Authenticates user with ticket system by verifying tokens.
      *
      * @throws JiraApiUnauthorizedException if authentication fails
+     * @throws Exception when database operations fail
      */
     public function authenticate(User $user, TicketSystem $ticketSystem): void
     {
