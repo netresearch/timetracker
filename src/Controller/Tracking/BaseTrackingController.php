@@ -110,22 +110,21 @@ abstract class BaseTrackingController extends BaseController
 
         $normalizedEntries = [];
         foreach ($entries as $entry) {
-            if ($entry instanceof Entry) {
-                $normalizedEntries[] = [
-                    'id' => (int) $entry->getId(),
-                    'start' => $entry->getStart(),
-                    'end' => $entry->getEnd(),
-                ];
-            }
+            // No need for instanceof check - findByDay always returns Entry[]
+            $normalizedEntries[] = [
+                'id' => (int) $entry->getId(),
+                'start' => $entry->getStart(),
+                'end' => $entry->getEnd(),
+            ];
         }
 
         if (0 === count($normalizedEntries)) {
             return;
         }
 
-        // Sort by start time
+        // Sort by start time - no isset check needed, structure is guaranteed
         usort($normalizedEntries, static fn (array $a, array $b): int => 
-            (isset($a['start'], $b['start'])) ? $a['start'] <=> $b['start'] : 0
+            $a['start'] <=> $b['start']
         );
 
         // Calculate overlaps
@@ -390,8 +389,7 @@ abstract class BaseTrackingController extends BaseController
 
     /**
      * Gets a DateTime object from a date string or returns null.
-     *
-     * @throws Exception when date parsing fails (caught internally)
+     * Catches parsing exceptions internally and returns null on failure.
      */
     protected function getDateTimeFromString(?string $dateString): ?DateTime
     {
