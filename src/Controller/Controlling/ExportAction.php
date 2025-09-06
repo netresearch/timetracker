@@ -30,6 +30,9 @@ final class ExportAction extends BaseController
         $this->export = $export;
     }
 
+    /**
+     * @throws \InvalidArgumentException When export parameters are invalid or file operations fail
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
     public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response|\Symfony\Component\HttpFoundation\RedirectResponse
@@ -38,6 +41,7 @@ final class ExportAction extends BaseController
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
         foreach ($attributeKeysToMap as $attributeKeyToMap) {
             if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
+                /** @var mixed $attributeValue */
                 $attributeValue = $request->attributes->get($attributeKeyToMap);
                 $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
                 $request->query->set($attributeKeyToMap, $stringValue);
