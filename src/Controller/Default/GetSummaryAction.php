@@ -21,6 +21,9 @@ final class GetSummaryAction extends BaseController
         $this->timeCalculationService = $timeCalculationService;
     }
 
+    /**
+     * @throws \InvalidArgumentException When request parameters are invalid
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
     {
