@@ -25,6 +25,11 @@ use function sprintf;
 
 final class SaveEntryAction extends BaseTrackingController
 {
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \BadMethodCallException
+     * @throws \InvalidArgumentException
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
     public function __invoke(
         Request $request,

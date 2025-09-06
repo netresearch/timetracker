@@ -30,6 +30,9 @@ final class BulkEntryAction extends BaseTrackingController
     ) {
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
     public function __invoke(
         Request $request,

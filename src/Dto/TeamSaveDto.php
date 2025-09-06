@@ -26,6 +26,9 @@ final readonly class TeamSaveDto
     ) {
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     */
     public static function fromRequest(Request $request): self
     {
         return new self(

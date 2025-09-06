@@ -59,6 +59,9 @@ final readonly class ProjectSaveDto
     ) {
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     */
     public static function fromRequest(Request $request): self
     {
         $internal = $request->request->get('internalJiraTicketSystem');
