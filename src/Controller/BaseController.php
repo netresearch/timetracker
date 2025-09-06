@@ -236,19 +236,6 @@ class BaseController extends AbstractController
         return $response;
     }
 
-    /**
-     * Returns a custom error message.
-     *
-     * @param string $message Error message
-     * @param int    $status  HTTP status code
-     */
-    protected function getFailedResponse(string $message, int $status): Response
-    {
-        $response = new Response($message);
-        $response->setStatusCode($status);
-
-        return $response;
-    }
 
     /**
      * helper method to shorten the usage of the translator in the controllers.
