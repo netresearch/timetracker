@@ -688,7 +688,8 @@ class Project extends Base
      */
     public function hasInternalJiraProjectKey(): bool
     {
-        return !empty($this->internalJiraProjectKey) && !empty($this->internalJiraTicketSystem);
+        return null !== $this->internalJiraProjectKey && '' !== $this->internalJiraProjectKey
+            && null !== $this->internalJiraTicketSystem && '' !== $this->internalJiraTicketSystem;
     }
 
     /**
