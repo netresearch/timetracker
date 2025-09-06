@@ -32,6 +32,9 @@ final readonly class PresetSaveDto
     ) {
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     */
     public static function fromRequest(Request $request): self
     {
         return new self(

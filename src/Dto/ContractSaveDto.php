@@ -41,6 +41,9 @@ final readonly class ContractSaveDto
     ) {
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     */
     public static function fromRequest(Request $request): self
     {
         $end = $request->request->get('end');

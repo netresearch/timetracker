@@ -57,6 +57,9 @@ final readonly class BulkEntryDto
         return $this->skipholidays > 0;
     }
 
+    /**
+     * @throws \Exception
+     */
     #[Assert\Callback]
     public function validateTimeRange(ExecutionContextInterface $context): void
     {
@@ -74,6 +77,9 @@ final readonly class BulkEntryDto
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     #[Assert\Callback]
     public function validateDateRange(ExecutionContextInterface $context): void
     {

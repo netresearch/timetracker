@@ -38,6 +38,9 @@ final readonly class UserSaveDto
     ) {
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     */
     public static function fromRequest(Request $request): self
     {
         /** @var list<int|string> $teams */
