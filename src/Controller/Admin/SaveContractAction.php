@@ -22,6 +22,8 @@ final class SaveContractAction extends BaseController
 {
     /**
      * @throws InvalidArgumentException
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|\App\Response\Error
@@ -115,6 +117,8 @@ final class SaveContractAction extends BaseController
     /**
      * Look for existing contracts for user and update the latest if open-ended.
      * Same behavior as legacy AdminController::updateOldContract.
+     *
+     * @throws \Exception
      */
     protected function updateOldContract(User $user, DateTime $newStartDate, ?DateTime $newEndDate): string
     {
