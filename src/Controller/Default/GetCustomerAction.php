@@ -13,6 +13,11 @@ use function is_scalar;
 
 final class GetCustomerAction extends BaseController
 {
+    /**
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
+     * @throws \InvalidArgumentException When project parameter is invalid
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getCustomer', name: '_getCustomer_attr', methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): JsonResponse

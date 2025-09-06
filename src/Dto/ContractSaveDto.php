@@ -42,7 +42,9 @@ final readonly class ContractSaveDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
+     * @throws \InvalidArgumentException When request data conversion fails
+     * @throws \UnexpectedValueException When numeric string conversion fails
      */
     public static function fromRequest(Request $request): self
     {

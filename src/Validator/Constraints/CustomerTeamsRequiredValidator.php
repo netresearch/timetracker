@@ -10,6 +10,10 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 class CustomerTeamsRequiredValidator extends ConstraintValidator
 {
+    /**
+     * @throws \Symfony\Component\Validator\Exception\UnexpectedTypeException When constraint type is invalid
+     * @throws \Exception When validation context access fails
+     */
     public function validate(mixed $value, Constraint $constraint): void
     {
         if (!$constraint instanceof CustomerTeamsRequired) {

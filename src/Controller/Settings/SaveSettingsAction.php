@@ -12,7 +12,10 @@ use Symfony\Component\HttpFoundation\Request;
 final class SaveSettingsAction extends BaseController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request is malformed
+     * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException When user is not authenticated
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Exception When user retrieval or persistence operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/settings/save', name: 'saveSettings', methods: ['POST'])]
     public function __invoke(Request $request): JsonResponse

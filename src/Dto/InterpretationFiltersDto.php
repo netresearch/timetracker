@@ -48,6 +48,10 @@ final readonly class InterpretationFiltersDto
     ) {
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
+     * @throws \InvalidArgumentException When parameter conversion fails
+     */
     public static function fromRequest(Request $request): self
     {
         return new self(

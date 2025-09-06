@@ -49,6 +49,12 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         return $isLoginSubmit;
     }
 
+    /**
+     * @throws \Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException When authentication fails
+     * @throws \Symfony\Component\Security\Core\Exception\UserNotFoundException When user is not found
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Exception When LDAP or user creation operations fail
+     */
     public function authenticate(Request $request): Passport
     {
         $username = $this->sanitizeLdapInput((string) $request->request->get('_username'));

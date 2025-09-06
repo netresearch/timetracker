@@ -204,6 +204,9 @@ class ModernLdapService
 
     /**
      * Tests LDAP connection with current configuration.
+     * 
+     * @throws \Laminas\Ldap\Exception\LdapException When LDAP operations fail
+     * @throws \Exception When connection validation fails
      */
     public function testConnection(): bool
     {

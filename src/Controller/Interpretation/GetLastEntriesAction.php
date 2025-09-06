@@ -20,6 +20,11 @@ final class GetLastEntriesAction extends BaseInterpretationController
         $this->timeCalculationService = $timeCalculationService;
     }
 
+    /**
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are invalid
+     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws \Exception When entry retrieval or time calculation fails
+     */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
     public function __invoke(Request $request): ModelResponse|JsonResponse
     {

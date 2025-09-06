@@ -35,6 +35,8 @@ class JsonResponse extends Response
 {
     /**
      * @param array<string, string|array<string>> $headers
+     * @throws \JsonException When JSON encoding fails
+     * @throws \InvalidArgumentException When content cannot be encoded
      */
     public function __construct(mixed $content = null, int $status = 200, array $headers = [])
     {

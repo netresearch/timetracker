@@ -30,7 +30,9 @@ final readonly class ExportQueryDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
+     * @throws \InvalidArgumentException When query parameters are invalid types
+     * @throws \UnexpectedValueException When parameter conversion fails
      */
     public static function fromRequest(Request $request): self
     {
