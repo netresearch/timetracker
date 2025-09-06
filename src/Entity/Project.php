@@ -10,11 +10,12 @@ use App\Service\Util\TimeCalculationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
+use function in_array;
+
 #[ORM\Entity(repositoryClass: \App\Repository\ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
 class Project extends Base
 {
-
     /**
      * @var int|null
      */
@@ -230,22 +231,16 @@ class Project extends Base
 
     /**
      * Retrieve the id from the object, useful for hydration, etc.
-     *
-     * @return mixed the id
      */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
     /**
      * Set the id of the object, useful for hydration, etc.
-     *
-     * @param mixed $id the new id
-     *
-     * @return $this
      */
-    public function setId($id): static
+    public function setId(?int $id): static
     {
         $this->id = $id;
 
@@ -348,7 +343,6 @@ class Project extends Base
         return $this;
     }
 
-
     /**
      * Returns the project's jira ID.
      *
@@ -446,7 +440,7 @@ class Project extends Base
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, \App\Entity\Entry>
+     * @return \Doctrine\Common\Collections\Collection<int, Entry>
      */
     public function getEntries(): \Doctrine\Common\Collections\Collection
     {
@@ -686,7 +680,7 @@ class Project extends Base
      */
     public function getInternalJiraTicketSystem(): ?string
     {
-        return $this->internalJiraTicketSystem !== null ? (string) $this->internalJiraTicketSystem : null;
+        return null !== $this->internalJiraTicketSystem ? (string) $this->internalJiraTicketSystem : null;
     }
 
     /**
@@ -713,12 +707,12 @@ class Project extends Base
 
         // Support comma-separated list of project keys
         $projectKeys = array_map('trim', explode(',', $internalKey));
-        
+
         return in_array($jiraId, $projectKeys, true);
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, \App\Entity\Preset>
+     * @return \Doctrine\Common\Collections\Collection<int, Preset>
      */
     public function getPresets(): \Doctrine\Common\Collections\Collection
     {

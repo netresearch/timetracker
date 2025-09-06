@@ -9,8 +9,6 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
-use function is_object;
-
 class UniqueProjectNameForCustomerValidator extends ConstraintValidator
 {
     public function __construct(

@@ -9,20 +9,19 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
-use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\EntryClass;
-use App\Enum\UserType;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
-use App\Util\RequestEntityHelper;
 use DateTime;
 use Exception;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Throwable;
+
+use function sprintf;
 
 final class SaveEntryAction extends BaseTrackingController
 {
@@ -78,7 +77,7 @@ final class SaveEntryAction extends BaseTrackingController
         if (!empty($dto->ticket)) {
             // Use project's jira_id as the expected prefix if it exists
             $prefix = $project->getJiraId();
-            
+
             if (!empty($prefix)) {
                 if (!str_starts_with($dto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
@@ -115,7 +114,7 @@ final class SaveEntryAction extends BaseTrackingController
                 $dayDate = new DateTime($dto->date);
                 $entry->setDay($dayDate);
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
@@ -124,7 +123,7 @@ final class SaveEntryAction extends BaseTrackingController
                 $startTime = new DateTime($dto->start);
                 $entry->setStart($startTime);
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
@@ -133,7 +132,7 @@ final class SaveEntryAction extends BaseTrackingController
                 $endTime = new DateTime($dto->end);
                 $entry->setEnd($endTime);
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
@@ -180,13 +179,13 @@ final class SaveEntryAction extends BaseTrackingController
             $customer = $entry->getCustomer();
             $project = $entry->getProject();
             $activity = $entry->getActivity();
-            
-            if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime ||
-                !$user instanceof User || !$customer instanceof Customer || 
-                !$project instanceof Project || !$activity instanceof Activity) {
+
+            if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime
+                || !$user instanceof User || !$customer instanceof Customer
+                || !$project instanceof Project || !$activity instanceof Activity) {
                 return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
-            
+
             $data = [
                 'result' => [
                     'date' => $day->format('d/m/Y'),
@@ -197,11 +196,11 @@ final class SaveEntryAction extends BaseTrackingController
                     'project' => $project->getId(),
                     'activity' => $activity->getId(),
                     'duration' => $entry->getDuration(),
-                    'durationString' => sprintf('%02d:%02d', intval($entry->getDuration() / 60), $entry->getDuration() % 60),
+                    'durationString' => sprintf('%02d:%02d', (int) ($entry->getDuration() / 60), $entry->getDuration() % 60),
                     'class' => $entry->getClass()->value,
                 ],
             ];
-            
+
             // Include ticket and description if present
             if (!empty($dto->ticket)) {
                 $data['result']['ticket'] = $entry->getTicket();
@@ -209,7 +208,7 @@ final class SaveEntryAction extends BaseTrackingController
             if (!empty($dto->description)) {
                 $data['result']['description'] = $entry->getDescription();
             }
-            
+
             return new JsonResponse($data);
         } catch (Throwable $exception) {
             return new Error('Could not save entry: ' . $exception->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);

@@ -13,21 +13,21 @@ final readonly class PresetSaveDto
 {
     public function __construct(
         public int $id = 0,
-        
+
         #[Assert\NotBlank(message: 'Please provide a valid preset name with at least 3 letters.')]
         #[Assert\Length(min: 3, minMessage: 'Please provide a valid preset name with at least 3 letters.')]
         public string $name = '',
-        
+
         /** IDs for relations; handled manually */
         #[Map(if: false)]
         public ?int $customer = null,
-        
+
         #[Map(if: false)]
         public ?int $project = null,
-        
+
         #[Map(if: false)]
         public ?int $activity = null,
-        
+
         public string $description = '',
     ) {
     }

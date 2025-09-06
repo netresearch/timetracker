@@ -17,6 +17,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Throwable;
 
+use function is_array;
+use function is_string;
 use function sprintf;
 
 /**
@@ -109,7 +111,7 @@ class JiraAuthenticationService
 
     /**
      * Extracts OAuth tokens from response.
-     * 
+     *
      * @return array<string, string>
      */
     private function extractTokens(ResponseInterface $response): array
@@ -124,8 +126,8 @@ class JiraAuthenticationService
         parse_str($responseBody, $tokens);
 
         if (isset($tokens['oauth_problem'])) {
-            $problem = is_array($tokens['oauth_problem']) 
-                ? implode(', ', $tokens['oauth_problem']) 
+            $problem = is_array($tokens['oauth_problem'])
+                ? implode(', ', $tokens['oauth_problem'])
                 : (string) $tokens['oauth_problem'];
             throw new JiraApiException(sprintf('OAuth problem: %s', $problem), 401);
         }
@@ -143,7 +145,7 @@ class JiraAuthenticationService
 
     /**
      * Stores OAuth tokens for user and ticket system.
-     * 
+     *
      * @return array{oauth_token_secret: string, oauth_token: string}
      */
     private function storeToken(
@@ -186,7 +188,7 @@ class JiraAuthenticationService
 
     /**
      * Retrieves and decrypts OAuth tokens for user.
-     * 
+     *
      * @return array{token: string, secret: string}
      */
     public function getTokens(User $user, TicketSystem $ticketSystem): array
@@ -295,5 +297,22 @@ class JiraAuthenticationService
         ?Throwable $throwable = null,
     ): never {
         throw new JiraApiUnauthorizedException('Unauthorized. Redirecting to Jira OAuth.', 401, $this->getOAuthAuthUrl($ticketSystem, ''), $throwable);
+    }
+
+    /**
+     * Authenticates user with ticket system by verifying tokens.
+     *
+     * @throws JiraApiUnauthorizedException if authentication fails
+     */
+    public function authenticate(User $user, TicketSystem $ticketSystem): void
+    {
+        if (!$this->checkUserTicketSystem($user, $ticketSystem)) {
+            $this->throwUnauthorizedRedirect($ticketSystem);
+        }
+
+        $tokens = $this->getTokens($user, $ticketSystem);
+        if (empty($tokens['token']) || empty($tokens['secret'])) {
+            $this->throwUnauthorizedRedirect($ticketSystem);
+        }
     }
 }

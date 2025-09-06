@@ -83,7 +83,7 @@ enum Period: int
     public function getStartOfPeriod(DateTimeInterface $date): DateTime
     {
         $start = new DateTime($date->format('Y-m-d'));
-        
+
         return match ($this) {
             self::DAY => $start,
             self::WEEK => $start->modify('monday this week'),
@@ -97,7 +97,7 @@ enum Period: int
     public function getEndOfPeriod(DateTimeInterface $date): DateTime
     {
         $end = new DateTime($date->format('Y-m-d'));
-        
+
         return match ($this) {
             self::DAY => $end,
             self::WEEK => $end->modify('sunday this week'),
@@ -124,7 +124,7 @@ enum Period: int
     {
         return match ($this) {
             self::DAY => 'daily',
-            self::WEEK => 'weekly', 
+            self::WEEK => 'weekly',
             self::MONTH => 'monthly',
         };
     }

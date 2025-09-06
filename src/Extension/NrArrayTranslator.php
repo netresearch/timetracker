@@ -18,12 +18,12 @@ declare(strict_types=1);
 
 namespace App\Extension;
 
-use App\Service\TypeSafety\ArrayTypeHelper;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_key_exists;
 use function in_array;
 use function is_array;
+use function is_string;
 
 /**
  * Class NrArrayTranslator.
@@ -110,17 +110,17 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
                 if (!is_string($key) || !in_array($key, $keys, true)) {
                     continue;
                 }
-                
+
                 // Ensure value is string before translation
                 if (!is_string($value)) {
                     continue;
                 }
-                
+
                 // Ensure we have array access to the nested structure
                 if (!is_array($data[$rowKey] ?? null) || !is_array($data[$rowKey][$arrayKey] ?? null)) {
                     continue;
                 }
-                
+
                 $data[$rowKey][$arrayKey][$key] = $this->translator->trans(
                     $value,
                     [],

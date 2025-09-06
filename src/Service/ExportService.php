@@ -8,11 +8,13 @@ use App\Entity\Entry;
 use App\Enum\TicketSystemType;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 
+use function count;
 use function in_array;
 use function is_array;
 use function is_object;
-use function is_string;
+use function sprintf;
 
 class ExportService
 {
@@ -23,14 +25,16 @@ class ExportService
     /**
      * Returns entries filtered and ordered.
      *
-     * @param array<string, bool>|null $arSort
+     * @param array<string, string>|null $arSort
+     * @param array<int, int>|null       $arProjects
+     * @param array<int, int>|null       $arUsers
      *
-     * @return array<string, mixed>
+     * @return list<array<string, int|string|null>>
      */
     public function getEntries(\App\Entity\User $currentUser, ?array $arSort = null, string $strStart = '', string $strEnd = '', ?array $arProjects = null, ?array $arUsers = null): array
     {
         /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
+        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
 
         $arFilter = [];
 
@@ -50,10 +54,13 @@ class ExportService
             $arFilter['users'] = $arUsers;
         }
 
-        $arEntries = $entryRepo->getEntries(
-            $currentUser->getId(),
-            $arSort,
+        // Add user filter to the filters array
+        $arFilter['user'] = $currentUser->getId();
+
+        $arEntries = $entryRepo->getFilteredEntries(
             $arFilter,
+            0, // offset
+            0, // limit (0 = no limit)
         );
 
         $arApi = [];
@@ -66,15 +73,15 @@ class ExportService
 
             $arReturn[] = [
                 'id' => $entry->getId(),
-                'user' => $entry->getUser() ? $entry->getUser()->getName() : '',
+                'user' => $entry->getUser() ? $entry->getUser()->getUsername() : '',
                 'customer' => $entry->getCustomer() ? $entry->getCustomer()->getName() : '',
                 'project' => $entry->getProject() ? $entry->getProject()->getName() : '',
                 'activity' => $entry->getActivity() ? $entry->getActivity()->getName() : '',
                 'description' => $entry->getDescription(),
-                'start' => $entry->getStart() ? $entry->getStart()->format('Y-m-d H:i:s') : '',
-                'end' => $entry->getEnd() ? $entry->getEnd()->format('Y-m-d H:i:s') : '',
+                'start' => $entry->getStart()->format('Y-m-d H:i:s'),
+                'end' => $entry->getEnd()->format('Y-m-d H:i:s'),
                 'ticket' => $entry->getTicket(),
-                'ticket_url' => $this->getTicketUrl($entry),
+                'ticket_url' => $this->getTicketUrl($entry, $arApi, $currentUser),
                 'worklog_url' => $this->getWorklogUrl($entry, $arApi, $currentUser),
             ];
         }
@@ -82,7 +89,10 @@ class ExportService
         return $arReturn;
     }
 
-    private function getTicketUrl(Entry $entry): string
+    /**
+     * @param array<int, mixed> $arApi
+     */
+    private function getTicketUrl(Entry $entry, array &$arApi, \App\Entity\User $currentUser): string
     {
         if ('' === $entry->getTicket()) {
             return '';
@@ -98,20 +108,16 @@ class ExportService
             return '';
         }
 
-        if ('' !== $entry->getTicket()
-            && $entry->getProject()
-            && $entry->getProject()->getTicketSystem()
-            && $entry->getProject()->getTicketSystem()->getBookTime()
-            && TicketSystemType::JIRA === $entry->getProject()->getTicketSystem()->getType()
+        if ($ticketSystem->getBookTime()
+            && TicketSystemType::JIRA === $ticketSystem->getType()
         ) {
-            $ticketSystem = $entry->getProject()->getTicketSystem();
-
             if (!isset($arApi[$ticketSystem->getId()])) {
                 $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
             }
 
             if (isset($arApi[$ticketSystem->getId()])) {
-                return $arApi[$ticketSystem->getId()]->getTicketUrl($entry->getTicket());
+                // Use the ticket system's URL template directly
+                return sprintf($ticketSystem->getTicketUrl(), $entry->getTicket());
             }
         }
 
@@ -145,23 +151,29 @@ class ExportService
             $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
         }
 
-        if (!isset($arApi[$ticketSystem->getId()])) {
+        $apiService = $arApi[$ticketSystem->getId()] ?? null;
+        if (!$apiService) {
             return '';
         }
 
-        return $arApi[$ticketSystem->getId()]->getWorklogUrl($entry->getTicket(), $entry->getWorklogId());
+        // Build worklog URL manually since getWorklogUrl method doesn't exist
+        $baseUrl = rtrim($ticketSystem->getTicketUrl(), '/');
+        $baseUrl = str_replace('%s', $entry->getTicket(), $baseUrl);
+
+        return $baseUrl . '/worklog/' . $entry->getWorklogId();
     }
 
     /**
      * Export entries for a specific user and month.
      *
-     * @param array<string, bool>|null $arSort Sorting configuration
+     * @param array<string, string>|null $arSort Sorting configuration
+     *
      * @return Entry[]
      */
     public function exportEntries(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null): array
     {
         /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->managerRegistry->getRepository(\App\Entity\Entry::class);
+        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
 
         return $entryRepo->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
     }
@@ -170,6 +182,7 @@ class ExportService
      * Enrich entries with ticket information from JIRA.
      *
      * @param Entry[] $entries
+     *
      * @return Entry[]
      */
     public function enrichEntriesWithTicketInformation(int $userId, array $entries, bool $includeBillable = false, bool $includeTicketTitle = false, bool $searchTickets = false): array
@@ -195,7 +208,7 @@ class ExportService
                 $entriesByTicketSystem[$ticketSystemId] = [
                     'ticketSystem' => $ticketSystem,
                     'entries' => [],
-                    'tickets' => []
+                    'tickets' => [],
                 ];
             }
 
@@ -217,13 +230,10 @@ class ExportService
             $tickets = array_unique($ticketSystemData['tickets']);
 
             $jiraApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-            if (!$jiraApi) {
-                continue;
-            }
 
             // Build JQL query for all tickets
             $ticketKeys = implode(',', $tickets);
-            $jql = "key in ($ticketKeys)";
+            $jql = "key in ({$ticketKeys})";
 
             $fields = [];
             if ($includeBillable) {
@@ -241,7 +251,7 @@ class ExportService
                 $result = $jiraApi->searchTicket($jql, $fields, count($tickets));
                 $ticketData = [];
 
-                if (isset($result->issues)) {
+                if (is_object($result) && property_exists($result, 'issues')) {
                     foreach ($result->issues as $issue) {
                         $ticketData[$issue->key] = $issue->fields;
                     }
@@ -265,7 +275,7 @@ class ExportService
                         $entry->setTicketTitle($fields->summary);
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Log error but continue with other entries
                 // In a real implementation, you might want to use a logger here
                 continue;
@@ -283,7 +293,7 @@ class ExportService
         /** @var \App\Repository\UserRepository $userRepo */
         $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
         $user = $userRepo->find($userId);
-        
+
         return $user ? $user->getUsername() : null;
     }
 }

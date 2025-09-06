@@ -9,6 +9,8 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
+use function is_string;
+
 class UniqueActivityNameValidator extends ConstraintValidator
 {
     public function __construct(
@@ -37,7 +39,7 @@ class UniqueActivityNameValidator extends ConstraintValidator
         if (null !== $existingActivity) {
             // Check if we're updating an existing activity
             $object = $this->context->getObject();
-            
+
             // Type-safe check for ActivitySaveDto
             if ($object instanceof \App\Dto\ActivitySaveDto && $object->id > 0) {
                 if ($existingActivity->getId() === $object->id) {

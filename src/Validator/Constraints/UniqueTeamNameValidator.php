@@ -9,6 +9,8 @@ use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
+use function is_string;
+
 class UniqueTeamNameValidator extends ConstraintValidator
 {
     public function __construct(
@@ -36,7 +38,7 @@ class UniqueTeamNameValidator extends ConstraintValidator
         if (null !== $existingTeam) {
             // Check if we're updating an existing team
             $object = $this->context->getObject();
-            
+
             // Type-safe check for TeamSaveDto
             if ($object instanceof \App\Dto\TeamSaveDto && $object->id > 0) {
                 if ($existingTeam->getId() === $object->id) {

@@ -8,22 +8,23 @@ use Symfony\Component\HttpFoundation\Request;
 
 use function in_array;
 use function is_bool;
+use function is_scalar;
 
 final readonly class ExportQueryDto
 {
     public function __construct(
         public int $userid = 0,
-        
+
         public int $year = 0,
-        
+
         public int $month = 0,
-        
+
         public int $project = 0,
-        
+
         public int $customer = 0,
-        
+
         public bool $billable = false,
-        
+
         public bool $tickettitles = false,
     ) {
     }
@@ -66,6 +67,7 @@ final readonly class ExportQueryDto
 
         if (is_scalar($value)) {
             $normalized = strtolower(trim((string) $value));
+
             return in_array($normalized, ['1', 'true', 'on', 'yes'], true);
         }
 

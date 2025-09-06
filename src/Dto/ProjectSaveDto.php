@@ -15,46 +15,46 @@ final readonly class ProjectSaveDto
 {
     public function __construct(
         public int $id = 0,
-        
+
         #[Assert\NotBlank(message: 'Please provide a valid project name with at least 3 letters.')]
         #[Assert\Length(min: 3, minMessage: 'Please provide a valid project name with at least 3 letters.')]
         public string $name = '',
-        
+
         #[Map(if: false)]
         public ?int $customer = null,
-        
+
         #[Assert\Regex(pattern: '/^[A-Z]+$/', message: 'The Jira prefix must contain only uppercase letters.', normalizer: 'trim')]
         public ?string $jiraId = null,
-        
+
         public ?string $jiraTicket = null,
-        
+
         public bool $active = false,
-        
+
         public bool $global = false,
-        
+
         #[Map(if: false)]
         public string $estimation = '0m',
-        
+
         #[Map(if: false)]
         public int $billing = 0,
-        
+
         public ?string $cost_center = null,
-        
+
         public ?string $offer = null,
-        
+
         #[Map(if: false)]
         public ?int $project_lead = null,
-        
+
         #[Map(if: false)]
         public ?int $technical_lead = null,
-        
+
         #[Map(if: false)]
         public ?string $ticket_system = null,
-        
+
         public bool $additionalInformationFromExternal = false,
-        
+
         public ?string $internalJiraTicketSystem = null,
-        
+
         public string $internalJiraProjectKey = '',
     ) {
     }
@@ -62,7 +62,7 @@ final readonly class ProjectSaveDto
     public static function fromRequest(Request $request): self
     {
         $internal = $request->request->get('internalJiraTicketSystem');
-        
+
         return new self(
             id: (int) ($request->request->get('id') ?? 0),
             name: (string) ($request->request->get('name') ?? ''),

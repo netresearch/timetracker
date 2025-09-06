@@ -8,6 +8,8 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 
+use function is_object;
+
 /**
  * Base model class with common functionality.
  */

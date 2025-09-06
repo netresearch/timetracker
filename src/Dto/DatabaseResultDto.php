@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use DateTime;
+
+use function is_string;
+
 /**
  * DTO for type-safe database result transformations.
  */
@@ -13,6 +17,7 @@ final readonly class DatabaseResultDto
      * Transform mixed database result to typed entry data.
      *
      * @param array<string, mixed> $row
+     *
      * @return array<string, mixed>
      */
     public static function transformEntryRow(array $row): array
@@ -39,7 +44,7 @@ final readonly class DatabaseResultDto
      * Transform mixed database result to typed scope data.
      *
      * @param array<string, mixed> $row
-     * @param string $scope
+     *
      * @return array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}
      */
     public static function transformScopeRow(array $row, string $scope): array
@@ -77,12 +82,12 @@ final readonly class DatabaseResultDto
     {
         if (is_string($value) && !empty($value)) {
             // Validate that it's a reasonable datetime string
-            if (\DateTime::createFromFormat('Y-m-d H:i:s', $value) !== false ||
-                \DateTime::createFromFormat('Y-m-d', $value) !== false) {
+            if (false !== DateTime::createFromFormat('Y-m-d H:i:s', $value)
+                || false !== DateTime::createFromFormat('Y-m-d', $value)) {
                 return $value;
             }
         }
-        
+
         return $default;
     }
 }

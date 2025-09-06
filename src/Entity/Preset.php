@@ -95,9 +95,9 @@ class Preset extends Base
     /**
      * Get projectId.
      */
-    public function getProjectId(): ?int
+    public function getProjectId(): int
     {
-        return $this->getProject()->getId();
+        return $this->getProject()->getId() ?? 0;
     }
 
     /**

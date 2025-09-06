@@ -64,7 +64,7 @@ final readonly class EntrySaveDto
     }
 
     /**
-     * Get customer ID with legacy field support
+     * Get customer ID with legacy field support.
      */
     public function getCustomerId(): ?int
     {
@@ -72,7 +72,7 @@ final readonly class EntrySaveDto
     }
 
     /**
-     * Get project ID with legacy field support
+     * Get project ID with legacy field support.
      */
     public function getProjectId(): ?int
     {
@@ -80,7 +80,7 @@ final readonly class EntrySaveDto
     }
 
     /**
-     * Get activity ID with legacy field support
+     * Get activity ID with legacy field support.
      */
     public function getActivityId(): ?int
     {
@@ -88,7 +88,7 @@ final readonly class EntrySaveDto
     }
 
     /**
-     * Convert date string to DateTime object
+     * Convert date string to DateTime object.
      */
     public function getDateAsDateTime(): ?DateTimeInterface
     {
@@ -97,11 +97,12 @@ final readonly class EntrySaveDto
         }
 
         $date = DateTime::createFromFormat('Y-m-d', $this->date);
+
         return $date ?: null;
     }
 
     /**
-     * Convert start time string to DateTime object
+     * Convert start time string to DateTime object.
      */
     public function getStartAsDateTime(): ?DateTimeInterface
     {
@@ -111,14 +112,15 @@ final readonly class EntrySaveDto
 
         // Handle both H:i and H:i:s formats
         $time = DateTime::createFromFormat('H:i:s', $this->start);
-        if ($time === false) {
+        if (false === $time) {
             $time = DateTime::createFromFormat('H:i', $this->start);
         }
+
         return $time ?: null;
     }
 
     /**
-     * Convert end time string to DateTime object
+     * Convert end time string to DateTime object.
      */
     public function getEndAsDateTime(): ?DateTimeInterface
     {
@@ -128,14 +130,15 @@ final readonly class EntrySaveDto
 
         // Handle both H:i and H:i:s formats
         $time = DateTime::createFromFormat('H:i:s', $this->end);
-        if ($time === false) {
+        if (false === $time) {
             $time = DateTime::createFromFormat('H:i', $this->end);
         }
+
         return $time ?: null;
     }
 
     /**
-     * Validate that start time is before end time
+     * Validate that start time is before end time.
      */
     #[Assert\Callback]
     public function validateTimeRange(ExecutionContextInterface $context): void
@@ -146,7 +149,8 @@ final readonly class EntrySaveDto
         if ($start && $end && $start >= $end) {
             $context->buildViolation('Start time must be before end time')
                 ->atPath('end')
-                ->addViolation();
+                ->addViolation()
+            ;
         }
     }
 }

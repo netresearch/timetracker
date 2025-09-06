@@ -12,6 +12,8 @@ use Doctrine\ORM\Query;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Exception;
 
+use function is_string;
+
 /**
  * Service for querying and paginating entries with proper type safety.
  */
@@ -30,20 +32,20 @@ final readonly class EntryQueryService
     public function findPaginatedEntries(InterpretationFiltersDto $filters): PaginatedEntryCollection
     {
         $searchArray = $this->buildSearchArray($filters);
-        
+
         $query = $this->entryRepository->queryByFilterArray($searchArray);
         // queryByFilterArray always returns Query, no need for instanceof check
-        
+
         $paginator = new Paginator($query);
-        
+
         /** @var Entry[] $entries */
         $entries = $paginator->getQuery()->getResult();
-        
+
         // No need to filter Entry instances - getResult() always returns Entry[]
-        
+
         /** @var int $maxResults */
         $maxResults = $searchArray['maxResults'];
-        
+
         return new PaginatedEntryCollection(
             entries: $entries,
             totalCount: $paginator->count(),

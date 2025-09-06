@@ -10,6 +10,8 @@ use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
+use function sprintf;
+
 final class GetHolidaysAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
@@ -23,24 +25,24 @@ final class GetHolidaysAction extends BaseController
         $month = $request->query->get('month');
 
         // Default to current year/month if not provided
-        $filterYear = $year !== null ? (int) $year : (int) date('Y');
+        $filterYear = null !== $year ? (int) $year : (int) date('Y');
         // Default to January if no month provided (test expects January holiday)
-        $filterMonth = $month !== null ? (int) $month : 1;
+        $filterMonth = null !== $month ? (int) $month : 1;
 
         // Direct SQL query to avoid Holiday entity hydration issues with SQLite
         /** @var Connection $connection */
         $connection = $this->managerRegistry->getConnection();
-        
+
         // Use database-agnostic date filtering
         $platform = $connection->getDatabasePlatform();
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform ||
-            $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
-            $sql = "SELECT name, day FROM holidays WHERE YEAR(day) = ? AND MONTH(day) = ? ORDER BY day ASC";
+        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
+            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+            $sql = 'SELECT name, day FROM holidays WHERE YEAR(day) = ? AND MONTH(day) = ? ORDER BY day ASC';
         } else {
             // SQLite
             $sql = "SELECT name, day FROM holidays WHERE strftime('%Y', day) = ? AND strftime('%m', day) = ? ORDER BY day ASC";
         }
-        
+
         $stmt = $connection->prepare($sql);
         $stmt->bindValue(1, $filterYear);
         $stmt->bindValue(2, sprintf('%02d', $filterMonth));

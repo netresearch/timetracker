@@ -68,8 +68,10 @@ class TtSyncSubticketsCommand extends Command
             OutputInterface::VERBOSITY_VERBOSE,
         );
         foreach ($projects as $projectEntity) {
+            $projectId = $projectEntity->getId() ?? 0;
+            $projectName = $projectEntity->getName() ?? 'Unknown';
             $output->writeln(
-                'Syncing ' . $projectEntity->getId() . ' ' . $projectEntity->getName(),
+                'Syncing ' . $projectId . ' ' . $projectName,
                 OutputInterface::VERBOSITY_VERBOSE,
             );
             try {

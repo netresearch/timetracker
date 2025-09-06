@@ -17,9 +17,9 @@ use DateInterval;
 use DateTime;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+use function count;
 use function in_array;
 use function sprintf;
 
@@ -29,9 +29,10 @@ final class BulkEntryAction extends BaseTrackingController
         private readonly ValidatorInterface $validator,
     ) {
     }
+
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
     public function __invoke(
-        Request $request
+        Request $request,
     ): Response {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
@@ -55,6 +56,7 @@ final class BulkEntryAction extends BaseTrackingController
             $errorMessage = (string) $violations->get(0)->getMessage();
             $response = new Response($this->translator->trans($errorMessage));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
+
             return $response;
         }
 
