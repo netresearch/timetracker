@@ -311,7 +311,7 @@ class JiraAuthenticationService
         }
 
         $tokens = $this->getTokens($user, $ticketSystem);
-        if (empty($tokens['token']) || empty($tokens['secret'])) {
+        if ('' === $tokens['token'] || '' === $tokens['secret']) {
             $this->throwUnauthorizedRedirect($ticketSystem);
         }
     }
