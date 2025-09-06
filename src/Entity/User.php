@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Enum\UserType;
 use App\Service\Util\LocalizationService;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -49,29 +50,38 @@ class User implements UserInterface
     protected bool $showFuture = true;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Team>
+     * @var Collection<int, Team>
      */
     #[ORM\ManyToMany(targetEntity: Team::class, inversedBy: 'users')]
     #[ORM\JoinTable(name: 'teams_users', joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id', onDelete: 'CASCADE')])]
-    protected $teams;
+    protected Collection $teams;
 
     #[ORM\Column(name: 'locale', type: 'string', length: 2, nullable: false, options: ['default' => 'de'])]
     protected string $locale = 'de';
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
+     * @var Collection<int, UserTicketsystem>
      */
     #[ORM\OneToMany(targetEntity: UserTicketsystem::class, mappedBy: 'user')]
-    protected $userTicketsystems;
+    protected Collection $userTicketsystems;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Entry>
+     * @var Collection<int, Entry>
      */
     #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'user')]
-    protected $entriesRelation;
+    protected Collection $entriesRelation;
+
+    /**
+     * @var Collection<int, Contract>
+     */
+    #[ORM\OneToMany(targetEntity: Contract::class, mappedBy: 'user')]
+    protected Collection $contracts;
 
     public function __construct()
     {
+        // Initialize all collections in constructor to fix PropertyNotSetInConstructor
+        $this->teams = new ArrayCollection();
+        $this->contracts = new ArrayCollection();
         $this->entriesRelation = new ArrayCollection();
         $this->userTicketsystems = new ArrayCollection();
     }
@@ -238,41 +248,35 @@ class User implements UserInterface
     }
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Contract>
-     */
-    #[ORM\OneToMany(targetEntity: Contract::class, mappedBy: 'user')]
-    protected $contracts;
-
-    /**
      * Get teams.
      *
-     * @return \Doctrine\Common\Collections\Collection<int, Team>
+     * @return Collection<int, Team>
      */
-    public function getTeams()
+    public function getTeams(): Collection
     {
         return $this->teams;
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, UserTicketsystem>
+     * @return Collection<int, UserTicketsystem>
      */
-    public function getUserTicketsystems()
+    public function getUserTicketsystems(): Collection
     {
         return $this->userTicketsystems;
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     * @return Collection<int, Entry>
      */
-    public function getEntries()
+    public function getEntries(): Collection
     {
         return $this->entriesRelation;
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Contract>
+     * @return Collection<int, Contract>
      */
-    public function getContracts()
+    public function getContracts(): Collection
     {
         return $this->contracts;
     }

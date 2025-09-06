@@ -17,32 +17,34 @@ class Holiday extends Base
 {
     #[ORM\Id]
     #[ORM\Column(name: 'day', type: 'date')]
-    private DateTime $day;
+    private readonly DateTime $day;
 
     #[ORM\Column(name: 'name', type: 'string', length: 255)]
-    private string $name;
+    private readonly string $name;
 
     public function __construct(string|DateTime $day, string $name)
     {
-        $this->setDay($day);
-        $this->setName($name);
+        // Initialize properties immediately in constructor for PSALM compliance
+        $this->day = $day instanceof DateTime ? $day : new DateTime($day);
+        $this->name = $name;
     }
 
     public function setDay(string|DateTime $day): static
     {
+        // For readonly properties, we cannot reassign after construction
+        // This method exists for backward compatibility but should not be used
         if (!$day instanceof DateTime) {
             $day = new DateTime($day);
         }
 
-        $this->day = $day;
-
-        return $this;
+        // Cannot modify readonly property after initialization
+        throw new \BadMethodCallException('Cannot modify readonly property $day after construction. Use constructor instead.');
     }
 
     /**
      * Get day.
      */
-    public function getDay(): ?DateTime
+    public function getDay(): DateTime
     {
         return $this->day;
     }
@@ -52,7 +54,8 @@ class Holiday extends Base
      */
     public function setName(string $name): void
     {
-        $this->name = $name;
+        // Cannot modify readonly property after initialization
+        throw new \BadMethodCallException('Cannot modify readonly property $name after construction. Use constructor instead.');
     }
 
     /**
@@ -73,7 +76,7 @@ class Holiday extends Base
     public function toArray(): array
     {
         return [
-            'day' => $this->getDay() instanceof DateTime ? $this->getDay()->format('d/m/Y') : null,
+            'day' => $this->getDay()->format('d/m/Y'),
             'description' => $this->getName(),
         ];
     }

@@ -21,8 +21,6 @@ class Error extends JsonResponse
 {
     /**
      * Error constructor.
-     *
-     * @psalm-suppress PropertyNotSetInConstructor
      */
     public function __construct(
         string $errorMessage,
@@ -40,7 +38,13 @@ class Error extends JsonResponse
             $message['exception'] = $this->getExceptionAsArray($throwable);
         }
 
-        parent::__construct($message, $statusCode > 0 ? $statusCode : 400);
+        // Ensure valid status code
+        $validStatusCode = $statusCode > 0 ? $statusCode : 400;
+
+        // Initialize parent JsonResponse with proper data to resolve PropertyNotSetInConstructor
+        parent::__construct($message, $validStatusCode, [
+            'Content-Type' => 'application/json'
+        ]);
     }
 
     /**
