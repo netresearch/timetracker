@@ -11,6 +11,7 @@
     "sort-packages": true,
     "allow-plugins": {
       "composer/package-versions-deprecated": true,
+      "laravel/pint": true,
       "ocramius/package-versions": true,
       "php-http/discovery": true,
       "phpstan/extension-installer": true,
