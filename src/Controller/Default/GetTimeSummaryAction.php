@@ -13,7 +13,7 @@ use App\Repository\EntryRepository;
 final class GetTimeSummaryAction extends BaseController
 {
     /**
-     * @throws Exception When database operations fail
+     * @throws \Exception When database operations fail
      * @throws \Exception When user ID retrieval or time calculation fails
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]

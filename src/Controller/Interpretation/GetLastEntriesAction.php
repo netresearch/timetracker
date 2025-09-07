@@ -22,7 +22,7 @@ final class GetLastEntriesAction extends BaseInterpretationController
 
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are invalid
-     * @throws Exception When database operations fail
+     * @throws \Exception When database operations fail
      * @throws \Exception When entry retrieval or time calculation fails
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]

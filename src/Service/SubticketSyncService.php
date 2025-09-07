@@ -19,7 +19,7 @@ class SubticketSyncService
      *
      * The project lead user's Jira tokens are used for access.
      *
-     * @throws Exception When something goes wrong.
+     * @throws \Exception When something goes wrong.
      *                   Exception codes are sensible HTTP status codes
      *
      * @return (mixed|string)[] Array of subticket keys

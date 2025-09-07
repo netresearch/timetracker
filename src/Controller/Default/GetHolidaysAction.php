@@ -16,7 +16,7 @@ use function sprintf;
 final class GetHolidaysAction extends BaseController
 {
     /**
-     * @throws Exception When database operations fail
+     * @throws \Exception When database operations fail
      * @throws \InvalidArgumentException When request parameters are invalid
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are malformed
      */
