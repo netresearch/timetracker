@@ -18,40 +18,6 @@ class Contract
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
     public User $user;
 
-    /**
-     * Initialize a new Contract with required properties.
-     *
-     * @param User $user The user this contract belongs to
-     * @param DateTime $start Contract start date
-     * @param float $hours0 Working hours for Sunday (default: 0.0)
-     * @param float $hours1 Working hours for Monday (default: 8.0)
-     * @param float $hours2 Working hours for Tuesday (default: 8.0)
-     * @param float $hours3 Working hours for Wednesday (default: 8.0)
-     * @param float $hours4 Working hours for Thursday (default: 8.0)
-     * @param float $hours5 Working hours for Friday (default: 8.0)
-     * @param float $hours6 Working hours for Saturday (default: 0.0)
-     */
-    public function __construct(
-        User $user,
-        DateTime $start,
-        float $hours0 = 0.0,
-        float $hours1 = 8.0,
-        float $hours2 = 8.0,
-        float $hours3 = 8.0,
-        float $hours4 = 8.0,
-        float $hours5 = 8.0,
-        float $hours6 = 0.0
-    ) {
-        $this->user = $user;
-        $this->start = $start;
-        $this->hours_0 = $hours0;
-        $this->hours_1 = $hours1;
-        $this->hours_2 = $hours2;
-        $this->hours_3 = $hours3;
-        $this->hours_4 = $hours4;
-        $this->hours_5 = $hours5;
-        $this->hours_6 = $hours6;
-    }
 
     /**
      * @var int

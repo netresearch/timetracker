@@ -18,36 +18,6 @@ use function is_string;
 class TicketSystem extends Base
 {
     /**
-     * Initialize a new TicketSystem with required properties.
-     *
-     * @param string $name The name of the ticket system
-     * @param string $url The URL of the ticket system
-     * @param string $ticketUrl The URL template for tickets
-     * @param string $login The login credentials
-     * @param string $password The password credentials
-     * @param TicketSystemType $type The type of ticket system (default: JIRA)
-     * @param bool $bookTime Whether to book time (default: false)
-     */
-    public function __construct(
-        string $name,
-        string $url,
-        string $ticketUrl,
-        string $login,
-        string $password,
-        TicketSystemType $type = TicketSystemType::JIRA,
-        bool $bookTime = false
-    ) {
-        $this->name = $name;
-        $this->url = $url;
-        $this->ticketUrl = $ticketUrl;
-        $this->login = $login;
-        $this->password = $password;
-        $this->type = $type;
-        $this->bookTime = $bookTime;
-        $this->publicKey = '';
-        $this->privateKey = '';
-    }
-    /**
      * @var int $id
      */
     #[ORM\Column(name: 'id', type: 'integer')]
