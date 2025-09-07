@@ -3,85 +3,90 @@
 declare(strict_types=1);
 
 use PHPat\Selector\Selector;
-use PHPat\Test\Builder\RuleBuilder;
+use PHPat\Test\Builder\Rule;
+use PHPat\Test\PHPat;
 
-return RuleBuilder::create()
+final class ArchitectureTest 
+{
+    public function test_controllers_should_only_depend_on_business_logic(): Rule 
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Controller'))
+            ->canOnlyDependOn()
+            ->classes(
+                Selector::inNamespace('App\Entity'),
+                Selector::inNamespace('App\Service'),
+                Selector::inNamespace('App\Dto'),
+                Selector::inNamespace('App\Enum'),
+                Selector::inNamespace('App\Event'),
+                Selector::inNamespace('Symfony'),
+                Selector::inNamespace('Doctrine'),
+                Selector::inNamespace('Sensio'),
+                Selector::classname('DateTime*', true),
+                Selector::classname('*Exception', true)
+            )
+            ->because('Controllers should only depend on business logic and framework components');
+    }
     
-    // Controllers should only depend on business logic and framework components
-    ->rule(
-        RuleBuilder::TYPE_CAN_ONLY_DEPEND_ON
-    )
-    ->classesThat(Selector::haveClassName('App\Controller\*'))
-    ->canOnlyDependOn()
-    ->classesThat(Selector::haveClassName('App\Entity\*'))
-    ->andClassesThat(Selector::haveClassName('App\Service\*'))
-    ->andClassesThat(Selector::haveClassName('App\Dto\*'))
-    ->andClassesThat(Selector::haveClassName('App\Enum\*'))
-    ->andClassesThat(Selector::haveClassName('App\Event\*'))
-    ->andClassesThat(Selector::haveClassName('Symfony\*'))
-    ->andClassesThat(Selector::haveClassName('Doctrine\*'))
-    ->andClassesThat(Selector::haveClassName('Sensio\*'))
-    ->andClassesThat(Selector::haveClassName('DateTime*'))
-    ->andClassesThat(Selector::haveClassName('Exception'))
-    ->andClassesThat(Selector::haveClassName('*Exception'))
-    ->because('Controllers should only depend on business logic and Symfony/Doctrine components')
+    public function test_entities_should_be_pure_data_models(): Rule 
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Entity'))
+            ->canOnlyDependOn()
+            ->classes(
+                Selector::inNamespace('App\Enum'),
+                Selector::inNamespace('Doctrine'),
+                Selector::inNamespace('Symfony\Component\Validator'),
+                Selector::classname('DateTimeInterface'),
+                Selector::classname('DateTime*', true)
+            )
+            ->because('Entities should be pure data models with minimal dependencies');
+    }
     
-    // Entities should be pure data models with minimal dependencies
-    ->rule(
-        RuleBuilder::TYPE_CAN_ONLY_DEPEND_ON
-    )
-    ->classesThat(Selector::haveClassName('App\Entity\*'))
-    ->canOnlyDependOn()
-    ->classesThat(Selector::haveClassName('App\Enum\*'))
-    ->andClassesThat(Selector::haveClassName('Doctrine\*'))
-    ->andClassesThat(Selector::haveClassName('Symfony\Component\Validator\*'))
-    ->andClassesThat(Selector::haveClassName('DateTimeInterface'))
-    ->andClassesThat(Selector::haveClassName('DateTime*'))
-    ->because('Entities should be pure data models with minimal dependencies')
+    public function test_services_can_orchestrate_business_logic(): Rule 
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Service'))
+            ->canOnlyDependOn()
+            ->classes(
+                Selector::inNamespace('App\Entity'),
+                Selector::inNamespace('App\Repository'),
+                Selector::inNamespace('App\Dto'),
+                Selector::inNamespace('App\Enum'),
+                Selector::inNamespace('App\Event'),
+                Selector::inNamespace('App\Service'),
+                Selector::inNamespace('Symfony'),
+                Selector::inNamespace('Doctrine'),
+                Selector::inNamespace('Psr'),
+                Selector::inNamespace('GuzzleHttp'),
+                Selector::classname('DateTime*', true),
+                Selector::classname('*Exception', true)
+            )
+            ->because('Services should handle business logic and orchestration');
+    }
     
-    // Services should handle business logic and orchestration
-    ->rule(
-        RuleBuilder::TYPE_CAN_ONLY_DEPEND_ON
-    )
-    ->classesThat(Selector::haveClassName('App\Service\*'))
-    ->canOnlyDependOn()
-    ->classesThat(Selector::haveClassName('App\Entity\*'))
-    ->andClassesThat(Selector::haveClassName('App\Repository\*'))
-    ->andClassesThat(Selector::haveClassName('App\Dto\*'))
-    ->andClassesThat(Selector::haveClassName('App\Enum\*'))
-    ->andClassesThat(Selector::haveClassName('App\Event\*'))
-    ->andClassesThat(Selector::haveClassName('App\Service\*'))
-    ->andClassesThat(Selector::haveClassName('Symfony\*'))
-    ->andClassesThat(Selector::haveClassName('Doctrine\*'))
-    ->andClassesThat(Selector::haveClassName('Psr\*'))
-    ->andClassesThat(Selector::haveClassName('GuzzleHttp\*'))
-    ->andClassesThat(Selector::haveClassName('DateTime*'))
-    ->andClassesThat(Selector::haveClassName('Exception'))
-    ->andClassesThat(Selector::haveClassName('*Exception'))
-    ->because('Services should handle business logic and orchestration')
+    public function test_repositories_should_only_handle_data_access(): Rule 
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Repository'))
+            ->canOnlyDependOn()
+            ->classes(
+                Selector::inNamespace('App\Entity'),
+                Selector::inNamespace('App\Enum'),
+                Selector::inNamespace('Doctrine'),
+                Selector::inNamespace('Symfony\Component\Security'),
+                Selector::classname('DateTime*', true),
+                Selector::classname('*Exception', true)
+            )
+            ->because('Repositories should only handle data access');
+    }
     
-    // Repositories should only handle data access
-    ->rule(
-        RuleBuilder::TYPE_CAN_ONLY_DEPEND_ON
-    )
-    ->classesThat(Selector::haveClassName('App\Repository\*'))
-    ->canOnlyDependOn()
-    ->classesThat(Selector::haveClassName('App\Entity\*'))
-    ->andClassesThat(Selector::haveClassName('App\Enum\*'))
-    ->andClassesThat(Selector::haveClassName('Doctrine\*'))
-    ->andClassesThat(Selector::haveClassName('Symfony\Component\Security\*'))
-    ->andClassesThat(Selector::haveClassName('DateTime*'))
-    ->andClassesThat(Selector::haveClassName('Exception'))
-    ->andClassesThat(Selector::haveClassName('*Exception'))
-    ->because('Repositories should only handle data access')
-    
-    // Controllers must not directly access repositories (should use services)
-    ->rule(
-        RuleBuilder::TYPE_SHOULD_NOT_DEPEND_ON
-    )
-    ->classesThat(Selector::haveClassName('App\Controller\*'))
-    ->shouldNotDependOn()
-    ->classesThat(Selector::haveClassName('App\Repository\*'))
-    ->because('Controllers should use Services, not Repositories directly')
-    
-    ->build();
+    public function test_controllers_must_not_directly_access_repositories(): Rule 
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Controller'))
+            ->shouldNotDependOn()
+            ->classes(Selector::inNamespace('App\Repository'))
+            ->because('Controllers should use Services, not Repositories directly');
+    }
+}
