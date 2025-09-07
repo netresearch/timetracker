@@ -9,6 +9,7 @@ use App\Service\TypeSafety\ArrayTypeHelper;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+use function assert;
 use function is_array;
 
 /**
@@ -159,16 +160,21 @@ class ProjectRepository extends ServiceEntityRepository
      */
     public function findByCustomer(int $customerId = 0): array
     {
-        /* @var array<int, Project> */
-        return $this->createQueryBuilder('project')
+        $result = $this->createQueryBuilder('project')
             ->where('project.global = 1 OR customer.id = :customerId')
             ->setParameter('customerId', $customerId)
             ->leftJoin('project.customer', 'customer')
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute()
+            ->getResult()
         ;
+
+        assert(is_array($result));
+        // All results are Project entities due to the repository context
+        assert(array_is_list($result) || empty($result));
+
+        return $result;
     }
 
     /**
