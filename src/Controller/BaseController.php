@@ -100,8 +100,9 @@ class BaseController extends AbstractController
 
         // Fallback for test environment: extract token from session if token storage not yet populated
         if (!$user instanceof User) {
-            $session = $this->container->has('session') ? $this->container->get('session') : $request->getSession();
-            if (null !== $session && $session->has('_security_main')) {
+            $containerSession = $this->container->has('session') ? $this->container->get('session') : null;
+            $session = $containerSession instanceof \Symfony\Component\HttpFoundation\Session\SessionInterface ? $containerSession : $request->getSession();
+            if ($session->has('_security_main')) {
                 $rawToken = $session->get('_security_main');
                 if (is_string($rawToken) && '' !== $rawToken) {
                     try {
@@ -196,10 +197,8 @@ class BaseController extends AbstractController
             return true;
         }
 
-        $session = $this->container->has('session') ? $this->container->get('session') : $request->getSession();
-        if (null === $session) {
-            return false;
-        }
+        $containerSession = $this->container->has('session') ? $this->container->get('session') : null;
+        $session = $containerSession instanceof \Symfony\Component\HttpFoundation\Session\SessionInterface ? $containerSession : $request->getSession();
         if (!$session->has('_security_main')) {
             return false;
         }
