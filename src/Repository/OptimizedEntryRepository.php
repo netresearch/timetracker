@@ -16,6 +16,7 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Cache\CacheItemPoolInterface;
 
+use function array_key_exists;
 use function assert;
 use function is_array;
 use function sprintf;
@@ -147,8 +148,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
+            assert(array_is_list($cachedResult) || array_key_exists('customer', $cachedResult));
 
-            /* @var array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
             return $cachedResult;
         }
 
@@ -216,8 +217,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
+            assert(isset($cachedResult['duration'], $cachedResult['count']));
+            assert(is_int($cachedResult['duration']) && is_int($cachedResult['count']));
 
-            /* @var array{duration: int, count: int} $cachedResult */
             return $cachedResult;
         }
 
