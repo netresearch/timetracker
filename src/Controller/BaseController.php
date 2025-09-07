@@ -22,6 +22,7 @@ use App\Entity\User;
 use App\Enum\UserType;
 use App\Model\Response;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -74,7 +75,7 @@ class BaseController extends AbstractController
      * Check if user is logged in.
      * Prefer Symfony Security, but fall back to session token in tests.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function isLoggedIn(Request $request): bool
     {
@@ -88,10 +89,10 @@ class BaseController extends AbstractController
     /**
      * Returns the user id.
      *
-     * @return int User ID
-     *
      * @throws AccessDeniedException
-     * @throws \Exception
+     * @throws Exception
+     *
+     * @return int User ID
      */
     protected function getUserId(Request $request): int
     {
@@ -131,7 +132,7 @@ class BaseController extends AbstractController
     /**
      * Redirects to the login page.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function login(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|Response
     {
@@ -219,7 +220,7 @@ class BaseController extends AbstractController
     /**
      * Provide a standard response for cases where the login failed.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function getFailedLoginResponse(): Response
     {
@@ -233,7 +234,7 @@ class BaseController extends AbstractController
     /**
      * returns an error message for not allowed actions.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function getFailedAuthorizationResponse(): Response
     {
@@ -244,7 +245,6 @@ class BaseController extends AbstractController
         return $response;
     }
 
-
     /**
      * helper method to shorten the usage of the translator in the controllers.
      *
@@ -253,7 +253,7 @@ class BaseController extends AbstractController
      * @param string               $domain     translation file domain
      * @param null                 $locale     translation locale
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function translate(
         string $id,
