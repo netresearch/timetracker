@@ -38,10 +38,10 @@ class Ticket extends Base
     /**
      * Initialize a new Ticket with required properties.
      *
-     * @param int $ticketSystemId The ticket system ID
-     * @param string $ticketNumber The ticket number/identifier
-     * @param string $name The ticket name/title
-     * @param int $estimatedDuration Estimated duration in minutes (default: 0)
+     * @param int    $ticketSystemId     The ticket system ID
+     * @param string $ticketNumber       The ticket number/identifier
+     * @param string $name               The ticket name/title
+     * @param int    $estimatedDuration  Estimated duration in minutes (default: 0)
      * @param string $parentTicketNumber Parent ticket number (default: '')
      */
     public function __construct(
@@ -49,7 +49,7 @@ class Ticket extends Base
         string $ticketNumber,
         string $name,
         int $estimatedDuration = 0,
-        string $parentTicketNumber = ''
+        string $parentTicketNumber = '',
     ) {
         $this->ticketSystemId = $ticketSystemId;
         $this->ticketNumber = $ticketNumber;

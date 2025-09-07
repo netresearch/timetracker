@@ -90,7 +90,7 @@ abstract class BaseTrackingController extends BaseController
     /**
      * Set rendering classes for pause, overlap and daybreak.
      *
-     * @throws \Exception when database operations fail
+     * @throws Exception when database operations fail
      */
     protected function calculateClasses(int $userId, string $day): void
     {
@@ -123,8 +123,9 @@ abstract class BaseTrackingController extends BaseController
         }
 
         // Sort by start time - no isset check needed, structure is guaranteed
-        usort($normalizedEntries, static fn (array $a, array $b): int => 
-            $a['start'] <=> $b['start']
+        usort(
+            $normalizedEntries,
+            static fn (array $a, array $b): int => $a['start'] <=> $b['start'],
         );
 
         // Calculate overlaps
@@ -226,7 +227,7 @@ abstract class BaseTrackingController extends BaseController
      * Validates that the ticket project matches the project JIRA ID.
      * Extracts the project key from the ticket and validates against project JIRA IDs.
      *
-     * @throws \Exception when ticket project doesn't match
+     * @throws Exception        when ticket project doesn't match
      * @throws RuntimeException when ticket service is not available
      */
     protected function validateTicketProjectMatch(Entry $entry, Project $project): void
@@ -407,7 +408,7 @@ abstract class BaseTrackingController extends BaseController
     /**
      * Validates entry date and time values.
      *
-     * @throws \Exception when validation fails
+     * @throws Exception when validation fails
      */
     protected function validateEntryDateTime(Entry $entry): void
     {

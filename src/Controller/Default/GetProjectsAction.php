@@ -7,13 +7,14 @@ namespace App\Controller\Default;
 use App\Controller\BaseController;
 use App\Entity\Project;
 use App\Model\JsonResponse;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GetProjectsAction extends BaseController
 {
     /**
-     * @throws \Exception When database operations fail
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request is malformed
+     * @throws Exception                                                        When database operations fail
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException  When request is malformed
      * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException When user lacks required permissions
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjects', name: '_getProjects_attr', methods: ['GET'])]

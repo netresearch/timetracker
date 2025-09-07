@@ -27,7 +27,7 @@ class ProjectRepository extends ServiceEntityRepository
     public function findOneById(int $id): ?Project
     {
         $result = $this->find($id);
-        
+
         return $result instanceof Project ? $result : null;
     }
 
@@ -159,7 +159,7 @@ class ProjectRepository extends ServiceEntityRepository
      */
     public function findByCustomer(int $customerId = 0): array
     {
-        /** @var array<int, Project> */
+        /* @var array<int, Project> */
         return $this->createQueryBuilder('project')
             ->where('project.global = 1 OR customer.id = :customerId')
             ->setParameter('customerId', $customerId)

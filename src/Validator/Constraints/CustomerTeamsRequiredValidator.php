@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use Exception;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -11,8 +12,8 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class CustomerTeamsRequiredValidator extends ConstraintValidator
 {
     /**
-     * @throws \Symfony\Component\Validator\Exception\UnexpectedTypeException When constraint type is invalid
-     * @throws \Exception When validation context access fails
+     * @throws UnexpectedTypeException When constraint type is invalid
+     * @throws Exception               When validation context access fails
      */
     public function validate(mixed $value, Constraint $constraint): void
     {

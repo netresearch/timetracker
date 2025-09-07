@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Model\Base;
+use BadMethodCallException;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -38,7 +39,7 @@ class Holiday extends Base
         }
 
         // Cannot modify readonly property after initialization
-        throw new \BadMethodCallException('Cannot modify readonly property $day after construction. Use constructor instead.');
+        throw new BadMethodCallException('Cannot modify readonly property $day after construction. Use constructor instead.');
     }
 
     /**
@@ -55,7 +56,7 @@ class Holiday extends Base
     public function setName(string $name): void
     {
         // Cannot modify readonly property after initialization
-        throw new \BadMethodCallException('Cannot modify readonly property $name after construction. Use constructor instead.');
+        throw new BadMethodCallException('Cannot modify readonly property $name after construction. Use constructor instead.');
     }
 
     /**

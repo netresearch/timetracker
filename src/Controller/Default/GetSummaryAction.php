@@ -9,7 +9,11 @@ use App\Entity\Entry;
 use App\Model\JsonResponse;
 use App\Response\Error;
 use App\Service\Util\TimeCalculationService;
+use Exception;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
+
+use function is_array;
 
 final class GetSummaryAction extends BaseController
 {
@@ -22,10 +26,10 @@ final class GetSummaryAction extends BaseController
     }
 
     /**
-     * @throws \InvalidArgumentException When request parameters are invalid
+     * @throws InvalidArgumentException                                        When request parameters are invalid
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws \Exception When database operations fail
-     * @throws \Exception When time calculation operations fail
+     * @throws Exception                                                       When database operations fail
+     * @throws Exception                                                       When time calculation operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
@@ -63,15 +67,15 @@ final class GetSummaryAction extends BaseController
             // Safely access nested array values with null coalescing and type validation
             $projectTotal = null;
             $projectEstimation = null;
-            
+
             if (isset($data['project']['total'])) {
                 $projectTotal = is_numeric($data['project']['total']) ? (float) $data['project']['total'] : 0.0;
             }
-            
+
             if (isset($data['project']['estimation'])) {
                 $projectEstimation = is_numeric($data['project']['estimation']) ? (float) $data['project']['estimation'] : 0.0;
             }
-            
+
             // Only calculate quota if both values are available and valid
             if (null !== $projectTotal && null !== $projectEstimation) {
                 $data['project']['quota'] = $this->timeCalculationService->formatQuota(

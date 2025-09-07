@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
+use UnexpectedValueException;
 
 use function in_array;
 use function is_bool;
@@ -14,25 +16,19 @@ final readonly class ExportQueryDto
 {
     public function __construct(
         public int $userid = 0,
-
         public int $year = 0,
-
         public int $month = 0,
-
         public int $project = 0,
-
         public int $customer = 0,
-
         public bool $billable = false,
-
         public bool $tickettitles = false,
     ) {
     }
 
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws \InvalidArgumentException When query parameters are invalid types
-     * @throws \UnexpectedValueException When parameter conversion fails
+     * @throws InvalidArgumentException                                        When query parameters are invalid types
+     * @throws UnexpectedValueException                                        When parameter conversion fails
      */
     public static function fromRequest(Request $request): self
     {

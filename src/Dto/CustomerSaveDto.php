@@ -6,9 +6,11 @@ namespace App\Dto;
 
 use App\Validator\Constraints\CustomerTeamsRequired;
 use App\Validator\Constraints\UniqueCustomerName;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
+use UnexpectedValueException;
 
 #[Map(target: \App\Entity\Customer::class)]
 #[CustomerTeamsRequired]
@@ -16,14 +18,11 @@ final readonly class CustomerSaveDto
 {
     public function __construct(
         public int $id = 0,
-
         #[Assert\NotBlank(message: 'Please provide a valid customer name with at least 3 letters.')]
         #[Assert\Length(min: 3, minMessage: 'Please provide a valid customer name with at least 3 letters.')]
         #[UniqueCustomerName]
         public string $name = '',
-
         public bool $active = false,
-
         public bool $global = false,
 
         /** @var list<int|string> */
@@ -34,8 +33,8 @@ final readonly class CustomerSaveDto
 
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws \InvalidArgumentException When request data conversion fails
-     * @throws \UnexpectedValueException When array parameter extraction fails
+     * @throws InvalidArgumentException                                        When request data conversion fails
+     * @throws UnexpectedValueException                                        When array parameter extraction fails
      */
     public static function fromRequest(Request $request): self
     {

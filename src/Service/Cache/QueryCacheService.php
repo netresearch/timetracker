@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Cache;
 
+use Exception;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
@@ -41,9 +42,10 @@ class QueryCacheService
      *
      * @param callable(): T $callback
      *
-     * @return T
      * @throws \Psr\Cache\InvalidArgumentException When cache key is invalid
-     * @throws \Exception When callback execution fails
+     * @throws Exception                           When callback execution fails
+     *
+     * @return T
      */
     public function remember(string $key, callable $callback, int $ttl = self::DEFAULT_TTL): mixed
     {

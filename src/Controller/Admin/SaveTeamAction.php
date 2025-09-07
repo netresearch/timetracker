@@ -18,7 +18,7 @@ final class SaveTeamAction extends BaseController
 {
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
-     * @throws \Exception
+     * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error

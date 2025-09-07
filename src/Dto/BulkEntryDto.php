@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Dto;
 
 use DateTime;
+use Exception;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -18,15 +19,10 @@ final readonly class BulkEntryDto
         #[Assert\NotBlank(message: 'Preset ID is required')]
         #[Assert\Positive(message: 'Preset ID must be positive')]
         public int $preset = 0,
-
         public string $startdate = '',
-
         public string $enddate = '',
-
         public string $starttime = '',
-
         public string $endtime = '',
-
         public int $usecontract = 0,
         public int $skipweekend = 0,
         public int $skipholidays = 0,
@@ -58,7 +54,7 @@ final readonly class BulkEntryDto
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     #[Assert\Callback]
     public function validateTimeRange(ExecutionContextInterface $context): void
@@ -78,7 +74,7 @@ final readonly class BulkEntryDto
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     #[Assert\Callback]
     public function validateDateRange(ExecutionContextInterface $context): void

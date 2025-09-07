@@ -443,7 +443,6 @@ class Entry extends Base
      * @return (int|string|null)[]
      *
      * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string|null}
-     *
      */
     public function toArray(): array
     {

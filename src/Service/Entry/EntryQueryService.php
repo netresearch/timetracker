@@ -27,7 +27,7 @@ final readonly class EntryQueryService
     /**
      * Find paginated entries based on filters.
      *
-     * @throws \Exception When query building fails
+     * @throws Exception When query building fails
      */
     public function findPaginatedEntries(InterpretationFiltersDto $filters): PaginatedEntryCollection
     {

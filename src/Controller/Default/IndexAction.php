@@ -8,14 +8,15 @@ use App\Controller\BaseController;
 use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\User;
+use Exception;
 
 final class IndexAction extends BaseController
 {
     /**
-     * @throws \Exception When database operations fail
-     * @throws \Twig\Error\LoaderError When template loading fails
+     * @throws Exception                When database operations fail
+     * @throws \Twig\Error\LoaderError  When template loading fails
      * @throws \Twig\Error\RuntimeError When template rendering fails
-     * @throws \Twig\Error\SyntaxError When template syntax is invalid
+     * @throws \Twig\Error\SyntaxError  When template syntax is invalid
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response

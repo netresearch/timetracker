@@ -7,6 +7,8 @@ namespace App\Util;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
 use function is_scalar;
@@ -15,7 +17,7 @@ final class RequestEntityHelper
 {
     /**
      * Extract a scalar id value from request for a given key; returns null for empty/non-scalar values.
-     * 
+     *
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request is malformed
      */
     public static function id(Request $request, string $key): ?string
@@ -37,9 +39,10 @@ final class RequestEntityHelper
      *
      * @param class-string<T> $entityClass
      *
+     * @throws Exception                When database operations fail
+     * @throws InvalidArgumentException When entity class is invalid
+     *
      * @return T|null
-     * @throws \Exception When database operations fail
-     * @throws \InvalidArgumentException When entity class is invalid
      */
     public static function findById(ManagerRegistry $managerRegistry, string $entityClass, ?string $id): ?object
     {

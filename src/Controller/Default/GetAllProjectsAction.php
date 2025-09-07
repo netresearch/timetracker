@@ -7,14 +7,16 @@ namespace App\Controller\Default;
 use App\Controller\BaseController;
 use App\Entity\Project;
 use App\Model\JsonResponse;
+use Exception;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GetAllProjectsAction extends BaseController
 {
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
-     * @throws \Exception When database operations fail
-     * @throws \InvalidArgumentException When customer ID parameter is invalid
+     * @throws Exception                                                       When database operations fail
+     * @throws InvalidArgumentException                                        When customer ID parameter is invalid
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]

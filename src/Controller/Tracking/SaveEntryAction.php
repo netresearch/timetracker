@@ -14,8 +14,10 @@ use App\Enum\EntryClass;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
+use BadMethodCallException;
 use DateTime;
 use Exception;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -27,13 +29,14 @@ final class SaveEntryAction extends BaseTrackingController
 {
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
-     * @throws \BadMethodCallException
-     * @throws \InvalidArgumentException
+     * @throws BadMethodCallException
+     * @throws InvalidArgumentException
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
     public function __invoke(
         Request $request,
-        #[MapRequestPayload] EntrySaveDto $dto,
+        #[MapRequestPayload]
+        EntrySaveDto $dto,
     ): Response|JsonResponse|Error|RedirectResponse {
         if (!$this->checkLogin($request)) {
             return $this->redirectToRoute('_login');
@@ -53,7 +56,7 @@ final class SaveEntryAction extends BaseTrackingController
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);
 
         $customerId = $dto->getCustomerId();
-        if ($customerId === null) {
+        if (null === $customerId) {
             return new JsonResponse(['error' => 'Customer ID is required'], Response::HTTP_BAD_REQUEST);
         }
         $customer = $customerRepo->findOneById($customerId);
@@ -66,7 +69,7 @@ final class SaveEntryAction extends BaseTrackingController
         $projectRepo = $this->managerRegistry->getRepository(Project::class);
 
         $projectId = $dto->getProjectId();
-        if ($projectId === null) {
+        if (null === $projectId) {
             return new JsonResponse(['error' => 'Project ID is required'], Response::HTTP_BAD_REQUEST);
         }
         $project = $projectRepo->findOneById($projectId);
@@ -79,7 +82,7 @@ final class SaveEntryAction extends BaseTrackingController
         $activityRepo = $this->managerRegistry->getRepository(Activity::class);
 
         $activityId = $dto->getActivityId();
-        if ($activityId === null) {
+        if (null === $activityId) {
             return new JsonResponse(['error' => 'Activity ID is required'], Response::HTTP_BAD_REQUEST);
         }
         $activity = $activityRepo->findOneById($activityId);
@@ -95,7 +98,7 @@ final class SaveEntryAction extends BaseTrackingController
             // Use project's jira_id as the expected prefix if it exists
             $prefix = $project->getJiraId();
 
-            if ($prefix !== null && $prefix !== '') {
+            if (null !== $prefix && '' !== $prefix) {
                 if (!str_starts_with($dto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
                 }
@@ -110,7 +113,7 @@ final class SaveEntryAction extends BaseTrackingController
         $entryRepo = $this->managerRegistry->getRepository(Entry::class);
 
         $entry = null;
-        if ($entryId !== null) {
+        if (null !== $entryId) {
             $entry = $entryRepo->findOneById($entryId);
         }
 

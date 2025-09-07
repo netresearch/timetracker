@@ -11,20 +11,23 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
+use Exception;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use UnexpectedValueException;
 
 use function sprintf;
 
 final class SaveUserAction extends BaseController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request payload is malformed
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException          When request payload is malformed
      * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws \Exception When database operations fail
-     * @throws \InvalidArgumentException When team IDs are invalid or missing teams are found
-     * @throws \UnexpectedValueException When user data mapping fails or validation errors occur
+     * @throws Exception                                                                When database operations fail
+     * @throws InvalidArgumentException                                                 When team IDs are invalid or missing teams are found
+     * @throws UnexpectedValueException                                                 When user data mapping fails or validation errors occur
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse

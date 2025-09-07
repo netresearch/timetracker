@@ -24,7 +24,7 @@ class CustomerRepository extends ServiceEntityRepository
     public function findOneById(int $id): ?Customer
     {
         $result = $this->find($id);
-        
+
         return $result instanceof Customer ? $result : null;
     }
 
