@@ -8,12 +8,13 @@ use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\User;
 use App\Model\JsonResponse;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
 final class GetDataAction extends BaseController
 {
     /**
-     * @throws \InvalidArgumentException When query parameters are invalid
+     * @throws InvalidArgumentException                                        When query parameters are invalid
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are malformed
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getData', name: '_getData_attr', methods: ['GET', 'POST'])]

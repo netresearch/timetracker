@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Service\Ldap\LdapClientService;
 use BackedEnum;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -50,10 +51,10 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
     }
 
     /**
-     * @throws \Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException When authentication fails
-     * @throws \Symfony\Component\Security\Core\Exception\UserNotFoundException When user is not found
-     * @throws \Exception When database operations fail
-     * @throws \Exception When LDAP or user creation operations fail
+     * @throws CustomUserMessageAuthenticationException When authentication fails
+     * @throws UserNotFoundException                    When user is not found
+     * @throws Exception                                When database operations fail
+     * @throws Exception                                When LDAP or user creation operations fail
      */
     public function authenticate(Request $request): Passport
     {

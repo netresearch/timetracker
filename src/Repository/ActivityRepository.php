@@ -24,7 +24,7 @@ class ActivityRepository extends ServiceEntityRepository
     public function findOneById(int $id): ?Activity
     {
         $result = $this->find($id);
-        
+
         return $result instanceof Activity ? $result : null;
     }
 

@@ -6,45 +6,37 @@ namespace App\Dto;
 
 use App\Validator\Constraints\ContractDatesValid;
 use App\Validator\Constraints\ValidUser;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
+use UnexpectedValueException;
 
 #[ContractDatesValid]
 final readonly class ContractSaveDto
 {
     public function __construct(
         public int $id = 0,
-
         #[Assert\Positive(message: 'Please enter a valid user.')]
         #[ValidUser]
         public int $user_id = 0,
-
         #[Assert\NotBlank(message: 'Please enter a valid contract start.')]
         #[Assert\Regex(pattern: '/^\d{3,4}-\d{2}-\d{2}$/', message: 'Please enter a valid contract start.')]
         public string $start = '',
-
         public ?string $end = null,
-
         public float $hours_0 = 0.0,
-
         public float $hours_1 = 0.0,
-
         public float $hours_2 = 0.0,
-
         public float $hours_3 = 0.0,
-
         public float $hours_4 = 0.0,
-
         public float $hours_5 = 0.0,
-
         public float $hours_6 = 0.0,
     ) {
     }
 
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws \InvalidArgumentException When request data conversion fails
-     * @throws \UnexpectedValueException When numeric string conversion fails
+     * @throws InvalidArgumentException                                        When request data conversion fails
+     * @throws UnexpectedValueException                                        When numeric string conversion fails
      */
     public static function fromRequest(Request $request): self
     {

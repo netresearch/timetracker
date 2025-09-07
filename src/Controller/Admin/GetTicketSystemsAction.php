@@ -8,6 +8,7 @@ use App\Controller\BaseController;
 use App\Entity\TicketSystem;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 use function count;
@@ -15,7 +16,7 @@ use function count;
 final class GetTicketSystemsAction extends BaseController
 {
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTicketSystems', name: '_getTicketSystems_attr', methods: ['GET'])]
     public function __invoke(Request $request): Response|JsonResponse

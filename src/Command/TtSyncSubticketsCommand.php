@@ -7,6 +7,8 @@ namespace App\Command;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\SubticketSyncService;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
+use LogicException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,7 +22,7 @@ use function is_scalar;
 class TtSyncSubticketsCommand extends Command
 {
     /**
-     * @throws \LogicException
+     * @throws LogicException
      */
     public function __construct(private readonly SubticketSyncService $subticketSyncService, private readonly EntityManagerInterface $entityManager)
     {
@@ -28,7 +30,7 @@ class TtSyncSubticketsCommand extends Command
     }
 
     /**
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     protected function configure(): void
     {
@@ -38,8 +40,9 @@ class TtSyncSubticketsCommand extends Command
     }
 
     /**
+     * @throws InvalidArgumentException
+     *
      * @psalm-return 0|1
-     * @throws \InvalidArgumentException
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

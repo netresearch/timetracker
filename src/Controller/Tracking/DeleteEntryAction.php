@@ -9,15 +9,16 @@ use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use App\Util\RequestEntityHelper;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 final class DeleteEntryAction extends BaseTrackingController
 {
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are invalid
-     * @throws \Exception When database operations fail
-     * @throws \App\Exception\Integration\Jira\JiraApiException When Jira API operations fail
-     * @throws \Exception When entry processing or deletion fails
+     * @throws Exception                                                       When database operations fail
+     * @throws \App\Exception\Integration\Jira\JiraApiException                When Jira API operations fail
+     * @throws Exception                                                       When entry processing or deletion fails
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
     public function __invoke(Request $request): Response|JsonResponse|Error

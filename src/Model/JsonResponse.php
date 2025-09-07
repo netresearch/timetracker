@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Model;
 
+use InvalidArgumentException;
+use JsonException;
+
 /**
  * JSON response.
  *
@@ -35,8 +38,9 @@ class JsonResponse extends Response
 {
     /**
      * @param array<string, string|array<string>> $headers
-     * @throws \JsonException When JSON encoding fails
-     * @throws \InvalidArgumentException When content cannot be encoded
+     *
+     * @throws JsonException            When JSON encoding fails
+     * @throws InvalidArgumentException When content cannot be encoded
      */
     public function __construct(mixed $content = null, int $status = 200, array $headers = [])
     {
@@ -62,7 +66,7 @@ class JsonResponse extends Response
         if (!$this->headers->has('Content-Type')) {
             $this->headers->set('Content-Type', 'application/json');
         }
-        
+
         parent::send($flush);
 
         return $this;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Ldap;
 
 use App\Service\TypeSafety\ArrayTypeHelper;
+use Exception;
 use InvalidArgumentException;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
@@ -204,9 +205,9 @@ class ModernLdapService
 
     /**
      * Tests LDAP connection with current configuration.
-     * 
-     * @throws \Laminas\Ldap\Exception\LdapException When LDAP operations fail
-     * @throws \Exception When connection validation fails
+     *
+     * @throws LdapException When LDAP operations fail
+     * @throws Exception     When connection validation fails
      */
     public function testConnection(): bool
     {

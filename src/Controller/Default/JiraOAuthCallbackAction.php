@@ -9,6 +9,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 use function is_string;
@@ -24,10 +25,10 @@ final class JiraOAuthCallbackAction extends BaseController
     }
 
     /**
-     * @throws \Exception When database operations fail
+     * @throws Exception                                                       When database operations fail
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
-     * @throws \App\Exception\Integration\Jira\JiraApiException When Jira API operations fail
-     * @throws \Exception When OAuth token operations or API calls fail
+     * @throws JiraApiException                                                When Jira API operations fail
+     * @throws Exception                                                       When OAuth token operations or API calls fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/jiraoauthcallback', name: 'jiraOAuthCallback', methods: ['GET'])]
     public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response

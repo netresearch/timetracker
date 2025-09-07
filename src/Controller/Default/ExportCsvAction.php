@@ -9,6 +9,7 @@ use App\Entity\Entry;
 use App\Entity\User;
 use App\Model\Response;
 use App\Repository\EntryRepository;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 use function chr;
@@ -16,7 +17,7 @@ use function chr;
 final class ExportCsvAction extends BaseController
 {
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
     public function __invoke(Request $request): Response

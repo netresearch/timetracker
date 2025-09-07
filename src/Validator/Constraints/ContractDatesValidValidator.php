@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Validator\Constraints;
 
 use DateTime;
+use Exception;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -12,8 +13,8 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class ContractDatesValidValidator extends ConstraintValidator
 {
     /**
-     * @throws \Symfony\Component\Validator\Exception\UnexpectedTypeException When constraint type is invalid
-     * @throws \Exception When date parsing or validation context fails
+     * @throws UnexpectedTypeException When constraint type is invalid
+     * @throws Exception               When date parsing or validation context fails
      */
     public function validate(mixed $value, Constraint $constraint): void
     {

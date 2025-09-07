@@ -53,7 +53,7 @@ class EntryRepository extends ServiceEntityRepository
     public function findOneById(int $id): ?Entry
     {
         $result = $this->find($id);
-        
+
         return $result instanceof Entry ? $result : null;
     }
 
@@ -400,7 +400,7 @@ class EntryRepository extends ServiceEntityRepository
 
         $sql['from'] = 'FROM entries e';
         $sql['joins'] = 'LEFT JOIN users u ON e.user_id = u.id
-                        LEFT JOIN customers c ON e.customer_id = c.id  
+                        LEFT JOIN customers c ON e.customer_id = c.id
                         LEFT JOIN projects p ON e.project_id = p.id
                         LEFT JOIN activities a ON e.activity_id = a.id';
 
@@ -1041,7 +1041,7 @@ class EntryRepository extends ServiceEntityRepository
         $connection = $this->getEntityManager()->getConnection();
 
         $sql = 'SELECT a.name, SUM(e.duration) as total_time
-                FROM entries e 
+                FROM entries e
                 LEFT JOIN activities a ON e.activity_id = a.id
                 WHERE e.ticket = ?
                 GROUP BY e.activity_id, a.name
@@ -1074,7 +1074,7 @@ class EntryRepository extends ServiceEntityRepository
         $connection = $this->getEntityManager()->getConnection();
 
         $sql = 'SELECT u.username, SUM(e.duration) as total_time
-                FROM entries e 
+                FROM entries e
                 LEFT JOIN users u ON e.user_id = u.id
                 WHERE e.ticket = ?
                 GROUP BY e.user_id, u.username
@@ -1251,7 +1251,7 @@ class EntryRepository extends ServiceEntityRepository
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
                           c.name as name
-                   FROM entries e 
+                   FROM entries e
                    LEFT JOIN customers c ON e.customer_id = c.id
                    WHERE e.customer_id = ?';
 
@@ -1281,7 +1281,7 @@ class EntryRepository extends ServiceEntityRepository
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
                           p.name as name, p.estimation as estimation
-                   FROM entries e 
+                   FROM entries e
                    LEFT JOIN projects p ON e.project_id = p.id
                    WHERE e.project_id = ?';
 
@@ -1313,7 +1313,7 @@ class EntryRepository extends ServiceEntityRepository
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
                           a.name as name
-                   FROM entries e 
+                   FROM entries e
                    LEFT JOIN activities a ON e.activity_id = a.id
                    WHERE e.activity_id = ?';
 
@@ -1342,7 +1342,7 @@ class EntryRepository extends ServiceEntityRepository
         if (!empty($entry->getTicket())) {
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own
-                   FROM entries e 
+                   FROM entries e
                    WHERE e.ticket = ?';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getTicket()])->fetchAssociative();

@@ -20,10 +20,10 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 final class SavePresetAction extends BaseController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request payload is malformed
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException          When request payload is malformed
      * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws \Exception When database operations fail
-     * @throws \Exception When entity relationships are invalid or persistence operations fail
+     * @throws Exception                                                                When database operations fail
+     * @throws Exception                                                                When entity relationships are invalid or persistence operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] PresetSaveDto $presetSaveDto, ObjectMapperInterface $objectMapper): Response|JsonResponse|\App\Response\Error
@@ -49,7 +49,7 @@ final class SavePresetAction extends BaseController
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-        // $preset is already instance of Preset due to the check above
+            // $preset is already instance of Preset due to the check above
         } else {
             $preset = new Preset();
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
 use function is_scalar;
@@ -15,42 +16,30 @@ final readonly class InterpretationFiltersDto
 {
     public function __construct(
         public ?int $customer = null,
-
         public ?int $customer_id = null, // legacy alias support
 
         public ?int $project = null,
-
         public ?int $project_id = null, // legacy alias support
 
         public ?int $user = null,
-
         public ?int $activity = null,
-
         public ?int $activity_id = null, // legacy alias support
 
         public ?int $team = null,
-
         public ?string $ticket = null,
-
         public ?string $description = null,
-
         public ?string $datestart = null,
-
         public ?string $dateend = null,
-
         public ?string $year = null,
-
         public ?string $month = null,
-
         public ?int $maxResults = null,
-
         public ?int $page = null,
     ) {
     }
 
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
-     * @throws \InvalidArgumentException When parameter conversion fails
+     * @throws InvalidArgumentException                                        When parameter conversion fails
      */
     public static function fromRequest(Request $request): self
     {

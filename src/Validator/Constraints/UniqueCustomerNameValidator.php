@@ -6,6 +6,7 @@ namespace App\Validator\Constraints;
 
 use App\Entity\Customer;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -18,9 +19,9 @@ class UniqueCustomerNameValidator extends ConstraintValidator
     }
 
     /**
-     * @throws \Symfony\Component\Validator\Exception\UnexpectedTypeException When constraint type is invalid
-     * @throws \Exception When database operations fail
-     * @throws \Exception When validation context or query execution fails
+     * @throws UnexpectedTypeException When constraint type is invalid
+     * @throws Exception               When database operations fail
+     * @throws Exception               When validation context or query execution fails
      */
     public function validate(mixed $value, Constraint $constraint): void
     {

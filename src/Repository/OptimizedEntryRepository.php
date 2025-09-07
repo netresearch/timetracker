@@ -147,7 +147,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
-            /** @var array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
+
+            /* @var array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
             return $cachedResult;
         }
 
@@ -158,27 +159,27 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         // Use a single query with conditional aggregation instead of UNION
         $sql = "
-            SELECT 
+            SELECT
                 -- Customer totals
                 COUNT(CASE WHEN e.customer_id = :customerId THEN 1 END) as customer_entries,
                 SUM(CASE WHEN e.customer_id = :customerId THEN e.duration END) as customer_total,
                 SUM(CASE WHEN e.customer_id = :customerId AND e.user_id = :userId THEN e.duration END) as customer_own,
-                
+
                 -- Project totals
                 COUNT(CASE WHEN e.project_id = :projectId THEN 1 END) as project_entries,
                 SUM(CASE WHEN e.project_id = :projectId THEN e.duration END) as project_total,
                 SUM(CASE WHEN e.project_id = :projectId AND e.user_id = :userId THEN e.duration END) as project_own,
-                
+
                 -- Activity totals
                 COUNT(CASE WHEN e.activity_id = :activityId THEN 1 END) as activity_entries,
                 SUM(CASE WHEN e.activity_id = :activityId THEN e.duration END) as activity_total,
                 SUM(CASE WHEN e.activity_id = :activityId AND e.user_id = :userId THEN e.duration END) as activity_own,
-                
+
                 -- Ticket totals
                 COUNT(CASE WHEN e.ticket = :ticket THEN 1 END) as ticket_entries,
                 SUM(CASE WHEN e.ticket = :ticket THEN e.duration END) as ticket_total,
                 SUM(CASE WHEN e.ticket = :ticket AND e.user_id = :userId THEN e.duration END) as ticket_own,
-                
+
                 -- Get names in subqueries for efficiency
                 (SELECT name FROM customers WHERE id = :customerId LIMIT 1) as customer_name,
                 (SELECT {$projectNameExpr} FROM projects p WHERE id = :projectId LIMIT 1) as project_name,
@@ -215,7 +216,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
-            /** @var array{duration: int, count: int} $cachedResult */
+
+            /* @var array{duration: int, count: int} $cachedResult */
             return $cachedResult;
         }
 

@@ -43,7 +43,7 @@ class Error extends JsonResponse
 
         // Initialize parent JsonResponse with proper data to resolve PropertyNotSetInConstructor
         parent::__construct($message, $validStatusCode, [
-            'Content-Type' => 'application/json'
+            'Content-Type' => 'application/json',
         ]);
     }
 

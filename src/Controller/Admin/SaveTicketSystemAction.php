@@ -18,10 +18,10 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 final class SaveTicketSystemAction extends BaseController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request payload is malformed
+     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException          When request payload is malformed
      * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws \Exception When database operations fail
-     * @throws \Exception When object mapping or persistence operations fail
+     * @throws Exception                                                                When database operations fail
+     * @throws Exception                                                                When object mapping or persistence operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/save', name: 'saveTicketSystem_attr', methods: ['POST'])]
     public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse

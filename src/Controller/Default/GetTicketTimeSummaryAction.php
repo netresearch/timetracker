@@ -9,6 +9,7 @@ use App\Entity\Entry;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Service\Util\TimeCalculationService;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 use function count;
@@ -25,9 +26,9 @@ final class GetTicketTimeSummaryAction extends BaseController
     }
 
     /**
-     * @throws \Exception When database operations fail
+     * @throws Exception                                                       When database operations fail
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When route parameters are invalid
-     * @throws \Exception When time calculation operations fail
+     * @throws Exception                                                       When time calculation operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -38,7 +39,7 @@ final class GetTicketTimeSummaryAction extends BaseController
         }
 
         $attributes = $request->attributes;
-        
+
         // Priority 1: Fix MixedAssignment with proper type assertion
         $ticketParam = $attributes->has('ticket') ? $attributes->get('ticket') : null;
         $ticket = is_string($ticketParam) ? $ticketParam : '';
