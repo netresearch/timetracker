@@ -120,7 +120,6 @@ services:
       - production
       - dev
       - development
-      - test
 
   # Test database (for unit/integration tests)
   db-test:

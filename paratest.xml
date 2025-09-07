@@ -29,7 +29,9 @@
             <directory>tests</directory>
             <exclude>tests/Controller</exclude>
             <exclude>tests/Entity</exclude>
+            <exclude>tests/Performance</exclude>
             <!-- Entity tests require database and are problematic in parallel -->
+            <!-- Performance tests have separate phpunit-performance.xml configuration -->
         </testsuite>
         <!-- Controller tests need sequential execution due to database state -->
         <testsuite name="controller-sequential">
