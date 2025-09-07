@@ -17,7 +17,7 @@ if (is_array($env = @include dirname(__DIR__).'/.env.local.php') && (!isset($env
     (new Dotenv())->usePutenv(false)->loadEnv(dirname(__DIR__).'/.env');
 }
 
-$env = $_SERVER['APP_ENV'] ?? 'prod';
+$env = (string) ($_SERVER['APP_ENV'] ?? 'prod');
 $debug = (bool) ($_SERVER['APP_DEBUG'] ?? ('prod' !== $env));
 
 if ($debug) {
@@ -29,12 +29,15 @@ $kernel = new Kernel($env, $debug);
 $request = Request::createFromGlobals();
 
 # feat #28: trust a defined list of proxy
-if (!empty($_SERVER['TRUSTED_PROXY_LIST']) && null !== json_decode($_SERVER['TRUSTED_PROXY_LIST'])) {
-    $trustedHeaderSet = Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT;
-    Request::setTrustedProxies(
-        json_decode($_SERVER['TRUSTED_PROXY_LIST']),
-        $trustedHeaderSet
-    );
+if (!empty($_SERVER['TRUSTED_PROXY_LIST']) && is_string($_SERVER['TRUSTED_PROXY_LIST'])) {
+    $proxyList = json_decode($_SERVER['TRUSTED_PROXY_LIST'], true);
+    if (is_array($proxyList)) {
+        $trustedHeaderSet = Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT;
+        Request::setTrustedProxies(
+            $proxyList,
+            $trustedHeaderSet
+        );
+    }
 }
 
 # feat #28: trust all remote addresses
