@@ -120,6 +120,7 @@ services:
       - production
       - dev
       - development
+      - test
 
   # Test database (for unit/integration tests)
   db-test:
@@ -145,6 +146,24 @@ services:
       - development
       - test
 
+  # Unit test database (for PHPUnit tests)
+  db_unittest:
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${UNITTEST_DB_ROOT_PASSWORD:-global123}
+      - MYSQL_USER=${UNITTEST_DB_USER:-unittest}
+      - MYSQL_PASSWORD=${UNITTEST_DB_PASSWORD:-unittest}
+      - MYSQL_DATABASE=${UNITTEST_DB_NAME:-unittest}
+    volumes:
+      - db-unittest-data:/var/lib/mysql
+      - ./sql/unittest/001_testtables.sql:/docker-entrypoint-initdb.d/001_testtables.sql
+      - ./sql/unittest/002_testdata.sql:/docker-entrypoint-initdb.d/002_testdata.sql
+    restart: always
+    profiles: 
+      - dev
+      - development
+      - test
+
 networks:
   default:
     driver: "bridge"
@@ -162,4 +181,8 @@ volumes:
 
   # Test volumes  
   db-test-data:
+    driver: local
+  
+  # Unit test volume
+  db-unittest-data:
     driver: local
