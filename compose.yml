@@ -24,7 +24,7 @@ services:
       - prod
       - production
 
-  # Development app service with dev tools
+  # Development app service with dev tools (includes databases)
   app-dev:
     build:
       context: .
@@ -51,6 +51,26 @@ services:
       - dev
       - development
       - test
+
+  # Development tools service (static analysis, linting - no DB dependencies)
+  app-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: devbox
+    image: ghcr.io/netresearch/timetracker:devbox
+    environment:
+      - APP_ENV=${APP_ENV:-dev}
+      - APP_DEBUG=${APP_DEBUG:-1}
+    volumes:
+      # Tools volumes (bind mounts for source code access only)
+      - .:/var/www/html
+      - ./var/cache:/var/www/html/var/cache
+      - ./var/log:/var/www/html/var/log
+    restart: "no"
+    profiles: 
+      - tools
+      - dev-tools
 
   # Production web server
   httpd:

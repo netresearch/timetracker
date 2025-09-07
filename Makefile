@@ -4,19 +4,22 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
 	@echo ""
 	@echo "Environment profiles:"
 	@echo "  COMPOSE_PROFILES=dev      # development (default)"
+	@echo "  COMPOSE_PROFILES=tools    # lightweight tools only (no DB)"
 	@echo "  COMPOSE_PROFILES=prod     # production"  
 	@echo "  COMPOSE_PROFILES=test     # testing"
 	@echo ""
 	@echo "Commands:"
 	@echo "  make up               # start stack"
 	@echo "  make down             # stop stack"
+	@echo "  make tools-up         # start lightweight tools only (no DB)"
+	@echo "  make tools-down       # stop tools containers"
 	@echo "  make restart          # restart stack"
 	@echo "  make build            # build images"
 	@echo "  make logs             # follow logs"
@@ -28,17 +31,25 @@ help:
 	@echo "  make test-parallel-all  # run all tests optimally (parallel + sequential)"
 	@echo "  make coverage         # run tests with coverage"
 	@echo "  make reset-test-db    # reset test database (for schema changes)"
-	@echo "  make stan|phpat       # static analysis & architecture"
-	@echo "  make cs-check|cs-fix  # coding standards"
-	@echo "  make check-all        # stan + phpat + pint + twig"
-	@echo "  make twig-lint        # lint twig templates"
-	@echo "  make fix-all          # pint + rector (modern stack)"
+	@echo "  make stan|phpat       # static analysis & architecture (fast - no DB)"
+	@echo "  make cs-check|cs-fix  # coding standards (fast - no DB)"
+	@echo "  make check-all        # stan + phpat + pint + twig (fast - no DB)"
+	@echo "  make twig-lint        # lint twig templates (fast - no DB)"
+	@echo "  make fix-all          # pint + rector (modern stack, fast - no DB)"
 
 up:
 	docker compose up -d --build
 
 down:
 	docker compose down
+
+tools-up:
+	@echo "Starting lightweight development tools (no databases)..."
+	COMPOSE_PROFILES=tools docker compose up -d --build
+
+tools-down:
+	@echo "Stopping tools containers..."
+	COMPOSE_PROFILES=tools docker compose down
 
 restart: down up
 
@@ -105,25 +116,32 @@ coverage-sequential: prepare-test-sql
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:
-	docker compose run --rm app-dev composer analyze
+	@echo "Running PHPStan static analysis (lightweight - no DB)..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer analyze
 
 phpat:
-	docker compose run --rm app-dev composer analyze:arch
+	@echo "Running PHPat architecture analysis (lightweight - no DB)..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer analyze:arch
 
 cs-check:
-	docker compose run --rm app-dev composer cs-check
+	@echo "Running Laravel Pint code style check (lightweight - no DB)..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-check
 
 cs-fix:
-	docker compose run --rm app-dev composer cs-fix
+	@echo "Running Laravel Pint code style fix (lightweight - no DB)..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-fix
 
 check-all:
-	docker compose run --rm app-dev composer check:all
+	@echo "Running complete validation suite (lightweight - no DB)..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer check:all
 
 twig-lint:
-	docker compose run --rm app-dev composer twig:lint
+	@echo "Running Twig template linting (lightweight - no DB)..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer twig:lint
 
 fix-all:
-	docker compose run --rm app-dev composer fix:all
+	@echo "Running modern code fixing suite (lightweight - no DB)..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer fix:all
 
 db-migrate:
 	docker compose run --rm app-dev bin/console doctrine:migrations:migrate -n

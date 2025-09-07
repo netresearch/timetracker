@@ -40,25 +40,25 @@ jobs:
 
       - name: Static analysis (PHPStan)
         env:
-          COMPOSE_PROFILES: dev
+          COMPOSE_PROFILES: tools
         run: |
           make stan
 
       - name: Architecture analysis (PHPat)
         env:
-          COMPOSE_PROFILES: dev
+          COMPOSE_PROFILES: tools
         run: |
           make phpat
 
       - name: Code style (Laravel Pint)
         env:
-          COMPOSE_PROFILES: dev
+          COMPOSE_PROFILES: tools
         run: |
           make cs-check
 
       - name: Lint Twig templates
         env:
-          COMPOSE_PROFILES: dev
+          COMPOSE_PROFILES: tools
         run: |
           make twig-lint
 

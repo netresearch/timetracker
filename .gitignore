@@ -39,22 +39,12 @@ yarn-error.log
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
-###> squizlabs/php_codesniffer ###
-/.phpcs-cache
-/phpcs.xml
-###< squizlabs/php_codesniffer ###
 ###> symfony/phpunit-bridge ###
 .phpunit
 .phpunit.result.cache
 .phpunit.cache
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
-
-###> php-cs-fixer/shim ###
-/.php-cs-fixer.php
-/.php-cs-fixer.cache
-###< php-cs-fixer/shim ###
-
 # ChunkHound config files
 .chunkhound.json
 *.chunkhound.json

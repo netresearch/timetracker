@@ -37,18 +37,6 @@
             "migrations/.gitignore"
         ]
     },
-    "php-cs-fixer/shim": {
-        "version": "3.9",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "3.0",
-            "ref": "16422bf8eac6c3be42afe07d37e2abc89d2bdf6b"
-        },
-        "files": [
-            ".php-cs-fixer.dist.php"
-        ]
-    },
     "php-http/discovery": {
         "version": "1.20",
         "recipe": {
@@ -95,18 +83,6 @@
             "version": "3.0",
             "ref": "31024cb40a800443dc032ce8b463b73879a7942a"
         }
-    },
-    "squizlabs/php_codesniffer": {
-        "version": "3.12",
-        "recipe": {
-            "repo": "github.com/symfony/recipes-contrib",
-            "branch": "main",
-            "version": "3.6",
-            "ref": "1019e5c08d4821cb9b77f4891f8e9c31ff20ac6f"
-        },
-        "files": [
-            "phpcs.xml.dist"
-        ]
     },
     "symfony/console": {
         "version": "4.4",
