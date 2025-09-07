@@ -15,7 +15,7 @@ final class SyncJiraEntriesAction extends BaseController
 {
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \Exception When date parsing or Jira API operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/syncentries/jira', name: 'syncJiraEntries_attr', methods: ['GET'])]

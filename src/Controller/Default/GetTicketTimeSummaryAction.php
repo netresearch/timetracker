@@ -25,7 +25,7 @@ final class GetTicketTimeSummaryAction extends BaseController
     }
 
     /**
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When route parameters are invalid
      * @throws \Exception When time calculation operations fail
      */

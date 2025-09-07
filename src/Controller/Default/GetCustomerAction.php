@@ -14,7 +14,7 @@ use function is_scalar;
 final class GetCustomerAction extends BaseController
 {
     /**
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
      * @throws \InvalidArgumentException When project parameter is invalid
      */

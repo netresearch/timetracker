@@ -20,7 +20,7 @@ class UniqueTicketSystemNameValidator extends ConstraintValidator
 
     /**
      * @throws \Symfony\Component\Validator\Exception\UnexpectedTypeException When constraint type is invalid
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \Exception When validation context or repository access fails
      */
     public function validate(mixed $value, Constraint $constraint): void

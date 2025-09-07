@@ -12,7 +12,7 @@ use App\Entity\User;
 final class IndexAction extends BaseController
 {
     /**
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \Twig\Error\LoaderError When template loading fails
      * @throws \Twig\Error\RuntimeError When template rendering fails
      * @throws \Twig\Error\SyntaxError When template syntax is invalid

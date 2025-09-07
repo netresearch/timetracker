@@ -15,7 +15,7 @@ final class DeleteEntryAction extends BaseTrackingController
 {
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are invalid
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \App\Exception\Integration\Jira\JiraApiException When Jira API operations fail
      * @throws \Exception When entry processing or deletion fails
      */

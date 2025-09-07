@@ -22,7 +22,7 @@ final class SavePresetAction extends BaseController
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request payload is malformed
      * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \Exception When entity relationships are invalid or persistence operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
