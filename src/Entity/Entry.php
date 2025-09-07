@@ -18,34 +18,6 @@ use function sprintf;
 class Entry extends Base
 {
     /**
-     * Initialize a new Entry with required properties.
-     *
-     * @param DateTimeInterface $day The date when the entry was made
-     * @param DateTimeInterface $start Start time of the entry
-     * @param DateTimeInterface $end End time of the entry
-     * @param string $description Description of the work done (default: '')
-     * @param string $ticket Ticket identifier (default: '')
-     */
-    public function __construct(
-        DateTimeInterface $day,
-        DateTimeInterface $start,
-        DateTimeInterface $end,
-        string $description = '',
-        string $ticket = ''
-    ) {
-        $this->day = $day;
-        $this->start = $start;
-        $this->end = $end;
-        $this->description = $description;
-        $this->ticket = $ticket;
-        $this->duration = 0;
-        $this->syncedToTicketsystem = false;
-        $this->class = EntryClass::PLAIN;
-        $this->externalSummary = '';
-        $this->externalReporter = '';
-        $this->externalLabels = [];
-    }
-    /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.
      */
     protected ?bool $billable = null;
@@ -377,12 +349,6 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
-        /*
-         * Guard for partially initialized entity during construction/hydration.
-         *
-         * @psalm-suppress RedundantPropertyInitializationCheck
-         * @psalm-suppress TypeDoesNotContainType
-         */
         if (!isset($this->start) || !isset($this->end)) {
             return $this;
         }
@@ -478,7 +444,6 @@ class Entry extends Base
      *
      * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string|null}
      *
-     * @psalm-suppress RedundantPropertyInitializationCheck
      */
     public function toArray(): array
     {
@@ -493,11 +458,9 @@ class Entry extends Base
             $customer = null;
         }
 
-        /** @psalm-suppress RedundantPropertyInitializationCheck */
         $userEntity = $this->getUser();
         $activityEntity = $this->getActivity();
 
-        /* @psalm-suppress RedundantPropertyInitializationCheck */
         return [
             'id' => $this->getId(),
             'date' => isset($this->day) ? $this->getDay()->format('d/m/Y') : null,
@@ -524,12 +487,6 @@ class Entry extends Base
      */
     public function calcDuration(float $factor = 1.0): static
     {
-        /*
-         * Guard for partially initialized entity during construction/hydration.
-         *
-         * @psalm-suppress RedundantPropertyInitializationCheck
-         * @psalm-suppress TypeDoesNotContainType
-         */
         if (!isset($this->start) || !isset($this->end)) {
             $this->setDuration(0);
 
