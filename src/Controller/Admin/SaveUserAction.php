@@ -22,7 +22,7 @@ final class SaveUserAction extends BaseController
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request payload is malformed
      * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \InvalidArgumentException When team IDs are invalid or missing teams are found
      * @throws \UnexpectedValueException When user data mapping fails or validation errors occur
      */

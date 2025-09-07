@@ -24,7 +24,7 @@ final class JiraOAuthCallbackAction extends BaseController
     }
 
     /**
-     * @throws \Doctrine\ORM\ORMException When database operations fail
+     * @throws Exception When database operations fail
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
      * @throws \App\Exception\Integration\Jira\JiraApiException When Jira API operations fail
      * @throws \Exception When OAuth token operations or API calls fail
