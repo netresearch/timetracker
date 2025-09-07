@@ -38,7 +38,7 @@ final class RequestEntityHelper
      * @param class-string<T> $entityClass
      *
      * @return T|null
-     * @throws Exception When database operations fail
+     * @throws \Exception When database operations fail
      * @throws \InvalidArgumentException When entity class is invalid
      */
     public static function findById(ManagerRegistry $managerRegistry, string $entityClass, ?string $id): ?object

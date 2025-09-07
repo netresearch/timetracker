@@ -52,7 +52,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
     /**
      * @throws \Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException When authentication fails
      * @throws \Symfony\Component\Security\Core\Exception\UserNotFoundException When user is not found
-     * @throws Exception When database operations fail
+     * @throws \Exception When database operations fail
      * @throws \Exception When LDAP or user creation operations fail
      */
     public function authenticate(Request $request): Passport

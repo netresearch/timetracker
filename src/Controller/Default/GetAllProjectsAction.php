@@ -13,7 +13,7 @@ final class GetAllProjectsAction extends BaseController
 {
     /**
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
-     * @throws Exception When database operations fail
+     * @throws \Exception When database operations fail
      * @throws \InvalidArgumentException When customer ID parameter is invalid
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
