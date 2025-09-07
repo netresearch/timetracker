@@ -100,8 +100,15 @@
     "post-update-cmd": [
       "@auto-scripts"
     ],
-    "cs-check": "vendor/laravel/pint/builds/pint --test",
-    "cs-fix": "vendor/laravel/pint/builds/pint",
+    "cs-check": "php -d memory_limit=512M vendor/laravel/pint/builds/pint --test",
+    "cs-fix": "php -d memory_limit=512M vendor/laravel/pint/builds/pint",
+    "cs-check-batch": [
+      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Entity --test",
+      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Controller --test",
+      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Repository --test",
+      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Service --test",
+      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Command src/Dto src/Enum src/Event src/EventSubscriber src/Exception src/Extension src/Model src/Response src/Security src/Util src/Validator src/ValueObject src/Kernel.php --test"
+    ],
     "analyze": "phpstan analyze --configuration=phpstan.neon --memory-limit=512M",
     "analyze:arch": "phpstan analyze --configuration=phpstan-phpat.neon --memory-limit=512M",
     "rector": "rector process src",
