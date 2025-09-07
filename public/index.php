@@ -17,7 +17,7 @@ if (is_array($env = @include dirname(__DIR__).'/.env.local.php') && (!isset($env
     (new Dotenv())->usePutenv(false)->loadEnv(dirname(__DIR__).'/.env');
 }
 
-$env = (string) ($_SERVER['APP_ENV'] ?? 'prod');
+$env = is_string($_SERVER['APP_ENV'] ?? null) ? $_SERVER['APP_ENV'] : 'prod';
 $debug = (bool) ($_SERVER['APP_DEBUG'] ?? ('prod' !== $env));
 
 if ($debug) {
