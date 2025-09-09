@@ -820,12 +820,7 @@ class EntryRepository extends ServiceEntityRepository
         ?int $customer = null,
         ?array $arSort = null,
     ): array {
-        $qb = $this->createQueryBuilder('e')
-            ->leftJoin('e.user', 'u')
-            ->leftJoin('e.customer', 'c')
-            ->leftJoin('e.project', 'p')
-            ->leftJoin('e.activity', 'a')
-        ;
+        $qb = $this->findEntriesWithRelations();
 
         // Use date range instead of YEAR function for DQL compatibility
         $startOfYear = sprintf('%04d-01-01', $year);
@@ -892,6 +887,105 @@ class EntryRepository extends ServiceEntityRepository
                 ->addOrderBy('e.start', 'DESC')
             ;
         }
+
+        $result = $qb->getQuery()->getResult();
+        assert(is_array($result) && array_is_list($result));
+
+        /* @var array<int, Entry> $result */
+        return $result;
+    }
+
+    /**
+     * Find entries by date with pagination for memory efficiency.
+     *
+     * @param array<string, string>|null $arSort
+     *
+     * @return array<int, Entry>
+     */
+    public function findByDatePaginated(
+        int $user,
+        int $year,
+        ?int $month = null,
+        ?int $project = null,
+        ?int $customer = null,
+        ?array $arSort = null,
+        int $offset = 0,
+        int $limit = 1000,
+    ): array {
+        $qb = $this->findEntriesWithRelations();
+
+        // Use date range instead of YEAR function for DQL compatibility
+        $startOfYear = sprintf('%04d-01-01', $year);
+        $endOfYear = sprintf('%04d-12-31', $year);
+        $qb->andWhere('e.day >= :startOfYear')
+            ->andWhere('e.day <= :endOfYear')
+            ->setParameter('startOfYear', $startOfYear)
+            ->setParameter('endOfYear', $endOfYear)
+        ;
+
+        if (0 !== $user) {
+            $qb->andWhere('e.user = :user')
+                ->setParameter('user', $user)
+            ;
+        }
+
+        if (null !== $month && $month > 0) {
+            // Use date range instead of MONTH function for DQL compatibility
+            $startOfMonth = sprintf('%04d-%02d-01', $year, $month);
+            $lastDay = (new DateTime("{$year}-{$month}-01"))->format('t');
+            $endOfMonth = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
+            $qb->andWhere('e.day >= :startOfMonth')
+                ->andWhere('e.day <= :endOfMonth')
+                ->setParameter('startOfMonth', $startOfMonth)
+                ->setParameter('endOfMonth', $endOfMonth)
+            ;
+        }
+
+        if (null !== $project) {
+            $qb->andWhere('e.project = :project')
+                ->setParameter('project', $project)
+            ;
+        }
+
+        if (null !== $customer) {
+            $qb->andWhere('e.customer = :customer')
+                ->setParameter('customer', $customer)
+            ;
+        }
+
+        // Apply sorting
+        if (is_array($arSort) && [] !== $arSort) {
+            foreach ($arSort as $field => $direction) {
+                if (!is_string($field) || !is_string($direction)) {
+                    continue;
+                }
+
+                if (!is_string($direction)) {
+                    $direction = 'DESC';
+                } else {
+                    $direction = 'ASC' === strtoupper((string) $direction) ? 'ASC' : 'DESC';
+                }
+
+                // Map logical field names to proper DQL expressions
+                $dqlField = match ($field) {
+                    'user.username' => 'u.username',
+                    'entry.day' => 'e.day',
+                    'entry.start' => 'e.start',
+                    'entry.end' => 'e.end',
+                    default => 'e.' . $field,
+                };
+
+                $qb->addOrderBy($dqlField, $direction);
+            }
+        } else {
+            $qb->orderBy('e.day', 'DESC')
+                ->addOrderBy('e.start', 'DESC')
+            ;
+        }
+
+        // Apply pagination
+        $qb->setFirstResult($offset)
+           ->setMaxResults($limit);
 
         $result = $qb->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
