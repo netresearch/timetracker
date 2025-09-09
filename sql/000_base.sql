@@ -223,7 +223,13 @@ CREATE TABLE IF NOT EXISTS `entries` (
   KEY (`user_id`),
   KEY (`account_id`),
   KEY (`activity_id`),
-  KEY (`customer_id`)
+  KEY (`customer_id`),
+  KEY `idx_entries_user_day` (`user_id`, `day` DESC),
+  KEY `idx_entries_day` (`day`),
+  KEY `idx_entries_ticket` (`ticket`),
+  KEY `idx_entries_user_project` (`user_id`, `project_id`),
+  KEY `idx_entries_worklog` (`worklog_id`),
+  KEY `idx_entries_day_start` (`day` DESC, `start` DESC)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 --
