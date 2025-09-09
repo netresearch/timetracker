@@ -179,6 +179,27 @@ class ExportService
     }
 
     /**
+     * Export entries in batches for memory efficiency.
+     * 
+     * @param array<string, string>|null $arSort Sorting configuration
+     * @return \Generator<Entry[]>
+     */
+    public function exportEntriesBatched(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null, int $batchSize = 1000): \Generator
+    {
+        /** @var \App\Repository\EntryRepository $entryRepo */
+        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+        
+        $offset = 0;
+        do {
+            $batch = $entryRepo->findByDatePaginated($userId, $year, $month, $projectId, $customerId, $arSort, $offset, $batchSize);
+            if (!empty($batch)) {
+                yield $batch;
+            }
+            $offset += $batchSize;
+        } while (count($batch) === $batchSize);
+    }
+
+    /**
      * Enrich entries with ticket information from JIRA.
      *
      * @param Entry[] $entries
