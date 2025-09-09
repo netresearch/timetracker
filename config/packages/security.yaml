@@ -1,7 +1,7 @@
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
-        App\Entity\User: 'plaintext'
+        App\Entity\User: 'auto'
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
@@ -38,7 +38,7 @@ security:
                 secret: '%kernel.secret%'
                 lifetime: 2592000 # 30 days in seconds
                 path: /
-                secure: false  # Set to true in production with HTTPS
+                secure: true  # HTTPS required for security
 
             # Enable user switching (impersonation)
             switch_user:
