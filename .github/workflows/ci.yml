@@ -37,6 +37,10 @@ jobs:
         run: |
           # Use profile-based setup matching local development
           make install
+          # Explicitly bring up all required services for CI
+          docker compose up -d --profile dev
+          # Wait for databases to be healthy
+          docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
 
       - name: Static analysis (PHPStan)
         env:
