@@ -960,11 +960,7 @@ class EntryRepository extends ServiceEntityRepository
                     continue;
                 }
 
-                if (!is_string($direction)) {
-                    $direction = 'DESC';
-                } else {
-                    $direction = 'ASC' === strtoupper((string) $direction) ? 'ASC' : 'DESC';
-                }
+                $direction = 'ASC' === strtoupper($direction) ? 'ASC' : 'DESC';
 
                 // Map logical field names to proper DQL expressions
                 $dqlField = match ($field) {
