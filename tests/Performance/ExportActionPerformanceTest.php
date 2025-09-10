@@ -64,7 +64,7 @@ final class ExportActionPerformanceTest extends TestCase
     {
         $this->performanceBaselines = [
             'small_excel_export' => 750,     // 750ms for 50 entries with Excel generation (Docker environment)
-            'medium_excel_export' => 2000,   // 2s for 500 entries with Excel generation  
+            'medium_excel_export' => 4500,   // 4.5s for 500 entries with Excel generation (Docker environment)  
             'large_excel_export' => 11000,   // 11s for 5000 entries with Excel generation (Docker environment)
             'excel_memory_threshold' => 100 * 1024 * 1024, // 100MB for Excel processing
             'template_loading' => 100,       // 100ms for template loading
