@@ -371,4 +371,16 @@ class User implements UserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
     }
+
+    /**
+     * Returns a password-like string for remember_me functionality.
+     * Since LDAP users don't have stored passwords, we generate a stable hash
+     * based on the username for security signature generation.
+     */
+    public function getPassword(): ?string
+    {
+        // Generate a stable hash for remember_me functionality
+        // This is not the actual password but a consistent value for this user
+        return hash('sha256', $this->username . '_ldap_user_' . ($this->id ?? '0'));
+    }
 }

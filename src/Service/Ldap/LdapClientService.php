@@ -173,6 +173,11 @@ class LdapClientService
                 'dn_returned' => $returnedDn,
                 'cn' => $ldapEntry['cn'][0] ?? 'N/A',
             ]);
+            // Debug: log the complete LDAP entry structure
+            $this->logger->debug('LDAP: Complete entry structure for debugging.', [
+                'entry_keys' => array_keys($ldapEntry),
+                'entry_sample' => array_map(fn($val) => is_array($val) ? implode(', ', array_slice($val, 0, 2)) : $val, $ldapEntry)
+            ]);
         }
 
         $this->setTeamsByLdapResponse($ldapEntry);
@@ -196,10 +201,32 @@ class LdapClientService
             throw new Exception('LDAP password must be set via setUserPass() before authentication');
         }
 
-        $userDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? null);
+        // Try multiple ways to extract the DN from LDAP response
+        $userDn = $ldapEntry['distinguishedname'][0] ?? 
+                  $ldapEntry['dn'][0] ?? 
+                  $ldapEntry['entrydn'][0] ?? 
+                  null;
+        
+        // If DN extraction failed or returned invalid data, construct it from username
+        if (!$userDn || strlen($userDn) < 10) {
+            // Construct DN using the original username and our known structure
+            $userDn = sprintf('uid=%s,ou=users,%s', $this->_userName, $this->_baseDn);
+            if ($this->logger instanceof LoggerInterface) {
+                $this->logger->debug('LDAP: Constructed DN from username and base DN.', [
+                    'original_dn' => $ldapEntry['dn'][0] ?? 'N/A',
+                    'constructed_dn' => $userDn,
+                    'username' => $this->_userName,
+                    'base_dn' => $this->_baseDn
+                ]);
+            }
+        }
+        
         if (!$userDn) {
             if ($this->logger instanceof LoggerInterface) {
-                $this->logger->error('LDAP: Could not extract DN or distinguishedName from user entry.', ['entry' => $ldapEntry]);
+                $this->logger->error('LDAP: Could not extract or construct DN from user entry.', [
+                    'entry_keys' => array_keys($ldapEntry),
+                    'entry' => array_map(fn($val) => is_array($val) ? implode(', ', $val) : $val, $ldapEntry)
+                ]);
             }
 
             throw new Exception('Could not determine user DN for authentication.');
