@@ -201,37 +201,22 @@ class AdminControllerTest extends AbstractWebTestCase
     {
         $expectedJson = [
             [
-                'project' => [
-                    'id' => 3,
-                    'name' => 'GlobalProject',
-                    'jiraId' => 'TIM-1',
-                    'active' => false,
-                    'global' => false,
-                    'customerId' => 3,
-                    'customerName' => 'Der Globale Customer',
-                ],
+                'id' => 2,
+                'name' => 'Attack Server',
+                'customerId' => 1,
+                'customerName' => 'Der Bäcker von nebenan',
             ],
             [
-                'project' => [
-                    'id' => 1,
-                    'name' => 'Das Kuchenbacken',
-                    'jiraId' => 'SA',
-                    'active' => true,
-                    'global' => false,
-                    'customerId' => 1,
-                    'customerName' => 'Der Bäcker von nebenan',
-                ],
+                'id' => 1,
+                'name' => 'Das Kuchenbacken',
+                'customerId' => 1,
+                'customerName' => 'Der Bäcker von nebenan',
             ],
             [
-                'project' => [
-                    'id' => 2,
-                    'name' => 'Attack Server',
-                    'jiraId' => 'TIM-1',
-                    'active' => false,
-                    'global' => false,
-                    'customerId' => 1,
-                    'customerName' => 'Der Bäcker von nebenan',
-                ],
+                'id' => 3,
+                'name' => 'GlobalProject',
+                'customerId' => 3,
+                'customerName' => 'Der Globale Customer',
             ],
         ];
 
@@ -322,16 +307,16 @@ class AdminControllerTest extends AbstractWebTestCase
         $expectedJson = [
             [
                 'team' => [
-                    'id' => 1,
-                    'name' => 'Kuchenbäcker',
-                    'leadUserId' => 1,
+                    'id' => 2,
+                    'name' => 'Hackerman',
+                    'lead_user_id' => 2,
                 ],
             ],
             [
                 'team' => [
-                    'id' => 2,
-                    'name' => 'Hackerman',
-                    'leadUserId' => 2,
+                    'id' => 1,
+                    'name' => 'Kuchenbäcker',
+                    'lead_user_id' => 1,
                 ],
             ],
         ];
