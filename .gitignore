@@ -53,3 +53,4 @@ chunkhound.json
 # ChunkHound database
 .chunkhound.db
 .chunkhound/
+results.txt
