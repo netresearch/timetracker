@@ -69,8 +69,8 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             'month' => 8,
             'project' => 0,
             'customer' => 0,
-            'billable' => false,
-            'tickettitles' => false,
+            'billable' => '0',
+            'tickettitles' => '0',
         ]);
         
         $memoryAfter = memory_get_usage(true);
@@ -156,8 +156,8 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             'userid' => 1,
             'year' => 2025,
             'month' => 8,
-            'billable' => true,
-            'tickettitles' => true,
+            'billable' => '1',
+            'tickettitles' => '1',
         ]);
         
         $memoryAfter = memory_get_usage(true);
@@ -187,16 +187,16 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
      */
     public function testDatabaseQueryPerformance(): void
     {
-        // Create test data
-        $this->createTestDataForExport(1000);
+        // Create test data and get the created user ID
+        $userId = $this->createTestDataForExport(1000);
         
         $this->stopwatch->start('database_query');
         
         /** @var \App\Repository\EntryRepository $entryRepository */
         $entryRepository = $this->getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
         
-        // Query entries directly from repository
-        $entries = $entryRepository->findByDate(1, 2025, 8, null, null, [
+        // Query entries directly from repository using the actual created user ID
+        $entries = $entryRepository->findByDate($userId, 2025, 8, null, null, [
             'user.username' => 'ASC',
             'entry.day' => 'DESC',
             'entry.start' => 'DESC',
@@ -355,15 +355,15 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
     /**
      * Create test data for export performance testing.
      */
-    private function createTestDataForExport(int $entryCount, bool $withTickets = false): void
+    private function createTestDataForExport(int $entryCount, bool $withTickets = false): int
     {
         $entityManager = $this->getContainer()->get('doctrine')->getManager();
         
-        // Create test user
+        // Create test user with ID 1 to match query expectations
         $user = new \App\Entity\User();
-        $user->setUsername('exporttest')
-             ->setAbbr('ET')
-             ->setPassword('test');
+        $user->setId(1)
+             ->setUsername('exporttest')
+             ->setAbbr('ET');
         $entityManager->persist($user);
         
         // Create test customer
@@ -378,7 +378,11 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         
         if ($withTickets) {
             $ticketSystem = new \App\Entity\TicketSystem();
-            $ticketSystem->setBookTime(true)
+            $ticketSystem->setName('Export Performance JIRA')
+                        ->setUrl('https://example.atlassian.net')
+                        ->setLogin('testuser')
+                        ->setPassword('testpass')
+                        ->setBookTime(true)
                         ->setType(\App\Enum\TicketSystemType::JIRA)
                         ->setTicketUrl('https://example.atlassian.net/browse/%s');
             $entityManager->persist($ticketSystem);
@@ -409,7 +413,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
                   ->setStart($start)
                   ->setEnd($end)
                   ->setDescription("Export performance test entry {$i}")
-                  ->setDuration(8.0);
+                  ->setDuration(8);
             
             if ($withTickets) {
                 $entry->setTicket("EXPORT-" . (1000 + $i));
@@ -431,6 +435,9 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         }
         
         $entityManager->flush();
+        
+        // Return the actual user ID that was created
+        return (int) $user->getId();
     }
 
     /**
