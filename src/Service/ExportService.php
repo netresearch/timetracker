@@ -9,6 +9,7 @@ use App\Enum\TicketSystemType;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
+use Generator;
 
 use function count;
 use function in_array;
@@ -180,15 +181,16 @@ class ExportService
 
     /**
      * Export entries in batches for memory efficiency.
-     * 
+     *
      * @param array<string, string>|null $arSort Sorting configuration
-     * @return \Generator<Entry[]>
+     *
+     * @return Generator<Entry[]>
      */
-    public function exportEntriesBatched(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null, int $batchSize = 1000): \Generator
+    public function exportEntriesBatched(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null, int $batchSize = 1000): Generator
     {
         /** @var \App\Repository\EntryRepository $entryRepo */
         $entryRepo = $this->managerRegistry->getRepository(Entry::class);
-        
+
         $offset = 0;
         do {
             $batch = $entryRepo->findByDatePaginated($userId, $year, $month, $projectId, $customerId, $arSort, $offset, $batchSize);
