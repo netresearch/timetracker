@@ -16,15 +16,10 @@ final class TicketTest extends TestCase
 {
     public function testGettersAndSetters(): void
     {
-        $ticket = new Ticket();
-        $ticket->setName('ABC-123');
-        $ticket->setTicketNumber('ABC-123');
-        $ticket->setTicketSystemId(5);
-        $ticket->setEstimatedDuration(120);
-        $ticket->setParentTicketNumber('ABC-1');
+        $ticket = new Ticket(5, 'ABC-123', 'Test Ticket Name', 120, 'ABC-1');
         $ticket->setTicketId(99);
 
-        self::assertSame('ABC-123', $ticket->getName());
+        self::assertSame('Test Ticket Name', $ticket->getName());
         self::assertSame('ABC-123', $ticket->getTicketNumber());
         self::assertSame(5, $ticket->getTicketSystemId());
         self::assertSame(120, $ticket->getEstimatedDuration());
