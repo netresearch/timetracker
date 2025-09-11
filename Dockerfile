@@ -75,6 +75,13 @@ RUN npm install -g npm@latest
 RUN pecl install pcov \
    && docker-php-ext-enable pcov
 
+# Install Xdebug for development debugging
+RUN pecl install xdebug \
+   && docker-php-ext-enable xdebug
+
+# Copy Xdebug configuration
+COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
+
 RUN git config --global --add safe.directory '*'
 
 FROM devbox AS app_builder
