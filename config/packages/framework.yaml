@@ -4,6 +4,7 @@ framework:
     default_locale: '%locale%'
     csrf_protection:
         enabled: true
+        stateless_token_ids: ['authenticate', 'logout']
     http_method_override: true
     annotations:
         enabled: false
