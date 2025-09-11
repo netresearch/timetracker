@@ -26,6 +26,13 @@ RUN set -ex \
    xml \
    gd \
    intl \
+   && pecl install apcu \
+   && docker-php-ext-enable apcu
+
+# Copy APCu configuration
+COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
+
+RUN set -ex \
    # clean up (keep runtime libraries required by PHP extensions)
    && apt-get -y clean \
    && rm -rf /usr/src/* \

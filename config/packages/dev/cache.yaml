@@ -1,0 +1,26 @@
+framework:
+    cache:
+        # In development, use shorter TTLs and add debugging
+        pools:
+            # Shorter TTLs for development to see changes faster
+            cache.auth:
+                adapter: cache.adapter.apcu
+                default_lifetime: 300  # 5 minutes
+
+            cache.config:
+                adapter: cache.adapter.apcu
+                default_lifetime: 600  # 10 minutes
+
+            # Keep filesystem cache for data in dev
+            cache.data:
+                adapter: cache.adapter.filesystem
+                default_lifetime: 3600  # 1 hour
+
+            cache.session:
+                adapter: cache.adapter.apcu
+                default_lifetime: 300  # 5 minutes
+
+            # Development-specific cache pool for debugging
+            cache.debug:
+                adapter: cache.adapter.apcu
+                default_lifetime: 60  # 1 minute
