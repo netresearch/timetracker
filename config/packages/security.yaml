@@ -32,6 +32,8 @@ security:
                 target: _login
                 # Ensure any custom session data is cleared on logout
                 invalidate_session: true
+                # Enable CSRF protection for logout (now stateless)
+                enable_csrf: true
 
             # Remember me functionality (uses Symfony's built-in feature)
             remember_me:
