@@ -6,11 +6,11 @@ use PHPat\Selector\Selector;
 use PHPat\Test\Builder\Rule;
 use PHPat\Test\PHPat;
 
-final class ArchitectureTest 
+final class phpat
 {
-    public function test_controllers_should_only_depend_on_business_logic(): Rule 
+    public function test_controllers_should_only_depend_on_business_logic(): Rule
     {
-        return PHPat::rule()
+        return self::rule()
             ->classes(Selector::inNamespace('App\Controller'))
             ->canOnlyDependOn()
             ->classes(
@@ -23,14 +23,14 @@ final class ArchitectureTest
                 Selector::inNamespace('Doctrine'),
                 Selector::inNamespace('Sensio'),
                 Selector::classname('DateTime*', true),
-                Selector::classname('*Exception', true)
+                Selector::classname('*Exception', true),
             )
             ->because('Controllers should only depend on business logic and framework components');
     }
-    
-    public function test_entities_should_be_pure_data_models(): Rule 
+
+    public function test_entities_should_be_pure_data_models(): Rule
     {
-        return PHPat::rule()
+        return self::rule()
             ->classes(Selector::inNamespace('App\Entity'))
             ->canOnlyDependOn()
             ->classes(
@@ -38,14 +38,14 @@ final class ArchitectureTest
                 Selector::inNamespace('Doctrine'),
                 Selector::inNamespace('Symfony\Component\Validator'),
                 Selector::classname('DateTimeInterface'),
-                Selector::classname('DateTime*', true)
+                Selector::classname('DateTime*', true),
             )
             ->because('Entities should be pure data models with minimal dependencies');
     }
-    
-    public function test_services_can_orchestrate_business_logic(): Rule 
+
+    public function test_services_can_orchestrate_business_logic(): Rule
     {
-        return PHPat::rule()
+        return self::rule()
             ->classes(Selector::inNamespace('App\Service'))
             ->canOnlyDependOn()
             ->classes(
@@ -60,14 +60,14 @@ final class ArchitectureTest
                 Selector::inNamespace('Psr'),
                 Selector::inNamespace('GuzzleHttp'),
                 Selector::classname('DateTime*', true),
-                Selector::classname('*Exception', true)
+                Selector::classname('*Exception', true),
             )
             ->because('Services should handle business logic and orchestration');
     }
-    
-    public function test_repositories_should_only_handle_data_access(): Rule 
+
+    public function test_repositories_should_only_handle_data_access(): Rule
     {
-        return PHPat::rule()
+        return self::rule()
             ->classes(Selector::inNamespace('App\Repository'))
             ->canOnlyDependOn()
             ->classes(
@@ -76,14 +76,14 @@ final class ArchitectureTest
                 Selector::inNamespace('Doctrine'),
                 Selector::inNamespace('Symfony\Component\Security'),
                 Selector::classname('DateTime*', true),
-                Selector::classname('*Exception', true)
+                Selector::classname('*Exception', true),
             )
             ->because('Repositories should only handle data access');
     }
-    
-    public function test_controllers_must_not_directly_access_repositories(): Rule 
+
+    public function test_controllers_must_not_directly_access_repositories(): Rule
     {
-        return PHPat::rule()
+        return self::rule()
             ->classes(Selector::inNamespace('App\Controller'))
             ->shouldNotDependOn()
             ->classes(Selector::inNamespace('App\Repository'))

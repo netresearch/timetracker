@@ -6,13 +6,13 @@ namespace Tests\Entity;
 
 use App\Entity\Customer;
 use App\Entity\Entry;
-use App\Enum\EntryClass;
 use App\Entity\Preset;
 use App\Entity\Project;
-use App\Enum\BillingType;
 use App\Entity\TicketSystem;
-use App\Enum\TicketSystemType;
 use App\Entity\User;
+use App\Enum\BillingType;
+use App\Enum\EntryClass;
+use App\Enum\TicketSystemType;
 use App\Enum\UserType;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
@@ -26,7 +26,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');

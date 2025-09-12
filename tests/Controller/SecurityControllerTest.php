@@ -34,7 +34,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
             [
                 'HTTP_ACCEPT' => 'text/html',
                 'HTTP_USER_AGENT' => 'Mozilla/5.0',
-            ]
+            ],
         );
 
         // Should return forbidden (improved security behavior)
@@ -102,7 +102,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
             '/getUsers',
             [],
             [],
-            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'],
         );
 
         // Should return forbidden (improved security behavior)

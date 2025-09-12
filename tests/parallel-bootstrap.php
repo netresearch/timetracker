@@ -35,7 +35,7 @@ if (getenv('PARATEST_PARALLEL') || isset($_ENV['PARATEST_PARALLEL'])) {
     $processId = getenv('TEST_TOKEN') ?: uniqid('test_', true);
     $_ENV['TEST_PROCESS_ID'] = $processId;
     $_SERVER['TEST_PROCESS_ID'] = $processId;
-    
+
     // Override database URL to include process ID for isolation
     if (isset($_ENV['DATABASE_URL'])) {
         // Extract database name and add process suffix
@@ -47,7 +47,7 @@ if (getenv('PARATEST_PARALLEL') || isset($_ENV['PARATEST_PARALLEL'])) {
             $_SERVER['DATABASE_URL'] = $_ENV['DATABASE_URL'];
         }
     }
-    
+
     // Set process-specific cache directory
     $_ENV['CACHE_DIR'] = dirname(__DIR__) . '/var/cache/test_' . substr(md5($processId), 0, 8);
     $_SERVER['CACHE_DIR'] = $_ENV['CACHE_DIR'];

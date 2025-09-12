@@ -11,14 +11,14 @@ use function json_encode;
 
 /**
  * HTTP client functionality trait.
- * 
+ *
  * Provides HTTP client setup and request helpers
  * for test cases making HTTP requests.
  */
 trait HttpClientTrait
 {
     protected KernelBrowser $client;
-    
+
     protected $serviceContainer;
 
     /**

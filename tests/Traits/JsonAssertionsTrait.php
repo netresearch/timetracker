@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
+use Throwable;
+
 use function count;
 use function explode;
 use function is_array;
@@ -18,9 +20,11 @@ use function str_ends_with;
 use function str_replace;
 use function str_starts_with;
 
+use const JSON_ERROR_NONE;
+
 /**
  * JSON response assertion trait.
- * 
+ *
  * Provides JSON response validation, API testing helpers, and response assertions
  * for test cases working with JSON APIs.
  */
@@ -99,7 +103,7 @@ trait JsonAssertionsTrait
                         if ($valuesEqual($needle, $candidate)) {
                             return $idx;
                         }
-                    } catch (\Throwable) {
+                    } catch (Throwable) {
                         // try next
                     }
                 }
@@ -141,14 +145,14 @@ trait JsonAssertionsTrait
     {
         $responseContent = $this->client->getResponse()->getContent();
         $response = $this->client->getResponse();
-        
+
         // Check if response is JSON (validation errors return JSON)
         $contentType = $response->headers->get('Content-Type', '');
         if (str_contains($contentType, 'application/json') || (str_starts_with($responseContent, '{') && str_ends_with($responseContent, '}'))) {
             $json = json_decode($responseContent, true);
             if (JSON_ERROR_NONE === json_last_error() && isset($json['message'])) {
                 $jsonMessage = $json['message'];
-                
+
                 // Handle translation mapping for contract validation messages
                 $contractTranslations = [
                     'Das Vertragsende muss nach dem Vertragsbeginn liegen.' => 'End date has to be greater than the start date.',
@@ -156,15 +160,17 @@ trait JsonAssertionsTrait
                     'Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.' => 'There is already an ongoing contract with a closed end date in the future.',
                     'Für den Nutzer besteht mehr als ein unbefristeter Vertrag.' => 'There is more than one open-ended contract for the user.',
                 ];
-                
+
                 // Check if the expected German message matches the English JSON message
                 if (isset($contractTranslations[$message]) && $contractTranslations[$message] === $jsonMessage) {
                     self::assertTrue(true);
+
                     return;
                 }
-                
+
                 // Direct comparison for other messages
                 self::assertSame($message, $jsonMessage);
+
                 return;
             }
         }
@@ -172,6 +178,7 @@ trait JsonAssertionsTrait
         // Try direct comparison first
         if ($message === $responseContent) {
             self::assertTrue(true);
+
             return;
         }
 
@@ -189,6 +196,7 @@ trait JsonAssertionsTrait
             if (preg_match('/^' . $germanPattern . '$/', $message, $germanMatches)
                 && preg_match('/^' . $englishPattern . '$/', (string) $responseContent, $englishMatches)) {
                 self::assertTrue(true, 'Translation matched via pattern');
+
                 return;
             }
         }

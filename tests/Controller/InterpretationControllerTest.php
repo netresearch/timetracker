@@ -67,7 +67,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', $parameter);
         $this->assertStatusCode(200);
-        
+
         $this->assertJsonStructure($expectedJson);
     }
 
@@ -131,10 +131,10 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'datestart=not a date',
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
-        
+
         // Invalid dates are now silently ignored (more robust behavior)
         $this->assertStatusCode(200);
-        
+
         // Verify response has expected JSON structure
         $response = $this->client->getResponse();
         $json = json_decode($response->getContent(), true);
@@ -148,10 +148,10 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'dateend=1',
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
-        
-        // Invalid dates are now silently ignored (more robust behavior)  
+
+        // Invalid dates are now silently ignored (more robust behavior)
         $this->assertStatusCode(200);
-        
+
         // Verify response has expected JSON structure
         $response = $this->client->getResponse();
         $json = json_decode($response->getContent(), true);
@@ -414,7 +414,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
-        
+
         $this->assertLength(2, 'data');
         $this->assertJsonStructure($expectedLinks);
         $this->assertJsonStructure($expectedData);
@@ -438,7 +438,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
-        
+
         $this->assertLength(2, 'data'); // Last page actually has 2 entries based on test results
         $this->assertJsonStructure($expectedLinks);
         $this->assertJsonStructure($expectedData);
