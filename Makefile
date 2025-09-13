@@ -25,7 +25,8 @@ help:
 	@echo "  make logs             # follow logs"
 	@echo "  make sh               # shell into app container"
 	@echo "  make install          # composer install + npm install"
-	@echo "  make test             # run test suite (sequential)"
+	@echo "  make test             # run tests fast without Xdebug"
+	@echo "  make test-debug       # run tests with Xdebug for debugging"
 	@echo "  make test-parallel    # run unit tests in parallel (full CPU)"
 	@echo "  make test-parallel-safe # run unit tests in parallel (4 cores)"
 	@echo "  make test-parallel-all  # run all tests optimally (parallel + sequential)"
@@ -82,37 +83,48 @@ npm-dev:
 npm-watch:
 	docker compose run --rm app-dev npm run watch
 
-# Sequential test execution (original)
+# Fast test execution without Xdebug (default for developers)
 test: prepare-test-sql
-	docker compose run --rm -e APP_ENV=test app-dev php -d memory_limit=512M ./bin/phpunit
+	@echo "Running tests without Xdebug for fast execution..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
+
+# Test with Xdebug enabled for debugging failing tests
+test-debug: prepare-test-sql
+	@echo "Running tests with Xdebug enabled for debugging..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=debug,develop app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
+
+# Test with CI configuration (full verbosity for CI pipeline)
+test-ci: prepare-test-sql
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=phpunit.xml.ci
 
 # Parallel test execution - Full CPU utilization
 test-parallel: prepare-test-sql
 	@echo "Running parallel tests with $$(nproc) processes..."
-	docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 
 # Safe parallel execution - Limited to 4 processes
 test-parallel-safe: prepare-test-sql
 	@echo "Running parallel tests with 4 processes (safe mode)..."
-	docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=4 --testsuite=unit-parallel --max-batch-size=25
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=4 --testsuite=unit-parallel --max-batch-size=25
 
 # Optimal test execution - Parallel for units, sequential for controllers
 test-parallel-all: prepare-test-sql
 	@echo "Running optimized test suite (parallel units + sequential controllers)..."
 	@echo "Phase 1: Parallel unit tests..."
-	docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 	@echo "Phase 2: Sequential controller tests..."
-	docker compose run --rm -e APP_ENV=test app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=controller-sequential
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
 
-# Coverage with parallel execution
+# Coverage with parallel execution (using PCOV for speed)
 coverage: prepare-test-sql
-	@echo "Running parallel test coverage..."
-	docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
+	@echo "Running parallel test coverage with PCOV..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
 	@echo "Coverage HTML: var/coverage-parallel/index.html"
 
-# Traditional coverage (sequential)
+# Traditional coverage (sequential, using PCOV)
 coverage-sequential: prepare-test-sql
-	docker compose run --rm -e APP_ENV=test app-dev php -d memory_limit=512M ./bin/phpunit --coverage-html var/coverage
+	@echo "Running sequential test coverage with PCOV..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:
