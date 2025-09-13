@@ -6,11 +6,11 @@ use PHPat\Selector\Selector;
 use PHPat\Test\Builder\Rule;
 use PHPat\Test\PHPat;
 
-final class phpat
+final class ArchitectureTest
 {
     public function test_controllers_should_only_depend_on_business_logic(): Rule
     {
-        return self::rule()
+        return PHPat::rule()
             ->classes(Selector::inNamespace('App\Controller'))
             ->canOnlyDependOn()
             ->classes(
@@ -30,7 +30,7 @@ final class phpat
 
     public function test_entities_should_be_pure_data_models(): Rule
     {
-        return self::rule()
+        return PHPat::rule()
             ->classes(Selector::inNamespace('App\Entity'))
             ->canOnlyDependOn()
             ->classes(
@@ -45,7 +45,7 @@ final class phpat
 
     public function test_services_can_orchestrate_business_logic(): Rule
     {
-        return self::rule()
+        return PHPat::rule()
             ->classes(Selector::inNamespace('App\Service'))
             ->canOnlyDependOn()
             ->classes(
@@ -67,7 +67,7 @@ final class phpat
 
     public function test_repositories_should_only_handle_data_access(): Rule
     {
-        return self::rule()
+        return PHPat::rule()
             ->classes(Selector::inNamespace('App\Repository'))
             ->canOnlyDependOn()
             ->classes(
@@ -83,7 +83,7 @@ final class phpat
 
     public function test_controllers_must_not_directly_access_repositories(): Rule
     {
-        return self::rule()
+        return PHPat::rule()
             ->classes(Selector::inNamespace('App\Controller'))
             ->shouldNotDependOn()
             ->classes(Selector::inNamespace('App\Repository'))

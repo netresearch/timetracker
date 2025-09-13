@@ -39,10 +39,7 @@ services:
     App\:
         resource: '../src/*'
         exclude: 
-            - '../src/DependencyInjection/'
             - '../src/Entity/'
-            - '../src/Migrations/'
-            - '../src/Tests/'
             - '../src/Kernel.php'
             - '../src/Service/Integration/Jira/JiraHttpClientService.php'
             - '../src/Service/Integration/Jira/JiraWorkLogService.php'
