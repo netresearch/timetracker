@@ -13,6 +13,7 @@ use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 use UnitEnum;
 
+use function array_slice;
 use function is_array;
 use function is_bool;
 use function is_float;
@@ -20,6 +21,7 @@ use function is_int;
 use function is_object;
 use function is_string;
 use function sprintf;
+use function strlen;
 
 class LdapClientService
 {
@@ -176,7 +178,7 @@ class LdapClientService
             // Debug: log the complete LDAP entry structure
             $this->logger->debug('LDAP: Complete entry structure for debugging.', [
                 'entry_keys' => array_keys($ldapEntry),
-                'entry_sample' => array_map(fn($val) => implode(', ', array_slice((array) $val, 0, 2)), $ldapEntry)
+                'entry_sample' => array_map(static fn ($val) => implode(', ', array_slice((array) $val, 0, 2)), $ldapEntry),
             ]);
         }
 
@@ -202,11 +204,11 @@ class LdapClientService
         }
 
         // Try multiple ways to extract the DN from LDAP response
-        $userDn = $ldapEntry['distinguishedname'][0] ?? 
-                  $ldapEntry['dn'][0] ?? 
-                  $ldapEntry['entrydn'][0] ?? 
+        $userDn = $ldapEntry['distinguishedname'][0] ??
+                  $ldapEntry['dn'][0] ??
+                  $ldapEntry['entrydn'][0] ??
                   null;
-        
+
         // If DN extraction failed or returned invalid data, construct it from username
         if (!$userDn || strlen($userDn) < 10) {
             // Construct DN using the original username and our known structure
@@ -216,16 +218,16 @@ class LdapClientService
                     'original_dn' => $ldapEntry['dn'][0] ?? 'N/A',
                     'constructed_dn' => $userDn,
                     'username' => $this->_userName,
-                    'base_dn' => $this->_baseDn
+                    'base_dn' => $this->_baseDn,
                 ]);
             }
         }
-        
+
         if (!$userDn) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error('LDAP: Could not extract or construct DN from user entry.', [
                     'entry_keys' => array_keys($ldapEntry),
-                    'entry' => array_map(fn($val) => implode(', ', (array) $val), $ldapEntry)
+                    'entry' => array_map(static fn ($val) => implode(', ', (array) $val), $ldapEntry),
                 ]);
             }
 
