@@ -6,6 +6,7 @@ namespace Tests\Controller;
 
 use App\Model\JsonResponse;
 use App\Service\ExportService as Export;
+use DateTime;
 use Tests\AbstractWebTestCase;
 
 /**
@@ -69,9 +70,9 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $entry1 = (new \App\Entity\Entry())
             ->setId(4)
-            ->setDay(new \DateTime('2023-10-15'))
-            ->setStart(new \DateTime('2023-10-15 09:00:00'))
-            ->setEnd(new \DateTime('2023-10-15 10:30:00'))
+            ->setDay(new DateTime('2023-10-15'))
+            ->setStart(new DateTime('2023-10-15 09:00:00'))
+            ->setEnd(new DateTime('2023-10-15 10:30:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
@@ -82,9 +83,9 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $entry2 = (new \App\Entity\Entry())
             ->setId(5)
-            ->setDay(new \DateTime('2023-10-20'))
-            ->setStart(new \DateTime('2023-10-20 11:00:00'))
-            ->setEnd(new \DateTime('2023-10-20 12:30:00'))
+            ->setDay(new DateTime('2023-10-20'))
+            ->setStart(new DateTime('2023-10-20 11:00:00'))
+            ->setEnd(new DateTime('2023-10-20 12:30:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
@@ -182,9 +183,9 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $entry1 = (new \App\Entity\Entry())
             ->setId(6)
-            ->setDay(new \DateTime('2023-11-05'))
-            ->setStart(new \DateTime('2023-11-05 08:00:00'))
-            ->setEnd(new \DateTime('2023-11-05 09:30:00'))
+            ->setDay(new DateTime('2023-11-05'))
+            ->setStart(new DateTime('2023-11-05 08:00:00'))
+            ->setEnd(new DateTime('2023-11-05 09:30:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
@@ -198,7 +199,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
             ->willReturn([$entry1])
         ;
 
-        // Since showBillableField=false and tickettitles is not requested, 
+        // Since showBillableField=false and tickettitles is not requested,
         // enrichEntriesWithTicketInformation should NOT be called
         $exportServiceMock->expects(self::never())
             ->method('enrichEntriesWithTicketInformation');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,13 +12,12 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Bundle\SecurityBundle\Security;
 
 final class AccessDeniedSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private Security $security,
-        private RouterInterface $router
+        private RouterInterface $router,
     ) {
     }
 
@@ -41,6 +41,7 @@ final class AccessDeniedSubscriber implements EventSubscriberInterface
             $loginUrl = $this->router->generate('_login');
             $response = new RedirectResponse($loginUrl);
             $event->setResponse($response);
+
             return;
         }
 

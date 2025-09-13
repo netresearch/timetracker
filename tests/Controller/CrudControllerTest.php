@@ -28,12 +28,12 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Controller uses MapRequestPayload which expects JSON payloads
         $this->client->request(
-            \Symfony\Component\HttpFoundation\Request::METHOD_POST, 
-            '/tracking/save', 
-            [], 
-            [], 
-            ['CONTENT_TYPE' => 'application/json'], 
-            json_encode($parameter)
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
+            '/tracking/save',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($parameter),
         );
 
         $expectedJson = [
@@ -87,12 +87,12 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Controller uses MapRequestPayload which expects JSON payloads
         $this->client->request(
-            \Symfony\Component\HttpFoundation\Request::METHOD_POST, 
-            '/tracking/save', 
-            [], 
-            [], 
-            ['CONTENT_TYPE' => 'application/json'], 
-            json_encode($parameter)
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
+            '/tracking/save',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($parameter),
         );
         $this->assertStatusCode(200);
 
@@ -255,7 +255,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Check for pre-existing entries to ensure test isolation
         $queryBefore = 'SELECT * FROM `entries` WHERE `day` >= "2020-02-07" AND `day` <= "2020-02-10" ORDER BY `id` ASC';
         $resultsBefore = $this->connection->executeQuery($queryBefore)->fetchAllAssociative();
-        
+
         $parameter = [
             'startdate' => '2020-02-07',    // opt
             'enddate' => '2020-02-10',  // opt
@@ -266,13 +266,13 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
-        
+
         $this->assertMessage('2 Einträge wurden angelegt.');
 
         // Only count entries created after the bulk operation to ensure test isolation
         $preExistingCount = count($resultsBefore);
         $maxPreExistingId = $preExistingCount > 0 ? max(array_column($resultsBefore, 'id')) : 0;
-        
+
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "2020-02-07"
@@ -280,7 +280,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `id` > ' . $maxPreExistingId . '
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
-        
+
         self::assertSame(2, count($results));
 
         $staticExpected = [
@@ -448,7 +448,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ['day' => '2020-01-04', 'end' => '13:00:00', 'duration' => '300'],
             ['day' => '2020-01-05', 'end' => '09:00:00', 'duration' => '60'],
         ];
-        
+
         $counter = count($results);
         for ($i = 0; $i < $counter; ++$i) {
             self::assertArraySubset($staticExpected, $results[$i]);
@@ -471,12 +471,12 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Controller uses MapRequestPayload which expects JSON payloads
         $this->client->request(
-            \Symfony\Component\HttpFoundation\Request::METHOD_POST, 
-            '/tracking/save', 
-            [], 
-            [], 
-            ['CONTENT_TYPE' => 'application/json'], 
-            json_encode($parameter)
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
+            '/tracking/save',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($parameter),
         );
 
         $expectedJson = [

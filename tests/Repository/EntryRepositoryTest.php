@@ -21,7 +21,7 @@ final class EntryRepositoryTest extends TestCase
     public function testGetCalendarDaysByWorkDaysAcrossWeekend(): void
     {
         // Clock that says today is Monday (1)
-        $clock = new class implements ClockInterface {
+        $clock = new class () implements ClockInterface {
             public function now(): DateTimeImmutable
             {
                 return new DateTimeImmutable('2025-08-11 12:00:00');
@@ -47,7 +47,7 @@ final class EntryRepositoryTest extends TestCase
 
     public function testGetCalendarDaysByWorkDaysBasics(): void
     {
-        $clock = new class implements ClockInterface {
+        $clock = new class () implements ClockInterface {
             public function now(): DateTimeImmutable
             {
                 return new DateTimeImmutable('2023-10-24 12:00:00');
@@ -72,7 +72,7 @@ final class EntryRepositoryTest extends TestCase
 
     public function testGetCalendarDaysByWorkDaysMondayEdge(): void
     {
-        $clock = new class implements ClockInterface {
+        $clock = new class () implements ClockInterface {
             public function now(): DateTimeImmutable
             {
                 return new DateTimeImmutable('2023-10-23 12:00:00');

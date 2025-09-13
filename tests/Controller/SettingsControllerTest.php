@@ -16,7 +16,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
     public function testSaveAction(): void
     {
         $this->logInSession('i.myself');
-        
+
         $parameter = [
             'locale' => 'de',
             'show_empty_line' => 1,

@@ -20,7 +20,7 @@ final class TeamDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');

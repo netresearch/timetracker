@@ -121,7 +121,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'global' => false,
                     'teams' => [1],
                 ],
-            ]
+            ],
         ]);
     }
 

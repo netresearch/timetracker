@@ -34,11 +34,11 @@ final class SecurityControllerTest extends AbstractWebTestCase
             [
                 'HTTP_ACCEPT' => 'text/html',
                 'HTTP_USER_AGENT' => 'Mozilla/5.0',
-            ]
+            ],
         );
 
-        // Should return forbidden (improved security behavior)
-        $this->assertStatusCode(403);
+        // Should redirect to login when not authenticated
+        $this->assertStatusCode(302);
     }
 
     public function testLoggedInUserCanAccessProtectedRoute(): void
@@ -86,8 +86,16 @@ final class SecurityControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getUsers');
         $this->assertStatusCode(200);
 
-        // After logging out
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/logout');
+        // Get CSRF token for logout (required with CSRF protection enabled)
+        $csrfTokenManager = $this->serviceContainer->get('security.csrf.token_manager');
+        $csrfToken = $csrfTokenManager->getToken('logout')->getValue();
+
+        // After logging out with CSRF token
+        $this->client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            '/logout',
+            ['_csrf_token' => $csrfToken]
+        );
 
         // The user should be redirected
         self::assertTrue($this->client->getResponse()->isRedirect());
@@ -102,10 +110,10 @@ final class SecurityControllerTest extends AbstractWebTestCase
             '/getUsers',
             [],
             [],
-            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'],
         );
 
-        // Should return forbidden (improved security behavior)
-        $this->assertStatusCode(403);
+        // Should redirect to login when not authenticated
+        $this->assertStatusCode(302);
     }
 }

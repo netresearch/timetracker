@@ -95,10 +95,12 @@
       "assets:install %PUBLIC_DIR%": "symfony-cmd"
     },
     "post-install-cmd": [
-      "@auto-scripts"
+      "@auto-scripts",
+      "bash scripts/fix-symfony-validator.sh"
     ],
     "post-update-cmd": [
-      "@auto-scripts"
+      "@auto-scripts",
+      "bash scripts/fix-symfony-validator.sh"
     ],
     "cs-check": "php -d memory_limit=512M vendor/laravel/pint/builds/pint --test",
     "cs-fix": "php -d memory_limit=512M vendor/laravel/pint/builds/pint",

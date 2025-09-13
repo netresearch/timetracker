@@ -6,6 +6,9 @@ use Symfony\Component\Dotenv\Dotenv;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+// Set memory limit for tests to handle large datasets
+ini_set('memory_limit', '2G');
+
 // Force load mbstring polyfill for PHPUnit compatibility
 if (!extension_loaded('mbstring')) {
     require dirname(__DIR__) . '/vendor/symfony/polyfill-mbstring/bootstrap.php';

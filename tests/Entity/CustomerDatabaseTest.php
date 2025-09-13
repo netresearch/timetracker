@@ -6,8 +6,8 @@ namespace Tests\Entity;
 
 use App\Entity\Customer;
 use App\Entity\Project;
-use App\Enum\BillingType;
 use App\Entity\Team;
+use App\Enum\BillingType;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
 
@@ -22,7 +22,7 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');

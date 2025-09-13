@@ -8,32 +8,31 @@ use Exception;
 use Throwable;
 
 use function method_exists;
-use function trim;
 
 /**
  * Database test functionality trait.
- * 
+ *
  * Provides transaction isolation, database reset, and query builder setup
  * for test cases requiring database operations.
  */
 trait DatabaseTestTrait
 {
     protected $connection;
-    
+
     protected $queryBuilder;
-    
+
     protected $filepath = '/../sql/unittest/002_testdata.sql';
-    
+
     /**
      * The initial state of a table used to assert integrity after a DEV test.
      */
     protected $tableInitialState;
-    
+
     /**
      * Flag to track if database has been initialized.
      */
     private static bool $databaseInitialized = false;
-    
+
     protected $useTransactions = true;
 
     /**
@@ -46,7 +45,7 @@ trait DatabaseTestTrait
 
         // Ensure we have a Doctrine DBAL connection reference
         $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
-        
+
         // Enable savepoints to speed nested transactions
         if (method_exists($dbal, 'setNestTransactionsWithSavepoints')) {
             $dbal->setNestTransactionsWithSavepoints(true);
