@@ -64,13 +64,13 @@ echo "   - Add XDEBUG_SESSION=PHPSTORM to your browser or request\n";
 echo "   - Or use: docker-compose exec app-dev php -dxdebug.start_with_request=yes script.php\n";
 
 echo "\n5. Sample Debugging Function:\n";
-function testBreakpoint() {
+function testBreakpoint(): string {
     $variable = "This is a test variable";
     $array = ['key1' => 'value1', 'key2' => 'value2'];
-    
+
     // This line is good for setting a breakpoint
     echo "   Set a breakpoint on this line to test debugging\n";
-    
+
     return $variable . ' - processed';
 }
 
