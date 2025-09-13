@@ -176,7 +176,7 @@ class LdapClientService
             // Debug: log the complete LDAP entry structure
             $this->logger->debug('LDAP: Complete entry structure for debugging.', [
                 'entry_keys' => array_keys($ldapEntry),
-                'entry_sample' => array_map(fn($val) => is_array($val) ? implode(', ', array_slice($val, 0, 2)) : $val, $ldapEntry)
+                'entry_sample' => array_map(fn($val) => implode(', ', array_slice((array) $val, 0, 2)), $ldapEntry)
             ]);
         }
 
@@ -225,7 +225,7 @@ class LdapClientService
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error('LDAP: Could not extract or construct DN from user entry.', [
                     'entry_keys' => array_keys($ldapEntry),
-                    'entry' => array_map(fn($val) => is_array($val) ? implode(', ', $val) : $val, $ldapEntry)
+                    'entry' => array_map(fn($val) => implode(', ', (array) $val), $ldapEntry)
                 ]);
             }
 
