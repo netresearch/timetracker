@@ -84,7 +84,7 @@ npm-watch:
 
 # Sequential test execution (original)
 test: prepare-test-sql
-	docker compose run --rm -e APP_ENV=test app-dev php -d memory_limit=512M ./bin/phpunit
+	docker compose run --rm -e APP_ENV=test -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
 
 # Parallel test execution - Full CPU utilization
 test-parallel: prepare-test-sql
@@ -102,7 +102,7 @@ test-parallel-all: prepare-test-sql
 	@echo "Phase 1: Parallel unit tests..."
 	docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 	@echo "Phase 2: Sequential controller tests..."
-	docker compose run --rm -e APP_ENV=test app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=controller-sequential
+	docker compose run --rm -e APP_ENV=test -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
 
 # Coverage with parallel execution
 coverage: prepare-test-sql
@@ -112,7 +112,7 @@ coverage: prepare-test-sql
 
 # Traditional coverage (sequential)
 coverage-sequential: prepare-test-sql
-	docker compose run --rm -e APP_ENV=test app-dev php -d memory_limit=512M ./bin/phpunit --coverage-html var/coverage
+	docker compose run --rm -e APP_ENV=test -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:
