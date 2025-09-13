@@ -11,7 +11,7 @@ security:
                 default_target_path: /
             # Set form_login as the entry point for redirects
             entry_point: form_login
-            remember_me: false
+            # Note: remember_me disabled by omission in test environment
             logout:
                 path: _logout
                 target: _login
