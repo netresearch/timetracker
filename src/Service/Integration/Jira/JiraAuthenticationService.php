@@ -37,7 +37,6 @@ class JiraAuthenticationService
 
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
-        /** @phpstan-ignore-next-line */
         RouterInterface $router,
         private readonly TokenEncryptionService $tokenEncryptionService,
     ) {
