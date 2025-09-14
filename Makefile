@@ -25,8 +25,9 @@ help:
 	@echo "  make logs             # follow logs"
 	@echo "  make sh               # shell into app container"
 	@echo "  make install          # composer install + npm install"
-	@echo "  make test             # run tests fast without Xdebug"
-	@echo "  make test-debug       # run tests with Xdebug for debugging"
+	@echo "  make test             # run tests fast without Xdebug (quiet output)"
+	@echo "  make test-verbose     # run tests with verbose output for debugging"
+	@echo "  make test-debug       # run tests with Xdebug for step debugging"
 	@echo "  make test-parallel    # run unit tests in parallel (full CPU)"
 	@echo "  make test-parallel-safe # run unit tests in parallel (4 cores)"
 	@echo "  make test-parallel-all  # run all tests optimally (parallel + sequential)"
@@ -93,9 +94,10 @@ test-debug: prepare-test-sql
 	@echo "Running tests with Xdebug enabled for debugging..."
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=debug,develop app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
 
-# Test with CI configuration (full verbosity for CI pipeline)
-test-ci: prepare-test-sql
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=phpunit.xml.ci
+# Test with verbose configuration (full output for debugging)
+test-verbose: prepare-test-sql
+	@echo "Running tests with verbose output for debugging..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=phpunit.xml.verbose
 
 # Parallel test execution - Full CPU utilization
 test-parallel: prepare-test-sql
