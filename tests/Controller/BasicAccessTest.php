@@ -39,7 +39,7 @@ final class BasicAccessTest extends AbstractWebTestCase
             [],
             ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
         );
-        $this->assertStatusCode(403); // Should return forbidden (improved security behavior)
+        $this->assertStatusCode(302); // Should redirect to login for unauthenticated users
 
         // Use the Base class login functionality to authenticate
         $this->logInSession('i.myself');
