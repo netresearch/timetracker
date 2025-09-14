@@ -1,0 +1,46 @@
+includes:
+    - vendor/phpstan/phpstan/conf/bleedingEdge.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 10
+    paths:
+        - src
+        - tests
+
+    # Symfony specific
+    symfony:
+        containerXmlPath: 'var/cache/dev/App_KernelDevDebugContainer.xml'
+        consoleApplicationLoader: 'bin/console'
+
+    # Doctrine specific
+    doctrine:
+        objectManagerLoader: null
+        repositoryClass: App\Repository\ServiceEntityRepository
+
+    # Strict rules are enabled via extension-installer
+
+    # Type coverage checks enabled at level 10
+
+    # Strict type checking
+    treatPhpDocTypesAsCertain: false
+
+    # PHPUnit specific configuration handled by extension
+
+    tmpDir: /tmp/phpstan-timetracker
+
+    # These might need to be addressed gradually
+    ignoreErrors:
+        # Temporarily ignore some strict issues until they can be fixed
+        - identifier: missingType.generics
+
+    reportUnmatchedIgnoredErrors: true
+
+    # Parallel processing for better performance
+    parallel:
+        processTimeout: 300.0
+        maximumNumberOfProcesses: 4
+        minimumNumberOfJobsPerProcess: 2
+
+    # Error format
+    editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'

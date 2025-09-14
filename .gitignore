@@ -37,7 +37,7 @@ yarn-error.log
 ###< phpunit/phpunit ###
 
 ###> phpstan/phpstan ###
-phpstan.neon
+# phpstan.neon is now tracked in the repository
 ###< phpstan/phpstan ###
 ###> symfony/phpunit-bridge ###
 .phpunit
