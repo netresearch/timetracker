@@ -37,8 +37,8 @@ final class SecurityControllerTest extends AbstractWebTestCase
             ]
         );
 
-        // Should return forbidden (improved security behavior)
-        $this->assertStatusCode(403);
+        // Should redirect to login for unauthenticated users
+        $this->assertStatusCode(302);
     }
 
     public function testLoggedInUserCanAccessProtectedRoute(): void
@@ -105,7 +105,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
             ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
         );
 
-        // Should return forbidden (improved security behavior)
-        $this->assertStatusCode(403);
+        // Should redirect to login for unauthenticated users
+        $this->assertStatusCode(302);
     }
 }
