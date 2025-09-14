@@ -15,10 +15,11 @@ PHPStan has been upgraded to the maximum strictness level (level 10) with bleedi
   - phpstan-doctrine
   - phpstan-symfony
   - phpstan-phpunit
+  - sfp-phpstan-psr-log (PSR-3 logger validation)
 
 ## Baseline Statistics
 
-Total errors baselined: **1201**
+Total errors baselined: **1228**
 
 ### Error Categories
 
@@ -33,7 +34,8 @@ Total errors baselined: **1201**
 | booleanNot.exprNotBoolean | 46 | Non-boolean values in negation |
 | ternary.shortNotAllowed | 35 | Short ternary operator usage |
 | return.type | 26 | Return type mismatches |
-| Others | 312 | Various other strict checks |
+| sfpPsrLog.messageNotStaticString | 18 | Non-static PSR-3 log messages |
+| Others | 321 | Various other strict checks |
 
 ## Migration Strategy
 
@@ -105,6 +107,18 @@ $value = $input ?: 'default';
 // After
 $value = $input ?? 'default';  // for null checks
 $value = $input !== null ? $input : 'default';  // for truthy checks
+```
+
+### PSR-3 Logger Usage
+```php
+// Before - dynamic message
+$logger->error($exception->getMessage(), ['exception' => get_class($exception)]);
+
+// After - static message with placeholder and proper exception
+$logger->error('Exception occurred: {message}', [
+    'message' => $exception->getMessage(),
+    'exception' => $exception  // Must be Throwable object, not string
+]);
 ```
 
 ## Benefits of Level 10

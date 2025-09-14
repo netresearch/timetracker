@@ -84,6 +84,7 @@
     "phpstan/phpstan-symfony": "^2.0",
     "phpunit/phpunit": "^12.3",
     "rector/rector": "^2.1",
+    "struggle-for-php/sfp-phpstan-psr-log": "*",
     "symfony/browser-kit": "^7.3",
     "symfony/css-selector": "^7.3",
     "symfony/debug-bundle": "^7.3",

@@ -148,7 +148,7 @@ services:
     # Modern LDAP Service
     App\Service\Ldap\ModernLdapService:
         arguments:
-            $params: '@parameter_bag'
+            $parameterBag: '@parameter_bag'
             $logger: '@?logger'
         tags:
             - { name: monolog.logger, channel: ldap }

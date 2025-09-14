@@ -433,6 +433,54 @@ parameters:
 			path: src/EventSubscriber/EntryEventSubscriber.php
 
 		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:info\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:error\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:info\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:warning\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, array\{exception\: class\-string\<Throwable\>&literal\-string, message\: string, path\: string, file\: string, line\: int\} given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/EventSubscriber/ExceptionSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, array\{exception\: class\-string\<Throwable\>&literal\-string, message\: string, path\: string, file\: string, line\: int\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/ExceptionSubscriber.php
+
+		-
 			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
 			identifier: ternary.shortNotAllowed
 			count: 1
@@ -697,6 +745,18 @@ parameters:
 			path: src/Security/LdapAuthenticator.php
 
 		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Cache/QueryCacheService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Cache/QueryCacheService.php
+
+		-
 			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
 			identifier: foreach.nonIterable
 			count: 1
@@ -825,6 +885,54 @@ parameters:
 		-
 			message: '#^PHPDoc tag @var with type App\\Repository\\TicketSystemRepository is not subtype of type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\>\.$#'
 			identifier: varTag.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:info\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:error\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:info\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:warning\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
 			count: 1
 			path: src/Service/Integration/Jira/JiraIntegrationService.php
 
@@ -1101,6 +1209,54 @@ parameters:
 		-
 			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
 			identifier: if.condNotBoolean
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:info\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:error\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:info\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:warning\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
 			count: 1
 			path: src/Service/Ldap/ModernLdapService.php
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "81023aaa285e6dde3c28322ca9bb74ba",
+    "content-hash": "07673cff5f61b0a72d15feff025da929",
     "packages": [
         {
             "name": "composer/pcre",
@@ -10680,6 +10680,130 @@
                 }
             ],
             "time": "2024-10-20T05:08:20+00:00"
+        },
+        {
+            "name": "struggle-for-php/sfp-phpstan-psr-log",
+            "version": "0.24.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/struggle-for-php/sfp-phpstan-psr-log.git",
+                "reference": "3ffcc02668195e046518b4e7e50241e0a8e11f35"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/struggle-for-php/sfp-phpstan-psr-log/zipball/3ffcc02668195e046518b4e7e50241e0a8e11f35",
+                "reference": "3ffcc02668195e046518b4e7e50241e0a8e11f35",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": "^7.2.0 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0",
+                "phpstan/phpstan": "^1.12 || ^2.0",
+                "struggle-for-php/sfp-stubs-psr-log": "^1.0.1 || ^2 || ^3.0.1"
+            },
+            "conflict": {
+                "nikic/php-parser": "<4.13.0"
+            },
+            "require-dev": {
+                "laminas/laminas-coding-standard": "^2.0.0",
+                "maglnet/composer-require-checker": "^2|^3|^4",
+                "phpstan/phpstan-phpunit": "^1.3 || ^2.0",
+                "phpstan/phpstan-strict-rules": "^1.5 || ^2.0",
+                "phpunit/phpunit": "^8.5.31 || ^9.5.10 || ^10.5.35",
+                "roave/security-advisories": "dev-master",
+                "squizlabs/php_codesniffer": "^3.7",
+                "vimeo/psalm": "^4 || ^5.26"
+            },
+            "bin": [
+                "bin/phpstan-type-mapping-from-bigquery"
+            ],
+            "type": "phpstan-extension",
+            "extra": {
+                "phpstan": {
+                    "includes": [
+                        "extension.neon",
+                        "rules.neon"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Sfp\\PHPStan\\Psr\\Log\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Extra strict and opinionated psr/log (psr-3) rules for PHPStan",
+            "keywords": [
+                "PHPStan",
+                "PSR3",
+                "logging",
+                "psr-3",
+                "static analysis"
+            ],
+            "support": {
+                "issues": "https://github.com/struggle-for-php/sfp-phpstan-psr-log/issues",
+                "source": "https://github.com/struggle-for-php/sfp-phpstan-psr-log/tree/0.24.0"
+            },
+            "time": "2025-04-24T13:53:54+00:00"
+        },
+        {
+            "name": "struggle-for-php/sfp-stubs-psr-log",
+            "version": "3.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/struggle-for-php/sfp-stubs-psr-log.git",
+                "reference": "5531a2446de0f3f77568adbb57b70aef723b849b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/struggle-for-php/sfp-stubs-psr-log/zipball/5531a2446de0f3f77568adbb57b70aef723b849b",
+                "reference": "5531a2446de0f3f77568adbb57b70aef723b849b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.0"
+            },
+            "conflict": {
+                "psr/log": "^1 || ^2 || >=4"
+            },
+            "require-dev": {
+                "ext-simplexml": "*",
+                "psr/log": "^3",
+                "rector/rector": "0.15.21",
+                "squizlabs/php_codesniffer": "^3.7",
+                "symfony/console": "^5",
+                "vimeo/psalm": "^5.8",
+                "weirdan/codeception-psalm-module": "^0.14.0"
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "sasezaki",
+                    "email": "sasezaki@gmail.com"
+                }
+            ],
+            "description": "Stubs to let Static Analysis understand psr/log (PSR-3)",
+            "keywords": [
+                "PSR3",
+                "exception",
+                "log",
+                "static analysis",
+                "static-analysis",
+                "stub",
+                "stubs"
+            ],
+            "support": {
+                "issues": "https://github.com/struggle-for-php/sfp-stubs-psr-log/issues",
+                "source": "https://github.com/struggle-for-php/sfp-stubs-psr-log/tree/3.0.2"
+            },
+            "time": "2024-02-12T09:11:20+00:00"
         },
         {
             "name": "symfony/browser-kit",
