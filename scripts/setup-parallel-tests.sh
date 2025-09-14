@@ -62,10 +62,10 @@ check_configuration_files() {
     echo -e "${YELLOW}Checking configuration files...${NC}"
     
     # Check paratest.xml
-    if [ -f "paratest.xml" ]; then
+    if [ -f "config/testing/paratest.xml" ]; then
         print_status "OK" "paratest.xml configuration exists"
     else
-        print_status "ERROR" "paratest.xml configuration missing"
+        print_status "ERROR" "config/testing/paratest.xml configuration missing"
         exit 1
     fi
     

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.3/phpunit.xsd"
+    bootstrap="tests/bootstrap.php"
+    colors="true"
+    stopOnFailure="false"
+    executionOrder="depends,defects"
+    beStrictAboutOutputDuringTests="false"
+    beStrictAboutChangesToGlobalState="false"
+    cacheDirectory=".phpunit.cache"
+>
+    <coverage/>
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>src/Migrations</directory>
+            <directory>src/DataFixtures</directory>
+            <directory>vendor</directory>
+            <directory>tests</directory>
+            <directory>var</directory>
+        </exclude>
+    </source>
+    <testsuites>
+        <!-- Unit tests are perfect for parallel execution - no database dependencies -->
+        <testsuite name="unit-parallel">
+            <directory>tests</directory>
+            <exclude>tests/Controller</exclude>
+            <exclude>tests/Entity</exclude>
+            <exclude>tests/Performance</exclude>
+            <!-- Entity tests require database and are problematic in parallel -->
+            <!-- Performance tests have separate phpunit-performance.xml configuration -->
+        </testsuite>
+        <!-- Controller tests need sequential execution due to database state -->
+        <testsuite name="controller-sequential">
+            <directory>tests/Controller</directory>
+        </testsuite>
+        <!-- Entity tests need careful database handling -->
+        <testsuite name="entity-sequential">
+            <directory>tests/Entity</directory>
+        </testsuite>
+        <!-- All unit tests (legacy compatibility) -->
+        <testsuite name="unit">
+            <directory>tests</directory>
+            <exclude>tests/Controller</exclude>
+        </testsuite>
+        <!-- All controller tests (legacy compatibility) -->
+        <testsuite name="controller">
+            <directory>tests/Controller</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <server name="APP_ENV" value="test" force="true"/>
+        <server name="KERNEL_CLASS" value="App\Kernel"/>
+        <server name="SHELL_VERBOSITY" value="-1"/>
+        <server name="SYMFONY_PHPUNIT_REMOVE" value=""/>
+        <server name="SYMFONY_PHPUNIT_VERSION" value="12.3"/>
+        <ini name="memory_limit" value="256M"/>
+        <!-- Parallel execution specific settings -->
+        <env name="PARATEST_PARALLEL" value="1"/>
+        <!-- Each process should have unique database connections -->
+        <env name="DB_CONNECTION_POOL_SIZE" value="5"/>
+    </php>
+</phpunit>

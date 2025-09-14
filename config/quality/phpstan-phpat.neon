@@ -1,0 +1,14 @@
+includes:
+  - phpstan.neon
+
+parameters:
+  paths:
+    - src
+    - phpat.php
+  level: 9
+  tmpDir: var/phpstan-phpat
+  
+  phpat:
+    ignore_doc_comments: false
+    ignore_built_in_classes: false
+    show_rule_names: true

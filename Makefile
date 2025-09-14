@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -38,6 +38,8 @@ help:
 	@echo "  make check-all        # stan + phpat + pint + twig (fast - no DB)"
 	@echo "  make twig-lint        # lint twig templates (fast - no DB)"
 	@echo "  make fix-all          # pint + rector (modern stack, fast - no DB)"
+	@echo "  make validate-stack   # validate entire modern toolchain"
+	@echo "  make analyze-coverage # analyze test coverage report"
 
 up:
 	docker compose up -d --build
@@ -97,30 +99,30 @@ test-debug: prepare-test-sql
 # Test with verbose configuration (full output for debugging)
 test-verbose: prepare-test-sql
 	@echo "Running tests with verbose output for debugging..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=phpunit.xml.verbose
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=config/testing/phpunit.xml.verbose
 
 # Parallel test execution - Full CPU utilization
 test-parallel: prepare-test-sql
 	@echo "Running parallel tests with $$(nproc) processes..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 
 # Safe parallel execution - Limited to 4 processes
 test-parallel-safe: prepare-test-sql
 	@echo "Running parallel tests with 4 processes (safe mode)..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=4 --testsuite=unit-parallel --max-batch-size=25
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=4 --testsuite=unit-parallel --max-batch-size=25
 
 # Optimal test execution - Parallel for units, sequential for controllers
 test-parallel-all: prepare-test-sql
 	@echo "Running optimized test suite (parallel units + sequential controllers)..."
 	@echo "Phase 1: Parallel unit tests..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 	@echo "Phase 2: Sequential controller tests..."
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
 
 # Coverage with parallel execution (using PCOV for speed)
 coverage: prepare-test-sql
 	@echo "Running parallel test coverage with PCOV..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
 	@echo "Coverage HTML: var/coverage-parallel/index.html"
 
 # Traditional coverage (sequential, using PCOV)
@@ -189,3 +191,30 @@ reset-test-db: prepare-test-sql
 		echo "Waiting for database... ($$i/30)"; \
 		sleep 2; \
 	done
+
+# Validation target (replacing validate-modern-stack.sh)
+validate-stack:
+	@echo "🔍 Validating modern toolchain..."
+	@echo "──────────────────────────────────"
+	@echo "▶ Checking composer configuration..."
+	@docker compose run --rm app composer validate --no-check-publish
+	@echo "✅ Composer configuration valid"
+	@echo ""
+	@echo "▶ Running PHPStan analysis..."
+	@$(MAKE) stan
+	@echo "✅ PHPStan analysis passed"
+	@echo ""
+	@echo "▶ Running Pint code style check..."
+	@$(MAKE) cs-check
+	@echo "✅ Code style check passed"
+	@echo ""
+	@echo "▶ Running architectural tests..."
+	@$(MAKE) phpat
+	@echo "✅ Architecture tests passed"
+	@echo ""
+	@echo "🎉 All validation checks passed!"
+
+# Coverage analysis target (replacing analyze-coverage.php location)
+analyze-coverage:
+	@echo "📊 Analyzing test coverage..."
+	@docker compose run --rm -e APP_ENV=test app php tests/tools/analyze-coverage.php

@@ -60,8 +60,8 @@ validate_environment() {
     fi
     
     # Check if paratest.xml exists
-    if [ ! -f "paratest.xml" ]; then
-        echo -e "${RED}Error: paratest.xml configuration not found${NC}"
+    if [ ! -f "config/testing/paratest.xml" ]; then
+        echo -e "${RED}Error: config/testing/paratest.xml configuration not found${NC}"
         exit 1
     fi
     
@@ -91,7 +91,7 @@ run_parallel_unit() {
     start_time=$(date +%s)
     
     docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev \
-        ./bin/paratest --configuration=paratest.xml \
+        ./bin/paratest --configuration=config/testing/paratest.xml \
         --processes=${processes} \
         --testsuite=unit-parallel \
         --max-batch-size=${batch_size}
@@ -138,7 +138,7 @@ run_coverage() {
     start_time=$(date +%s)
     
     docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev \
-        ./bin/paratest --configuration=paratest.xml \
+        ./bin/paratest --configuration=config/testing/paratest.xml \
         --processes=${processes} \
         --testsuite=unit-parallel \
         --coverage-html var/coverage-parallel
@@ -170,7 +170,7 @@ run_benchmark() {
     par_start=$(date +%s)
     
     docker compose run --rm -e APP_ENV=test -e PARATEST_PARALLEL=1 app-dev \
-        ./bin/paratest --configuration=paratest.xml \
+        ./bin/paratest --configuration=config/testing/paratest.xml \
         --processes=${DEFAULT_PROCESSES} \
         --testsuite=unit-parallel >/dev/null 2>&1
     

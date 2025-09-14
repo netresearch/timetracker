@@ -101,7 +101,7 @@ docker compose run --rm app npm run build
 - Prefer dependency injection for services (Symfony autowiring/autoconfiguration)
 - Keep controllers thin; move business logic into dedicated services under `App\Service`
 
-Refer to configured tooling and rules in `phpcs.xml`, `phpstan.neon`, `psalm.xml`, and `rector.php`.
+Refer to configured tooling and rules in `phpcs.xml`, `config/quality/phpstan.neon`, `psalm.xml`, and `config/quality/rector.php`.
 
 ## Architecture and Design
 

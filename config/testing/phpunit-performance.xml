@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.3/phpunit.xsd"
+    bootstrap="tests/bootstrap.php"
+    colors="true"
+    stopOnFailure="false"
+    executionOrder="depends,defects"
+    beStrictAboutOutputDuringTests="false"
+    beStrictAboutChangesToGlobalState="false"
+    cacheDirectory=".phpunit.cache"
+>
+    <coverage/>
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>src/Migrations</directory>
+            <directory>src/DataFixtures</directory>
+            <directory>vendor</directory>
+            <directory>tests</directory>
+            <directory>var</directory>
+        </exclude>
+    </source>
+    <testsuites>
+        <testsuite name="performance">
+            <directory>tests/Performance</directory>
+        </testsuite>
+        <testsuite name="performance-unit">
+            <file>tests/Performance/ExportPerformanceTest.php</file>
+            <file>tests/Performance/ExportActionPerformanceTest.php</file>
+        </testsuite>
+        <testsuite name="performance-integration">
+            <file>tests/Performance/ExportWorkflowIntegrationTest.php</file>
+        </testsuite>
+    </testsuites>
+    <groups>
+        <include>
+            <group>performance</group>
+        </include>
+    </groups>
+    <php>
+        <server name="APP_ENV" value="test" force="true"/>
+        <server name="KERNEL_CLASS" value="App\Kernel"/>
+        <server name="SHELL_VERBOSITY" value="-1"/>
+        <server name="SYMFONY_PHPUNIT_REMOVE" value=""/>
+        <server name="SYMFONY_PHPUNIT_VERSION" value="12.3"/>
+        <!-- Increase memory and time limits for performance tests -->
+        <ini name="memory_limit" value="512M"/>
+        <ini name="max_execution_time" value="300"/>
+        <!-- Disable opcache for consistent benchmarking -->
+        <ini name="opcache.enable" value="0"/>
+        <ini name="opcache.enable_cli" value="0"/>
+    </php>
+</phpunit>

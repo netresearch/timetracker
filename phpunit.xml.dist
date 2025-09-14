@@ -9,6 +9,9 @@
     beStrictAboutOutputDuringTests="false"
     beStrictAboutChangesToGlobalState="false"
     cacheDirectory=".phpunit.cache"
+    displayDetailsOnTestsThatTriggerErrors="false"
+    displayDetailsOnTestsThatTriggerWarnings="false"
+    displayDetailsOnTestsThatTriggerDeprecations="false"
 >
     <coverage/>
     <source>
@@ -18,6 +21,9 @@
         <exclude>
             <directory>src/Migrations</directory>
             <directory>src/DataFixtures</directory>
+            <directory>vendor</directory>
+            <directory>tests</directory>
+            <directory>var</directory>
         </exclude>
     </source>
     <testsuites>
@@ -29,4 +35,15 @@
             <directory>tests/Controller</directory>
         </testsuite>
     </testsuites>
+    <php>
+        <server name="APP_ENV" value="test" force="true"/>
+        <server name="KERNEL_CLASS" value="App\Kernel"/>
+        <server name="SHELL_VERBOSITY" value="-1"/>
+        <server name="SYMFONY_PHPUNIT_REMOVE" value=""/>
+        <server name="SYMFONY_PHPUNIT_VERSION" value="12.3"/>
+        <!-- Memory limit for tests -->
+        <ini name="memory_limit" value="2G"/>
+        <!-- Symfony deprecation helper - reports deprecations without verbose output -->
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak"/>
+    </php>
 </phpunit>
