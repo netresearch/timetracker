@@ -100,6 +100,7 @@ final class ExportAction extends BaseController
         );
 
         $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        // Apply LibreOffice column limit filter (prevents >1024 column errors)
         $reader->setReadFilter(new LOReadFilter());
 
         $spreadsheet = $reader->load(
