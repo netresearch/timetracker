@@ -36,7 +36,7 @@ class JiraHttpClientService
     public function __construct(
         private readonly User $user,
         private readonly TicketSystem $ticketSystem,
-        private readonly JiraAuthenticationService $authService,
+        private readonly JiraAuthenticationService $jiraAuthenticationService,
     ) {
     }
 
@@ -71,9 +71,9 @@ class JiraHttpClientService
     {
         switch ($tokenMode) {
             case 'user':
-                $tokens = $this->authService->getTokens($this->user, $this->ticketSystem);
+                $tokens = $this->jiraAuthenticationService->getTokens($this->user, $this->ticketSystem);
                 if ('' === $tokens['token'] && '' === $tokens['secret']) {
-                    $this->authService->throwUnauthorizedRedirect($this->ticketSystem);
+                    $this->jiraAuthenticationService->throwUnauthorizedRedirect($this->ticketSystem);
                 }
 
                 return $tokens;
@@ -97,7 +97,7 @@ class JiraHttpClientService
         $curlHandler = new CurlHandler();
         $handlerStack = HandlerStack::create($curlHandler);
 
-        $middleware = new Oauth1([
+        $oauth1 = new Oauth1([
             'consumer_key' => $this->getOAuthConsumerKey(),
             'consumer_secret' => $this->getOAuthConsumerSecret(),
             'private_key_file' => $this->getPrivateKeyFile(),
@@ -107,7 +107,7 @@ class JiraHttpClientService
             'token_secret' => $oAuthTokenSecret,
         ]);
 
-        $handlerStack->push($middleware);
+        $handlerStack->push($oauth1);
 
         return new Client([
             'base_uri' => $this->getJiraBaseUrl(),
@@ -177,7 +177,7 @@ class JiraHttpClientService
             $fullUrl = $this->jiraApiUrl . ltrim($url, '/');
 
             $options = ['auth' => 'oauth'];
-            if (!empty($data)) {
+            if ($data !== []) {
                 $options['json'] = $data;
             }
 
@@ -218,16 +218,16 @@ class JiraHttpClientService
      *
      * @throws JiraApiException
      */
-    private function handleGuzzleException(GuzzleException $e, string $url): never
+    private function handleGuzzleException(GuzzleException $guzzleException, string $url): never
     {
         // Check if this is a RequestException with a response
         $response = null;
-        if ($e instanceof \GuzzleHttp\Exception\RequestException) {
-            $response = $e->getResponse();
+        if ($guzzleException instanceof \GuzzleHttp\Exception\RequestException) {
+            $response = $guzzleException->getResponse();
         }
 
         if (!$response) {
-            throw new JiraApiException('Network error connecting to Jira: ' . $e->getMessage(), 500, null, $e);
+            throw new JiraApiException('Network error connecting to Jira: ' . $guzzleException->getMessage(), 500, null, $guzzleException);
         }
 
         $statusCode = $response->getStatusCode();
@@ -237,13 +237,13 @@ class JiraHttpClientService
 
         switch ($statusCode) {
             case 401:
-                $this->authService->throwUnauthorizedRedirect($this->ticketSystem, $e);
+                $this->jiraAuthenticationService->throwUnauthorizedRedirect($this->ticketSystem, $guzzleException);
 
                 // no break
             case 404:
-                throw new JiraApiInvalidResourceException(sprintf('Resource not found: %s', $url), 404, null, $e);
+                throw new JiraApiInvalidResourceException(sprintf('Resource not found: %s', $url), 404, null, $guzzleException);
             default:
-                throw new JiraApiException(sprintf('Jira API error [%d]: %s', $statusCode, $errorMessage), $statusCode, null, $e);
+                throw new JiraApiException(sprintf('Jira API error [%d]: %s', $statusCode, $errorMessage), $statusCode, null, $guzzleException);
         }
     }
 
@@ -284,7 +284,7 @@ class JiraHttpClientService
     {
         $certificate = $this->ticketSystem->getPrivateKey();
 
-        if (!$certificate) {
+        if ($certificate === '' || $certificate === '0') {
             throw new JiraApiException('OAuth private key not configured', 500);
         }
 

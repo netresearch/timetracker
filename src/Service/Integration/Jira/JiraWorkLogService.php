@@ -24,9 +24,9 @@ class JiraWorkLogService
 {
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
-        private readonly JiraHttpClientService $httpClient,
-        private readonly JiraTicketService $ticketService,
-        private readonly JiraAuthenticationService $authService,
+        private readonly JiraHttpClientService $jiraHttpClientService,
+        private readonly JiraTicketService $jiraTicketService,
+        private readonly JiraAuthenticationService $jiraAuthenticationService,
     ) {
     }
 
@@ -47,14 +47,14 @@ class JiraWorkLogService
         TicketSystem $ticketSystem,
         ?int $entryLimit = null,
     ): void {
-        if (!$this->authService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
-        $em = $this->managerRegistry->getManager();
-        $entryRepository = $this->managerRegistry->getRepository(Entry::class);
+        $objectManager = $this->managerRegistry->getManager();
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
 
-        $entries = $entryRepository->findByUserAndTicketSystemToSync(
+        $entries = $objectRepository->findByUserAndTicketSystemToSync(
             (int) $user->getId(),
             (int) $ticketSystem->getId(),
             $entryLimit ?? 50,
@@ -63,7 +63,7 @@ class JiraWorkLogService
         foreach ($entries as $entry) {
             try {
                 $this->updateEntryWorkLog($entry);
-                $em->persist($entry);
+                $objectManager->persist($entry);
             } catch (Exception $e) {
                 // Log error but continue with other entries
                 // This prevents one failed entry from blocking all others
@@ -73,7 +73,7 @@ class JiraWorkLogService
                     $e->getMessage(),
                 ));
             } finally {
-                $em->flush();
+                $objectManager->flush();
             }
         }
     }
@@ -102,16 +102,16 @@ class JiraWorkLogService
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (!$ticketSystem) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             return;
         }
 
-        if (!$this->authService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
         // Verify ticket exists in Jira
-        if (!$this->ticketService->doesTicketExist($ticket)) {
+        if (!$this->jiraTicketService->doesTicketExist($ticket)) {
             return;
         }
 
@@ -175,11 +175,11 @@ class JiraWorkLogService
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (!$ticketSystem) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             return;
         }
 
-        if (!$this->authService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
@@ -191,7 +191,7 @@ class JiraWorkLogService
         }
 
         try {
-            $this->httpClient->delete(sprintf('issue/%s/worklog/%d', $ticket, $workLogId));
+            $this->jiraHttpClientService->delete(sprintf('issue/%s/worklog/%d', $ticket, $workLogId));
             $entry->setWorklogId(null);
             $entry->setSyncedToTicketsystem(false);
         } catch (JiraApiInvalidResourceException) {
@@ -206,7 +206,7 @@ class JiraWorkLogService
      */
     private function doesWorkLogExist(string $ticket, int $workLogId): bool
     {
-        return $this->httpClient->doesResourceExist(
+        return $this->jiraHttpClientService->doesResourceExist(
             sprintf('issue/%s/worklog/%d', $ticket, $workLogId),
         );
     }
@@ -218,7 +218,7 @@ class JiraWorkLogService
      */
     private function createWorkLog(string $ticket, array $data): mixed
     {
-        $response = $this->httpClient->post(sprintf('issue/%s/worklog', $ticket), $data);
+        $response = $this->jiraHttpClientService->post(sprintf('issue/%s/worklog', $ticket), $data);
 
         if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when creating work log', 500);
@@ -234,7 +234,7 @@ class JiraWorkLogService
      */
     private function updateWorkLog(string $ticket, int $workLogId, array $data): mixed
     {
-        $response = $this->httpClient->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
+        $response = $this->jiraHttpClientService->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
 
         if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when updating work log', 500);
@@ -266,7 +266,7 @@ class JiraWorkLogService
         $project = $entry->getProject();
         $activity = $entry->getActivity();
 
-        $description = (string) $entry->getDescription();
+        $description = $entry->getDescription();
 
         if ('' === $description) {
             $description = 'no description';
@@ -274,15 +274,15 @@ class JiraWorkLogService
 
         $parts = [];
 
-        if ($customer) {
+        if ($customer instanceof \App\Entity\Customer) {
             $parts[] = $customer->getName();
         }
 
-        if ($project) {
+        if ($project instanceof \App\Entity\Project) {
             $parts[] = $project->getName();
         }
 
-        if ($activity) {
+        if ($activity instanceof \App\Entity\Activity) {
             $parts[] = $activity->getName();
         }
 
@@ -334,13 +334,13 @@ class JiraWorkLogService
     public function validateConnection(User $user, TicketSystem $ticketSystem): bool
     {
         try {
-            $this->authService->authenticate($user, $ticketSystem);
+            $this->jiraAuthenticationService->authenticate($user, $ticketSystem);
             // Try a simple API call to validate connection
-            $response = $this->httpClient->get('myself');
+            $response = $this->jiraHttpClientService->get('myself');
 
             return is_object($response) && property_exists($response, 'name');
-        } catch (Exception $e) {
-            throw new JiraApiException('JIRA connection validation failed: ' . $e->getMessage(), 0, null, $e);
+        } catch (Exception $exception) {
+            throw new JiraApiException('JIRA connection validation failed: ' . $exception->getMessage(), 0, null, $exception);
         }
     }
 
@@ -354,8 +354,8 @@ class JiraWorkLogService
     public function getProjectInfo(string $projectKey, User $user, TicketSystem $ticketSystem): array
     {
         try {
-            $this->authService->authenticate($user, $ticketSystem);
-            $response = $this->httpClient->get(sprintf('project/%s', $projectKey));
+            $this->jiraAuthenticationService->authenticate($user, $ticketSystem);
+            $response = $this->jiraHttpClientService->get(sprintf('project/%s', $projectKey));
 
             if (!is_object($response)) {
                 return [];
@@ -366,8 +366,8 @@ class JiraWorkLogService
                 'name' => $response->name ?? '',
                 'id' => $response->id ?? '',
             ];
-        } catch (Exception $e) {
-            throw new JiraApiException('Failed to get JIRA project info: ' . $e->getMessage(), 0, null, $e);
+        } catch (Exception $exception) {
+            throw new JiraApiException('Failed to get JIRA project info: ' . $exception->getMessage(), 0, null, $exception);
         }
     }
 }

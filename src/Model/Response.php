@@ -36,6 +36,7 @@ class Response extends \Symfony\Component\HttpFoundation\Response
     /**
      * Add additional headers before sending an ajax reply to the client.
      */
+    #[\Override]
     public function send(bool $flush = true): static
     {
         $this->headers->set('Access-Control-Allow-Origin', '*');

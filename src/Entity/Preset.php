@@ -207,6 +207,7 @@ class Preset extends Base
      *
      * @psalm-return array{id: int, name: string, customer: int|null, project: int|null, activity: int|null, description: string}
      */
+    #[\Override]
     public function toArray(): array
     {
         return [

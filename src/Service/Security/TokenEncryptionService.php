@@ -19,8 +19,10 @@ use const OPENSSL_RAW_DATA;
 class TokenEncryptionService
 {
     private const string CIPHER_METHOD = 'aes-256-gcm';
+
     private const int TAG_LENGTH = 16;
-    private string $encryptionKey;
+
+    private readonly string $encryptionKey;
 
     public function __construct(ParameterBagInterface $parameterBag)
     {
@@ -48,7 +50,7 @@ class TokenEncryptionService
      */
     public function encryptToken(string $token): string
     {
-        if (empty($token)) {
+        if ($token === '' || $token === '0') {
             return '';
         }
 
@@ -97,7 +99,7 @@ class TokenEncryptionService
      */
     public function decryptToken(string $encryptedToken): string
     {
-        if (empty($encryptedToken)) {
+        if ($encryptedToken === '' || $encryptedToken === '0') {
             return '';
         }
 

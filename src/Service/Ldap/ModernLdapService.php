@@ -26,10 +26,11 @@ class ModernLdapService
 {
     /** @var array<string, mixed> */
     private readonly array $config;
-    private ?Ldap $ldapConnection = null;
+
+    private ?Ldap $ldap = null;
 
     public function __construct(
-        private readonly ParameterBagInterface $params,
+        private readonly ParameterBagInterface $parameterBag,
         private readonly ?LoggerInterface $logger = null,
     ) {
         $this->config = $this->loadConfiguration();
@@ -61,10 +62,10 @@ class ModernLdapService
             $this->log('LDAP authentication successful', ['username' => $username]);
 
             return true;
-        } catch (LdapException $e) {
+        } catch (LdapException $ldapException) {
             $this->log('LDAP authentication failed', [
                 'username' => $username,
-                'error' => $e->getMessage(),
+                'error' => $ldapException->getMessage(),
             ], 'warning');
 
             return false;
@@ -101,13 +102,13 @@ class ModernLdapService
             $entry = $result->current();
 
             return $this->normalizeUserData($entry);
-        } catch (LdapException $e) {
+        } catch (LdapException $ldapException) {
             $this->log('LDAP search failed', [
                 'username' => $username,
-                'error' => $e->getMessage(),
+                'error' => $ldapException->getMessage(),
             ], 'error');
 
-            throw $e;
+            throw $ldapException;
         } finally {
             $this->disconnect();
         }
@@ -147,13 +148,13 @@ class ModernLdapService
             ]);
 
             return $users;
-        } catch (LdapException $e) {
+        } catch (LdapException $ldapException) {
             $this->log('LDAP search failed', [
                 'criteria' => $criteria,
-                'error' => $e->getMessage(),
+                'error' => $ldapException->getMessage(),
             ], 'error');
 
-            throw $e;
+            throw $ldapException;
         } finally {
             $this->disconnect();
         }
@@ -191,13 +192,13 @@ class ModernLdapService
             }
 
             return $groups;
-        } catch (LdapException $e) {
+        } catch (LdapException $ldapException) {
             $this->log('Failed to get user groups', [
                 'username' => $username,
-                'error' => $e->getMessage(),
+                'error' => $ldapException->getMessage(),
             ], 'error');
 
-            throw $e;
+            throw $ldapException;
         } finally {
             $this->disconnect();
         }
@@ -225,8 +226,8 @@ class ModernLdapService
             $this->log('LDAP connection test successful');
 
             return $result->count() > 0;
-        } catch (LdapException $e) {
-            $this->log('LDAP connection test failed', ['error' => $e->getMessage()], 'error');
+        } catch (LdapException $ldapException) {
+            $this->log('LDAP connection test failed', ['error' => $ldapException->getMessage()], 'error');
 
             return false;
         } finally {
@@ -241,12 +242,12 @@ class ModernLdapService
      */
     private function getConnection(): Ldap
     {
-        if (null === $this->ldapConnection) {
+        if (null === $this->ldap) {
             $options = $this->buildLdapOptions();
-            $this->ldapConnection = new Ldap($options);
+            $this->ldap = new Ldap($options);
         }
 
-        return $this->ldapConnection;
+        return $this->ldap;
     }
 
     /**
@@ -271,9 +272,9 @@ class ModernLdapService
      */
     private function disconnect(): void
     {
-        if (null !== $this->ldapConnection) {
-            $this->ldapConnection->disconnect();
-            $this->ldapConnection = null;
+        if (null !== $this->ldap) {
+            $this->ldap->disconnect();
+            $this->ldap = null;
         }
     }
 
@@ -338,11 +339,7 @@ class ModernLdapService
             $value = $this->sanitizeLdapInput($value);
 
             // Support wildcards
-            if (str_contains($value, '*')) {
-                $filters[] = sprintf('(%s=%s)', $field, $value);
-            } else {
-                $filters[] = sprintf('(%s=*%s*)', $field, $value);
-            }
+            $filters[] = str_contains($value, '*') ? sprintf('(%s=%s)', $field, $value) : sprintf('(%s=*%s*)', $field, $value);
         }
 
         if (1 === count($filters)) {
@@ -402,11 +399,11 @@ class ModernLdapService
      */
     private function validateInput(string $username, string $password): void
     {
-        if (empty($username)) {
+        if ($username === '' || $username === '0') {
             throw new InvalidArgumentException('Username cannot be empty');
         }
 
-        if (empty($password)) {
+        if ($password === '' || $password === '0') {
             throw new InvalidArgumentException('Password cannot be empty');
         }
 
@@ -422,25 +419,25 @@ class ModernLdapService
      */
     private function loadConfiguration(): array
     {
-        $port = $this->params->get('ldap_port');
+        $port = $this->parameterBag->get('ldap_port');
         $portValue = is_scalar($port) ? (int) $port : 389;
 
-        $useSsl = $this->params->get('ldap_usessl');
-        $useSslValue = is_scalar($useSsl) ? (bool) $useSsl : false;
+        $useSsl = $this->parameterBag->get('ldap_usessl');
+        $useSslValue = is_scalar($useSsl) && (bool) $useSsl;
 
-        $host = $this->params->get('ldap_host');
+        $host = $this->parameterBag->get('ldap_host');
         $hostValue = is_scalar($host) ? (string) $host : 'localhost';
 
-        $readUser = $this->params->get('ldap_readuser');
+        $readUser = $this->parameterBag->get('ldap_readuser');
         $readUserValue = is_scalar($readUser) ? (string) $readUser : '';
 
-        $readPass = $this->params->get('ldap_readpass');
+        $readPass = $this->parameterBag->get('ldap_readpass');
         $readPassValue = is_scalar($readPass) ? (string) $readPass : '';
 
-        $baseDn = $this->params->get('ldap_basedn');
+        $baseDn = $this->parameterBag->get('ldap_basedn');
         $baseDnValue = is_scalar($baseDn) ? (string) $baseDn : '';
 
-        $userNameField = $this->params->get('ldap_usernamefield');
+        $userNameField = $this->parameterBag->get('ldap_usernamefield');
         $userNameFieldValue = is_scalar($userNameField) ? (string) $userNameField : 'uid';
 
         return [
@@ -461,7 +458,7 @@ class ModernLdapService
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
-        if (!$this->logger) {
+        if (!$this->logger instanceof \Psr\Log\LoggerInterface) {
             return;
         }
 

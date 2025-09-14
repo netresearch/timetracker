@@ -221,10 +221,11 @@ class Project extends Base
      *
      * @return array<string, mixed>
      */
+    #[\Override]
     public function toArray(): array
     {
         $data = parent::toArray();
-        $data['estimationText'] = (new TimeCalculationService())->minutesToReadable($this->getEstimation(), false);
+        $data['estimationText'] = new TimeCalculationService()->minutesToReadable($this->getEstimation(), false);
 
         return $data;
     }
@@ -508,13 +509,13 @@ class Project extends Base
     /**
      * Sets the project's billing method.
      *
-     * @param BillingType $billing the billing method
+     * @param BillingType $billingType the billing method
      *
      * @return $this
      */
-    public function setBilling(BillingType $billing): static
+    public function setBilling(BillingType $billingType): static
     {
-        $this->billing = $billing;
+        $this->billing = $billingType;
 
         return $this;
     }
@@ -604,13 +605,13 @@ class Project extends Base
     /**
      * Sets the project lead user.
      *
-     * @param User|null $projectLead the project lead
+     * @param User|null $user the project lead
      *
      * @return $this
      */
-    public function setProjectLead(?User $projectLead): static
+    public function setProjectLead(?User $user): static
     {
-        $this->projectLead = $projectLead;
+        $this->projectLead = $user;
 
         return $this;
     }
@@ -628,13 +629,13 @@ class Project extends Base
     /**
      * Sets the technical lead user.
      *
-     * @param User|null $technicalLead the technical lead
+     * @param User|null $user the technical lead
      *
      * @return $this
      */
-    public function setTechnicalLead(?User $technicalLead): static
+    public function setTechnicalLead(?User $user): static
     {
-        $this->technicalLead = $technicalLead;
+        $this->technicalLead = $user;
 
         return $this;
     }

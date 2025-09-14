@@ -13,9 +13,13 @@ use Symfony\Contracts\EventDispatcher\Event;
 class EntryEvent extends Event
 {
     public const string CREATED = 'entry.created';
+
     public const string UPDATED = 'entry.updated';
+
     public const string DELETED = 'entry.deleted';
+
     public const string SYNCED = 'entry.synced';
+
     public const string SYNC_FAILED = 'entry.sync_failed';
 
     /**

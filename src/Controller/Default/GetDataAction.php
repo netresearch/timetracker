@@ -32,8 +32,8 @@ final class GetDataAction extends BaseController
             return new JsonResponse([]);
         }
 
-        /** @var \App\Repository\EntryRepository $entryRepository */
-        $entryRepository = $this->managerRegistry->getRepository(Entry::class);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
 
         // Check if this is a filtered request (with year/month/user/customer/project parameters)
         $year = $request->query->get('year');
@@ -51,7 +51,7 @@ final class GetDataAction extends BaseController
             $filterProject = null !== $project ? (int) $project : null;
             $filterCustomer = null !== $customer ? (int) $customer : null;
 
-            $entries = $entryRepository->findByDate(
+            $entries = $objectRepository->findByDate(
                 $filterUserId,
                 $filterYear,
                 $filterMonth,
@@ -73,7 +73,7 @@ final class GetDataAction extends BaseController
             ? (int) $request->attributes->get('days')
             : 3;
 
-        $data = $entryRepository->getEntriesByUser($user, $days, $user->getShowFuture());
+        $data = $objectRepository->getEntriesByUser($user, $days, $user->getShowFuture());
 
         return new JsonResponse($data);
     }

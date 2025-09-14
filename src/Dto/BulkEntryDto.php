@@ -57,15 +57,15 @@ final readonly class BulkEntryDto
      * @throws Exception
      */
     #[Assert\Callback]
-    public function validateTimeRange(ExecutionContextInterface $context): void
+    public function validateTimeRange(ExecutionContextInterface $executionContext): void
     {
         // Only validate time range if not using contract
-        if (!$this->isUseContract() && !empty($this->starttime) && !empty($this->endtime)) {
+        if (!$this->isUseContract() && ($this->starttime !== '' && $this->starttime !== '0') && ($this->endtime !== '' && $this->endtime !== '0')) {
             $startDateTime = DateTime::createFromFormat('H:i:s', $this->starttime);
             $endDateTime = DateTime::createFromFormat('H:i:s', $this->endtime);
 
             if ($startDateTime && $endDateTime && $startDateTime >= $endDateTime) {
-                $context->buildViolation('Die Aktivität muss mindestens eine Minute angedauert haben!')
+                $executionContext->buildViolation('Die Aktivität muss mindestens eine Minute angedauert haben!')
                     ->atPath('endtime')
                     ->addViolation()
                 ;
@@ -77,14 +77,14 @@ final readonly class BulkEntryDto
      * @throws Exception
      */
     #[Assert\Callback]
-    public function validateDateRange(ExecutionContextInterface $context): void
+    public function validateDateRange(ExecutionContextInterface $executionContext): void
     {
-        if (!empty($this->startdate) && !empty($this->enddate)) {
+        if ($this->startdate !== '' && $this->startdate !== '0' && ($this->enddate !== '' && $this->enddate !== '0')) {
             $startDate = DateTime::createFromFormat('Y-m-d', $this->startdate);
             $endDate = DateTime::createFromFormat('Y-m-d', $this->enddate);
 
             if ($startDate && $endDate && $startDate > $endDate) {
-                $context->buildViolation('Start date must be before or equal to end date')
+                $executionContext->buildViolation('Start date must be before or equal to end date')
                     ->atPath('enddate')
                     ->addViolation()
                 ;

@@ -28,7 +28,7 @@ final class SyncJiraEntriesAction extends BaseController
 
         $from = $request->query->get('from');
         $to = $request->query->get('to');
-        null !== $from ? new DateTime((string) $from) : (new DateTime())->modify('-3 days');
+        null !== $from ? new DateTime((string) $from) : new DateTime()->modify('-3 days');
         null !== $to ? new DateTime((string) $to) : new DateTime();
 
         // Use current user as admin context if available

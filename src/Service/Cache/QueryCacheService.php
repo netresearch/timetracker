@@ -20,6 +20,7 @@ use function sprintf;
 class QueryCacheService
 {
     private const string DEFAULT_PREFIX = 'query_';
+
     private const int DEFAULT_TTL = 300; // 5 minutes
 
     /**
@@ -30,7 +31,7 @@ class QueryCacheService
     private array $tags = [];
 
     public function __construct(
-        private readonly CacheItemPoolInterface $cache,
+        private readonly CacheItemPoolInterface $cacheItemPool,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -50,7 +51,7 @@ class QueryCacheService
     public function remember(string $key, callable $callback, int $ttl = self::DEFAULT_TTL): mixed
     {
         $cacheKey = $this->getCacheKey($key);
-        $item = $this->cache->getItem($cacheKey);
+        $item = $this->cacheItemPool->getItem($cacheKey);
 
         if ($item->isHit()) {
             $this->log('Cache hit', ['key' => $cacheKey]);
@@ -65,7 +66,7 @@ class QueryCacheService
         $item->set($value);
         $item->expiresAfter($ttl);
 
-        $this->cache->save($item);
+        $this->cacheItemPool->save($item);
 
         $this->log('Cache set', ['key' => $cacheKey, 'ttl' => $ttl]);
 
@@ -78,7 +79,7 @@ class QueryCacheService
     public function get(string $key): mixed
     {
         $cacheKey = $this->getCacheKey($key);
-        $item = $this->cache->getItem($cacheKey);
+        $item = $this->cacheItemPool->getItem($cacheKey);
 
         if ($item->isHit()) {
             $this->log('Cache hit', ['key' => $cacheKey]);
@@ -97,12 +98,12 @@ class QueryCacheService
     public function set(string $key, mixed $value, int $ttl = self::DEFAULT_TTL): void
     {
         $cacheKey = $this->getCacheKey($key);
-        $item = $this->cache->getItem($cacheKey);
+        $item = $this->cacheItemPool->getItem($cacheKey);
 
         $item->set($value);
         $item->expiresAfter($ttl);
 
-        $this->cache->save($item);
+        $this->cacheItemPool->save($item);
 
         $this->log('Cache set', ['key' => $cacheKey, 'ttl' => $ttl]);
     }
@@ -114,7 +115,7 @@ class QueryCacheService
     {
         $cacheKey = $this->getCacheKey($key);
 
-        return $this->cache->hasItem($cacheKey);
+        return $this->cacheItemPool->hasItem($cacheKey);
     }
 
     /**
@@ -123,7 +124,7 @@ class QueryCacheService
     public function delete(string $key): void
     {
         $cacheKey = $this->getCacheKey($key);
-        $this->cache->deleteItem($cacheKey);
+        $this->cacheItemPool->deleteItem($cacheKey);
 
         $this->log('Cache delete', ['key' => $cacheKey]);
     }
@@ -134,7 +135,7 @@ class QueryCacheService
     public function clear(?string $pattern = null): void
     {
         if (null === $pattern) {
-            $this->cache->clear();
+            $this->cacheItemPool->clear();
             $this->log('Cache cleared');
 
             return;
@@ -172,7 +173,7 @@ class QueryCacheService
         }
 
         foreach ($this->tags[$tag] as $cacheKey) {
-            $this->cache->deleteItem($cacheKey);
+            $this->cacheItemPool->deleteItem($cacheKey);
         }
 
         unset($this->tags[$tag]);
@@ -218,7 +219,7 @@ class QueryCacheService
         // Some adapters provide statistics, others don't
 
         return [
-            'adapter' => get_class($this->cache),
+            'adapter' => $this->cacheItemPool::class,
             'tags' => array_keys($this->tags),
             'tag_count' => count($this->tags),
         ];
@@ -252,10 +253,10 @@ class QueryCacheService
         // For filesystem adapter, we could iterate through files
 
         // Fallback: iterate through known keys
-        foreach ($this->tags as $tag => $keys) {
-            foreach ($keys as $key) {
+        foreach ($this->tags as $tag) {
+            foreach ($tag as $key) {
                 if (fnmatch($pattern, $key)) {
-                    $this->cache->deleteItem($key);
+                    $this->cacheItemPool->deleteItem($key);
                 }
             }
         }
@@ -270,7 +271,7 @@ class QueryCacheService
      */
     private function log(string $message, array $context = []): void
     {
-        if ($this->logger) {
+        if ($this->logger instanceof \Psr\Log\LoggerInterface) {
             $this->logger->debug('[QueryCache] ' . $message, $context);
         }
     }

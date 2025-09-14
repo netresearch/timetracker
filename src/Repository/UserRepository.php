@@ -62,7 +62,7 @@ class UserRepository extends ServiceEntityRepository
             if ($currentUserId === $user->getId()) {
                 // Set current user on top
                 array_unshift($data, ['user' => [
-                    'id' => (int) $user->getId(),
+                    'id' => $user->getId(),
                     'username' => (string) $user->getUsername(),
                     'type' => $user->getType()->value,
                     'abbr' => (string) $user->getAbbr(),

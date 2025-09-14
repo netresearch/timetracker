@@ -34,8 +34,8 @@ class ExportService
      */
     public function getEntries(\App\Entity\User $currentUser, ?array $arSort = null, string $strStart = '', string $strEnd = '', ?array $arProjects = null, ?array $arUsers = null): array
     {
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
 
         $arFilter = [];
 
@@ -58,7 +58,7 @@ class ExportService
         // Add user filter to the filters array
         $arFilter['user'] = $currentUser->getId();
 
-        $arEntries = $entryRepo->getFilteredEntries(
+        $arEntries = $objectRepository->getFilteredEntries(
             $arFilter,
             0, // offset
             0, // limit (0 = no limit)
@@ -67,23 +67,23 @@ class ExportService
         $arApi = [];
 
         $arReturn = [];
-        foreach ($arEntries as $entry) {
-            if (!$entry instanceof Entry) {
+        foreach ($arEntries as $arEntry) {
+            if (!$arEntry instanceof Entry) {
                 continue;
             }
 
             $arReturn[] = [
-                'id' => $entry->getId(),
-                'user' => $entry->getUser() ? $entry->getUser()->getUsername() : '',
-                'customer' => $entry->getCustomer() ? $entry->getCustomer()->getName() : '',
-                'project' => $entry->getProject() ? $entry->getProject()->getName() : '',
-                'activity' => $entry->getActivity() ? $entry->getActivity()->getName() : '',
-                'description' => $entry->getDescription(),
-                'start' => $entry->getStart()->format('Y-m-d H:i:s'),
-                'end' => $entry->getEnd()->format('Y-m-d H:i:s'),
-                'ticket' => $entry->getTicket(),
-                'ticket_url' => $this->getTicketUrl($entry, $arApi, $currentUser),
-                'worklog_url' => $this->getWorklogUrl($entry, $arApi, $currentUser),
+                'id' => $arEntry->getId(),
+                'user' => $arEntry->getUser() instanceof \App\Entity\User ? $arEntry->getUser()->getUsername() : '',
+                'customer' => $arEntry->getCustomer() instanceof \App\Entity\Customer ? $arEntry->getCustomer()->getName() : '',
+                'project' => $arEntry->getProject() instanceof \App\Entity\Project ? $arEntry->getProject()->getName() : '',
+                'activity' => $arEntry->getActivity() instanceof \App\Entity\Activity ? $arEntry->getActivity()->getName() : '',
+                'description' => $arEntry->getDescription(),
+                'start' => $arEntry->getStart()->format('Y-m-d H:i:s'),
+                'end' => $arEntry->getEnd()->format('Y-m-d H:i:s'),
+                'ticket' => $arEntry->getTicket(),
+                'ticket_url' => $this->getTicketUrl($arEntry, $arApi, $currentUser),
+                'worklog_url' => $this->getWorklogUrl($arEntry, $arApi, $currentUser),
             ];
         }
 
@@ -100,12 +100,12 @@ class ExportService
         }
 
         $project = $entry->getProject();
-        if (!$project) {
+        if (!$project instanceof \App\Entity\Project) {
             return '';
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             return '';
         }
 
@@ -135,12 +135,12 @@ class ExportService
         }
 
         $project = $entry->getProject();
-        if (!$project) {
+        if (!$project instanceof \App\Entity\Project) {
             return '';
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             return '';
         }
 
@@ -173,10 +173,10 @@ class ExportService
      */
     public function exportEntries(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null): array
     {
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
 
-        return $entryRepo->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
+        return $objectRepository->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
     }
 
     /**
@@ -188,15 +188,16 @@ class ExportService
      */
     public function exportEntriesBatched(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null, int $batchSize = 1000): Generator
     {
-        /** @var \App\Repository\EntryRepository $entryRepo */
-        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(Entry::class);
 
         $offset = 0;
         do {
-            $batch = $entryRepo->findByDatePaginated($userId, $year, $month, $projectId, $customerId, $arSort, $offset, $batchSize);
+            $batch = $objectRepository->findByDatePaginated($userId, $year, $month, $projectId, $customerId, $arSort, $offset, $batchSize);
             if (!empty($batch)) {
                 yield $batch;
             }
+
             $offset += $batchSize;
         } while (count($batch) === $batchSize);
     }
@@ -217,12 +218,23 @@ class ExportService
         // Group entries by ticket system to minimize API calls
         $entriesByTicketSystem = [];
         foreach ($entries as $entry) {
-            if (!$entry instanceof Entry || !$entry->getTicket() || !$entry->getProject()) {
+            if (!$entry instanceof Entry) {
                 continue;
             }
-
+            if (!$entry->getTicket()) {
+                continue;
+            }
+            if (!$entry->getProject()) {
+                continue;
+            }
             $ticketSystem = $entry->getProject()->getTicketSystem();
-            if (!$ticketSystem || !$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
+            if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+                continue;
+            }
+            if (!$ticketSystem->getBookTime()) {
+                continue;
+            }
+            if (TicketSystemType::JIRA !== $ticketSystem->getType()) {
                 continue;
             }
 
@@ -240,9 +252,9 @@ class ExportService
         }
 
         // Get user for API calls
-        /** @var \App\Repository\UserRepository $userRepo */
-        $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
-        $user = $userRepo->find($userId);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
+        $user = $objectRepository->find($userId);
         if (!$user) {
             return $entries;
         }
@@ -256,17 +268,18 @@ class ExportService
 
             // Build JQL query for all tickets
             $ticketKeys = implode(',', $tickets);
-            $jql = "key in ({$ticketKeys})";
+            $jql = sprintf('key in (%s)', $ticketKeys);
 
             $fields = [];
             if ($includeBillable) {
                 $fields[] = 'labels';
             }
+
             if ($includeTicketTitle) {
                 $fields[] = 'summary';
             }
 
-            if (empty($fields)) {
+            if ($fields === []) {
                 continue;
             }
 
@@ -298,7 +311,7 @@ class ExportService
                         $entry->setTicketTitle($fields->summary);
                     }
                 }
-            } catch (Exception $e) {
+            } catch (Exception) {
                 // Log error but continue with other entries
                 // In a real implementation, you might want to use a logger here
                 continue;
@@ -313,9 +326,9 @@ class ExportService
      */
     public function getUsername(int $userId): ?string
     {
-        /** @var \App\Repository\UserRepository $userRepo */
-        $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
-        $user = $userRepo->find($userId);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
+        $user = $objectRepository->find($userId);
 
         return $user ? $user->getUsername() : null;
     }

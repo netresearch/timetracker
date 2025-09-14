@@ -444,6 +444,7 @@ class Entry extends Base
      *
      * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string|null}
      */
+    #[\Override]
     public function toArray(): array
     {
         $customerEntity = $this->getCustomer();
@@ -515,9 +516,9 @@ class Entry extends Base
         return $this->customer;
     }
 
-    public function setClass(EntryClass $class): static
+    public function setClass(EntryClass $entryClass): static
     {
-        $this->class = $class;
+        $this->class = $entryClass;
 
         return $this;
     }
@@ -531,9 +532,9 @@ class Entry extends Base
      * Add a class value. For now, just set the class directly.
      * TODO: Implement proper bitwise combination if needed.
      */
-    public function addClass(EntryClass $class): static
+    public function addClass(EntryClass $entryClass): static
     {
-        $this->class = $class;
+        $this->class = $entryClass;
 
         return $this;
     }

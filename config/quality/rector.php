@@ -9,8 +9,8 @@ use Rector\Symfony\Set\SymfonySetList;
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__.'/src',
-        __DIR__.'/tests',
+        __DIR__.'/../../src',
+        __DIR__.'/../../tests',
     ])
     #->withPHPStanConfigs([__DIR__.'/phpstan.neon'])
     ->withSets([

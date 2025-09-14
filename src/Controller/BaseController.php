@@ -203,13 +203,16 @@ class BaseController extends AbstractController
         if (!$session->has('_security_main')) {
             return false;
         }
+
         $token = $session->get('_security_main');
         if (null === $token) {
             return false;
         }
+
         if (is_string($token)) {
             return '' !== $token;
         }
+
         if (is_array($token)) {
             return [] !== $token;
         }

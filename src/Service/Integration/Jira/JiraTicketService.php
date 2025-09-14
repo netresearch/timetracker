@@ -17,7 +17,7 @@ use function sprintf;
 class JiraTicketService
 {
     public function __construct(
-        private readonly JiraHttpClientService $httpClient,
+        private readonly JiraHttpClientService $jiraHttpClientService,
     ) {
     }
 
@@ -30,7 +30,7 @@ class JiraTicketService
     {
         $project = $entry->getProject();
 
-        if (!$project) {
+        if (!$project instanceof \App\Entity\Project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
@@ -56,12 +56,12 @@ class JiraTicketService
         ];
 
         // Add custom fields if configured
-        $customFields = $this->getCustomFields($entry);
-        if (!empty($customFields)) {
+        $customFields = $this->getCustomFields();
+        if ($customFields !== []) {
             $ticketData['fields'] = array_merge($ticketData['fields'], $customFields);
         }
 
-        $response = $this->httpClient->post('issue', $ticketData);
+        $response = $this->jiraHttpClientService->post('issue', $ticketData);
 
         if (!is_object($response) || !property_exists($response, 'key')) {
             throw new JiraApiException('Failed to create Jira ticket', 500);
@@ -86,11 +86,11 @@ class JiraTicketService
             'maxResults' => $limit,
         ];
 
-        if (!empty($fields)) {
+        if ($fields !== []) {
             $searchData['fields'] = $fields;
         }
 
-        return $this->httpClient->post('search', $searchData);
+        return $this->jiraHttpClientService->post('search', $searchData);
     }
 
     /**
@@ -103,7 +103,7 @@ class JiraTicketService
         }
 
         try {
-            $this->httpClient->get(sprintf('issue/%s', $ticketKey));
+            $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
 
             return true;
         } catch (JiraApiException) {
@@ -125,7 +125,7 @@ class JiraTicketService
         }
 
         try {
-            $issue = $this->httpClient->get(sprintf('issue/%s', $ticketKey));
+            $issue = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
 
             if (!is_object($issue) || !property_exists($issue, 'fields') || !property_exists($issue->fields, 'subtasks')) {
                 return [];
@@ -143,8 +143,8 @@ class JiraTicketService
             }
 
             return $subtasks;
-        } catch (JiraApiException $e) {
-            throw new JiraApiException(sprintf('Failed to get subtasks for ticket %s: %s', $ticketKey, $e->getMessage()), $e->getCode(), null, $e);
+        } catch (JiraApiException $jiraApiException) {
+            throw new JiraApiException(sprintf('Failed to get subtasks for ticket %s: %s', $ticketKey, $jiraApiException->getMessage()), $jiraApiException->getCode(), null, $jiraApiException);
         }
     }
 
@@ -163,11 +163,11 @@ class JiraTicketService
 
         $url = sprintf('issue/%s', $ticketKey);
 
-        if (!empty($fields)) {
+        if ($fields !== []) {
             $url .= '?fields=' . implode(',', $fields);
         }
 
-        return $this->httpClient->get($url);
+        return $this->jiraHttpClientService->get($url);
     }
 
     /**
@@ -183,7 +183,7 @@ class JiraTicketService
             throw new JiraApiException('Ticket key cannot be empty', 400);
         }
 
-        return $this->httpClient->put(sprintf('issue/%s', $ticketKey), $updateData);
+        return $this->jiraHttpClientService->put(sprintf('issue/%s', $ticketKey), $updateData);
     }
 
     /**
@@ -201,7 +201,7 @@ class JiraTicketService
             throw new JiraApiException('Comment cannot be empty', 400);
         }
 
-        return $this->httpClient->post(
+        return $this->jiraHttpClientService->post(
             sprintf('issue/%s/comment', $ticketKey),
             ['body' => $comment],
         );
@@ -219,7 +219,7 @@ class JiraTicketService
         }
 
         try {
-            $response = $this->httpClient->get(sprintf('issue/%s/transitions', $ticketKey));
+            $response = $this->jiraHttpClientService->get(sprintf('issue/%s/transitions', $ticketKey));
 
             if (!is_object($response) || !property_exists($response, 'transitions')) {
                 return [];
@@ -231,6 +231,7 @@ class JiraTicketService
                 if (!is_object($transition)) {
                     continue;
                 }
+
                 $to = $transition->to ?? null;
                 $transitions[] = [
                     'id' => property_exists($transition, 'id') ? (string) ($transition->id ?? '') : '',
@@ -271,11 +272,11 @@ class JiraTicketService
             ],
         ];
 
-        if (!empty($fields)) {
+        if ($fields !== []) {
             $transitionData['fields'] = $fields;
         }
 
-        $this->httpClient->post(sprintf('issue/%s/transitions', $ticketKey), $transitionData);
+        $this->jiraHttpClientService->post(sprintf('issue/%s/transitions', $ticketKey), $transitionData);
     }
 
     /**
@@ -286,21 +287,21 @@ class JiraTicketService
         $parts = [];
 
         $customer = $entry->getCustomer();
-        if ($customer) {
+        if ($customer instanceof \App\Entity\Customer) {
             $parts[] = $customer->getName();
         }
 
         $project = $entry->getProject();
-        if ($project) {
+        if ($project instanceof \App\Entity\Project) {
             $parts[] = $project->getName();
         }
 
         $activity = $entry->getActivity();
-        if ($activity) {
+        if ($activity instanceof \App\Entity\Activity) {
             $parts[] = $activity->getName();
         }
 
-        if (!empty($parts)) {
+        if ($parts !== []) {
             return implode(' - ', $parts);
         }
 
@@ -315,7 +316,7 @@ class JiraTicketService
         // This could be configurable per project or activity
         $activity = $entry->getActivity();
 
-        if ($activity) {
+        if ($activity instanceof \App\Entity\Activity) {
             $activityName = strtolower($activity->getName());
 
             if (str_contains($activityName, 'bug') || str_contains($activityName, 'fix')) {
@@ -339,10 +340,9 @@ class JiraTicketService
      *
      * @return array<string, mixed>
      */
-    private function getCustomFields(Entry $entry): array
+    private function getCustomFields(): array
     {
         return [];
-
         // Add any custom field mappings here
         // Example:
         // if ($entry->getPriority()) {

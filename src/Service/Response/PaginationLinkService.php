@@ -17,7 +17,7 @@ final readonly class PaginationLinkService
      *
      * @return array<string, mixed>
      */
-    public function generateLinks(Request $request, PaginatedEntryCollection $collection): array
+    public function generateLinks(Request $request, PaginatedEntryCollection $paginatedEntryCollection): array
     {
         $route = $request->getUriForPath($request->getPathInfo()) . '?';
         $queryParams = [];
@@ -31,28 +31,28 @@ final readonly class PaginationLinkService
             $queryParams = array_filter($queryParams, 'is_scalar');
         }
 
-        if (0 === $collection->totalCount) {
-            return $this->getEmptyLinks($route, $queryParams, $collection->currentPage);
+        if (0 === $paginatedEntryCollection->totalCount) {
+            return $this->getEmptyLinks($route, $queryParams, $paginatedEntryCollection->currentPage);
         }
 
         $links = [];
 
         // Self link (current page)
-        $queryParams['page'] = $collection->currentPage;
+        $queryParams['page'] = $paginatedEntryCollection->currentPage;
         $links['self'] = $route . http_build_query($queryParams);
 
         // Last page link
-        $queryParams['page'] = $collection->getLastPage();
+        $queryParams['page'] = $paginatedEntryCollection->getLastPage();
         $links['last'] = $route . http_build_query($queryParams);
 
         // Previous page link
-        $links['prev'] = $collection->hasPreviousPage()
-            ? $route . http_build_query(array_merge($queryParams, ['page' => $collection->getPreviousPage()]))
+        $links['prev'] = $paginatedEntryCollection->hasPreviousPage()
+            ? $route . http_build_query(array_merge($queryParams, ['page' => $paginatedEntryCollection->getPreviousPage()]))
             : null;
 
         // Next page link
-        $links['next'] = $collection->hasNextPage()
-            ? $route . http_build_query(array_merge($queryParams, ['page' => $collection->getNextPage()]))
+        $links['next'] = $paginatedEntryCollection->hasNextPage()
+            ? $route . http_build_query(array_merge($queryParams, ['page' => $paginatedEntryCollection->getNextPage()]))
             : null;
 
         return ['links' => $links];

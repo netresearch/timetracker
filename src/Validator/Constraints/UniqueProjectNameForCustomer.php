@@ -12,6 +12,7 @@ class UniqueProjectNameForCustomer extends Constraint
 {
     public string $message = 'A project with the name "{{ value }}" already exists for this customer.';
 
+    #[\Override]
     public function getTargets(): string
     {
         return self::CLASS_CONSTRAINT;

@@ -46,10 +46,9 @@ class UniqueTeamNameValidator extends ConstraintValidator
             $object = $this->context->getObject();
 
             // Type-safe check for TeamSaveDto
-            if ($object instanceof \App\Dto\TeamSaveDto && $object->id > 0) {
-                if ($existingTeam->getId() === $object->id) {
-                    return; // Same team being updated
-                }
+            if ($object instanceof \App\Dto\TeamSaveDto && $object->id > 0 && $existingTeam->getId() === $object->id) {
+                return;
+                // Same team being updated
             }
 
             $this->context->buildViolation($constraint->message)

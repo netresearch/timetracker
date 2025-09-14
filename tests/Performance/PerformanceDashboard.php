@@ -530,6 +530,3 @@ JAVASCRIPT;
 if (PHP_SAPI === 'cli' && isset($argv) && basename(__FILE__) === basename($argv[0])) {
     PerformanceDashboard::main($argv);
 }
-JAVASCRIPT;
-    }
-}

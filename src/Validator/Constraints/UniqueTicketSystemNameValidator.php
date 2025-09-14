@@ -46,10 +46,9 @@ class UniqueTicketSystemNameValidator extends ConstraintValidator
             $object = $this->context->getObject();
 
             // Type-safe check for TicketSystemSaveDto
-            if ($object instanceof \App\Dto\TicketSystemSaveDto && $object->id > 0) {
-                if ($existingSystem->getId() === $object->id) {
-                    return; // Same ticket system being updated
-                }
+            if ($object instanceof \App\Dto\TicketSystemSaveDto && $object->id > 0 && $existingSystem->getId() === $object->id) {
+                return;
+                // Same ticket system being updated
             }
 
             $this->context->buildViolation($constraint->message)

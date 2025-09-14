@@ -47,10 +47,9 @@ class UniqueActivityNameValidator extends ConstraintValidator
             $object = $this->context->getObject();
 
             // Type-safe check for ActivitySaveDto
-            if ($object instanceof \App\Dto\ActivitySaveDto && $object->id > 0) {
-                if ($existingActivity->getId() === $object->id) {
-                    return; // Same activity being updated
-                }
+            if ($object instanceof \App\Dto\ActivitySaveDto && $object->id > 0 && $existingActivity->getId() === $object->id) {
+                return;
+                // Same activity being updated
             }
 
             $this->context->buildViolation($constraint->message)

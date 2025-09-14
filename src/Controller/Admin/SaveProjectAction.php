@@ -51,7 +51,7 @@ final class SaveProjectAction extends BaseController
         $active = $projectSaveDto->active;
         $global = $projectSaveDto->global;
         $estimation = $this->timeCalculationService->readableToFullMinutes($projectSaveDto->estimation);
-        $billing = BillingType::from($projectSaveDto->billing); // Convert int to enum
+        $billingType = BillingType::from($projectSaveDto->billing); // Convert int to enum
         $costCenter = $projectSaveDto->cost_center;
         $offer = $projectSaveDto->offer;
         $additionalInformationFromExternal = $projectSaveDto->additionalInformationFromExternal;
@@ -112,7 +112,7 @@ final class SaveProjectAction extends BaseController
             ->setEstimation($estimation)
             ->setProjectLead($projectLead)
             ->setTechnicalLead($technicalLead)
-            ->setBilling($billing) // Use the converted enum
+            ->setBilling($billingType) // Use the converted enum
             ->setOffer($offer)
             ->setCostCenter($costCenter)
             ->setAdditionalInformationFromExternal($additionalInformationFromExternal)

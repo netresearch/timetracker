@@ -29,9 +29,9 @@ final readonly class EntryQueryService
      *
      * @throws Exception When query building fails
      */
-    public function findPaginatedEntries(InterpretationFiltersDto $filters): PaginatedEntryCollection
+    public function findPaginatedEntries(InterpretationFiltersDto $interpretationFiltersDto): PaginatedEntryCollection
     {
-        $searchArray = $this->buildSearchArray($filters);
+        $searchArray = $this->buildSearchArray($interpretationFiltersDto);
 
         $query = $this->entryRepository->queryByFilterArray($searchArray);
         // queryByFilterArray always returns Query, no need for instanceof check
@@ -49,7 +49,7 @@ final readonly class EntryQueryService
         return new PaginatedEntryCollection(
             entries: $entries,
             totalCount: $paginator->count(),
-            currentPage: $filters->page ?? 0,
+            currentPage: $interpretationFiltersDto->page ?? 0,
             maxResults: $maxResults,
         );
     }
@@ -59,14 +59,14 @@ final readonly class EntryQueryService
      *
      * @return array<string, mixed>
      */
-    private function buildSearchArray(InterpretationFiltersDto $filters): array
+    private function buildSearchArray(InterpretationFiltersDto $interpretationFiltersDto): array
     {
         // Handle legacy *_id aliases through the DTO
-        $project = $filters->project ?? $filters->project_id ?? 0;
-        $customer = $filters->customer ?? $filters->customer_id ?? 0;
-        $activity = $filters->activity ?? $filters->activity_id ?? 0;
-        $maxResults = $filters->maxResults ?? 0;
-        $page = $filters->page ?? 0;
+        $project = $interpretationFiltersDto->project ?? $interpretationFiltersDto->project_id ?? 0;
+        $customer = $interpretationFiltersDto->customer ?? $interpretationFiltersDto->customer_id ?? 0;
+        $activity = $interpretationFiltersDto->activity ?? $interpretationFiltersDto->activity_id ?? 0;
+        $maxResults = $interpretationFiltersDto->maxResults ?? 0;
+        $page = $interpretationFiltersDto->page ?? 0;
 
         // Validate and sanitize inputs
         if ($page < 0) {
@@ -94,12 +94,12 @@ final readonly class EntryQueryService
         }
 
         // Add string filters if they're valid
-        if (is_string($filters->datestart) && '' !== $filters->datestart) {
-            $searchArray['datestart'] = $filters->datestart;
+        if (is_string($interpretationFiltersDto->datestart) && '' !== $interpretationFiltersDto->datestart) {
+            $searchArray['datestart'] = $interpretationFiltersDto->datestart;
         }
 
-        if (is_string($filters->dateend) && '' !== $filters->dateend) {
-            $searchArray['dateend'] = $filters->dateend;
+        if (is_string($interpretationFiltersDto->dateend) && '' !== $interpretationFiltersDto->dateend) {
+            $searchArray['dateend'] = $interpretationFiltersDto->dateend;
         }
 
         return $searchArray;

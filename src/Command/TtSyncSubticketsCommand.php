@@ -19,24 +19,13 @@ use function count;
 use function is_scalar;
 
 #[\Symfony\Component\Console\Attribute\AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
-class TtSyncSubticketsCommand extends Command
+class TtSyncSubticketsCommand
 {
     /**
      * @throws LogicException
      */
     public function __construct(private readonly SubticketSyncService $subticketSyncService, private readonly EntityManagerInterface $entityManager)
     {
-        parent::__construct();
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     */
-    protected function configure(): void
-    {
-        $this
-            ->addArgument('project', InputArgument::OPTIONAL, 'Single project ID to update')
-        ;
     }
 
     /**
@@ -44,12 +33,13 @@ class TtSyncSubticketsCommand extends Command
      *
      * @psalm-return 0|1
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    public function __invoke(#[\Symfony\Component\Console\Attribute\Argument(name: 'project', description: 'Single project ID to update')]
+    ?string $project, OutputInterface $output): int
     {
-        $projectArg = $input->getArgument('project');
+        $projectArg = $project;
         $symfonyStyle = new SymfonyStyle($input, $output);
 
-        $projectId = is_scalar($projectArg) ? (string) $projectArg : null;
+        $projectId = is_scalar($projectArg) ? $projectArg : null;
 
         $entityRepository = $this->entityManager
             ->getRepository(\App\Entity\Project::class)
@@ -81,7 +71,7 @@ class TtSyncSubticketsCommand extends Command
             $projectId = $projectEntity->getId() ?? 0;
             $projectName = $projectEntity->getName();
             $output->writeln(
-                'Syncing ' . (string) $projectId . ' ' . $projectName,
+                'Syncing ' . $projectId . ' ' . $projectName,
                 OutputInterface::VERBOSITY_VERBOSE,
             );
             try {

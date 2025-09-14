@@ -59,16 +59,14 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
     }
 
     /**
-     * Returns the filters of the extension.
+     * Returns a list of filters to add to the existing list.
      *
-     * @return \Twig\TwigFilter[]
-     *
-     * @psalm-return array{nr_array_translator: \Twig\TwigFilter}
+     * @return array<\Twig\TwigFilter>
      */
     public function getFilters(): array
     {
         return [
-            'nr_array_translator' => new \Twig\TwigFilter('nr_array_translator', $this->filterArray(...)),
+            new \Twig\TwigFilter('nr_array_translator', [$this, 'filterArray']),
         ];
     }
 
@@ -96,10 +94,12 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
 
         foreach ($data as $rowKey => $row) {
             // Ensure $row is an array before checking keys
-            if (!is_array($row) || !array_key_exists($arrayKey, $row)) {
+            if (!is_array($row)) {
                 continue;
             }
-
+            if (!array_key_exists($arrayKey, $row)) {
+                continue;
+            }
             // Ensure the nested element is iterable
             if (!is_iterable($row[$arrayKey])) {
                 continue;
@@ -107,17 +107,21 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
 
             foreach ($row[$arrayKey] as $key => $value) {
                 // Ensure key is string and in the allowed keys
-                if (!is_string($key) || !in_array($key, $keys, true)) {
+                if (!is_string($key)) {
                     continue;
                 }
-
+                if (!in_array($key, $keys, true)) {
+                    continue;
+                }
                 // Ensure value is string before translation
                 if (!is_string($value)) {
                     continue;
                 }
-
                 // Ensure we have array access to the nested structure
-                if (!is_array($data[$rowKey] ?? null) || !is_array($data[$rowKey][$arrayKey] ?? null)) {
+                if (!is_array($data[$rowKey] ?? null)) {
+                    continue;
+                }
+                if (!is_array($data[$rowKey][$arrayKey] ?? null)) {
                     continue;
                 }
 

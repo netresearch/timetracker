@@ -52,6 +52,7 @@ class ProjectRepository extends ServiceEntityRepository
             if (!is_array($customerData)) {
                 continue;
             }
+
             /** @var array<string, mixed> $customerData */
             $customerId = ArrayTypeHelper::getInt($customerData, 'id');
             if (null === $customerId) {
@@ -76,7 +77,7 @@ class ProjectRepository extends ServiceEntityRepository
                         'id' => $globalProject->getId(),
                         'name' => $globalProject->getName(),
                         'jiraId' => $globalProject->getJiraId(),
-                        'active' => (bool) $globalProject->getActive(),
+                        'active' => $globalProject->getActive(),
                     ];
                 }
             }
@@ -107,7 +108,7 @@ class ProjectRepository extends ServiceEntityRepository
             if ($globalProject instanceof Project) {
                 $projects['all'][] = [
                     'id' => (int) $globalProject->getId(),
-                    'name' => (string) $globalProject->getName(),
+                    'name' => $globalProject->getName(),
                     'jiraId' => $globalProject->getJiraId(),
                 ];
             }
@@ -172,7 +173,7 @@ class ProjectRepository extends ServiceEntityRepository
 
         assert(is_array($result));
         // All results are Project entities due to the repository context
-        assert(array_is_list($result) || empty($result));
+        assert(array_is_list($result) || $result === []);
 
         return $result;
     }

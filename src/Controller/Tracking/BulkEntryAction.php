@@ -43,7 +43,7 @@ final class BulkEntryAction extends BaseTrackingController
         }
 
         // Create DTO from request data
-        $dto = new BulkEntryDto(
+        $bulkEntryDto = new BulkEntryDto(
             preset: (int) $request->request->get('preset', 0),
             startdate: (string) $request->request->get('startdate', ''),
             enddate: (string) $request->request->get('enddate', ''),
@@ -55,9 +55,9 @@ final class BulkEntryAction extends BaseTrackingController
         );
 
         // Validate DTO
-        $violations = $this->validator->validate($dto);
-        if (count($violations) > 0) {
-            $errorMessage = (string) $violations->get(0)->getMessage();
+        $constraintViolationList = $this->validator->validate($bulkEntryDto);
+        if (count($constraintViolationList) > 0) {
+            $errorMessage = (string) $constraintViolationList->get(0)->getMessage();
             $response = new Response($this->translator->trans($errorMessage));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
 
@@ -65,12 +65,12 @@ final class BulkEntryAction extends BaseTrackingController
         }
 
         try {
-            $this->logData(['preset' => $dto->preset, 'startdate' => $dto->startdate, 'enddate' => $dto->enddate], true);
+            $this->logData(['preset' => $bulkEntryDto->preset, 'startdate' => $bulkEntryDto->startdate, 'enddate' => $bulkEntryDto->enddate], true);
 
             $doctrine = $this->managerRegistry;
             $contractHoursArray = [];
 
-            $preset = $doctrine->getRepository(Preset::class)->find($dto->preset);
+            $preset = $doctrine->getRepository(Preset::class)->find($bulkEntryDto->preset);
             if (!$preset instanceof Preset) {
                 throw new Exception('Preset not found');
             }
@@ -81,7 +81,7 @@ final class BulkEntryAction extends BaseTrackingController
             $project = $doctrine->getRepository(Project::class)->find($preset->getProjectId());
             $activity = $doctrine->getRepository(Activity::class)->find($preset->getActivityId());
 
-            if ($dto->isUseContract()) {
+            if ($bulkEntryDto->isUseContract()) {
                 $contracts = $doctrine->getRepository(Contract::class)
                     ->findBy(['user' => $this->getUserId($request)], ['start' => 'ASC'])
                 ;
@@ -93,7 +93,7 @@ final class BulkEntryAction extends BaseTrackingController
 
                     $contractHoursArray[] = [
                         'start' => $contract->getStart(),
-                        'stop' => $contract->getEnd() ?? new DateTime($dto->enddate ?: 'now'),
+                        'stop' => $contract->getEnd() ?? new DateTime($bulkEntryDto->enddate ?: 'now'),
                         7 => $contract->getHours0(),
                         1 => $contract->getHours1(),
                         2 => $contract->getHours2(),
@@ -115,8 +115,8 @@ final class BulkEntryAction extends BaseTrackingController
             }
 
             $em = $doctrine->getManager();
-            $date = new DateTime($dto->startdate ?: 'now');
-            $endDate = new DateTime($dto->enddate ?: 'now');
+            $date = new DateTime($bulkEntryDto->startdate ?: 'now');
+            $endDate = new DateTime($bulkEntryDto->enddate ?: 'now');
 
             $c = 0;
             $weekend = ['0', '6', '7'];
@@ -130,12 +130,12 @@ final class BulkEntryAction extends BaseTrackingController
                     break;
                 }
 
-                if ($dto->isSkipWeekend() && in_array($date->format('w'), $weekend, true)) {
+                if ($bulkEntryDto->isSkipWeekend() && in_array($date->format('w'), $weekend, true)) {
                     $date->add(new DateInterval('P1D'));
                     continue;
                 }
 
-                if ($dto->isSkipHolidays()) {
+                if ($bulkEntryDto->isSkipHolidays()) {
                     if (in_array($date->format('m-d'), $regular_holidays, true)) {
                         $date->add(new DateInterval('P1D'));
                         continue;
@@ -147,7 +147,7 @@ final class BulkEntryAction extends BaseTrackingController
                     }
                 }
 
-                if ($dto->isUseContract()) {
+                if ($bulkEntryDto->isUseContract()) {
                     foreach ($contractHoursArray as $contractHourArray) {
                         $workTime = 0;
                         if ($contractHourArray['start'] <= $date && $contractHourArray['stop'] >= $date) {
@@ -167,10 +167,10 @@ final class BulkEntryAction extends BaseTrackingController
                     $minutesPart = (int) round(60 * ((float) ('0.' . $fractionPart)));
                     $hoursToAdd = new DateInterval(sprintf('PT%dH%dM', $hoursPart, $minutesPart));
                     $startTime = new DateTime('08:00:00');
-                    $endTime = (new DateTime('08:00:00'))->add($hoursToAdd);
+                    $endTime = new DateTime('08:00:00')->add($hoursToAdd);
                 } else {
-                    $startTime = new DateTime($dto->starttime ?: '00:00:00');
-                    $endTime = new DateTime($dto->endtime ?: '00:00:00');
+                    $startTime = new DateTime($bulkEntryDto->starttime ?: '00:00:00');
+                    $endTime = new DateTime($bulkEntryDto->endtime ?: '00:00:00');
                 }
 
                 $entry = new Entry();
@@ -206,7 +206,7 @@ final class BulkEntryAction extends BaseTrackingController
             } while ($date <= $endDate);
 
             $responseContent = $this->translator->trans('%num% entries have been added', ['%num%' => $numAdded]);
-            if ([] !== $contractHoursArray && (new DateTime($dto->startdate ?: 'now')) < $contractHoursArray[0]['start']) {
+            if ([] !== $contractHoursArray && (new DateTime($bulkEntryDto->startdate ?: 'now')) < $contractHoursArray[0]['start']) {
                 $responseContent .= '<br/>' . $this->translator->trans('Contract is valid from %date%.', ['%date%' => $contractHoursArray[0]['start']->format('d.m.Y')]);
             }
 

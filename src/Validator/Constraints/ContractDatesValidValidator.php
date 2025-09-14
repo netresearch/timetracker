@@ -29,7 +29,7 @@ class ContractDatesValidValidator extends ConstraintValidator
         $start = $value->start;
         $end = $value->end;
 
-        if (empty($start) || null === $end || '' === $end) {
+        if ($start === '' || $start === '0' || null === $end || '' === $end) {
             return; // Other validators will handle empty values
         }
 

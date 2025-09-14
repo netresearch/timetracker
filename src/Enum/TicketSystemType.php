@@ -116,7 +116,7 @@ enum TicketSystemType: string
      */
     public static function withTimeTracking(): array
     {
-        return array_filter(self::cases(), static fn (self $type) => $type->supportsTimeTracking());
+        return array_filter(self::cases(), static fn (self $type): bool => $type->supportsTimeTracking());
     }
 
     /**

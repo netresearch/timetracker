@@ -118,7 +118,7 @@ abstract class BaseTrackingController extends BaseController
             ];
         }
 
-        if (0 === count($normalizedEntries)) {
+        if ([] === $normalizedEntries) {
             return;
         }
 
@@ -127,9 +127,11 @@ abstract class BaseTrackingController extends BaseController
             $normalizedEntries,
             static fn (array $a, array $b): int => $a['start'] <=> $b['start'],
         );
+        // Calculate overlaps
+        $counter = count($normalizedEntries);
 
         // Calculate overlaps
-        for ($i = 0; $i < count($normalizedEntries); ++$i) {
+        for ($i = 0; $i < $counter; ++$i) {
             for ($j = $i + 1; $j < count($normalizedEntries); ++$j) {
                 if ($normalizedEntries[$i]['end'] > $normalizedEntries[$j]['start']) {
                     // Mark both as overlapping
@@ -159,11 +161,11 @@ abstract class BaseTrackingController extends BaseController
     /**
      * Add a rendering class to an entry.
      */
-    private function addEntryClass(int $entryId, EntryClass $class): void
+    private function addEntryClass(int $entryId, EntryClass $entryClass): void
     {
         $entry = $this->managerRegistry->getRepository(Entry::class)->find($entryId);
         if ($entry instanceof Entry) {
-            $entry->addClass($class);
+            $entry->addClass($entryClass);
             $this->managerRegistry->getManager()->flush();
         }
     }
@@ -219,6 +221,7 @@ abstract class BaseTrackingController extends BaseController
                     'error' => $exception->getMessage(),
                 ]);
             }
+
             throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0, null);
         }
     }
@@ -361,9 +364,9 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
-        $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-        $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
+        /** @var \App\Repository\TicketSystemRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(TicketSystem::class);
+        $ticketSystem = $objectRepository->find($project->getInternalJiraTicketSystem());
 
         if (!$ticketSystem instanceof TicketSystem) {
             return;
@@ -423,10 +426,10 @@ abstract class BaseTrackingController extends BaseController
             throw new Exception('Entry start time must be before end time');
         }
 
-        $maxDuration = new DateInterval('PT23H59M');
-        $duration = $start->diff($end);
+        new DateInterval('PT23H59M');
+        $dateInterval = $start->diff($end);
 
-        if ($duration->days > 0 || $duration->h > 23) {
+        if ($dateInterval->days > 0 || $dateInterval->h > 23) {
             throw new Exception('Entry duration cannot exceed 24 hours');
         }
     }

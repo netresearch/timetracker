@@ -36,17 +36,15 @@ use function sprintf;
 class OptimizedEntryRepository extends ServiceEntityRepository
 {
     private const string CACHE_PREFIX = 'entry_repo_';
-    private const int CACHE_TTL = 300; // 5 minutes
 
-    private ?CacheItemPoolInterface $cache = null;
+    private const int CACHE_TTL = 300;
 
     public function __construct(
         ManagerRegistry $managerRegistry,
         private readonly ClockInterface $clock,
-        ?CacheItemPoolInterface $cache = null,
+        private readonly ?CacheItemPoolInterface $cacheItemPool = null,
     ) {
         parent::__construct($managerRegistry, Entry::class);
-        $this->cache = $cache;
     }
 
     /**
@@ -58,7 +56,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId(), $days);
 
-        if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
+        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult) && array_is_list($cachedResult));
 
             return $cachedResult;
@@ -66,7 +64,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $fromDate = $this->calculateFromDate($days);
 
-        $qb = $this->createOptimizedQueryBuilder('e')
+        $queryBuilder = $this->createOptimizedQueryBuilder('e')
             ->where('e.user = :user')
             ->andWhere('e.day >= :fromDate')
             ->setParameter('user', $user)
@@ -75,7 +73,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->addOrderBy('e.start', 'ASC')
         ;
 
-        $result = $qb->getQuery()->getResult();
+        $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
 
@@ -99,7 +97,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         ?int $customerId = null,
         ?array $arSort = null,
     ): array {
-        $qb = $this->createOptimizedQueryBuilder('e')
+        $queryBuilder = $this->createOptimizedQueryBuilder('e')
             ->where('e.user = :user')
             ->andWhere($this->generateYearExpression('e.day') . ' = :year')
             ->setParameter('user', $userId)
@@ -107,26 +105,26 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         ;
 
         if (null !== $month) {
-            $qb->andWhere($this->generateMonthExpression('e.day') . ' = :month')
+            $queryBuilder->andWhere($this->generateMonthExpression('e.day') . ' = :month')
                 ->setParameter('month', $month)
             ;
         }
 
         if (null !== $projectId) {
-            $qb->andWhere('e.project = :project')
+            $queryBuilder->andWhere('e.project = :project')
                 ->setParameter('project', $projectId)
             ;
         }
 
         if (null !== $customerId) {
-            $qb->andWhere('e.customer = :customer')
+            $queryBuilder->andWhere('e.customer = :customer')
                 ->setParameter('customer', $customerId)
             ;
         }
 
-        $this->applySort($qb, $arSort);
+        $this->applySort($queryBuilder, $arSort);
 
-        $result = $qb->getQuery()->getResult();
+        $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
 
@@ -147,14 +145,14 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
 
-        if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
+        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
             assert(array_is_list($cachedResult) || array_key_exists('customer', $cachedResult));
 
             return $cachedResult;
         }
 
-        $conn = $this->getEntityManager()->getConnection();
+        $connection = $this->getEntityManager()->getConnection();
 
         // Build database-agnostic project name concatenation
         $projectNameExpr = $this->generateConcatExpression('p.name', "' (Est: '", 'p.estimation', "')'");
@@ -198,7 +196,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             'ticket' => $entry->getTicket(),
         ];
 
-        $result = $conn->executeQuery($sql, $params)->fetchAssociative();
+        $result = $connection->executeQuery($sql, $params)->fetchAssociative();
 
         $data = $this->formatSummaryData($result ?: null, $entry);
 
@@ -216,7 +214,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
 
-        if ($this->cache && $cachedResult = $this->getCached($cacheKey)) {
+        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
             assert(isset($cachedResult['duration'], $cachedResult['count']));
             assert(is_int($cachedResult['duration']) && is_int($cachedResult['count']));
@@ -224,15 +222,15 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             return $cachedResult;
         }
 
-        $qb = $this->createQueryBuilder('e')
+        $queryBuilder = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, SUM(e.duration) as duration')
             ->where('e.user = :user')
             ->setParameter('user', $userId)
         ;
 
-        $this->applyPeriodFilter($qb, $period);
+        $this->applyPeriodFilter($queryBuilder, $period);
 
-        $result = $qb->getQuery()->getSingleResult();
+        $result = $queryBuilder->getQuery()->getSingleResult();
 
         if (!is_array($result)) {
             $result = ['duration' => 0, 'count' => 0];
@@ -257,62 +255,62 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     public function findByFilterArrayOptimized(array $filter = []): array
     {
-        $qb = $this->createOptimizedQueryBuilder('e');
+        $queryBuilder = $this->createOptimizedQueryBuilder('e');
 
         // Apply filters with index-aware ordering
         if (isset($filter['user_id'])) {
-            $qb->andWhere('e.user = :user')
+            $queryBuilder->andWhere('e.user = :user')
                 ->setParameter('user', $filter['user_id'])
             ;
         }
 
         if (isset($filter['customer_id'])) {
-            $qb->andWhere('e.customer = :customer')
+            $queryBuilder->andWhere('e.customer = :customer')
                 ->setParameter('customer', $filter['customer_id'])
             ;
         }
 
         if (isset($filter['project_id'])) {
-            $qb->andWhere('e.project = :project')
+            $queryBuilder->andWhere('e.project = :project')
                 ->setParameter('project', $filter['project_id'])
             ;
         }
 
         if (isset($filter['activity_id'])) {
-            $qb->andWhere('e.activity = :activity')
+            $queryBuilder->andWhere('e.activity = :activity')
                 ->setParameter('activity', $filter['activity_id'])
             ;
         }
 
         if (isset($filter['date_from'])) {
-            $qb->andWhere('e.day >= :date_from')
+            $queryBuilder->andWhere('e.day >= :date_from')
                 ->setParameter('date_from', $filter['date_from'])
             ;
         }
 
         if (isset($filter['date_to'])) {
-            $qb->andWhere('e.day <= :date_to')
+            $queryBuilder->andWhere('e.day <= :date_to')
                 ->setParameter('date_to', $filter['date_to'])
             ;
         }
 
         if (isset($filter['ticket'])) {
-            $qb->andWhere('e.ticket = :ticket')
+            $queryBuilder->andWhere('e.ticket = :ticket')
                 ->setParameter('ticket', $filter['ticket'])
             ;
         }
 
         // Optimize sorting for indexed columns
-        $qb->orderBy('e.day', 'DESC')
+        $queryBuilder->orderBy('e.day', 'DESC')
             ->addOrderBy('e.start', 'DESC')
         ;
 
         // Add limit if specified
         if (isset($filter['limit'])) {
-            $qb->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
+            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
         }
 
-        $result = $qb->getQuery()->getResult();
+        $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
 
@@ -336,13 +334,13 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Applies period filter to query builder.
      */
-    private function applyPeriodFilter(QueryBuilder $qb, Period $period): void
+    private function applyPeriodFilter(QueryBuilder $queryBuilder, Period $period): void
     {
         $today = $this->clock->today();
 
         switch ($period) {
             case Period::DAY:
-                $qb->andWhere('e.day = :today')
+                $queryBuilder->andWhere('e.day = :today')
                     ->setParameter('today', $today)
                 ;
                 break;
@@ -353,14 +351,14 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 $endOfWeek = clone $startOfWeek;
                 $endOfWeek = $endOfWeek->modify('+6 days') ?: $endOfWeek;
 
-                $qb->andWhere('e.day BETWEEN :start AND :end')
+                $queryBuilder->andWhere('e.day BETWEEN :start AND :end')
                     ->setParameter('start', $startOfWeek)
                     ->setParameter('end', $endOfWeek)
                 ;
                 break;
 
             case Period::MONTH:
-                $qb->andWhere($this->generateYearExpression('e.day') . ' = :year')
+                $queryBuilder->andWhere($this->generateYearExpression('e.day') . ' = :year')
                     ->andWhere($this->generateMonthExpression('e.day') . ' = :month')
                     ->setParameter('year', $today->format('Y'))
                     ->setParameter('month', $today->format('m'))
@@ -374,10 +372,10 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, string>|null $sort
      */
-    private function applySort(QueryBuilder $qb, ?array $sort): void
+    private function applySort(QueryBuilder $queryBuilder, ?array $sort): void
     {
-        if (empty($sort)) {
-            $qb->orderBy('e.day', 'DESC')
+        if ($sort === null || $sort === []) {
+            $queryBuilder->orderBy('e.day', 'DESC')
                 ->addOrderBy('e.start', 'DESC')
             ;
 
@@ -386,7 +384,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         foreach ($sort as $field => $direction) {
             $direction = 'ASC' === strtoupper($direction) ? 'ASC' : 'DESC';
-            $qb->addOrderBy('e.' . $field, $direction);
+            $queryBuilder->addOrderBy('e.' . $field, $direction);
         }
     }
 
@@ -509,10 +507,10 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
         if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
-            return "YEAR({$field})";
+            return sprintf('YEAR(%s)', $field);
         }
 
-        return "strftime('%Y', {$field})";
+        return sprintf("strftime('%%Y', %s)", $field);
     }
 
     /**
@@ -523,10 +521,10 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
         if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
-            return "MONTH({$field})";
+            return sprintf('MONTH(%s)', $field);
         }
 
-        return "strftime('%m', {$field})";
+        return sprintf("strftime('%%m', %s)", $field);
     }
 
     /**
@@ -549,11 +547,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function getCached(string $key): mixed
     {
-        if (!$this->cache) {
+        if (!$this->cacheItemPool) {
             return null;
         }
 
-        $item = $this->cache->getItem($key);
+        $item = $this->cacheItemPool->getItem($key);
 
         return $item->isHit() ? $item->get() : null;
     }
@@ -563,14 +561,14 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function setCached(string $key, mixed $data, int $ttl = self::CACHE_TTL): void
     {
-        if (!$this->cache) {
+        if (!$this->cacheItemPool) {
             return;
         }
 
-        $item = $this->cache->getItem($key);
+        $item = $this->cacheItemPool->getItem($key);
         $item->set($data);
         $item->expiresAfter($ttl);
 
-        $this->cache->save($item);
+        $this->cacheItemPool->save($item);
     }
 }

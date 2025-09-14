@@ -21,14 +21,14 @@ class TwigCsvEscapingExtension extends AbstractExtension
     }
 
     /**
-     * @return \Twig\TwigFilter[]
+     * Returns a list of filters to add to the existing list.
      *
-     * @psalm-return list{\Twig\TwigFilter}
+     * @return array<\Twig\TwigFilter>
      */
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
-            new \Twig\TwigFilter('csv_escape', $this->csvEscape(...)),
+            new \Twig\TwigFilter('csv_escape', [$this, 'csvEscape']),
         ];
     }
 

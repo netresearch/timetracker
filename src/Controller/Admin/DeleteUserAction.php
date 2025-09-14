@@ -22,6 +22,7 @@ final class DeleteUserAction extends BaseController
         if (false === $this->isPl($request)) {
             return $this->getFailedAuthorizationResponse();
         }
+
         try {
             $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;

@@ -36,17 +36,17 @@ final class SaveEntryAction extends BaseTrackingController
     public function __invoke(
         Request $request,
         #[MapRequestPayload]
-        EntrySaveDto $dto,
+        EntrySaveDto $entrySaveDto,
     ): Response|JsonResponse|Error|RedirectResponse {
         if (!$this->checkLogin($request)) {
             return $this->redirectToRoute('_login');
         }
 
         $userId = $this->getUserId($request);
-        /** @var \App\Repository\UserRepository $userRepo */
-        $userRepo = $this->managerRegistry->getRepository(User::class);
+        /** @var \App\Repository\UserRepository $objectRepository */
+        $objectRepository = $this->managerRegistry->getRepository(User::class);
 
-        $user = $userRepo->findOneById($userId);
+        $user = $objectRepository->findOneById($userId);
 
         if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
@@ -55,10 +55,11 @@ final class SaveEntryAction extends BaseTrackingController
         /** @var \App\Repository\CustomerRepository $customerRepo */
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);
 
-        $customerId = $dto->getCustomerId();
+        $customerId = $entrySaveDto->getCustomerId();
         if (null === $customerId) {
             return new JsonResponse(['error' => 'Customer ID is required'], Response::HTTP_BAD_REQUEST);
         }
+
         $customer = $customerRepo->findOneById($customerId);
 
         if (!$customer instanceof Customer) {
@@ -68,10 +69,11 @@ final class SaveEntryAction extends BaseTrackingController
         /** @var \App\Repository\ProjectRepository $projectRepo */
         $projectRepo = $this->managerRegistry->getRepository(Project::class);
 
-        $projectId = $dto->getProjectId();
+        $projectId = $entrySaveDto->getProjectId();
         if (null === $projectId) {
             return new JsonResponse(['error' => 'Project ID is required'], Response::HTTP_BAD_REQUEST);
         }
+
         $project = $projectRepo->findOneById($projectId);
 
         if (!$project instanceof Project) {
@@ -81,29 +83,30 @@ final class SaveEntryAction extends BaseTrackingController
         /** @var \App\Repository\ActivityRepository $activityRepo */
         $activityRepo = $this->managerRegistry->getRepository(Activity::class);
 
-        $activityId = $dto->getActivityId();
+        $activityId = $entrySaveDto->getActivityId();
         if (null === $activityId) {
             return new JsonResponse(['error' => 'Activity ID is required'], Response::HTTP_BAD_REQUEST);
         }
+
         $activity = $activityRepo->findOneById($activityId);
 
         if (!$activity instanceof Activity) {
             return new Error('Given activity does not exist.', Response::HTTP_BAD_REQUEST);
         }
 
-        $entryId = $dto->id;
+        $entryId = $entrySaveDto->id;
 
         // Should we check if the ticket belongs to the project
-        if (!empty($dto->ticket)) {
+        if ($entrySaveDto->ticket !== '' && $entrySaveDto->ticket !== '0') {
             // Use project's jira_id as the expected prefix if it exists
             $prefix = $project->getJiraId();
 
             if (null !== $prefix && '' !== $prefix) {
-                if (!str_starts_with($dto->ticket, $prefix)) {
+                if (!str_starts_with($entrySaveDto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
                 }
 
-                if (!str_contains($dto->ticket, '-')) {
+                if (!str_contains($entrySaveDto->ticket, '-')) {
                     return new Error('Given ticket does not have a valid format.', Response::HTTP_BAD_REQUEST);
                 }
             }
@@ -133,8 +136,8 @@ final class SaveEntryAction extends BaseTrackingController
         $entry->setClass(EntryClass::DAYBREAK);
 
         try {
-            if (!empty($dto->date)) {
-                $dayDate = new DateTime($dto->date);
+            if ($entrySaveDto->date !== '' && $entrySaveDto->date !== '0') {
+                $dayDate = new DateTime($entrySaveDto->date);
                 $entry->setDay($dayDate);
             }
         } catch (Exception $exception) {
@@ -142,8 +145,8 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         try {
-            if (!empty($dto->start)) {
-                $startTime = new DateTime($dto->start);
+            if ($entrySaveDto->start !== '' && $entrySaveDto->start !== '0') {
+                $startTime = new DateTime($entrySaveDto->start);
                 $entry->setStart($startTime);
             }
         } catch (Exception $exception) {
@@ -151,20 +154,20 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         try {
-            if (!empty($dto->end)) {
-                $endTime = new DateTime($dto->end);
+            if ($entrySaveDto->end !== '' && $entrySaveDto->end !== '0') {
+                $endTime = new DateTime($entrySaveDto->end);
                 $entry->setEnd($endTime);
             }
-        } catch (Exception $exception) {
+        } catch (Exception) {
             return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
-        if (!empty($dto->description)) {
-            $entry->setDescription($dto->description);
+        if ($entrySaveDto->description !== '' && $entrySaveDto->description !== '0') {
+            $entry->setDescription($entrySaveDto->description);
         }
 
-        if (!empty($dto->ticket)) {
-            $entry->setTicket($dto->ticket);
+        if ($entrySaveDto->ticket !== '' && $entrySaveDto->ticket !== '0') {
+            $entry->setTicket($entrySaveDto->ticket);
         }
 
         if (!$project->getActive()) {
@@ -225,16 +228,17 @@ final class SaveEntryAction extends BaseTrackingController
             ];
 
             // Include ticket and description if present
-            if (!empty($dto->ticket)) {
+            if ($entrySaveDto->ticket !== '' && $entrySaveDto->ticket !== '0') {
                 $data['result']['ticket'] = $entry->getTicket();
             }
-            if (!empty($dto->description)) {
+
+            if ($entrySaveDto->description !== '' && $entrySaveDto->description !== '0') {
                 $data['result']['description'] = $entry->getDescription();
             }
 
             return new JsonResponse($data);
-        } catch (Throwable $exception) {
-            return new Error('Could not save entry: ' . $exception->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (Throwable $throwable) {
+            return new Error('Could not save entry: ' . $throwable->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

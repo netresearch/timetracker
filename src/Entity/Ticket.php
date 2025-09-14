@@ -45,18 +45,20 @@ class Ticket extends Base
      * @param string $parentTicketNumber Parent ticket number (default: '')
      */
     public function __construct(
-        int $ticketSystemId,
-        string $ticketNumber,
-        string $name,
-        int $estimatedDuration = 0,
-        string $parentTicketNumber = '',
-    ) {
-        $this->ticketSystemId = $ticketSystemId;
-        $this->ticketNumber = $ticketNumber;
-        $this->name = $name;
-        $this->estimatedDuration = $estimatedDuration;
-        $this->parentTicketNumber = $parentTicketNumber;
+        #[ORM\Column(name: 'ticket_system_id', type: 'integer')]
+        private int $ticketSystemId,
+        #[ORM\Column(name: 'ticket_number', type: 'string', length: 31)]
+        private string $ticketNumber,
+        #[ORM\Column(type: 'string', length: 127)]
+        private string $name,
+        #[ORM\Column(type: 'integer', name: 'estimation')]
+        private int $estimatedDuration = 0,
+        #[ORM\Column(type: 'string', name: 'parent', length: 31)]
+        private string $parentTicketNumber = ''
+    )
+    {
     }
+
     /**
      * @var int
      */
@@ -69,36 +71,6 @@ class Ticket extends Base
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
-
-    /**
-     * @var int
-     */
-    #[ORM\Column(name: 'ticket_system_id', type: 'integer')]
-    private $ticketSystemId;
-
-    /**
-     * @var string
-     */
-    #[ORM\Column(name: 'ticket_number', type: 'string', length: 31)]
-    private $ticketNumber;
-
-    /**
-     * @var string
-     */
-    #[ORM\Column(type: 'string', length: 127)]
-    private $name;
-
-    /**
-     * @var int
-     */
-    #[ORM\Column(type: 'integer', name: 'estimation')]
-    private $estimatedDuration;
-
-    /**
-     * @var string
-     */
-    #[ORM\Column(type: 'string', name: 'parent', length: 31)]
-    private $parentTicketNumber;
 
     /**
      * Sets the estimated duration.

@@ -32,16 +32,16 @@ class ExceptionSubscriber implements EventSubscriberInterface
         ];
     }
 
-    public function onKernelException(ExceptionEvent $event): void
+    public function onKernelException(ExceptionEvent $exceptionEvent): void
     {
-        $exception = $event->getThrowable();
-        $request = $event->getRequest();
+        $throwable = $exceptionEvent->getThrowable();
+        $request = $exceptionEvent->getRequest();
 
         // Log the exception
-        $this->logException($exception, $request->getPathInfo());
+        $this->logException($throwable, $request->getPathInfo());
 
         // Determine if we should return JSON response
-        $acceptsJson = str_contains($request->headers->get('Accept', ''), 'application/json')
+        $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
                       || str_contains($request->getPathInfo(), '/api/');
 
         if (!$acceptsJson) {
@@ -50,32 +50,32 @@ class ExceptionSubscriber implements EventSubscriberInterface
         }
 
         // Convert exception to appropriate response
-        $response = $this->createResponseFromException($exception);
-        $event->setResponse($response);
+        $jsonResponse = $this->createResponseFromException($throwable);
+        $exceptionEvent->setResponse($jsonResponse);
     }
 
-    private function createResponseFromException(Throwable $exception): JsonResponse
+    private function createResponseFromException(Throwable $throwable): JsonResponse
     {
         // Handle JIRA API exceptions
-        if ($exception instanceof JiraApiUnauthorizedException) {
+        if ($throwable instanceof JiraApiUnauthorizedException) {
             return new JsonResponse([
                 'error' => 'JIRA authentication required',
-                'message' => $exception->getMessage(),
-                'redirect_url' => $exception->getRedirectUrl(),
-            ], 401);
+                'message' => $throwable->getMessage(),
+                'redirect_url' => $throwable->getRedirectUrl(),
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
         }
 
-        if ($exception instanceof JiraApiException) {
+        if ($throwable instanceof JiraApiException) {
             return new JsonResponse([
                 'error' => 'JIRA API error',
-                'message' => $exception->getMessage(),
-            ], 502);
+                'message' => $throwable->getMessage(),
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_GATEWAY);
         }
 
         // Handle HTTP exceptions
-        if ($exception instanceof HttpExceptionInterface) {
-            $statusCode = $exception->getStatusCode();
-            $message = $exception->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
+        if ($throwable instanceof HttpExceptionInterface) {
+            $statusCode = $throwable->getStatusCode();
+            $message = $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
 
             return new JsonResponse([
                 'error' => $this->getErrorTypeForStatusCode($statusCode),
@@ -87,19 +87,19 @@ class ExceptionSubscriber implements EventSubscriberInterface
         if ('dev' === $this->environment) {
             return new JsonResponse([
                 'error' => 'Internal server error',
-                'message' => $exception->getMessage(),
-                'exception' => $exception::class,
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString(),
-            ], 500);
+                'message' => $throwable->getMessage(),
+                'exception' => $throwable::class,
+                'file' => $throwable->getFile(),
+                'line' => $throwable->getLine(),
+                'trace' => $throwable->getTraceAsString(),
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         // Production mode - hide internal details
         return new JsonResponse([
             'error' => 'Internal server error',
             'message' => 'An unexpected error occurred. Please try again later.',
-        ], 500);
+        ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     private function getErrorTypeForStatusCode(int $statusCode): string
@@ -140,23 +140,23 @@ class ExceptionSubscriber implements EventSubscriberInterface
         };
     }
 
-    private function logException(Throwable $exception, string $path): void
+    private function logException(Throwable $throwable, string $path): void
     {
-        if (!$this->logger) {
+        if (!$this->logger instanceof \Psr\Log\LoggerInterface) {
             return;
         }
 
         $context = [
-            'exception' => $exception::class,
-            'message' => $exception->getMessage(),
+            'exception' => $throwable::class,
+            'message' => $throwable->getMessage(),
             'path' => $path,
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
+            'file' => $throwable->getFile(),
+            'line' => $throwable->getLine(),
         ];
 
         // Determine log level based on exception type
-        if ($exception instanceof HttpExceptionInterface) {
-            $statusCode = $exception->getStatusCode();
+        if ($throwable instanceof HttpExceptionInterface) {
+            $statusCode = $throwable->getStatusCode();
             if ($statusCode >= 500) {
                 $this->logger->error('Server error occurred', $context);
             } elseif ($statusCode >= 400) {

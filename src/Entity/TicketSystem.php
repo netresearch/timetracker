@@ -141,11 +141,7 @@ class TicketSystem extends Base
      */
     public function setType(TicketSystemType|string $type): static
     {
-        if (is_string($type)) {
-            $this->type = TicketSystemType::from($type);
-        } else {
-            $this->type = $type;
-        }
+        $this->type = is_string($type) ? TicketSystemType::from($type) : $type;
 
         return $this;
     }

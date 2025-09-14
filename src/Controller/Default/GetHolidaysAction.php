@@ -50,10 +50,11 @@ final class GetHolidaysAction extends BaseController
             $sql = "SELECT name, day FROM holidays WHERE strftime('%Y', day) = ? AND strftime('%m', day) = ? ORDER BY day ASC";
         }
 
-        $stmt = $connection->prepare($sql);
-        $stmt->bindValue(1, $filterYear);
-        $stmt->bindValue(2, sprintf('%02d', $filterMonth));
-        $result = $stmt->executeQuery()->fetchAllAssociative();
+        $statement = $connection->prepare($sql);
+        $statement->bindValue(1, $filterYear);
+        $statement->bindValue(2, sprintf('%02d', $filterMonth));
+
+        $result = $statement->executeQuery()->fetchAllAssociative();
 
         // Transform to expected format
         $data = [];

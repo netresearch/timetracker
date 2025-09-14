@@ -85,7 +85,7 @@ final readonly class EntrySaveDto
      */
     public function getDateAsDateTime(): ?DateTimeInterface
     {
-        if (empty($this->date)) {
+        if ($this->date === '' || $this->date === '0') {
             return null;
         }
 
@@ -101,7 +101,7 @@ final readonly class EntrySaveDto
      */
     public function getStartAsDateTime(): ?DateTimeInterface
     {
-        if (empty($this->start)) {
+        if ($this->start === '' || $this->start === '0') {
             return null;
         }
 
@@ -121,7 +121,7 @@ final readonly class EntrySaveDto
      */
     public function getEndAsDateTime(): ?DateTimeInterface
     {
-        if (empty($this->end)) {
+        if ($this->end === '' || $this->end === '0') {
             return null;
         }
 
@@ -140,13 +140,13 @@ final readonly class EntrySaveDto
      * @throws Exception
      */
     #[Assert\Callback]
-    public function validateTimeRange(ExecutionContextInterface $context): void
+    public function validateTimeRange(ExecutionContextInterface $executionContext): void
     {
         $start = $this->getStartAsDateTime();
         $end = $this->getEndAsDateTime();
 
         if ($start && $end && $start >= $end) {
-            $context->buildViolation('Start time must be before end time')
+            $executionContext->buildViolation('Start time must be before end time')
                 ->atPath('end')
                 ->addViolation()
             ;

@@ -55,12 +55,12 @@ final class ExportAction extends BaseController
 
         // Validate month parameter
         if ($exportQueryDto->month < 0 || $exportQueryDto->month > 12) {
-            return new Response('Month must be between 0 and 12 (0 means all months)', 422);
+            return new Response('Month must be between 0 and 12 (0 means all months)', \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // Validate year parameter (reasonable range)
         if ($exportQueryDto->year < 1900 || $exportQueryDto->year > 2100) {
-            return new Response('Year must be between 1900 and 2100', 422);
+            return new Response('Year must be between 1900 and 2100', \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $service = $this->export;
@@ -172,6 +172,7 @@ final class ExportAction extends BaseController
                     $customerName = (string) $projectEntity->getCustomer()->getName();
                 }
             }
+
             $sheet->setCellValue('D' . $lineNumber, $customerName);
 
             $projectName = '';
@@ -179,6 +180,7 @@ final class ExportAction extends BaseController
             if ($projectEntity instanceof \App\Entity\Project) {
                 $projectName = $projectEntity->getName();
             }
+
             $sheet->setCellValue('E' . $lineNumber, $projectName);
             $sheet->setCellValue('F' . $lineNumber, $activity);
             $sheet->setCellValue('G' . $lineNumber, $entry->getDescription());

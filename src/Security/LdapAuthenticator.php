@@ -40,6 +40,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
     {
     }
 
+    #[\Override]
     public function supports(Request $request): bool
     {
         $isLoginSubmit = ('_login' === $request->attributes->get('_route')) && $request->isMethod('POST');
@@ -100,7 +101,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                     throw new UserNotFoundException(sprintf('User "%s" authenticated via LDAP but not found locally and creation is disabled.', $userIdentifier));
                 }
 
-                $newUser = (new User())
+                $newUser = new User()
                     ->setUsername($userIdentifier)
                     ->setType('DEV')
                     ->setLocale('de')

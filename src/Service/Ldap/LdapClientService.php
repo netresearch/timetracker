@@ -44,10 +44,12 @@ class LdapClientService
     protected $_userNameField = 'sAMAccountName';
 
     /** @var string LDAP user auth name - must be set before use */
-    protected string $_userName;
+    // Initialize security-sensitive properties to prevent accidental usage
+    // These MUST be explicitly set via setUserName() and setUserPass() before authentication
+    protected string $_userName = '';
 
     /** @var string LDAP user auth password - must be set before use */
-    protected string $_userPass;
+    protected string $_userPass = '';
 
     /** @var bool Use SSL for LDAP-connection. */
     protected $_useSSL = false;
@@ -57,10 +59,6 @@ class LdapClientService
 
     public function __construct(protected ?LoggerInterface $logger = null, protected string $projectDir = '')
     {
-        // Initialize security-sensitive properties to prevent accidental usage
-        // These MUST be explicitly set via setUserName() and setUserPass() before authentication
-        $this->_userName = '';
-        $this->_userPass = '';
     }
 
     /**
@@ -178,7 +176,7 @@ class LdapClientService
             // Debug: log the complete LDAP entry structure
             $this->logger->debug('LDAP: Complete entry structure for debugging.', [
                 'entry_keys' => array_keys($ldapEntry),
-                'entry_sample' => array_map(static fn ($val) => implode(', ', array_slice((array) $val, 0, 2)), $ldapEntry),
+                'entry_sample' => array_map(static fn (array $val): string => implode(', ', array_slice($val, 0, 2)), $ldapEntry),
             ]);
         }
 
@@ -223,11 +221,11 @@ class LdapClientService
             }
         }
 
-        if (!$userDn) {
+        if ($userDn === '' || $userDn === '0') {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error('LDAP: Could not extract or construct DN from user entry.', [
                     'entry_keys' => array_keys($ldapEntry),
-                    'entry' => array_map(static fn ($val) => implode(', ', (array) $val), $ldapEntry),
+                    'entry' => array_map(static fn (array $val): string => implode(', ', $val), $ldapEntry),
                 ]);
             }
 

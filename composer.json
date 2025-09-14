@@ -109,8 +109,8 @@
       "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Service --test --config=config/quality/pint.json",
       "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Command src/Dto src/Enum src/Event src/EventSubscriber src/Exception src/Extension src/Model src/Response src/Security src/Util src/Validator src/ValueObject src/Kernel.php --test --config=config/quality/pint.json"
     ],
-    "analyze": "phpstan analyze --configuration=config/quality/phpstan.neon --memory-limit=512M",
-    "analyze:arch": "phpstan analyze --configuration=config/quality/phpstan-phpat.neon --memory-limit=512M",
+    "analyze": "php -d memory_limit=1G bin/phpstan analyze",
+    "analyze:arch": "php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php",
     "rector": "rector process src --config=config/quality/rector.php",
     "test": "APP_ENV=test php -d memory_limit=512M bin/phpunit",
     "test:unit": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit",

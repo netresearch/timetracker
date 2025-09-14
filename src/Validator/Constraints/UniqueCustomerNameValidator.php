@@ -41,19 +41,19 @@ class UniqueCustomerNameValidator extends ConstraintValidator
             $customerId = $dto->id;
         }
 
-        $repository = $this->entityManager->getRepository(Customer::class);
-        $qb = $repository->createQueryBuilder('c')
+        $entityRepository = $this->entityManager->getRepository(Customer::class);
+        $queryBuilder = $entityRepository->createQueryBuilder('c')
             ->where('c.name = :name')
             ->setParameter('name', $value)
         ;
 
         if ($customerId > 0) {
-            $qb->andWhere('c.id != :id')
+            $queryBuilder->andWhere('c.id != :id')
                 ->setParameter('id', $customerId)
             ;
         }
 
-        $existingCustomer = $qb->getQuery()->getOneOrNullResult();
+        $existingCustomer = $queryBuilder->getQuery()->getOneOrNullResult();
 
         if (null !== $existingCustomer) {
             $this->context->buildViolation($constraint->message)

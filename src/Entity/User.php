@@ -156,11 +156,7 @@ class User implements UserInterface
      */
     public function setType(UserType|string $type): static
     {
-        if (is_string($type)) {
-            $this->type = UserType::from($type);
-        } else {
-            $this->type = $type;
-        }
+        $this->type = is_string($type) ? UserType::from($type) : $type;
 
         return $this;
     }
@@ -288,7 +284,7 @@ class User implements UserInterface
 
     public function setLocale(string $locale): static
     {
-        $this->locale = (new LocalizationService())->normalizeLocale($locale);
+        $this->locale = new LocalizationService()->normalizeLocale($locale);
 
         return $this;
     }
@@ -307,7 +303,7 @@ class User implements UserInterface
             'user_id' => $this->getId() ?? 0,
             'user_name' => $this->getUsername() ?? '',
             'type' => $this->getType()->value,
-            'locale' => (new LocalizationService())->normalizeLocale($this->getLocale()),
+            'locale' => new LocalizationService()->normalizeLocale($this->getLocale()),
         ];
     }
 

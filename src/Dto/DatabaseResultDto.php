@@ -80,14 +80,17 @@ final readonly class DatabaseResultDto
      */
     public static function safeDateTime(mixed $value, string $default = ''): string
     {
-        if (is_string($value) && !empty($value)) {
-            // Validate that it's a reasonable datetime string
-            if (false !== DateTime::createFromFormat('Y-m-d H:i:s', $value)
-                || false !== DateTime::createFromFormat('Y-m-d', $value)) {
-                return $value;
-            }
+        if (!is_string($value)) {
+            return $default;
         }
-
+        if ($value === '' || $value === '0') {
+            return $default;
+        }
+        // Validate that it's a reasonable datetime string
+        if (false !== DateTime::createFromFormat('Y-m-d H:i:s', $value)
+            || false !== DateTime::createFromFormat('Y-m-d', $value)) {
+            return $value;
+        }
         return $default;
     }
 }

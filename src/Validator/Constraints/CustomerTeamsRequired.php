@@ -12,6 +12,7 @@ class CustomerTeamsRequired extends Constraint
 {
     public string $message = 'Teams must be specified when customer is not global.';
 
+    #[\Override]
     public function getTargets(): string
     {
         return self::CLASS_CONSTRAINT;

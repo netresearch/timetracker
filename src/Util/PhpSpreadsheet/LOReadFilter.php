@@ -58,7 +58,7 @@ class LOReadFilter implements IReadFilter
      */
     private const int MAX_LIBREOFFICE_COLUMNS = 1024;
 
-    private LoggerInterface $logger;
+    private readonly LoggerInterface $logger;
 
     /**
      * @param LoggerInterface|null $logger Optional logger for tracking filtered columns

@@ -113,7 +113,7 @@ services:
     # Query Cache Service configuration
     App\Service\Cache\QueryCacheService:
         arguments:
-            $cache: '@cache.app'
+            $cacheItemPool: '@cache.app'
             $logger: '@?logger'
         tags:
             - { name: monolog.logger, channel: cache }
@@ -123,7 +123,7 @@ services:
         arguments:
             $managerRegistry: '@doctrine'
             $clock: '@App\Service\ClockInterface'
-            $cache: '@?cache.app'
+            $cacheItemPool: '@?cache.app'
         tags:
             - { name: 'doctrine.repository_service' }
 

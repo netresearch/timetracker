@@ -20,14 +20,11 @@ class Holiday extends Base
     #[ORM\Column(name: 'day', type: 'date')]
     private readonly DateTime $day;
 
-    #[ORM\Column(name: 'name', type: 'string', length: 255)]
-    private readonly string $name;
-
-    public function __construct(string|DateTime $day, string $name)
+    public function __construct(string|DateTime $day, #[ORM\Column(name: 'name', type: 'string', length: 255)]
+    private readonly string $name)
     {
         // Initialize properties immediately in constructor for PSALM compliance
         $this->day = $day instanceof DateTime ? $day : new DateTime($day);
-        $this->name = $name;
     }
 
     public function setDay(string|DateTime $day): static
@@ -74,6 +71,7 @@ class Holiday extends Base
      *
      * @psalm-return array{day: null|string, description: string}
      */
+    #[\Override]
     public function toArray(): array
     {
         return [

@@ -29,7 +29,7 @@ class CustomerTeamsRequiredValidator extends ConstraintValidator
         $global = $value->global;
         $teams = $value->teams;
 
-        if (!$global && empty($teams)) {
+        if (!$global && $teams === []) {
             $this->context->buildViolation($constraint->message)
                 ->addViolation()
             ;
