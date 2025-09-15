@@ -1,24 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Method App\\Command\\TtSyncSubticketsCommand\:\:__construct\(\) has LogicException in PHPDoc @throws tag but it''s not thrown\.$#'
-			identifier: throws.unusedType
-			count: 1
-			path: src/Command/TtSyncSubticketsCommand.php
-
-		-
-			message: '#^Parameter \#1 \$input of class Symfony\\Component\\Console\\Style\\SymfonyStyle constructor expects Symfony\\Component\\Console\\Input\\InputInterface, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Command/TtSyncSubticketsCommand.php
-
-		-
-			message: '#^Undefined variable\: \$input$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Command/TtSyncSubticketsCommand.php
-
-		-
 			message: '#^PHPDoc tag @var with type App\\Repository\\ContractRepository is not subtype of type App\\Repository\\ContractRepository\<App\\Entity\\Contract\>\.$#'
 			identifier: varTag.type
 			count: 1
@@ -1711,12 +1693,6 @@ parameters:
 			path: tests/Basic.php
 
 		-
-			message: '#^Parameter \#1 \$command of method Symfony\\Component\\Console\\Application\:\:add\(\) expects Symfony\\Component\\Console\\Command\\Command, App\\Command\\TtSyncSubticketsCommand given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Command/TtSyncSubticketsCommandTest.php
-
-		-
 			message: '#^Variable \$syncService in PHPDoc tag @var does not exist\.$#'
 			identifier: varTag.variableNotFound
 			count: 1
@@ -2757,6 +2733,12 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$string of method App\\Extension\\NrArrayTranslator\:\:filterArray\(\) expects string, string\|false given\.$#'
 			identifier: argument.type
+			count: 1
+			path: tests/Extension/NrArrayTranslatorTest.php
+
+		-
+			message: '#^You should use assertSame\(\) instead of assertEquals\(\), because both values are scalars of the same type$#'
+			identifier: phpunit.assertEquals
 			count: 1
 			path: tests/Extension/NrArrayTranslatorTest.php
 
