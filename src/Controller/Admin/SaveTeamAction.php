@@ -25,10 +25,6 @@ final class SaveTeamAction extends BaseController
     #[IsGranted("ROLE_ADMIN")]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
         /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
 

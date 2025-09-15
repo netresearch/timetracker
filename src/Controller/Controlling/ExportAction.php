@@ -16,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function is_scalar;
 
@@ -34,6 +35,7 @@ final class ExportAction extends BaseController
     /**
      * @throws InvalidArgumentException When export parameters are invalid or file operations fail
      */
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
     public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response|\Symfony\Component\HttpFoundation\RedirectResponse
@@ -49,9 +51,6 @@ final class ExportAction extends BaseController
             }
         }
 
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
-        }
 
         // Validate month parameter
         if ($exportQueryDto->month < 0 || $exportQueryDto->month > 12) {

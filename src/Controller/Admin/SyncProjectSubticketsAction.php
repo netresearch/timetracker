@@ -13,6 +13,7 @@ use App\Service\SubticketSyncService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class SyncProjectSubticketsAction extends BaseController
 {
@@ -25,12 +26,9 @@ final class SyncProjectSubticketsAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
+    #[IsGranted("ROLE_ADMIN")]
     public function __invoke(Request $request, #[MapQueryString] AdminSyncDto $adminSyncDto): JsonResponse|Error|ModelResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
-
         $projectId = $adminSyncDto->project;
 
         try {
