@@ -11,6 +11,7 @@ use Exception;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function sprintf;
 
@@ -22,9 +23,10 @@ final class GetHolidaysAction extends BaseController
      * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are malformed
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
-    public function __invoke(Request $request): JsonResponse|RedirectResponse
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): JsonResponse|RedirectResponse
     {
-        if (!$this->checkLogin($request)) {
+        if (!$user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 

@@ -5,22 +5,21 @@ declare(strict_types=1);
 namespace Tests\Traits;
 
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken;
-use Throwable;
 
 /**
  * Authentication test functionality trait.
- * 
- * Provides user authentication, session management, and authentication helpers
- * for test cases requiring authenticated requests.
+ *
+ * Provides user authentication helpers for test cases requiring authenticated requests.
+ * Uses Symfony's built-in loginUser() helper for clean test authentication.
  */
 trait AuthenticationTestTrait
 {
     /**
      * Authenticate user in session for testing purposes.
+     *
+     * This method now uses Symfony's built-in loginUser() helper exclusively,
+     * providing cleaner test isolation without manual session manipulation.
      */
     protected function logInSession(string $user = 'unittest'): void
     {
@@ -34,60 +33,13 @@ trait AuthenticationTestTrait
 
         $userId = $userMap[$user] ?? '1';
 
-        // Get the user entity from the database to create a security token
+        // Get the user entity from the database
         $userRepository = $this->serviceContainer->get('doctrine')->getRepository(\App\Entity\User::class);
         $userEntity = $userRepository->find($userId);
 
         if ($userEntity) {
-            // Primary: modern login helper for the "main" firewall
+            // Use Symfony's built-in loginUser() helper for clean test authentication
             $this->client->loginUser($userEntity, 'main');
-
-            // Compatibility: also persist a session token like legacy tests expect
-            $session = null;
-            if ($this->serviceContainer->has('session')) {
-                $session = $this->serviceContainer->get('session');
-            } elseif ($this->serviceContainer->has('test.session')) {
-                $session = $this->serviceContainer->get('test.session');
-            }
-
-            if ($session) {
-                if (method_exists($session, 'isStarted') && !$session->isStarted()) {
-                    $session->start();
-                }
-
-                $usernamePasswordToken = new UsernamePasswordToken(
-                    $userEntity,
-                    'main',
-                    $userEntity->getRoles(),
-                );
-                $session->set('_security_main', serialize($usernamePasswordToken));
-                $session->save();
-
-                // Sync cookie jar with the session id
-                $this->client->getCookieJar()->clear();
-                $cookie = new Cookie($session->getName(), $session->getId());
-                $this->client->getCookieJar()->set($cookie);
-            }
-
-            // Ensure token storage reflects the authenticated user in current request cycle
-            if ($this->serviceContainer->has('security.token_storage')) {
-                $tokenStorage = $this->serviceContainer->get('security.token_storage');
-                try {
-                    $postAuthenticationToken = new PostAuthenticationToken(
-                        $userEntity,
-                        'main',
-                        $userEntity->getRoles(),
-                    );
-                    $tokenStorage->setToken($postAuthenticationToken);
-                } catch (Throwable) {
-                    $fallbackToken = new UsernamePasswordToken(
-                        $userEntity,
-                        'main',
-                        $userEntity->getRoles(),
-                    );
-                    $tokenStorage->setToken($fallbackToken);
-                }
-            }
 
             // Avoid kernel reboot to keep the same DB connection within a test method
             $this->client->disableReboot();

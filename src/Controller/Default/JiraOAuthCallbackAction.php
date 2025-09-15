@@ -11,6 +11,7 @@ use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function is_string;
 
@@ -31,10 +32,12 @@ final class JiraOAuthCallbackAction extends BaseController
      * @throws Exception                                                       When OAuth token operations or API calls fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/jiraoauthcallback', name: 'jiraOAuthCallback', methods: ['GET'])]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
-        /** @var User $user */
-        $user = $this->managerRegistry->getRepository(User::class)->find($this->getUserId($request));
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('_login');
+        }
 
         /** @var TicketSystem $ticketSystem */
         $ticketSystem = $this->managerRegistry->getRepository(TicketSystem::class)->find($request->query->get('tsid'));

@@ -12,6 +12,7 @@ use App\Service\Util\TimeCalculationService;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function is_array;
 
@@ -32,13 +33,14 @@ final class GetSummaryAction extends BaseController
      * @throws Exception                                                       When time calculation operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
+        if (!$user instanceof \App\Entity\User) {
+            return $this->redirectToRoute('_login');
         }
 
-        $userId = $this->getUserId($request);
+        $userId = (int) $user->getId();
 
         $data = [
             'customer' => ['scope' => 'customer', 'name' => '', 'entries' => 0, 'total' => 0, 'own' => 0, 'estimation' => 0],

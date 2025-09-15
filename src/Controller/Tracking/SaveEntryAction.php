@@ -21,6 +21,8 @@ use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
 
 use function sprintf;
@@ -33,24 +35,13 @@ final class SaveEntryAction extends BaseTrackingController
      * @throws InvalidArgumentException
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
         #[MapRequestPayload]
         EntrySaveDto $entrySaveDto,
+        #[CurrentUser] User $user,
     ): Response|JsonResponse|Error|RedirectResponse {
-        if (!$this->checkLogin($request)) {
-            return $this->redirectToRoute('_login');
-        }
-
-        $userId = $this->getUserId($request);
-        /** @var \App\Repository\UserRepository $objectRepository */
-        $objectRepository = $this->managerRegistry->getRepository(User::class);
-
-        $user = $objectRepository->findOneById($userId);
-
-        if (!$user instanceof User) {
-            return $this->redirectToRoute('_login');
-        }
 
         /** @var \App\Repository\CustomerRepository $customerRepo */
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);

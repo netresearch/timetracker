@@ -8,17 +8,16 @@ use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use App\Service\SubticketSyncService;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\Security;
 use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
 final class SyncAllProjectSubticketsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/syncsubtickets', name: 'syncAllSubtickets_attr', methods: ['GET'])]
+    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
     public function __invoke(Request $request): JsonResponse
     {
-        if (false === $this->isPl($request)) {
-            return new JsonResponse(['success' => false, 'message' => 'Forbidden'], \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
-        }
 
         // Legacy route syncs all projects; mirror behavior by iterating all
         $projects = $this->doctrineRegistry->getRepository(\App\Entity\Project::class)->findAll();

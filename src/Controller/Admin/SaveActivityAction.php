@@ -14,6 +14,7 @@ use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Security\Http\Attribute\Security;
 
 final class SaveActivityAction extends BaseController
 {
@@ -22,14 +23,11 @@ final class SaveActivityAction extends BaseController
      * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
+    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
     public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
-        }
-
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
         }
 
         /** @var \App\Repository\ActivityRepository $objectRepository */

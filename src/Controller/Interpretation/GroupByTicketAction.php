@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
 
+use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class GroupByTicketAction extends BaseInterpretationController
 {
@@ -21,14 +24,14 @@ final class GroupByTicketAction extends BaseInterpretationController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/ticket', name: 'interpretation_ticket_attr', methods: ['GET'])]
-    public function __invoke(Request $request): ModelResponse|JsonResponse
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(
+        Request $request,
+        #[CurrentUser] User $currentUser,
+    ): ModelResponse|JsonResponse {
 
         try {
-            $entries = $this->getEntries($request);
+            $entries = $this->getEntries($request, $currentUser);
         } catch (Exception $exception) {
             $response = new ModelResponse($this->translate($exception->getMessage()));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);

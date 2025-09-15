@@ -20,10 +20,10 @@ final class GetAllProjectsAction extends BaseController
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
+        if (!$user instanceof \App\Entity\User) {
+            return $this->redirectToRoute('_login');
         }
 
         $customerId = (int) $request->query->get('customer');

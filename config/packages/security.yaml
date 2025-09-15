@@ -22,6 +22,9 @@ security:
         main:
             provider: app_user_provider
             lazy: true
+            # Set entry point to form_login for multiple authenticators
+            entry_point: form_login
+
             # Use the new authenticator manager in Symfony 7.3
             custom_authenticators:
                 - App\Security\LdapAuthenticator
