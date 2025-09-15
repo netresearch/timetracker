@@ -38,7 +38,7 @@ final class ExportAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
-    public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response
     {
         // Map legacy path parameters to query parameters for backward compatibility
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];

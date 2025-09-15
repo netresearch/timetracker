@@ -62,12 +62,12 @@ final class GetTicketTimeSummaryAction extends BaseController
             $time['activities'][$key]['time'] = $this->timeCalculationService->minutesToReadable($total);
         }
 
-        foreach ($users as $user) {
-            $time['total_time']['time'] += $user['total_time'];
-            $key = $user['username'];
+        foreach ($users as $userData) {
+            $time['total_time']['time'] += $userData['total_time'];
+            $key = $userData['username'];
             // Priority 3: Remove redundant cast - total_time is already int from repository
-            $time['users'][$key]['seconds'] = $user['total_time'] * 60;
-            $time['users'][$key]['time'] = $this->timeCalculationService->minutesToReadable($user['total_time']);
+            $time['users'][$key]['seconds'] = $userData['total_time'] * 60;
+            $time['users'][$key]['time'] = $this->timeCalculationService->minutesToReadable($userData['total_time']);
         }
 
         $time['total_time']['seconds'] = $time['total_time']['time'] * 60;
