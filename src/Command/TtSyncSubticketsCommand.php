@@ -34,7 +34,7 @@ class TtSyncSubticketsCommand extends Command
      * @psalm-return 0|1
      */
     public function __invoke(#[\Symfony\Component\Console\Attribute\Argument(name: 'project', description: 'Single project ID to update')]
-        ?string $project, \Symfony\Component\Console\Input\InputInterface $input, OutputInterface $output): int
+        ?string $project, InputInterface $input, OutputInterface $output): int
     {
         $projectArg = $project;
         $symfonyStyle = new SymfonyStyle($input, $output);
