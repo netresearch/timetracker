@@ -27,13 +27,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
-
-use function is_array;
-use function is_string;
 
 /**
  * BaseController.php.
@@ -72,18 +67,16 @@ class BaseController extends AbstractController
     }
 
     /**
-     * Check if user is logged in.
-     * Prefer Symfony Security, but fall back to session token in tests.
+     * Check if user is logged in using Symfony Security.
      *
+     * @deprecated Use isGranted('IS_AUTHENTICATED_FULLY') directly
      * @throws Exception
      */
     protected function isLoggedIn(Request $request): bool
     {
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return true;
-        }
+        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use isGranted(\'IS_AUTHENTICATED_FULLY\') directly', E_USER_DEPRECATED);
 
-        return $this->checkLogin($request);
+        return $this->isGranted('IS_AUTHENTICATED_FULLY');
     }
 
     /**
@@ -96,30 +89,7 @@ class BaseController extends AbstractController
      */
     protected function getUserId(Request $request): int
     {
-        // Prefer Symfony security context
         $user = $this->getUser();
-
-        // Fallback for test environment: extract token from session if token storage not yet populated
-        if (!$user instanceof User) {
-            $containerSession = $this->container->has('session') ? $this->container->get('session') : null;
-            $session = $containerSession instanceof \Symfony\Component\HttpFoundation\Session\SessionInterface ? $containerSession : $request->getSession();
-            if ($session->has('_security_main')) {
-                $rawToken = $session->get('_security_main');
-                if (is_string($rawToken) && '' !== $rawToken) {
-                    try {
-                        $token = @unserialize($rawToken, ['allowed_classes' => true]);
-                        if ($token instanceof UsernamePasswordToken) {
-                            $candidate = $token->getUser();
-                            if ($candidate instanceof User) {
-                                $user = $candidate;
-                            }
-                        }
-                    } catch (Throwable) {
-                        // ignore and fall through
-                    }
-                }
-            }
-        }
 
         if (!$user instanceof User) {
             throw new AccessDeniedException('No user logged in');
@@ -147,35 +117,42 @@ class BaseController extends AbstractController
 
     /**
      * Check if the current user has a specific user type.
+     *
+     * @deprecated Use Security expressions with #[Security] attribute instead
      */
     protected function hasUserType(Request $request, UserType $userType): bool
     {
+        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with expressions instead', E_USER_DEPRECATED);
+
         $currentUser = $this->getUser();
         if ($currentUser instanceof User) {
             return $userType === $currentUser->getType();
         }
 
-        $userId = $this->getUserId($request);
-        /** @var \App\Repository\UserRepository $objectRepository */
-        $objectRepository = $this->managerRegistry->getRepository(User::class);
-        $user = $objectRepository->find($userId);
-
-        return $user instanceof User && $userType === $user->getType();
+        return false;
     }
 
     /**
-     * checks the user type to be PL.
+     * Checks the user type to be PL.
+     *
+     * @deprecated Use #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType() == 'PL')")] instead
      */
     protected function isPl(Request $request): bool
     {
+        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with user type check instead', E_USER_DEPRECATED);
+
         return $this->hasUserType($request, UserType::PL);
     }
 
     /**
-     * checks the user type to be DEV.
+     * Checks the user type to be DEV.
+     *
+     * @deprecated Use #[Security("is_granted('ROLE_USER') and user.getType() == 'DEV')")] instead
      */
     protected function isDEV(Request $request): bool
     {
+        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with user type check instead', E_USER_DEPRECATED);
+
         return $this->hasUserType($request, UserType::DEV);
     }
 
@@ -191,33 +168,14 @@ class BaseController extends AbstractController
 
     /**
      * Checks if the user is logged in via Symfony Security.
+     *
+     * @deprecated Use isGranted('IS_AUTHENTICATED_FULLY') directly
      */
     protected function checkLogin(Request $request): bool
     {
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-            return true;
-        }
+        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use isGranted(\'IS_AUTHENTICATED_FULLY\') directly', E_USER_DEPRECATED);
 
-        $containerSession = $this->container->has('session') ? $this->container->get('session') : null;
-        $session = $containerSession instanceof \Symfony\Component\HttpFoundation\Session\SessionInterface ? $containerSession : $request->getSession();
-        if (!$session->has('_security_main')) {
-            return false;
-        }
-
-        $token = $session->get('_security_main');
-        if (null === $token) {
-            return false;
-        }
-
-        if (is_string($token)) {
-            return '' !== $token;
-        }
-
-        if (is_array($token)) {
-            return [] !== $token;
-        }
-
-        return true;
+        return $this->isGranted('IS_AUTHENTICATED_FULLY');
     }
 
     /**
