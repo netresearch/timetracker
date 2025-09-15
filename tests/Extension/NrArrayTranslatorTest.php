@@ -77,10 +77,9 @@ final class NrArrayTranslatorTest extends TestCase
     {
         $filters = $this->nrArrayTranslator->getFilters();
         self::assertTrue(is_array($filters));
-        self::assertTrue(array_key_exists('nr_array_translator', $filters));
-        self::assertTrue(
-            $filters['nr_array_translator'] instanceof \Twig\TwigFilter,
-        );
+        self::assertCount(1, $filters);
+        self::assertInstanceOf(\Twig\TwigFilter::class, $filters[0]);
+        self::assertEquals('nr_array_translator', $filters[0]->getName());
     }
 
     /**

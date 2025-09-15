@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use LogicException;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -17,13 +18,14 @@ use function count;
 use function is_scalar;
 
 #[\Symfony\Component\Console\Attribute\AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
-class TtSyncSubticketsCommand
+class TtSyncSubticketsCommand extends Command
 {
     /**
      * @throws LogicException
      */
     public function __construct(private readonly SubticketSyncService $subticketSyncService, private readonly EntityManagerInterface $entityManager)
     {
+        parent::__construct();
     }
 
     /**
@@ -32,7 +34,7 @@ class TtSyncSubticketsCommand
      * @psalm-return 0|1
      */
     public function __invoke(#[\Symfony\Component\Console\Attribute\Argument(name: 'project', description: 'Single project ID to update')]
-        ?string $project, OutputInterface $output): int
+        ?string $project, \Symfony\Component\Console\Input\InputInterface $input, OutputInterface $output): int
     {
         $projectArg = $project;
         $symfonyStyle = new SymfonyStyle($input, $output);
