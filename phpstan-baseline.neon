@@ -265,14 +265,20 @@ parameters:
 			path: src/Controller/Interpretation/BaseInterpretationController.php
 
 		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Controller/Interpretation/GetAllEntriesAction.php
+
+		-
 			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
 			identifier: booleanNot.exprNotBoolean
 			count: 1
 			path: src/Controller/Interpretation/GetAllEntriesAction.php
 
 		-
-			message: '#^Strict comparison using \=\=\= between App\\Enum\\UserType and null will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
+			message: '#^Only booleans are allowed in a negated boolean, App\\Enum\\UserType given\.$#'
+			identifier: booleanNot.exprNotBoolean
 			count: 1
 			path: src/Controller/Interpretation/GetAllEntriesAction.php
 
@@ -1995,6 +2001,12 @@ parameters:
 		-
 			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseIsSuccessful\(\)\.$#'
 			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Controller/SecurityControllerTest.php
+
+		-
+			message: '#^Missing call to parent\:\:setUp\(\) method\.$#'
+			identifier: phpunit.callParent
 			count: 1
 			path: tests/Controller/SecurityControllerTest.php
 

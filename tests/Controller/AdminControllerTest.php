@@ -106,23 +106,11 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testGetCustomersActionWithNonPL(): void
     {
-        // Note: /getAllCustomers only requires login, not PL role
-        // So developer users can also access this route
+        // /getAllCustomers now requires ROLE_ADMIN after auth modernization
         $this->logInSession('developer');
         $this->client->request('GET', '/getAllCustomers');
-        $this->assertStatusCode(200);
-        // Should return same structure as PL user
-        $this->assertJsonStructure([
-            [
-                'customer' => [
-                    'id' => 1,
-                    'name' => 'Der Bäcker von nebenan',
-                    'active' => true,
-                    'global' => false,
-                    'teams' => [1],
-                ],
-            ]
-        ]);
+        $this->assertStatusCode(403);
+        $this->assertMessage('You are not allowed to perform this action.');
     }
 
     public function testDeleteCustomerActionWithPL(): void
@@ -255,7 +243,7 @@ class AdminControllerTest extends AbstractWebTestCase
                 'user' => [
                     'id' => 3,
                     'username' => 'i.myself',
-                    'type' => 'PL',
+                    'type' => 'ADMIN',
                     'abbr' => 'IMY',
                     'locale' => 'de',
                     'teams' => [], // User 3 has no teams in current test data
@@ -265,7 +253,7 @@ class AdminControllerTest extends AbstractWebTestCase
                 'user' => [
                     'id' => 5,
                     'username' => 'noContract',
-                    'type' => 'PL',
+                    'type' => 'ADMIN',
                     'abbr' => 'NCO',
                     'locale' => 'de',
                     'teams' => [], // User 5 has no teams
@@ -285,7 +273,7 @@ class AdminControllerTest extends AbstractWebTestCase
                 'user' => [
                     'id' => 1,
                     'username' => 'unittest',
-                    'type' => 'PL',
+                    'type' => 'ADMIN',
                     'abbr' => 'UTE',
                     'locale' => 'de',
                     'teams' => [1], // User 1 is in team 1

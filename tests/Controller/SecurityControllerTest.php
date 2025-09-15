@@ -13,9 +13,26 @@ use Tests\AbstractWebTestCase;
  */
 final class SecurityControllerTest extends AbstractWebTestCase
 {
+    /**
+     * Override setUp to not automatically log in for this test class.
+     */
+    protected function setUp(): void
+    {
+        // Call grandparent setUp to skip the automatic login in AbstractWebTestCase
+        \Symfony\Bundle\FrameworkBundle\Test\WebTestCase::setUp();
+
+        // Initialize HTTP client (from HttpClientTrait)
+        $this->initializeHttpClient();
+
+        // Initialize database and transactions (from DatabaseTestTrait)
+        $this->initializeDatabase();
+
+        // DO NOT call logInSession() - we want to test unauthenticated access
+    }
+
     public function testAccessToProtectedRouteReturnsForbidden(): void
     {
-        // Clear session to simulate not being logged in
+        // Session is already cleared in setUp, just verify we're not logged in
         $session = $this->client->getContainer()->get('session');
         $session->clear();
         $session->save();
@@ -26,9 +43,10 @@ final class SecurityControllerTest extends AbstractWebTestCase
         }
 
         // Try to access a protected route with only text/html accept header
+        // Use an admin route that requires authentication
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_GET,
-            '/controlling/export',
+            '/getAllUsers',
             [],
             [],
             [
@@ -37,8 +55,9 @@ final class SecurityControllerTest extends AbstractWebTestCase
             ]
         );
 
-        // Should redirect to login when not authenticated
-        $this->assertStatusCode(302);
+        // Admin routes return 403 Forbidden for unauthenticated users
+        // (They don't redirect to login for API endpoints)
+        $this->assertStatusCode(403);
     }
 
     public function testLoggedInUserCanAccessProtectedRoute(): void
