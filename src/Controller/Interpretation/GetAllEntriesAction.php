@@ -30,8 +30,10 @@ final class GetAllEntriesAction extends BaseController
     public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $interpretationFiltersDto, #[CurrentUser] ?\App\Entity\User $user = null): ModelResponse|JsonResponse|Error
     {
         // Check if user is either admin or PL type
-        if (!$this->isGranted('ROLE_ADMIN') && (!$user || !$user->getType() || $user->getType()->value !== 'PL')) {
-            return new Error($this->translate('Permission denied.'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            if (!$user || !$user->getType() || $user->getType()->value !== 'PL') {
+                return new Error($this->translate('Permission denied.'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
+            }
         }
 
         try {
