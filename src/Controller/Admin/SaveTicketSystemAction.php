@@ -14,7 +14,7 @@ use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
-use Symfony\Component\Security\Http\Attribute\Security;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class SaveTicketSystemAction extends BaseController
 {
@@ -25,7 +25,7 @@ final class SaveTicketSystemAction extends BaseController
      * @throws Exception                                                                When object mapping or persistence operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/save', name: 'saveTicketSystem_attr', methods: ['POST'])]
-    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
+    #[IsGranted("ROLE_ADMIN")]
     public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
 
