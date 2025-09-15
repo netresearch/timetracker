@@ -8,14 +8,14 @@ use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use App\Service\SubticketSyncService;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Http\Attribute\Security;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
 final class SyncAllProjectSubticketsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/syncsubtickets', name: 'syncAllSubtickets_attr', methods: ['GET'])]
-    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
+    #[IsGranted("ROLE_ADMIN")]
     public function __invoke(Request $request): JsonResponse
     {
 

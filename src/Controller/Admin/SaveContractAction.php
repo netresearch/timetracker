@@ -16,7 +16,7 @@ use Exception;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\Security\Http\Attribute\Security;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function count;
 
@@ -28,7 +28,7 @@ final class SaveContractAction extends BaseController
      * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
-    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
+    #[IsGranted("ROLE_ADMIN")]
     public function __invoke(Request $request, #[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|\App\Response\Error
     {
 

@@ -8,12 +8,12 @@ use App\Controller\BaseController;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Http\Attribute\Security;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class GetTeamsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllTeams', name: '_getAllTeams_attr', methods: ['GET'])]
-    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
+    #[IsGranted("ROLE_ADMIN")]
     public function __invoke(Request $request): Response|JsonResponse
     {
         if (!$this->checkLogin($request)) {
