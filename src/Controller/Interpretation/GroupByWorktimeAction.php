@@ -28,7 +28,8 @@ final class GroupByWorktimeAction extends BaseInterpretationController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
-        #[CurrentUser] User $currentUser,
+        #[CurrentUser]
+        User $currentUser,
     ): ModelResponse|JsonResponse {
 
         try {

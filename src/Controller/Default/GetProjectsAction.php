@@ -20,7 +20,7 @@ final class GetProjectsAction extends BaseController
      * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException When user lacks required permissions
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjects', name: '_getProjects_attr', methods: ['GET'])]
-    #[IsGranted("ROLE_USER")]
+    #[IsGranted('ROLE_USER')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|Response|JsonResponse
     {
         if (!$user instanceof \App\Entity\User) {
@@ -28,9 +28,10 @@ final class GetProjectsAction extends BaseController
         }
 
         // Check if user is either admin or PL type
-        if (!$this->isGranted('ROLE_ADMIN') && $user->getType()->value !== 'PL') {
+        if (!$this->isGranted('ROLE_ADMIN') && 'PL' !== $user->getType()->value) {
             $response = new Response($this->translate('Permission denied.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
+
             return $response;
         }
 

@@ -40,7 +40,8 @@ final class SaveEntryAction extends BaseTrackingController
         Request $request,
         #[MapRequestPayload]
         EntrySaveDto $entrySaveDto,
-        #[CurrentUser] User $user,
+        #[CurrentUser]
+        User $user,
     ): Response|JsonResponse|Error|RedirectResponse {
 
         /** @var \App\Repository\CustomerRepository $customerRepo */

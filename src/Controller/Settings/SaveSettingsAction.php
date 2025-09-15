@@ -25,7 +25,8 @@ final class SaveSettingsAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
-        #[CurrentUser] User $user,
+        #[CurrentUser]
+        User $user,
     ): JsonResponse {
         if ('POST' !== $request->getMethod()) {
             $response = new JsonResponse([

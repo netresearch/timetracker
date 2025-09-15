@@ -30,7 +30,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
                 'suggest_time' => true,
                 'show_future' => true,
                 'user_name' => 'i.myself',
-                'type' => 'PL',
+                'type' => 'ADMIN',
                 'locale' => 'de',
             ],
             'locale' => 'de',
@@ -48,7 +48,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
             0 => [
                 'username' => 'i.myself',
                 'abbr' => 'IMY',
-                'type' => 'PL',
+                'type' => 'ADMIN',
                 'show_empty_line' => 1,
                 'suggest_time' => 1,
                 'show_future' => 1,

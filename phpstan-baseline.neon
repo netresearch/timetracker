@@ -139,12 +139,6 @@ parameters:
 			path: src/Controller/Admin/SyncProjectSubticketsAction.php
 
 		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/BaseController.php
-
-		-
 			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\User\|null given\.$#'
 			identifier: ternary.condNotBoolean
 			count: 1
@@ -235,15 +229,9 @@ parameters:
 			path: src/Controller/Default/GetTimeSummaryAction.php
 
 		-
-			message: '#^Only booleans are allowed in &&, App\\Entity\\User\|null given on the left side\.$#'
-			identifier: booleanAnd.leftNotBoolean
-			count: 1
-			path: src/Controller/Default/GetUsersAction.php
-
-		-
 			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
 			identifier: varTag.type
-			count: 2
+			count: 1
 			path: src/Controller/Default/GetUsersAction.php
 
 		-
@@ -275,6 +263,18 @@ parameters:
 			identifier: varTag.type
 			count: 1
 			path: src/Controller/Interpretation/BaseInterpretationController.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Controller/Interpretation/GetAllEntriesAction.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between App\\Enum\\UserType and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Controller/Interpretation/GetAllEntriesAction.php
 
 		-
 			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Customer\|null given\.$#'
@@ -331,6 +331,12 @@ parameters:
 			path: src/Controller/Tracking/BulkEntryAction.php
 
 		-
+			message: '#^Method App\\Controller\\Tracking\\SaveEntryAction\:\:__invoke\(\) never returns Symfony\\Component\\HttpFoundation\\RedirectResponse so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Controller/Tracking/SaveEntryAction.php
+
+		-
 			message: '#^PHPDoc tag @var with type App\\Repository\\ActivityRepository is not subtype of type App\\Repository\\ActivityRepository\<App\\Entity\\Activity\>\.$#'
 			identifier: varTag.type
 			count: 1
@@ -350,12 +356,6 @@ parameters:
 
 		-
 			message: '#^PHPDoc tag @var with type App\\Repository\\ProjectRepository is not subtype of type App\\Repository\\ProjectRepository\<App\\Entity\\Project\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Tracking/SaveEntryAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
 			identifier: varTag.type
 			count: 1
 			path: src/Controller/Tracking/SaveEntryAction.php
@@ -715,6 +715,12 @@ parameters:
 			path: src/Response/Error.php
 
 		-
+			message: '#^Binary operation "\." between ''LdapAuthenticator\:…'' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: src/Security/LdapAuthenticator.php
+
+		-
 			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
 			identifier: empty.notAllowed
 			count: 1
@@ -723,6 +729,12 @@ parameters:
 		-
 			message: '#^Only booleans are allowed in an if condition, string\|null given\.$#'
 			identifier: if.condNotBoolean
+			count: 1
+			path: src/Security/LdapAuthenticator.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
 			count: 1
 			path: src/Security/LdapAuthenticator.php
 
@@ -1365,23 +1377,11 @@ parameters:
 		-
 			message: '#^Cannot call method get\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 9
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Cannot call method getId\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
+			count: 6
 			path: tests/AbstractWebTestCase.php
 
 		-
 			message: '#^Cannot call method getManager\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Cannot call method getName\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: tests/AbstractWebTestCase.php
@@ -1393,31 +1393,13 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Cannot call method getRoles\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 3
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^Cannot call method has\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 5
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Cannot call method isStarted\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
+			count: 2
 			path: tests/AbstractWebTestCase.php
 
 		-
 			message: '#^Cannot call method rollBack\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Cannot call method save\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: tests/AbstractWebTestCase.php
@@ -1429,25 +1411,7 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Cannot call method set\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^Cannot call method setNestTransactionsWithSavepoints\(\) on class\-string\|object\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Cannot call method setToken\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Cannot call method start\(\) on class\-string\|object\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: tests/AbstractWebTestCase.php
@@ -1567,27 +1531,9 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Parameter \#1 \$name of class Symfony\\Component\\BrowserKit\\Cookie constructor expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, mixed given\.$#'
 			identifier: argument.type
-			count: 3
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Parameter \#1 \$user of class Symfony\\Component\\Security\\Core\\Authentication\\Token\\UsernamePasswordToken constructor expects Symfony\\Component\\Security\\Core\\User\\UserInterface, mixed given\.$#'
-			identifier: argument.type
 			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Parameter \#1 \$user of class Symfony\\Component\\Security\\Http\\Authenticator\\Token\\PostAuthenticationToken constructor expects Symfony\\Component\\Security\\Core\\User\\UserInterface, mixed given\.$#'
-			identifier: argument.type
-			count: 1
 			path: tests/AbstractWebTestCase.php
 
 		-
@@ -1610,24 +1556,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#2 \$haystack of static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\) expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Parameter \#2 \$value of class Symfony\\Component\\BrowserKit\\Cookie constructor expects string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Parameter \#3 \$roles of class Symfony\\Component\\Security\\Core\\Authentication\\Token\\UsernamePasswordToken constructor expects array\<string\>, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Parameter \#3 \$roles of class Symfony\\Component\\Security\\Http\\Authenticator\\Token\\PostAuthenticationToken constructor expects array\<string\>, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: tests/AbstractWebTestCase.php
@@ -3001,7 +2929,7 @@ parameters:
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
-			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\HttpFoundation\\\\Response'' and App\\Model\\Response\|Symfony\\Component\\HttpFoundation\\RedirectResponse will always evaluate to true\.$#'
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\HttpFoundation\\\\Response'' and App\\Model\\Response will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
 			count: 5
 			path: tests/Performance/ExportActionPerformanceTest.php
