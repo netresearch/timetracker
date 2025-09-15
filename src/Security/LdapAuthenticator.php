@@ -44,9 +44,16 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
     #[Override]
     public function supports(Request $request): bool
     {
-        $isLoginSubmit = ('_login' === $request->attributes->get('_route')) && $request->isMethod('POST');
+        // Support both unified _login route and legacy login_check route
+        $route = $request->attributes->get('_route');
+        $isLoginRoute = in_array($route, ['_login', 'login_check'], true);
+        $isPostMethod = $request->isMethod('POST');
+
+        // Only authenticate on POST requests to login routes
+        $isLoginSubmit = $isLoginRoute && $isPostMethod;
+
         if ($isLoginSubmit) {
-            $this->logger->debug('LdapAuthenticator: supports() returned true for POST on _login');
+            $this->logger->debug('LdapAuthenticator: supports() returned true for POST on ' . $route);
         }
 
         return $isLoginSubmit;

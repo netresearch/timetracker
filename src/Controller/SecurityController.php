@@ -30,8 +30,8 @@ class SecurityController extends AbstractController
     }
 
     /**
-     * This is just a route target for the login form
-     * The actual rendering is now handled by Symfony's form_login system.
+     * Unified login action handling both GET (form display) and POST (authentication).
+     * The actual authentication is handled by LdapAuthenticator on POST requests.
      *
      * @throws \Twig\Error\LoaderError  When template loading fails
      * @throws \Twig\Error\RuntimeError When template rendering fails
@@ -39,7 +39,13 @@ class SecurityController extends AbstractController
      */
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
+        // If user is already authenticated, redirect to start page
+        if ($this->getUser()) {
+            return $this->redirectToRoute('_start');
+        }
+
         // Render login form with error handling
+        // Works for both GET (initial display) and POST (after failed authentication)
         return $this->render('login.html.twig', [
             'locale' => 'en',
             'apptitle' => 'Netresearch TimeTracker',
