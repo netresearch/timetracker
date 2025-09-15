@@ -57,7 +57,7 @@ class JiraTicketService
 
         // Add custom fields if configured
         $customFields = $this->getCustomFields();
-        if ($customFields !== []) {
+        if ([] !== $customFields) {
             $ticketData['fields'] = array_merge($ticketData['fields'], $customFields);
         }
 
@@ -86,7 +86,7 @@ class JiraTicketService
             'maxResults' => $limit,
         ];
 
-        if ($fields !== []) {
+        if ([] !== $fields) {
             $searchData['fields'] = $fields;
         }
 
@@ -163,7 +163,7 @@ class JiraTicketService
 
         $url = sprintf('issue/%s', $ticketKey);
 
-        if ($fields !== []) {
+        if ([] !== $fields) {
             $url .= '?fields=' . implode(',', $fields);
         }
 
@@ -272,7 +272,7 @@ class JiraTicketService
             ],
         ];
 
-        if ($fields !== []) {
+        if ([] !== $fields) {
             $transitionData['fields'] = $fields;
         }
 
@@ -301,7 +301,7 @@ class JiraTicketService
             $parts[] = $activity->getName();
         }
 
-        if ($parts !== []) {
+        if ([] !== $parts) {
             return implode(' - ', $parts);
         }
 

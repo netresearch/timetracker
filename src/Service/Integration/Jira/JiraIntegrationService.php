@@ -17,6 +17,8 @@ use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Psr\Log\LoggerInterface;
 
+use function in_array;
+
 /**
  * Service for managing JIRA integration operations.
  * Extracted from BaseTrackingController to improve separation of concerns.
@@ -252,6 +254,7 @@ class JiraIntegrationService
 
         // Calculate duration - must be greater than 0
         $duration = $entry->getEnd()->getTimestamp() - $entry->getStart()->getTimestamp();
+
         return $duration > 0;
     }
 

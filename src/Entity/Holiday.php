@@ -8,6 +8,7 @@ use App\Model\Base;
 use BadMethodCallException;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
+use Override;
 
 /**
  * App\Entity\Holiday.
@@ -21,7 +22,7 @@ class Holiday extends Base
     private readonly DateTime $day;
 
     public function __construct(string|DateTime $day, #[ORM\Column(name: 'name', type: 'string', length: 255)]
-    private readonly string $name)
+        private readonly string $name)
     {
         // Initialize properties immediately in constructor for PSALM compliance
         $this->day = $day instanceof DateTime ? $day : new DateTime($day);
@@ -71,7 +72,7 @@ class Holiday extends Base
      *
      * @psalm-return array{day: null|string, description: string}
      */
-    #[\Override]
+    #[Override]
     public function toArray(): array
     {
         return [

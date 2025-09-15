@@ -10,8 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use LogicException;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -34,7 +32,7 @@ class TtSyncSubticketsCommand
      * @psalm-return 0|1
      */
     public function __invoke(#[\Symfony\Component\Console\Attribute\Argument(name: 'project', description: 'Single project ID to update')]
-    ?string $project, OutputInterface $output): int
+        ?string $project, OutputInterface $output): int
     {
         $projectArg = $project;
         $symfonyStyle = new SymfonyStyle($input, $output);

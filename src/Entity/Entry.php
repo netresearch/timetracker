@@ -10,6 +10,7 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
+use Override;
 
 use function sprintf;
 
@@ -444,7 +445,7 @@ class Entry extends Base
      *
      * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: int, durationString: string, class: int, worklog: int|null, extTicket: string|null}
      */
-    #[\Override]
+    #[Override]
     public function toArray(): array
     {
         $customerEntity = $this->getCustomer();

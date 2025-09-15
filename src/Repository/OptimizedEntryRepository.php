@@ -374,7 +374,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function applySort(QueryBuilder $queryBuilder, ?array $sort): void
     {
-        if ($sort === null || $sort === []) {
+        if (null === $sort || [] === $sort) {
             $queryBuilder->orderBy('e.day', 'DESC')
                 ->addOrderBy('e.start', 'DESC')
             ;

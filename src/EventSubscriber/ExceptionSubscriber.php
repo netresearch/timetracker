@@ -142,7 +142,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
     private function logException(Throwable $throwable, string $path): void
     {
-        if (!$this->logger instanceof \Psr\Log\LoggerInterface) {
+        if (!$this->logger instanceof LoggerInterface) {
             return;
         }
 

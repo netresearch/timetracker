@@ -10,6 +10,7 @@ use App\Service\Ldap\LdapClientService;
 use BackedEnum;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -40,7 +41,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
     {
     }
 
-    #[\Override]
+    #[Override]
     public function supports(Request $request): bool
     {
         $isLoginSubmit = ('_login' === $request->attributes->get('_route')) && $request->isMethod('POST');

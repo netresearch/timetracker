@@ -83,7 +83,7 @@ final readonly class DatabaseResultDto
         if (!is_string($value)) {
             return $default;
         }
-        if ($value === '' || $value === '0') {
+        if ('' === $value || '0' === $value) {
             return $default;
         }
         // Validate that it's a reasonable datetime string
@@ -91,6 +91,7 @@ final readonly class DatabaseResultDto
             || false !== DateTime::createFromFormat('Y-m-d', $value)) {
             return $value;
         }
+
         return $default;
     }
 }

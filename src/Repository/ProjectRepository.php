@@ -173,7 +173,7 @@ class ProjectRepository extends ServiceEntityRepository
 
         assert(is_array($result));
         // All results are Project entities due to the repository context
-        assert(array_is_list($result) || $result === []);
+        assert(array_is_list($result) || [] === $result);
 
         return $result;
     }

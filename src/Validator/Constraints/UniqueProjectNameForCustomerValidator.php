@@ -37,7 +37,7 @@ class UniqueProjectNameForCustomerValidator extends ConstraintValidator
         $customerId = $value->customer;
         $projectId = $value->id;
 
-        if ($name === '' || $name === '0' || null === $customerId) {
+        if ('' === $name || '0' === $name || null === $customerId) {
             return; // Other validators will handle these
         }
 

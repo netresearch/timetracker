@@ -13,6 +13,8 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function in_array;
+
 /**
  * Handles entry-related events.
  */
@@ -182,7 +184,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
-        if (!$this->logger instanceof \Psr\Log\LoggerInterface) {
+        if (!$this->logger instanceof LoggerInterface) {
             return;
         }
 

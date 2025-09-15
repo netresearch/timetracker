@@ -168,7 +168,7 @@ class JiraAuthenticationService
             'ticketSystem' => $ticketSystem,
         ]);
 
-        if (!$userTicketSystem instanceof \App\Entity\UserTicketsystem) {
+        if (!$userTicketSystem instanceof UserTicketsystem) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($user);
             $userTicketSystem->setTicketSystem($ticketSystem);
@@ -208,7 +208,7 @@ class JiraAuthenticationService
             'ticketSystem' => $ticketSystem,
         ]);
 
-        if (!$userTicketSystem instanceof \App\Entity\UserTicketsystem) {
+        if (!$userTicketSystem instanceof UserTicketsystem) {
             return ['token' => '', 'secret' => ''];
         }
 
@@ -240,7 +240,7 @@ class JiraAuthenticationService
             'ticketSystem' => $ticketSystem,
         ]);
 
-        if ($userTicketSystem instanceof \App\Entity\UserTicketsystem) {
+        if ($userTicketSystem instanceof UserTicketsystem) {
             $objectManager->remove($userTicketSystem);
             $objectManager->flush();
         }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App;
 
 use Generator;
+use Override;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 
@@ -24,7 +25,7 @@ class Kernel extends BaseKernel
         }
     }
 
-    #[\Override]
+    #[Override]
     public function getProjectDir(): string
     {
         return dirname(__DIR__);

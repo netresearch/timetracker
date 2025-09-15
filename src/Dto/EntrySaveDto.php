@@ -85,7 +85,7 @@ final readonly class EntrySaveDto
      */
     public function getDateAsDateTime(): ?DateTimeInterface
     {
-        if ($this->date === '' || $this->date === '0') {
+        if ('' === $this->date || '0' === $this->date) {
             return null;
         }
 
@@ -101,7 +101,7 @@ final readonly class EntrySaveDto
      */
     public function getStartAsDateTime(): ?DateTimeInterface
     {
-        if ($this->start === '' || $this->start === '0') {
+        if ('' === $this->start || '0' === $this->start) {
             return null;
         }
 
@@ -121,7 +121,7 @@ final readonly class EntrySaveDto
      */
     public function getEndAsDateTime(): ?DateTimeInterface
     {
-        if ($this->end === '' || $this->end === '0') {
+        if ('' === $this->end || '0' === $this->end) {
             return null;
         }
 

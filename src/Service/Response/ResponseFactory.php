@@ -35,7 +35,7 @@ class ResponseFactory
     {
         $responseData = ['success' => true];
 
-        if ($data !== []) {
+        if ([] !== $data) {
             $responseData = array_merge($responseData, $data);
         }
 
@@ -92,7 +92,7 @@ class ResponseFactory
     {
         $message = $this->translator->trans('Validation failed');
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             $errorMessages = array_map(
                 static fn ($field, $error): string => sprintf('%s: %s', $field, $error),
                 array_keys($errors),

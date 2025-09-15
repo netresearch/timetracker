@@ -50,7 +50,7 @@ class TokenEncryptionService
      */
     public function encryptToken(string $token): string
     {
-        if ($token === '' || $token === '0') {
+        if ('' === $token || '0' === $token) {
             return '';
         }
 
@@ -99,7 +99,7 @@ class TokenEncryptionService
      */
     public function decryptToken(string $encryptedToken): string
     {
-        if ($encryptedToken === '' || $encryptedToken === '0') {
+        if ('' === $encryptedToken || '0' === $encryptedToken) {
             return '';
         }
 

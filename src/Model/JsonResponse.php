@@ -23,6 +23,7 @@ namespace App\Model;
 
 use InvalidArgumentException;
 use JsonException;
+use Override;
 
 /**
  * JSON response.
@@ -60,7 +61,7 @@ class JsonResponse extends Response
     /**
      * Add additional headers before sending an JSON reply to the client.
      */
-    #[\Override]
+    #[Override]
     public function send(bool $flush = true): static
     {
         // Ensure Content-Type is always set for JSON responses

@@ -221,7 +221,7 @@ class LdapClientService
             }
         }
 
-        if ($userDn === '' || $userDn === '0') {
+        if ('' === $userDn || '0' === $userDn) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->error('LDAP: Could not extract or construct DN from user entry.', [
                     'entry_keys' => array_keys($ldapEntry),

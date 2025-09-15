@@ -200,7 +200,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function findByIds(array $ids): array
     {
-        if ($ids === []) {
+        if ([] === $ids) {
             return [];
         }
 
@@ -622,7 +622,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function bulkUpdate(array $entryIds, array $updateData): int
     {
-        if ($entryIds === [] || $updateData === []) {
+        if ([] === $entryIds || [] === $updateData) {
             return 0;
         }
 
@@ -860,7 +860,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Apply sorting
-        if (is_array($arSort) && $arSort !== []) {
+        if (is_array($arSort) && [] !== $arSort) {
             foreach ($arSort as $field => $direction) {
                 // Handle both string and boolean values for direction
                 if (is_bool($direction)) {
@@ -1030,7 +1030,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function getActivitiesWithTime(string $ticket): array
     {
-        if ($ticket === '' || $ticket === '0') {
+        if ('' === $ticket || '0' === $ticket) {
             return [];
         }
 
@@ -1063,7 +1063,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function getUsersWithTime(string $ticket): array
     {
-        if ($ticket === '' || $ticket === '0') {
+        if ('' === $ticket || '0' === $ticket) {
             return [];
         }
 
@@ -1243,7 +1243,7 @@ class EntryRepository extends ServiceEntityRepository
         $connection = $this->getEntityManager()->getConnection();
 
         // Get customer summary
-        if ($entry->getCustomer() instanceof \App\Entity\Customer) {
+        if ($entry->getCustomer() instanceof Customer) {
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
                           c.name as name
@@ -1273,7 +1273,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Get project summary
-        if ($entry->getProject() instanceof \App\Entity\Project) {
+        if ($entry->getProject() instanceof Project) {
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
                           p.name as name, p.estimation as estimation
@@ -1305,7 +1305,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Get activity summary
-        if ($entry->getActivity() instanceof \App\Entity\Activity) {
+        if ($entry->getActivity() instanceof Activity) {
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own,
                           a.name as name

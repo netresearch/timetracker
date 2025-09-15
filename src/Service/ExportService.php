@@ -279,7 +279,7 @@ class ExportService
                 $fields[] = 'summary';
             }
 
-            if ($fields === []) {
+            if ([] === $fields) {
                 continue;
             }
 

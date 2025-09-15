@@ -55,7 +55,7 @@ final readonly class UserSaveDto
     #[Assert\Callback]
     public function validateTeams(ExecutionContextInterface $executionContext): void
     {
-        if ($this->teams === []) {
+        if ([] === $this->teams) {
             $executionContext->buildViolation('Every user must belong to at least one team')
                 ->atPath('teams')
                 ->addViolation()

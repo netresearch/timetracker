@@ -70,7 +70,7 @@ final class SaveCustomerAction extends BaseController
             static fn (int $id): bool => $id > 0,
         );
 
-        if ($validTeamIds !== []) {
+        if ([] !== $validTeamIds) {
             // Fetch all teams in a single query to avoid N+1 problem
             $teams = $this->doctrineRegistry->getRepository(Team::class)->findBy(['id' => $validTeamIds]);
             $foundTeamIds = [];
@@ -82,7 +82,7 @@ final class SaveCustomerAction extends BaseController
 
             // Check if any requested teams were not found
             $missingTeamIds = array_diff($validTeamIds, $foundTeamIds);
-            if ($missingTeamIds !== []) {
+            if ([] !== $missingTeamIds) {
                 $response = new Response(sprintf(
                     $this->translate('Could not find team(s) with ID(s): %s.'),
                     implode(', ', $missingTeamIds),

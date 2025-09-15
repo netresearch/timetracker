@@ -9,7 +9,6 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
 use function count;
-use function get_class;
 use function is_callable;
 use function sprintf;
 
@@ -271,7 +270,7 @@ class QueryCacheService
      */
     private function log(string $message, array $context = []): void
     {
-        if ($this->logger instanceof \Psr\Log\LoggerInterface) {
+        if ($this->logger instanceof LoggerInterface) {
             $this->logger->debug('[QueryCache] ' . $message, $context);
         }
     }

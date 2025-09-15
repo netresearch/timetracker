@@ -54,9 +54,8 @@ class Ticket extends Base
         #[ORM\Column(type: 'integer', name: 'estimation')]
         private int $estimatedDuration = 0,
         #[ORM\Column(type: 'string', name: 'parent', length: 31)]
-        private string $parentTicketNumber = ''
-    )
-    {
+        private string $parentTicketNumber = '',
+    ) {
     }
 
     /**

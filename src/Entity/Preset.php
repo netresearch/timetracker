@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Model\Base;
 use Doctrine\ORM\Mapping as ORM;
+use Override;
 
 #[ORM\Entity(repositoryClass: \App\Repository\PresetRepository::class)]
 #[ORM\Table(name: 'presets')]
@@ -207,7 +208,7 @@ class Preset extends Base
      *
      * @psalm-return array{id: int, name: string, customer: int|null, project: int|null, activity: int|null, description: string}
      */
-    #[\Override]
+    #[Override]
     public function toArray(): array
     {
         return [

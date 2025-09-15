@@ -9,6 +9,7 @@ use App\Model\Base;
 use App\Service\Util\TimeCalculationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Override;
 
 use function in_array;
 
@@ -221,7 +222,7 @@ class Project extends Base
      *
      * @return array<string, mixed>
      */
-    #[\Override]
+    #[Override]
     public function toArray(): array
     {
         $data = parent::toArray();

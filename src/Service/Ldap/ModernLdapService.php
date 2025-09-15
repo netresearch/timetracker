@@ -399,11 +399,11 @@ class ModernLdapService
      */
     private function validateInput(string $username, string $password): void
     {
-        if ($username === '' || $username === '0') {
+        if ('' === $username || '0' === $username) {
             throw new InvalidArgumentException('Username cannot be empty');
         }
 
-        if ($password === '' || $password === '0') {
+        if ('' === $password || '0' === $password) {
             throw new InvalidArgumentException('Password cannot be empty');
         }
 
@@ -458,7 +458,7 @@ class ModernLdapService
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
-        if (!$this->logger instanceof \Psr\Log\LoggerInterface) {
+        if (!$this->logger instanceof LoggerInterface) {
             return;
         }
 

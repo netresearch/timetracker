@@ -177,7 +177,7 @@ class JiraHttpClientService
             $fullUrl = $this->jiraApiUrl . ltrim($url, '/');
 
             $options = ['auth' => 'oauth'];
-            if ($data !== []) {
+            if ([] !== $data) {
                 $options['json'] = $data;
             }
 
@@ -284,7 +284,7 @@ class JiraHttpClientService
     {
         $certificate = $this->ticketSystem->getPrivateKey();
 
-        if ($certificate === '' || $certificate === '0') {
+        if ('' === $certificate || '0' === $certificate) {
             throw new JiraApiException('OAuth private key not configured', 500);
         }
 

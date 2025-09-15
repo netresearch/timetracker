@@ -97,7 +97,7 @@ final class SaveEntryAction extends BaseTrackingController
         $entryId = $entrySaveDto->id;
 
         // Should we check if the ticket belongs to the project
-        if ($entrySaveDto->ticket !== '' && $entrySaveDto->ticket !== '0') {
+        if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
             // Use project's jira_id as the expected prefix if it exists
             $prefix = $project->getJiraId();
 
@@ -136,7 +136,7 @@ final class SaveEntryAction extends BaseTrackingController
         $entry->setClass(EntryClass::DAYBREAK);
 
         try {
-            if ($entrySaveDto->date !== '' && $entrySaveDto->date !== '0') {
+            if ('' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
                 $dayDate = new DateTime($entrySaveDto->date);
                 $entry->setDay($dayDate);
             }
@@ -145,7 +145,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         try {
-            if ($entrySaveDto->start !== '' && $entrySaveDto->start !== '0') {
+            if ('' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
                 $startTime = new DateTime($entrySaveDto->start);
                 $entry->setStart($startTime);
             }
@@ -154,7 +154,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         try {
-            if ($entrySaveDto->end !== '' && $entrySaveDto->end !== '0') {
+            if ('' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
                 $endTime = new DateTime($entrySaveDto->end);
                 $entry->setEnd($endTime);
             }
@@ -162,11 +162,11 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
-        if ($entrySaveDto->description !== '' && $entrySaveDto->description !== '0') {
+        if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
             $entry->setDescription($entrySaveDto->description);
         }
 
-        if ($entrySaveDto->ticket !== '' && $entrySaveDto->ticket !== '0') {
+        if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
             $entry->setTicket($entrySaveDto->ticket);
         }
 
@@ -228,11 +228,11 @@ final class SaveEntryAction extends BaseTrackingController
             ];
 
             // Include ticket and description if present
-            if ($entrySaveDto->ticket !== '' && $entrySaveDto->ticket !== '0') {
+            if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
                 $data['result']['ticket'] = $entry->getTicket();
             }
 
-            if ($entrySaveDto->description !== '' && $entrySaveDto->description !== '0') {
+            if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
                 $data['result']['description'] = $entry->getDescription();
             }
 

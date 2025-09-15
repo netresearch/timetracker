@@ -102,7 +102,7 @@ class JiraWorkLogService
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return;
         }
 
@@ -175,7 +175,7 @@ class JiraWorkLogService
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return;
         }
 
