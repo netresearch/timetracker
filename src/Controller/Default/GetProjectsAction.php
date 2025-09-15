@@ -28,7 +28,7 @@ final class GetProjectsAction extends BaseController
         }
 
         // Check if user is either admin or PL type
-        if (!$this->isGranted('ROLE_ADMIN') && (!$user->getType() || $user->getType()->value !== 'PL')) {
+        if (!$this->isGranted('ROLE_ADMIN') && $user->getType()->value !== 'PL') {
             $response = new Response($this->translate('Permission denied.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             return $response;
