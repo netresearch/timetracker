@@ -1,17 +1,21 @@
 # config/routes.yaml
 # Main routing configuration
 
-# Standard login route (Symfony 6 convention)
+# Unified login route (Symfony 7.3 convention)
+# Handles both GET (display form) and POST (authentication)
 _login:
     path: /login
     controller: App\Controller\SecurityController::login
+    methods: [GET, POST]
 
-# Login check route for form_login
+# Legacy login_check route for backward compatibility
+# Will be removed after full migration
 login_check:
     path: /login_check
+    controller: App\Controller\SecurityController::login
     methods: POST
 
-# Logout route (Symfony 6 convention)
+# Logout route (Symfony 7.3 convention)
 _logout:
     path: /logout
     controller: App\Controller\SecurityController::logout
