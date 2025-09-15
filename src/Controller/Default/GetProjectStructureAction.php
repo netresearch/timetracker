@@ -13,13 +13,13 @@ final class GetProjectStructureAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getProjectStructure', name: '_getProjectStructure_attr', methods: ['GET'])]
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->login($request);
+        if (!$user instanceof \App\Entity\User) {
+            return $this->redirectToRoute('_login');
         }
 
-        $userId = $this->getUserId($request);
+        $userId = (int) $user->getId();
         $managerRegistry = $this->managerRegistry;
 
         /** @var \App\Repository\CustomerRepository $objectRepository */

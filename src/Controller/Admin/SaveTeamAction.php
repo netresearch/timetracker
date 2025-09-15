@@ -13,6 +13,7 @@ use App\Model\Response;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Security\Http\Attribute\Security;
 
 final class SaveTeamAction extends BaseController
 {
@@ -21,14 +22,11 @@ final class SaveTeamAction extends BaseController
      * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
+    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
-        }
-
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
         }
 
         /** @var \App\Repository\TeamRepository $objectRepository */

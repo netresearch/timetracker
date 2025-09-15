@@ -40,8 +40,6 @@ services:
         resource: '../src/*'
         exclude:
             - '../src/Entity/'
-            - '../src/Migrations/'
-            - '../src/Tests/'
             - '../src/Kernel.php'
             - '../src/Service/Integration/Jira/JiraHttpClientService.php'
             - '../src/Service/Integration/Jira/JiraWorkLogService.php'

@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class GetDataAction extends BaseController
 {
@@ -19,18 +20,14 @@ final class GetDataAction extends BaseController
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getData', name: '_getData_attr', methods: ['GET', 'POST'])]
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getData/days/{days}', name: '_getDataDays_attr', defaults: ['days' => 3], methods: ['GET'])]
-    public function __invoke(Request $request): JsonResponse
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return new JsonResponse(['error' => 'not authenticated'], \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
-        }
-
-        $userId = $this->getUserId($request);
-        $user = $this->managerRegistry->getRepository(User::class)->find($userId);
-
         if (!$user instanceof User) {
             return new JsonResponse([]);
         }
+
+        $userId = (int) $user->getId();
 
         /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);

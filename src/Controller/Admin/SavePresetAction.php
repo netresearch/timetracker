@@ -16,6 +16,7 @@ use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Security\Http\Attribute\Security;
 
 final class SavePresetAction extends BaseController
 {
@@ -26,11 +27,9 @@ final class SavePresetAction extends BaseController
      * @throws Exception                                                                When entity relationships are invalid or persistence operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
+    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
     public function __invoke(Request $request, #[MapRequestPayload] PresetSaveDto $presetSaveDto, ObjectMapperInterface $objectMapper): Response|JsonResponse|\App\Response\Error
     {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
 
         $id = $presetSaveDto->id;
         $customer = null !== $presetSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($presetSaveDto->customer) : null;

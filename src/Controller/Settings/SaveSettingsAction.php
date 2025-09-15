@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Controller\Settings;
 
 use App\Controller\BaseController;
+use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Service\Util\LocalizationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class SaveSettingsAction extends BaseController
 {
@@ -19,38 +22,17 @@ final class SaveSettingsAction extends BaseController
      * @throws Exception                                                        When user retrieval or persistence operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/settings/save', name: 'saveSettings', methods: ['POST'])]
-    public function __invoke(Request $request): JsonResponse
-    {
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(
+        Request $request,
+        #[CurrentUser] User $user,
+    ): JsonResponse {
         if ('POST' !== $request->getMethod()) {
             $response = new JsonResponse([
                 'success' => false,
                 'message' => $this->translator->trans('The configuration could not be saved.'),
             ]);
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_SERVICE_UNAVAILABLE);
-
-            return $response;
-        }
-
-        try {
-            $userId = $this->getUserId($request);
-        } catch (\Symfony\Component\Security\Core\Exception\AccessDeniedException) {
-            $response = new JsonResponse([
-                'success' => false,
-                'message' => $this->translator->trans('User not found.'),
-            ]);
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-
-            return $response;
-        }
-
-        /** @var \App\Entity\User|null $user */
-        $user = $this->managerRegistry->getRepository(\App\Entity\User::class)->find($userId);
-        if (!$user instanceof \App\Entity\User) {
-            $response = new JsonResponse([
-                'success' => false,
-                'message' => $this->translator->trans('User not found.'),
-            ]);
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
 
             return $response;
         }

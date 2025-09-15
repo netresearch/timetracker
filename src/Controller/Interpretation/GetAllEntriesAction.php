@@ -14,6 +14,7 @@ use App\Service\Response\PaginationLinkService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\Security\Http\Attribute\Security;
 
 final class GetAllEntriesAction extends BaseController
 {
@@ -24,11 +25,9 @@ final class GetAllEntriesAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
+    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
     public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $interpretationFiltersDto): ModelResponse|JsonResponse|Error
     {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
 
         try {
             $paginatedEntries = $this->entryQueryService->findPaginatedEntries($interpretationFiltersDto);

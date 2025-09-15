@@ -11,6 +11,7 @@ use App\Model\Response;
 use App\Repository\EntryRepository;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function chr;
 
@@ -20,19 +21,16 @@ final class ExportCsvAction extends BaseController
      * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
-    public function __invoke(Request $request): Response
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): Response
     {
-        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days'))
-            ? (int) $request->attributes->get('days')
-            : 10000;
-
-        $user = $this->managerRegistry
-            ->getRepository(User::class)
-            ->find($this->getUserId($request))
-        ;
         if (!$user instanceof User) {
             return $this->getFailedLoginResponse();
         }
+
+        $days = $request->attributes->has('days') && is_numeric($request->attributes->get('days'))
+            ? (int) $request->attributes->get('days')
+            : 10000;
 
         /** @var EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);

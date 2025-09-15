@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Controller\Tracking;
 
 use App\Entity\Entry;
+use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use App\Util\RequestEntityHelper;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class DeleteEntryAction extends BaseTrackingController
 {
@@ -21,11 +24,11 @@ final class DeleteEntryAction extends BaseTrackingController
      * @throws Exception                                                       When entry processing or deletion fails
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
-    public function __invoke(Request $request): Response|JsonResponse|Error
-    {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(
+        Request $request,
+        #[CurrentUser] User $currentUser,
+    ): Response|JsonResponse|Error {
 
         $alert = null;
 
@@ -54,7 +57,7 @@ final class DeleteEntryAction extends BaseTrackingController
             $manager->remove($entry);
             $manager->flush();
 
-            $this->calculateClasses($this->getUserId($request), $day);
+            $this->calculateClasses($currentUser->getId() ?? 0, $day);
         }
 
         return new JsonResponse(['success' => true, 'alert' => $alert]);

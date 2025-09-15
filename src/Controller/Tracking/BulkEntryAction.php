@@ -17,6 +17,8 @@ use DateInterval;
 use DateTime;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 use function count;
@@ -35,12 +37,11 @@ final class BulkEntryAction extends BaseTrackingController
      * @throws Exception                                                       when entry creation or validation fails
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
+        #[CurrentUser] User $currentUser,
     ): Response {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
 
         // Create DTO from request data
         $bulkEntryDto = new BulkEntryDto(
@@ -75,15 +76,14 @@ final class BulkEntryAction extends BaseTrackingController
                 throw new Exception('Preset not found');
             }
 
-            /** @var User $user */
-            $user = $doctrine->getRepository(User::class)->find($this->getUserId($request));
+            $user = $currentUser;
             $customer = $doctrine->getRepository(Customer::class)->find($preset->getCustomerId());
             $project = $doctrine->getRepository(Project::class)->find($preset->getProjectId());
             $activity = $doctrine->getRepository(Activity::class)->find($preset->getActivityId());
 
             if ($bulkEntryDto->isUseContract()) {
                 $contracts = $doctrine->getRepository(Contract::class)
-                    ->findBy(['user' => $this->getUserId($request)], ['start' => 'ASC'])
+                    ->findBy(['user' => $currentUser->getId()], ['start' => 'ASC'])
                 ;
 
                 foreach ($contracts as $contract) {

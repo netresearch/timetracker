@@ -20,6 +20,7 @@ use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Security\Http\Attribute\Security;
 use Symfony\Contracts\Service\Attribute\Required;
 
 use function strlen;
@@ -31,11 +32,9 @@ final class SaveProjectAction extends BaseController
      * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
+    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
     public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $projectSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-        if (false === $this->isPl($request)) {
-            return $this->getFailedAuthorizationResponse();
-        }
 
         $projectId = $projectSaveDto->id;
 

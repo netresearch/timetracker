@@ -7,6 +7,8 @@ namespace App\Controller\Interpretation;
 use App\Controller\BaseController;
 use App\Dto\InterpretationFiltersDto;
 use App\Entity\Entry;
+use App\Entity\User;
+use App\Enum\UserType;
 use DateInterval;
 use DateTime;
 use Exception;
@@ -57,10 +59,11 @@ abstract class BaseInterpretationController extends BaseController
      *
      * @psalm-return array<int, Entry>
      */
-    protected function getEntries(\Symfony\Component\HttpFoundation\Request $request, ?int $maxResults = null): array
+    protected function getEntries(\Symfony\Component\HttpFoundation\Request $request, ?User $currentUser = null, ?int $maxResults = null): array
     {
         $interpretationFiltersDto = InterpretationFiltersDto::fromRequest($request);
-        $arParams = $interpretationFiltersDto->toFilterArray($this->isDEV($request) ? $this->getUserId($request) : null, $maxResults);
+        $userId = ($currentUser?->getType() === UserType::DEV) ? $currentUser->getId() : null;
+        $arParams = $interpretationFiltersDto->toFilterArray($userId, $maxResults);
 
         $year = $interpretationFiltersDto->year;
         if (null !== $year) {

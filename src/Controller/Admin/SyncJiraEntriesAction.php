@@ -10,6 +10,7 @@ use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use DateTime;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\Security;
 use Symfony\Contracts\Service\Attribute\Required;
 
 final class SyncJiraEntriesAction extends BaseController
@@ -20,11 +21,9 @@ final class SyncJiraEntriesAction extends BaseController
      * @throws Exception                                                       When date parsing or Jira API operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/syncentries/jira', name: 'syncJiraEntries_attr', methods: ['GET'])]
+    #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType().value == 'PL')")]
     public function __invoke(Request $request): JsonResponse
     {
-        if (false === $this->isPl($request)) {
-            return new JsonResponse(['success' => false, 'message' => 'Forbidden'], \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
-        }
 
         $from = $request->query->get('from');
         $to = $request->query->get('to');
