@@ -62,7 +62,7 @@ abstract class BaseInterpretationController extends BaseController
     protected function getEntries(\Symfony\Component\HttpFoundation\Request $request, ?User $currentUser = null, ?int $maxResults = null): array
     {
         $interpretationFiltersDto = InterpretationFiltersDto::fromRequest($request);
-        $userId = ($currentUser?->getType() === UserType::DEV) ? $currentUser->getId() : null;
+        $userId = (UserType::DEV === $currentUser?->getType()) ? $currentUser->getId() : null;
         $arParams = $interpretationFiltersDto->toFilterArray($userId, $maxResults);
 
         $year = $interpretationFiltersDto->year;

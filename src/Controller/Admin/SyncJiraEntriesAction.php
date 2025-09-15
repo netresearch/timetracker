@@ -21,7 +21,7 @@ final class SyncJiraEntriesAction extends BaseController
      * @throws Exception                                                       When date parsing or Jira API operations fail
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/syncentries/jira', name: 'syncJiraEntries_attr', methods: ['GET'])]
-    #[IsGranted("ROLE_ADMIN")]
+    #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): JsonResponse
     {
 

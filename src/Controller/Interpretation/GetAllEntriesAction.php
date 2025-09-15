@@ -26,12 +26,12 @@ final class GetAllEntriesAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
-    #[IsGranted("ROLE_USER")]
+    #[IsGranted('ROLE_USER')]
     public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $interpretationFiltersDto, #[CurrentUser] ?\App\Entity\User $user = null): ModelResponse|JsonResponse|Error
     {
         // Check if user is either admin or PL type
         if (!$this->isGranted('ROLE_ADMIN')) {
-            if (!$user || $user->getType() === null || $user->getType()->value !== 'PL') {
+            if (!$user || null === $user->getType() || 'PL' !== $user->getType()->value) {
                 return new Error($this->translate('Permission denied.'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             }
         }

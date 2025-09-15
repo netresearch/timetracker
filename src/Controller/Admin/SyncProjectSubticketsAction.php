@@ -26,7 +26,7 @@ final class SyncProjectSubticketsAction extends BaseController
     }
 
     #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
-    #[IsGranted("ROLE_ADMIN")]
+    #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapQueryString] AdminSyncDto $adminSyncDto): JsonResponse|Error|ModelResponse
     {
         $projectId = $adminSyncDto->project;

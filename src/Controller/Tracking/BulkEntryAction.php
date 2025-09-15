@@ -40,7 +40,8 @@ final class BulkEntryAction extends BaseTrackingController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
-        #[CurrentUser] User $currentUser,
+        #[CurrentUser]
+        User $currentUser,
     ): Response {
 
         // Create DTO from request data

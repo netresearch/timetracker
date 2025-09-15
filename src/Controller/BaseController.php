@@ -30,6 +30,8 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use const E_USER_DEPRECATED;
+
 /**
  * BaseController.php.
  *
@@ -70,6 +72,7 @@ class BaseController extends AbstractController
      * Check if user is logged in using Symfony Security.
      *
      * @deprecated Use isGranted('IS_AUTHENTICATED_FULLY') directly
+     *
      * @throws Exception
      */
     protected function isLoggedIn(Request $request): bool

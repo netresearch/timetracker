@@ -60,9 +60,9 @@ INSERT INTO
     `locale`
   )
 VALUES
-  (1, 'unittest', 'UTE', 'PL', NULL, 0, 1, 1, 'de'),
+  (1, 'unittest', 'UTE', 'ADMIN', NULL, 0, 1, 1, 'de'),
   (2, 'developer', 'NPL', 'DEV', NULL, 0, 1, 1, 'de'),
-  (3, 'i.myself', 'IMY', 'PL', NULL, 0, 1, 1, 'de'),
+  (3, 'i.myself', 'IMY', 'ADMIN', NULL, 0, 1, 1, 'de'),
   (
     4,
     'testGroupByActionUser',

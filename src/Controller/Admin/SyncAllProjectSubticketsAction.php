@@ -15,7 +15,7 @@ use Throwable;
 final class SyncAllProjectSubticketsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/syncsubtickets', name: 'syncAllSubtickets_attr', methods: ['GET'])]
-    #[IsGranted("ROLE_ADMIN")]
+    #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): JsonResponse
     {
 

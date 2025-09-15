@@ -22,7 +22,7 @@ final class SaveTeamAction extends BaseController
      * @throws Exception
      */
     #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
-    #[IsGranted("ROLE_ADMIN")]
+    #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
         /** @var \App\Repository\TeamRepository $objectRepository */
