@@ -13,7 +13,7 @@ final class CheckStatusAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/status/check', name: 'check_status', methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse
     {
-        $login = $this->isLoggedIn($request);
+        $login = $this->isGranted('IS_AUTHENTICATED_FULLY');
 
         return new JsonResponse(['loginStatus' => $login]);
     }

@@ -16,9 +16,6 @@ final class GetTeamsAction extends BaseController
     #[IsGranted("ROLE_ADMIN")]
     public function __invoke(Request $request): Response|JsonResponse
     {
-        if (!$this->checkLogin($request)) {
-            return $this->getFailedLoginResponse();
-        }
 
         /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(\App\Entity\Team::class);
