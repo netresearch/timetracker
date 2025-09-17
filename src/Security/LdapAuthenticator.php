@@ -27,6 +27,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Throwable;
 
+use function in_array;
 use function is_int;
 use function is_scalar;
 use function is_string;
