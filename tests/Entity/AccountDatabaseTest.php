@@ -28,7 +28,9 @@ final class AccountDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        $this->entityManager = $entityManager;
     }
 
     public function testPersistAndFind(): void
@@ -150,8 +152,9 @@ final class AccountDatabaseTest extends AbstractWebTestCase
     {
         $account = new Account();
 
-        // Test required fields
+        // Test required fields - setName expects string, passing null should cause TypeError
         static::expectException(\TypeError::class);
+        /** @phpstan-ignore-next-line Intentionally passing null to test TypeError */
         $account->setName(null);
     }
 

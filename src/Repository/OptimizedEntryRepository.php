@@ -236,9 +236,13 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             $result = ['duration' => 0, 'count' => 0];
         }
 
+        // Ensure result is properly typed as array<string, mixed>
+        /** @var array<string, mixed> $typedResult */
+        $typedResult = $result;
+        
         $data = [
-            'duration' => ArrayTypeHelper::getInt($result, 'duration', 0) ?? 0,
-            'count' => ArrayTypeHelper::getInt($result, 'count', 0) ?? 0,
+            'duration' => ArrayTypeHelper::getInt($typedResult, 'duration', 0) ?? 0,
+            'count' => ArrayTypeHelper::getInt($typedResult, 'count', 0) ?? 0,
         ];
 
         $this->setCached($cacheKey, $data, 60); // Shorter cache for work stats
@@ -307,7 +311,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         // Add limit if specified
         if (isset($filter['limit'])) {
-            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
+            /** @var array<string, mixed> $typedFilter */
+            $typedFilter = $filter;
+            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($typedFilter, 'limit', 100));
         }
 
         $result = $queryBuilder->getQuery()->getResult();
@@ -440,7 +446,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function formatSummaryData(?array $result, Entry $entry): array
     {
-        if (!$result) {
+        if ($result === null) {
             return $this->getEmptySummaryData();
         }
 

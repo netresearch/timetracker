@@ -153,7 +153,7 @@ class ExportService
         }
 
         $apiService = $arApi[$ticketSystem->getId()] ?? null;
-        if (!$apiService) {
+        if ($apiService === null) {
             return '';
         }
 
@@ -255,7 +255,7 @@ class ExportService
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
         $user = $objectRepository->find($userId);
-        if (!$user) {
+        if ($user === null) {
             return $entries;
         }
 
@@ -303,12 +303,18 @@ class ExportService
                     $fields = $ticketData[$ticket];
 
                     if ($includeBillable && isset($fields->labels)) {
-                        $isBillable = in_array('billable', $fields->labels, true);
-                        $entry->setBillable($isBillable);
+                        $labels = $fields->labels;
+                        if (is_array($labels)) {
+                            $isBillable = in_array('billable', $labels, true);
+                            $entry->setBillable($isBillable);
+                        }
                     }
 
                     if ($includeTicketTitle && isset($fields->summary)) {
-                        $entry->setTicketTitle($fields->summary);
+                        $summary = $fields->summary;
+                        if (is_string($summary) || $summary === null) {
+                            $entry->setTicketTitle($summary);
+                        }
                     }
                 }
             } catch (Exception) {

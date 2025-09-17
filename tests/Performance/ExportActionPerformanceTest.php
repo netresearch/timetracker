@@ -35,6 +35,9 @@ use Symfony\Component\Stopwatch\Stopwatch;
 final class ExportActionPerformanceTest extends TestCase
 {
     private Stopwatch $stopwatch;
+    /**
+     * @var array<string, int>
+     */
     private array $performanceBaselines;
     private string $tempDir;
 
@@ -480,6 +483,9 @@ final class ExportActionPerformanceTest extends TestCase
 
     /**
      * Generate test entries for performance testing.
+     */
+    /**
+     * @return array<int, Entry>
      */
     private function generateTestEntries(int $count, bool $withTickets = false, bool $withStats = false): array
     {

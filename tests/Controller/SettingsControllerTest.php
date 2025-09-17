@@ -39,6 +39,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
+        self::assertNotNull($this->queryBuilder);
         $this->queryBuilder->select('*')
             ->from('users')->where('id = :userId')
             ->setParameter('userId', 3)

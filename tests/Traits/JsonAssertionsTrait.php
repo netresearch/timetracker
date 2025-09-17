@@ -34,6 +34,10 @@ trait JsonAssertionsTrait
      *   - When $subset has one element, assert that there exists at least one element in $array containing that subset.
      *   - Otherwise, check elements in order (index-wise) for being a subset.
      */
+    /**
+     * @param array<string|int, mixed> $subset
+     * @param array<string|int, mixed> $array
+     */
     protected function assertArraySubset(array $subset, array $array, string $message = ''): void
     {
         $isAssoc = static function (array $a): bool {
@@ -142,10 +146,13 @@ trait JsonAssertionsTrait
         $responseContent = $this->client->getResponse()->getContent();
         $response = $this->client->getResponse();
         
+        // Ensure response content is a string
+        $responseContentString = (string) $responseContent;
+        
         // Check if response is JSON (validation errors return JSON)
         $contentType = $response->headers->get('Content-Type', '');
-        if (str_contains($contentType, 'application/json') || (str_starts_with($responseContent, '{') && str_ends_with($responseContent, '}'))) {
-            $json = json_decode($responseContent, true);
+        if (str_contains($contentType, 'application/json') || (str_starts_with($responseContentString, '{') && str_ends_with($responseContentString, '}'))) {
+            $json = json_decode($responseContentString, true);
             if (JSON_ERROR_NONE === json_last_error() && isset($json['message'])) {
                 $jsonMessage = $json['message'];
                 
@@ -170,7 +177,7 @@ trait JsonAssertionsTrait
         }
 
         // Try direct comparison first
-        if ($message === $responseContent) {
+        if ($message === $responseContentString) {
             self::assertTrue(true);
             return;
         }
@@ -187,14 +194,14 @@ trait JsonAssertionsTrait
             $englishPattern = str_replace('%num%', '$1', preg_quote($english, '/'));
 
             if (preg_match('/^' . $germanPattern . '$/', $message, $germanMatches)
-                && preg_match('/^' . $englishPattern . '$/', (string) $responseContent, $englishMatches)) {
+                && preg_match('/^' . $englishPattern . '$/', $responseContentString, $englishMatches)) {
                 self::assertTrue(true, 'Translation matched via pattern');
                 return;
             }
         }
 
         // Fall back to direct comparison
-        self::assertSame($message, $responseContent);
+        self::assertSame($message, $responseContentString);
     }
 
     /**
@@ -211,13 +218,21 @@ trait JsonAssertionsTrait
     /**
      * Takes a JSON in array and compares it against the response content.
      */
+    /**
+     * @param array<string|int, mixed> $json
+     */
     protected function assertJsonStructure(array $json): void
     {
+        $responseContent = $this->client->getResponse()->getContent();
         $responseJson = json_decode(
-            (string) $this->client->getResponse()->getContent(),
+            (string) $responseContent,
             true,
         );
-        self::assertArraySubset($json, $responseJson);
+        if (is_array($responseJson)) {
+            self::assertArraySubset($json, $responseJson);
+        } else {
+            self::fail('Response is not a valid JSON array');
+        }
     }
 
     /**
@@ -225,16 +240,30 @@ trait JsonAssertionsTrait
      */
     protected function assertLength(int $length, ?string $path = null): void
     {
+        $responseContent = $this->client->getResponse()->getContent();
         $response = json_decode(
-            (string) $this->client->getResponse()->getContent(),
+            (string) $responseContent,
             true,
         );
+        if (!is_array($response)) {
+            self::fail('Response is not a valid JSON array');
+            return;
+        }
+        
         if ($path) {
             foreach (explode('.', $path) as $key) {
+                if (!is_array($response) || !isset($response[$key])) {
+                    self::fail(sprintf('Path %s not found in response', $path));
+                    return;
+                }
                 $response = $response[$key];
             }
         }
 
-        self::assertSame($length, count($response));
+        if (is_countable($response)) {
+            self::assertSame($length, count($response));
+        } else {
+            self::fail('Response path is not countable');
+        }
     }
 }

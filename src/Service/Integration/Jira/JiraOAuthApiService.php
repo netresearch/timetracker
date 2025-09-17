@@ -628,7 +628,7 @@ class JiraOAuthApiService
             ])
         ;
 
-        if (!$userTicketSystem) {
+        if ($userTicketSystem === null) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($this->user)
                 ->setTicketSystem($this->ticketSystem)

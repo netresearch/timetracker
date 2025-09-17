@@ -18,6 +18,9 @@ use ReflectionClass;
  */
 interface JiraOAuthApiTestProxy
 {
+    /**
+     * @param array<string, mixed> $data
+     */
     public function callGetResponse(string $method, string $url, array $data = []): object;
 }
 
@@ -52,6 +55,9 @@ final class JiraOAuthApiTest extends TestCase
             {
             }
 
+            /**
+             * @param array<string, mixed> $options
+             */
             public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
             {
                 $fn = $this->handler;
@@ -72,6 +78,9 @@ final class JiraOAuthApiTest extends TestCase
                 return $this->client;
             }
 
+            /**
+             * @param array<string, mixed> $data
+             */
             public function callGetResponse(string $method, string $url, array $data = []): object
             {
                 return parent::getResponse($method, $url, $data);

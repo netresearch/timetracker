@@ -105,6 +105,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         // Get CSRF token for logout (required with CSRF protection enabled)
+        /** @var \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface $csrfTokenManager */
         $csrfTokenManager = $this->serviceContainer->get('security.csrf.token_manager');
         $csrfToken = $csrfTokenManager->getToken('logout')->getValue();
 
@@ -119,6 +120,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
         self::assertTrue($this->client->getResponse()->isRedirect());
 
         // Ensure token cleared to avoid sticky authentication across requests
+        /** @var \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $tokenStorage */
         $tokenStorage = $this->client->getContainer()->get('security.token_storage');
         self::assertNull($tokenStorage->getToken());
 

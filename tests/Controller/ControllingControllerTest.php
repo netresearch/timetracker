@@ -105,12 +105,14 @@ final class ControllingControllerTest extends AbstractWebTestCase
             ->willReturnCallback(static function ($userId, array $entries, $includeBillable, $includeTicketTitle, $searchTickets): array {
                 foreach ($entries as $entry) {
                     // Use setters ON THE REAL Entry objects
-                    if ($includeBillable && method_exists($entry, 'setBillable')) {
-                        $entry->setBillable(true);
-                    }
+                    if ($entry instanceof \App\Entity\Entry) {
+                        if ($includeBillable && method_exists($entry, 'setBillable')) {
+                            $entry->setBillable(true);
+                        }
 
-                    if ($includeTicketTitle && method_exists($entry, 'setTicketTitle')) {
-                        $entry->setTicketTitle('Mocked Title for ' . $entry->getTicket());
+                        if ($includeTicketTitle && method_exists($entry, 'setTicketTitle')) {
+                            $entry->setTicketTitle('Mocked Title for ' . $entry->getTicket());
+                        }
                     }
                 }
 

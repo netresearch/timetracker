@@ -39,6 +39,9 @@ final readonly class TestCoverageAnalyzer
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function analyze(): array
     {
         $controllers = $this->findControllers();
@@ -61,7 +64,7 @@ final readonly class TestCoverageAnalyzer
         foreach ($controllers as $controllerClass => $actions) {
             foreach ($actions as $action) {
                 $totalActions++;
-                $isTestedAction = $this->isActionTested($controllerClass, $action, $tests);
+                $isTestedAction = $this->isActionTested($controllerClass, (string)$action, $tests);
                 
                 if ($isTestedAction) {
                     $testedActions++;
@@ -91,6 +94,9 @@ final readonly class TestCoverageAnalyzer
     /**
      * Find all controller classes and their public action methods
      */
+    /**
+     * @return array<string, array<int, string>>
+     */
     private function findControllers(): array
     {
         $controllers = [];
@@ -100,8 +106,12 @@ final readonly class TestCoverageAnalyzer
         $phpFiles = new RegexIterator($iterator, '/\.php$/');
 
         foreach ($phpFiles as $file) {
-            $relativePath = str_replace($this->controllersPath . '/', '', $file->getPathname());
-            $className = $this->getClassNameFromFile($file->getPathname());
+            if ($file instanceof \SplFileInfo) {
+                $relativePath = str_replace($this->controllersPath . '/', '', $file->getPathname());
+                $className = $this->getClassNameFromFile((string)$file->getPathname());
+            } else {
+                continue;
+            }
             
             if (!$className || !class_exists($className)) {
                 continue;
@@ -129,6 +139,9 @@ final readonly class TestCoverageAnalyzer
 
     /**
      * Extract public action methods from a controller
+     */
+    /**
+     * @return array<int, string>
      */
     private function extractPublicActions(ReflectionClass $reflection): array
     {
@@ -179,6 +192,9 @@ final readonly class TestCoverageAnalyzer
     /**
      * Find all test methods in test files
      */
+    /**
+     * @return array<string, array<int, string>>
+     */
     private function findTestMethods(): array
     {
         $testMethods = [];
@@ -193,7 +209,11 @@ final readonly class TestCoverageAnalyzer
         $phpFiles = new RegexIterator($iterator, '/Test\.php$/');
 
         foreach ($phpFiles as $file) {
-            $className = $this->getClassNameFromFile($file->getPathname(), 'Tests');
+            if ($file instanceof \SplFileInfo) {
+                $className = $this->getClassNameFromFile((string)$file->getPathname(), 'Tests');
+            } else {
+                continue;
+            }
             
             if (!$className || !class_exists($className)) {
                 continue;
@@ -220,6 +240,9 @@ final readonly class TestCoverageAnalyzer
     /**
      * Check if an action is tested by matching patterns
      */
+    /**
+     * @param array<string, array<int, string>> $tests
+     */
     private function isActionTested(string $controllerClass, string $action, array $tests): string|false
     {
         // Extract controller area and action name for better matching
@@ -229,9 +252,9 @@ final readonly class TestCoverageAnalyzer
             // Match by controller area (Settings, Admin, Default, etc.)
             $testArea = $this->extractTestArea($testClass);
             
-            if ($this->areasMatch($controllerInfo['area'], $testArea)) {
+            if ($this->areasMatch((string)$controllerInfo['area'], (string)$testArea)) {
                 foreach ($testMethods as $testMethod) {
-                    if ($this->matchesTestPattern($controllerInfo['action'], $action, $testMethod)) {
+                    if ($this->matchesTestPattern((string)$controllerInfo['action'], $action, (string)$testMethod)) {
                         return "{$testClass}::{$testMethod}";
                     }
                 }
@@ -311,6 +334,9 @@ final readonly class TestCoverageAnalyzer
 
     /**
      * Extract controller area and action information
+     */
+    /**
+     * @return array<string, string>
      */
     private function extractControllerInfo(string $controllerClass): array
     {
@@ -420,6 +446,9 @@ final readonly class TestCoverageAnalyzer
  */
 final readonly class OutputFormatter
 {
+    /**
+     * @param array<string, mixed> $results
+     */
     public function formatResults(array $results): void
     {
         $this->printHeader();
@@ -441,6 +470,9 @@ final readonly class OutputFormatter
         echo str_repeat('=', 80) . "\n";
     }
 
+    /**
+     * @param array<string, mixed> $summary
+     */
     private function printSummary(array $summary): void
     {
         echo "\n📊 SUMMARY:\n";
@@ -454,6 +486,9 @@ final readonly class OutputFormatter
         echo "Progress: {$coverageBar}\n";
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $untested
+     */
     private function printUntestedActions(array $untested): void
     {
         echo "\n❌ UNTESTED CONTROLLER ACTIONS:\n";
@@ -473,6 +508,9 @@ final readonly class OutputFormatter
         }
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $tested
+     */
     private function printTestedActions(array $tested): void
     {
         if (empty($tested)) {

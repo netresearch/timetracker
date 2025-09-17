@@ -17,11 +17,17 @@ use RuntimeException;
  */
 final class PerformanceBenchmarkRunner
 {
+    /**
+     * @var array<string, mixed>
+     */
     private array $benchmarkResults = [];
     private string $reportPath;
+    /**
+     * @var array<string, int|float>
+     */
     private array $regressionThresholds;
 
-    public function __construct(string $reportPath = null)
+    public function __construct(?string $reportPath = null)
     {
         $this->reportPath = $reportPath ?? __DIR__ . '/../../var/performance-report-' . date('Y-m-d-H-i-s') . '.json';
         $this->setupRegressionThresholds();
@@ -41,6 +47,9 @@ final class PerformanceBenchmarkRunner
 
     /**
      * Run all performance benchmarks.
+     */
+    /**
+     * @return array<string, mixed>
      */
     public function runAllBenchmarks(): array
     {
@@ -102,6 +111,9 @@ final class PerformanceBenchmarkRunner
     /**
      * Get performance test methods from a test class.
      */
+    /**
+     * @return array<int, string>
+     */
     private function getPerformanceTestMethods(string $testClass): array
     {
         $reflection = new \ReflectionClass($testClass);
@@ -120,6 +132,9 @@ final class PerformanceBenchmarkRunner
     /**
      * Run a single benchmark test.
      */
+    /**
+     * @return array<string, mixed>
+     */
     private function runSingleBenchmark(string $testClass, string $method): array
     {
         $startTime = microtime(true);
@@ -128,10 +143,17 @@ final class PerformanceBenchmarkRunner
 
         try {
             // Create test instance and run method
+            /** @var object $test */
             $test = new $testClass();
-            $test->setUp();
-            $test->$method();
-            $test->tearDown();
+            if (method_exists($test, 'setUp')) {
+                $test->setUp();
+            }
+            if (method_exists($test, $method)) {
+                $test->$method();
+            }
+            if (method_exists($test, 'tearDown')) {
+                $test->tearDown();
+            }
             
             $success = true;
             $error = null;
@@ -156,6 +178,9 @@ final class PerformanceBenchmarkRunner
 
     /**
      * Format benchmark result for console output.
+     */
+    /**
+     * @param array<string, mixed> $result
      */
     private function formatBenchmarkResult(array $result): string
     {
@@ -233,11 +258,16 @@ final class PerformanceBenchmarkRunner
     /**
      * Add summary statistics to the report.
      */
+    /**
+     * @param array<int, string> &$report
+     */
     private function addSummaryStatistics(array &$report): void
     {
         $allResults = [];
         foreach ($this->benchmarkResults['benchmarks'] as $suite) {
-            $allResults = array_merge($allResults, array_values($suite));
+            if (is_array($suite)) {
+                $allResults = array_merge($allResults, array_values($suite));
+            }
         }
 
         $successfulResults = array_filter($allResults, fn($r) => $r['success']);
@@ -253,12 +283,17 @@ final class PerformanceBenchmarkRunner
 
         $executionTimes = array_column($successfulResults, 'execution_time_ms');
         $memoryUsages = array_column($successfulResults, 'memory_usage_bytes');
+        
+        if (!is_array($executionTimes) || empty($executionTimes) || !is_array($memoryUsages) || empty($memoryUsages)) {
+            $report[] = "No valid performance data to analyze.";
+            return;
+        }
 
         $report[] = sprintf("Total Tests: %d (✅ %d, ❌ %d)", $totalTests, $successfulTests, $failedTests);
-        $report[] = sprintf("Average Execution Time: %.1fms", array_sum($executionTimes) / count($executionTimes));
-        $report[] = sprintf("Max Execution Time: %.1fms", max($executionTimes));
-        $report[] = sprintf("Average Memory Usage: %.2fMB", array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024);
-        $report[] = sprintf("Max Memory Usage: %.2fMB", max($memoryUsages) / 1024 / 1024);
+        $report[] = sprintf("Average Execution Time: %.1fms", (float)(array_sum($executionTimes) / count($executionTimes)));
+        $report[] = sprintf("Max Execution Time: %.1fms", (float)max($executionTimes));
+        $report[] = sprintf("Average Memory Usage: %.2fMB", (float)(array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024));
+        $report[] = sprintf("Max Memory Usage: %.2fMB", (float)(max($memoryUsages) / 1024 / 1024));
     }
 
     /**
@@ -275,12 +310,20 @@ final class PerformanceBenchmarkRunner
             return;
         }
 
-        $history = json_decode(file_get_contents($historyFile), true);
-        if (empty($history)) {
+        $historyContent = file_get_contents($historyFile);
+        if ($historyContent === false) {
+            return;
+        }
+        
+        $history = json_decode($historyContent, true);
+        if (!is_array($history) || empty($history)) {
             return;
         }
 
         $lastRun = end($history);
+        if (!is_array($lastRun)) {
+            return;
+        }
         $regressions = $this->comparePerformanceResults($lastRun, $this->benchmarkResults);
 
         if (!empty($regressions)) {
@@ -295,12 +338,19 @@ final class PerformanceBenchmarkRunner
 
         // Append current results to history (keep last 10 runs)
         $history[] = $this->benchmarkResults;
-        $history = array_slice($history, -10);
+        if (is_array($history)) {
+            $history = array_slice($history, -10);
+        }
         file_put_contents($historyFile, json_encode($history, JSON_PRETTY_PRINT));
     }
 
     /**
      * Compare performance results and detect regressions.
+     */
+    /**
+     * @param array<string, mixed> $baseline
+     * @param array<string, mixed> $current
+     * @return array<int, string>
      */
     private function comparePerformanceResults(array $baseline, array $current): array
     {
@@ -319,36 +369,46 @@ final class PerformanceBenchmarkRunner
                 }
 
                 // Check execution time regression
+                $baselineTime = $baselineResult['execution_time_ms'] ?? 0;
+                $currentTime = $result['execution_time_ms'] ?? 0;
+                if (!is_numeric($baselineTime) || !is_numeric($currentTime)) {
+                    continue;
+                }
                 $timeRegression = $this->calculateRegression(
-                    $baselineResult['execution_time_ms'],
-                    $result['execution_time_ms']
+                    (float)$baselineTime,
+                    (float)$currentTime
                 );
                 
                 if ($timeRegression > $this->regressionThresholds['execution_time']) {
                     $regressions[] = sprintf(
                         "%s::%s execution time increased by %.1f%% (%.1fms → %.1fms)",
-                        $suiteName,
-                        $testName,
-                        $timeRegression,
-                        $baselineResult['execution_time_ms'],
-                        $result['execution_time_ms']
+                        (string)$suiteName,
+                        (string)$testName,
+                        (float)$timeRegression,
+                        (float)$baselineTime,
+                        (float)$currentTime
                     );
                 }
 
                 // Check memory usage regression
+                $baselineMemory = $baselineResult['memory_usage_bytes'] ?? 0;
+                $currentMemory = $result['memory_usage_bytes'] ?? 0;
+                if (!is_numeric($baselineMemory) || !is_numeric($currentMemory)) {
+                    continue;
+                }
                 $memoryRegression = $this->calculateRegression(
-                    $baselineResult['memory_usage_bytes'],
-                    $result['memory_usage_bytes']
+                    (float)$baselineMemory,
+                    (float)$currentMemory
                 );
                 
                 if ($memoryRegression > $this->regressionThresholds['memory_usage']) {
                     $regressions[] = sprintf(
                         "%s::%s memory usage increased by %.1f%% (%.2fMB → %.2fMB)",
-                        $suiteName,
-                        $testName,
-                        $memoryRegression,
-                        $baselineResult['memory_usage_bytes'] / 1024 / 1024,
-                        $result['memory_usage_bytes'] / 1024 / 1024
+                        (string)$suiteName,
+                        (string)$testName,
+                        (float)$memoryRegression,
+                        (float)($baselineMemory / 1024 / 1024),
+                        (float)($currentMemory / 1024 / 1024)
                     );
                 }
             }
@@ -372,9 +432,12 @@ final class PerformanceBenchmarkRunner
     /**
      * Run benchmarks from command line.
      */
+    /**
+     * @param array<int, string> $argv
+     */
     public static function main(array $argv = []): void
     {
-        $reportPath = $argv[1] ?? null;
+        $reportPath = isset($argv[1]) && is_string($argv[1]) ? $argv[1] : null;
         $runner = new self($reportPath);
         
         try {

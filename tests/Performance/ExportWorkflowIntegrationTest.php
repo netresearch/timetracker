@@ -24,6 +24,9 @@ use Symfony\Component\Stopwatch\Stopwatch;
 final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 {
     private Stopwatch $stopwatch;
+    /**
+     * @var array<string, int>
+     */
     private array $performanceBaselines;
 
     protected function setUp(): void
@@ -427,10 +430,20 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
                 $entityManager->clear();
                 
                 // Re-fetch entities for next batch
-                $user = $entityManager->find(\App\Entity\User::class, $user->getId());
-                $customer = $entityManager->find(\App\Entity\Customer::class, $customer->getId());
-                $project = $entityManager->find(\App\Entity\Project::class, $project->getId());
-                $activity = $entityManager->find(\App\Entity\Activity::class, $activity->getId());
+                $userId = $user->getId();
+                $customerId = $customer->getId();
+                $projectId = $project->getId();
+                $activityId = $activity->getId();
+                
+                $user = $entityManager->find(\App\Entity\User::class, $userId);
+                $customer = $entityManager->find(\App\Entity\Customer::class, $customerId);
+                $project = $entityManager->find(\App\Entity\Project::class, $projectId);
+                $activity = $entityManager->find(\App\Entity\Activity::class, $activityId);
+                
+                self::assertNotNull($user);
+                self::assertNotNull($customer);
+                self::assertNotNull($project);
+                self::assertNotNull($activity);
             }
         }
         

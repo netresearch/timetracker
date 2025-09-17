@@ -11,6 +11,9 @@ use function array_key_exists;
 
 class TokenStub implements TokenInterface
 {
+    /**
+     * @var array<string, mixed>
+     */
     private array $attributes = [];
 
     private bool $authenticated = true;
@@ -24,11 +27,17 @@ class TokenStub implements TokenInterface
         return 'token-stub';
     }
 
+    /**
+     * @return array<int, \Symfony\Component\Security\Core\Role\RoleInterface>
+     */
     public function getRoles(): array
     {
         return [];
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getRoleNames(): array
     {
         return [];
@@ -84,11 +93,17 @@ class TokenStub implements TokenInterface
         // no-op
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAttributes(): array
     {
         return $this->attributes;
     }
 
+    /**
+     * @param array<string, mixed> $attributes
+     */
     public function setAttributes(array $attributes): void
     {
         $this->attributes = $attributes;
@@ -126,6 +141,9 @@ class TokenStub implements TokenInterface
     }
 
     // New PHP 7.4+/8.x serialization
+    /**
+     * @return array<string, mixed>
+     */
     public function __serialize(): array
     {
         return [
@@ -134,6 +152,9 @@ class TokenStub implements TokenInterface
         ];
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __unserialize(array $data): void
     {
         $this->authenticated = (bool) ($data['authenticated'] ?? true);

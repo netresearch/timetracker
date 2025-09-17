@@ -22,6 +22,7 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testPersistAndFind(): void
     {
+        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         $day = '2023-12-25';
         $conn->insert('holidays', ['day' => $day, 'name' => 'Christmas']);
@@ -36,6 +37,7 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testUpdate(): void
     {
+        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         $day = '2023-01-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'New Year']);
@@ -48,6 +50,7 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testDelete(): void
     {
+        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         $day = '2023-05-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'Labor Day']);
@@ -59,6 +62,7 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testFindByYear(): void
     {
+        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         $rows = [
             ['day' => '2022-12-25', 'name' => 'Christmas 2022'],

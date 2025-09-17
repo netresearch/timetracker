@@ -55,6 +55,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure($expectedJson);
 
         $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
+        self::assertNotNull($this->connection);
         $result = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $expectedDbEntry = [
@@ -98,6 +99,7 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Get the created entry ID
         $query = 'SELECT id FROM `entries` WHERE `day` = "2024-01-01" ORDER BY `id` DESC LIMIT 1';
+        self::assertNotNull($this->connection);
         $result = $this->connection->executeQuery($query)->fetchAssociative();
         $entryId = (int) $result['id'];
 
@@ -109,6 +111,7 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Verify entry is deleted
         $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
+        self::assertNotNull($this->connection);
         $result = $this->connection->executeQuery($query)->fetchAssociative();
         self::assertSame(0, (int) $result['count'], 'Entry was not deleted from database');
 
@@ -161,6 +164,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2020-01-25"
             AND `day` <= "2020-02-06"
             ORDER BY `id` ASC';
+        self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         self::assertSame(10, count($results));
@@ -215,6 +219,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2024-01-01"
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
+        self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
         self::assertSame(8, count($results));
 
@@ -254,6 +259,7 @@ final class CrudControllerTest extends AbstractWebTestCase
     {
         // Check for pre-existing entries to ensure test isolation
         $queryBefore = 'SELECT * FROM `entries` WHERE `day` >= "2020-02-07" AND `day` <= "2020-02-10" ORDER BY `id` ASC';
+        self::assertNotNull($this->connection);
         $resultsBefore = $this->connection->executeQuery($queryBefore)->fetchAllAssociative();
         
         $parameter = [
@@ -279,6 +285,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-02-10"
             AND `id` > ' . $maxPreExistingId . '
             ORDER BY `id` ASC';
+        self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
         
         self::assertSame(2, count($results));
@@ -340,6 +347,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2020-02-10"
             AND `day` <= "2020-02-20"
             ORDER BY `id` ASC';
+        self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         self::assertSame(10, count($results));
@@ -395,6 +403,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "0020-02-10"
             AND `day` <= "0020-02-20"
             ORDER BY `id` ASC';
+        self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         self::assertSame(0, count($results));
@@ -424,6 +433,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             WHERE `day` >= "2019-12-29"
             AND `day` <= "2020-01-05"
             ORDER BY `id` ASC';
+        self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         // Update count expectation to match actual: 5 instead of 4
@@ -501,6 +511,7 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Verify the database entry
         $query = 'SELECT * FROM `entries` WHERE `day` = "2024-01-15" ORDER BY `id` DESC LIMIT 1';
+        self::assertNotNull($this->connection);
         $result = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $expectedDbEntry = [

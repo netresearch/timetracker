@@ -13,7 +13,8 @@ use function assert;
 use function is_array;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\Project>
+ * @template T of \App\Entity\Project
+ * @extends ServiceEntityRepository<T>
  */
 class ProjectRepository extends ServiceEntityRepository
 {

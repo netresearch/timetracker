@@ -36,7 +36,7 @@ class JiraTicketService
 
         $projectJiraId = $project->getJiraId();
 
-        if (!$projectJiraId) {
+        if ($projectJiraId === null || $projectJiraId === '') {
             throw new JiraApiException('Project has no Jira ID configured', 400);
         }
 

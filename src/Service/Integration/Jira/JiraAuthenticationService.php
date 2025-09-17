@@ -259,7 +259,7 @@ class JiraAuthenticationService
             ])
         ;
 
-        return $userTicketSystem && !$userTicketSystem->getAvoidConnection();
+        return $userTicketSystem instanceof UserTicketsystem && !$userTicketSystem->getAvoidConnection();
     }
 
     /**

@@ -162,7 +162,7 @@ class JiraWorkLogService
 
         $workLogId = $entry->getWorklogId();
 
-        if (!$workLogId) {
+        if ($workLogId === null || $workLogId === '') {
             return;
         }
 

@@ -18,23 +18,23 @@ use function trim;
  */
 trait DatabaseTestTrait
 {
-    protected $connection;
+    protected mixed $connection = null;
     
-    protected $queryBuilder;
+    protected mixed $queryBuilder = null;
     
-    protected $filepath = '/../sql/unittest/002_testdata.sql';
+    protected string $filepath = '/../sql/unittest/002_testdata.sql';
     
     /**
      * The initial state of a table used to assert integrity after a DEV test.
      */
-    protected $tableInitialState;
+    protected mixed $tableInitialState = null;
     
     /**
      * Flag to track if database has been initialized.
      */
     private static bool $databaseInitialized = false;
     
-    protected $useTransactions = true;
+    protected bool $useTransactions = true;
 
     /**
      * Initialize database connection and transaction for test isolation.
@@ -45,6 +45,7 @@ trait DatabaseTestTrait
         $this->resetDatabase();
 
         // Ensure we have a Doctrine DBAL connection reference
+        /** @var \Doctrine\DBAL\Connection $dbal */
         $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
         
         // Enable savepoints to speed nested transactions
@@ -73,6 +74,7 @@ trait DatabaseTestTrait
         if ($this->useTransactions && $this->serviceContainer) {
             try {
                 if ($this->serviceContainer->has('doctrine.dbal.default_connection')) {
+                    /** @var \Doctrine\DBAL\Connection $dbal */
                     $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
                     // Be tolerant: attempt rollback but ignore if not active
                     try {
@@ -88,7 +90,9 @@ trait DatabaseTestTrait
         // Clear entity manager to prevent stale data between tests, tolerate shut down kernel
         try {
             if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
-                $this->serviceContainer->get('doctrine')->getManager()->clear();
+                /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
+                $doctrine = $this->serviceContainer->get('doctrine');
+                $doctrine->getManager()->clear();
             }
         } catch (Throwable) {
             // Ignore if kernel has been shut down during the test
@@ -100,12 +104,14 @@ trait DatabaseTestTrait
      */
     protected function setInitialDbState(string $tableName): void
     {
-        $qb = $this->queryBuilder
-            ->select('*')
-            ->from($tableName)
-        ;
-        $result = $qb->executeQuery();
-        $this->tableInitialState = $result->fetchAllAssociative();
+        if ($this->queryBuilder !== null) {
+            $qb = $this->queryBuilder
+                ->select('*')
+                ->from($tableName)
+            ;
+            $result = $qb->executeQuery();
+            $this->tableInitialState = $result->fetchAllAssociative();
+        }
     }
 
     /**
@@ -114,12 +120,16 @@ trait DatabaseTestTrait
      */
     protected function assertDbState(string $tableName): void
     {
-        $qb = $this->queryBuilder
-            ->select('*')
-            ->from($tableName)
-        ;
-        $result = $qb->executeQuery();
-        $newTableState = $result->fetchAllAssociative();
+        if ($this->queryBuilder !== null) {
+            $qb = $this->queryBuilder
+                ->select('*')
+                ->from($tableName)
+            ;
+            $result = $qb->executeQuery();
+            $newTableState = $result->fetchAllAssociative();
+        } else {
+            $newTableState = [];
+        }
         self::assertSame($this->tableInitialState, $newTableState);
         $this->tableInitialState = null;
     }
@@ -134,6 +144,7 @@ trait DatabaseTestTrait
             self::$databaseInitialized = true;
         } elseif (null === $this->queryBuilder || null === $this->connection) {
             // Ensure queryBuilder and connection are available even if loadTestData wasn't called
+            /** @var \Doctrine\DBAL\Connection $connection */
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
             $this->queryBuilder = $connection->createQueryBuilder();
 

@@ -29,7 +29,9 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        $this->entityManager = $entityManager;
     }
 
     public function testPersistAndFind(): void

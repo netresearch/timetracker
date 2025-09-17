@@ -31,7 +31,13 @@ final class ExportPerformanceTest extends TestCase
 {
     private Stopwatch $stopwatch;
     private ExportService $exportService;
+    /**
+     * @var array<string, int>
+     */
     private array $performanceBaselines;
+    /**
+     * @var array<int, Entry>
+     */
     private array $currentTestEntries = [];
 
     protected function setUp(): void
@@ -371,6 +377,9 @@ final class ExportPerformanceTest extends TestCase
 
     /**
      * Generate test entries for performance testing.
+     */
+    /**
+     * @return array<int, Entry>
      */
     private function generateTestEntries(int $count, bool $withTickets): array
     {

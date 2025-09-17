@@ -18,7 +18,7 @@ final class PerformanceDashboard
     private string $historyFile;
     private string $outputPath;
 
-    public function __construct(string $historyFile = null, string $outputPath = null)
+    public function __construct(?string $historyFile = null, ?string $outputPath = null)
     {
         $this->historyFile = $historyFile ?? __DIR__ . '/../../var/performance-history.json';
         $this->outputPath = $outputPath ?? __DIR__ . '/../../var/performance-dashboard.html';
@@ -51,6 +51,9 @@ final class PerformanceDashboard
     /**
      * Load performance history from JSON file.
      */
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     private function loadPerformanceHistory(): array
     {
         if (!file_exists($this->historyFile)) {
@@ -69,9 +72,15 @@ final class PerformanceDashboard
     /**
      * Generate dashboard HTML with performance trends.
      */
+    /**
+     * @param array<int, array<string, mixed>> $history
+     */
     private function generateDashboardHtml(array $history): string
     {
         $latest = end($history);
+        if (!is_array($latest)) {
+            return $this->generateEmptyDashboard();
+        }
         $trends = $this->calculateTrends($history);
         $chartData = $this->prepareChartData($history);
 
@@ -248,6 +257,10 @@ HTML;
     /**
      * Generate metrics HTML cards.
      */
+    /**
+     * @param array<string, mixed> $latest
+     * @param array<string, array<string, float>> $trends
+     */
     private function generateMetricsHtml(array $latest, array $trends): string
     {
         $metrics = [];
@@ -289,6 +302,9 @@ HTML;
     /**
      * Generate test results table HTML.
      */
+    /**
+     * @param array<string, mixed> $latest
+     */
     private function generateTestResultsHtml(array $latest): string
     {
         $html = '<table class="test-table"><thead><tr><th>Test Suite</th><th>Test Name</th><th>Status</th><th>Duration</th><th>Memory</th></tr></thead><tbody>';
@@ -297,8 +313,10 @@ HTML;
             foreach ($suite as $testName => $result) {
                 $status = $result['success'] ? 'PASS' : 'FAIL';
                 $statusClass = $result['success'] ? 'status-success' : 'status-failure';
-                $duration = number_format($result['execution_time_ms'] ?? 0, 1);
-                $memory = number_format(($result['memory_usage_bytes'] ?? 0) / 1024 / 1024, 2);
+                $executionTime = $result['execution_time_ms'] ?? 0;
+                $memoryBytes = $result['memory_usage_bytes'] ?? 0;
+                $duration = number_format((float)$executionTime, 1);
+                $memory = number_format((float)$memoryBytes / 1024 / 1024, 2);
                 
                 $html .= <<<HTML
                     <tr>
@@ -318,6 +336,10 @@ HTML;
 
     /**
      * Calculate performance trends between runs.
+     */
+    /**
+     * @param array<int, array<string, mixed>> $history
+     * @return array<string, array<string, float>>
      */
     private function calculateTrends(array $history): array
     {
@@ -347,6 +369,10 @@ HTML;
 
     /**
      * Prepare data for JavaScript charts.
+     */
+    /**
+     * @param array<int, array<string, mixed>> $history
+     * @return array<string, array<int|float|string>>
      */
     private function prepareChartData(array $history): array
     {
@@ -385,6 +411,9 @@ HTML;
 
     /**
      * Generate JavaScript for charts.
+     */
+    /**
+     * @param array<string, array<int|float|string>> $chartData
      */
     private function generateChartJavaScript(array $chartData): string
     {
@@ -446,6 +475,10 @@ JAVASCRIPT;
     /**
      * Calculate average execution times by suite.
      */
+    /**
+     * @param array<string, mixed> $run
+     * @return array<string, float>
+     */
     private function calculateAverageExecutionTimes(array $run): array
     {
         $averages = [];
@@ -459,6 +492,9 @@ JAVASCRIPT;
 
     /**
      * Calculate average memory usage.
+     */
+    /**
+     * @param array<string, mixed> $run
      */
     private function calculateAverageMemoryUsage(array $run): float
     {
@@ -479,6 +515,9 @@ JAVASCRIPT;
 
     /**
      * Calculate average execution time for a test suite.
+     */
+    /**
+     * @param array<string, array<string, mixed>> $suite
      */
     private function calculateSuiteAverageTime(array $suite): float
     {
@@ -507,6 +546,9 @@ JAVASCRIPT;
 
     /**
      * Main entry point for CLI usage.
+     */
+    /**
+     * @param array<int, string> $argv
      */
     public static function main(array $argv = []): void
     {

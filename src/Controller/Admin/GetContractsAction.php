@@ -17,7 +17,7 @@ final class GetContractsAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): Response|JsonResponse
     {
-        /** @var \App\Repository\ContractRepository $objectRepository */
+        /** @var \App\Repository\ContractRepository<Contract> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         return new JsonResponse($objectRepository->getContracts());

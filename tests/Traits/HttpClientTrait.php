@@ -19,7 +19,7 @@ trait HttpClientTrait
 {
     protected KernelBrowser $client;
     
-    protected $serviceContainer;
+    protected mixed $serviceContainer = null;
 
     /**
      * Initialize HTTP client for testing.
@@ -36,6 +36,9 @@ trait HttpClientTrait
 
     /**
      * Helper method to create JSON request.
+     * 
+     * @param array<string, mixed> $content
+     * @param array<string, string> $headers
      */
     protected function createJsonRequest(
         string $method,

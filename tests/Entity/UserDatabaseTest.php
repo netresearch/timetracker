@@ -29,7 +29,9 @@ final class UserDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        $this->entityManager = $entityManager;
     }
 
     public function testPersistAndFind(): void
@@ -56,6 +58,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Fetch from database and verify
         $fetchedUser = $this->entityManager->getRepository(User::class)->find($id);
         self::assertNotNull($fetchedUser, 'User was not found in database');
+        self::assertInstanceOf(User::class, $fetchedUser);
         self::assertSame('test_user', $fetchedUser->getUsername());
         self::assertSame('TSU', $fetchedUser->getAbbr());
         self::assertSame(UserType::DEV, $fetchedUser->getType());
@@ -101,6 +104,8 @@ final class UserDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedUser = $this->entityManager->getRepository(User::class)->find($id);
+        self::assertNotNull($updatedUser);
+        self::assertInstanceOf(User::class, $updatedUser);
         self::assertSame('updated_user', $updatedUser->getUserIdentifier());
         self::assertSame('UPU', $updatedUser->getAbbr());
         self::assertSame(UserType::PL, $updatedUser->getType());

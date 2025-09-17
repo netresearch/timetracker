@@ -17,7 +17,9 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
     public function testGetSummaryActionWithProjectEstimationComputesQuota(): void
     {
         $container = $this->client->getContainer();
-        $em = $container->get('doctrine')->getManager();
+        /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
+        $doctrine = $container->get('doctrine');
+        $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
         if (!$entry) {
             self::markTestSkipped('No entries found in the database.');
@@ -46,7 +48,9 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
     public function testGetSummaryActionWithoutEstimationLeavesZeroQuota(): void
     {
         $container = $this->client->getContainer();
-        $em = $container->get('doctrine')->getManager();
+        /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
+        $doctrine = $container->get('doctrine');
+        $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
         if (!$entry) {
             self::markTestSkipped('No entries found in the database.');

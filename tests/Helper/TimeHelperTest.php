@@ -22,6 +22,9 @@ final class TimeHelperTest extends TestCase
         self::assertSame($minutes, (int) $timeCalculationService->readableToMinutes($readable));
     }
 
+    /**
+     * @return iterable<array{int, string}>
+     */
     public static function provideReadable2MinutesCases(): iterable
     {
         return [
@@ -63,6 +66,9 @@ final class TimeHelperTest extends TestCase
         self::assertSame($readable, $timeCalculationService->minutesToReadable($minutes, $useWeeks));
     }
 
+    /**
+     * @return iterable<array{string, int, bool}|array{string, int}>
+     */
     public static function provideMinutes2ReadableCases(): iterable
     {
         return [
@@ -98,6 +104,9 @@ final class TimeHelperTest extends TestCase
         self::assertSame($value, $timeCalculationService->formatDuration($duration, $inDays));
     }
 
+    /**
+     * @return iterable<array{int|float, bool, string}>
+     */
     public static function provideFormatDurationCases(): iterable
     {
         return [
@@ -121,6 +130,9 @@ final class TimeHelperTest extends TestCase
         self::assertSame($value, $timeCalculationService->formatQuota($amount, $sum));
     }
 
+    /**
+     * @return iterable<array{int|float, int, string}>
+     */
     public static function provideFormatQuotaCases(): iterable
     {
         return [
