@@ -93,6 +93,8 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', $parameter);
         $this->assertStatusCode(200);
         $response = json_decode($this->client->getResponse()->getContent(), true);
+        assert(is_array($response));
+        assert(is_array($response['settings']));
         self::assertSame('en', $response['locale']);
         self::assertSame('en', $response['settings']['locale']);
     }

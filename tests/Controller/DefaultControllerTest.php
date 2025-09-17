@@ -163,6 +163,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         
         // Check that each item has the expected project structure
         foreach ($data as $item) {
+            assert(is_array($item));
             self::assertArrayHasKey('project', $item);
             $project = $item['project'];
             
@@ -309,6 +310,8 @@ final class DefaultControllerTest extends AbstractWebTestCase
         // Updated to match actual response format (user objects, not just usernames)
         // Verify we have the expected users (may be in different order)
         $userNames = array_map(function($userData) {
+            assert(is_array($userData));
+            assert(is_array($userData['user']));
             return $userData['user']['username'] ?? null;
         }, $data);
         

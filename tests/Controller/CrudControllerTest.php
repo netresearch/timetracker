@@ -101,6 +101,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $query = 'SELECT id FROM `entries` WHERE `day` = "2024-01-01" ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
         $result = $this->connection->executeQuery($query)->fetchAssociative();
+        assert(is_array($result));
         $entryId = (int) $result['id'];
 
         // Now perform the delete - form data is fine for delete
@@ -113,6 +114,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
         self::assertNotNull($this->connection);
         $result = $this->connection->executeQuery($query)->fetchAssociative();
+        assert(is_array($result));
         self::assertSame(0, (int) $result['count'], 'Entry was not deleted from database');
 
         // Try to delete again and expect 404
@@ -166,6 +168,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert(is_array($results));
 
         self::assertSame(10, count($results));
 
@@ -221,6 +224,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert(is_array($results));
         self::assertSame(8, count($results));
 
         // Assert days for the expected entries
@@ -287,6 +291,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert(is_array($results));
         
         self::assertSame(2, count($results));
 
@@ -349,6 +354,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert(is_array($results));
 
         self::assertSame(10, count($results));
 
@@ -435,6 +441,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert(is_array($results));
 
         // Update count expectation to match actual: 5 instead of 4
         self::assertSame(5, count($results));

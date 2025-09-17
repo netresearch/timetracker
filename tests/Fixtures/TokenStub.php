@@ -136,8 +136,11 @@ class TokenStub implements TokenInterface
     public function unserialize($serialized): void
     {
         $data = unserialize((string) $serialized);
+        assert(is_array($data));
         $this->authenticated = (bool) ($data['authenticated'] ?? true);
-        $this->attributes = (array) ($data['attributes'] ?? []);
+        $attributes = $data['attributes'] ?? [];
+        assert(is_array($attributes));
+        $this->attributes = $attributes;
     }
 
     // New PHP 7.4+/8.x serialization

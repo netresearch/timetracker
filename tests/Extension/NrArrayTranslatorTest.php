@@ -87,6 +87,7 @@ final class NrArrayTranslatorTest extends TestCase
      */
     public function testFilterArray(): void
     {
+        /** @var array<int, array<string, mixed>> $dataToTranslate */
         $dataToTranslate = [];
         $dataToTranslate[]['activity'] = [
             'id' => 1, 'name' => 'Entwicklung',

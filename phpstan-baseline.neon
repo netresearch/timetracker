@@ -43,24 +43,6 @@ parameters:
 			path: src/Dto/EntrySaveDto.php
 
 		-
-			rawMessage: 'Argument of an invalid type mixed supplied for foreach, only iterables are supported.'
-			identifier: foreach.nonIterable
-			count: 1
-			path: src/Kernel.php
-
-		-
-			rawMessage: Cannot access offset 'all' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Kernel.php
-
-		-
-			rawMessage: Cannot access offset string on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Kernel.php
-
-		-
 			rawMessage: 'Method App\Repository\EntryRepository::findByDate() should return array<int, App\Entity\Entry> but returns list.'
 			identifier: return.type
 			count: 1
@@ -349,12 +331,6 @@ parameters:
 			path: src/Service/Ldap/LdapClientService.php
 
 		-
-			rawMessage: Cannot access offset 0 on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/Service/Ldap/ModernLdapService.php
-
-		-
 			rawMessage: 'Call to method find() on an unknown class App\Repository\ServiceEntityRepository.'
 			identifier: class.notFound
 			count: 1
@@ -463,27 +439,9 @@ parameters:
 			path: tests/Controller/ApiSmokeTest.php
 
 		-
-			rawMessage: Cannot access offset 'name' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			rawMessage: Cannot access offset 'success' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 7
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
 			rawMessage: 'Parameter #1 $json of function json_decode expects string, string|false given.'
 			identifier: argument.type
 			count: 9
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			rawMessage: 'Parameter #2 $array of method PHPUnit\Framework\Assert::assertArrayHasKey() expects array<mixed>|ArrayAccess<(int|string), mixed>, mixed given.'
-			identifier: argument.type
-			count: 1
 			path: tests/Controller/AuthorizationSecurityTest.php
 
 		-
@@ -535,42 +493,6 @@ parameters:
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			rawMessage: Cannot access offset 'count' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: Cannot access offset 'id' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Cannot access offset int<0, 1> on mixed.'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Cannot access offset int<0, 4> on mixed.'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Cannot access offset int<0, 7> on mixed.'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Cannot access offset int<0, 9> on mixed.'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 4
-			path: tests/Controller/CrudControllerTest.php
-
-		-
 			rawMessage: 'Cannot call method executeQuery() on mixed.'
 			identifier: method.nonObject
 			count: 11
@@ -603,7 +525,7 @@ parameters:
 		-
 			rawMessage: 'Parameter #1 $value of function count expects array|Countable, mixed given.'
 			identifier: argument.type
-			count: 12
+			count: 2
 			path: tests/Controller/CrudControllerTest.php
 
 		-
@@ -649,24 +571,6 @@ parameters:
 			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
-			rawMessage: Cannot access offset 'project' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Controller/DefaultControllerTest.php
-
-		-
-			rawMessage: Cannot access offset 'user' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Controller/DefaultControllerTest.php
-
-		-
-			rawMessage: Cannot access offset 'username' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Controller/DefaultControllerTest.php
-
-		-
 			rawMessage: 'Parameter #2 $array of function array_map expects array, mixed given.'
 			identifier: argument.type
 			count: 1
@@ -675,7 +579,7 @@ parameters:
 		-
 			rawMessage: 'Parameter #2 $array of static method PHPUnit\Framework\Assert::assertArrayHasKey() expects array<mixed>|ArrayAccess<(int|string), mixed>, mixed given.'
 			identifier: argument.type
-			count: 7
+			count: 6
 			path: tests/Controller/DefaultControllerTest.php
 
 		-
@@ -707,18 +611,6 @@ parameters:
 			identifier: argument.type
 			count: 5
 			path: tests/Controller/SecurityControllerTest.php
-
-		-
-			rawMessage: Cannot access offset 'locale' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: Cannot access offset 'settings' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
 
 		-
 			rawMessage: 'Cannot call method executeQuery() on mixed.'
@@ -1195,18 +1087,6 @@ parameters:
 			path: tests/Fixtures/TokenStub.php
 
 		-
-			rawMessage: Cannot access offset 'attributes' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Fixtures/TokenStub.php
-
-		-
-			rawMessage: Cannot access offset 'authenticated' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Fixtures/TokenStub.php
-
-		-
 			rawMessage: Cannot cast mixed to string.
 			identifier: cast.string
 			count: 4
@@ -1673,12 +1553,6 @@ parameters:
 			identifier: offsetAccess.invalidOffset
 			count: 3
 			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			rawMessage: Cannot access offset 'forwardUrl' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Response/ErrorResponseTest.php
 
 		-
 			rawMessage: Cannot cast mixed to string.
