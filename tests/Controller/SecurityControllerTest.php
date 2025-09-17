@@ -52,12 +52,11 @@ final class SecurityControllerTest extends AbstractWebTestCase
             [
                 'HTTP_ACCEPT' => 'text/html',
                 'HTTP_USER_AGENT' => 'Mozilla/5.0',
-            ]
+            ],
         );
 
-        // Admin routes return 403 Forbidden for unauthenticated users
-        // (They don't redirect to login for API endpoints)
-        $this->assertStatusCode(403);
+        // Admin routes redirect to login for unauthenticated users with HTML accept header
+        $this->assertStatusCode(302);
     }
 
     public function testLoggedInUserCanAccessProtectedRoute(): void
@@ -113,7 +112,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/logout',
-            ['_csrf_token' => $csrfToken]
+            ['_csrf_token' => $csrfToken],
         );
 
         // The user should be redirected
@@ -129,7 +128,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
             '/getUsers',
             [],
             [],
-            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'],
         );
 
         // Should redirect to login when not authenticated
