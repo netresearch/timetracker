@@ -106,6 +106,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $queryResult = $this->connection->executeQuery($query);
         $result = $queryResult->fetchAssociative();
         assert(is_array($result));
+        assert(is_scalar($result['id']), 'Entry ID must be scalar');
         $entryId = (int) $result['id'];
 
         // Now perform the delete - form data is fine for delete
@@ -115,12 +116,13 @@ final class CrudControllerTest extends AbstractWebTestCase
         $this->assertJsonStructure(['success' => true, 'alert' => null]);
 
         // Verify entry is deleted
-        $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
+        $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . (string)$entryId;
         self::assertNotNull($this->connection);
         assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $result = $queryResult->fetchAssociative();
         assert(is_array($result));
+        assert(is_scalar($result['count']), 'Count must be scalar');
         self::assertSame(0, (int) $result['count'], 'Entry was not deleted from database');
 
         // Try to delete again and expect 404
@@ -293,7 +295,9 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Only count entries created after the bulk operation to ensure test isolation
         $preExistingCount = count($resultsBefore);
-        $maxPreExistingId = $preExistingCount > 0 ? max(array_column($resultsBefore, 'id')) : 0;
+        $idColumn = array_column($resultsBefore, 'id');
+        assert(is_array($idColumn), 'ID column should be an array');
+        $maxPreExistingId = $preExistingCount > 0 && count($idColumn) > 0 ? max($idColumn) : 0;
         
         $query = 'SELECT *
             FROM `entries`

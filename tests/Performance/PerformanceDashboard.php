@@ -318,8 +318,8 @@ HTML;
                 $statusClass = $result['success'] ? 'status-success' : 'status-failure';
                 $executionTime = $result['execution_time_ms'] ?? 0;
                 $memoryBytes = $result['memory_usage_bytes'] ?? 0;
-                $duration = number_format((float)$executionTime, 1);
-                $memory = number_format((float)$memoryBytes / 1024 / 1024, 2);
+                $duration = number_format(is_numeric($executionTime) ? (float)$executionTime : 0.0, 1);
+                $memory = number_format(is_numeric($memoryBytes) ? (float)$memoryBytes / 1024 / 1024 : 0.0, 2);
                 
                 $html .= <<<HTML
                     <tr>
@@ -398,7 +398,7 @@ HTML;
                     assert(is_array($result) && isset($result['success']));
                     if ($result['success']) {
                         $totalTime += $result['execution_time_ms'] ?? 0;
-                        $totalMemory += ($result['memory_usage_bytes'] ?? 0) / 1024 / 1024;
+                        $totalMemory += (is_numeric($result['memory_usage_bytes'] ?? 0) ? (float)($result['memory_usage_bytes'] ?? 0) : 0.0) / 1024 / 1024;
                         $totalTests++;
                     }
                 }

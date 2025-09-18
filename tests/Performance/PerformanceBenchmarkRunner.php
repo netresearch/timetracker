@@ -192,7 +192,7 @@ final class PerformanceBenchmarkRunner
 
         assert(isset($result['execution_time_ms'], $result['memory_usage_bytes']));
         $time = $result['execution_time_ms'];
-        $memory = number_format($result['memory_usage_bytes'] / 1024 / 1024, 2);
+        $memory = number_format((is_numeric($result['memory_usage_bytes']) ? (float)$result['memory_usage_bytes'] : 0.0) / 1024 / 1024, 2);
         
         return "✅ {$time}ms, {$memory}MB";
     }
@@ -223,11 +223,11 @@ final class PerformanceBenchmarkRunner
         $report = [];
         $report[] = "=== Export Performance Benchmark Report ===";
         assert(isset($this->benchmarkResults['timestamp'], $this->benchmarkResults['php_version'], $this->benchmarkResults['memory_limit']));
-        $report[] = "Generated: " . $this->benchmarkResults['timestamp'];
-        $report[] = "PHP Version: " . $this->benchmarkResults['php_version'];
-        $report[] = "Memory Limit: " . $this->benchmarkResults['memory_limit'];
+        $report[] = "Generated: " . (is_scalar($this->benchmarkResults['timestamp']) ? (string)$this->benchmarkResults['timestamp'] : 'unknown');
+        $report[] = "PHP Version: " . (is_scalar($this->benchmarkResults['php_version']) ? (string)$this->benchmarkResults['php_version'] : 'unknown');
+        $report[] = "Memory Limit: " . (is_scalar($this->benchmarkResults['memory_limit']) ? (string)$this->benchmarkResults['memory_limit'] : 'unknown');
         assert(is_array($this->benchmarkResults['environment']) && isset($this->benchmarkResults['environment']['os']));
-        $report[] = "OS: " . $this->benchmarkResults['environment']['os'];
+        $report[] = "OS: " . (is_scalar($this->benchmarkResults['environment']['os']) ? (string)$this->benchmarkResults['environment']['os'] : 'unknown');
         $report[] = "";
 
         assert(is_array($this->benchmarkResults['benchmarks']));
@@ -239,7 +239,7 @@ final class PerformanceBenchmarkRunner
                 assert(is_array($result) && isset($result['success']));
                 $status = $result['success'] ? '✅' : '❌';
                 $time = $result['execution_time_ms'] ?? 0;
-                $memory = number_format(($result['memory_usage_bytes'] ?? 0) / 1024 / 1024, 2);
+                $memory = number_format((is_numeric($result['memory_usage_bytes'] ?? 0) ? (float)($result['memory_usage_bytes'] ?? 0) : 0.0) / 1024 / 1024, 2);
                 
                 $report[] = sprintf(
                     "%s %-40s %6.1fms %8sMB",
@@ -250,7 +250,7 @@ final class PerformanceBenchmarkRunner
                 );
                 
                 if (!$result['success'] && isset($result['error'])) {
-                    $report[] = "    Error: " . $result['error'];
+                    $report[] = "    Error: " . (is_scalar($result['error']) ? (string)$result['error'] : 'unknown');
                 }
             }
             $report[] = "";
@@ -299,9 +299,11 @@ final class PerformanceBenchmarkRunner
 
         $report[] = sprintf("Total Tests: %d (✅ %d, ❌ %d)", $totalTests, $successfulTests, $failedTests);
         $report[] = sprintf("Average Execution Time: %.1fms", (float)(array_sum($executionTimes) / count($executionTimes)));
-        $report[] = sprintf("Max Execution Time: %.1fms", (float)max($executionTimes));
+        $maxExecutionTime = max($executionTimes);
+        $report[] = sprintf("Max Execution Time: %.1fms", is_numeric($maxExecutionTime) ? (float)$maxExecutionTime : 0.0);
         $report[] = sprintf("Average Memory Usage: %.2fMB", (float)(array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024));
-        $report[] = sprintf("Max Memory Usage: %.2fMB", (float)(max($memoryUsages) / 1024 / 1024));
+        $maxMemoryUsage = max($memoryUsages);
+        $report[] = sprintf("Max Memory Usage: %.2fMB", is_numeric($maxMemoryUsage) ? (float)($maxMemoryUsage / 1024 / 1024) : 0.0);
     }
 
     /**
@@ -390,8 +392,8 @@ final class PerformanceBenchmarkRunner
                 if ($timeRegression > $this->regressionThresholds['execution_time']) {
                     $regressions[] = sprintf(
                         "%s::%s execution time increased by %.1f%% (%.1fms → %.1fms)",
-                        (string)$suiteName,
-                        (string)$testName,
+                        is_scalar($suiteName) ? (string)$suiteName : 'unknown',
+                        is_scalar($testName) ? (string)$testName : 'unknown',
                         (float)$timeRegression,
                         (float)$baselineTime,
                         (float)$currentTime
@@ -412,8 +414,8 @@ final class PerformanceBenchmarkRunner
                 if ($memoryRegression > $this->regressionThresholds['memory_usage']) {
                     $regressions[] = sprintf(
                         "%s::%s memory usage increased by %.1f%% (%.2fMB → %.2fMB)",
-                        (string)$suiteName,
-                        (string)$testName,
+                        is_scalar($suiteName) ? (string)$suiteName : 'unknown',
+                        is_scalar($testName) ? (string)$testName : 'unknown',
                         (float)$memoryRegression,
                         (float)($baselineMemory / 1024 / 1024),
                         (float)($currentMemory / 1024 / 1024)

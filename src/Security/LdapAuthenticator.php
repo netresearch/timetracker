@@ -54,7 +54,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         $isLoginSubmit = $isLoginRoute && $isPostMethod;
 
         if ($isLoginSubmit) {
-            $this->logger->debug('LdapAuthenticator: supports() returned true for POST on ' . $route);
+            $this->logger->debug('LdapAuthenticator: supports() returned true for POST on ' . (is_scalar($route) ? (string)$route : 'unknown'));
         }
 
         return $isLoginSubmit;
