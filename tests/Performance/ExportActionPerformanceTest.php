@@ -112,8 +112,10 @@ final class ExportActionPerformanceTest extends TestCase
         
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
-                                   $response->headers->get('Content-Type'));
+        $contentType = $response->headers->get('Content-Type');
+        self::assertNotNull($contentType, 'Content-Type header should not be null');
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                   $contentType);
         
         $this->logPerformanceMetric('Small Excel Export', (int) $duration, (int) $memoryUsage, 50);
     }

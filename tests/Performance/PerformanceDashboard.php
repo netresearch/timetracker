@@ -8,9 +8,9 @@ use DateTime;
 
 /**
  * Performance dashboard generator for export benchmarks.
- * 
+ *
  * Generates HTML dashboard with performance trends and metrics visualization.
- * 
+ *
  * @internal
  */
 final class PerformanceDashboard
@@ -30,28 +30,27 @@ final class PerformanceDashboard
     public function generateDashboard(): string
     {
         $history = $this->loadPerformanceHistory();
-        
+
         if (empty($history)) {
             return $this->generateEmptyDashboard();
         }
 
         $html = $this->generateDashboardHtml($history);
-        
+
         // Ensure output directory exists
         $outputDir = dirname($this->outputPath);
         if (!is_dir($outputDir)) {
             mkdir($outputDir, 0777, true);
         }
-        
+
         file_put_contents($this->outputPath, $html);
-        
+
         return $this->outputPath;
     }
 
     /**
      * Load performance history from JSON file.
-     */
-    /**
+     *
      * @return array<int, array<string, mixed>>
      */
     private function loadPerformanceHistory(): array
@@ -66,7 +65,26 @@ final class PerformanceDashboard
         }
 
         $history = json_decode($content, true);
-        return is_array($history) ? $history : [];
+        if (!is_array($history)) {
+            return [];
+        }
+
+        // Ensure we return array<int, array<string, mixed>>
+        $typedHistory = [];
+        foreach ($history as $index => $item) {
+            if (is_int($index) && is_array($item)) {
+                // Ensure the item is properly typed as array<string, mixed>
+                $typedItem = [];
+                foreach ($item as $key => $value) {
+                    if (is_string($key)) {
+                        $typedItem[$key] = $value;
+                    }
+                }
+                $typedHistory[$index] = $typedItem;
+            }
+        }
+
+        return $typedHistory;
     }
 
     /**
@@ -84,6 +102,11 @@ final class PerformanceDashboard
         $trends = $this->calculateTrends($history);
         $chartData = $this->prepareChartData($history);
 
+        // Safe string interpolation with type validation
+        $timestamp = is_scalar($latest['timestamp']) ? (string)$latest['timestamp'] : 'unknown';
+        $phpVersion = is_scalar($latest['php_version']) ? (string)$latest['php_version'] : 'unknown';
+        $memoryLimit = is_scalar($latest['memory_limit']) ? (string)$latest['memory_limit'] : 'unknown';
+
         return <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -93,95 +116,95 @@ final class PerformanceDashboard
     <title>Export Performance Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 20px; 
-            background-color: #f5f5f5; 
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
         }
-        .container { 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .header { 
-            text-align: center; 
-            margin-bottom: 30px; 
-            border-bottom: 2px solid #e0e0e0; 
-            padding-bottom: 20px; 
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 20px;
         }
-        .metrics { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-            gap: 20px; 
-            margin-bottom: 30px; 
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        .metric-card { 
-            background: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 6px; 
-            border-left: 4px solid #007bff; 
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
         }
-        .metric-title { 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-            color: #495057; 
+        .metric-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #495057;
         }
-        .metric-value { 
-            font-size: 24px; 
-            font-weight: bold; 
-            color: #007bff; 
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
         }
-        .metric-trend { 
-            font-size: 14px; 
-            margin-top: 5px; 
+        .metric-trend {
+            font-size: 14px;
+            margin-top: 5px;
         }
         .trend-up { color: #dc3545; }
         .trend-down { color: #28a745; }
         .trend-stable { color: #6c757d; }
-        .charts { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 30px; 
-            margin-bottom: 30px; 
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
         }
-        .chart-container { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 6px; 
-            border: 1px solid #e0e0e0; 
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
         }
-        .chart-title { 
-            font-weight: bold; 
-            margin-bottom: 15px; 
-            text-align: center; 
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
         }
-        .test-results { 
-            margin-top: 30px; 
+        .test-results {
+            margin-top: 30px;
         }
-        .test-table { 
-            width: 100%; 
-            border-collapse: collapse; 
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .test-table th, .test-table td { 
-            padding: 12px; 
-            text-align: left; 
-            border-bottom: 1px solid #e0e0e0; 
+        .test-table th, .test-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
         }
-        .test-table th { 
-            background-color: #f8f9fa; 
-            font-weight: bold; 
+        .test-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
         }
         .status-success { color: #28a745; }
         .status-failure { color: #dc3545; }
-        .footer { 
-            text-align: center; 
-            margin-top: 30px; 
-            padding-top: 20px; 
-            border-top: 1px solid #e0e0e0; 
-            color: #6c757d; 
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #6c757d;
         }
     </style>
 </head>
@@ -189,8 +212,8 @@ final class PerformanceDashboard
     <div class="container">
         <div class="header">
             <h1>Export Performance Dashboard</h1>
-            <p>Last Updated: {$latest['timestamp']}</p>
-            <p>PHP Version: {$latest['php_version']} | Memory Limit: {$latest['memory_limit']}</p>
+            <p>Last Updated: {$timestamp}</p>
+            <p>PHP Version: {$phpVersion} | Memory Limit: {$memoryLimit}</p>
         </div>
 
         <div class="metrics">
@@ -264,15 +287,15 @@ HTML;
     private function generateMetricsHtml(array $latest, array $trends): string
     {
         $metrics = [];
-        
+
         // Calculate average execution times
         $avgTimes = $this->calculateAverageExecutionTimes($latest);
-        
+
         foreach ($avgTimes as $suite => $avgTime) {
             $trend = $trends[$suite]['execution_time'] ?? 0;
             $trendClass = $this->getTrendClass($trend);
             $trendSymbol = $trend > 0 ? '↑' : ($trend < 0 ? '↓' : '→');
-            
+
             $metrics[] = <<<HTML
                 <div class="metric-card">
                     <div class="metric-title">{$suite} Avg Execution Time</div>
@@ -287,7 +310,7 @@ HTML;
         $memoryTrend = $trends['overall']['memory_usage'] ?? 0;
         $memoryTrendClass = $this->getTrendClass($memoryTrend);
         $memoryTrendSymbol = $memoryTrend > 0 ? '↑' : ($memoryTrend < 0 ? '↓' : '→');
-        
+
         $metrics[] = <<<HTML
             <div class="metric-card">
                 <div class="metric-title">Average Memory Usage</div>
@@ -308,19 +331,27 @@ HTML;
     private function generateTestResultsHtml(array $latest): string
     {
         $html = '<table class="test-table"><thead><tr><th>Test Suite</th><th>Test Name</th><th>Status</th><th>Duration</th><th>Memory</th></tr></thead><tbody>';
-        
-        assert(is_array($latest['benchmarks']));
-        foreach ($latest['benchmarks'] ?? [] as $suiteName => $suite) {
-            assert(is_array($suite));
+
+        if (!isset($latest['benchmarks']) || !is_array($latest['benchmarks'])) {
+            $html .= '<tr><td colspan="5">No benchmark data available</td></tr>';
+            $html .= '</tbody></table>';
+            return $html;
+        }
+        foreach ($latest['benchmarks'] as $suiteName => $suite) {
+            if (!is_array($suite)) {
+                continue;
+            }
             foreach ($suite as $testName => $result) {
-                assert(is_array($result) && isset($result['success']));
+                if (!is_array($result) || !isset($result['success'])) {
+                    continue;
+                }
                 $status = $result['success'] ? 'PASS' : 'FAIL';
                 $statusClass = $result['success'] ? 'status-success' : 'status-failure';
                 $executionTime = $result['execution_time_ms'] ?? 0;
                 $memoryBytes = $result['memory_usage_bytes'] ?? 0;
                 $duration = number_format(is_numeric($executionTime) ? (float)$executionTime : 0.0, 1);
                 $memory = number_format(is_numeric($memoryBytes) ? (float)$memoryBytes / 1024 / 1024 : 0.0, 2);
-                
+
                 $html .= <<<HTML
                     <tr>
                         <td>{$suiteName}</td>
@@ -332,15 +363,14 @@ HTML;
 HTML;
             }
         }
-        
+
         $html .= '</tbody></table>';
         return $html;
     }
 
     /**
      * Calculate performance trends between runs.
-     */
-    /**
+     *
      * @param array<int, array<string, mixed>> $history
      * @return array<string, array<string, float>>
      */
@@ -352,18 +382,28 @@ HTML;
 
         $current = end($history);
         $previous = $history[count($history) - 2];
-        
+
+        if (!is_array($current) || !is_array($previous)) {
+            return [];
+        }
+
         $trends = [];
-        
+
         foreach ($current['benchmarks'] ?? [] as $suiteName => $suite) {
-            $prevSuite = $previous['benchmarks'][$suiteName] ?? [];
-            $trends[$suiteName] = [];
-            
+            if ((!is_string($suiteName) && !is_int($suiteName)) || !is_array($suite)) {
+                continue;
+            }
+            $stringKey = (string)$suiteName;
+            $prevSuite = (is_array($previous['benchmarks']) && isset($previous['benchmarks'][$suiteName]) && is_array($previous['benchmarks'][$suiteName])) ? $previous['benchmarks'][$suiteName] : [];
+            $trends[$stringKey] = [];
+
+            /** @var array<mixed> $suite */
+            /** @var array<mixed> $prevSuite */
             $currentAvg = $this->calculateSuiteAverageTime($suite);
             $prevAvg = $this->calculateSuiteAverageTime($prevSuite);
-            
+
             if ($prevAvg > 0) {
-                $trends[$suiteName]['execution_time'] = round((($currentAvg - $prevAvg) / $prevAvg) * 100, 1);
+                $trends[$stringKey]['execution_time'] = round((($currentAvg - $prevAvg) / $prevAvg) * 100, 1);
             }
         }
 
@@ -384,26 +424,37 @@ HTML;
         $timestamps = [];
 
         foreach ($history as $run) {
-            $timestamps[] = (new DateTime($run['timestamp']))->format('M d');
-            
+            // Fix argument.type: Ensure timestamp is string before passing to DateTime constructor
+            $runTimestamp = $run['timestamp'] ?? '';
+            if (!is_string($runTimestamp)) {
+                $runTimestamp = is_scalar($runTimestamp) ? (string)$runTimestamp : date('c');
+            }
+            $timestamps[] = (new DateTime($runTimestamp))->format('M d');
+
             // Calculate average execution time per run
             $totalTime = 0;
             $totalTests = 0;
             $totalMemory = 0;
-            
-            assert(is_array($run['benchmarks']));
-            foreach ($run['benchmarks'] ?? [] as $suite) {
-                assert(is_array($suite));
+
+            if (!isset($run['benchmarks']) || !is_array($run['benchmarks'])) {
+                continue;
+            }
+            foreach ($run['benchmarks'] as $suite) {
+                if (!is_array($suite)) {
+                    continue;
+                }
                 foreach ($suite as $result) {
-                    assert(is_array($result) && isset($result['success']));
+                    if (!is_array($result) || !isset($result['success'])) {
+                        continue;
+                    }
                     if ($result['success']) {
-                        $totalTime += $result['execution_time_ms'] ?? 0;
+                        $totalTime += (is_numeric($result['execution_time_ms'] ?? 0) ? (float)($result['execution_time_ms'] ?? 0) : 0.0);
                         $totalMemory += (is_numeric($result['memory_usage_bytes'] ?? 0) ? (float)($result['memory_usage_bytes'] ?? 0) : 0.0) / 1024 / 1024;
                         $totalTests++;
                     }
                 }
             }
-            
+
             $executionTimes[] = $totalTests > 0 ? round($totalTime / $totalTests, 1) : 0;
             $memoryUsages[] = $totalTests > 0 ? round($totalMemory / $totalTests, 2) : 0;
         }
@@ -480,19 +531,22 @@ JAVASCRIPT;
 
     /**
      * Calculate average execution times by suite.
-     */
-    /**
+     *
      * @param array<string, mixed> $run
      * @return array<string, float>
      */
     private function calculateAverageExecutionTimes(array $run): array
     {
         $averages = [];
-        
+
         foreach ($run['benchmarks'] ?? [] as $suiteName => $suite) {
-            $averages[$suiteName] = $this->calculateSuiteAverageTime($suite);
+            if ((is_string($suiteName) || is_int($suiteName)) && is_array($suite)) {
+                $stringKey = (string)$suiteName;
+                /** @var array<mixed> $suite */
+                $averages[$stringKey] = $this->calculateSuiteAverageTime($suite);
+            }
         }
-        
+
         return $averages;
     }
 
@@ -506,10 +560,14 @@ JAVASCRIPT;
     {
         $totalMemory = 0;
         $totalTests = 0;
-        
-        assert(is_array($run['benchmarks']));
-        foreach ($run['benchmarks'] ?? [] as $suite) {
-            assert(is_array($suite));
+
+        if (!isset($run['benchmarks']) || !is_array($run['benchmarks'])) {
+            return 0;
+        }
+        foreach ($run['benchmarks'] as $suite) {
+            if (!is_array($suite)) {
+                continue;
+            }
             foreach ($suite as $result) {
                 assert(is_array($result) && isset($result['success']));
                 if ($result['success']) {
@@ -518,29 +576,30 @@ JAVASCRIPT;
                 }
             }
         }
-        
+
         return $totalTests > 0 ? round($totalMemory / $totalTests / 1024 / 1024, 2) : 0;
     }
 
     /**
      * Calculate average execution time for a test suite.
-     */
-    /**
-     * @param array<string, array<string, mixed>> $suite
+     *
+     * @param array<string, array<string, mixed>>|array<mixed> $suite
      */
     private function calculateSuiteAverageTime(array $suite): float
     {
         $totalTime = 0;
         $successfulTests = 0;
-        
+
         foreach ($suite as $result) {
-            assert(is_array($result) && isset($result['success']));
+            if (!is_array($result) || !isset($result['success'])) {
+                continue;
+            }
             if ($result['success']) {
-                $totalTime += $result['execution_time_ms'] ?? 0;
+                $totalTime += (is_numeric($result['execution_time_ms'] ?? 0) ? (float)($result['execution_time_ms'] ?? 0) : 0.0);
                 $successfulTests++;
             }
         }
-        
+
         return $successfulTests > 0 ? round($totalTime / $successfulTests, 1) : 0;
     }
 
@@ -564,9 +623,9 @@ JAVASCRIPT;
     {
         $historyFile = $argv[1] ?? null;
         $outputPath = $argv[2] ?? null;
-        
+
         $dashboard = new self($historyFile, $outputPath);
-        
+
         try {
             $outputFile = $dashboard->generateDashboard();
             echo "✅ Performance dashboard generated: {$outputFile}\n";
