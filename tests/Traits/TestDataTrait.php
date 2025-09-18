@@ -58,8 +58,10 @@ trait TestDataTrait
         }
 
         try {
+            if ($this->serviceContainer === null) {
+                throw new \RuntimeException('Service container not initialized');
+            }
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
-            assert($connection instanceof \Doctrine\DBAL\Connection);
 
             // Execute SQL file statements using DBAL (avoid native connection handling)
             $statements = explode(';', $file);
@@ -67,11 +69,7 @@ trait TestDataTrait
                 $statement = trim($statement);
                 if ('' !== $statement && '0' !== $statement) {
                     try {
-                        if (method_exists($connection, 'executeStatement')) {
-                            $connection->executeStatement($statement);
-                        } else {
-                            $connection->executeQuery($statement);
-                        }
+                        $connection->executeStatement($statement);
                     } catch (Exception $e) {
                         // In parallel execution, some statements might fail due to race conditions
                         // Log but don't fail completely

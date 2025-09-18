@@ -12,7 +12,7 @@ use function trim;
 
 /**
  * Database test functionality trait.
- * 
+ *
  * Provides transaction isolation, database reset, and query builder setup
  * for test cases requiring database operations.
  */
@@ -26,14 +26,16 @@ trait DatabaseTestTrait
 
     /**
      * The initial state of a table used to assert integrity after a DEV test.
+     *
+     * @var array<int, array<string, mixed>>|null
      */
     protected array|null $tableInitialState = null;
-    
+
     /**
      * Flag to track if database has been initialized.
      */
     private static bool $databaseInitialized = false;
-    
+
     protected bool $useTransactions = true;
 
     /**
@@ -45,13 +47,13 @@ trait DatabaseTestTrait
         $this->resetDatabase();
 
         // Ensure we have a Doctrine DBAL connection reference
-        $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
-        assert($dbal instanceof \Doctrine\DBAL\Connection);
-        
-        // Enable savepoints to speed nested transactions
-        if (method_exists($dbal, 'setNestTransactionsWithSavepoints')) {
-            $dbal->setNestTransactionsWithSavepoints(true);
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
         }
+        $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
+
+        // Enable savepoints to speed nested transactions
+        $dbal->setNestTransactionsWithSavepoints(true);
 
         $this->connection = $dbal;
         $this->queryBuilder = $dbal->createQueryBuilder();
@@ -76,8 +78,7 @@ trait DatabaseTestTrait
             try {
                 if ($this->serviceContainer->has('doctrine.dbal.default_connection')) {
                     $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
-                    assert($dbal instanceof \Doctrine\DBAL\Connection);
-                    // Be tolerant: attempt rollback but ignore if not active
+                                // Be tolerant: attempt rollback but ignore if not active
                     try {
                         $dbal->rollBack();
                     } catch (Throwable) {
@@ -92,10 +93,8 @@ trait DatabaseTestTrait
         try {
             if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
                 $doctrine = $this->serviceContainer->get('doctrine');
-                assert($doctrine instanceof \Doctrine\Persistence\ManagerRegistry);
-                $entityManager = $doctrine->getManager();
-                assert($entityManager instanceof \Doctrine\Persistence\ObjectManager);
-                $entityManager->clear();
+                        $entityManager = $doctrine->getManager();
+                        $entityManager->clear();
             }
         } catch (Throwable) {
             // Ignore if kernel has been shut down during the test
@@ -113,7 +112,6 @@ trait DatabaseTestTrait
                 ->from($tableName)
             ;
             $result = $qb->executeQuery();
-            assert($result instanceof \Doctrine\DBAL\Result);
             $this->tableInitialState = $result->fetchAllAssociative();
         }
     }
@@ -130,7 +128,6 @@ trait DatabaseTestTrait
                 ->from($tableName)
             ;
             $result = $qb->executeQuery();
-            assert($result instanceof \Doctrine\DBAL\Result);
             $newTableState = $result->fetchAllAssociative();
         } else {
             $newTableState = [];
@@ -149,8 +146,10 @@ trait DatabaseTestTrait
             self::$databaseInitialized = true;
         } elseif (null === $this->queryBuilder || null === $this->connection) {
             // Ensure queryBuilder and connection are available even if loadTestData wasn't called
+            if ($this->serviceContainer === null) {
+                throw new \RuntimeException('Service container not initialized');
+            }
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
-            assert($connection instanceof \Doctrine\DBAL\Connection);
             $this->queryBuilder = $connection->createQueryBuilder();
 
             // Also make sure $this->connection is properly initialized

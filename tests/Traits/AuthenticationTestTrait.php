@@ -34,6 +34,9 @@ trait AuthenticationTestTrait
         $userId = $userMap[$user] ?? '1';
 
         // Get the user entity from the database
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
         /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
         $doctrine = $this->serviceContainer->get('doctrine');
         $userRepository = $doctrine->getRepository(\App\Entity\User::class);
