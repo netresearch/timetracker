@@ -1,21 +1,8 @@
 parameters:
 	ignoreErrors:
-
 		-
 			rawMessage: 'Call to function property_exists() with $this(Tests\AbstractWebTestCase) and ''client'' will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			rawMessage: 'Deprecated in PHP 8.4: Parameter #2 $property (string) is implicitly nullable via default value null.'
-			identifier: parameter.implicitlyNullable
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			rawMessage: 'Deprecated in PHP 8.4: Parameter #3 $property (string) is implicitly nullable via default value null.'
-			identifier: parameter.implicitlyNullable
 			count: 1
 			path: tests/AbstractWebTestCase.php
 
@@ -78,7 +65,6 @@ parameters:
 			identifier: method.internal
 			count: 1
 			path: tests/Performance/ExportPerformanceTest.php
-
 
 		-
 			rawMessage: 'Call to function is_scalar() with (int|string) will always evaluate to true.'

@@ -84,7 +84,7 @@ trait HttpRequestTestTrait
     /**
      * Assert redirect response (3xx status code).
      */
-    protected function assertRedirect(string $expectedLocation = null): self
+    protected function assertRedirect(?string $expectedLocation = null): self
     {
         $response = $this->client->getResponse();
         $this->assertTrue($response->isRedirect(), 'Expected redirect response');

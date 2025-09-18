@@ -115,7 +115,7 @@ trait JsonAssertionsTrait
      *
      * @param array<string, mixed> $json
      */
-    protected function assertJsonCount(int $expectedCount, array $json, string $property = null): void
+    protected function assertJsonCount(int $expectedCount, array $json, ?string $property = null): void
     {
         if ($property !== null) {
             self::assertArrayHasKey($property, $json, "JSON should contain property '$property'");
@@ -261,7 +261,7 @@ trait JsonAssertionsTrait
      * @param int $expectedLength Expected number of items
      * @param string|null $property Optional property name to check within JSON response
      */
-    protected function assertLength(int $expectedLength, string $property = null): void
+    protected function assertLength(int $expectedLength, ?string $property = null): void
     {
         // Get response from the HTTP client (available via HttpClientTrait composition)
         if (!property_exists($this, 'client')) {
