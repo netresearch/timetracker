@@ -1,0 +1,612 @@
+parameters:
+	ignoreErrors:
+		-
+			rawMessage: Negated boolean expression is always false.
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Controller/Interpretation/GetAllEntriesAction.php
+
+		-
+			rawMessage: 'Strict comparison using === between array{} and non-empty-list<array{id: int, start: mixed, end: mixed}> will always evaluate to false.'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Controller/Tracking/BaseTrackingController.php
+
+		-
+			rawMessage: 'Method App\Repository\OptimizedEntryRepository::getEntrySummaryOptimized() should return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> but returns array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>.'
+			identifier: return.type
+			count: 2
+			path: src/Repository/OptimizedEntryRepository.php
+
+		-
+			rawMessage: 'Method App\Repository\OptimizedEntryRepository::getEntrySummaryOptimized() should return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> but returns non-empty-array.'
+			identifier: return.type
+			count: 1
+			path: src/Repository/OptimizedEntryRepository.php
+
+		-
+			rawMessage: 'Strict comparison using === between array{} and non-empty-array<mixed, mixed> will always evaluate to false.'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Repository/ProjectRepository.php
+
+		-
+			rawMessage: Possibly invalid array key type mixed.
+			identifier: offsetAccess.invalidOffset
+			count: 1
+			path: src/Service/ExportService.php
+
+		-
+			rawMessage: Cannot cast mixed to string.
+			identifier: cast.string
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			rawMessage: 'Strict comparison using === between int and '''' will always evaluate to false.'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Service/Integration/Jira/JiraWorkLogService.php
+
+		-
+			rawMessage: 'Call to function assert() with true will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 3
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: 'Call to function method_exists() with Doctrine\DBAL\Connection and ''executeStatement'' will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: 'Call to function method_exists() with Doctrine\DBAL\Connection and ''setNestTransactions…'' will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertTrue() with true and ''Translation matched…'' will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertTrue() with true will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: Instanceof between Doctrine\DBAL\Result and Doctrine\DBAL\Result will always evaluate to true.
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: Instanceof between Doctrine\Persistence\ObjectManager and Doctrine\Persistence\ObjectManager will always evaluate to true.
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: 'Parameter #6 $content of method Symfony\Component\BrowserKit\AbstractBrowser<Symfony\Component\HttpFoundation\Request,Symfony\Component\HttpFoundation\Response>::request() expects string|null, string|false|null given.'
+			identifier: argument.type
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: Property Tests\AbstractWebTestCase::$tableInitialState type has no value type specified in iterable type array.
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: Unreachable statement - code above always terminates.
+			identifier: deadCode.unreachable
+			count: 2
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertTrue() with true will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Basic.php
+
+		-
+			rawMessage: Variable $syncService in PHPDoc tag @var does not exist.
+			identifier: varTag.variableNotFound
+			count: 1
+			path: tests/Command/TtSyncSubticketsCommandTest.php
+
+		-
+			rawMessage: 'Parameter #2 $string of static method PHPUnit\Framework\Assert::assertMatchesRegularExpression() expects string, mixed given.'
+			identifier: argument.type
+			count: 3
+			path: tests/Controller/AdminControllerNegativeTest.php
+
+		-
+			rawMessage: 'Call to function is_array() with array<mixed> will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 7
+			path: tests/Controller/ApiSmokeTest.php
+
+		-
+			rawMessage: 'Parameter #6 $content of method Symfony\Component\BrowserKit\AbstractBrowser<Symfony\Component\HttpFoundation\Request,Symfony\Component\HttpFoundation\Response>::request() expects string|null, string|false given.'
+			identifier: argument.type
+			count: 30
+			path: tests/Controller/AuthorizationSecurityTest.php
+
+		-
+			rawMessage: 'Call to function method_exists() with App\Entity\Entry and ''setBillable'' will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Controller/ControllingControllerTest.php
+
+		-
+			rawMessage: 'Call to function method_exists() with App\Entity\Entry and ''setTicketTitle'' will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Controller/ControllingControllerTest.php
+
+		-
+			rawMessage: Unreachable statement - code above always terminates.
+			identifier: deadCode.unreachable
+			count: 9
+			path: tests/Controller/ControllingControllerTest.php
+
+		-
+			rawMessage: Binary operation "." between "SELECT *\n          …" and mixed results in an error.
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			rawMessage: 'Call to function assert() with true will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 11
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			rawMessage: 'Call to function is_array() with array will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 6
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			rawMessage: Instanceof between Doctrine\DBAL\Connection and Doctrine\DBAL\Connection will always evaluate to true.
+			identifier: instanceof.alwaysTrue
+			count: 11
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			rawMessage: 'Call to function assert() with true will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Controller/SettingsControllerTest.php
+
+		-
+			rawMessage: Instanceof between Doctrine\DBAL\Query\QueryBuilder and Doctrine\DBAL\Query\QueryBuilder will always evaluate to true.
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: tests/Controller/SettingsControllerTest.php
+
+		-
+			rawMessage: 'Call to function is_array() with array will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: tests/Entity/EntryTest.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertNotNull() with App\Entity\Activity will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/PresetDatabaseTest.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertNotNull() with App\Entity\Customer will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/PresetDatabaseTest.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertNotNull() with App\Entity\Project will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/PresetDatabaseTest.php
+
+		-
+			rawMessage: 'Parameter #2 $haystack of static method PHPUnit\Framework\Assert::assertCount() expects Countable|iterable, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Entity/TeamDatabaseTest.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertNotNull() with object and ''User should not be…'' will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/UserDatabaseTest.php
+
+		-
+			rawMessage: 'Call to function method_exists() with Symfony\Component\Security\Core\User\UserInterface and ''getUserIdentifier'' will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Method Tests\Fixtures\TokenStub::getAttribute() has parameter $name with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Method Tests\Fixtures\TokenStub::getRoles() has invalid return type Symfony\Component\Security\Core\Role\RoleInterface.'
+			identifier: class.notFound
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Method Tests\Fixtures\TokenStub::hasAttribute() has parameter $name with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Method Tests\Fixtures\TokenStub::setAttribute() has parameter $name with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Method Tests\Fixtures\TokenStub::setAttribute() has parameter $value with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Method Tests\Fixtures\TokenStub::setAuthenticated() has parameter $isAuthenticated with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Method Tests\Fixtures\TokenStub::unserialize() has parameter $serialized with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Parameter #1 $object_or_class of function method_exists expects object|string, Symfony\Component\Security\Core\User\UserInterface|null given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: 'Property Tests\Fixtures\TokenStub::$attributes (array<string, mixed>) does not accept array<mixed, mixed>.'
+			identifier: assign.propertyType
+			count: 2
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			rawMessage: Anonymous class extends @final class GuzzleHttp\Client.
+			identifier: class.extendsFinalByPhpDoc
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			rawMessage: 'Method App\Service\Integration\Jira\JiraOAuthApiService@anonymous/tests/Helper/JiraOAuthApiTest.php:70::__construct() has parameter $client with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			rawMessage: 'Method App\Service\Integration\Jira\JiraOAuthApiService@anonymous/tests/Helper/JiraOAuthApiTest.php:70::getClient() should return GuzzleHttp\Client but returns mixed.'
+			identifier: return.type
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			rawMessage: 'Method GuzzleHttp\Client@anonymous/tests/Helper/JiraOAuthApiTest.php:53::__construct() has parameter $handler with no type specified.'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			rawMessage: 'Method GuzzleHttp\Client@anonymous/tests/Helper/JiraOAuthApiTest.php:53::request() should return Psr\Http\Message\ResponseInterface but returns mixed.'
+			identifier: return.type
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			rawMessage: Trying to invoke mixed but it's not a callable.
+			identifier: callable.nonCallable
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			rawMessage: 'Method Tests\Model\TestModel::getActive() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: 'Method Tests\Model\TestModel::getId() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: 'Method Tests\Model\TestModel::getName() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: 'Method Tests\Model\TestModel::getWorkspace() has no return type specified.'
+			identifier: missingType.return
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: Property Tests\Model\TestModel::$active has no type specified.
+			identifier: missingType.property
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: Property Tests\Model\TestModel::$id has no type specified.
+			identifier: missingType.property
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: Property Tests\Model\TestModel::$name has no type specified.
+			identifier: missingType.property
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: Property Tests\Model\TestModel::$workspace has no type specified.
+			identifier: missingType.property
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			rawMessage: Variable $content on left side of ?? always exists and is not nullable.
+			identifier: nullCoalesce.variable
+			count: 1
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			rawMessage: 'Call to internal method PHPUnit\Framework\TestCase::addToAssertionCount() from outside its root namespace PHPUnit.'
+			identifier: method.internal
+			count: 1
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			rawMessage: 'Argument of an invalid type mixed supplied for foreach, only iterables are supported.'
+			identifier: foreach.nonIterable
+			count: 3
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+
+		-
+			rawMessage: 'Call to function is_array() with array will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: 'Call to function is_array() with non-empty-array will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: Cannot access offset 'execution_time_ms' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: Cannot access offset 'memory_usage_bytes' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: Cannot access offset 'success' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 3
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: Cannot access offset mixed on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: Cannot access offset string on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: 'Parameter #1 $baseline of method Tests\Performance\PerformanceBenchmarkRunner::comparePerformanceResults() expects array<string, mixed>, array<mixed, mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: 'Parameter #1 $objectOrClass of class ReflectionClass constructor expects class-string<T of object>|T of object, string given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: 'Parameter #2 $callback of function array_filter expects (callable(mixed): bool)|null, Closure(mixed): mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			rawMessage: 'Parameter #4 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+
+		-
+			rawMessage: 'Argument of an invalid type mixed supplied for foreach, only iterables are supported.'
+			identifier: foreach.nonIterable
+			count: 2
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			rawMessage: 'Binary operation "+=" between (float|int) and mixed results in an error.'
+			identifier: assignOp.invalid
+			count: 3
+			path: tests/Performance/PerformanceDashboard.php
+
+
+		-
+			rawMessage: Cannot access offset mixed on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			rawMessage: 'Method Tests\Performance\PerformanceDashboard::calculateAverageExecutionTimes() should return array<string, float> but returns array<float>.'
+			identifier: return.type
+			count: 1
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			rawMessage: 'Method Tests\Performance\PerformanceDashboard::calculateTrends() should return array<string, array<string, float>> but returns array<array<string, float>>.'
+			identifier: return.type
+			count: 1
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			rawMessage: 'Method Tests\Performance\PerformanceDashboard::loadPerformanceHistory() should return array<int, array<string, mixed>> but returns array<mixed>.'
+			identifier: return.type
+			count: 1
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			rawMessage: 'Parameter #1 $datetime of class DateTime constructor expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			rawMessage: 'Parameter #1 $suite of method Tests\Performance\PerformanceDashboard::calculateSuiteAverageTime() expects array<string, array<string, mixed>>, mixed given.'
+			identifier: argument.type
+			count: 3
+			path: tests/Performance/PerformanceDashboard.php
+
+
+		-
+			rawMessage: Possibly invalid array key type mixed.
+			identifier: offsetAccess.invalidOffset
+			count: 3
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			rawMessage: 'Call to an undefined method App\Service\Integration\Jira\JiraOAuthApiFactory|PHPUnit\Framework\MockObject\MockObject::method().'
+			identifier: method.notFound
+			count: 1
+			path: tests/Service/SubticketSyncServiceTest.php
+
+		-
+			rawMessage: PHPDoc tag @var with type App\Service\Integration\Jira\JiraOAuthApiFactory|PHPUnit\Framework\MockObject\MockObject is not subtype of native type PHPUnit\Framework\MockObject\MockObject.
+			identifier: varTag.nativeType
+			count: 1
+			path: tests/Service/SubticketSyncServiceTest.php
+
+		-
+			rawMessage: 'Parameter #2 $jiraOAuthApiFactory of method Tests\Service\SubticketSyncServiceTest::createService() expects App\Service\Integration\Jira\JiraOAuthApiFactory, App\Service\Integration\Jira\JiraOAuthApiFactory|PHPUnit\Framework\MockObject\MockObject given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Service/SubticketSyncServiceTest.php
+
+		-
+			rawMessage: Trait Tests\Traits\HttpRequestTestTrait is used zero times and is not analysed.
+			identifier: trait.unused
+			count: 1
+			path: tests/Traits/HttpRequestTestTrait.php
+
+		-
+			rawMessage: 'Parameter #2 $subject of function preg_match expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/parallel-bootstrap.php
+
+		-
+			rawMessage: 'Parameter #3 $subject of function str_replace expects array<string>|string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/parallel-bootstrap.php
+
+		-
+			rawMessage: 'Parameter #1 $percentage of method OutputFormatter::generateCoverageBar() expects float, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #1 $string of function strtolower expects string, string|null given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #1 $summary of method OutputFormatter::printSummary() expects array<string, mixed>, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #1 $tested of method OutputFormatter::printTestedActions() expects array<int, array<string, mixed>>, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #1 $untested of method OutputFormatter::printUntestedActions() expects array<int, array<string, mixed>>, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #2 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
+			identifier: argument.type
+			count: 4
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #3 $subject of function str_replace expects array<string>|string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #3 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			rawMessage: 'Parameter #4 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+
+		-
+			rawMessage: Possibly invalid array key type mixed.
+			identifier: offsetAccess.invalidOffset
+			count: 1
+			path: tests/tools/analyze-coverage.php
