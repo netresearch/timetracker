@@ -20,7 +20,7 @@ final class StatusControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testPageAction(): void
@@ -62,7 +62,7 @@ final class StatusControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $this->assertJsonStructure([
             'loginStatus' => true,
-        ]);
+        ], $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testCheckActionWithLoggedOutUserReturnsInactiveStatus(): void
@@ -74,6 +74,6 @@ final class StatusControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $this->assertJsonStructure([
             'loginStatus' => false,
-        ]);
+        ], $this->getJsonResponse($this->client->getResponse()));
     }
 }

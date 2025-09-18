@@ -99,6 +99,7 @@ final class NrArrayTranslatorTest extends TestCase
         $dataToTranslate[] = $ignoreMe;
 
         $dataToTranslateJson = json_encode($dataToTranslate);
+        self::assertNotFalse($dataToTranslateJson, 'JSON encoding should not fail');
 
         self::assertSame(
             $dataToTranslateJson,

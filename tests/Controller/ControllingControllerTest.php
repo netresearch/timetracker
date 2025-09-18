@@ -106,11 +106,11 @@ final class ControllingControllerTest extends AbstractWebTestCase
                 foreach ($entries as $entry) {
                     // Use setters ON THE REAL Entry objects
                     if ($entry instanceof \App\Entity\Entry) {
-                        if ($includeBillable && method_exists($entry, 'setBillable')) {
+                        if ($includeBillable) {
                             $entry->setBillable(true);
                         }
 
-                        if ($includeTicketTitle && method_exists($entry, 'setTicketTitle')) {
+                        if ($includeTicketTitle) {
                             $entry->setTicketTitle('Mocked Title for ' . $entry->getTicket());
                         }
                     }

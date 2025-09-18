@@ -29,6 +29,9 @@ final class UserDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($entityManager instanceof EntityManagerInterface);
         $this->entityManager = $entityManager;
@@ -182,6 +185,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedUser = $this->entityManager->find(User::class, $userId);
+        self::assertNotNull($fetchedUser, 'User should exist');
 
         // Test team relationship
         self::assertCount(2, $fetchedUser->getTeams());
@@ -246,6 +250,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedUser = $this->entityManager->find(User::class, $userId);
+        self::assertNotNull($fetchedUser, 'User should exist');
 
         // Test contract relationship
         self::assertCount(2, $fetchedUser->getContracts());
@@ -306,6 +311,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedUser = $this->entityManager->find(User::class, $userId);
+        self::assertNotNull($fetchedUser, 'User should exist');
 
         // Test entry relationship
         self::assertCount(2, $fetchedUser->getEntries());
@@ -372,15 +378,20 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $fetchedTicketSystem = $this->entityManager->find(TicketSystem::class, $ticketSystemId);
 
         // Test ticket system relationship
+        self::assertNotNull($fetchedUser, 'User should exist');
         self::assertCount(1, $fetchedUser->getUserTicketsystems());
         $userTs = $fetchedUser->getUserTicketsystems()->first();
+        self::assertNotFalse($userTs, 'UserTicketsystem should exist');
         self::assertSame('test-token', $userTs->getAccessToken());
+        self::assertNotNull($userTs->getTicketSystem(), 'TicketSystem should exist');
         self::assertSame('Test Ticket System', $userTs->getTicketSystem()->getName());
 
         // Clean up
+        self::assertNotFalse($userTs, 'UserTicketsystem should not be false');
         $this->entityManager->remove($userTs);
         $this->entityManager->flush();
 
+        // PHPStan knows $fetchedUser is never null after successful find() operation
         $this->entityManager->remove($fetchedUser);
         if ($fetchedTicketSystem instanceof TicketSystem) {
             $this->entityManager->remove($fetchedTicketSystem);

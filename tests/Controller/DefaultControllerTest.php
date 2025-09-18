@@ -62,7 +62,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getCustomers');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetAllProjectsAction(): void
@@ -166,7 +166,8 @@ final class DefaultControllerTest extends AbstractWebTestCase
             assert(is_array($item));
             self::assertArrayHasKey('project', $item);
             $project = $item['project'];
-            
+            assert(is_array($project), 'Project should be an array');
+
             // Verify key fields exist (structure test rather than exact value test)
             self::assertArrayHasKey('id', $project);
             self::assertArrayHasKey('name', $project);
@@ -218,8 +219,9 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
         $data = json_decode((string) ($response->getContent() ?: ''), true);
-        
-        $this->assertJsonStructure($expectedJson);
+        assert(is_array($data), 'Response data should be an array');
+
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
         self::assertCount(3, $data); // Updated to match actual response (3 projects)
     }
 
@@ -234,7 +236,8 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
         $data = json_decode((string) ($response->getContent() ?: ''), true);
-        
+        assert(is_array($data), 'Response data should be an array');
+
         self::assertCount(3, $data); // Updated to match actual response (3 projects)
     }
 
@@ -306,7 +309,8 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
         $data = json_decode((string) ($response->getContent() ?: ''), true);
-        
+        assert(is_array($data), 'Response data should be an array');
+
         // Updated to match actual response format (user objects, not just usernames)
         // Verify we have the expected users (may be in different order)
         $userNames = array_map(function($userData) {
@@ -361,7 +365,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getActivities');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetHolidaysAction(): void
@@ -377,7 +381,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getHolidays', ['year' => 2020]);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetHolidaysActionNotAuthorized(): void

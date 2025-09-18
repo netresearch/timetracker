@@ -22,6 +22,9 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testPersistAndFind(): void
     {
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-12-25';
@@ -38,6 +41,9 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testUpdate(): void
     {
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-01-01';
@@ -52,6 +58,9 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testDelete(): void
     {
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-05-01';
@@ -64,6 +73,9 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testFindByYear(): void
     {
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
         assert($conn instanceof \Doctrine\DBAL\Connection);
         $rows = [

@@ -104,6 +104,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized, just ensure we got a validation error
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/Zeichen|characters|abbr/i', $data['message']);
     }
 
@@ -125,6 +126,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/exists|existiert|bereits/i', $data['message']);
     }
 
@@ -146,6 +148,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/teams|Team|sollte nicht leer sein/i', $data['message']);
     }
 

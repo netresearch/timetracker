@@ -28,6 +28,9 @@ final class AccountDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($entityManager instanceof EntityManagerInterface);
         $this->entityManager = $entityManager;

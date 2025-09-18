@@ -177,7 +177,6 @@ final class EntryTest extends TestCase
 
         // empty case
         $result = $entry->toArray();
-        self::assertTrue(is_array($result));
         self::assertNull($result['customer']);
         self::assertNull($result['project']);
 
@@ -196,7 +195,6 @@ final class EntryTest extends TestCase
             ->setTicket('TTT-51')
         ;
         $result = $entry->toArray();
-        self::assertTrue(is_array($result));
         self::assertSame(5, $result['id']);
         self::assertSame('foo', $result['description']);
         self::assertSame('TTT-51', $result['ticket']);

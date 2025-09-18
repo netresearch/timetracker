@@ -28,10 +28,10 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Controller uses MapRequestPayload which expects JSON payloads
         $this->client->request(
-            \Symfony\Component\HttpFoundation\Request::METHOD_POST, 
-            '/tracking/save', 
-            [], 
-            [], 
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
+            '/tracking/save',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             (string) json_encode($parameter)
         );
@@ -52,11 +52,10 @@ final class CrudControllerTest extends AbstractWebTestCase
         ];
 
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
 
         $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $result = $queryResult->fetchAllAssociative();
 
@@ -90,10 +89,10 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Controller uses MapRequestPayload which expects JSON payloads
         $this->client->request(
-            \Symfony\Component\HttpFoundation\Request::METHOD_POST, 
-            '/tracking/save', 
-            [], 
-            [], 
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
+            '/tracking/save',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             (string) json_encode($parameter)
         );
@@ -102,10 +101,13 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Get the created entry ID
         $query = 'SELECT id FROM `entries` WHERE `day` = "2024-01-01" ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $result = $queryResult->fetchAssociative();
-        assert(is_array($result));
+
+        // Fix offsetAccess.nonOffsetAccessible: Check if result is array and has 'id' key
+        if ($result === false || !is_array($result) || !isset($result['id'])) {
+            self::fail('Expected to find entry in database');
+        }
         assert(is_scalar($result['id']), 'Entry ID must be scalar');
         $entryId = (int) $result['id'];
 
@@ -113,22 +115,25 @@ final class CrudControllerTest extends AbstractWebTestCase
         $deleteParam = ['id' => $entryId];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure(['success' => true, 'alert' => null]);
+        $this->assertJsonStructure(['success' => true, 'alert' => null], $this->getJsonResponse($this->client->getResponse()));
 
         // Verify entry is deleted
         $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . (string)$entryId;
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $result = $queryResult->fetchAssociative();
-        assert(is_array($result));
+
+        // Fix offsetAccess.nonOffsetAccessible: Check if result is array and has 'count' key
+        if ($result === false || !is_array($result) || !isset($result['count'])) {
+            self::fail('Expected to get count from database');
+        }
         assert(is_scalar($result['count']), 'Count must be scalar');
         self::assertSame(0, (int) $result['count'], 'Entry was not deleted from database');
 
         // Try to delete again and expect 404
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
         $this->assertStatusCode(404);
-        $this->assertJsonStructure(['message' => 'No entry for id.']);
+        $this->assertJsonStructure(['message' => 'No entry for id.'], $this->getJsonResponse($this->client->getResponse()));
     }
 
     // -------------- Bulkentry routes ----------------------------------------
@@ -175,10 +180,8 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-02-06"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
-        assert(is_array($results));
 
         self::assertSame(10, count($results));
 
@@ -233,10 +236,8 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
-        assert(is_array($results));
         self::assertSame(8, count($results));
 
         // Assert days for the expected entries
@@ -276,10 +277,9 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Check for pre-existing entries to ensure test isolation
         $queryBefore = 'SELECT * FROM `entries` WHERE `day` >= "2020-02-07" AND `day` <= "2020-02-10" ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($queryBefore);
         $resultsBefore = $queryResult->fetchAllAssociative();
-        
+
         $parameter = [
             'startdate' => '2020-02-07',    // opt
             'enddate' => '2020-02-10',  // opt
@@ -290,15 +290,14 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
-        
+
         $this->assertMessage('2 Einträge wurden angelegt.');
 
         // Only count entries created after the bulk operation to ensure test isolation
         $preExistingCount = count($resultsBefore);
         $idColumn = array_column($resultsBefore, 'id');
-        assert(is_array($idColumn), 'ID column should be an array');
         $maxPreExistingId = $preExistingCount > 0 && count($idColumn) > 0 ? max($idColumn) : 0;
-        
+
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "2020-02-07"
@@ -306,11 +305,9 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `id` > ' . $maxPreExistingId . '
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
-        assert(is_array($results));
-        
+
         self::assertSame(2, count($results));
 
         $staticExpected = [
@@ -371,10 +368,8 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-02-20"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
-        assert(is_array($results));
 
         self::assertSame(10, count($results));
 
@@ -430,7 +425,6 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "0020-02-20"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
 
@@ -462,10 +456,8 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-01-05"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
-        assert(is_array($results));
 
         // Update count expectation to match actual: 5 instead of 4
         self::assertSame(5, count($results));
@@ -489,7 +481,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ['day' => '2020-01-04', 'end' => '13:00:00', 'duration' => '300'],
             ['day' => '2020-01-05', 'end' => '09:00:00', 'duration' => '60'],
         ];
-        
+
         $counter = count($results);
         for ($i = 0; $i < $counter; ++$i) {
             self::assertArraySubset($staticExpected, $results[$i]);
@@ -512,10 +504,10 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Controller uses MapRequestPayload which expects JSON payloads
         $this->client->request(
-            \Symfony\Component\HttpFoundation\Request::METHOD_POST, 
-            '/tracking/save', 
-            [], 
-            [], 
+            \Symfony\Component\HttpFoundation\Request::METHOD_POST,
+            '/tracking/save',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             (string) json_encode($parameter)
         );
@@ -538,12 +530,11 @@ final class CrudControllerTest extends AbstractWebTestCase
         ];
 
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
 
         // Verify the database entry
         $query = 'SELECT * FROM `entries` WHERE `day` = "2024-01-15" ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        assert($this->connection instanceof \Doctrine\DBAL\Connection);
         $queryResult = $this->connection->executeQuery($query);
         $result = $queryResult->fetchAllAssociative();
 

@@ -26,6 +26,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         }
 
         $project = $entry->getProject();
+        self::assertNotNull($project, 'Project should not be null');
         // Ensure estimation is set to a non-zero value
         $project->setEstimation(300);
 
@@ -58,6 +59,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         }
 
         $project = $entry->getProject();
+        self::assertNotNull($project, 'Project should not be null');
         // Remove estimation (set to 0)
         $project->setEstimation(0);
 

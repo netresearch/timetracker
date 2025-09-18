@@ -101,7 +101,7 @@ class AdminControllerTest extends AbstractWebTestCase
         // Use admin route that returns all customers with full data
         $this->client->request('GET', '/getAllCustomers');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetCustomersActionWithNonPL(): void
@@ -210,7 +210,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
         $this->client->request('GET', '/getProjects');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetProjectsActionWithNonPL(): void
@@ -286,7 +286,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
         // Assert response status and expected JSON structure
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     // -------------- teams routes ----------------------------------------
@@ -311,7 +311,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
         $this->client->request('GET', '/getAllTeams');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetTeamsActionWithNonPL(): void

@@ -28,7 +28,8 @@ final class LdapClientServiceTest extends TestCase
         // Indirectly verify normalization via reflection
         $reflectionClass = new ReflectionClass($ldapClientService);
         $reflectionProperty = $reflectionClass->getProperty('_userName');
-        self::assertSame('juergen.mueller', trim((string) $reflectionProperty->getValue($ldapClientService), '.'));
+        $userName = $reflectionProperty->getValue($ldapClientService);
+        self::assertSame('juergen.mueller', trim(is_scalar($userName) ? (string) $userName : '', '.'));
     }
 
     public function testSetTeamsByLdapResponseHandlesMissingDn(): void
