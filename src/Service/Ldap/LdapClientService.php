@@ -445,7 +445,7 @@ class LdapClientService
     }
 
     /**
-     * @return array<int, string>
+     * @return array<string>
      */
     public function getTeams()
     {

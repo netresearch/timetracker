@@ -38,6 +38,7 @@ final class SubticketSyncServiceTest extends TestCase
         $registry = $this->createMock(ManagerRegistry::class);
         $registry->method('getRepository')->willReturn($repo);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
+        assert($factory instanceof JiraOAuthApiFactory);
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
@@ -57,6 +58,7 @@ final class SubticketSyncServiceTest extends TestCase
         $registry = $this->createMock(ManagerRegistry::class);
         $registry->method('getRepository')->willReturn($repo);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
+        assert($factory instanceof JiraOAuthApiFactory);
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
@@ -84,6 +86,7 @@ final class SubticketSyncServiceTest extends TestCase
         $registry->method('getRepository')->willReturn($repo);
         $registry->method('getManager')->willReturn($om);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
+        assert($factory instanceof JiraOAuthApiFactory);
 
         $subticketSyncService = $this->createService($registry, $factory);
         $result = $subticketSyncService->syncProjectSubtickets(1);
@@ -103,6 +106,7 @@ final class SubticketSyncServiceTest extends TestCase
         $registry = $this->createMock(ManagerRegistry::class);
         $registry->method('getRepository')->willReturn($repo);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
+        assert($factory instanceof JiraOAuthApiFactory);
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
@@ -129,6 +133,7 @@ final class SubticketSyncServiceTest extends TestCase
         $registry = $this->createMock(ManagerRegistry::class);
         $registry->method('getRepository')->willReturn($repo);
         $factory = $this->createMock(JiraOAuthApiFactory::class);
+        assert($factory instanceof JiraOAuthApiFactory);
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
@@ -177,9 +182,9 @@ final class SubticketSyncServiceTest extends TestCase
             ->willReturnCallback(static fn (string $main): array => 'ABC-1' === $main ? ['ABC-2'] : [])
         ;
 
-        /** @var JiraOAuthApiFactory|MockObject $factory */
         $factory = $this->createMock(JiraOAuthApiFactory::class);
         $factory->method('create')->willReturn($jiraApi);
+        assert($factory instanceof JiraOAuthApiFactory);
 
         $subticketSyncService = $this->createService($registry, $factory);
         $result = $subticketSyncService->syncProjectSubtickets(1);

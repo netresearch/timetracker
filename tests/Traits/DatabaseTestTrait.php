@@ -12,29 +12,31 @@ use function trim;
 
 /**
  * Database test functionality trait.
- * 
+ *
  * Provides transaction isolation, database reset, and query builder setup
  * for test cases requiring database operations.
  */
 trait DatabaseTestTrait
 {
-    protected $connection;
-    
-    protected $queryBuilder;
-    
-    protected $filepath = '/../sql/unittest/002_testdata.sql';
-    
+    protected \Doctrine\DBAL\Connection|null $connection = null;
+
+    protected \Doctrine\DBAL\Query\QueryBuilder|null $queryBuilder = null;
+
+    protected string $filepath = '/../sql/unittest/002_testdata.sql';
+
     /**
      * The initial state of a table used to assert integrity after a DEV test.
+     *
+     * @var array<int, array<string, mixed>>|null
      */
-    protected $tableInitialState;
-    
+    protected array|null $tableInitialState = null;
+
     /**
      * Flag to track if database has been initialized.
      */
     private static bool $databaseInitialized = false;
-    
-    protected $useTransactions = true;
+
+    protected bool $useTransactions = true;
 
     /**
      * Initialize database connection and transaction for test isolation.
@@ -45,13 +47,15 @@ trait DatabaseTestTrait
         $this->resetDatabase();
 
         // Ensure we have a Doctrine DBAL connection reference
-        $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
-        
-        // Enable savepoints to speed nested transactions
-        if (method_exists($dbal, 'setNestTransactionsWithSavepoints')) {
-            $dbal->setNestTransactionsWithSavepoints(true);
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
         }
+        $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
 
+        // Enable savepoints to speed nested transactions
+        $dbal->setNestTransactionsWithSavepoints(true);
+
+        $this->connection = $dbal;
         $this->queryBuilder = $dbal->createQueryBuilder();
 
         // Begin a transaction to isolate test database changes (reliable via DBAL)
@@ -74,7 +78,7 @@ trait DatabaseTestTrait
             try {
                 if ($this->serviceContainer->has('doctrine.dbal.default_connection')) {
                     $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
-                    // Be tolerant: attempt rollback but ignore if not active
+                                // Be tolerant: attempt rollback but ignore if not active
                     try {
                         $dbal->rollBack();
                     } catch (Throwable) {
@@ -88,7 +92,9 @@ trait DatabaseTestTrait
         // Clear entity manager to prevent stale data between tests, tolerate shut down kernel
         try {
             if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
-                $this->serviceContainer->get('doctrine')->getManager()->clear();
+                $doctrine = $this->serviceContainer->get('doctrine');
+                        $entityManager = $doctrine->getManager();
+                        $entityManager->clear();
             }
         } catch (Throwable) {
             // Ignore if kernel has been shut down during the test
@@ -100,12 +106,14 @@ trait DatabaseTestTrait
      */
     protected function setInitialDbState(string $tableName): void
     {
-        $qb = $this->queryBuilder
-            ->select('*')
-            ->from($tableName)
-        ;
-        $result = $qb->executeQuery();
-        $this->tableInitialState = $result->fetchAllAssociative();
+        if ($this->queryBuilder !== null) {
+            $qb = $this->queryBuilder
+                ->select('*')
+                ->from($tableName)
+            ;
+            $result = $qb->executeQuery();
+            $this->tableInitialState = $result->fetchAllAssociative();
+        }
     }
 
     /**
@@ -114,12 +122,16 @@ trait DatabaseTestTrait
      */
     protected function assertDbState(string $tableName): void
     {
-        $qb = $this->queryBuilder
-            ->select('*')
-            ->from($tableName)
-        ;
-        $result = $qb->executeQuery();
-        $newTableState = $result->fetchAllAssociative();
+        if ($this->queryBuilder !== null) {
+            $qb = $this->queryBuilder
+                ->select('*')
+                ->from($tableName)
+            ;
+            $result = $qb->executeQuery();
+            $newTableState = $result->fetchAllAssociative();
+        } else {
+            $newTableState = [];
+        }
         self::assertSame($this->tableInitialState, $newTableState);
         $this->tableInitialState = null;
     }
@@ -134,6 +146,9 @@ trait DatabaseTestTrait
             self::$databaseInitialized = true;
         } elseif (null === $this->queryBuilder || null === $this->connection) {
             // Ensure queryBuilder and connection are available even if loadTestData wasn't called
+            if ($this->serviceContainer === null) {
+                throw new \RuntimeException('Service container not initialized');
+            }
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
             $this->queryBuilder = $connection->createQueryBuilder();
 

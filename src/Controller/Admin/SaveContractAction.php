@@ -39,12 +39,12 @@ final class SaveContractAction extends BaseController
         /** @var User $user */
         $user = $this->doctrineRegistry->getRepository(User::class)->find($contractSaveDto->user_id);
 
-        /** @var \App\Repository\ContractRepository $objectRepository */
+        /** @var \App\Repository\ContractRepository<Contract> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         if (0 !== $contractId) {
             $contract = $objectRepository->find($contractId);
-            if (!$contract) {
+            if ($contract === null) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
@@ -127,7 +127,7 @@ final class SaveContractAction extends BaseController
 
         /** @var array<int, Contract> $contractsOld */
         $contractsOld = $objectRepository->findBy(['user' => $user]);
-        if (!$contractsOld) {
+        if ($contractsOld === []) {
             return '';
         }
 

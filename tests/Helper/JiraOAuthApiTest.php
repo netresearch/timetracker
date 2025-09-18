@@ -18,6 +18,9 @@ use ReflectionClass;
  */
 interface JiraOAuthApiTestProxy
 {
+    /**
+     * @param array<string, mixed> $data
+     */
     public function callGetResponse(string $method, string $url, array $data = []): object;
 }
 
@@ -46,32 +49,43 @@ final class JiraOAuthApiTest extends TestCase
         $router = $this->getMockBuilder(\Symfony\Component\Routing\RouterInterface::class)->getMock();
         $router->method('generate')->willReturn('http://localhost/jiraoauthcallback');
 
-        // Fake client that invokes provided handler
+        // Fake client that invokes provided handler with proper type specification
         $fakeClient = new class($requestHandler) extends \GuzzleHttp\Client {
+            /**
+             * @param callable $handler
+             */
             public function __construct(private $handler)
             {
             }
 
+            /**
+             * @param array<string, mixed> $options
+             */
             public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
             {
                 $fn = $this->handler;
-
-                return $fn($method, $uri, $options);
+                $result = $fn($method, $uri, $options);
+                assert($result instanceof \Psr\Http\Message\ResponseInterface);
+                return $result;
             }
         };
 
         // Subclass to expose getResponse and return fake client
         return new class($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
-            public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, private $client)
+            public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, private mixed $client)
             {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
             }
 
             protected function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): \GuzzleHttp\Client
             {
+                assert($this->client instanceof \GuzzleHttp\Client);
                 return $this->client;
             }
 
+            /**
+             * @param array<string, mixed> $data
+             */
             public function callGetResponse(string $method, string $url, array $data = []): object
             {
                 return parent::getResponse($method, $url, $data);

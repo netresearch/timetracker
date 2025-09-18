@@ -80,8 +80,6 @@ final readonly class EntrySaveDto
 
     /**
      * Convert date string to DateTime object.
-     *
-     * @throws Exception
      */
     public function getDateAsDateTime(): ?DateTimeInterface
     {
@@ -96,8 +94,6 @@ final readonly class EntrySaveDto
 
     /**
      * Convert start time string to DateTime object.
-     *
-     * @throws Exception
      */
     public function getStartAsDateTime(): ?DateTimeInterface
     {
@@ -116,8 +112,6 @@ final readonly class EntrySaveDto
 
     /**
      * Convert end time string to DateTime object.
-     *
-     * @throws Exception
      */
     public function getEndAsDateTime(): ?DateTimeInterface
     {
@@ -145,7 +139,7 @@ final readonly class EntrySaveDto
         $start = $this->getStartAsDateTime();
         $end = $this->getEndAsDateTime();
 
-        if ($start && $end && $start >= $end) {
+        if ($start !== null && $end !== null && $start >= $end) {
             $executionContext->buildViolation('Start time must be before end time')
                 ->atPath('end')
                 ->addViolation()

@@ -27,8 +27,8 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
         $contentDisposition = $response->headers->get('Content-disposition');
-        self::assertStringStartsWith('attachment;', $contentDisposition);
-        self::assertStringContainsString('02_developer', $contentDisposition); // userid 2 = 'developer'
+        self::assertStringStartsWith('attachment;', (string) $contentDisposition);
+        self::assertStringContainsString('02_developer', (string) $contentDisposition); // userid 2 = 'developer'
     }
 
     public function testExportActionInvalidMonth(): void
@@ -105,12 +105,14 @@ final class ControllingControllerTest extends AbstractWebTestCase
             ->willReturnCallback(static function ($userId, array $entries, $includeBillable, $includeTicketTitle, $searchTickets): array {
                 foreach ($entries as $entry) {
                     // Use setters ON THE REAL Entry objects
-                    if ($includeBillable && method_exists($entry, 'setBillable')) {
-                        $entry->setBillable(true);
-                    }
+                    if ($entry instanceof \App\Entity\Entry) {
+                        if ($includeBillable) {
+                            $entry->setBillable(true);
+                        }
 
-                    if ($includeTicketTitle && method_exists($entry, 'setTicketTitle')) {
-                        $entry->setTicketTitle('Mocked Title for ' . $entry->getTicket());
+                        if ($includeTicketTitle) {
+                            $entry->setTicketTitle('Mocked Title for ' . $entry->getTicket());
+                        }
                     }
                 }
 
@@ -157,10 +159,10 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $response = $this->client->getResponse();
         // ... (other header assertions)
         $contentDisposition = $response->headers->get('Content-disposition');
-        self::assertStringStartsWith('attachment;', $contentDisposition);
+        self::assertStringStartsWith('attachment;', (string) $contentDisposition);
         self::assertStringContainsString(
             'attachment;filename=2023_10_unittest.xlsx', // Expect mocked username
-            $contentDisposition,
+            (string) $contentDisposition,
         );
         // ... (rest of assertions)
     }
@@ -254,7 +256,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('Controlling', $response);
+        self::assertStringContainsString('Controlling', (string) $response);
     }
 
     public function testLandingPageNotAuthorized(): void
@@ -265,7 +267,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(403);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('You are not allowed', $response);
+        self::assertStringContainsString('You are not allowed', (string) $response);
     }
 
     public function testLandingPageAsUserWithData(): void
@@ -276,16 +278,16 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('Controlling', $response);
+        self::assertStringContainsString('Controlling', (string) $response);
         // test menu title
-        self::assertStringContainsString('Export', $response);
+        self::assertStringContainsString('Export', (string) $response);
 
         $this->logInSession('developer'); // Normal User
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling');
         $this->assertStatusCode(403);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('You are not allowed', $response);
+        self::assertStringContainsString('You are not allowed', (string) $response);
     }
 
     public function testGetDataForBrowsingByCustomer(): void
@@ -300,7 +302,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertArraySubset([
             'content' => [
                 [
@@ -328,7 +330,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertArraySubset([
             'content' => [
                 [
@@ -362,7 +364,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
 
         self::assertArraySubset([
             'content' => [
@@ -403,7 +405,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertArraySubset([
             'content' => [
                 [
@@ -446,7 +448,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         ]);
         self::assertInstanceOf(JsonResponse::class, $response);
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
 
         self::assertArraySubset([
             'content' => [

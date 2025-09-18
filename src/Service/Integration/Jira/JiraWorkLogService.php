@@ -143,6 +143,7 @@ class JiraWorkLogService
 
         // Update entry with work log ID
         /* @var object{id: int|string} $workLog */
+        assert(is_scalar($workLog->id), 'Work log ID must be scalar');
         $entry->setWorklogId((int) $workLog->id);
         $entry->setSyncedToTicketsystem(true);
     }
@@ -162,7 +163,7 @@ class JiraWorkLogService
 
         $workLogId = $entry->getWorklogId();
 
-        if (!$workLogId) {
+        if ($workLogId === null) {
             return;
         }
 

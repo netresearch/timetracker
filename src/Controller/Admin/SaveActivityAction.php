@@ -26,14 +26,14 @@ final class SaveActivityAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-        /** @var \App\Repository\ActivityRepository $objectRepository */
+        /** @var \App\Repository\ActivityRepository<Activity> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
 
         $id = $activitySaveDto->id;
 
         if (0 !== $id) {
             $activity = $objectRepository->find($id);
-            if (!$activity) {
+            if ($activity === null) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);

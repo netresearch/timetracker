@@ -16,7 +16,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
     public function testSaveAction(): void
     {
         $this->logInSession('i.myself');
-        
+
         $parameter = [
             'locale' => 'de',
             'show_empty_line' => 1,
@@ -38,12 +38,15 @@ final class SettingsControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', $parameter);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
-        $this->queryBuilder->select('*')
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+        self::assertNotNull($this->queryBuilder);
+        $queryBuilder = $this->queryBuilder;
+        $queryBuilder->select('*')
             ->from('users')->where('id = :userId')
             ->setParameter('userId', 3)
         ;
-        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
+        $queryResult = $queryBuilder->executeQuery();
+        $result = $queryResult->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'username' => 'i.myself',
@@ -91,8 +94,21 @@ final class SettingsControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', $parameter);
         $this->assertStatusCode(200);
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $response = json_decode((string) $this->client->getResponse()->getContent(), true);
+
+        // Fix offsetAccess.nonOffsetAccessible: Check if response is array and has expected keys
+        if (!is_array($response)) {
+            self::fail('Expected JSON response to be an array');
+        }
+
+        self::assertArrayHasKey('locale', $response, 'Response should contain locale key');
         self::assertSame('en', $response['locale']);
+
+        self::assertArrayHasKey('settings', $response, 'Response should contain settings key');
+        if (!is_array($response['settings'])) {
+            self::fail('Expected settings to be an array');
+        }
+        self::assertArrayHasKey('locale', $response['settings'], 'Settings should contain locale key');
         self::assertSame('en', $response['settings']['locale']);
     }
 }
