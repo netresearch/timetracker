@@ -1,97 +1,97 @@
 parameters:
 	ignoreErrors:
 		-
-			rawMessage: 'Call to function property_exists() with $this(Tests\AbstractWebTestCase) and ''client'' will always evaluate to true.'
+			message: 'Call to function property_exists() with $this(Tests\AbstractWebTestCase) and ''client'' will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: tests/AbstractWebTestCase.php
 
 		-
-			rawMessage: 'Part $value (mixed) of encapsed string cannot be cast to string.'
+			message: 'Part $value (mixed) of encapsed string cannot be cast to string.'
 			identifier: encapsedStringPart.nonString
 			count: 1
 			path: tests/AbstractWebTestCase.php
 
 		-
-			rawMessage: Variable $syncService in PHPDoc tag @var does not exist.
+			message: Variable $syncService in PHPDoc tag @var does not exist.
 			identifier: varTag.variableNotFound
 			count: 1
 			path: tests/Command/TtSyncSubticketsCommandTest.php
 
 		-
-			rawMessage: 'Call to function is_array() with array<mixed> will always evaluate to true.'
+			message: 'Call to function is_array() with array<mixed> will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: tests/Controller/ApiSmokeTest.php
 
 		-
-			rawMessage: Unreachable statement - code above always terminates.
+			message: Unreachable statement - code above always terminates.
 			identifier: deadCode.unreachable
 			count: 9
 			path: tests/Controller/ControllingControllerTest.php
 
 		-
-			rawMessage: Binary operation "." between "SELECT *\n          …" and mixed results in an error.
+			message: Binary operation "." between "SELECT *\n          …" and mixed results in an error.
 			identifier: binaryOp.invalid
 			count: 1
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			rawMessage: 'Call to function is_array() with array will always evaluate to true.'
+			message: 'Call to function is_array() with array will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 2
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			rawMessage: 'Property Tests\Fixtures\TokenStub::$attributes (array<string, mixed>) does not accept array<mixed, mixed>.'
+			message: 'Property Tests\Fixtures\TokenStub::$attributes (array<string, mixed>) does not accept array<mixed, mixed>.'
 			identifier: assign.propertyType
 			count: 2
 			path: tests/Fixtures/TokenStub.php
 
 		-
-			rawMessage: Anonymous class extends @final class GuzzleHttp\Client.
+			message: Anonymous class extends @final class GuzzleHttp\Client.
 			identifier: class.extendsFinalByPhpDoc
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			rawMessage: Variable $content on left side of ?? always exists and is not nullable.
+			message: Variable $content on left side of ?? always exists and is not nullable.
 			identifier: nullCoalesce.variable
 			count: 1
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
-			rawMessage: 'Call to internal method PHPUnit\Framework\TestCase::addToAssertionCount() from outside its root namespace PHPUnit.'
+			message: 'Call to internal method PHPUnit\Framework\TestCase::addToAssertionCount() from outside its root namespace PHPUnit.'
 			identifier: method.internal
 			count: 1
 			path: tests/Performance/ExportPerformanceTest.php
 
 		-
-			rawMessage: 'Call to function is_scalar() with (int|string) will always evaluate to true.'
+			message: 'Call to function is_scalar() with (int|string) will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 5
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			rawMessage: Variable $time on left side of ?? always exists and is not nullable.
+			message: Variable $time on left side of ?? always exists and is not nullable.
 			identifier: nullCoalesce.variable
 			count: 1
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			rawMessage: 'Argument of an invalid type mixed supplied for foreach, only iterables are supported.'
+			message: 'Argument of an invalid type mixed supplied for foreach, only iterables are supported.'
 			identifier: foreach.nonIterable
 			count: 2
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			rawMessage: 'Binary operation "+=" between (float|int) and mixed results in an error.'
+			message: 'Binary operation "+=" between (float|int) and mixed results in an error.'
 			identifier: assignOp.invalid
 			count: 1
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			rawMessage: 'Call to function is_string() with string will always evaluate to true.'
+			message: 'Call to function is_string() with string will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: tests/tools/analyze-coverage.php
