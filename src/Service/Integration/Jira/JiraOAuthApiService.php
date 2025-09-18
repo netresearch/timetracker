@@ -218,9 +218,9 @@ class JiraOAuthApiService
                 $this->getOAuthRequestUrl() . '?oauth_callback=' . urlencode($this->getOAuthCallbackUrl()),
             );
 
-            $token = $this->extractTokens($response);
+            $tokenData = $this->extractTokens($response);
 
-            return $this->getOAuthAuthUrl($token['oauth_token']);
+            return $this->getOAuthAuthUrl($tokenData['oauth_token']);
         } catch (Throwable $throwable) {
             throw new JiraApiException($throwable->getMessage(), (int) $throwable->getCode(), null, $throwable);
         }
@@ -235,15 +235,15 @@ class JiraOAuthApiService
     {
         $body = (string) $response->getBody();
 
-        $token = [];
-        parse_str($body, $token);
+        $tokenRaw = [];
+        parse_str($body, $tokenRaw);
 
-        if ([] === $token) {
+        if ([] === $tokenRaw) {
             throw new JiraApiException('An unknown error occurred while requesting OAuth token.', 1541147716);
         }
 
-        $secret = is_string($token['oauth_token_secret'] ?? null) ? $token['oauth_token_secret'] : '';
-        $access = is_string($token['oauth_token'] ?? null) ? $token['oauth_token'] : '';
+        $secret = is_string($tokenRaw['oauth_token_secret'] ?? null) ? $tokenRaw['oauth_token_secret'] : '';
+        $access = is_string($tokenRaw['oauth_token'] ?? null) ? $tokenRaw['oauth_token'] : '';
 
         return $this->storeToken($secret, $access);
     }
@@ -335,6 +335,7 @@ class JiraOAuthApiService
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
+        assert(is_scalar($workLog->id), 'Work log ID must be scalar');
         $entry->setWorklogId((int) $workLog->id);
         $entry->setSyncedToTicketsystem(true);
     }
@@ -397,7 +398,7 @@ class JiraOAuthApiService
             [
                 'fields' => [
                     'project' => [
-                        'key' => (string) $project->getInternalJiraProjectKey(),
+                        'key' => is_scalar($project->getInternalJiraProjectKey()) ? (string) $project->getInternalJiraProjectKey() : '',
                     ],
                     'summary' => $entry->getTicket(),
                     'description' => $entry->getTicketSystemIssueLink(),
@@ -475,6 +476,7 @@ class JiraOAuthApiService
             && property_exists($ticket->fields, 'issuetype')
             && is_object($ticket->fields->issuetype)
             && property_exists($ticket->fields->issuetype, 'name')
+            && is_scalar($ticket->fields->issuetype->name)
             && 'epic' === strtolower((string) $ticket->fields->issuetype->name)) {
             $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
 

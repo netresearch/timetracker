@@ -290,7 +290,10 @@ class ExportService
                 if (is_object($result) && property_exists($result, 'issues') && is_array($result->issues)) {
                     foreach ($result->issues as $issue) {
                         if (is_object($issue) && property_exists($issue, 'key') && property_exists($issue, 'fields')) {
-                            $ticketData[$issue->key] = $issue->fields;
+                            $key = $issue->key;
+                            if (is_string($key) || is_int($key)) {
+                                $ticketData[$key] = $issue->fields;
+                            }
                         }
                     }
                 }

@@ -245,11 +245,11 @@ class JiraTicketService
 
                 $to = $transition->to ?? null;
                 $transitions[] = [
-                    'id' => property_exists($transition, 'id') ? (string) ($transition->id ?? '') : '',
-                    'name' => property_exists($transition, 'name') ? (string) ($transition->name ?? '') : '',
+                    'id' => property_exists($transition, 'id') && is_scalar($transition->id ?? '') ? (string) ($transition->id ?? '') : '',
+                    'name' => property_exists($transition, 'name') && is_scalar($transition->name ?? '') ? (string) ($transition->name ?? '') : '',
                     'to' => [
-                        'id' => (is_object($to) && property_exists($to, 'id')) ? (string) ($to->id ?? '') : '',
-                        'name' => (is_object($to) && property_exists($to, 'name')) ? (string) ($to->name ?? '') : '',
+                        'id' => (is_object($to) && property_exists($to, 'id') && is_scalar($to->id ?? '')) ? (string) ($to->id ?? '') : '',
+                        'name' => (is_object($to) && property_exists($to, 'name') && is_scalar($to->name ?? '')) ? (string) ($to->name ?? '') : '',
                     ],
                 ];
                 }

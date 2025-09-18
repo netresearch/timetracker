@@ -118,7 +118,7 @@ abstract class BaseTrackingController extends BaseController
             ];
         }
 
-        if ([] === $normalizedEntries) {
+        if (count($normalizedEntries) === 0) {
             return;
         }
 

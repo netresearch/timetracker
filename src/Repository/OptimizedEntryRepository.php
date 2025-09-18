@@ -143,15 +143,17 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $entry = $this->find($entryId);
         if (!$entry instanceof Entry) {
-            return $this->getEmptySummaryData();
+            $emptyData = $this->getEmptySummaryData();
+            assert($emptyData !== []);
+            return $emptyData;
         }
 
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
 
         if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
-            assert(array_is_list($cachedResult) || array_key_exists('customer', $cachedResult));
-
+            assert(array_key_exists('customer', $cachedResult));
+            /** @var non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
             return $cachedResult;
         }
 
@@ -202,6 +204,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $connection->executeQuery($sql, $params)->fetchAssociative();
 
         $data = $this->formatSummaryData($result ?: null, $entry);
+        assert($data !== []);
 
         $this->setCached($cacheKey, $data);
 
@@ -446,7 +449,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed>|null $result
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function formatSummaryData(?array $result, Entry $entry): array
     {
@@ -495,7 +498,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Returns empty summary data structure.
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function getEmptySummaryData(): array
     {
