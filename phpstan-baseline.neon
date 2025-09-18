@@ -91,12 +91,6 @@ parameters:
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			rawMessage: Trait Tests\Traits\HttpRequestTestTrait is used zero times and is not analysed.
-			identifier: trait.unused
-			count: 1
-			path: tests/Traits/HttpRequestTestTrait.php
-
-		-
 			rawMessage: 'Call to function is_string() with string will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 1

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
+use Tests\Traits\HttpRequestTestTrait;
 
 /**
  * @internal
@@ -13,19 +14,21 @@ use Tests\AbstractWebTestCase;
  */
 final class StatusControllerTest extends AbstractWebTestCase
 {
+    use HttpRequestTestTrait;
+
     public function testCheckAction(): void
     {
         $expectedJson = [
             'loginStatus' => true,
         ];
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');
+        $this->getJson('/status/check');
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testPageAction(): void
     {
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/page');
+        $this->get('/status/page');
         $this->assertStatusCode(200);
 
         // Check that the response contains valid HTML
@@ -41,7 +44,7 @@ final class StatusControllerTest extends AbstractWebTestCase
 
     public function testPageActionWithLoggedInUserReturnsActiveStatus(): void
     {
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/page');
+        $this->get('/status/page');
         $this->assertStatusCode(200);
         self::assertStringContainsString('class="status_active"', (string) $this->client->getResponse()->getContent());
     }
