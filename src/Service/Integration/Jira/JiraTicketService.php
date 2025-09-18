@@ -116,7 +116,7 @@ class JiraTicketService
      *
      * @throws JiraApiException
      *
-     * @return array<int, array{key: string, summary: string, status: string, assignee: string|null}>
+     * @return list<array{key: mixed, summary: mixed, status: mixed, assignee: mixed}>
      */
     public function getSubtickets(string $ticketKey): array
     {
@@ -127,19 +127,29 @@ class JiraTicketService
         try {
             $issue = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
 
-            if (!is_object($issue) || !property_exists($issue, 'fields') || !property_exists($issue->fields, 'subtasks')) {
+            if (!is_object($issue) || !property_exists($issue, 'fields')) {
+                return [];
+            }
+
+            if (!is_object($issue->fields) || !property_exists($issue->fields, 'subtasks')) {
                 return [];
             }
 
             $subtasks = [];
 
-            foreach ($issue->fields->subtasks as $subtask) {
+            if (is_array($issue->fields->subtasks)) {
+                foreach ($issue->fields->subtasks as $subtask) {
+                if (!is_object($subtask)) {
+                    continue;
+                }
+
                 $subtasks[] = [
-                    'key' => $subtask->key ?? '',
-                    'summary' => $subtask->fields->summary ?? '',
-                    'status' => $subtask->fields->status->name ?? '',
-                    'assignee' => $subtask->fields->assignee->displayName ?? null,
+                    'key' => property_exists($subtask, 'key') ? $subtask->key : '',
+                    'summary' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'summary')) ? $subtask->fields->summary : '',
+                    'status' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'status') && is_object($subtask->fields->status) && property_exists($subtask->fields->status, 'name')) ? $subtask->fields->status->name : '',
+                    'assignee' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'assignee') && is_object($subtask->fields->assignee) && property_exists($subtask->fields->assignee, 'displayName')) ? $subtask->fields->assignee->displayName : null,
                 ];
+                }
             }
 
             return $subtasks;
@@ -227,7 +237,8 @@ class JiraTicketService
 
             $transitions = [];
 
-            foreach ($response->transitions as $transition) {
+            if (is_array($response->transitions)) {
+                foreach ($response->transitions as $transition) {
                 if (!is_object($transition)) {
                     continue;
                 }
@@ -241,6 +252,7 @@ class JiraTicketService
                         'name' => (is_object($to) && property_exists($to, 'name')) ? (string) ($to->name ?? '') : '',
                     ],
                 ];
+                }
             }
 
             return $transitions;

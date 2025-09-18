@@ -137,7 +137,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         
         // Verify response has expected JSON structure
         $response = $this->client->getResponse();
-        $json = json_decode($response->getContent(), true);
+        $json = json_decode((string) $response->getContent(), true);
         self::assertArrayHasKey('links', $json);
         self::assertArrayHasKey('data', $json);
     }
@@ -154,7 +154,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         
         // Verify response has expected JSON structure
         $response = $this->client->getResponse();
-        $json = json_decode($response->getContent(), true);
+        $json = json_decode((string) $response->getContent(), true);
         self::assertArrayHasKey('links', $json);
         self::assertArrayHasKey('data', $json);
     }

@@ -29,8 +29,8 @@ final class UserDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        /** @var EntityManagerInterface $entityManager */
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        assert($entityManager instanceof EntityManagerInterface);
         $this->entityManager = $entityManager;
     }
 

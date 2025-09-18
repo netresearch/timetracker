@@ -460,18 +460,21 @@ class JiraOAuthApiService
         $subtickets = [];
 
         // Check if subtasks exist and is iterable
-        if (isset($ticket->fields->subtasks) && is_iterable($ticket->fields->subtasks)) {
+        if (is_object($ticket->fields)
+            && property_exists($ticket->fields, 'subtasks')
+            && is_iterable($ticket->fields->subtasks)) {
             foreach ($ticket->fields->subtasks as $subtask) {
-                if (is_object($subtask) && isset($subtask->key)) {
+                if (is_object($subtask) && property_exists($subtask, 'key')) {
                     $subtickets[] = $subtask->key;
                 }
             }
         }
 
         // Check for epic type tickets
-        if (isset($ticket->fields->issuetype)
+        if (is_object($ticket->fields)
+            && property_exists($ticket->fields, 'issuetype')
             && is_object($ticket->fields->issuetype)
-            && isset($ticket->fields->issuetype->name)
+            && property_exists($ticket->fields->issuetype, 'name')
             && 'epic' === strtolower((string) $ticket->fields->issuetype->name)) {
             $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
 
@@ -620,9 +623,10 @@ class JiraOAuthApiService
      */
     protected function storeToken(string $tokenSecret, string $accessToken = 'token_request_unfinished', bool $avoidConnection = false): array
     {
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         /** @var UserTicketsystem $userTicketSystem */
-        $userTicketSystem = $this->managerRegistry->getRepository(UserTicketsystem::class)
-            ->findOneBy([
+        $userTicketSystem = $repository->findOneBy([
                 'user' => $this->user,
                 'ticketSystem' => $this->ticketSystem,
             ])
@@ -737,10 +741,10 @@ class JiraOAuthApiService
      */
     protected function checkUserTicketSystem(): bool
     {
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         /** @var UserTicketsystem $userTicketSystem */
-        $userTicketSystem = $this->managerRegistry
-            ->getRepository(UserTicketsystem::class)
-            ->findOneBy([
+        $userTicketSystem = $repository->findOneBy([
                 'user' => $this->user,
                 'ticketSystem' => $this->ticketSystem,
             ])

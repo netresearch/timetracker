@@ -17,7 +17,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testNewCustomerActionWithPL(): void
     {
-        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 0, // 0 means new customer
             'name' => 'customerName',
             'active' => true,
@@ -30,7 +30,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testNewCustomerActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 0, // 0 means new customer
             'name' => 'customerName',
             'active' => true,
@@ -42,7 +42,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testEditCustomerActionWithPL(): void
     {
-        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 1, // Existing customer ID
             'name' => 'customerName Updated',
             'active' => true,
@@ -55,7 +55,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testEditCustomerActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 1, // Existing customer ID
             'name' => 'customerName Updated',
             'active' => true,
@@ -115,7 +115,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testDeleteCustomerActionWithPL(): void
     {
-        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 2,
         ]));
         $this->assertStatusCode(200);
@@ -124,7 +124,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testDeleteCustomerActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 2,
         ]));
         $this->assertMessage('You are not allowed to perform this action.');
@@ -133,7 +133,7 @@ class AdminControllerTest extends AbstractWebTestCase
     // -------------- projects routes ----------------------------------
     public function testNewProjectAction(): void
     {
-        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 0, // 0 means new project
             'customer' => 1,
             'name' => 'newProject',
@@ -147,7 +147,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testNewProjectActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 0, // 0 means new project
             'customer' => 1,
             'name' => 'newProject',
@@ -160,7 +160,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testEditProjectAction(): void
     {
-        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 1, // Existing project ID
             'customer' => 1,
             'name' => 'editedProject',
@@ -174,7 +174,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testEditProjectActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 1, // Existing project ID
             'customer' => 1,
             'name' => 'editedProject',
@@ -323,7 +323,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testNewTeamActionWithPL(): void
     {
-        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 0, // 0 means new team
             'name' => 'teamName',
             'lead_user_id' => 1,
@@ -334,7 +334,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testNewTeamActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 0, // 0 means new team
             'name' => 'teamName',
             'lead_user_id' => 1,
@@ -344,7 +344,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testEditTeamActionWithPL(): void
     {
-        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 1, // Existing team ID
             'name' => 'editedTeamName',
             'lead_user_id' => 1,
@@ -355,7 +355,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testEditTeamActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 1, // Existing team ID
             'name' => 'editedTeamName',
             'lead_user_id' => 1,
@@ -365,7 +365,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
     public function testDeleteTeamActionWithPL(): void
     {
-        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 2,
         ]));
         $this->assertStatusCode(200);
@@ -374,7 +374,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testDeleteTeamActionWithNonPL(): void
     {
         $this->logInSession('developer');
-        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
             'id' => 2,
         ]));
         $this->assertMessage('You are not allowed to perform this action.');

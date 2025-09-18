@@ -24,8 +24,8 @@ final class PresetDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        /** @var EntityManagerInterface $entityManager */
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        assert($entityManager instanceof EntityManagerInterface);
         $this->entityManager = $entityManager;
     }
 
@@ -56,6 +56,7 @@ final class PresetDatabaseTest extends AbstractWebTestCase
         // Re-fetch the preset to ensure it's managed
         $fetchedPreset = $this->entityManager->getRepository(Preset::class)->find($id);
         self::assertNotNull($fetchedPreset, 'Preset was not found in database');
+        assert($fetchedPreset instanceof Preset);
         self::assertSame('Test Database Preset', $fetchedPreset->getName());
         self::assertSame('Test Description', $fetchedPreset->getDescription());
 
@@ -112,6 +113,8 @@ final class PresetDatabaseTest extends AbstractWebTestCase
 
         // Re-fetch the preset to ensure it's managed
         $updatedPreset = $this->entityManager->getRepository(Preset::class)->find($id);
+        self::assertNotNull($updatedPreset);
+        assert($updatedPreset instanceof Preset);
         self::assertSame('Updated Preset', $updatedPreset->getName());
         self::assertSame('Updated Description', $updatedPreset->getDescription());
 

@@ -33,17 +33,17 @@ final class StatusControllerTest extends AbstractWebTestCase
         $content = $response->getContent();
 
         // Just verify we got HTML with expected content
-        self::assertStringContainsString('<!DOCTYPE HTML>', $content);
-        self::assertStringContainsString('<html>', $content);
-        self::assertStringContainsString('Login-Status', $content);
-        self::assertStringContainsString('class="status_active"', $content);
+        self::assertStringContainsString('<!DOCTYPE HTML>', (string) $content);
+        self::assertStringContainsString('<html>', (string) $content);
+        self::assertStringContainsString('Login-Status', (string) $content);
+        self::assertStringContainsString('class="status_active"', (string) $content);
     }
 
     public function testPageActionWithLoggedInUserReturnsActiveStatus(): void
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/page');
         $this->assertStatusCode(200);
-        self::assertStringContainsString('class="status_active"', $this->client->getResponse()->getContent());
+        self::assertStringContainsString('class="status_active"', (string) $this->client->getResponse()->getContent());
     }
 
     public function testPageActionWithLoggedOutUserReturnsInactiveStatus(): void
@@ -53,7 +53,7 @@ final class StatusControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/page');
         $this->assertStatusCode(200);
-        self::assertStringContainsString('class="status_inactive"', $this->client->getResponse()->getContent());
+        self::assertStringContainsString('class="status_inactive"', (string) $this->client->getResponse()->getContent());
     }
 
     public function testCheckActionWithLoggedInUserReturnsActiveStatus(): void

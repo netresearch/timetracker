@@ -309,8 +309,11 @@ HTML;
     {
         $html = '<table class="test-table"><thead><tr><th>Test Suite</th><th>Test Name</th><th>Status</th><th>Duration</th><th>Memory</th></tr></thead><tbody>';
         
-        foreach ($latest['benchmarks'] as $suiteName => $suite) {
+        assert(is_array($latest['benchmarks']));
+        foreach ($latest['benchmarks'] ?? [] as $suiteName => $suite) {
+            assert(is_array($suite));
             foreach ($suite as $testName => $result) {
+                assert(is_array($result) && isset($result['success']));
                 $status = $result['success'] ? 'PASS' : 'FAIL';
                 $statusClass = $result['success'] ? 'status-success' : 'status-failure';
                 $executionTime = $result['execution_time_ms'] ?? 0;
@@ -352,7 +355,7 @@ HTML;
         
         $trends = [];
         
-        foreach ($current['benchmarks'] as $suiteName => $suite) {
+        foreach ($current['benchmarks'] ?? [] as $suiteName => $suite) {
             $prevSuite = $previous['benchmarks'][$suiteName] ?? [];
             $trends[$suiteName] = [];
             
@@ -388,8 +391,11 @@ HTML;
             $totalTests = 0;
             $totalMemory = 0;
             
-            foreach ($run['benchmarks'] as $suite) {
+            assert(is_array($run['benchmarks']));
+            foreach ($run['benchmarks'] ?? [] as $suite) {
+                assert(is_array($suite));
                 foreach ($suite as $result) {
+                    assert(is_array($result) && isset($result['success']));
                     if ($result['success']) {
                         $totalTime += $result['execution_time_ms'] ?? 0;
                         $totalMemory += ($result['memory_usage_bytes'] ?? 0) / 1024 / 1024;
@@ -483,7 +489,7 @@ JAVASCRIPT;
     {
         $averages = [];
         
-        foreach ($run['benchmarks'] as $suiteName => $suite) {
+        foreach ($run['benchmarks'] ?? [] as $suiteName => $suite) {
             $averages[$suiteName] = $this->calculateSuiteAverageTime($suite);
         }
         
@@ -501,8 +507,11 @@ JAVASCRIPT;
         $totalMemory = 0;
         $totalTests = 0;
         
-        foreach ($run['benchmarks'] as $suite) {
+        assert(is_array($run['benchmarks']));
+        foreach ($run['benchmarks'] ?? [] as $suite) {
+            assert(is_array($suite));
             foreach ($suite as $result) {
+                assert(is_array($result) && isset($result['success']));
                 if ($result['success']) {
                     $totalMemory += ($result['memory_usage_bytes'] ?? 0);
                     $totalTests++;
@@ -525,6 +534,7 @@ JAVASCRIPT;
         $successfulTests = 0;
         
         foreach ($suite as $result) {
+            assert(is_array($result) && isset($result['success']));
             if ($result['success']) {
                 $totalTime += $result['execution_time_ms'] ?? 0;
                 $successfulTests++;

@@ -575,21 +575,22 @@ HELP;
         
         $analyzer = new TestCoverageAnalyzer();
         $results = $analyzer->analyze();
-        
+
         $formatter = new OutputFormatter();
         $formatter->formatResults($results);
-        
+
         echo "\n" . str_repeat('=', 80) . "\n";
         echo "Analysis complete! Use this report to identify testing gaps.\n";
-        
+
+        assert(is_array($results['summary']) && isset($results['summary']['untested_actions']));
         if ($results['summary']['untested_actions'] > 0) {
             echo "💡 Tip: Consider adding tests for untested controller actions above.\n";
         } else {
             echo "🎉 Excellent! All controller actions have corresponding tests.\n";
         }
-        
+
         echo str_repeat('=', 80) . "\n\n";
-        
+
         // Exit with appropriate code
         $exitCode = $results['summary']['untested_actions'] > 0 ? 1 : 0;
         exit($exitCode);

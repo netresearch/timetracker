@@ -163,7 +163,9 @@ class JiraAuthenticationService
     ): array {
         $objectManager = $this->managerRegistry->getManager();
 
-        $userTicketSystem = $objectManager->getRepository(UserTicketsystem::class)->findOneBy([
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $objectManager->getRepository(UserTicketsystem::class);
+        $userTicketSystem = $repository->findOneBy([
             'user' => $user,
             'ticketSystem' => $ticketSystem,
         ]);
@@ -203,7 +205,9 @@ class JiraAuthenticationService
     {
         $objectManager = $this->managerRegistry->getManager();
 
-        $userTicketSystem = $objectManager->getRepository(UserTicketsystem::class)->findOneBy([
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $objectManager->getRepository(UserTicketsystem::class);
+        $userTicketSystem = $repository->findOneBy([
             'user' => $user,
             'ticketSystem' => $ticketSystem,
         ]);
@@ -235,7 +239,9 @@ class JiraAuthenticationService
     {
         $objectManager = $this->managerRegistry->getManager();
 
-        $userTicketSystem = $objectManager->getRepository(UserTicketsystem::class)->findOneBy([
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $objectManager->getRepository(UserTicketsystem::class);
+        $userTicketSystem = $repository->findOneBy([
             'user' => $user,
             'ticketSystem' => $ticketSystem,
         ]);
@@ -251,9 +257,9 @@ class JiraAuthenticationService
      */
     public function checkUserTicketSystem(User $user, TicketSystem $ticketSystem): bool
     {
-        $userTicketSystem = $this->managerRegistry
-            ->getRepository(UserTicketsystem::class)
-            ->findOneBy([
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
+        $userTicketSystem = $repository->findOneBy([
                 'user' => $user,
                 'ticketSystem' => $ticketSystem,
             ])

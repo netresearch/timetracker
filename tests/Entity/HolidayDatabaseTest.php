@@ -22,13 +22,14 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testPersistAndFind(): void
     {
-        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-12-25';
         $conn->insert('holidays', ['day' => $day, 'name' => 'Christmas']);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
         self::assertNotEmpty($row);
+        assert(is_array($row));
         self::assertSame('Christmas', $row['name']);
 
         // Clean up
@@ -37,21 +38,22 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testUpdate(): void
     {
-        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-01-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'New Year']);
         $conn->update('holidays', ['name' => 'Updated Holiday'], ['day' => $day]);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
+        assert(is_array($row));
         self::assertSame('Updated Holiday', $row['name']);
         $conn->delete('holidays', ['day' => $day]);
     }
 
     public function testDelete(): void
     {
-        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-05-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'Labor Day']);
         $conn->delete('holidays', ['day' => $day]);
@@ -62,8 +64,8 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testFindByYear(): void
     {
-        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $rows = [
             ['day' => '2022-12-25', 'name' => 'Christmas 2022'],
             ['day' => '2023-01-01', 'name' => 'New Year 2023'],

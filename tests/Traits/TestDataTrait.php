@@ -58,8 +58,8 @@ trait TestDataTrait
         }
 
         try {
-            /** @var \Doctrine\DBAL\Connection $connection */
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
+            assert($connection instanceof \Doctrine\DBAL\Connection);
 
             // Execute SQL file statements using DBAL (avoid native connection handling)
             $statements = explode(';', $file);

@@ -32,8 +32,8 @@ final class CrudControllerTest extends AbstractWebTestCase
             '/tracking/save', 
             [], 
             [], 
-            ['CONTENT_TYPE' => 'application/json'], 
-            json_encode($parameter)
+            ['CONTENT_TYPE' => 'application/json'],
+            (string) json_encode($parameter)
         );
 
         $expectedJson = [
@@ -56,7 +56,9 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        $result = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $result = $queryResult->fetchAllAssociative();
 
         $expectedDbEntry = [
             [
@@ -92,15 +94,17 @@ final class CrudControllerTest extends AbstractWebTestCase
             '/tracking/save', 
             [], 
             [], 
-            ['CONTENT_TYPE' => 'application/json'], 
-            json_encode($parameter)
+            ['CONTENT_TYPE' => 'application/json'],
+            (string) json_encode($parameter)
         );
         $this->assertStatusCode(200);
 
         // Get the created entry ID
         $query = 'SELECT id FROM `entries` WHERE `day` = "2024-01-01" ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        $result = $this->connection->executeQuery($query)->fetchAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $result = $queryResult->fetchAssociative();
         assert(is_array($result));
         $entryId = (int) $result['id'];
 
@@ -113,7 +117,9 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Verify entry is deleted
         $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
         self::assertNotNull($this->connection);
-        $result = $this->connection->executeQuery($query)->fetchAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $result = $queryResult->fetchAssociative();
         assert(is_array($result));
         self::assertSame(0, (int) $result['count'], 'Entry was not deleted from database');
 
@@ -167,7 +173,9 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-02-06"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $results = $queryResult->fetchAllAssociative();
         assert(is_array($results));
 
         self::assertSame(10, count($results));
@@ -223,7 +231,9 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $results = $queryResult->fetchAllAssociative();
         assert(is_array($results));
         self::assertSame(8, count($results));
 
@@ -264,7 +274,9 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Check for pre-existing entries to ensure test isolation
         $queryBefore = 'SELECT * FROM `entries` WHERE `day` >= "2020-02-07" AND `day` <= "2020-02-10" ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        $resultsBefore = $this->connection->executeQuery($queryBefore)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($queryBefore);
+        $resultsBefore = $queryResult->fetchAllAssociative();
         
         $parameter = [
             'startdate' => '2020-02-07',    // opt
@@ -290,7 +302,9 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `id` > ' . $maxPreExistingId . '
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $results = $queryResult->fetchAllAssociative();
         assert(is_array($results));
         
         self::assertSame(2, count($results));
@@ -353,7 +367,9 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-02-20"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $results = $queryResult->fetchAllAssociative();
         assert(is_array($results));
 
         self::assertSame(10, count($results));
@@ -410,7 +426,9 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "0020-02-20"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $results = $queryResult->fetchAllAssociative();
 
         self::assertSame(0, count($results));
     }
@@ -440,7 +458,9 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-01-05"
             ORDER BY `id` ASC';
         self::assertNotNull($this->connection);
-        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $results = $queryResult->fetchAllAssociative();
         assert(is_array($results));
 
         // Update count expectation to match actual: 5 instead of 4
@@ -492,8 +512,8 @@ final class CrudControllerTest extends AbstractWebTestCase
             '/tracking/save', 
             [], 
             [], 
-            ['CONTENT_TYPE' => 'application/json'], 
-            json_encode($parameter)
+            ['CONTENT_TYPE' => 'application/json'],
+            (string) json_encode($parameter)
         );
 
         $expectedJson = [
@@ -519,7 +539,9 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Verify the database entry
         $query = 'SELECT * FROM `entries` WHERE `day` = "2024-01-15" ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        $result = $this->connection->executeQuery($query)->fetchAllAssociative();
+        assert($this->connection instanceof \Doctrine\DBAL\Connection);
+        $queryResult = $this->connection->executeQuery($query);
+        $result = $queryResult->fetchAllAssociative();
 
         $expectedDbEntry = [
             [

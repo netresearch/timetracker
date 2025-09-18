@@ -100,7 +100,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized, just ensure we got a validation error
@@ -121,7 +121,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized
@@ -142,7 +142,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized

@@ -104,7 +104,7 @@ final class ExportPerformanceTest extends TestCase
         $this->assertCount(50, $result);
         
         // Log performance metrics
-        $this->logPerformanceMetric('Small Dataset Export', $duration, $memoryUsage, 50);
+        $this->logPerformanceMetric('Small Dataset Export', (int) $duration, (int) $memoryUsage, 50);
     }
 
     /**
@@ -144,7 +144,7 @@ final class ExportPerformanceTest extends TestCase
         );
         
         $this->assertCount(500, $result);
-        $this->logPerformanceMetric('Medium Dataset Export', $duration, $memoryUsage, 500);
+        $this->logPerformanceMetric('Medium Dataset Export', (int) $duration, (int) $memoryUsage, 500);
     }
 
     /**
@@ -184,7 +184,7 @@ final class ExportPerformanceTest extends TestCase
         );
         
         $this->assertCount(5000, $result);
-        $this->logPerformanceMetric('Large Dataset Export', $duration, $memoryUsage, 5000);
+        $this->logPerformanceMetric('Large Dataset Export', (int) $duration, (int) $memoryUsage, 5000);
     }
 
     /**
@@ -221,7 +221,7 @@ final class ExportPerformanceTest extends TestCase
         );
         
         $this->assertCount(10, $result);
-        $this->logPerformanceMetric('Small Ticket Enrichment', $duration, $memoryUsage, 10);
+        $this->logPerformanceMetric('Small Ticket Enrichment', (int) $duration, (int) $memoryUsage, 10);
     }
 
     /**
@@ -258,7 +258,7 @@ final class ExportPerformanceTest extends TestCase
         );
         
         $this->assertCount(100, $result);
-        $this->logPerformanceMetric('Medium Ticket Enrichment', $duration, $memoryUsage, 100);
+        $this->logPerformanceMetric('Medium Ticket Enrichment', (int) $duration, (int) $memoryUsage, 100);
     }
 
     /**
@@ -295,7 +295,7 @@ final class ExportPerformanceTest extends TestCase
         );
         
         $this->assertCount(100, $result);
-        $this->logPerformanceMetric('Export Without Enrichment', $duration, $memoryUsage, 100);
+        $this->logPerformanceMetric('Export Without Enrichment', (int) $duration, (int) $memoryUsage, 100);
     }
 
     /**
@@ -372,7 +372,7 @@ final class ExportPerformanceTest extends TestCase
             $this->assertCount(200, $result);
         }
         
-        $this->logPerformanceMetric('Concurrent Export Simulation', $duration, $memoryUsage, 1000);
+        $this->logPerformanceMetric('Concurrent Export Simulation', (int) $duration, (int) $memoryUsage, 1000);
     }
 
     /**

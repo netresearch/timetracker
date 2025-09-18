@@ -25,8 +25,8 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        /** @var EntityManagerInterface $entityManager */
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        assert($entityManager instanceof EntityManagerInterface);
         $this->entityManager = $entityManager;
     }
 
@@ -50,6 +50,7 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
         // Fetch from database and verify
         $fetchedCustomer = $this->entityManager->getRepository(Customer::class)->find($id);
         self::assertNotNull($fetchedCustomer, 'Customer was not found in database');
+        assert($fetchedCustomer instanceof Customer);
         self::assertSame('Test Database Customer', $fetchedCustomer->getName());
         self::assertTrue($fetchedCustomer->getActive());
         self::assertFalse($fetchedCustomer->getGlobal());
@@ -83,6 +84,8 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedCustomer = $this->entityManager->getRepository(Customer::class)->find($id);
+        self::assertNotNull($updatedCustomer);
+        assert($updatedCustomer instanceof Customer);
         self::assertSame('Updated Customer', $updatedCustomer->getName());
         self::assertFalse($updatedCustomer->getActive());
         self::assertTrue($updatedCustomer->getGlobal());
@@ -155,6 +158,8 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+        self::assertNotNull($fetchedCustomer);
+        assert($fetchedCustomer instanceof Customer);
 
         // Test project relationship
         self::assertCount(2, $fetchedCustomer->getProjects());
@@ -204,6 +209,8 @@ final class CustomerDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedCustomer = $this->entityManager->find(Customer::class, $customerId);
+        self::assertNotNull($fetchedCustomer);
+        assert($fetchedCustomer instanceof Customer);
 
         // Test team relationship
         self::assertCount(2, $fetchedCustomer->getTeams());

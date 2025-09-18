@@ -153,7 +153,7 @@ trait JsonAssertionsTrait
         $contentType = $response->headers->get('Content-Type', '');
         if (str_contains($contentType, 'application/json') || (str_starts_with($responseContentString, '{') && str_ends_with($responseContentString, '}'))) {
             $json = json_decode($responseContentString, true);
-            if (JSON_ERROR_NONE === json_last_error() && isset($json['message'])) {
+            if (JSON_ERROR_NONE === json_last_error() && is_array($json) && isset($json['message'])) {
                 $jsonMessage = $json['message'];
                 
                 // Handle translation mapping for contract validation messages

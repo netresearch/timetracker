@@ -28,8 +28,8 @@ final class AccountDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        /** @var EntityManagerInterface $entityManager */
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        assert($entityManager instanceof EntityManagerInterface);
         $this->entityManager = $entityManager;
     }
 
@@ -54,6 +54,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         // Find by ID
         $foundAccount = $this->entityManager->find(Account::class, $account->getId());
         static::assertNotNull($foundAccount);
+        assert($foundAccount instanceof Account);
         static::assertEquals($accountData['name'], $foundAccount->getName());
         
         // Test legacy method still works
@@ -119,14 +120,20 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Verify relationship
-        static::assertEquals($account->getId(), $entry->getAccount()->getId());
+        $entryAccount = $entry->getAccount();
+        static::assertNotNull($entryAccount);
+        static::assertEquals($account->getId(), $entryAccount->getId());
 
         // Test the relationship from account side
         $refreshedAccount = $this->entityManager->find(Account::class, $account->getId());
+        static::assertNotNull($refreshedAccount);
+        assert($refreshedAccount instanceof Account);
         $accountEntries = $refreshedAccount->getEntries();
 
         static::assertCount(1, $accountEntries);
-        static::assertEquals($entry->getId(), $accountEntries->first()->getId());
+        $firstEntry = $accountEntries->first();
+        static::assertNotFalse($firstEntry);
+        static::assertEquals($entry->getId(), $firstEntry->getId());
     }
 
     public function testFindByName(): void
@@ -139,12 +146,14 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Find by name
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<Account> $repository */
         $repository = $this->entityManager->getRepository(Account::class);
         $foundByName = $repository->findOneBy([
             'name' => 'Name Test Account',
         ]);
 
         static::assertNotNull($foundByName);
+        assert($foundByName instanceof Account);
         static::assertEquals('Name Test Account', $foundByName->getName());
     }
 
@@ -184,11 +193,13 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         }
 
         // Verify count
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<Account> $repository */
         $repository = $this->entityManager->getRepository(Account::class);
-        $totalCount = $repository->createQueryBuilder('a')
+        $queryBuilder = $repository->createQueryBuilder('a');
+        $query = $queryBuilder
             ->select('COUNT(a.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->getQuery();
+        $totalCount = $query->getSingleScalarResult();
 
         static::assertGreaterThanOrEqual(count($accountsData), $totalCount);
     }

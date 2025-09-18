@@ -158,7 +158,7 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, Project>
+     * @return list<Project>
      */
     public function findByCustomer(int $customerId = 0): array
     {
@@ -175,6 +175,7 @@ class ProjectRepository extends ServiceEntityRepository
         assert(is_array($result));
         // All results are Project entities due to the repository context
         assert(array_is_list($result) || [] === $result);
+        /** @var list<Project> $result */
 
         return $result;
     }

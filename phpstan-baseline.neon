@@ -1,12 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			rawMessage: 'Method App\Controller\Interpretation\BaseInterpretationController::getEntries() should return array<int, App\Entity\Entry> but returns array<App\Entity\Entry>.'
-			identifier: return.type
-			count: 1
-			path: src/Controller/Interpretation/BaseInterpretationController.php
-
-		-
 			rawMessage: Negated boolean expression is always false.
 			identifier: booleanNot.alwaysFalse
 			count: 1
@@ -19,136 +13,16 @@ parameters:
 			path: src/Controller/Tracking/BaseTrackingController.php
 
 		-
-			rawMessage: 'Method App\Controller\Tracking\SaveEntryAction::__invoke() never returns Symfony\Component\HttpFoundation\RedirectResponse so it can be removed from the return type.'
-			identifier: return.unusedType
-			count: 1
-			path: src/Controller/Tracking/SaveEntryAction.php
-
-		-
-			rawMessage: 'Method App\Dto\EntrySaveDto::getDateAsDateTime() has Exception in PHPDoc @throws tag but it''s not thrown.'
-			identifier: throws.unusedType
-			count: 1
-			path: src/Dto/EntrySaveDto.php
-
-		-
-			rawMessage: 'Method App\Dto\EntrySaveDto::getEndAsDateTime() has Exception in PHPDoc @throws tag but it''s not thrown.'
-			identifier: throws.unusedType
-			count: 1
-			path: src/Dto/EntrySaveDto.php
-
-		-
-			rawMessage: 'Method App\Dto\EntrySaveDto::getStartAsDateTime() has Exception in PHPDoc @throws tag but it''s not thrown.'
-			identifier: throws.unusedType
-			count: 1
-			path: src/Dto/EntrySaveDto.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findByDate() should return array<int, App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findByDatePaginated() should return array<int, App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findByDay() should return array<App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findByFilterArray() should return array<App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findByIds() should return array<App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findByRecentDaysOfUser() should return array<App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findByUserAndTicketSystemToSync() should return array<App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::findOverlappingEntries() should return array<int, App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::getEntriesByUser() should return array<int, App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::getEntriesForDay() should return array<App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::getEntriesForMonth() should return array<App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\EntryRepository::getFilteredEntries() should return array<int, App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/EntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\HolidayRepository::findByMonth() should return array<int, App\Entity\Holiday> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/HolidayRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\OptimizedEntryRepository::findByDate() should return array<int, App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/OptimizedEntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\OptimizedEntryRepository::findByFilterArrayOptimized() should return array<int, App\Entity\Entry> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/OptimizedEntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\OptimizedEntryRepository::findByRecentDaysOfUser() should return array<int, App\Entity\Entry> but returns list.'
+			rawMessage: 'Method App\Repository\OptimizedEntryRepository::getEntrySummaryOptimized() should return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> but returns array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>.'
 			identifier: return.type
 			count: 2
 			path: src/Repository/OptimizedEntryRepository.php
 
 		-
-			rawMessage: 'Method App\Repository\OptimizedEntryRepository::getEntrySummaryOptimized() should return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> but returns non-empty-array.'
+			rawMessage: 'Method App\Repository\OptimizedEntryRepository::getEntrySummaryOptimized() should return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> but returns non-empty-array.'
 			identifier: return.type
 			count: 1
 			path: src/Repository/OptimizedEntryRepository.php
-
-		-
-			rawMessage: 'Method App\Repository\ProjectRepository::findByCustomer() should return array<int, App\Entity\Project> but returns list.'
-			identifier: return.type
-			count: 1
-			path: src/Repository/ProjectRepository.php
 
 		-
 			rawMessage: 'Strict comparison using === between array{} and non-empty-array<mixed, mixed> will always evaluate to false.'
@@ -169,64 +43,10 @@ parameters:
 			path: src/Service/ExportService.php
 
 		-
-			rawMessage: Cannot access property $fields on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
-			rawMessage: Cannot access property $key on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
-			rawMessage: Cannot access property $labels on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
-			rawMessage: Cannot access property $summary on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
 			rawMessage: Possibly invalid array key type mixed.
 			identifier: offsetAccess.invalidOffset
 			count: 1
 			path: src/Service/ExportService.php
-
-		-
-			rawMessage: 'Strict comparison using === between mixed and null will always evaluate to false.'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
-			rawMessage: 'Call to method findOneBy() on an unknown class App\Repository\ServiceEntityRepository.'
-			identifier: class.notFound
-			count: 4
-			path: src/Service/Integration/Jira/JiraAuthenticationService.php
-
-		-
-			rawMessage: 'Call to method findOneBy() on an unknown class App\Repository\ServiceEntityRepository.'
-			identifier: class.notFound
-			count: 2
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			rawMessage: Cannot access property $issuetype on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			rawMessage: Cannot access property $subtasks on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
 		-
 			rawMessage: Cannot cast mixed to int.
@@ -247,69 +67,9 @@ parameters:
 			path: src/Service/Integration/Jira/JiraTicketService.php
 
 		-
-			rawMessage: Cannot access property $assignee on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: Cannot access property $displayName on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: Cannot access property $fields on mixed.
-			identifier: property.nonObject
-			count: 3
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: Cannot access property $key on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: Cannot access property $name on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: Cannot access property $status on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: Cannot access property $subtasks on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: Cannot access property $summary on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
 			rawMessage: Cannot cast mixed to string.
 			identifier: cast.string
 			count: 4
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: 'Method App\Service\Integration\Jira\JiraTicketService::getSubtickets() should return array<int, array{key: string, summary: string, status: string, assignee: string|null}> but returns list<array{key: mixed, summary: mixed, status: mixed, assignee: mixed}>.'
-			identifier: return.type
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			rawMessage: 'Parameter #1 $object_or_class of function property_exists expects object|string, mixed given.'
-			identifier: argument.type
-			count: 1
 			path: src/Service/Integration/Jira/JiraTicketService.php
 
 		-
@@ -325,16 +85,22 @@ parameters:
 			path: src/Service/Integration/Jira/JiraWorkLogService.php
 
 		-
-			rawMessage: 'Method App\Service\Ldap\LdapClientService::getTeams() should return array<int, string> but returns array<string>.'
-			identifier: return.type
-			count: 1
-			path: src/Service/Ldap/LdapClientService.php
+			rawMessage: 'Call to function assert() with true will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 3
+			path: tests/AbstractWebTestCase.php
 
 		-
-			rawMessage: 'Call to method find() on an unknown class App\Repository\ServiceEntityRepository.'
-			identifier: class.notFound
+			rawMessage: 'Call to function method_exists() with Doctrine\DBAL\Connection and ''executeStatement'' will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
 			count: 1
-			path: src/Util/RequestEntityHelper.php
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: 'Call to function method_exists() with Doctrine\DBAL\Connection and ''setNestTransactions…'' will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/AbstractWebTestCase.php
 
 		-
 			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertTrue() with true and ''Translation matched…'' will always evaluate to true.'
@@ -345,30 +111,6 @@ parameters:
 		-
 			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertTrue() with true will always evaluate to true.'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
-			rawMessage: Cannot access offset 'message' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			rawMessage: 'Cannot call method executeQuery() on mixed.'
-			identifier: method.nonObject
-			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
-			rawMessage: 'Cannot call method fetchAllAssociative() on mixed.'
-			identifier: method.nonObject
-			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
-			rawMessage: 'Cannot call method from() on mixed.'
-			identifier: method.nonObject
 			count: 2
 			path: tests/AbstractWebTestCase.php
 
@@ -385,9 +127,15 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			rawMessage: 'Cannot call method select() on mixed.'
-			identifier: method.nonObject
+			rawMessage: Instanceof between Doctrine\DBAL\Result and Doctrine\DBAL\Result will always evaluate to true.
+			identifier: instanceof.alwaysTrue
 			count: 2
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: Instanceof between Doctrine\Persistence\ObjectManager and Doctrine\Persistence\ObjectManager will always evaluate to true.
+			identifier: instanceof.alwaysTrue
+			count: 1
 			path: tests/AbstractWebTestCase.php
 
 		-
@@ -399,6 +147,12 @@ parameters:
 		-
 			rawMessage: 'Parameter #6 $content of method Symfony\Component\BrowserKit\AbstractBrowser<Symfony\Component\HttpFoundation\Request,Symfony\Component\HttpFoundation\Response>::request() expects string|null, string|false|null given.'
 			identifier: argument.type
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			rawMessage: Property Tests\AbstractWebTestCase::$tableInitialState type has no value type specified in iterable type array.
+			identifier: missingType.iterableValue
 			count: 1
 			path: tests/AbstractWebTestCase.php
 
@@ -427,28 +181,10 @@ parameters:
 			path: tests/Controller/AdminControllerNegativeTest.php
 
 		-
-			rawMessage: 'Parameter #6 $content of method Symfony\Component\BrowserKit\AbstractBrowser<Symfony\Component\HttpFoundation\Request,Symfony\Component\HttpFoundation\Response>::request() expects string|null, string|false given.'
-			identifier: argument.type
-			count: 16
-			path: tests/Controller/AdminControllerTest.php
-
-		-
-			rawMessage: 'Parameter #2 $array of static method PHPUnit\Framework\Assert::assertArrayHasKey() expects array<mixed>|ArrayAccess<(int|string), mixed>, mixed given.'
-			identifier: argument.type
-			count: 6
+			rawMessage: 'Call to function is_array() with array<mixed> will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 7
 			path: tests/Controller/ApiSmokeTest.php
-
-		-
-			rawMessage: 'Parameter #1 $json of function json_decode expects string, string|false given.'
-			identifier: argument.type
-			count: 9
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			rawMessage: 'Parameter #2 $haystack of method PHPUnit\Framework\Assert::assertStringContainsString() expects string, string|false given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Controller/AuthorizationSecurityTest.php
 
 		-
 			rawMessage: 'Parameter #6 $content of method Symfony\Component\BrowserKit\AbstractBrowser<Symfony\Component\HttpFoundation\Request,Symfony\Component\HttpFoundation\Response>::request() expects string|null, string|false given.'
@@ -469,18 +205,6 @@ parameters:
 			path: tests/Controller/ControllingControllerTest.php
 
 		-
-			rawMessage: 'Parameter #2 $haystack of static method PHPUnit\Framework\Assert::assertStringContainsString() expects string, string|null given.'
-			identifier: argument.type
-			count: 2
-			path: tests/Controller/ControllingControllerTest.php
-
-		-
-			rawMessage: 'Parameter #2 $string of static method PHPUnit\Framework\Assert::assertStringStartsWith() expects string, string|null given.'
-			identifier: argument.type
-			count: 2
-			path: tests/Controller/ControllingControllerTest.php
-
-		-
 			rawMessage: Unreachable statement - code above always terminates.
 			identifier: deadCode.unreachable
 			count: 9
@@ -493,21 +217,15 @@ parameters:
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			rawMessage: 'Cannot call method executeQuery() on mixed.'
-			identifier: method.nonObject
+			rawMessage: 'Call to function assert() with true will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
 			count: 11
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			rawMessage: 'Cannot call method fetchAllAssociative() on mixed.'
-			identifier: method.nonObject
-			count: 9
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Cannot call method fetchAssociative() on mixed.'
-			identifier: method.nonObject
-			count: 2
+			rawMessage: 'Call to function is_array() with array will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
+			count: 5
 			path: tests/Controller/CrudControllerTest.php
 
 		-
@@ -517,40 +235,16 @@ parameters:
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			rawMessage: 'Parameter #1 $array of function array_column expects array, mixed given.'
+			rawMessage: Instanceof between Doctrine\DBAL\Connection and Doctrine\DBAL\Connection will always evaluate to true.
+			identifier: instanceof.alwaysTrue
+			count: 11
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			rawMessage: 'Parameter #1 ...$arg1 of function max expects non-empty-array, list<mixed> given.'
 			identifier: argument.type
 			count: 1
 			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Parameter #1 $value of function count expects array|Countable, mixed given.'
-			identifier: argument.type
-			count: 2
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Parameter #1 ...$arg1 of function max expects non-empty-array, list given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Parameter #2 $array of method Tests\AbstractWebTestCase::assertArraySubset() expects array<int|string, mixed>, mixed given.'
-			identifier: argument.type
-			count: 12
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: 'Parameter #6 $content of method Symfony\Component\BrowserKit\AbstractBrowser<Symfony\Component\HttpFoundation\Request,Symfony\Component\HttpFoundation\Response>::request() expects string|null, string|false given.'
-			identifier: argument.type
-			count: 3
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			rawMessage: Cannot access offset 'quota' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
 			rawMessage: 'Cannot call method setEstimation() on App\Entity\Project|null.'
@@ -562,12 +256,6 @@ parameters:
 			rawMessage: 'Parameter #1 $object of method Doctrine\Persistence\ObjectManager::persist() expects object, App\Entity\Project|null given.'
 			identifier: argument.type
 			count: 2
-			path: tests/Controller/DefaultControllerSummaryTest.php
-
-		-
-			rawMessage: 'Parameter #2 $array of static method PHPUnit\Framework\Assert::assertArrayHasKey() expects array<mixed>|ArrayAccess<(int|string), mixed>, mixed given.'
-			identifier: argument.type
-			count: 1
 			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
@@ -589,12 +277,6 @@ parameters:
 			path: tests/Controller/DefaultControllerTest.php
 
 		-
-			rawMessage: 'Parameter #1 $json of function json_decode expects string, string|false given.'
-			identifier: argument.type
-			count: 2
-			path: tests/Controller/InterpretationControllerTest.php
-
-		-
 			rawMessage: 'Parameter #2 $array of static method PHPUnit\Framework\Assert::assertArrayHasKey() expects array<mixed>|ArrayAccess<(int|string), mixed>, mixed given.'
 			identifier: argument.type
 			count: 4
@@ -607,121 +289,19 @@ parameters:
 			path: tests/Controller/SecurityControllerTest.php
 
 		-
-			rawMessage: 'Parameter #2 $haystack of static method PHPUnit\Framework\Assert::assertStringContainsString() expects string, string|false given.'
-			identifier: argument.type
-			count: 5
-			path: tests/Controller/SecurityControllerTest.php
-
-		-
-			rawMessage: 'Cannot call method executeQuery() on mixed.'
-			identifier: method.nonObject
+			rawMessage: 'Call to function assert() with true will always evaluate to true.'
+			identifier: function.alreadyNarrowedType
 			count: 1
 			path: tests/Controller/SettingsControllerTest.php
 
 		-
-			rawMessage: 'Cannot call method fetchAllAssociative() on mixed.'
-			identifier: method.nonObject
+			rawMessage: Instanceof between Doctrine\DBAL\Query\QueryBuilder and Doctrine\DBAL\Query\QueryBuilder will always evaluate to true.
+			identifier: instanceof.alwaysTrue
 			count: 1
 			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: 'Cannot call method from() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: 'Cannot call method select() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: 'Cannot call method setParameter() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: 'Cannot call method where() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: 'Parameter #1 $json of function json_decode expects string, string|false given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: 'Parameter #2 $array of method Tests\AbstractWebTestCase::assertArraySubset() expects array<int|string, mixed>, mixed given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
-			rawMessage: 'Parameter #2 $haystack of static method PHPUnit\Framework\Assert::assertStringContainsString() expects string, string|false given.'
-			identifier: argument.type
-			count: 6
-			path: tests/Controller/StatusControllerTest.php
-
-		-
-			rawMessage: 'Call to method createQueryBuilder() on an unknown class App\Repository\ServiceEntityRepository.'
-			identifier: class.notFound
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Call to method findOneBy() on an unknown class App\Repository\ServiceEntityRepository.'
-			identifier: class.notFound
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
 
 		-
 			rawMessage: 'Cannot call method get() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getEntries() on App\Entity\Account|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getId() on App\Entity\Account|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getId() on App\Entity\Entry|false.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getName() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getQuery() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getSingleScalarResult() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method select() on mixed.'
 			identifier: method.nonObject
 			count: 1
 			path: tests/Entity/AccountDatabaseTest.php
@@ -733,81 +313,9 @@ parameters:
 			path: tests/Entity/ActivityDatabaseTest.php
 
 		-
-			rawMessage: 'Cannot call method getEntries() on App\Entity\Activity|null.'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Entity/ActivityDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getFactor() on App\Entity\Activity|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/ActivityDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getName() on App\Entity\Activity|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/ActivityDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getNeedsTicket() on App\Entity\Activity|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/ActivityDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getPresets() on App\Entity\Activity|null.'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Entity/ActivityDatabaseTest.php
-
-		-
-			rawMessage: 'Parameter #1 $object of method Doctrine\Persistence\ObjectManager::remove() expects object, App\Entity\Activity|null given.'
-			identifier: argument.type
-			count: 3
-			path: tests/Entity/ActivityDatabaseTest.php
-
-		-
 			rawMessage: 'Cannot call method get() on mixed.'
 			identifier: method.nonObject
 			count: 1
-			path: tests/Entity/CustomerDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getActive() on App\Entity\Customer|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/CustomerDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getGlobal() on App\Entity\Customer|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/CustomerDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getName() on App\Entity\Customer|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/CustomerDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getProjects() on App\Entity\Customer|null.'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Entity/CustomerDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getTeams() on App\Entity\Customer|null.'
-			identifier: method.nonObject
-			count: 2
-			path: tests/Entity/CustomerDatabaseTest.php
-
-		-
-			rawMessage: 'Parameter #1 $object of method Doctrine\Persistence\ObjectManager::remove() expects object, App\Entity\Customer|null given.'
-			identifier: argument.type
-			count: 3
 			path: tests/Entity/CustomerDatabaseTest.php
 
 		-
@@ -817,31 +325,31 @@ parameters:
 			path: tests/Entity/EntryTest.php
 
 		-
-			rawMessage: 'Cannot access offset ''name'' on array<string, mixed>|false.'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Entity/HolidayDatabaseTest.php
-
-		-
 			rawMessage: 'Cannot call method get() on mixed.'
 			identifier: method.nonObject
 			count: 4
 			path: tests/Entity/HolidayDatabaseTest.php
 
 		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertNotNull() with App\Entity\Activity will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/PresetDatabaseTest.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertNotNull() with App\Entity\Customer will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/PresetDatabaseTest.php
+
+		-
+			rawMessage: 'Call to static method PHPUnit\Framework\Assert::assertNotNull() with App\Entity\Project will always evaluate to true.'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/PresetDatabaseTest.php
+
+		-
 			rawMessage: 'Cannot call method get() on mixed.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/PresetDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getDescription() on App\Entity\Preset|null.'
-			identifier: method.nonObject
-			count: 1
-			path: tests/Entity/PresetDatabaseTest.php
-
-		-
-			rawMessage: 'Cannot call method getName() on App\Entity\Preset|null.'
 			identifier: method.nonObject
 			count: 1
 			path: tests/Entity/PresetDatabaseTest.php
@@ -861,7 +369,7 @@ parameters:
 		-
 			rawMessage: 'Parameter #1 $object of method Doctrine\Persistence\ObjectManager::remove() expects object, App\Entity\Preset|null given.'
 			identifier: argument.type
-			count: 2
+			count: 1
 			path: tests/Entity/PresetDatabaseTest.php
 
 		-
@@ -1063,18 +571,6 @@ parameters:
 			path: tests/Entity/UserDatabaseTest.php
 
 		-
-			rawMessage: Cannot access offset 'activity' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Extension/NrArrayTranslatorTest.php
-
-		-
-			rawMessage: Cannot access offset 'ignoreMe' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Extension/NrArrayTranslatorTest.php
-
-		-
 			rawMessage: 'Parameter #1 $string of method App\Extension\NrArrayTranslator::filterArray() expects string, string|false given.'
 			identifier: argument.type
 			count: 3
@@ -1231,24 +727,6 @@ parameters:
 			path: tests/Model/BaseTest.php
 
 		-
-			rawMessage: 'Parameter #1 $string of function strlen expects string, string|false given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
-			rawMessage: 'Parameter #2 $array of function array_map expects array, list<string>|false given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
-			rawMessage: 'Parameter #2 $durationMs of method Tests\Performance\ExportActionPerformanceTest::logPerformanceMetric() expects int, float|int given.'
-			identifier: argument.type
-			count: 5
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
 			rawMessage: 'Parameter #2 $haystack of method PHPUnit\Framework\Assert::assertStringContainsString() expects string, string|null given.'
 			identifier: argument.type
 			count: 1
@@ -1267,27 +745,9 @@ parameters:
 			path: tests/Performance/ExportPerformanceTest.php
 
 		-
-			rawMessage: 'Parameter #2 $durationMs of method Tests\Performance\ExportPerformanceTest::logPerformanceMetric() expects int, float|int given.'
-			identifier: argument.type
-			count: 7
-			path: tests/Performance/ExportPerformanceTest.php
-
-		-
-			rawMessage: 'Parameter #1 $string of function strlen expects string, string|false given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			rawMessage: 'Parameter #2 $durationMs of method Tests\Performance\ExportWorkflowIntegrationTest::logPerformanceMetric() expects int, float|int given.'
-			identifier: argument.type
-			count: 6
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
 			rawMessage: 'Argument of an invalid type mixed supplied for foreach, only iterables are supported.'
 			identifier: foreach.nonIterable
-			count: 5
+			count: 3
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
@@ -1339,33 +799,21 @@ parameters:
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			rawMessage: Cannot access offset 'error' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
 			rawMessage: Cannot access offset 'execution_time_ms' on mixed.
 			identifier: offsetAccess.nonOffsetAccessible
-			count: 3
+			count: 2
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
 			rawMessage: Cannot access offset 'memory_usage_bytes' on mixed.
 			identifier: offsetAccess.nonOffsetAccessible
-			count: 3
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
-			rawMessage: Cannot access offset 'os' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
+			count: 2
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
 			rawMessage: Cannot access offset 'success' on mixed.
 			identifier: offsetAccess.nonOffsetAccessible
-			count: 4
+			count: 3
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
@@ -1411,12 +859,6 @@ parameters:
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			rawMessage: 'Parameter #3 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
 			rawMessage: 'Parameter #4 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
 			identifier: argument.type
 			count: 1
@@ -1424,12 +866,6 @@ parameters:
 
 		-
 			rawMessage: 'Part $result[''error''] (mixed) of encapsed string cannot be cast to string.'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
-			rawMessage: 'Part $suiteName (mixed) of encapsed string cannot be cast to string.'
 			identifier: encapsedStringPart.nonString
 			count: 1
 			path: tests/Performance/PerformanceBenchmarkRunner.php
@@ -1443,7 +879,7 @@ parameters:
 		-
 			rawMessage: 'Argument of an invalid type mixed supplied for foreach, only iterables are supported.'
 			identifier: foreach.nonIterable
-			count: 8
+			count: 2
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
@@ -1456,24 +892,6 @@ parameters:
 			rawMessage: Binary operation "/" between mixed and 1024 results in an error.
 			identifier: binaryOp.invalid
 			count: 1
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			rawMessage: Cannot access offset 'execution_time_ms' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			rawMessage: Cannot access offset 'memory_usage_bytes' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 3
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			rawMessage: Cannot access offset 'success' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 3
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
@@ -1537,18 +955,6 @@ parameters:
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			rawMessage: 'Part $suiteName (mixed) of encapsed string cannot be cast to string.'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			rawMessage: 'Part $testName (mixed) of encapsed string cannot be cast to string.'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
 			rawMessage: Possibly invalid array key type mixed.
 			identifier: offsetAccess.invalidOffset
 			count: 3
@@ -1595,12 +1001,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: tests/parallel-bootstrap.php
-
-		-
-			rawMessage: Cannot access offset 'untested_actions' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/tools/analyze-coverage.php
 
 		-
 			rawMessage: 'Parameter #1 $percentage of method OutputFormatter::generateCoverageBar() expects float, mixed given.'

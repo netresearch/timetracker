@@ -20,7 +20,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', $response);
+        self::assertStringContainsString('TimeTracker', (string) $response);
     }
 
     public function testIndexActionNotAuthorized(): void
@@ -31,7 +31,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', $response);
+        self::assertStringContainsString('TimeTracker', (string) $response);
     }
 
     public function testIndexActionAsUserWithData(): void
@@ -41,7 +41,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', $response);
+        self::assertStringContainsString('TimeTracker', (string) $response);
     }
 
     public function testGetCustomersAction(): void
@@ -155,7 +155,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         
         // Instead of checking exact values, verify the response structure is correct
         self::assertIsArray($data);
@@ -217,7 +217,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getProjects', $parameter);
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         
         $this->assertJsonStructure($expectedJson);
         self::assertCount(3, $data); // Updated to match actual response (3 projects)
@@ -233,7 +233,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getProjects', $parameter);
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         
         self::assertCount(3, $data); // Updated to match actual response (3 projects)
     }
@@ -245,7 +245,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getProjects');
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertIsArray($data);
     }
 
@@ -263,7 +263,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertArraySubset(['totalWorkTime' => 330], (array) $data);
     }
 
@@ -279,7 +279,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertArraySubset(['totalWorkTime' => 330], (array) $data);
     }
 
@@ -294,7 +294,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertArraySubset(['totalWorkTime' => 330], (array) $data);
     }
 
@@ -305,7 +305,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         
         // Updated to match actual response format (user objects, not just usernames)
         // Verify we have the expected users (may be in different order)
@@ -327,7 +327,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getActivities');
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertIsArray($data);
         // Verify we have the expected activities from test data
         self::assertCount(3, $data); // Entwicklung, Tests, Weinen
@@ -387,7 +387,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getHolidays', ['year' => 2020]);
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertIsArray($data);
         // Verify we get the expected holiday from test data
         self::assertCount(1, $data); // Neujahr 2020-01-01
@@ -400,7 +400,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getCustomers');
         $this->assertStatusCode(200);
         $response = $this->client->getResponse();
-        $data = json_decode($response->getContent() ?: '', true);
+        $data = json_decode((string) ($response->getContent() ?: ''), true);
         self::assertIsArray($data);
         // Verify we get customers that the default test user can access
         self::assertGreaterThanOrEqual(1, count($data));

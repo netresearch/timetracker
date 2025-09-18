@@ -38,6 +38,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($response);
         self::assertArrayHasKey('project', $response);
+        assert(is_array($response['project']));
         self::assertArrayHasKey('quota', $response['project']);
         $quota = $response['project']['quota'];
         // When estimation is set, quota should be a percentage string
@@ -69,6 +70,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($response);
         self::assertArrayHasKey('project', $response);
+        assert(is_array($response['project']));
         // Without estimation set, quota remains numeric zero according to default data
         self::assertSame(0, $response['project']['quota'] ?? 0);
     }

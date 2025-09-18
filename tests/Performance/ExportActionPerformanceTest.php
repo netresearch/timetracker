@@ -55,7 +55,7 @@ final class ExportActionPerformanceTest extends TestCase
     {
         // Clean up temporary files
         if (is_dir($this->tempDir)) {
-            array_map('unlink', glob($this->tempDir . '/*'));
+            array_map('unlink', glob($this->tempDir . '/*') ?: []);
             rmdir($this->tempDir);
         }
     }
@@ -115,7 +115,7 @@ final class ExportActionPerformanceTest extends TestCase
         $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
                                    $response->headers->get('Content-Type'));
         
-        $this->logPerformanceMetric('Small Excel Export', $duration, $memoryUsage, 50);
+        $this->logPerformanceMetric('Small Excel Export', (int) $duration, (int) $memoryUsage, 50);
     }
 
     /**
@@ -154,7 +154,7 @@ final class ExportActionPerformanceTest extends TestCase
         );
         
         $this->assertInstanceOf(Response::class, $response);
-        $this->logPerformanceMetric('Medium Excel Export', $duration, $memoryUsage, 500);
+        $this->logPerformanceMetric('Medium Excel Export', (int) $duration, (int) $memoryUsage, 500);
     }
 
     /**
@@ -193,7 +193,7 @@ final class ExportActionPerformanceTest extends TestCase
         );
         
         $this->assertInstanceOf(Response::class, $response);
-        $this->logPerformanceMetric('Large Excel Export', $duration, $memoryUsage, 5000);
+        $this->logPerformanceMetric('Large Excel Export', (int) $duration, (int) $memoryUsage, 5000);
     }
 
     /**
@@ -226,7 +226,7 @@ final class ExportActionPerformanceTest extends TestCase
         );
         
         $this->assertInstanceOf(Response::class, $response);
-        $this->logPerformanceMetric('Excel Export with Ticket Enrichment', $duration, $memoryUsage, 200);
+        $this->logPerformanceMetric('Excel Export with Ticket Enrichment', (int) $duration, (int) $memoryUsage, 200);
     }
 
     /**
@@ -260,7 +260,7 @@ final class ExportActionPerformanceTest extends TestCase
         );
         
         $this->assertInstanceOf(Response::class, $response);
-        $this->logPerformanceMetric('Export with Statistics Calculation', $duration, $memoryUsage, 1000);
+        $this->logPerformanceMetric('Export with Statistics Calculation', (int) $duration, (int) $memoryUsage, 1000);
     }
 
     /**
@@ -278,7 +278,7 @@ final class ExportActionPerformanceTest extends TestCase
             
             $response = $exportAction($request, $exportQueryDto);
             $content = $response->getContent();
-            $fileSize = strlen($content ?? '');
+            $fileSize = strlen((string) ($content ?? ''));
             $fileSizes[$size] = $fileSize;
         }
         

@@ -184,10 +184,13 @@ final class PerformanceBenchmarkRunner
      */
     private function formatBenchmarkResult(array $result): string
     {
+        assert(isset($result['success']));
         if (!$result['success']) {
+            assert(isset($result['error']));
             return "❌ FAILED: {$result['error']}";
         }
 
+        assert(isset($result['execution_time_ms'], $result['memory_usage_bytes']));
         $time = $result['execution_time_ms'];
         $memory = number_format($result['memory_usage_bytes'] / 1024 / 1024, 2);
         
@@ -219,16 +222,21 @@ final class PerformanceBenchmarkRunner
         
         $report = [];
         $report[] = "=== Export Performance Benchmark Report ===";
+        assert(isset($this->benchmarkResults['timestamp'], $this->benchmarkResults['php_version'], $this->benchmarkResults['memory_limit']));
         $report[] = "Generated: " . $this->benchmarkResults['timestamp'];
         $report[] = "PHP Version: " . $this->benchmarkResults['php_version'];
         $report[] = "Memory Limit: " . $this->benchmarkResults['memory_limit'];
+        assert(is_array($this->benchmarkResults['environment']) && isset($this->benchmarkResults['environment']['os']));
         $report[] = "OS: " . $this->benchmarkResults['environment']['os'];
         $report[] = "";
 
-        foreach ($this->benchmarkResults['benchmarks'] as $suiteName => $suite) {
+        assert(is_array($this->benchmarkResults['benchmarks']));
+        foreach ($this->benchmarkResults['benchmarks'] ?? [] as $suiteName => $suite) {
             $report[] = "--- {$suiteName} Benchmarks ---";
-            
+
+            assert(is_array($suite));
             foreach ($suite as $testName => $result) {
+                assert(is_array($result) && isset($result['success']));
                 $status = $result['success'] ? '✅' : '❌';
                 $time = $result['execution_time_ms'] ?? 0;
                 $memory = number_format(($result['memory_usage_bytes'] ?? 0) / 1024 / 1024, 2);
@@ -241,7 +249,7 @@ final class PerformanceBenchmarkRunner
                     $memory
                 );
                 
-                if (!$result['success'] && $result['error']) {
+                if (!$result['success'] && isset($result['error'])) {
                     $report[] = "    Error: " . $result['error'];
                 }
             }
@@ -264,7 +272,7 @@ final class PerformanceBenchmarkRunner
     private function addSummaryStatistics(array &$report): void
     {
         $allResults = [];
-        foreach ($this->benchmarkResults['benchmarks'] as $suite) {
+        foreach ($this->benchmarkResults['benchmarks'] ?? [] as $suite) {
             if (is_array($suite)) {
                 $allResults = array_merge($allResults, array_values($suite));
             }
@@ -356,7 +364,7 @@ final class PerformanceBenchmarkRunner
     {
         $regressions = [];
 
-        foreach ($current['benchmarks'] as $suiteName => $suite) {
+        foreach ($current['benchmarks'] ?? [] as $suiteName => $suite) {
             if (!isset($baseline['benchmarks'][$suiteName])) {
                 continue;
             }

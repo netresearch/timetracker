@@ -40,11 +40,14 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson);
         self::assertNotNull($this->queryBuilder);
-        $this->queryBuilder->select('*')
+        assert($this->queryBuilder instanceof \Doctrine\DBAL\Query\QueryBuilder);
+        $queryBuilder = $this->queryBuilder;
+        $queryBuilder->select('*')
             ->from('users')->where('id = :userId')
             ->setParameter('userId', 3)
         ;
-        $result = $this->queryBuilder->executeQuery()->fetchAllAssociative();
+        $queryResult = $queryBuilder->executeQuery();
+        $result = $queryResult->fetchAllAssociative();
         $expectedDbEntry = [
             0 => [
                 'username' => 'i.myself',
@@ -92,7 +95,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', $parameter);
         $this->assertStatusCode(200);
-        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $response = json_decode((string) $this->client->getResponse()->getContent(), true);
         assert(is_array($response));
         assert(is_array($response['settings']));
         self::assertSame('en', $response['locale']);

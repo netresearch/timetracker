@@ -19,7 +19,9 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+        assert(is_array($data));
         if ([] !== $data) {
+            assert(is_array($data[0]));
             self::assertArrayHasKey('activity', $data[0]);
         }
     }
@@ -30,7 +32,9 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+        assert(is_array($data));
         if ([] !== $data) {
+            assert(is_array($data[0]));
             self::assertArrayHasKey('customer', $data[0]);
         }
     }
@@ -41,7 +45,9 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+        assert(is_array($data));
         if ([] !== $data) {
+            assert(is_array($data[0]));
             self::assertArrayHasKey('project', $data[0]);
         }
     }
@@ -52,7 +58,9 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+        assert(is_array($data));
         if ([] !== $data) {
+            assert(is_array($data[0]));
             self::assertArrayHasKey('team', $data[0]);
         }
     }
@@ -63,7 +71,9 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+        assert(is_array($data));
         if ([] !== $data) {
+            assert(is_array($data[0]));
             self::assertArrayHasKey('user', $data[0]);
         }
     }
@@ -74,7 +84,9 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+        assert(is_array($data));
         if ([] !== $data) {
+            assert(is_array($data[0]));
             self::assertArrayHasKey('contract', $data[0]);
         }
     }
@@ -117,6 +129,7 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+        assert(is_array($data));
         self::assertArrayHasKey('today', $data);
         self::assertArrayHasKey('week', $data);
         self::assertArrayHasKey('month', $data);

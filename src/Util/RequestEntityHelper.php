@@ -50,7 +50,9 @@ final class RequestEntityHelper
             return null;
         }
 
-        $entity = $managerRegistry->getRepository($entityClass)->find($id);
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<T> $repository */
+        $repository = $managerRegistry->getRepository($entityClass);
+        $entity = $repository->find($id);
 
         return $entity instanceof $entityClass ? $entity : null;
     }

@@ -50,7 +50,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Returns work log entries for user and recent days with optimized query.
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
@@ -58,6 +58,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult) && array_is_list($cachedResult));
+            /** @var list<Entry> $cachedResult */
 
             return $cachedResult;
         }
@@ -76,6 +77,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         $this->setCached($cacheKey, $result);
 
@@ -87,7 +89,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, string>|null $arSort
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByDate(
         int $userId,
@@ -127,6 +129,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -134,7 +137,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Gets entry summary with optimized single query instead of multiple UNION queries.
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     public function getEntrySummaryOptimized(int $entryId, int $userId): array
     {
@@ -255,7 +258,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed> $filter
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByFilterArrayOptimized(array $filter = []): array
     {
@@ -319,6 +322,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
