@@ -1,0 +1,81 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#Call to function property_exists\(\) with \$this\(Tests\\AbstractWebTestCase\) and .client. will always evaluate to true\.#'
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#Part \$value \(mixed\) of encapsed string cannot be cast to string\.#'
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#Variable \$syncService in PHPDoc tag @var does not exist\.#'
+			count: 1
+			path: tests/Command/TtSyncSubticketsCommandTest.php
+
+		-
+			message: '#Call to function is_array\(\) with array<mixed> will always evaluate to true\.#'
+			count: 1
+			path: tests/Controller/ApiSmokeTest.php
+
+		-
+			message: '#Unreachable statement - code above always terminates\.#'
+			count: 9
+			path: tests/Controller/ControllingControllerTest.php
+
+		-
+			message: '#Binary operation "\." between "SELECT \*\\n          …" and mixed results in an error\.#'
+			count: 1
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			message: '#Call to function is_array\(\) with array will always evaluate to true\.#'
+			count: 2
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			message: '#Property Tests\\Fixtures\\TokenStub::\$attributes \(array<string, mixed>\) does not accept array<mixed, mixed>\.#'
+			count: 2
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			message: '#Anonymous class extends @final class GuzzleHttp\\Client\.#'
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			message: '#Variable \$content on left side of \?\? always exists and is not nullable\.#'
+			count: 1
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#Call to internal method PHPUnit\\Framework\\TestCase::addToAssertionCount\(\) from outside its root namespace PHPUnit\.#'
+			count: 1
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			message: '#Call to function is_scalar\(\) with \(int\|string\) will always evaluate to true\.#'
+			count: 5
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#Variable \$time on left side of \?\? always exists and is not nullable\.#'
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#Argument of an invalid type mixed supplied for foreach, only iterables are supported\.#'
+			count: 2
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			message: '#Binary operation "\+=" between \(float\|int\) and mixed results in an error\.#'
+			count: 1
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			message: '#Call to function is_string\(\) with string will always evaluate to true\.#'
+			count: 1
+			path: tests/tools/analyze-coverage.php
