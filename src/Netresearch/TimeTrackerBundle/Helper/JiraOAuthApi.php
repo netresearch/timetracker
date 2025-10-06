@@ -441,7 +441,7 @@ class JiraOAuthApi
     {
         // we use POST to support very large queries
         return $this->post(
-            "search/",
+            "search/jql",
             [
                 'jql'        => $jql,
                 'fields'     => $fields,
