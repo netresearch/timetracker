@@ -92,6 +92,12 @@ class TicketSystem extends Base
      */
     protected $oauthConsumerSecret;
 
+    /**
+     * @var string $jiraApiVersion
+     * @ORM\Column(type="string", name="jira_api_version", nullable=true)
+     */
+    protected $jiraApiVersion = '2';
+
 
 
     /**
@@ -350,6 +356,24 @@ class TicketSystem extends Base
     public function setOauthConsumerSecret($oauthConsumerSecret)
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getJiraApiVersion()
+    {
+        return $this->jiraApiVersion ?: '2';
+    }
+
+    /**
+     * @param string $jiraApiVersion
+     * @return $this
+     */
+    public function setJiraApiVersion($jiraApiVersion)
+    {
+        $this->jiraApiVersion = $jiraApiVersion;
         return $this;
     }
 }

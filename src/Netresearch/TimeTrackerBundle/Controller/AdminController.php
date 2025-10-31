@@ -694,6 +694,7 @@ class AdminController extends BaseController
         $ticketUrl           = $request->get('ticketUrl');
         $oauthConsumerKey    = $request->get('oauthConsumerKey');
         $oauthConsumerSecret = $request->get('oauthConsumerSecret');
+        $jiraApiVersion      = $request->get('jiraApiVersion', '2');
 
         if ($id) {
             $ticketSystem = $repository->find($id);
@@ -731,7 +732,8 @@ class AdminController extends BaseController
                 ->setPublicKey($publicKey)
                 ->setPrivateKey($privateKey)
                 ->setOauthConsumerKey($oauthConsumerKey)
-                ->setOauthConsumerSecret($oauthConsumerSecret);
+                ->setOauthConsumerSecret($oauthConsumerSecret)
+                ->setJiraApiVersion($jiraApiVersion);
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($ticketSystem);

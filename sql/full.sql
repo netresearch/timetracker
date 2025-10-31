@@ -127,6 +127,7 @@ CREATE TABLE `ticket_systems` (
   `ticketurl` VARCHAR(255) NOT NULL,
   `oauth_consumer_key` VARCHAR(100) NULL,
   `oauth_consumer_secret` VARCHAR(4000) NULL,
+  `jira_api_version` VARCHAR(10) NULL DEFAULT '2',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
