@@ -12,6 +12,7 @@ Ext.define('Netresearch.model.TicketSystem', {
         {name: 'privateKey', type: 'string'},
         {name: 'ticketUrl', type: 'string'},
         {name: 'oauthConsumerKey', type: 'string'},
-        {name: 'oauthConsumerSecret', type: 'string'}
+        {name: 'oauthConsumerSecret', type: 'string'},
+        {name: 'jiraApiVersion', type: 'string'}
     ]
 });

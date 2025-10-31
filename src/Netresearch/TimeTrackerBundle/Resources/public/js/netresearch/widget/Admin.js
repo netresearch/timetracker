@@ -111,6 +111,7 @@ Ext.define('Netresearch.widget.Admin', {
 
     _oauthConsumerKeyTitle: 'OAuth consumer key',
     _oauthConsumerSecretTitle: 'OAuth consumer secret',
+    _jiraApiVersionTitle: 'JIRA API version',
     _refreshTitle: 'Refresh',
     _startTitle: 'Start',
     _endTitle: 'End',
@@ -1749,6 +1750,13 @@ Ext.define('Netresearch.widget.Admin', {
                     field: {
                         xtype: 'textfield'
                     }
+                }, {
+                    header: this._jiraApiVersionTitle,
+                    dataIndex: 'jiraApiVersion',
+                    width: 120,
+                    field: {
+                        xtype: 'textfield'
+                    }
                 }
             ],
             tbar: [
@@ -1902,7 +1910,14 @@ Ext.define('Netresearch.widget.Admin', {
                                     grow: true,
                                     growMin: 130,
                                     value: record.oauthConsumerSecret ? record.oauthConsumerSecret : ''
-                                })
+                                }), {
+                                    fieldLabel: panel._jiraApiVersionTitle,
+                                    name: 'jiraApiVersion',
+                                    xtype: 'combobox',
+                                    anchor: '100%',
+                                    store: [['2', '2 (Jira Server/On-Prem)'], ['3', '3 (Jira Cloud)']],
+                                    value: record.jiraApiVersion ? record.jiraApiVersion : '2'
+                                }
                             ],
                             buttons: [
                                 {
@@ -2597,6 +2612,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _factorTitle: 'Faktor',
         _oauthConsumerKeyTitle: 'OAuth Consumer-Key',
         _oauthConsumerSecretTitle: 'OAuth Consumer-Secret',
+        _jiraApiVersionTitle: 'JIRA API Version',
         _refreshTitle: 'Aktualisieren',
         _startTitle: 'Beginn',
         _endTitle: 'Ende',
