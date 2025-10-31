@@ -323,7 +323,9 @@ function parseAjaxError(response) {
         }
         if (response.status === 422 && data) {
             if (data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
+                message = Ext.Array.map(data.violations, function (v) { 
+                    return v.title || v.message || (typeof v === 'string' ? v : ''); 
+                }).filter(function(m) { return m !== ''; }).join('<br>');
             } else if (data.message) {
                 message = data.message;
             }
