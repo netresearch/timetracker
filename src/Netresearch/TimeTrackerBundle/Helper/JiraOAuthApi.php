@@ -443,9 +443,14 @@ class JiraOAuthApi
      */
     public function searchTicket($jql, $fields, $limit = 1)
     {
+        // Determine search endpoint based on API version
+        // API v3 (Cloud) uses 'search/jql', API v2 (Server) uses 'search'
+        $apiVersion = $this->ticketSystem->getJiraApiVersion();
+        $searchEndpoint = ($apiVersion === '3') ? 'search/jql' : 'search';
+        
         // we use POST to support very large queries
         return $this->post(
-            "search/jql",
+            $searchEndpoint,
             [
                 'jql'        => $jql,
                 'fields'     => $fields,
