@@ -41,11 +41,19 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $this->logException($throwable, $request->getPathInfo());
 
         // Determine if we should return JSON response
+        // Check for JSON Accept header, API paths, or AJAX requests
         $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
-                      || str_contains($request->getPathInfo(), '/api/');
+                      || str_contains($request->getPathInfo(), '/api/')
+                      || $request->isXmlHttpRequest();
 
         if (!$acceptsJson) {
             // Let Symfony handle HTML error pages
+            return;
+        }
+
+        // For 422 validation errors, let Symfony's default handler format the response
+        // so that violations are properly included in the expected format
+        if ($throwable instanceof HttpExceptionInterface && 422 === $throwable->getStatusCode()) {
             return;
         }
 
