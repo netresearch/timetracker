@@ -111,7 +111,7 @@ Ext.define('Netresearch.widget.Admin', {
 
     _oauthConsumerKeyTitle: 'OAuth consumer key',
     _oauthConsumerSecretTitle: 'OAuth consumer secret',
-    _jiraApiVersionTitle: 'JIRA API version',
+    _jiraApiVersionTitle: 'Jira API version',
     _refreshTitle: 'Refresh',
     _startTitle: 'Start',
     _endTitle: 'End',
@@ -2613,7 +2613,7 @@ if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
         _factorTitle: 'Faktor',
         _oauthConsumerKeyTitle: 'OAuth Consumer-Key',
         _oauthConsumerSecretTitle: 'OAuth Consumer-Secret',
-        _jiraApiVersionTitle: 'JIRA API Version',
+        _jiraApiVersionTitle: 'Jira API Version',
         _refreshTitle: 'Aktualisieren',
         _startTitle: 'Beginn',
         _endTitle: 'Ende',

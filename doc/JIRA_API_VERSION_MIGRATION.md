@@ -69,7 +69,7 @@ For fresh installations, the field is already included in `sql/full.sql`.
 1. Navigate to **Administration > Ticket-System**
 2. Click **Add ticket system**
 3. Fill in the required fields
-4. Select the appropriate **JIRA API version**:
+4. Select the appropriate **Jira API version**:
    - Choose **2** for Jira Server/Data Center/On-Prem 9.x
    - Choose **3** for Jira Cloud
 5. Save the ticket system
@@ -78,7 +78,7 @@ For fresh installations, the field is already included in `sql/full.sql`.
 
 1. Navigate to **Administration > Ticket-System**
 2. Edit an existing Jira ticket system
-3. Select the appropriate **JIRA API version** from the dropdown
+3. Select the appropriate **Jira API version** from the dropdown
 4. Save the changes
 
 **Note**: Existing ticket systems will default to API version 2 to maintain compatibility with Jira Server installations.
