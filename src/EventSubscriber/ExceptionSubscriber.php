@@ -121,10 +121,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
                 ], $statusCode);
             }
 
-            $message = $throwable->getMessage();
-            if ('' === $message) {
-                $message = $this->getDefaultMessageForStatusCode($statusCode);
-            }
+            $message = $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
 
             return new JsonResponse([
                 'error' => $this->getErrorTypeForStatusCode($statusCode),
