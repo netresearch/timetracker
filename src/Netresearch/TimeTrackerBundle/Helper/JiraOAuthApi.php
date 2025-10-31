@@ -39,7 +39,7 @@ class JiraOAuthApi
     protected $oAuthCallbackUrl;
 
     /** @var string */
-    protected $jiraApiUrl = '/rest/api/latest/';
+    protected $jiraApiUrl;
     /** @var string */
     protected $oAuthRequestUrl = '/plugins/servlet/oauth/request-token';
     /** @var string */
@@ -64,6 +64,10 @@ class JiraOAuthApi
         $this->ticketSystem = $ticketSystem;
         $this->doctrine = $doctrine;
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        
+        // Set API version based on ticket system configuration
+        $apiVersion = $ticketSystem->getJiraApiVersion() ?: '2';
+        $this->jiraApiUrl = '/rest/api/' . $apiVersion . '/';
     }
 
     /**
