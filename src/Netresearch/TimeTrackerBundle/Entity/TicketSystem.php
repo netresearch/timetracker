@@ -364,7 +364,7 @@ class TicketSystem extends Base
      */
     public function getJiraApiVersion()
     {
-        return $this->jiraApiVersion ?: '2';
+        return (!empty($this->jiraApiVersion)) ? $this->jiraApiVersion : '2';
     }
 
     /**

@@ -1755,7 +1755,8 @@ Ext.define('Netresearch.widget.Admin', {
                     dataIndex: 'jiraApiVersion',
                     width: 120,
                     field: {
-                        xtype: 'textfield'
+                        xtype: 'combobox',
+                        store: [['2', '2 (Jira Server/On-Prem)'], ['3', '3 (Jira Cloud)']]
                     }
                 }
             ],
