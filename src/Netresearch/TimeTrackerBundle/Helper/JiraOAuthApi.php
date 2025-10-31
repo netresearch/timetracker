@@ -66,7 +66,7 @@ class JiraOAuthApi
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
         
         // Set API version based on ticket system configuration
-        $apiVersion = $ticketSystem->getJiraApiVersion() ?: '2';
+        $apiVersion = $ticketSystem->getJiraApiVersion();
         $this->jiraApiUrl = '/rest/api/' . $apiVersion . '/';
     }
 
