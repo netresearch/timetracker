@@ -9,6 +9,7 @@ use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -56,7 +57,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $exceptionEvent->setResponse($jsonResponse);
     }
 
-    private function createResponseFromException(Throwable $throwable, \Symfony\Component\HttpFoundation\Request $request): JsonResponse
+    private function createResponseFromException(Throwable $throwable, Request $request): JsonResponse
     {
         // Handle JIRA API exceptions
         if ($throwable instanceof JiraApiUnauthorizedException) {
