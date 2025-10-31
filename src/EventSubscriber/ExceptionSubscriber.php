@@ -51,18 +51,12 @@ class ExceptionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // For 422 validation errors, let Symfony's default handler format the response
-        // so that violations are properly included in the expected format
-        if ($throwable instanceof HttpExceptionInterface && 422 === $throwable->getStatusCode()) {
-            return;
-        }
-
         // Convert exception to appropriate response
-        $jsonResponse = $this->createResponseFromException($throwable);
+        $jsonResponse = $this->createResponseFromException($throwable, $request);
         $exceptionEvent->setResponse($jsonResponse);
     }
 
-    private function createResponseFromException(Throwable $throwable): JsonResponse
+    private function createResponseFromException(Throwable $throwable, \Symfony\Component\HttpFoundation\Request $request): JsonResponse
     {
         // Handle JIRA API exceptions
         if ($throwable instanceof JiraApiUnauthorizedException) {
@@ -83,6 +77,37 @@ class ExceptionSubscriber implements EventSubscriberInterface
         // Handle HTTP exceptions
         if ($throwable instanceof HttpExceptionInterface) {
             $statusCode = $throwable->getStatusCode();
+
+            // For 422 validation errors, extract violations from request attributes
+            if (422 === $statusCode) {
+                // Try to get violations from request attributes (set by Symfony's argument resolver)
+                $violations = $request->attributes->get('_constraint_violations');
+                
+                if ($violations instanceof \Symfony\Component\Validator\ConstraintViolationListInterface && count($violations) > 0) {
+                    // Format violations for JavaScript consumption
+                    $formattedViolations = [];
+                    foreach ($violations as $violation) {
+                        $formattedViolations[] = [
+                            'propertyPath' => $violation->getPropertyPath(),
+                            'message' => $violation->getMessage(),
+                            'title' => $violation->getMessage(), // Include both for compatibility
+                        ];
+                    }
+                    
+                    return new JsonResponse([
+                        'error' => $this->getErrorTypeForStatusCode($statusCode),
+                        'message' => $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode),
+                        'violations' => $formattedViolations,
+                    ], $statusCode);
+                }
+                
+                // Fallback if no violations found
+                return new JsonResponse([
+                    'error' => $this->getErrorTypeForStatusCode($statusCode),
+                    'message' => $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode),
+                ], $statusCode);
+            }
+
             $message = $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
 
             return new JsonResponse([
