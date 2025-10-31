@@ -102,9 +102,23 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         self::assertNotEmpty($content);
         $data = json_decode($content, true);
         self::assertIsArray($data);
-        self::assertArrayHasKey('message', $data);
-        // Validation message may be localized, just ensure we got a validation error
-        self::assertMatchesRegularExpression('/Zeichen|characters|abbr/i', $data['message']);
+        
+        // Check that we have either a violations array or a message
+        // The violations array is what the JavaScript expects
+        if (isset($data['violations']) && is_array($data['violations'])) {
+            // Verify violations array format
+            self::assertNotEmpty($data['violations'], 'Violations array should not be empty');
+            $firstViolation = $data['violations'][0];
+            self::assertArrayHasKey('message', $firstViolation, 'Violation should have a message field');
+            self::assertArrayHasKey('title', $firstViolation, 'Violation should have a title field (for JS compatibility)');
+            // Message should mention the abbreviation requirement
+            self::assertMatchesRegularExpression('/3.*Zeichen|3.*characters|abbr/i', $firstViolation['message']);
+        } else {
+            // Fallback: check for message field
+            self::assertArrayHasKey('message', $data);
+            // Validation message may be localized, just ensure we got a validation error
+            self::assertMatchesRegularExpression('/Zeichen|characters|abbr/i', $data['message']);
+        }
     }
 
     public function testSaveUserDuplicateUsername(): void
