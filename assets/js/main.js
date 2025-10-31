@@ -327,9 +327,9 @@ function parseAjaxError(response) {
                 var violationMessages = Ext.Array.map(data.violations, function (v) { 
                     return v.title || v.message || (typeof v === 'string' ? v : ''); 
                 });
-                // Remove empty strings and join with line breaks
+                // Remove empty/falsy values and join with line breaks
                 message = violationMessages.filter(function(m) { 
-                    return m !== ''; 
+                    return m && m.trim && m.trim() !== ''; 
                 }).join('<br>');
             } else if (data.message) {
                 message = data.message;

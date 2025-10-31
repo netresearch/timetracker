@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Throwable;
 
 /**
@@ -84,7 +85,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
                 // Try to get violations from request attributes (set by Symfony's argument resolver)
                 $violations = $request->attributes->get('_constraint_violations');
                 
-                if ($violations instanceof \Symfony\Component\Validator\ConstraintViolationListInterface && count($violations) > 0) {
+                if ($violations instanceof ConstraintViolationListInterface && count($violations) > 0) {
                     // Format violations for JavaScript consumption
                     $formattedViolations = [];
                     foreach ($violations as $violation) {
