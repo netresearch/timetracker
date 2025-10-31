@@ -88,6 +88,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
                 if ($violations instanceof ConstraintViolationListInterface && count($violations) > 0) {
                     // Format violations for JavaScript consumption
                     $formattedViolations = [];
+                    /** @var \Symfony\Component\Validator\ConstraintViolation $violation */
                     foreach ($violations as $violation) {
                         $formattedViolations[] = [
                             'propertyPath' => $violation->getPropertyPath(),
@@ -96,21 +97,34 @@ class ExceptionSubscriber implements EventSubscriberInterface
                         ];
                     }
                     
+                    $errorMessage = $throwable->getMessage();
+                    if ('' === $errorMessage) {
+                        $errorMessage = $this->getDefaultMessageForStatusCode($statusCode);
+                    }
+                    
                     return new JsonResponse([
                         'error' => $this->getErrorTypeForStatusCode($statusCode),
-                        'message' => $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode),
+                        'message' => $errorMessage,
                         'violations' => $formattedViolations,
                     ], $statusCode);
                 }
                 
                 // Fallback if no violations found
+                $errorMessage = $throwable->getMessage();
+                if ('' === $errorMessage) {
+                    $errorMessage = $this->getDefaultMessageForStatusCode($statusCode);
+                }
+                
                 return new JsonResponse([
                     'error' => $this->getErrorTypeForStatusCode($statusCode),
-                    'message' => $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode),
+                    'message' => $errorMessage,
                 ], $statusCode);
             }
 
-            $message = $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
+            $message = $throwable->getMessage();
+            if ('' === $message) {
+                $message = $this->getDefaultMessageForStatusCode($statusCode);
+            }
 
             return new JsonResponse([
                 'error' => $this->getErrorTypeForStatusCode($statusCode),
