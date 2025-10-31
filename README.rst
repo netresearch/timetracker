@@ -219,7 +219,12 @@ Using OAuth to transmit work logs to Jira ticket system
    - Enter your private key you created above into OAuth consumer secret field
      (``jira_privatekey.pcks8``).
      Must begin with ``-----BEGIN PRIVATE KEY-----`` (not ``BEGIN RSA``!).
-
+   - **JIRA API version**: Select the appropriate API version:
+     
+     - **2** for Jira Server/Data Center/On-Prem 9.x (default)
+     - **3** for Jira Cloud
+     
+     See ``doc/JIRA_API_VERSION_MIGRATION.md`` for details.
 #. Assign this ticket system to at least one project
 
 #. Start time tracking to this project
