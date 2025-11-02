@@ -18,7 +18,6 @@ use BadMethodCallException;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -42,7 +41,7 @@ final class SaveEntryAction extends BaseTrackingController
         EntrySaveDto $entrySaveDto,
         #[CurrentUser]
         User $user,
-    ): Response|JsonResponse|Error|RedirectResponse {
+    ): Response|JsonResponse|Error {
 
         /** @var \App\Repository\CustomerRepository $customerRepo */
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);

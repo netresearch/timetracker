@@ -9,7 +9,8 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\Preset>
+ * @template T of \App\Entity\Preset
+ * @extends ServiceEntityRepository<T>
  */
 class PresetRepository extends ServiceEntityRepository
 {

@@ -9,7 +9,8 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\Team>
+ * @template T of \App\Entity\Team
+ * @extends ServiceEntityRepository<T>
  */
 class TeamRepository extends ServiceEntityRepository
 {

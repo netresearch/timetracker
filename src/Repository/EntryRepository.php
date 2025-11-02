@@ -55,7 +55,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Get all entries for specific day.
      *
-     * @return Entry[]
+     * @return list<Entry>
      */
     public function getEntriesForDay(User $user, string $day): array
     {
@@ -69,6 +69,7 @@ class EntryRepository extends ServiceEntityRepository
         ;
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -76,7 +77,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Get entries for a specific month.
      *
-     * @return Entry[]
+     * @return list<Entry>
      */
     public function getEntriesForMonth(User $user, string $startDate, string $endDate): array
     {
@@ -94,6 +95,7 @@ class EntryRepository extends ServiceEntityRepository
         ;
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -196,7 +198,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param int[] $ids
      *
-     * @return Entry[]
+     * @return list<Entry>
      */
     public function findByIds(array $ids): array
     {
@@ -212,6 +214,7 @@ class EntryRepository extends ServiceEntityRepository
         ;
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -435,7 +438,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed> $filters
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function getFilteredEntries(
         array $filters = [],
@@ -486,6 +489,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -726,7 +730,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Find overlapping entries for validation.
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findOverlappingEntries(
         User $user,
@@ -758,6 +762,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -765,7 +770,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Get entries by user for specified days.
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function getEntriesByUser(User $user, int $days, bool $showFuture = false): array
     {
@@ -799,7 +804,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /* @var array<int, Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
@@ -808,7 +813,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param array<string, string>|null $arSort
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByDate(
         int $user,
@@ -889,7 +894,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /* @var array<int, Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
@@ -898,7 +903,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param array<string, string>|null $arSort
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByDatePaginated(
         int $user,
@@ -986,7 +991,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /* @var array<int, Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
@@ -1170,7 +1175,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Finds entries by recent days of user (ported from OptimizedEntryRepository).
      *
-     * @return Entry[]
+     * @return list<Entry>
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
@@ -1189,14 +1194,14 @@ class EntryRepository extends ServiceEntityRepository
 
         assert(is_array($result) && array_is_list($result));
 
-        /* @var array<Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
     /**
      * Finds entries by user and ticket system for synchronization.
      *
-     * @return Entry[]
+     * @return list<Entry>
      */
     public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, int $limit = 50): array
     {
@@ -1222,6 +1227,7 @@ class EntryRepository extends ServiceEntityRepository
         ;
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -1368,7 +1374,7 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Finds entries by day.
      *
-     * @return Entry[]
+     * @return list<Entry>
      */
     public function findByDay(int $userId, string $day): array
     {
@@ -1387,6 +1393,7 @@ class EntryRepository extends ServiceEntityRepository
         ;
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -1414,7 +1421,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed> $arFilter
      *
-     * @return Entry[]
+     * @return list<Entry>
      */
     public function findByFilterArray(array $arFilter): array
     {
@@ -1477,6 +1484,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }

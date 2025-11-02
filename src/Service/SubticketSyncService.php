@@ -65,7 +65,7 @@ class SubticketSyncService
         }
 
         $token = $userWithJiraAccess->getTicketSystemAccessToken($ticketSystem);
-        if (!$token) {
+        if ($token === null || $token === '') {
             throw new Exception('Project user has no token for ticket system: ' . $userWithJiraAccess->getUsername() . '@' . $project->getName(), 400);
         }
 

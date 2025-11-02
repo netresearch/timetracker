@@ -13,7 +13,8 @@ use function assert;
 use function is_array;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\Project>
+ * @template T of \App\Entity\Project
+ * @extends ServiceEntityRepository<T>
  */
 class ProjectRepository extends ServiceEntityRepository
 {
@@ -157,7 +158,7 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, Project>
+     * @return list<Project>
      */
     public function findByCustomer(int $customerId = 0): array
     {
@@ -173,7 +174,8 @@ class ProjectRepository extends ServiceEntityRepository
 
         assert(is_array($result));
         // All results are Project entities due to the repository context
-        assert(array_is_list($result) || [] === $result);
+        assert(array_is_list($result) || count($result) === 0);
+        /** @var list<Project> $result */
 
         return $result;
     }

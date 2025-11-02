@@ -50,7 +50,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Returns work log entries for user and recent days with optimized query.
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
@@ -58,6 +58,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult) && array_is_list($cachedResult));
+            /** @var list<Entry> $cachedResult */
 
             return $cachedResult;
         }
@@ -76,6 +77,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         $this->setCached($cacheKey, $result);
 
@@ -87,7 +89,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, string>|null $arSort
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByDate(
         int $userId,
@@ -127,6 +129,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -134,21 +137,23 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Gets entry summary with optimized single query instead of multiple UNION queries.
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     public function getEntrySummaryOptimized(int $entryId, int $userId): array
     {
         $entry = $this->find($entryId);
         if (!$entry instanceof Entry) {
-            return $this->getEmptySummaryData();
+            $emptyData = $this->getEmptySummaryData();
+            assert($emptyData !== []);
+            return $emptyData;
         }
 
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
 
         if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
             assert(is_array($cachedResult));
-            assert(array_is_list($cachedResult) || array_key_exists('customer', $cachedResult));
-
+            assert(array_key_exists('customer', $cachedResult));
+            /** @var non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
             return $cachedResult;
         }
 
@@ -199,6 +204,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $connection->executeQuery($sql, $params)->fetchAssociative();
 
         $data = $this->formatSummaryData($result ?: null, $entry);
+        assert($data !== []);
 
         $this->setCached($cacheKey, $data);
 
@@ -236,9 +242,13 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             $result = ['duration' => 0, 'count' => 0];
         }
 
+        // Ensure result is properly typed as array<string, mixed>
+        /** @var array<string, mixed> $typedResult */
+        $typedResult = $result;
+        
         $data = [
-            'duration' => ArrayTypeHelper::getInt($result, 'duration', 0) ?? 0,
-            'count' => ArrayTypeHelper::getInt($result, 'count', 0) ?? 0,
+            'duration' => ArrayTypeHelper::getInt($typedResult, 'duration', 0) ?? 0,
+            'count' => ArrayTypeHelper::getInt($typedResult, 'count', 0) ?? 0,
         ];
 
         $this->setCached($cacheKey, $data, 60); // Shorter cache for work stats
@@ -251,7 +261,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed> $filter
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByFilterArrayOptimized(array $filter = []): array
     {
@@ -307,12 +317,15 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         // Add limit if specified
         if (isset($filter['limit'])) {
-            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
+            /** @var array<string, mixed> $typedFilter */
+            $typedFilter = $filter;
+            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($typedFilter, 'limit', 100));
         }
 
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -436,11 +449,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed>|null $result
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function formatSummaryData(?array $result, Entry $entry): array
     {
-        if (!$result) {
+        if ($result === null) {
             return $this->getEmptySummaryData();
         }
 
@@ -485,7 +498,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Returns empty summary data structure.
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function getEmptySummaryData(): array
     {

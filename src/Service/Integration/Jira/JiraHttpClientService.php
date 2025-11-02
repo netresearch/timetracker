@@ -226,7 +226,7 @@ class JiraHttpClientService
             $response = $guzzleException->getResponse();
         }
 
-        if (!$response) {
+        if ($response === null) {
             throw new JiraApiException('Network error connecting to Jira: ' . $guzzleException->getMessage(), 500, null, $guzzleException);
         }
 
