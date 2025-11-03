@@ -323,7 +323,14 @@ function parseAjaxError(response) {
         }
         if (response.status === 422 && data) {
             if (data.violations && Ext.isArray(data.violations) && data.violations.length) {
-                message = Ext.Array.map(data.violations, function (v) { return v.title || v.message || v; }).join('<br>');
+                // Extract violation messages, filtering out invalid entries
+                var violationMessages = Ext.Array.map(data.violations, function (v) { 
+                    return v.title || v.message || (typeof v === 'string' ? v : ''); 
+                });
+                // Remove empty/falsy values and join with line breaks
+                message = violationMessages.filter(function(m) { 
+                    return m && m.trim && m.trim() !== ''; 
+                }).join('<br>');
             } else if (data.message) {
                 message = data.message;
             }

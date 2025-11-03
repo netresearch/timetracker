@@ -9,9 +9,11 @@ use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Throwable;
 
 /**
@@ -41,8 +43,10 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $this->logException($throwable, $request->getPathInfo());
 
         // Determine if we should return JSON response
+        // Check for JSON Accept header, API paths, or AJAX requests
         $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
-                      || str_contains($request->getPathInfo(), '/api/');
+                      || str_contains($request->getPathInfo(), '/api/')
+                      || $request->isXmlHttpRequest();
 
         if (!$acceptsJson) {
             // Let Symfony handle HTML error pages
@@ -50,11 +54,11 @@ class ExceptionSubscriber implements EventSubscriberInterface
         }
 
         // Convert exception to appropriate response
-        $jsonResponse = $this->createResponseFromException($throwable);
+        $jsonResponse = $this->createResponseFromException($throwable, $request);
         $exceptionEvent->setResponse($jsonResponse);
     }
 
-    private function createResponseFromException(Throwable $throwable): JsonResponse
+    private function createResponseFromException(Throwable $throwable, Request $request): JsonResponse
     {
         // Handle JIRA API exceptions
         if ($throwable instanceof JiraApiUnauthorizedException) {
@@ -75,6 +79,48 @@ class ExceptionSubscriber implements EventSubscriberInterface
         // Handle HTTP exceptions
         if ($throwable instanceof HttpExceptionInterface) {
             $statusCode = $throwable->getStatusCode();
+
+            // For 422 validation errors, extract violations from request attributes
+            if (422 === $statusCode) {
+                // Try to get violations from request attributes (set by Symfony's argument resolver)
+                $violations = $request->attributes->get('_constraint_violations');
+                
+                if ($violations instanceof ConstraintViolationListInterface && count($violations) > 0) {
+                    // Format violations for JavaScript consumption
+                    $formattedViolations = [];
+                    /** @var \Symfony\Component\Validator\ConstraintViolation $violation */
+                    foreach ($violations as $violation) {
+                        $formattedViolations[] = [
+                            'propertyPath' => $violation->getPropertyPath(),
+                            'message' => $violation->getMessage(),
+                            'title' => $violation->getMessage(), // Include both for compatibility
+                        ];
+                    }
+                    
+                    $errorMessage = $throwable->getMessage();
+                    if ('' === $errorMessage) {
+                        $errorMessage = $this->getDefaultMessageForStatusCode($statusCode);
+                    }
+                    
+                    return new JsonResponse([
+                        'error' => $this->getErrorTypeForStatusCode($statusCode),
+                        'message' => $errorMessage,
+                        'violations' => $formattedViolations,
+                    ], $statusCode);
+                }
+                
+                // Fallback if no violations found
+                $errorMessage = $throwable->getMessage();
+                if ('' === $errorMessage) {
+                    $errorMessage = $this->getDefaultMessageForStatusCode($statusCode);
+                }
+                
+                return new JsonResponse([
+                    'error' => $this->getErrorTypeForStatusCode($statusCode),
+                    'message' => $errorMessage,
+                ], $statusCode);
+            }
+
             $message = $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
 
             return new JsonResponse([
