@@ -86,6 +86,8 @@ class BaseController extends Controller
     protected function getUserId(Request $request)
     {
         if (!$this->isLoggedIn($request)) {
+            // getUserId should not be callable without beeing logged in
+            // when you see this in sentry fix the route
             throw new AccessDeniedException('No user logged in');
         }
 
@@ -103,6 +105,8 @@ class BaseController extends Controller
                 ->getRepository('NetresearchTimeTrackerBundle:User')
                 ->find($realUserId);
             if (!$this->mayImpersonate($realUser, $simulatedUserId)) {
+                // getUserId should not be callable without beeing logged in
+                // when you see this in sentry fix the route
                 throw new AccessDeniedException('This user may not simulate other users');
             }
             return (int) $simulatedUserId;
