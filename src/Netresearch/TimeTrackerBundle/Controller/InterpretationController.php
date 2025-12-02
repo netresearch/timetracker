@@ -241,12 +241,12 @@ class InterpretationController extends BaseController
      */
     public function groupByUserAction(Request $request)
     {
-        #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
-        $request->query->set('user', $this->getUserId($request));
-
         if (!$this->checkLogin($request)) {
             return $this->getFailedLoginResponse();
         }
+
+        #NRTECH-3720: pin the request to the current user id - make chart GDPR compliant
+        $request->query->set('user', $this->getUserId($request));
 
         try {
             $entries = $this->getCachedEntries($request);
