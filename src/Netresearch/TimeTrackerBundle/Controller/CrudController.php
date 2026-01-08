@@ -242,6 +242,17 @@ class CrudController extends BaseController
             return $this->getFailedLoginResponse();
         }
 
+        // Check activityId is not null
+        if (!$activityId = (int) $request->get('activity')) {
+            $message = $this->get('translator')->trans(
+                "The activityId '%activity%' is not valid and must be a positive integer.",
+                [
+                    '%activity%' => $request->get('activity'),
+                ]
+            );
+            throw new \Exception($message, 400);
+        }
+
         try {
             $alert = null;
             $this->logDataToFile($_POST, TRUE);
@@ -312,9 +323,18 @@ class CrudController extends BaseController
                 }
             }
 
+            // Check activityId belongs to activity
             /** @var Activity $activity */
-            if ($activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')->find($request->get('activity'))) {
+            if ($activity = $doctrine->getRepository('NetresearchTimeTrackerBundle:Activity')->find($activityId)) {
                 $entry->setActivity($activity);
+            } else {
+                $message = $this->get('translator')->trans(
+                    "The activityId '%activity%' does not match any known activity.",
+                    [
+                        '%activity%' => $activityId,
+                    ]
+                );
+                throw new \Exception($message, 422);
             }
 
             $entry->setTicket(strtoupper(trim($request->get('ticket') ? $request->get('ticket') : '')))
