@@ -43,8 +43,8 @@ final class SaveEntryAction extends BaseTrackingController
         User $user,
     ): Response|JsonResponse|Error {
 
-        /** @var \App\Repository\CustomerRepository $customerRepo */
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);
+        \assert($customerRepo instanceof \App\Repository\CustomerRepository);
 
         $customerId = $entrySaveDto->getCustomerId();
         if (null === $customerId) {
@@ -57,8 +57,8 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error('Given customer does not exist.', Response::HTTP_BAD_REQUEST);
         }
 
-        /** @var \App\Repository\ProjectRepository $projectRepo */
         $projectRepo = $this->managerRegistry->getRepository(Project::class);
+        \assert($projectRepo instanceof \App\Repository\ProjectRepository);
 
         $projectId = $entrySaveDto->getProjectId();
         if (null === $projectId) {
@@ -71,8 +71,8 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error('Given project does not exist.', Response::HTTP_BAD_REQUEST);
         }
 
-        /** @var \App\Repository\ActivityRepository $activityRepo */
         $activityRepo = $this->managerRegistry->getRepository(Activity::class);
+        \assert($activityRepo instanceof \App\Repository\ActivityRepository);
 
         $activityId = $entrySaveDto->getActivityId();
         if (null === $activityId) {
@@ -103,8 +103,8 @@ final class SaveEntryAction extends BaseTrackingController
             }
         }
 
-        /** @var \App\Repository\EntryRepository $entryRepo */
         $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+        \assert($entryRepo instanceof \App\Repository\EntryRepository);
 
         $entry = null;
         if (null !== $entryId) {

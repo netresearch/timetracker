@@ -25,8 +25,8 @@ final class GetTimeSummaryAction extends BaseController
         }
 
         $userId = (int) $user->getId();
-        /** @var EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof EntryRepository);
         $today = $objectRepository->getWorkByUser($userId, Period::DAY);
         $week = $objectRepository->getWorkByUser($userId, Period::WEEK);
         $month = $objectRepository->getWorkByUser($userId, Period::MONTH);

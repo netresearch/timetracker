@@ -94,8 +94,8 @@ abstract class BaseInterpretationController extends BaseController
             throw new Exception($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         return $objectRepository->findByFilterArray($arParams);
     }

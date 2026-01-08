@@ -1,81 +1,1372 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#Call to function property_exists\(\) with \$this\(Tests\\AbstractWebTestCase\) and .client. will always evaluate to true\.#'
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ContractRepository\<App\\Entity\\Contract\> but class App\\Repository\\ContractRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/GetContractsAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\> but class App\\Repository\\CustomerRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/GetCustomersAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\PresetRepository\<App\\Entity\\Preset\> but class App\\Repository\\PresetRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/GetPresetsAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TeamRepository\<App\\Entity\\Team\> but class App\\Repository\\TeamRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/GetTeamsAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\> but class App\\Repository\\TicketSystemRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/GetTicketSystemsAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\UserRepository\<App\\Entity\\User\> but class App\\Repository\\UserRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/GetUsersAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ActivityRepository\<App\\Entity\\Activity\> but class App\\Repository\\ActivityRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/SaveActivityAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ContractRepository\<App\\Entity\\Contract\> but class App\\Repository\\ContractRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/SaveContractAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\> but class App\\Repository\\CustomerRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/SaveCustomerAction.php
+
+		-
+			message: '#^Only booleans are allowed in &&, int\<0, max\> given on the left side\.$#'
+			identifier: booleanAnd.leftNotBoolean
+			count: 1
+			path: src/Controller/Admin/SaveProjectAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ProjectRepository\<App\\Entity\\Project\> but class App\\Repository\\ProjectRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/SaveProjectAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TeamRepository\<App\\Entity\\Team\> but class App\\Repository\\TeamRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/SaveTeamAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\> but class App\\Repository\\TicketSystemRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/SaveTicketSystemAction.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\UserRepository\<App\\Entity\\User\> but class App\\Repository\\UserRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Controller/Admin/SaveUserAction.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: src/Controller/Admin/SyncProjectSubticketsAction.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: src/Controller/Controlling/ExportAction.php
+
+		-
+			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 1
+			path: src/Controller/Default/GetSummaryAction.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 4
+			path: src/Controller/Interpretation/BaseInterpretationController.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Customer\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Controller/Interpretation/GroupByCustomerAction.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Project\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Controller/Interpretation/GroupByProjectAction.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Controller/Interpretation/GroupByUserAction.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: src/Dto/CustomerSaveDto.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: src/Dto/UserSaveDto.php
+
+		-
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 1
+			path: src/Entity/Entry.php
+
+		-
+			message: '#^Only booleans are allowed in &&, int\|null given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 2
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:info\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:error\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:info\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:warning\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/EventSubscriber/EntryEventSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, array\{exception\: class\-string\<Throwable\>&literal\-string, message\: string, path\: string, file\: string, line\: int\} given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/EventSubscriber/ExceptionSubscriber.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, array\{exception\: class\-string\<Throwable\>&literal\-string, message\: string, path\: string, file\: string, line\: int\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/EventSubscriber/ExceptionSubscriber.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: src/EventSubscriber/ExceptionSubscriber.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: src/Kernel.php
+
+		-
+			message: '#^Return type \(Generator\) of method App\\Kernel\:\:registerBundles\(\) should be covariant with return type \(iterable\<Symfony\\Component\\HttpKernel\\Bundle\\BundleInterface\>\) of method Symfony\\Component\\HttpKernel\\KernelInterface\:\:registerBundles\(\)$#'
+			identifier: method.childReturnType
+			count: 2
+			path: src/Kernel.php
+
+		-
+			message: '#^Variable method call on \$this\(App\\Model\\Base\)\.$#'
+			identifier: method.dynamicName
+			count: 1
+			path: src/Model/Base.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: src/Model/JsonResponse.php
+
+		-
+			message: '#^Only booleans are allowed in a ternary operator condition, DateTime given\.$#'
+			identifier: ternary.condNotBoolean
+			count: 1
+			path: src/Repository/ContractRepository.php
+
+		-
+			message: '#^Only booleans are allowed in a ternary operator condition, DateTime\|null given\.$#'
+			identifier: ternary.condNotBoolean
+			count: 1
+			path: src/Repository/ContractRepository.php
+
+		-
+			message: '#^PHPDoc tag @var with type Doctrine\\ORM\\Query\<\(int\|string\), mixed\> is not subtype of type Doctrine\\ORM\\Query\<null, mixed\>\.$#'
+			identifier: varTag.type
+			count: 1
+			path: src/Repository/ContractRepository.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, array\<string, mixed\>\|false given\.$#'
+			identifier: if.condNotBoolean
+			count: 4
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, string\|null given\.$#'
+			identifier: if.condNotBoolean
+			count: 2
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 2
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Only booleans are allowed in &&, Psr\\Cache\\CacheItemPoolInterface\|null given on the left side\.$#'
+			identifier: booleanAnd.leftNotBoolean
+			count: 3
+			path: src/Repository/OptimizedEntryRepository.php
+
+		-
+			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 3
+			path: src/Repository/OptimizedEntryRepository.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, Psr\\Cache\\CacheItemPoolInterface\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 2
+			path: src/Repository/OptimizedEntryRepository.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 4
+			path: src/Repository/OptimizedEntryRepository.php
+
+		-
+			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\Customer\|null given\.$#'
+			identifier: ternary.condNotBoolean
+			count: 2
+			path: src/Repository/ProjectRepository.php
+
+		-
+			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\User\|null given\.$#'
+			identifier: ternary.condNotBoolean
+			count: 1
+			path: src/Repository/TeamRepository.php
+
+		-
+			message: '#^Method App\\Response\\Error\:\:getExceptionAsArray\(\) should return array\{message\: string, class\: class\-string\<Throwable\>, code\: int\|string, file\: string, line\: int, trace\: list\<array\{args\?\: array\<int, mixed\>, class\?\: class\-string, file\?\: string, function\?\: string, line\?\: int, type\?\: ''\-\>''\|''\:\:''\}\>, previous\: array\<string, mixed\>\|null\}\|null but returns array\{message\: string, class\: class\-string\<Throwable\>&literal\-string, code\: \(int\|string\), file\: string, line\: int, trace\: list\<array\{function\: string, line\?\: int, file\?\: string, class\?\: class\-string, type\?\: ''\-\>''\|''\:\:'', args\?\: array\<mixed\>, object\?\: object\}\>, previous\: array\{message\: string, class\: class\-string\<Throwable\>, code\: int\|string, file\: string, line\: int, trace\: list\<array\{args\?\: array\<int, mixed\>, class\?\: class\-string, file\?\: string, function\?\: string, line\?\: int, type\?\: ''\-\>''\|''\:\:''\}\>, previous\: array\<string, mixed\>\|null\}\|null\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Response/Error.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, string\|false given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: src/Response/Error.php
+
+		-
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 1
+			path: src/Security/LdapAuthenticator.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, string\|null given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: src/Security/LdapAuthenticator.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Security/LdapAuthenticator.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Cache/QueryCacheService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Cache/QueryCacheService.php
+
+		-
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 1
+			path: src/Service/ExportService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Project\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/ExportService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, int\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/ExportService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, string given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/ExportService.php
+
+		-
+			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\User\|null given\.$#'
+			identifier: ternary.condNotBoolean
+			count: 1
+			path: src/Service/ExportService.php
+
+		-
+			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\> is not subtype of type App\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\>\.$#'
+			identifier: varTag.type
+			count: 4
+			path: src/Service/Integration/Jira/JiraAuthenticationService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, int\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:info\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:error\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:info\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:warning\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Integration/Jira/JiraIntegrationService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$fields\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$issues\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$subtasks\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Casting to int something that''s already int\<min, \-1\>\|int\<1, max\>\.$#'
+			identifier: cast.useless
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Casting to string something that''s already string\.$#'
+			identifier: cast.useless
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\UserTicketsystem given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
+			identifier: varTag.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\> is not subtype of type App\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\>\.$#'
+			identifier: varTag.type
+			count: 2
+			path: src/Service/Integration/Jira/JiraOAuthApiService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$fields\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Integration/Jira/JiraTicketService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$to\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Integration/Jira/JiraTicketService.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: src/Service/Integration/Jira/JiraTicketService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Integration/Jira/JiraWorkLogService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Integration/Jira/JiraWorkLogService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Integration/Jira/JiraWorkLogService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Project\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 2
+			path: src/Service/Integration/Jira/JiraWorkLogService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 2
+			path: src/Service/Integration/Jira/JiraWorkLogService.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: src/Service/Integration/Jira/JiraWorkLogService.php
+
+		-
+			message: '#^Only booleans are allowed in &&, Psr\\Log\\LoggerInterface\|null given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 2
+			path: src/Service/Ldap/LdapClientService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/Ldap/LdapClientService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 2
+			path: src/Service/Ldap/LdapClientService.php
+
+		-
+			message: '#^PHPDoc tag @var with type Laminas\\Ldap\\Collection\<array\<string, array\<int, string\>\>\> is not subtype of type Laminas\\Ldap\\Collection\<array\{dn\: string\}\>\.$#'
+			identifier: varTag.type
+			count: 1
+			path: src/Service/Ldap/LdapClientService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:info\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:warning\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:error\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:info\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:warning\(\) is not a static string$#'
+			identifier: sfpPsrLog.messageNotStaticString
+			count: 1
+			path: src/Service/Ldap/ModernLdapService.php
+
+		-
+			message: '#^PHPDoc tag @var with type array\<string, mixed\> is not subtype of type array\<int\|string, string\>\.$#'
+			identifier: varTag.type
+			count: 1
+			path: src/Service/Response/PaginationLinkService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, int\|false given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/Util/TicketService.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, int\<0, max\>\|false given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: src/Service/Util/TimeCalculationService.php
+
+		-
+			message: '#^Only booleans are allowed in a ternary operator condition, float\|int given\.$#'
+			identifier: ternary.condNotBoolean
+			count: 1
+			path: src/Service/Util/TimeCalculationService.php
+
+		-
+			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<T of object\> is not subtype of type App\\Repository\\ServiceEntityRepository\<T of object\>\.$#'
+			identifier: varTag.type
+			count: 1
+			path: src/Util/RequestEntityHelper.php
+
+		-
+			message: '''
+				#^Call to deprecated method setNestTransactionsWithSavepoints\(\) of class Doctrine\\DBAL\\Connection\:
+				No replacement planned$#
+			'''
+			identifier: method.deprecated
 			count: 1
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#Part \$value \(mixed\) of encapsed string cannot be cast to string\.#'
+			message: '#^Call to function property_exists\(\) with \$this\(Tests\\AbstractWebTestCase\) and ''client'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
 			count: 1
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#Variable \$syncService in PHPDoc tag @var does not exist\.#'
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseRedirects\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^Only booleans are allowed in &&, Symfony\\Component\\DependencyInjection\\ContainerInterface\|null given on the left side\.$#'
+			identifier: booleanAnd.leftNotBoolean
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^Only booleans are allowed in &&, Symfony\\Component\\DependencyInjection\\ContainerInterface\|null given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 2
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
+			identifier: varTag.type
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^Part \$value \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 5
+			path: tests/AbstractWebTestCase.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with 1 and 1 will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Basic.php
+
+		-
+			message: '#^Variable \$syncService in PHPDoc tag @var does not exist\.$#'
+			identifier: varTag.variableNotFound
 			count: 1
 			path: tests/Command/TtSyncSubticketsCommandTest.php
 
 		-
-			message: '#Call to function is_array\(\) with array<mixed> will always evaluate to true\.#'
+			message: '#^Casting to string something that''s already string\.$#'
+			identifier: cast.useless
+			count: 3
+			path: tests/Controller/AdminControllerNegativeTest.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<mixed, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
 			count: 1
 			path: tests/Controller/ApiSmokeTest.php
 
 		-
-			message: '#Unreachable statement - code above always terminates\.#'
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Controller/AuthorizationSecurityTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertEquals\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: tests/Controller/AuthorizationSecurityTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertNotEmpty\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Controller/AuthorizationSecurityTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Controller/AuthorizationSecurityTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 8
+			path: tests/Controller/AuthorizationSecurityTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:markTestSkipped\(\)\.$#'
+			identifier: staticMethod.dynamicCall
 			count: 9
 			path: tests/Controller/ControllingControllerTest.php
 
 		-
-			message: '#Binary operation "\." between "SELECT \*\\n          …" and mixed results in an error\.#'
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 9
+			path: tests/Controller/ControllingControllerTest.php
+
+		-
+			message: '#^Binary operation "\." between "SELECT \*\\n          …" and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
 			count: 1
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			message: '#Call to function is_array\(\) with array will always evaluate to true\.#'
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
 			count: 2
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			message: '#Property Tests\\Fixtures\\TokenStub::\$attributes \(array<string, mixed>\) does not accept array<mixed, mixed>\.#'
+			message: '#^You should use assertCount\(\$expectedCount, \$variable\) instead of assertSame\(\$expectedCount, count\(\$variable\)\)\.$#'
+			identifier: phpunit.assertCount
+			count: 6
+			path: tests/Controller/CrudControllerTest.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Entry\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 2
+			path: tests/Controller/DefaultControllerSummaryTest.php
+
+		-
+			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
+			identifier: varTag.type
+			count: 2
+			path: tests/Controller/DefaultControllerSummaryTest.php
+
+		-
+			message: '#^Casting to string something that''s already string\.$#'
+			identifier: cast.useless
+			count: 3
+			path: tests/Controller/DefaultControllerTest.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 11
+			path: tests/Controller/DefaultControllerTest.php
+
+		-
+			message: '#^Cannot access offset ''data'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 5
+			path: tests/Controller/InterpretationControllerTest.php
+
+		-
+			message: '#^Cannot access offset ''links'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 8
+			path: tests/Controller/InterpretationControllerTest.php
+
+		-
+			message: '#^Implicit array creation is not allowed \- variable \$expectedData does not exist\.$#'
+			identifier: variable.implicitArray
+			count: 5
+			path: tests/Controller/InterpretationControllerTest.php
+
+		-
+			message: '#^Implicit array creation is not allowed \- variable \$expectedLinks does not exist\.$#'
+			identifier: variable.implicitArray
+			count: 8
+			path: tests/Controller/InterpretationControllerTest.php
+
+		-
+			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseIsSuccessful\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Controller/SecurityControllerTest.php
+
+		-
+			message: '#^Missing call to parent\:\:setUp\(\) method\.$#'
+			identifier: phpunit.callParent
+			count: 1
+			path: tests/Controller/SecurityControllerTest.php
+
+		-
+			message: '#^Dynamic call to static method Tests\\AbstractWebTestCase\:\:ensureKernelShutdown\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Controller/SettingsControllerTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Controller/StatusControllerTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: tests/Controller/StatusControllerTest.php
+
+		-
+			message: '#^Dynamic call to static method Tests\\AbstractWebTestCase\:\:ensureKernelShutdown\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: tests/Controller/StatusControllerTest.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: tests/Entity/AccountDatabaseTest.php
+
+		-
+			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\Account\> is not subtype of type App\\Repository\\ServiceEntityRepository\<App\\Entity\\Account\>\.$#'
+			identifier: varTag.type
+			count: 2
+			path: tests/Entity/AccountDatabaseTest.php
+
+		-
+			message: '#^You should use assertSame\(\) instead of assertEquals\(\), because both values are scalars of the same type$#'
+			identifier: phpunit.assertEquals
+			count: 5
+			path: tests/Entity/AccountDatabaseTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''Krank'' and ''Krank'' will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/ActivityTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''Urlaub'' and ''Urlaub'' will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/ActivityTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with arguments \*NEVER\*, mixed and ''End should be…'' will always evaluate to false\.$#'
+			identifier: staticMethod.impossibleType
+			count: 1
+			path: tests/Entity/EntryTest.php
+
+		-
+			message: '#^Parameter \#1 \$expected of static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: tests/Entity/EntryTest.php
+
+		-
+			message: '#^Call to function is_array\(\) with non\-empty\-array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/HolidayDatabaseTest.php
+
+		-
+			message: '#^Call to method App\\Entity\\TicketSystem\:\:setTicketUrl\(\) with incorrect case\: setTicketurl$#'
+			identifier: method.nameCase
+			count: 1
+			path: tests/Entity/ProjectDatabaseTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotFalse\(\) with mixed and ''UserTicketsystem…'' will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Entity/UserDatabaseTest.php
+
+		-
+			message: '#^You should use assertSame\(\) instead of assertEquals\(\), because both values are scalars of the same type$#'
+			identifier: phpunit.assertEquals
+			count: 1
+			path: tests/Extension/NrArrayTranslatorTest.php
+
+		-
+			message: '#^Parameter \#1 \$attributes \(array\<string, mixed\>\) of method Tests\\Fixtures\\TokenStub\:\:setAttributes\(\) should be contravariant with parameter \$attributes \(array\) of method Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface\:\:setAttributes\(\)$#'
+			identifier: method.childParameterType
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			message: '#^Parameter \#1 \$data \(array\<string, mixed\>\) of method Tests\\Fixtures\\TokenStub\:\:__unserialize\(\) should be contravariant with parameter \$data \(array\) of method Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface\:\:__unserialize\(\)$#'
+			identifier: method.childParameterType
+			count: 1
+			path: tests/Fixtures/TokenStub.php
+
+		-
+			message: '#^Property Tests\\Fixtures\\TokenStub\:\:\$attributes \(array\<string, mixed\>\) does not accept array\<mixed, mixed\>\.$#'
+			identifier: assign.propertyType
 			count: 2
 			path: tests/Fixtures/TokenStub.php
 
 		-
-			message: '#Anonymous class extends @final class GuzzleHttp\\Client\.#'
+			message: '#^Anonymous class extends @final class GuzzleHttp\\Client\.$#'
+			identifier: class.extendsFinalByPhpDoc
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			message: '#Variable \$content on left side of \?\? always exists and is not nullable\.#'
+			message: '#^AnonymousClassbb223187f3d0d498da3a2554d256c23f\:\:__construct\(\) does not call parent constructor from GuzzleHttp\\Client\.$#'
+			identifier: constructor.missingParentCall
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:53\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\Client\:\:request\(\)$#'
+			identifier: method.childParameterType
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:53\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientInterface\:\:request\(\)$#'
+			identifier: method.childParameterType
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:53\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientTrait\:\:request\(\)$#'
+			identifier: method.childParameterType
+			count: 1
+			path: tests/Helper/JiraOAuthApiTest.php
+
+		-
+			message: '#^You should use assertCount\(\$expectedCount, \$variable\) instead of assertSame\(\$expectedCount, count\(\$variable\)\)\.$#'
+			identifier: phpunit.assertCount
+			count: 1
+			path: tests/Model/BaseTest.php
+
+		-
+			message: '#^@covers value ExportAction\:\:__invoke references an invalid method\.$#'
+			identifier: phpunit.coversMethod
+			count: 5
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\HttpFoundation\\\\Response'' and App\\Model\\Response will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 5
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^Casting to int something that''s already int\.$#'
+			identifier: cast.useless
+			count: 5
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertEquals\(\)\.$#'
+			identifier: staticMethod.dynamicCall
 			count: 1
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
-			message: '#Call to internal method PHPUnit\\Framework\\TestCase::addToAssertionCount\(\) from outside its root namespace PHPUnit\.#'
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 5
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertLessThan\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 10
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^Variable \$content on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^You should use assertSame\(\) instead of assertEquals\(\), because both values are scalars of the same type$#'
+			identifier: phpunit.assertEquals
+			count: 1
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
+			message: '#^@covers value ExportService\:\:enrichEntriesWithTicketInformation references an invalid method\.$#'
+			identifier: phpunit.coversMethod
+			count: 3
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			message: '#^@covers value ExportService\:\:exportEntries references an invalid method\.$#'
+			identifier: phpunit.coversMethod
+			count: 3
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			message: '#^Call to internal method PHPUnit\\Framework\\TestCase\:\:addToAssertionCount\(\) from outside its root namespace PHPUnit\.$#'
+			identifier: method.internal
 			count: 1
 			path: tests/Performance/ExportPerformanceTest.php
 
 		-
-			message: '#Call to function is_scalar\(\) with \(int\|string\) will always evaluate to true\.#'
+			message: '#^Casting to int something that''s already int\.$#'
+			identifier: cast.useless
+			count: 7
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertCount\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 8
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertLessThan\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 11
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			message: '#^@covers value EntryRepository\:\:findByDate references an invalid method\.$#'
+			identifier: phpunit.coversMethod
+			count: 1
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^@covers value ExportAction\:\:__invoke references an invalid method\.$#'
+			identifier: phpunit.coversMethod
+			count: 2
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^@covers value ExportService\:\:enrichEntriesWithTicketInformation references an invalid method\.$#'
+			identifier: phpunit.coversMethod
+			count: 2
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^@covers value ExportService\:\:exportEntries references an invalid method\.$#'
+			identifier: phpunit.coversMethod
+			count: 1
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Casting to int something that''s already int\.$#'
+			identifier: cast.useless
+			count: 5
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertCount\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertEquals\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 6
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertGreaterThan\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertLessThan\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 8
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertNotNull\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\KernelTestCase\:\:getContainer\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
+			identifier: varTag.type
+			count: 1
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^You should use assertSame\(\) instead of assertEquals\(\), because both values are scalars of the same type$#'
+			identifier: phpunit.assertEquals
+			count: 6
+			path: tests/Performance/ExportWorkflowIntegrationTest.php
+
+		-
+			message: '#^Call to function is_scalar\(\) with \(int\|string\) will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
 			count: 5
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			message: '#Variable \$time on left side of \?\? always exists and is not nullable\.#'
+			message: '#^Casting to float something that''s already float\.$#'
+			identifier: cast.useless
+			count: 2
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 5
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#^Loose comparison via "\=\=" is not allowed\.$#'
+			identifier: equal.notAllowed
 			count: 1
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			message: '#Argument of an invalid type mixed supplied for foreach, only iterables are supported\.#'
+			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 2
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 3
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#^Variable \$time on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#^Variable method call on object\.$#'
+			identifier: method.dynamicName
+			count: 1
+			path: tests/Performance/PerformanceBenchmarkRunner.php
+
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
 			count: 2
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			message: '#Binary operation "\+=" between \(float\|int\) and mixed results in an error\.#'
+			message: '#^Binary operation "\+\=" between \(float\|int\) and mixed results in an error\.$#'
+			identifier: assignOp.invalid
 			count: 1
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			message: '#Call to function is_string\(\) with string will always evaluate to true\.#'
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 1
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			message: '#^Only booleans are allowed in a ternary operator condition, mixed given\.$#'
+			identifier: ternary.condNotBoolean
+			count: 2
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
+			identifier: if.condNotBoolean
+			count: 3
+			path: tests/Performance/PerformanceDashboard.php
+
+		-
+			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
+			identifier: varTag.type
+			count: 2
+			path: tests/Repository/EntryRepositoryIntegrationTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''DateTimeImmutable'' and DateTimeImmutable will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: tests/Service/SystemClockTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertFalse\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 4
+			path: tests/Util/PhpSpreadsheet/LOReadFilterTest.php
+
+		-
+			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 6
+			path: tests/Util/PhpSpreadsheet/LOReadFilterTest.php
+
+		-
+			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 1
+			path: tests/bootstrap.php
+
+		-
+			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 1
+			path: tests/parallel-bootstrap.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, int\|false given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: tests/parallel-bootstrap.php
+
+		-
+			message: '#^Only booleans are allowed in \|\|, string\|false given on the left side\.$#'
+			identifier: booleanOr.leftNotBoolean
+			count: 1
+			path: tests/parallel-bootstrap.php
+
+		-
+			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
+			identifier: ternary.shortNotAllowed
+			count: 1
+			path: tests/parallel-bootstrap.php
+
+		-
+			message: '#^Call to function in_array\(\) requires parameter \#3 to be set\.$#'
+			identifier: function.strict
+			count: 3
+			path: tests/tools/analyze-coverage.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
+			identifier: empty.notAllowed
+			count: 4
+			path: tests/tools/analyze-coverage.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 2
+			path: tests/tools/analyze-coverage.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, int\|false given\.$#'
+			identifier: if.condNotBoolean
+			count: 1
+			path: tests/tools/analyze-coverage.php
+
+		-
+			message: '#^Only booleans are allowed in an if condition, string\|false given\.$#'
+			identifier: if.condNotBoolean
 			count: 1
 			path: tests/tools/analyze-coverage.php

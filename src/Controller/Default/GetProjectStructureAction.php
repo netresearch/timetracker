@@ -20,14 +20,13 @@ final class GetProjectStructureAction extends BaseController
         }
 
         $userId = (int) $user->getId();
-        $managerRegistry = $this->managerRegistry;
 
-        /** @var \App\Repository\CustomerRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(Customer::class);
+        $objectRepository = $this->managerRegistry->getRepository(Customer::class);
+        \assert($objectRepository instanceof \App\Repository\CustomerRepository);
         $customers = $objectRepository->getCustomersByUser($userId);
 
-        /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $managerRegistry->getRepository(\App\Entity\Project::class);
+        $projectRepo = $this->managerRegistry->getRepository(\App\Entity\Project::class);
+        \assert($projectRepo instanceof \App\Repository\ProjectRepository);
         $projectStructure = $projectRepo->getProjectStructure($userId, $customers);
 
         return new JsonResponse($projectStructure);

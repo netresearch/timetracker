@@ -17,8 +17,8 @@ final class GetCustomersAction extends BaseController
         }
 
         $userId = (int) $user->getId();
-        /** @var \App\Repository\CustomerRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\Customer::class);
+        \assert($objectRepository instanceof \App\Repository\CustomerRepository);
         $data = $objectRepository->getCustomersByUser($userId);
 
         return new JsonResponse($data);

@@ -35,8 +35,8 @@ final class GetProjectsAction extends BaseController
             return $response;
         }
 
-        /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Project::class);
+        \assert($objectRepository instanceof \App\Repository\ProjectRepository);
         $data = $objectRepository->getAllProjectsForAdmin();
 
         return new JsonResponse($data);

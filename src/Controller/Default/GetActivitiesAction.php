@@ -17,8 +17,8 @@ final class GetActivitiesAction extends BaseController
             return $this->redirectToRoute('_login');
         }
 
-        /** @var \App\Repository\ActivityRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\Activity::class);
+        \assert($objectRepository instanceof \App\Repository\ActivityRepository);
         $data = $objectRepository->getActivities();
 
         return new JsonResponse($data);

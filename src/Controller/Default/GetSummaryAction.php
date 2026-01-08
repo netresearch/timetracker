@@ -54,9 +54,9 @@ final class GetSummaryAction extends BaseController
             return new JsonResponse($data);
         }
 
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        if (!$objectRepository->find($entryId)) {
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
+        if (null === $objectRepository->find($entryId)) {
             $message = $this->translator->trans('No entry for id.');
 
             return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);

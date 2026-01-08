@@ -44,8 +44,8 @@ final class GetTicketTimeSummaryAction extends BaseController
         $ticketParam = $attributes->has('ticket') ? $attributes->get('ticket') : null;
         $ticket = is_string($ticketParam) ? $ticketParam : '';
 
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
         $activities = $objectRepository->getActivitiesWithTime($ticket);
         $users = $objectRepository->getUsersWithTime($ticket);
 

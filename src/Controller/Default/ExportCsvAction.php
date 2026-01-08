@@ -32,8 +32,8 @@ final class ExportCsvAction extends BaseController
             ? (int) $request->attributes->get('days')
             : 10000;
 
-        /** @var EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof EntryRepository);
         $entries = $objectRepository->findByRecentDaysOfUser($user, $days);
 
         $content = $this->renderView('export.csv.twig', [

@@ -29,8 +29,8 @@ final class GetDataAction extends BaseController
 
         $userId = (int) $user->getId();
 
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         // Check if this is a filtered request (with year/month/user/customer/project parameters)
         $year = $request->query->get('year');

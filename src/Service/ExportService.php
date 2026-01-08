@@ -34,8 +34,8 @@ class ExportService
      */
     public function getEntries(\App\Entity\User $currentUser, ?array $arSort = null, string $strStart = '', string $strEnd = '', ?array $arProjects = null, ?array $arUsers = null): array
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         $arFilter = [];
 
@@ -173,8 +173,8 @@ class ExportService
      */
     public function exportEntries(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null): array
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         return $objectRepository->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
     }
@@ -188,8 +188,8 @@ class ExportService
      */
     public function exportEntriesBatched(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null, int $batchSize = 1000): Generator
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         $offset = 0;
         do {
@@ -252,8 +252,8 @@ class ExportService
         }
 
         // Get user for API calls
-        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
+        \assert($objectRepository instanceof \App\Repository\UserRepository);
         $user = $objectRepository->find($userId);
         if ($user === null) {
             return $entries;
@@ -337,8 +337,8 @@ class ExportService
      */
     public function getUsername(int $userId): ?string
     {
-        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
+        \assert($objectRepository instanceof \App\Repository\UserRepository);
         $user = $objectRepository->find($userId);
 
         return $user ? $user->getUsername() : null;

@@ -66,8 +66,8 @@ abstract class BaseTrackingController extends BaseController
         }
 
         if ($project !== null && $project->hasInternalJiraProjectKey()) {
-            /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
+            \assert($ticketSystemRepo instanceof \App\Repository\TicketSystemRepository);
             $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
         }
 
@@ -98,10 +98,9 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        $managerRegistry = $this->managerRegistry;
-        $objectManager = $managerRegistry->getManager();
-        /** @var \App\Repository\EntryRepository $objectRepository */
+        $objectManager = $this->managerRegistry->getManager();
         $objectRepository = $objectManager->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
         $entries = $objectRepository->findByDay($userId, $day);
 
         if (0 === count($entries)) {
@@ -194,8 +193,8 @@ abstract class BaseTrackingController extends BaseController
         if ($project->hasInternalJiraProjectKey()) {
             $this->validateTicketProjectMatch($entry, $project);
 
-            /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
+            \assert($ticketSystemRepo instanceof \App\Repository\TicketSystemRepository);
             $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
         }
 
@@ -364,8 +363,8 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(TicketSystem::class);
+        \assert($objectRepository instanceof \App\Repository\TicketSystemRepository);
         $ticketSystem = $objectRepository->find($project->getInternalJiraTicketSystem());
 
         if (!$ticketSystem instanceof TicketSystem) {

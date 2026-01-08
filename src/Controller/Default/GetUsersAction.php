@@ -23,8 +23,8 @@ final class GetUsersAction extends BaseController
         $userId = (int) $user->getId();
         $isDev = UserType::DEV === $user->getType();
 
-        /** @var \App\Repository\UserRepository $userRepo */
         $userRepo = $this->managerRegistry->getRepository(\App\Entity\User::class);
+        \assert($userRepo instanceof \App\Repository\UserRepository);
         $data = $isDev ? $userRepo->getUserById($userId) : $userRepo->getUsers($userId);
 
         return new JsonResponse($data);

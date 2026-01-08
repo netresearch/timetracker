@@ -26,16 +26,15 @@ final class IndexAction extends BaseController
         }
 
         $userId = (int) $user->getId();
-        $managerRegistry = $this->managerRegistry;
 
         $settings = $user->getSettings();
 
-        /** @var \App\Repository\CustomerRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(Customer::class);
+        $objectRepository = $this->managerRegistry->getRepository(Customer::class);
+        \assert($objectRepository instanceof \App\Repository\CustomerRepository);
         $customers = $objectRepository->getCustomersByUser($userId);
 
-        /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $managerRegistry->getRepository(Project::class);
+        $projectRepo = $this->managerRegistry->getRepository(Project::class);
+        \assert($projectRepo instanceof \App\Repository\ProjectRepository);
         $projects = $projectRepo->getProjectStructure($userId, $customers);
 
         return $this->render('index.html.twig', [

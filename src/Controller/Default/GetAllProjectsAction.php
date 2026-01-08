@@ -27,9 +27,8 @@ final class GetAllProjectsAction extends BaseController
         }
 
         $customerId = (int) $request->query->get('customer');
-        $managerRegistry = $this->managerRegistry;
-        /** @var \App\Repository\ProjectRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(Project::class);
+        $objectRepository = $this->managerRegistry->getRepository(Project::class);
+        \assert($objectRepository instanceof \App\Repository\ProjectRepository);
         /** @var array<int, Project> $result */
         $result = $customerId > 0 ? $objectRepository->findByCustomer($customerId) : $objectRepository->findAll();
 

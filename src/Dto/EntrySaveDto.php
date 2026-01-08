@@ -89,7 +89,7 @@ final readonly class EntrySaveDto
 
         $date = DateTime::createFromFormat('Y-m-d', $this->date);
 
-        return $date ?: null;
+        return false !== $date ? $date : null;
     }
 
     /**
@@ -107,7 +107,7 @@ final readonly class EntrySaveDto
             $time = DateTime::createFromFormat('H:i', $this->start);
         }
 
-        return $time ?: null;
+        return false !== $time ? $time : null;
     }
 
     /**
@@ -125,7 +125,7 @@ final readonly class EntrySaveDto
             $time = DateTime::createFromFormat('H:i', $this->end);
         }
 
-        return $time ?: null;
+        return false !== $time ? $time : null;
     }
 
     /**

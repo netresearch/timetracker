@@ -171,8 +171,8 @@ class JiraIntegrationService
      */
     public function getEntriesNeedingSync(?User $user = null, ?DateTime $since = null): array
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         $criteria = [
             'syncedToTicketsystem' => false,
@@ -216,8 +216,8 @@ class JiraIntegrationService
     {
         // Check for internal JIRA project configuration
         if ($project->hasInternalJiraProjectKey()) {
-            /** @var TicketSystemRepository $ticketSystemRepo */
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
+            \assert($ticketSystemRepo instanceof TicketSystemRepository);
             $internalTicketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
 
             if ($internalTicketSystem instanceof TicketSystem) {
