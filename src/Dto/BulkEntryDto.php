@@ -64,7 +64,7 @@ final readonly class BulkEntryDto
             $startDateTime = DateTime::createFromFormat('H:i:s', $this->starttime);
             $endDateTime = DateTime::createFromFormat('H:i:s', $this->endtime);
 
-            if ($startDateTime && $endDateTime && $startDateTime >= $endDateTime) {
+            if ($startDateTime !== false && $endDateTime !== false && $startDateTime >= $endDateTime) {
                 $executionContext->buildViolation('Die Aktivität muss mindestens eine Minute angedauert haben!')
                     ->atPath('endtime')
                     ->addViolation()
@@ -83,7 +83,7 @@ final readonly class BulkEntryDto
             $startDate = DateTime::createFromFormat('Y-m-d', $this->startdate);
             $endDate = DateTime::createFromFormat('Y-m-d', $this->enddate);
 
-            if ($startDate && $endDate && $startDate > $endDate) {
+            if ($startDate !== false && $endDate !== false && $startDate > $endDate) {
                 $executionContext->buildViolation('Start date must be before or equal to end date')
                     ->atPath('enddate')
                     ->addViolation()

@@ -18,7 +18,9 @@ class Kernel extends BaseKernel
     public function registerBundles(): Generator
     {
         $contents = require $this->getProjectDir() . '/config/bundles.php';
+        assert(is_array($contents));
         foreach ($contents as $class => $envs) {
+            assert(is_array($envs));
             if ($envs[$this->environment] ?? $envs['all'] ?? false) {
                 yield new $class();
             }
