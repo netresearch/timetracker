@@ -6,6 +6,8 @@
 [![CI Status](https://github.com/netresearch/timetracker/workflows/CI/badge.svg)](https://github.com/netresearch/timetracker/actions)
 [![Test Coverage](https://img.shields.io/badge/coverage-38%25-orange.svg)](docs/TESTING_GUIDE.md)
 [![Code Quality](https://img.shields.io/badge/phpstan-level%209-green.svg)](phpstan.neon)
+[![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
 
 **Professional time tracking solution for teams and enterprises with advanced LDAP integration, JIRA synchronization, and comprehensive reporting.**
 
@@ -116,6 +118,8 @@ symfony server:start
 - **Authentication**: LDAP/AD with JWT token support
 - **Testing**: PHPUnit 12, Parallel test execution
 - **Code Quality**: PHPStan Level 9, Laravel Pint, Rector
+[![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
 
 ### Project Structure
 ```
@@ -268,6 +272,8 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 5. **Submit** a pull request with clear description
 
 ### Code Quality Standards
+[![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
 - **PSR-12** code style with Laravel Pint
 - **PHPStan Level 9** static analysis
 - **PHPUnit** tests with >80% coverage target
