@@ -14,7 +14,8 @@ use Doctrine\Persistence\ManagerRegistry;
  * @author Tony Kreissl <kreissl@mogic.com>
  */
 /**
- * @extends ServiceEntityRepository<\App\Entity\Contract>
+ * @template T of \App\Entity\Contract
+ * @extends ServiceEntityRepository<T>
  */
 class ContractRepository extends ServiceEntityRepository
 {

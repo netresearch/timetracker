@@ -10,9 +10,9 @@ use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Class UserRepository.
- */
-/**
- * @extends ServiceEntityRepository<\App\Entity\User>
+ *
+ * @template T of \App\Entity\User
+ * @extends ServiceEntityRepository<T>
  */
 class UserRepository extends ServiceEntityRepository
 {
