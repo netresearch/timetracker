@@ -218,9 +218,9 @@ class JiraOAuthApiService
                 $this->getOAuthRequestUrl() . '?oauth_callback=' . urlencode($this->getOAuthCallbackUrl()),
             );
 
-            $token = $this->extractTokens($response);
+            $tokenData = $this->extractTokens($response);
 
-            return $this->getOAuthAuthUrl($token['oauth_token']);
+            return $this->getOAuthAuthUrl($tokenData['oauth_token']);
         } catch (Throwable $throwable) {
             throw new JiraApiException($throwable->getMessage(), (int) $throwable->getCode(), null, $throwable);
         }
@@ -235,15 +235,15 @@ class JiraOAuthApiService
     {
         $body = (string) $response->getBody();
 
-        $token = [];
-        parse_str($body, $token);
+        $tokenRaw = [];
+        parse_str($body, $tokenRaw);
 
-        if ([] === $token) {
+        if ([] === $tokenRaw) {
             throw new JiraApiException('An unknown error occurred while requesting OAuth token.', 1541147716);
         }
 
-        $secret = is_string($token['oauth_token_secret'] ?? null) ? $token['oauth_token_secret'] : '';
-        $access = is_string($token['oauth_token'] ?? null) ? $token['oauth_token'] : '';
+        $secret = is_string($tokenRaw['oauth_token_secret'] ?? null) ? $tokenRaw['oauth_token_secret'] : '';
+        $access = is_string($tokenRaw['oauth_token'] ?? null) ? $tokenRaw['oauth_token'] : '';
 
         return $this->storeToken($secret, $access);
     }
@@ -335,6 +335,7 @@ class JiraOAuthApiService
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
+        assert(is_scalar($workLog->id), 'Work log ID must be scalar');
         $entry->setWorklogId((int) $workLog->id);
         $entry->setSyncedToTicketsystem(true);
     }
@@ -397,7 +398,7 @@ class JiraOAuthApiService
             [
                 'fields' => [
                     'project' => [
-                        'key' => (string) $project->getInternalJiraProjectKey(),
+                        'key' => is_scalar($project->getInternalJiraProjectKey()) ? (string) $project->getInternalJiraProjectKey() : '',
                     ],
                     'summary' => $entry->getTicket(),
                     'description' => $entry->getTicketSystemIssueLink(),
@@ -460,18 +461,22 @@ class JiraOAuthApiService
         $subtickets = [];
 
         // Check if subtasks exist and is iterable
-        if (isset($ticket->fields->subtasks) && is_iterable($ticket->fields->subtasks)) {
+        if (is_object($ticket->fields)
+            && property_exists($ticket->fields, 'subtasks')
+            && is_iterable($ticket->fields->subtasks)) {
             foreach ($ticket->fields->subtasks as $subtask) {
-                if (is_object($subtask) && isset($subtask->key)) {
+                if (is_object($subtask) && property_exists($subtask, 'key')) {
                     $subtickets[] = $subtask->key;
                 }
             }
         }
 
         // Check for epic type tickets
-        if (isset($ticket->fields->issuetype)
+        if (is_object($ticket->fields)
+            && property_exists($ticket->fields, 'issuetype')
             && is_object($ticket->fields->issuetype)
-            && isset($ticket->fields->issuetype->name)
+            && property_exists($ticket->fields->issuetype, 'name')
+            && is_scalar($ticket->fields->issuetype->name)
             && 'epic' === strtolower((string) $ticket->fields->issuetype->name)) {
             $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
 
@@ -620,15 +625,16 @@ class JiraOAuthApiService
      */
     protected function storeToken(string $tokenSecret, string $accessToken = 'token_request_unfinished', bool $avoidConnection = false): array
     {
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         /** @var UserTicketsystem $userTicketSystem */
-        $userTicketSystem = $this->managerRegistry->getRepository(UserTicketsystem::class)
-            ->findOneBy([
+        $userTicketSystem = $repository->findOneBy([
                 'user' => $this->user,
                 'ticketSystem' => $this->ticketSystem,
             ])
         ;
 
-        if (!$userTicketSystem) {
+        if ($userTicketSystem === null) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($this->user)
                 ->setTicketSystem($this->ticketSystem)
@@ -737,10 +743,10 @@ class JiraOAuthApiService
      */
     protected function checkUserTicketSystem(): bool
     {
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         /** @var UserTicketsystem $userTicketSystem */
-        $userTicketSystem = $this->managerRegistry
-            ->getRepository(UserTicketsystem::class)
-            ->findOneBy([
+        $userTicketSystem = $repository->findOneBy([
                 'user' => $this->user,
                 'ticketSystem' => $this->ticketSystem,
             ])

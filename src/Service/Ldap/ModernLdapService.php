@@ -185,9 +185,15 @@ class ModernLdapService
 
             $groups = [];
             foreach ($result as $entry) {
+                assert(is_array($entry));
+                $cn = $entry['cn'] ?? [];
+                $description = $entry['description'] ?? [];
+                assert(is_array($cn));
+                assert(is_array($description));
+                
                 $groups[] = [
-                    'name' => $entry['cn'][0] ?? '',
-                    'description' => $entry['description'][0] ?? '',
+                    'name' => $cn[0] ?? '',
+                    'description' => $description[0] ?? '',
                 ];
             }
 

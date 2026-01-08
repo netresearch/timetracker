@@ -61,10 +61,7 @@ class TokenEncryptionService
         }
 
         $iv = openssl_random_pseudo_bytes($ivLength);
-        // openssl_random_pseudo_bytes returns string in PHP 8+
-        if ('' === $iv) {
-            throw new RuntimeException('Failed to generate IV');
-        }
+        // With a valid ivLength > 0, openssl_random_pseudo_bytes never returns false
 
         // Encrypt the token
         $tag = '';

@@ -153,7 +153,7 @@ class ExportService
         }
 
         $apiService = $arApi[$ticketSystem->getId()] ?? null;
-        if (!$apiService) {
+        if ($apiService === null) {
             return '';
         }
 
@@ -255,7 +255,7 @@ class ExportService
         /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
         $user = $objectRepository->find($userId);
-        if (!$user) {
+        if ($user === null) {
             return $entries;
         }
 
@@ -287,9 +287,14 @@ class ExportService
                 $result = $jiraApi->searchTicket($jql, $fields, count($tickets));
                 $ticketData = [];
 
-                if (is_object($result) && property_exists($result, 'issues')) {
+                if (is_object($result) && property_exists($result, 'issues') && is_array($result->issues)) {
                     foreach ($result->issues as $issue) {
-                        $ticketData[$issue->key] = $issue->fields;
+                        if (is_object($issue) && property_exists($issue, 'key') && property_exists($issue, 'fields')) {
+                            $key = $issue->key;
+                            if (is_string($key) || is_int($key)) {
+                                $ticketData[$key] = $issue->fields;
+                            }
+                        }
                     }
                 }
 
@@ -302,13 +307,19 @@ class ExportService
 
                     $fields = $ticketData[$ticket];
 
-                    if ($includeBillable && isset($fields->labels)) {
-                        $isBillable = in_array('billable', $fields->labels, true);
-                        $entry->setBillable($isBillable);
+                    if ($includeBillable && is_object($fields) && property_exists($fields, 'labels')) {
+                        $labels = $fields->labels;
+                        if (is_array($labels)) {
+                            $isBillable = in_array('billable', $labels, true);
+                            $entry->setBillable($isBillable);
+                        }
                     }
 
-                    if ($includeTicketTitle && isset($fields->summary)) {
-                        $entry->setTicketTitle($fields->summary);
+                    if ($includeTicketTitle && is_object($fields) && property_exists($fields, 'summary')) {
+                        $summary = $fields->summary;
+                        if (is_string($summary) || $summary === null) {
+                            $entry->setTicketTitle($summary);
+                        }
                     }
                 }
             } catch (Exception) {
