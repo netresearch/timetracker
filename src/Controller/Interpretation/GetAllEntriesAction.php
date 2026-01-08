@@ -31,7 +31,7 @@ final class GetAllEntriesAction extends BaseController
     {
         // Check if user is either admin or PL type
         if (!$this->isGranted('ROLE_ADMIN')) {
-            if (!$user || !$user->getType() || 'PL' !== $user->getType()->value) {
+            if ($user === null || !$user->getType()->isPl()) {
                 return new Error($this->translate('You are not allowed to perform this action.'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
             }
         }

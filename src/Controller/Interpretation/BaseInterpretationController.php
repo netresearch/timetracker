@@ -55,9 +55,7 @@ abstract class BaseInterpretationController extends BaseController
      *
      * @throws Exception
      *
-     * @return Entry[]
-     *
-     * @psalm-return array<int, Entry>
+     * @return list<Entry>
      */
     protected function getEntries(\Symfony\Component\HttpFoundation\Request $request, ?User $currentUser = null, ?int $maxResults = null): array
     {

@@ -37,12 +37,12 @@ final class SaveCustomerAction extends BaseController
         $customerId = $customerSaveDto->id;
         $teamIds = $customerSaveDto->teams;
 
-        /** @var \App\Repository\CustomerRepository $objectRepository */
+        /** @var \App\Repository\CustomerRepository<Customer> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
 
         if (0 !== $customerId) {
             $customer = $objectRepository->find($customerId);
-            if (!$customer) {
+            if ($customer === null) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);

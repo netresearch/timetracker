@@ -126,7 +126,7 @@ final class ExportAction extends BaseController
         $lineNumber = 3;
         $stats = [];
         foreach ($entries as $entry) {
-            $abbr = $entry->getUser() ? (string) $entry->getUser()->getAbbr() : '';
+            $abbr = $entry->getUser() !== null ? (string) $entry->getUser()->getAbbr() : '';
             if (!isset($stats[$abbr])) {
                 $stats[$abbr] = [
                     'holidays' => 0,

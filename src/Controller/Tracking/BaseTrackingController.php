@@ -65,7 +65,7 @@ abstract class BaseTrackingController extends BaseController
             $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
         }
 
-        if ($project && $project->hasInternalJiraProjectKey()) {
+        if ($project !== null && $project->hasInternalJiraProjectKey()) {
             /** @var \App\Repository\TicketSystemRepository $ticketSystemRepo */
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
             $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
@@ -118,7 +118,7 @@ abstract class BaseTrackingController extends BaseController
             ];
         }
 
-        if ([] === $normalizedEntries) {
+        if (count($normalizedEntries) === 0) {
             return;
         }
 
