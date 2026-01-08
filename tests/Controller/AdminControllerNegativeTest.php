@@ -100,10 +100,11 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized, just ensure we got a validation error
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/Zeichen|characters|abbr/i', $data['message']);
     }
 
@@ -121,10 +122,11 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/exists|existiert|bereits/i', $data['message']);
     }
 
@@ -142,10 +144,11 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $content = (string) $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/teams|Team|sollte nicht leer sein/i', $data['message']);
     }
 

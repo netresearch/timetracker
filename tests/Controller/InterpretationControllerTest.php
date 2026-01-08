@@ -67,8 +67,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', $parameter);
         $this->assertStatusCode(200);
-        
-        $this->assertJsonStructure($expectedJson);
+
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGroupByWorktimeAction(): void
@@ -96,7 +96,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/time', $parameter);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGroupByActivityAction(): void
@@ -114,7 +114,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/activity', $parameter);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson);
+        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetAllEntriesActionDevNotAllowed(): void
@@ -134,10 +134,11 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         
         // Invalid dates are now silently ignored (more robust behavior)
         $this->assertStatusCode(200);
-        
+
         // Verify response has expected JSON structure
         $response = $this->client->getResponse();
-        $json = json_decode($response->getContent(), true);
+        $json = json_decode((string) $response->getContent(), true);
+        assert(is_array($json), 'Response should be an array');
         self::assertArrayHasKey('links', $json);
         self::assertArrayHasKey('data', $json);
     }
@@ -149,12 +150,13 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         
-        // Invalid dates are now silently ignored (more robust behavior)  
+        // Invalid dates are now silently ignored (more robust behavior)
         $this->assertStatusCode(200);
-        
+
         // Verify response has expected JSON structure
         $response = $this->client->getResponse();
-        $json = json_decode($response->getContent(), true);
+        $json = json_decode((string) $response->getContent(), true);
+        assert(is_array($json), 'Response should be an array');
         self::assertArrayHasKey('links', $json);
         self::assertArrayHasKey('data', $json);
     }
@@ -272,8 +274,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries');
             $this->assertStatusCode(200);
             $this->assertLength(7, 'data');
-            $this->assertJsonStructure($expectedLinks);
-            $this->assertJsonStructure($expectedData);
+            $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
+            $this->assertJsonStructure($expectedData, $this->getJsonResponse($this->client->getResponse()));
         } catch (Exception $exception) {
             self::markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
         }
@@ -342,8 +344,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             ];
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
             $this->assertLength(3, 'data');
-            $this->assertJsonStructure($expectedLinks);
-            $this->assertJsonStructure($expectedData);
+            $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
+            $this->assertJsonStructure($expectedData, $this->getJsonResponse($this->client->getResponse()));
         } catch (Exception $exception) {
             self::markTestSkipped('Skipping test due to potential environment configuration issues: ' . $exception->getMessage());
         }
@@ -356,7 +358,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(400);
-        $this->assertJsonStructure(['message' => 'page can not be negative.']);
+        $this->assertJsonStructure(['message' => 'page can not be negative.'], $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetAllEntriesActionReturnLinksNoParameter(): void
@@ -369,7 +371,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedLinks);
+        $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
         $this->assertLength(8, 'data'); // Updated to match actual response (includes additional test data)
     }
 
@@ -392,8 +394,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(2, 'data');
-        $this->assertJsonStructure($expectedLinks);
-        $this->assertJsonStructure($expectedData);
+        $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
+        $this->assertJsonStructure($expectedData, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetAllEntriesActionReturnLinksPageTwo(): void
@@ -414,10 +416,10 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
-        
+
         $this->assertLength(2, 'data');
-        $this->assertJsonStructure($expectedLinks);
-        $this->assertJsonStructure($expectedData);
+        $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
+        $this->assertJsonStructure($expectedData, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetAllEntriesActionReturnLinksLastPage(): void
@@ -438,10 +440,10 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
-        
+
         $this->assertLength(2, 'data'); // Last page actually has 2 entries based on test results
-        $this->assertJsonStructure($expectedLinks);
-        $this->assertJsonStructure($expectedData);
+        $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
+        $this->assertJsonStructure($expectedData, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetAllEntriesActionReturnLinksEmptyData(): void
@@ -458,7 +460,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(0, 'data');
-        $this->assertJsonStructure($expectedLinks);
+        $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetAllEntriesActionReturnLinksNonExistingPage(): void
@@ -476,6 +478,6 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
         $this->assertStatusCode(200);
         $this->assertLength(0, 'data');
-        $this->assertJsonStructure($expectedLinks);
+        $this->assertJsonStructure($expectedLinks, $this->getJsonResponse($this->client->getResponse()));
     }
 }

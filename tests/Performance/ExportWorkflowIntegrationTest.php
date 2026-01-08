@@ -24,6 +24,9 @@ use Symfony\Component\Stopwatch\Stopwatch;
 final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 {
     private Stopwatch $stopwatch;
+    /**
+     * @var array<string, int>
+     */
     private array $performanceBaselines;
 
     protected function setUp(): void
@@ -91,7 +94,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $this->assertResponseHeaderContains('Content-Type', 'spreadsheetml');
         $this->assertResponseHeaderContains('Content-disposition', 'attachment');
         
-        $this->logPerformanceMetric('Small Dataset End-to-End', $duration, $memoryUsage, 50);
+        $this->logPerformanceMetric('Small Dataset End-to-End', (int) $duration, (int) $memoryUsage, 50);
     }
 
     /**
@@ -129,14 +132,14 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         );
         
         // Check response size is reasonable
-        $contentLength = strlen($response->getContent() ?? '');
+        $contentLength = strlen((string) ($response->getContent() ?? ''));
         $this->assertLessThan(
             $this->performanceBaselines['http_response_size'],
             $contentLength,
             "Response size too large: " . number_format($contentLength / 1024 / 1024, 2) . "MB"
         );
         
-        $this->logPerformanceMetric('Medium Dataset End-to-End', $duration, $memoryUsage, 500);
+        $this->logPerformanceMetric('Medium Dataset End-to-End', (int) $duration, (int) $memoryUsage, 500);
     }
 
     /**
@@ -177,7 +180,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             "Export with ticket enrichment took {$duration}ms"
         );
         
-        $this->logPerformanceMetric('Export with Ticket Enrichment Integration', $duration, $memoryUsage, 100);
+        $this->logPerformanceMetric('Export with Ticket Enrichment Integration', (int) $duration, (int) $memoryUsage, 100);
     }
 
     /**
@@ -215,7 +218,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         
         $this->assertGreaterThan(0, count($entries));
         
-        $this->logPerformanceMetric('Database Query Performance', $duration, 0, count($entries));
+        $this->logPerformanceMetric('Database Query Performance', (int) $duration, 0, count($entries));
     }
 
     /**
@@ -261,7 +264,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         
         $this->assertCount(3, $responses);
         
-        $this->logPerformanceMetric('Concurrent Export Requests', $duration, $memoryUsage, 600);
+        $this->logPerformanceMetric('Concurrent Export Requests', (int) $duration, (int) $memoryUsage, 600);
     }
 
     /**
@@ -304,7 +307,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             
             $this->logPerformanceMetric(
                 'Export with Filters: ' . json_encode($filters),
-                $duration,
+                (int) $duration,
                 0,
                 300
             );
@@ -347,7 +350,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $this->logPerformanceMetric(
             'Large Export Memory Usage',
             0,
-            $peakMemoryIncrease,
+            (int) $peakMemoryIncrease,
             2000
         );
     }
@@ -427,10 +430,20 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
                 $entityManager->clear();
                 
                 // Re-fetch entities for next batch
-                $user = $entityManager->find(\App\Entity\User::class, $user->getId());
-                $customer = $entityManager->find(\App\Entity\Customer::class, $customer->getId());
-                $project = $entityManager->find(\App\Entity\Project::class, $project->getId());
-                $activity = $entityManager->find(\App\Entity\Activity::class, $activity->getId());
+                $userId = $user->getId();
+                $customerId = $customer->getId();
+                $projectId = $project->getId();
+                $activityId = $activity->getId();
+                
+                $user = $entityManager->find(\App\Entity\User::class, $userId);
+                $customer = $entityManager->find(\App\Entity\Customer::class, $customerId);
+                $project = $entityManager->find(\App\Entity\Project::class, $projectId);
+                $activity = $entityManager->find(\App\Entity\Activity::class, $activityId);
+                
+                self::assertNotNull($user);
+                self::assertNotNull($customer);
+                self::assertNotNull($project);
+                self::assertNotNull($activity);
             }
         }
         

@@ -23,6 +23,12 @@ use Symfony\Component\Routing\RouterInterface;
  */
 final class ExportServiceTest extends TestCase
 {
+    /**
+     * @param array<int, Entry> $entries
+     * @param array<int, string> $searchTickets
+     * @param array<string, array<int, string>> $jiraLabelsByIssue
+     * @param array<string, string> $jiraSummariesByIssue
+     */
     private function makeSubject(
         array $entries,
         array $searchTickets = [],
@@ -65,13 +71,25 @@ final class ExportServiceTest extends TestCase
                 TicketSystem $ticketSystem,
                 ManagerRegistry $managerRegistry,
                 RouterInterface $router,
+                /**
+                 * @var array<int, string>
+                 */
                 private readonly array $keys,
+                /**
+                 * @var array<string, array<int, string>>
+                 */
                 private array $labels,
+                /**
+                 * @var array<string, string>
+                 */
                 private array $summaries,
             ) {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
             }
 
+            /**
+             * @param array<int, string> $fields
+             */
             public function searchTicket(string $jql, array $fields, int $limit = 1): object
             {
                 $issues = [];

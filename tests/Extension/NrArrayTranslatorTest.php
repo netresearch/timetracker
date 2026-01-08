@@ -87,21 +87,19 @@ final class NrArrayTranslatorTest extends TestCase
      */
     public function testFilterArray(): void
     {
+        /** @var array<int, array<string, mixed>> $dataToTranslate */
         $dataToTranslate = [];
-        $dataToTranslate[]['activity'] = [
-            'id' => 1, 'name' => 'Entwicklung',
-        ];
-        $dataToTranslate[]['activity'] = [
-            'id' => 2, 'name' => 'QA',
-        ];
-        $dataToTranslate[]['activity'] = [
-            'id' => 3, 'name' => 'Administration',
-        ];
-        $dataToTranslate[]['ignoreMe'] = [
-            'id' => 3, 'name' => 'Administration',
-        ];
+        $activity1 = ['activity' => ['id' => 1, 'name' => 'Entwicklung']];
+        $activity2 = ['activity' => ['id' => 2, 'name' => 'QA']];
+        $activity3 = ['activity' => ['id' => 3, 'name' => 'Administration']];
+        $ignoreMe = ['ignoreMe' => ['id' => 3, 'name' => 'Administration']];
+        $dataToTranslate[] = $activity1;
+        $dataToTranslate[] = $activity2;
+        $dataToTranslate[] = $activity3;
+        $dataToTranslate[] = $ignoreMe;
 
         $dataToTranslateJson = json_encode($dataToTranslate);
+        self::assertNotFalse($dataToTranslateJson, 'JSON encoding should not fail');
 
         self::assertSame(
             $dataToTranslateJson,

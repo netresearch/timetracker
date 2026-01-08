@@ -139,6 +139,9 @@ final class LOReadFilterTest extends TestCase
     /**
      * Provides valid column addresses within the 1024 limit.
      */
+    /**
+     * @return array<string, array{string, int}>
+     */
     public static function validColumnProvider(): array
     {
         return [
@@ -157,6 +160,9 @@ final class LOReadFilterTest extends TestCase
 
     /**
      * Provides invalid column addresses beyond the 1024 limit.
+     */
+    /**
+     * @return array<string, array{string, int}>
      */
     public static function invalidColumnProvider(): array
     {

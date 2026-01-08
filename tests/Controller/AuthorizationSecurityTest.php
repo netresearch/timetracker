@@ -8,14 +8,14 @@ use Tests\AbstractWebTestCase;
 
 /**
  * Comprehensive authorization tests for critical Admin endpoints.
- * 
+ *
  * This test suite focuses on high-risk delete actions and admin save operations
  * that require proper PL (Project Leader) authorization to prevent unauthorized
  * data deletion and system configuration changes.
- * 
+ *
  * Tests both positive (PL user allowed) and negative (DEV user denied) scenarios
  * to ensure proper access control enforcement.
- * 
+ *
  * @internal
  * @coversNothing
  */
@@ -31,11 +31,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteActivityActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Activity ID from test fixtures (may be referenced by entries)
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         // Activity ID 1 may have referential constraints preventing deletion
         $this->assertStatusCode(422);
         $responseContent = $this->client->getResponse()->getContent();
@@ -50,11 +55,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteActivityActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Activity ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -65,14 +75,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteCustomerActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 2, // Customer ID from test fixtures (safe to delete)
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertTrue($responseData['success'] ?? false, 'Expected successful customer deletion');
     }
 
@@ -83,11 +99,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteCustomerActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 2, // Customer ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/customer/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -98,14 +119,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteProjectActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/project/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 2, // Project ID from test fixtures (safe to delete)
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/project/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertTrue($responseData['success'] ?? false, 'Expected successful project deletion');
     }
 
@@ -116,11 +143,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteProjectActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/project/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 2, // Project ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/project/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -131,14 +163,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteUserActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/user/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 4, // User ID from test fixtures (testGroupByActionUser - safe to delete)
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/user/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertTrue($responseData['success'] ?? false, 'Expected successful user deletion');
     }
 
@@ -149,11 +187,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteUserActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/user/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 4, // User ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/user/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -164,14 +207,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteTicketSystemActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/ticketsystem/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Ticket system ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/ticketsystem/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertTrue($responseData['success'] ?? false, 'Expected successful ticket system deletion');
     }
 
@@ -182,11 +231,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteTicketSystemActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/ticketsystem/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Ticket system ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/ticketsystem/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -197,14 +251,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteTeamActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 2, // Team ID from test fixtures (safe to delete)
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertTrue($responseData['success'] ?? false, 'Expected successful team deletion');
     }
 
@@ -215,11 +275,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteTeamActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 2, // Team ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/team/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -230,14 +295,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeletePresetActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/preset/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Preset ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/preset/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertTrue($responseData['success'] ?? false, 'Expected successful preset deletion');
     }
 
@@ -248,11 +319,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeletePresetActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/preset/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Preset ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/preset/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -263,14 +339,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteContractActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/contract/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Contract ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/contract/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertTrue($responseData['success'] ?? false, 'Expected successful contract deletion');
     }
 
@@ -281,11 +363,16 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteContractActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/contract/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Contract ID from test fixtures
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/contract/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -300,17 +387,23 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveTicketSystemActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'name' => 'SecurityTestSystem',
             'type' => 'JIRA',
             'url' => 'https://test.example.com',
             'ticketUrl' => 'https://test.example.com/ticket/{ticketId}',
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertArrayHasKey('id', $responseData, 'Expected ticket system to be created with ID');
         $this->assertEquals('SecurityTestSystem', $responseData['name'] ?? '', 'Expected correct ticket system name');
     }
@@ -322,15 +415,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveTicketSystemActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => null, // New ticket system
             'name' => 'UnauthorizedSystem',
             'type' => 'jira',
             'url' => 'https://malicious.example.com',
             'ticketUrl' => 'https://malicious.example.com/ticket/{ticketId}',
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -341,18 +439,24 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testUpdateTicketSystemActionWithPL(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Existing ticket system ID
             'name' => 'UpdatedTestSystem',
             'type' => 'JIRA',
             'url' => 'https://updated.example.com',
             'ticketUrl' => 'https://updated.example.com/ticket/{ticketId}',
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(200);
         $responseContent = $this->client->getResponse()->getContent();
-        $responseData = json_decode($responseContent, true);
+        $responseData = json_decode((string) $responseContent, true);
+        assert(is_array($responseData));
         $this->assertEquals('UpdatedTestSystem', $responseData['name'] ?? '', 'Expected ticket system name to be updated');
     }
 
@@ -363,15 +467,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testUpdateTicketSystemActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1, // Existing ticket system ID
             'name' => 'HijackedSystem',
             'type' => 'jira',
             'url' => 'https://malicious.example.com',
             'ticketUrl' => 'https://malicious.example.com/steal/{ticketId}',
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/ticketsystem/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -386,12 +495,17 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveActivityActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/activity/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'name' => 'UnauthorizedActivity',
             'factor' => 1.5,
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/activity/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -402,14 +516,19 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveCustomerActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'name' => 'UnauthorizedCustomer',
             'active' => true,
             'global' => false,
             'teams' => [1],
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -420,15 +539,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveProjectActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'customer' => 1,
             'name' => 'UnauthorizedProject',
             'active' => true,
             'global' => false,
             'jiraId' => 'HACK',
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/project/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -439,15 +563,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveUserActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/user/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'username' => 'unauthorized_user',
             'abbr' => 'UNA',
             'teams' => [1],
             'locale' => 'en',
             'type' => 'PL', // Attempting to create PL user
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/user/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -458,12 +587,17 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveTeamActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'name' => 'UnauthorizedTeam',
             'lead_user_id' => 1,
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/team/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -474,14 +608,19 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSaveContractActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/contract/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'user_id' => 2,
             'start' => '2024-01-01',
             'end' => '2024-12-31',
             'hours_per_week' => 40,
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/contract/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -492,13 +631,18 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testSavePresetActionWithDEV(): void
     {
         $this->logInSession('developer'); // DEV user
-        
-        $this->client->request('POST', '/preset/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'name' => 'UnauthorizedPreset',
             'projectId' => 1,
             'activityId' => 1,
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/preset/save', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         $this->assertStatusCode(403);
         $this->assertMessage('You are not allowed to perform this action.');
     }
@@ -513,11 +657,11 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteActionWithInvalidJsonPayload(): void
     {
         $this->logInSession('unittest'); // PL user
-        
+
         // Symfony throws BadRequestHttpException for malformed JSON, which should result in 400
         $this->expectException(\Symfony\Component\HttpKernel\Exception\BadRequestHttpException::class);
         $this->expectExceptionMessage('Request payload contains invalid "json" data');
-        
+
         $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], 'invalid-json');
     }
 
@@ -527,9 +671,14 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteActionWithMissingId(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([]));
-        
+
+        $jsonContent = json_encode([]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         // Should return 422 Unprocessable Entity for missing required field
         $this->assertStatusCode(422);
     }
@@ -540,15 +689,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteActionWithNonExistentId(): void
     {
         $this->logInSession('unittest'); // PL user
-        
-        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 99999, // Non-existent activity ID
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         // Should return error for already deleted/non-existent item
         $this->assertStatusCode(422);
         $responseContent = $this->client->getResponse()->getContent();
-        $this->assertStringContainsString('Der Datensatz konnte nicht enfernt werden!', $responseContent);
+        $this->assertStringContainsString('Der Datensatz konnte nicht enfernt werden!', (string) $responseContent);
     }
 
     /**
@@ -558,17 +712,22 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     {
         // Clear any existing authentication by restarting the client session
         $this->client->restart();
-        
-        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+
+        $jsonContent = json_encode([
             'id' => 1,
-        ]));
-        
+        ]);
+        if ($jsonContent === false) {
+            throw new \RuntimeException('Failed to encode JSON payload');
+        }
+
+        $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], $jsonContent);
+
         // Should redirect to login or return 401/403
         $response = $this->client->getResponse();
         $statusCode = $response->getStatusCode();
         $this->assertTrue(
-            $response->isRedirection() || 
-            $statusCode === 401 || 
+            $response->isRedirection() ||
+            $statusCode === 401 ||
             $statusCode === 403,
             "Unauthenticated requests should be rejected. Got status code: {$statusCode}"
         );
@@ -581,7 +740,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     public function testDeleteActionWithWrongHttpMethod(): void
     {
         $this->logInSession('unittest'); // PL user
-        
+
         // Attempt to access delete endpoint with GET method
         $this->expectException(\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class);
         $this->client->request('GET', '/activity/delete');

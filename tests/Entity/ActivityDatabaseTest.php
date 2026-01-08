@@ -28,7 +28,12 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        if ($this->serviceContainer === null) {
+            throw new \RuntimeException('Service container not initialized');
+        }
+        $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        assert($entityManager instanceof EntityManagerInterface);
+        $this->entityManager = $entityManager;
     }
 
     public function testPersistAndFind(): void
@@ -51,6 +56,7 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
         // Fetch from database and verify
         $fetchedActivity = $this->entityManager->getRepository(Activity::class)->find($id);
         self::assertNotNull($fetchedActivity, 'Activity was not found in database');
+        assert($fetchedActivity instanceof Activity);
         self::assertSame('Test Database Activity', $fetchedActivity->getName());
         self::assertTrue($fetchedActivity->getNeedsTicket());
         self::assertSame(1.25, $fetchedActivity->getFactor());
@@ -84,6 +90,8 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedActivity = $this->entityManager->getRepository(Activity::class)->find($id);
+        self::assertNotNull($updatedActivity);
+        assert($updatedActivity instanceof Activity);
         self::assertSame('Updated Activity', $updatedActivity->getName());
         self::assertTrue($updatedActivity->getNeedsTicket());
         self::assertSame(2.0, $updatedActivity->getFactor());
@@ -191,6 +199,8 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedActivity = $this->entityManager->find(Activity::class, $activityId);
+        self::assertNotNull($fetchedActivity);
+        assert($fetchedActivity instanceof Activity);
 
         // Test entry relationship
         self::assertCount(2, $fetchedActivity->getEntries());
@@ -265,6 +275,8 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedActivity = $this->entityManager->find(Activity::class, $activityId);
+        self::assertNotNull($fetchedActivity);
+        assert($fetchedActivity instanceof Activity);
 
         // Test preset relationship
         self::assertCount(2, $fetchedActivity->getPresets());
