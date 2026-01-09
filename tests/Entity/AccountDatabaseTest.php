@@ -79,7 +79,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         // Get user from database
         $userRepository = $this->entityManager->getRepository(User::class);
         $user = $userRepository->find(1);
-        if (! $user) {
+        if ($user === null) {
             // Create a test user if it doesn't exist
             $user = new User();
             $user->setUsername('test_user');
@@ -128,7 +128,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         // Verify relationship
         $entryAccount = $entry->getAccount();
         self::assertNotNull($entryAccount);
-        self::assertEquals($account->getId(), $entryAccount->getId());
+        self::assertSame($account->getId(), $entryAccount->getId());
 
         // Test the relationship from account side
         $refreshedAccount = $this->entityManager->find(Account::class, $account->getId());
@@ -139,7 +139,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         self::assertCount(1, $accountEntries);
         $firstEntry = $accountEntries->first();
         self::assertNotFalse($firstEntry);
-        self::assertEquals($entry->getId(), $firstEntry->getId());
+        self::assertSame($entry->getId(), $firstEntry->getId());
     }
 
     public function testFindByName(): void
@@ -152,7 +152,6 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Find by name
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<Account> $repository */
         $repository = $this->entityManager->getRepository(Account::class);
         $foundByName = $repository->findOneBy([
             'name' => 'Name Test Account',
@@ -160,7 +159,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
 
         self::assertNotNull($foundByName);
         assert($foundByName instanceof Account);
-        self::assertEquals('Name Test Account', $foundByName->getName());
+        self::assertSame('Name Test Account', $foundByName->getName());
     }
 
     public function testAccountValidation(): void
@@ -199,7 +198,6 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         }
 
         // Verify count
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<Account> $repository */
         $repository = $this->entityManager->getRepository(Account::class);
         $queryBuilder = $repository->createQueryBuilder('a');
         $query = $queryBuilder

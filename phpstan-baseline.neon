@@ -316,18 +316,6 @@ parameters:
 			path: tests/Controller/StatusControllerTest.php
 
 		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
-			message: '#^You should use assertSame\(\) instead of assertEquals\(\), because both values are scalars of the same type$#'
-			identifier: phpunit.assertEquals
-			count: 3
-			path: tests/Entity/AccountDatabaseTest.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''Krank'' and ''Krank'' will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
