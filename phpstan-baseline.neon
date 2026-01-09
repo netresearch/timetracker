@@ -730,12 +730,6 @@ parameters:
 			path: tests/Controller/DefaultControllerTest.php
 
 		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 11
-			path: tests/Controller/DefaultControllerTest.php
-
-		-
 			message: '#^Cannot access offset ''data'' on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 5
@@ -916,12 +910,6 @@ parameters:
 			path: tests/Model/BaseTest.php
 
 		-
-			message: '#^@covers value ExportAction\:\:__invoke references an invalid method\.$#'
-			identifier: phpunit.coversMethod
-			count: 5
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\HttpFoundation\\\\Response'' and App\\Model\\Response will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
 			count: 5
@@ -954,12 +942,6 @@ parameters:
 		-
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
 			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
 			count: 1
 			path: tests/Performance/ExportActionPerformanceTest.php
 
@@ -1108,18 +1090,6 @@ parameters:
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
-			identifier: empty.notAllowed
-			count: 5
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
-			message: '#^Loose comparison via "\=\=" is not allowed\.$#'
-			identifier: equal.notAllowed
-			count: 1
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
 			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
 			identifier: booleanAnd.rightNotBoolean
 			count: 2
@@ -1152,12 +1122,6 @@ parameters:
 		-
 			message: '#^Binary operation "\+\=" between \(float\|int\) and mixed results in an error\.$#'
 			identifier: assignOp.invalid
-			count: 1
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
-			identifier: empty.notAllowed
 			count: 1
 			path: tests/Performance/PerformanceDashboard.php
 
@@ -1222,27 +1186,9 @@ parameters:
 			path: tests/parallel-bootstrap.php
 
 		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: tests/parallel-bootstrap.php
-
-		-
-			message: '#^Call to function in_array\(\) requires parameter \#3 to be set\.$#'
-			identifier: function.strict
-			count: 3
-			path: tests/tools/analyze-coverage.php
-
-		-
 			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
-			path: tests/tools/analyze-coverage.php
-
-		-
-			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
-			identifier: empty.notAllowed
-			count: 4
 			path: tests/tools/analyze-coverage.php
 
 		-

@@ -5,7 +5,25 @@ declare(strict_types=1);
 namespace Tests\Performance;
 
 use DateTime;
-use RuntimeException;
+use Exception;
+use ReflectionClass;
+use ReflectionMethod;
+
+use function array_slice;
+use function assert;
+use function count;
+use function dirname;
+use function ini_get;
+use function is_array;
+use function is_scalar;
+use function is_string;
+use function sprintf;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_UNESCAPED_SLASHES;
+use const PHP_OS_FAMILY;
+use const PHP_SAPI;
+use const PHP_VERSION;
 
 /**
  * Performance benchmark runner and reporter.
@@ -62,7 +80,7 @@ final class PerformanceBenchmarkRunner
                 'os' => PHP_OS_FAMILY,
                 'php_sapi' => PHP_SAPI,
             ],
-            'benchmarks' => []
+            'benchmarks' => [],
         ];
 
         echo "🚀 Starting Export Performance Benchmarks...\n\n";
@@ -80,7 +98,7 @@ final class PerformanceBenchmarkRunner
 
         echo "\n✅ Benchmarks completed. Reports saved to:\n";
         echo "   JSON: {$this->reportPath}\n";
-        echo "   Text: " . str_replace('.json', '.txt', $this->reportPath) . "\n\n";
+        echo '   Text: ' . str_replace('.json', '.txt', $this->reportPath) . "\n\n";
 
         return $this->benchmarkResults;
     }
@@ -128,12 +146,12 @@ final class PerformanceBenchmarkRunner
             return [];
         }
 
-        $reflection = new \ReflectionClass($testClass);
+        $reflection = new ReflectionClass($testClass);
         $methods = [];
 
-        foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            if (str_starts_with($method->getName(), 'test') &&
-                str_contains($method->getName(), 'Performance')) {
+        foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            if (str_starts_with($method->getName(), 'test')
+                && str_contains($method->getName(), 'Performance')) {
                 $methods[] = $method->getName();
             }
         }
@@ -169,7 +187,7 @@ final class PerformanceBenchmarkRunner
 
             $success = true;
             $error = null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $success = false;
             $error = $e->getMessage();
         }
@@ -201,18 +219,20 @@ final class PerformanceBenchmarkRunner
             assert(isset($result['error']));
             // Fix cast.string #1: Safe string casting with type validation
             $errorValue = $result['error'] ?? 'unknown error';
-            $errorStr = is_scalar($errorValue) ? (string)$errorValue : 'unknown error';
-            return "❌ FAILED: " . $errorStr;
+            $errorStr = is_scalar($errorValue) ? (string) $errorValue : 'unknown error';
+
+            return '❌ FAILED: ' . $errorStr;
         }
 
         assert(isset($result['execution_time_ms'], $result['memory_usage_bytes']));
         $time = $result['execution_time_ms'];
-        $memory = number_format((is_numeric($result['memory_usage_bytes']) ? (float)$result['memory_usage_bytes'] : 0.0) / 1024 / 1024, 2);
+        $memory = number_format((is_numeric($result['memory_usage_bytes']) ? (float) $result['memory_usage_bytes'] : 0.0) / 1024 / 1024, 2);
 
         // Fix cast.string #2: Safe string casting with type validation
         $timeValue = $time ?? '0';
-        $timeStr = is_scalar($timeValue) ? (string)$timeValue : '0';
-        return "✅ " . $timeStr . "ms, {$memory}MB";
+        $timeStr = is_scalar($timeValue) ? (string) $timeValue : '0';
+
+        return '✅ ' . $timeStr . "ms, {$memory}MB";
     }
 
     /**
@@ -222,12 +242,12 @@ final class PerformanceBenchmarkRunner
     {
         $reportDir = dirname($this->reportPath);
         if (!is_dir($reportDir)) {
-            mkdir($reportDir, 0777, true);
+            mkdir($reportDir, 0o777, true);
         }
 
         file_put_contents(
             $this->reportPath,
-            json_encode($this->benchmarkResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            json_encode($this->benchmarkResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         );
     }
 
@@ -239,34 +259,34 @@ final class PerformanceBenchmarkRunner
         $textReportPath = str_replace('.json', '.txt', $this->reportPath);
 
         $report = [];
-        $report[] = "=== Export Performance Benchmark Report ===";
+        $report[] = '=== Export Performance Benchmark Report ===';
         assert(isset($this->benchmarkResults['timestamp'], $this->benchmarkResults['php_version'], $this->benchmarkResults['memory_limit']));
 
         // Fix cast.string #3: Safe string casting with type validation
         $timestampValue = $this->benchmarkResults['timestamp'] ?? 'unknown';
-        $timestampStr = is_scalar($timestampValue) ? (string)$timestampValue : 'unknown';
-        $report[] = "Generated: " . $timestampStr;
+        $timestampStr = is_scalar($timestampValue) ? (string) $timestampValue : 'unknown';
+        $report[] = 'Generated: ' . $timestampStr;
 
         // Fix cast.string #4: Safe string casting with type validation
         $phpVersionValue = $this->benchmarkResults['php_version'] ?? 'unknown';
-        $phpVersionStr = is_scalar($phpVersionValue) ? (string)$phpVersionValue : 'unknown';
-        $report[] = "PHP Version: " . $phpVersionStr;
+        $phpVersionStr = is_scalar($phpVersionValue) ? (string) $phpVersionValue : 'unknown';
+        $report[] = 'PHP Version: ' . $phpVersionStr;
 
         // Fix cast.string #5: Safe string casting with type validation
         $memoryLimitValue = $this->benchmarkResults['memory_limit'] ?? 'unknown';
-        $memoryLimitStr = is_scalar($memoryLimitValue) ? (string)$memoryLimitValue : 'unknown';
-        $report[] = "Memory Limit: " . $memoryLimitStr;
+        $memoryLimitStr = is_scalar($memoryLimitValue) ? (string) $memoryLimitValue : 'unknown';
+        $report[] = 'Memory Limit: ' . $memoryLimitStr;
 
         // Fix offsetAccess.nonOffsetAccessible: Check if environment and os key exist
         if (isset($this->benchmarkResults['environment']) && is_array($this->benchmarkResults['environment'])) {
             // Fix cast.string #6: Safe string casting with type validation
             $osValue = $this->benchmarkResults['environment']['os'] ?? 'unknown';
-            $osStr = is_scalar($osValue) ? (string)$osValue : 'unknown';
-            $report[] = "OS: " . $osStr;
+            $osStr = is_scalar($osValue) ? (string) $osValue : 'unknown';
+            $report[] = 'OS: ' . $osStr;
         } else {
-            $report[] = "OS: unknown";
+            $report[] = 'OS: unknown';
         }
-        $report[] = "";
+        $report[] = '';
 
         // Fix offsetAccess.nonOffsetAccessible: Check if benchmarks key exists and is array
         $benchmarks = $this->benchmarkResults['benchmarks'] ?? [];
@@ -279,31 +299,31 @@ final class PerformanceBenchmarkRunner
 
             // Fix offsetAccess.nonOffsetAccessible: Check if suite is array
             if (!is_array($suite)) {
-                $report[] = "Invalid suite data";
+                $report[] = 'Invalid suite data';
                 continue;
             }
 
             foreach ($suite as $testName => $result) {
                 // Fix offsetAccess.nonOffsetAccessible: Check if result is array and has required keys
                 if (!is_array($result)) {
-                    $report[] = sprintf("❌ %-40s Invalid result data", $testName);
+                    $report[] = sprintf('❌ %-40s Invalid result data', $testName);
                     continue;
                 }
 
                 $status = isset($result['success']) && $result['success'] ? '✅' : '❌';
                 $time = $result['execution_time_ms'] ?? 0;
                 $memoryBytes = $result['memory_usage_bytes'] ?? 0;
-                $memory = number_format((is_numeric($memoryBytes) ? (float)$memoryBytes : 0.0) / 1024 / 1024, 2);
+                $memory = number_format((is_numeric($memoryBytes) ? (float) $memoryBytes : 0.0) / 1024 / 1024, 2);
 
                 // Fix cast.string #7: Safe string casting with type validation
-                $testNameStr = is_scalar($testName) ? (string)$testName : 'unknown_test';
+                $testNameStr = is_scalar($testName) ? (string) $testName : 'unknown_test';
 
                 $report[] = sprintf(
-                    "%s %-40s %6.1fms %8sMB",
+                    '%s %-40s %6.1fms %8sMB',
                     $status,
                     $testNameStr,
-                    is_numeric($time) ? (float)$time : 0.0,
-                    $memory
+                    is_numeric($time) ? (float) $time : 0.0,
+                    $memory,
                 );
 
                 // Fix offsetAccess.nonOffsetAccessible: Check if success and error keys exist
@@ -311,16 +331,16 @@ final class PerformanceBenchmarkRunner
                     if (isset($result['error'])) {
                         // Fix cast.string #8: Safe string casting with type validation (duplicate of #1)
                         $errorValue = $result['error'] ?? 'unknown';
-                        $errorStr = is_scalar($errorValue) ? (string)$errorValue : 'unknown';
-                        $report[] = "    Error: " . $errorStr;
+                        $errorStr = is_scalar($errorValue) ? (string) $errorValue : 'unknown';
+                        $report[] = '    Error: ' . $errorStr;
                     }
                 }
             }
-            $report[] = "";
+            $report[] = '';
         }
 
         // Add summary statistics
-        $report[] = "--- Performance Summary ---";
+        $report[] = '--- Performance Summary ---';
         $this->addSummaryStatistics($report);
 
         file_put_contents($textReportPath, implode("\n", $report));
@@ -339,7 +359,8 @@ final class PerformanceBenchmarkRunner
         // Fix offsetAccess.nonOffsetAccessible: Check if benchmarks exists and is array
         $benchmarks = $this->benchmarkResults['benchmarks'] ?? [];
         if (!is_array($benchmarks)) {
-            $report[] = "No benchmark data available.";
+            $report[] = 'No benchmark data available.';
+
             return;
         }
 
@@ -351,12 +372,11 @@ final class PerformanceBenchmarkRunner
         }
 
         // Fix offsetAccess.nonOffsetAccessible: Filter results with proper type checking
-        $successfulResults = array_filter($allResults, function($r) {
-            return is_array($r) && isset($r['success']) && $r['success'];
-        });
+        $successfulResults = array_filter($allResults, static fn ($r) => is_array($r) && isset($r['success']) && $r['success']);
 
-        if (empty($successfulResults)) {
-            $report[] = "No successful benchmarks to analyze.";
+        if ([] === $successfulResults) {
+            $report[] = 'No successful benchmarks to analyze.';
+
             return;
         }
 
@@ -367,18 +387,19 @@ final class PerformanceBenchmarkRunner
         $executionTimes = array_column($successfulResults, 'execution_time_ms');
         $memoryUsages = array_column($successfulResults, 'memory_usage_bytes');
 
-        if (empty($executionTimes) || empty($memoryUsages)) {
-            $report[] = "No valid performance data to analyze.";
+        if ([] === $executionTimes || [] === $memoryUsages) {
+            $report[] = 'No valid performance data to analyze.';
+
             return;
         }
 
-        $report[] = sprintf("Total Tests: %d (✅ %d, ❌ %d)", $totalTests, $successfulTests, $failedTests);
-        $report[] = sprintf("Average Execution Time: %.1fms", (float)(array_sum($executionTimes) / count($executionTimes)));
+        $report[] = sprintf('Total Tests: %d (✅ %d, ❌ %d)', $totalTests, $successfulTests, $failedTests);
+        $report[] = sprintf('Average Execution Time: %.1fms', (float) (array_sum($executionTimes) / count($executionTimes)));
         $maxExecutionTime = max($executionTimes);
-        $report[] = sprintf("Max Execution Time: %.1fms", is_numeric($maxExecutionTime) ? (float)$maxExecutionTime : 0.0);
-        $report[] = sprintf("Average Memory Usage: %.2fMB", (float)(array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024));
+        $report[] = sprintf('Max Execution Time: %.1fms', is_numeric($maxExecutionTime) ? (float) $maxExecutionTime : 0.0);
+        $report[] = sprintf('Average Memory Usage: %.2fMB', (float) (array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024));
         $maxMemoryUsage = max($memoryUsages);
-        $report[] = sprintf("Max Memory Usage: %.2fMB", is_numeric($maxMemoryUsage) ? (float)($maxMemoryUsage / 1024 / 1024) : 0.0);
+        $report[] = sprintf('Max Memory Usage: %.2fMB', is_numeric($maxMemoryUsage) ? (float) ($maxMemoryUsage / 1024 / 1024) : 0.0);
     }
 
     /**
@@ -392,16 +413,17 @@ final class PerformanceBenchmarkRunner
             // Create initial history file
             file_put_contents($historyFile, json_encode([$this->benchmarkResults], JSON_PRETTY_PRINT));
             echo "📈 Created initial performance history baseline.\n";
+
             return;
         }
 
         $historyContent = file_get_contents($historyFile);
-        if ($historyContent === false) {
+        if (false === $historyContent) {
             return;
         }
 
         $history = json_decode($historyContent, true);
-        if (empty($history) || !is_array($history)) {
+        if (!is_array($history) || [] === $history) {
             return;
         }
 
@@ -412,13 +434,13 @@ final class PerformanceBenchmarkRunner
 
         // Fix argument.type: Ensure $lastRun is properly typed as array<string, mixed>
         $validatedLastRun = $this->validateHistoryEntry($lastRun);
-        if ($validatedLastRun === null) {
+        if (null === $validatedLastRun) {
             return;
         }
 
         $regressions = $this->comparePerformanceResults($validatedLastRun, $this->benchmarkResults);
 
-        if (!empty($regressions)) {
+        if ([] !== $regressions) {
             echo "⚠️  Performance regressions detected:\n";
             foreach ($regressions as $regression) {
                 echo "   {$regression}\n";
@@ -435,8 +457,10 @@ final class PerformanceBenchmarkRunner
     }
 
     /**
-     * Validate and ensure history entry has correct type structure
+     * Validate and ensure history entry has correct type structure.
+     *
      * @param array<mixed> $entry
+     *
      * @return array<string, mixed>|null
      */
     private function validateHistoryEntry(array $entry): ?array
@@ -462,6 +486,7 @@ final class PerformanceBenchmarkRunner
     /**
      * @param array<string, mixed> $baseline
      * @param array<string, mixed> $current
+     *
      * @return array<int, string>
      */
     private function comparePerformanceResults(array $baseline, array $current): array
@@ -496,8 +521,8 @@ final class PerformanceBenchmarkRunner
                 }
 
                 // Fix offsetAccess.nonOffsetAccessible: Check if success keys exist
-                if (!isset($result['success']) || !isset($baselineResult['success']) ||
-                    !$result['success'] || !$baselineResult['success']) {
+                if (!isset($result['success']) || !isset($baselineResult['success'])
+                    || !$result['success'] || !$baselineResult['success']) {
                     continue;
                 }
 
@@ -508,22 +533,22 @@ final class PerformanceBenchmarkRunner
                     continue;
                 }
                 $timeRegression = $this->calculateRegression(
-                    (float)$baselineTime,
-                    (float)$currentTime
+                    (float) $baselineTime,
+                    (float) $currentTime,
                 );
 
                 if ($timeRegression > $this->regressionThresholds['execution_time']) {
                     // Fix cast.string #9 & #10: Safe string casting with type validation
-                    $suiteNameStr = is_scalar($suiteName) ? (string)$suiteName : 'unknown_suite';
-                    $testNameStr = is_scalar($testName) ? (string)$testName : 'unknown_test';
+                    $suiteNameStr = is_scalar($suiteName) ? (string) $suiteName : 'unknown_suite';
+                    $testNameStr = is_scalar($testName) ? (string) $testName : 'unknown_test';
 
                     $regressions[] = sprintf(
-                        "%s::%s execution time increased by %.1f%% (%.1fms → %.1fms)",
+                        '%s::%s execution time increased by %.1f%% (%.1fms → %.1fms)',
                         $suiteNameStr,
                         $testNameStr,
-                        (float)$timeRegression,
-                        (float)$baselineTime,
-                        (float)$currentTime
+                        (float) $timeRegression,
+                        (float) $baselineTime,
+                        (float) $currentTime,
                     );
                 }
 
@@ -534,22 +559,22 @@ final class PerformanceBenchmarkRunner
                     continue;
                 }
                 $memoryRegression = $this->calculateRegression(
-                    (float)$baselineMemory,
-                    (float)$currentMemory
+                    (float) $baselineMemory,
+                    (float) $currentMemory,
                 );
 
                 if ($memoryRegression > $this->regressionThresholds['memory_usage']) {
                     // Fix cast.string #11 & #12: Safe string casting with type validation
-                    $suiteNameStr = is_scalar($suiteName) ? (string)$suiteName : 'unknown_suite';
-                    $testNameStr = is_scalar($testName) ? (string)$testName : 'unknown_test';
+                    $suiteNameStr = is_scalar($suiteName) ? (string) $suiteName : 'unknown_suite';
+                    $testNameStr = is_scalar($testName) ? (string) $testName : 'unknown_test';
 
                     $regressions[] = sprintf(
-                        "%s::%s memory usage increased by %.1f%% (%.2fMB → %.2fMB)",
+                        '%s::%s memory usage increased by %.1f%% (%.2fMB → %.2fMB)',
                         $suiteNameStr,
                         $testNameStr,
-                        (float)$memoryRegression,
-                        (float)($baselineMemory / 1024 / 1024),
-                        (float)($currentMemory / 1024 / 1024)
+                        (float) $memoryRegression,
+                        (float) ($baselineMemory / 1024 / 1024),
+                        (float) ($currentMemory / 1024 / 1024),
                     );
                 }
             }
@@ -563,7 +588,7 @@ final class PerformanceBenchmarkRunner
      */
     private function calculateRegression(float $baseline, float $current): float
     {
-        if ($baseline == 0) {
+        if (0.0 === $baseline) {
             return 0;
         }
 
@@ -584,8 +609,8 @@ final class PerformanceBenchmarkRunner
         try {
             $runner->runAllBenchmarks();
             exit(0);
-        } catch (\Exception $e) {
-            echo "❌ Benchmark execution failed: " . $e->getMessage() . "\n";
+        } catch (Exception $e) {
+            echo '❌ Benchmark execution failed: ' . $e->getMessage() . "\n";
             exit(1);
         }
     }

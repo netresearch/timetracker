@@ -103,6 +103,8 @@ RUN chmod ugo+rwX var/log var/cache
 
 FROM app_builder AS assets_builder
 
+# Skip CaptainHook in Docker build (no .git directory)
+ENV CAPTAINHOOK_DISABLE=true
 RUN composer install --no-ansi
 
 # Build webpack assets
