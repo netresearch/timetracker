@@ -244,18 +244,6 @@ parameters:
 			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Controller/StatusControllerTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Controller/StatusControllerTest.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotEmpty\(\) with ''Krank'' will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1

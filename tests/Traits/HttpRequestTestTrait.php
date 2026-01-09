@@ -76,7 +76,7 @@ trait HttpRequestTestTrait
     protected function assertSuccessfulResponse(): self
     {
         $statusCode = $this->client->getResponse()->getStatusCode();
-        $this->assertTrue(
+        self::assertTrue(
             $statusCode >= 200 && $statusCode < 300,
             "Expected successful response, got {$statusCode}",
         );
@@ -110,12 +110,12 @@ trait HttpRequestTestTrait
     protected function assertRedirect(?string $expectedLocation = null): self
     {
         $response = $this->client->getResponse();
-        $this->assertTrue($response->isRedirect(), 'Expected redirect response');
+        self::assertTrue($response->isRedirect(), 'Expected redirect response');
 
         if (null !== $expectedLocation) {
             $location = $response->headers->get('Location');
             self::assertIsString($location, 'Location header should be a string');
-            $this->assertStringContainsString($expectedLocation, $location);
+            self::assertStringContainsString($expectedLocation, $location);
         }
 
         return $this;
