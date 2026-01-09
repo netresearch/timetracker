@@ -336,9 +336,9 @@ class JiraOAuthApiService
             $response = $this->post(sprintf('issue/%s/worklog', $sTicket), $arData);
         }
 
-        $workLog = is_object($response) ? JiraWorkLog::fromApiResponse($response) : null;
+        $workLog = JiraWorkLog::fromApiResponse($response);
 
-        if ($workLog === null || ! $workLog->hasValidId()) {
+        if (! $workLog->hasValidId()) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 

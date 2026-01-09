@@ -145,28 +145,10 @@ parameters:
 			path: src/Service/Integration/Jira/JiraIntegrationService.php
 
 		-
-			message: '#^Call to function is_object\(\) with object will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\> is not subtype of type App\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\>\.$#'
 			identifier: varTag.type
 			count: 2
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$transitions\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>summary" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
 
 		-
 			message: '#^PHPDoc tag @var with type Laminas\\Ldap\\Collection\<array\<string, array\<int, string\>\>\> is not subtype of type Laminas\\Ldap\\Collection\<array\{dn\: string\}\>\.$#'
@@ -556,12 +538,6 @@ parameters:
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
-			message: '#^Parameter \#2 \$durationMs of method Tests\\Performance\\ExportActionPerformanceTest\:\:logPerformanceMetric\(\) expects int, float\|int given\.$#'
-			identifier: argument.type
-			count: 5
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
 			message: '#^Call to internal method PHPUnit\\Framework\\TestCase\:\:addToAssertionCount\(\) from outside its root namespace PHPUnit\.$#'
 			identifier: method.internal
 			count: 1
@@ -578,18 +554,6 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 11
 			path: tests/Performance/ExportPerformanceTest.php
-
-		-
-			message: '#^Parameter \#2 \$durationMs of method Tests\\Performance\\ExportPerformanceTest\:\:logPerformanceMetric\(\) expects int, float\|int given\.$#'
-			identifier: argument.type
-			count: 7
-			path: tests/Performance/ExportPerformanceTest.php
-
-		-
-			message: '#^Casting to int something that''s already int\.$#'
-			identifier: cast.useless
-			count: 5
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
 
 		-
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertCount\(\)\.$#'

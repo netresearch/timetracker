@@ -146,7 +146,7 @@ class JiraTicketService
             foreach ($issue->fields->subtasks as $subtask) {
                 $subtasks[] = [
                     'key' => $subtask->key ?? '',
-                    'summary' => $subtask->fields?->summary ?? '',
+                    'summary' => $subtask->fields->summary ?? '',
                     'status' => $subtask->fields?->status->name ?? '',
                     'assignee' => $subtask->fields?->assignee?->displayName,
                 ];
@@ -231,13 +231,20 @@ class JiraTicketService
         try {
             $response = $this->jiraHttpClientService->get(sprintf('issue/%s/transitions', $ticketKey));
 
-            if (! is_object($response) || ! isset($response->transitions) || ! is_iterable($response->transitions)) {
+            if (! is_object($response)) {
+                return [];
+            }
+
+            /** @var array<string, mixed> $responseData */
+            $responseData = (array) $response;
+
+            if (! isset($responseData['transitions']) || ! is_iterable($responseData['transitions'])) {
                 return [];
             }
 
             $transitions = [];
 
-            foreach ($response->transitions as $transitionData) {
+            foreach ($responseData['transitions'] as $transitionData) {
                 if (! is_object($transitionData)) {
                     continue;
                 }

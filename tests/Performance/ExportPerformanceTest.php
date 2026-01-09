@@ -532,10 +532,10 @@ final class ExportPerformanceTest extends TestCase
     /**
      * Log performance metrics for analysis.
      */
-    private function logPerformanceMetric(string $testName, int $durationMs, int $memoryBytes, int $recordCount): void
+    private function logPerformanceMetric(string $testName, float|int $durationMs, int $memoryBytes, int $recordCount): void
     {
         $memoryMB = number_format($memoryBytes / 1024 / 1024, 2);
-        $throughput = $recordCount > 0 ? round($recordCount / max($durationMs / 1000, 0.001), 2) : 0;
+        $throughput = $recordCount > 0 ? round($recordCount / max((float) $durationMs / 1000, 0.001), 2) : 0;
 
         fwrite(STDERR, sprintf(
             "\n[PERFORMANCE] %s: %dms, %sMB memory, %d records, %s records/sec\n",

@@ -104,7 +104,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $this->assertResponseHeaderContains('Content-Type', 'spreadsheetml');
         $this->assertResponseHeaderContains('Content-disposition', 'attachment');
 
-        $this->logPerformanceMetric('Small Dataset End-to-End', (int) $duration, (int) $memoryUsage, 50);
+        $this->logPerformanceMetric('Small Dataset End-to-End', $duration, $memoryUsage, 50);
     }
 
     /**
@@ -149,7 +149,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             'Response size too large: ' . number_format($contentLength / 1024 / 1024, 2) . 'MB',
         );
 
-        $this->logPerformanceMetric('Medium Dataset End-to-End', (int) $duration, (int) $memoryUsage, 500);
+        $this->logPerformanceMetric('Medium Dataset End-to-End', $duration, $memoryUsage, 500);
     }
 
     /**
@@ -190,7 +190,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             "Export with ticket enrichment took {$duration}ms",
         );
 
-        $this->logPerformanceMetric('Export with Ticket Enrichment Integration', (int) $duration, (int) $memoryUsage, 100);
+        $this->logPerformanceMetric('Export with Ticket Enrichment Integration', $duration, $memoryUsage, 100);
     }
 
     /**
@@ -228,7 +228,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 
         $this->assertGreaterThan(0, count($entries));
 
-        $this->logPerformanceMetric('Database Query Performance', (int) $duration, 0, count($entries));
+        $this->logPerformanceMetric('Database Query Performance', $duration, 0, count($entries));
     }
 
     /**
@@ -274,7 +274,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 
         $this->assertCount(3, $responses);
 
-        $this->logPerformanceMetric('Concurrent Export Requests', (int) $duration, (int) $memoryUsage, 600);
+        $this->logPerformanceMetric('Concurrent Export Requests', $duration, $memoryUsage, 600);
     }
 
     /**
@@ -317,7 +317,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 
             $this->logPerformanceMetric(
                 'Export with Filters: ' . json_encode($filters),
-                (int) $duration,
+                $duration,
                 0,
                 300,
             );
@@ -360,7 +360,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $this->logPerformanceMetric(
             'Large Export Memory Usage',
             0,
-            (int) $peakMemoryIncrease,
+            $peakMemoryIncrease,
             2000,
         );
     }
@@ -482,10 +482,10 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
     /**
      * Log performance metrics for analysis.
      */
-    private function logPerformanceMetric(string $testName, int $durationMs, int $memoryBytes, int $recordCount): void
+    private function logPerformanceMetric(string $testName, float|int $durationMs, int $memoryBytes, int $recordCount): void
     {
         $memoryMB = number_format($memoryBytes / 1024 / 1024, 2);
-        $throughput = $recordCount > 0 && $durationMs > 0 ? round($recordCount / ($durationMs / 1000), 2) : 0;
+        $throughput = $recordCount > 0 && $durationMs > 0 ? round($recordCount / ((float) $durationMs / 1000), 2) : 0;
 
         fwrite(STDERR, sprintf(
             "\n[INTEGRATION PERFORMANCE] %s: %dms, %sMB memory, %d records, %s records/sec\n",
