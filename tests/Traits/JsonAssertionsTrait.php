@@ -42,9 +42,9 @@ trait JsonAssertionsTrait
      * Assert JSON response structure.
      *
      * Supports three formats:
-     * 1. List of property names: ['id', 'name', 'email'] - check properties exist
-     * 2. Nested structures: ['user' => ['nested']] - recurse into nested arrays
-     * 3. Value comparison: ['id' => 5, 0 => 'value'] - check exact values at keys
+     * 1. List of property names: ['id', 'name', 'email']
+     * 2. Nested structures: ['user' => ['id', 'name']]
+     * 3. Expected values (associative): ['active' => true, 'count' => 5]
      *
      * @param array<int|string, mixed> $structure
      * @param array<string, mixed> $json
