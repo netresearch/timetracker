@@ -234,8 +234,8 @@ final class ExportAction extends BaseController
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $response->headers->set('Content-disposition', 'attachment;filename=' . $filename . '.xlsx');
 
-        $content = file_get_contents($filePath) ?: '';
-        $response->setContent($content);
+        $fileContents = file_get_contents($filePath);
+        $response->setContent(false !== $fileContents ? $fileContents : '');
         unlink($filePath);
 
         return $response;

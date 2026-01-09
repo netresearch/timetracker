@@ -56,7 +56,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId(), $days);
 
-        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
+        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult) && array_is_list($cachedResult));
             /** @var list<Entry> $cachedResult */
 
@@ -150,7 +150,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
 
-        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
+        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
             assert(array_key_exists('customer', $cachedResult));
             /** @var non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
@@ -203,8 +203,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $result = $connection->executeQuery($sql, $params)->fetchAssociative();
 
-        $data = $this->formatSummaryData($result ?: null, $entry);
-        assert($data !== []);
+        $data = $this->formatSummaryData(false !== $result ? $result : null, $entry);
+        assert([] !== $data);
 
         $this->setCached($cacheKey, $data);
 
@@ -220,7 +220,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
 
-        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
+        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
             assert(isset($cachedResult['duration'], $cachedResult['count']));
             assert(is_int($cachedResult['duration']) && is_int($cachedResult['count']));
@@ -360,9 +360,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
             case Period::WEEK:
                 $startOfWeek = clone $today;
-                $startOfWeek = $startOfWeek->modify('monday this week') ?: $startOfWeek;
+                $startOfWeek = false !== $startOfWeek->modify('monday this week') ? $startOfWeek->modify('monday this week') : $startOfWeek;
                 $endOfWeek = clone $startOfWeek;
-                $endOfWeek = $endOfWeek->modify('+6 days') ?: $endOfWeek;
+                $endOfWeek = false !== $endOfWeek->modify('+6 days') ? $endOfWeek->modify('+6 days') : $endOfWeek;
 
                 $queryBuilder->andWhere('e.day BETWEEN :start AND :end')
                     ->setParameter('start', $startOfWeek)
@@ -486,7 +486,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ],
             'ticket' => [
                 'scope' => 'ticket',
-                'name' => $entry->getTicket() ?: '',
+                'name' => '' !== $entry->getTicket() ? $entry->getTicket() : '',
                 'entries' => ArrayTypeHelper::getInt($result, 'ticket_entries', 0) ?? 0,
                 'total' => ArrayTypeHelper::getInt($result, 'ticket_total', 0) ?? 0,
                 'own' => ArrayTypeHelper::getInt($result, 'ticket_own', 0) ?? 0,
@@ -560,7 +560,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function getCached(string $key): mixed
     {
-        if (!$this->cacheItemPool) {
+        if (null === $this->cacheItemPool) {
             return null;
         }
 
@@ -574,7 +574,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function setCached(string $key, mixed $data, int $ttl = self::CACHE_TTL): void
     {
-        if (!$this->cacheItemPool) {
+        if (null === $this->cacheItemPool) {
             return;
         }
 

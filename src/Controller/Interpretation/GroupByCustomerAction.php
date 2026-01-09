@@ -43,7 +43,7 @@ final class GroupByCustomerAction extends BaseInterpretationController
         $customers = [];
         foreach ($entries as $entry) {
             $customerEntity = $entry->getCustomer();
-            if (!$customerEntity) {
+            if (null === $customerEntity) {
                 continue;
             }
 

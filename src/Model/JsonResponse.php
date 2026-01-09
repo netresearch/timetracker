@@ -48,7 +48,7 @@ class JsonResponse extends Response
         // Encode content first to ensure we have a string for parent constructor
         $encoded = match ($content) {
             null => 'null',
-            default => json_encode($content) ?: 'null',
+            default => false !== json_encode($content) ? json_encode($content) : 'null',
         };
 
         // Initialize base Response with proper content - this resolves PropertyNotSetInConstructor

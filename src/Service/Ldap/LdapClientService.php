@@ -157,7 +157,7 @@ class LdapClientService
             throw new Exception('Username unknown.');
         }
 
-        if ($collection->count() > 1 && $this->logger) {
+        if ($collection->count() > 1 && null !== $this->logger) {
             $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
                 'filter' => $searchFilter,
                 'baseDn' => $this->_baseDn,
@@ -494,7 +494,7 @@ class LdapClientService
                     }
                 }
 
-                if ([] === $this->teams && $this->logger) {
+                if ([] === $this->teams && null !== $this->logger) {
                     $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
                 }
             } catch (Exception $e) {

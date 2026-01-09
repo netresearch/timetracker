@@ -84,17 +84,6 @@ parameters:
 			count: 1
 			path: src/Controller/Admin/SaveUserAction.php
 
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: src/Controller/Admin/SyncProjectSubticketsAction.php
-
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: src/Controller/Controlling/ExportAction.php
 
 		-
 			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
@@ -108,41 +97,7 @@ parameters:
 			count: 4
 			path: src/Controller/Interpretation/BaseInterpretationController.php
 
-		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Customer\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Controller/Interpretation/GroupByCustomerAction.php
 
-		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Project\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Controller/Interpretation/GroupByProjectAction.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Controller/Interpretation/GroupByUserAction.php
-
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: src/Dto/CustomerSaveDto.php
-
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: src/Dto/UserSaveDto.php
-
-		-
-			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
-			identifier: empty.notAllowed
-			count: 1
-			path: src/Entity/Entry.php
 
 		-
 			message: '#^Only booleans are allowed in &&, int\|null given on the right side\.$#'
@@ -198,11 +153,6 @@ parameters:
 			count: 1
 			path: src/EventSubscriber/ExceptionSubscriber.php
 
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: src/EventSubscriber/ExceptionSubscriber.php
 
 		-
 			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
@@ -222,11 +172,6 @@ parameters:
 			count: 1
 			path: src/Model/Base.php
 
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: src/Model/JsonResponse.php
 
 		-
 			message: '#^Only booleans are allowed in a ternary operator condition, DateTime given\.$#'
@@ -264,35 +209,8 @@ parameters:
 			count: 2
 			path: src/Repository/EntryRepository.php
 
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 2
-			path: src/Repository/EntryRepository.php
 
-		-
-			message: '#^Only booleans are allowed in &&, Psr\\Cache\\CacheItemPoolInterface\|null given on the left side\.$#'
-			identifier: booleanAnd.leftNotBoolean
-			count: 3
-			path: src/Repository/OptimizedEntryRepository.php
 
-		-
-			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
-			count: 3
-			path: src/Repository/OptimizedEntryRepository.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, Psr\\Cache\\CacheItemPoolInterface\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 2
-			path: src/Repository/OptimizedEntryRepository.php
-
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 4
-			path: src/Repository/OptimizedEntryRepository.php
 
 		-
 			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\Customer\|null given\.$#'
@@ -318,11 +236,6 @@ parameters:
 			count: 1
 			path: src/Response/Error.php
 
-		-
-			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
-			identifier: empty.notAllowed
-			count: 1
-			path: src/Security/LdapAuthenticator.php
 
 		-
 			message: '#^Only booleans are allowed in an if condition, string\|null given\.$#'
@@ -348,11 +261,6 @@ parameters:
 			count: 1
 			path: src/Service/Cache/QueryCacheService.php
 
-		-
-			message: '#^Construct empty\(\) is not allowed\. Use more strict comparison\.$#'
-			identifier: empty.notAllowed
-			count: 1
-			path: src/Service/ExportService.php
 
 		-
 			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Project\|null given\.$#'
@@ -516,11 +424,6 @@ parameters:
 			count: 1
 			path: src/Service/Integration/Jira/JiraTicketService.php
 
-		-
-			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
-			identifier: ternary.shortNotAllowed
-			count: 1
-			path: src/Service/Integration/Jira/JiraTicketService.php
 
 		-
 			message: '#^Access to an undefined property object\:\:\$id\.$#'
@@ -558,11 +461,6 @@ parameters:
 			count: 1
 			path: src/Service/Integration/Jira/JiraWorkLogService.php
 
-		-
-			message: '#^Only booleans are allowed in &&, Psr\\Log\\LoggerInterface\|null given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
-			count: 2
-			path: src/Service/Ldap/LdapClientService.php
 
 		-
 			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'

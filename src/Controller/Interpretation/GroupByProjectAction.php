@@ -43,7 +43,7 @@ final class GroupByProjectAction extends BaseInterpretationController
         $projects = [];
         foreach ($entries as $entry) {
             $projectEntity = $entry->getProject();
-            if (!$projectEntity) {
+            if (null === $projectEntity) {
                 continue;
             }
 

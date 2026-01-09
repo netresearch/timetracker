@@ -39,7 +39,7 @@ final readonly class CustomerSaveDto
     public static function fromRequest(Request $request): self
     {
         /** @var list<int|string> $teams */
-        $teams = $request->request->all('teams') ?: [];
+        $teams = [] !== $request->request->all('teams') ? $request->request->all('teams') : [];
 
         return new self(
             id: (int) ($request->request->get('id') ?? 0),

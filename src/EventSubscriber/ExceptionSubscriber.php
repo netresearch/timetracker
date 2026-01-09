@@ -75,7 +75,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         // Handle HTTP exceptions
         if ($throwable instanceof HttpExceptionInterface) {
             $statusCode = $throwable->getStatusCode();
-            $message = $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
+            $message = '' !== $throwable->getMessage() ? $throwable->getMessage() : $this->getDefaultMessageForStatusCode($statusCode);
 
             return new JsonResponse([
                 'error' => $this->getErrorTypeForStatusCode($statusCode),

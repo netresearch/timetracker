@@ -116,7 +116,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                     ->setLocale('de')
                 ;
 
-                if (!empty($this->ldapClientService->getTeams())) {
+                if ([] !== $this->ldapClientService->getTeams()) {
                     $teamRepo = $this->entityManager->getRepository(Team::class);
                     foreach ($this->ldapClientService->getTeams() as $teamname) {
                         $team = $teamRepo->findOneBy(['name' => $teamname]);

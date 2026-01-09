@@ -44,7 +44,7 @@ final class GroupByUserAction extends BaseInterpretationController
         $users = [];
         foreach ($entries as $entry) {
             $u = $entry->getUser();
-            if (!$u) {
+            if (null === $u) {
                 continue;
             }
 

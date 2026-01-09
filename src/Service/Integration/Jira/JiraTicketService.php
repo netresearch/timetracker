@@ -40,7 +40,7 @@ class JiraTicketService
             throw new JiraApiException('Project has no Jira ID configured', 400);
         }
 
-        $description = $entry->getDescription() ?: 'No description provided';
+        $description = '' !== $entry->getDescription() ? $entry->getDescription() : 'No description provided';
 
         $ticketData = [
             'fields' => [

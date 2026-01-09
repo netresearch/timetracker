@@ -1148,9 +1148,9 @@ class EntryRepository extends ServiceEntityRepository
 
             case Period::WEEK:
                 $startOfWeek = clone $today;
-                $startOfWeek = $startOfWeek->modify('monday this week') ?: $startOfWeek;
+                $startOfWeek = false !== $startOfWeek->modify('monday this week') ? $startOfWeek->modify('monday this week') : $startOfWeek;
                 $endOfWeek = clone $startOfWeek;
-                $endOfWeek = $endOfWeek->modify('+6 days') ?: $endOfWeek;
+                $endOfWeek = false !== $endOfWeek->modify('+6 days') ? $endOfWeek->modify('+6 days') : $endOfWeek;
 
                 $queryBuilder->andWhere('e.day BETWEEN :start AND :end')
                     ->setParameter('start', $startOfWeek->format('Y-m-d'))

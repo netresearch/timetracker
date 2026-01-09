@@ -194,7 +194,7 @@ class ExportService
         $offset = 0;
         do {
             $batch = $objectRepository->findByDatePaginated($userId, $year, $month, $projectId, $customerId, $arSort, $offset, $batchSize);
-            if (!empty($batch)) {
+            if ([] !== $batch) {
                 yield $batch;
             }
 
