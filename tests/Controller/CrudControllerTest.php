@@ -172,7 +172,8 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
-        $this->assertMessage('10 Einträge wurden angelegt.');
+        // 9 weekdays between 2020-01-25 and 2020-02-06 (Saturday 2020-02-01 is skipped)
+        $this->assertMessage('9 Einträge wurden angelegt.');
 
         $query = 'SELECT *
             FROM `entries`
@@ -183,7 +184,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
 
-        self::assertSame(10, count($results));
+        self::assertSame(9, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -195,13 +196,14 @@ final class CrudControllerTest extends AbstractWebTestCase
             'class' => '2',
         ];
 
+        // Contract 1 ends 2020-01-31, Contract 2 starts 2020-02-01 (hours_0=0 for Sun, hours_6=0.5 for Sat)
+        // 2020-02-01 is Saturday (hours_6=0.5 in Contract 2) - but weekends are skipped in bulk entry
         $variableExpected = [
             ['day' => '2020-01-27', 'end' => '09:00:00', 'duration' => '60'],
             ['day' => '2020-01-28', 'end' => '10:00:00', 'duration' => '120'],
             ['day' => '2020-01-29', 'end' => '11:00:00', 'duration' => '180'],
             ['day' => '2020-01-30', 'end' => '12:00:00', 'duration' => '240'],
             ['day' => '2020-01-31', 'end' => '13:00:00', 'duration' => '300'],
-            ['day' => '2020-02-01', 'end' => '08:30:00', 'duration' => '30'],
             ['day' => '2020-02-03', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-04', 'end' => '10:12:00', 'duration' => '132'],
             ['day' => '2020-02-05', 'end' => '11:18:00', 'duration' => '198'],
@@ -360,7 +362,8 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
-        $this->assertMessage('10 Einträge wurden angelegt.');
+        // 9 weekdays between 2020-02-10 and 2020-02-20 (Saturday 2020-02-15 is skipped)
+        $this->assertMessage('9 Einträge wurden angelegt.');
 
         $query = 'SELECT *
             FROM `entries`
@@ -371,7 +374,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $queryResult = $this->connection->executeQuery($query);
         $results = $queryResult->fetchAllAssociative();
 
-        self::assertSame(10, count($results));
+        self::assertSame(9, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -383,14 +386,13 @@ final class CrudControllerTest extends AbstractWebTestCase
             'class' => '2',
         ];
 
-        // We only check the first 10 expected entries as that was the original test
+        // 9 weekdays - 2020-02-15 (Saturday) is skipped even though contract has hours_6=0.5
         $variableExpected = [
             ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-11', 'end' => '10:12:00', 'duration' => '132'],
             ['day' => '2020-02-12', 'end' => '11:18:00', 'duration' => '198'],
             ['day' => '2020-02-13', 'end' => '12:24:00', 'duration' => '264'],
             ['day' => '2020-02-14', 'end' => '13:30:00', 'duration' => '330'],
-            ['day' => '2020-02-15', 'end' => '08:30:00', 'duration' => '30'],
             ['day' => '2020-02-17', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-18', 'end' => '10:12:00', 'duration' => '132'],
             ['day' => '2020-02-19', 'end' => '11:18:00', 'duration' => '198'],

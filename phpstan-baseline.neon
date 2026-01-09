@@ -684,7 +684,7 @@ parameters:
 		-
 			message: '#^Call to function property_exists\(\) with \$this\(Tests\\AbstractWebTestCase\) and ''client'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
+			count: 2
 			path: tests/AbstractWebTestCase.php
 
 		-

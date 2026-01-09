@@ -43,15 +43,15 @@ final class ExportServiceTest extends TestCase
 
         // Provide appropriate repositories based on requested class
         $currentUser = new User();
-        $mock = $this->getMockBuilder(\Doctrine\Persistence\ObjectRepository::class)->getMock();
-        $mock->method('find')->willReturn($currentUser);
-        $doctrine->method('getRepository')->willReturnCallback(static function (string $class) use ($repo, $mock): \PHPUnit\Framework\MockObject\MockObject {
+        $userRepoMock = $this->createMock(\App\Repository\UserRepository::class);
+        $userRepoMock->method('find')->willReturn($currentUser);
+        $doctrine->method('getRepository')->willReturnCallback(static function (string $class) use ($repo, $userRepoMock): \PHPUnit\Framework\MockObject\MockObject {
             if (Entry::class === $class) {
                 return $repo;
             }
 
             if (User::class === $class) {
-                return $mock;
+                return $userRepoMock;
             }
 
             return $repo;

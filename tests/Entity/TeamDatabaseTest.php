@@ -129,6 +129,8 @@ final class TeamDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->flush();
         $teamId = $team->getId();
+        $user1Id = $user1->getId();
+        $user2Id = $user2->getId();
 
         // Clear entity manager to ensure fetch from DB
         $this->entityManager->clear();
@@ -149,12 +151,21 @@ final class TeamDatabaseTest extends AbstractWebTestCase
         assert(is_countable($users));
         self::assertCount(2, $users);
 
-        // Clean up
-        $this->entityManager->remove($team);
+        // Clean up - re-fetch entities since they were detached by clear()
+        $teamToRemove = $this->entityManager->find(Team::class, $teamId);
+        if (null !== $teamToRemove) {
+            $this->entityManager->remove($teamToRemove);
+        }
         $this->entityManager->flush();
 
-        $this->entityManager->remove($user1);
-        $this->entityManager->remove($user2);
+        $user1ToRemove = $this->entityManager->find(User::class, $user1Id);
+        $user2ToRemove = $this->entityManager->find(User::class, $user2Id);
+        if (null !== $user1ToRemove) {
+            $this->entityManager->remove($user1ToRemove);
+        }
+        if (null !== $user2ToRemove) {
+            $this->entityManager->remove($user2ToRemove);
+        }
         $this->entityManager->flush();
     }
 
