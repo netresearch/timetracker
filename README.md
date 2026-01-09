@@ -8,6 +8,7 @@
 [![Code Quality](https://img.shields.io/badge/phpstan-level%209-green.svg)](phpstan.neon)
 [![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11719/badge)](https://www.bestpractices.dev/projects/11719)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
