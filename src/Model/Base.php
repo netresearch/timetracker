@@ -29,6 +29,10 @@ class Base
         $data = [];
         foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $reflectionProperty) {
             $method = 'get' . ucwords($reflectionProperty->getName());
+            if (!method_exists($this, $method)) {
+                continue;
+            }
+            /** @var mixed $value */
             $value = $this->{$method}();
             if (is_object($value) && method_exists($value, 'getId')) {
                 $value = $value->getId();

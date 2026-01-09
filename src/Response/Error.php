@@ -54,7 +54,7 @@ class Error extends JsonResponse
      *   code: int|string,
      *   file: string,
      *   line: int,
-     *   trace: list<array{args?: array<int, mixed>, class?: class-string, file?: string, function?: string, line?: int, type?: '->'|'::'}>,
+     *   trace: list<array{function: string, line?: int, file?: string, class?: class-string, type?: '->'|'::', args?: array<mixed>, object?: object}>,
      *   previous: array<string, mixed>|null
      * }|null
      */

@@ -61,12 +61,6 @@ parameters:
 			path: src/Model/Base.php
 
 		-
-			message: '#^Method App\\Response\\Error\:\:getExceptionAsArray\(\) should return array\{message\: string, class\: class\-string\<Throwable\>, code\: int\|string, file\: string, line\: int, trace\: list\<array\{args\?\: array\<int, mixed\>, class\?\: class\-string, file\?\: string, function\?\: string, line\?\: int, type\?\: ''\-\>''\|''\:\:''\}\>, previous\: array\<string, mixed\>\|null\}\|null but returns array\{message\: string, class\: class\-string\<Throwable\>&literal\-string, code\: \(int\|string\), file\: string, line\: int, trace\: list\<array\{function\: string, line\?\: int, file\?\: string, class\?\: class\-string, type\?\: ''\-\>''\|''\:\:'', args\?\: array\<mixed\>, object\?\: object\}\>, previous\: array\{message\: string, class\: class\-string\<Throwable\>, code\: int\|string, file\: string, line\: int, trace\: list\<array\{args\?\: array\<int, mixed\>, class\?\: class\-string, file\?\: string, function\?\: string, line\?\: int, type\?\: ''\-\>''\|''\:\:''\}\>, previous\: array\<string, mixed\>\|null\}\|null\}\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Response/Error.php
-
-		-
 			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
 			identifier: sfpPsrLog.messageNotStaticString
 			count: 1
@@ -194,18 +188,6 @@ parameters:
 			identifier: method.deprecated
 			count: 1
 			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with arguments \*NEVER\*, mixed and ''End should be…'' will always evaluate to false\.$#'
-			identifier: staticMethod.impossibleType
-			count: 1
-			path: tests/Entity/EntryTest.php
-
-		-
-			message: '#^Parameter \#1 \$expected of static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: tests/Entity/EntryTest.php
 
 		-
 			message: '#^Variable method call on object\.$#'

@@ -136,8 +136,10 @@ final class EntryTest extends TestCase
         $entry->setEnd($invertedEnd);
         self::assertSame($invertedStart, $entry->getStart()->format('H:i'), 'Start should remain as set');
         // When end < start, the Entry entity clamps end to equal start
+        // Use expected value directly to avoid PHPStan type narrowing issues
+        $expectedEnd = '22:22';
         $actualEnd = $entry->getEnd()->format('H:i');
-        self::assertSame($invertedStart, $actualEnd, 'End should be clamped to start when end < start');
+        self::assertSame($expectedEnd, $actualEnd, 'End should be clamped to start when end < start');
     }
 
     public function testCalcDuration(): void
