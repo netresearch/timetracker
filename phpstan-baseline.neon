@@ -220,12 +220,6 @@ parameters:
 			path: tests/Basic.php
 
 		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 1
-			path: tests/Controller/CrudControllerTest.php
-
-		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
 			identifier: varTag.type
 			count: 2

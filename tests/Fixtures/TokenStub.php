@@ -98,9 +98,14 @@ class TokenStub implements TokenInterface
      */
     public function setAttributes(array $attributes): void
     {
-        /** @var array<string, mixed> $typedAttributes */
-        $typedAttributes = $attributes;
-        $this->attributes = $typedAttributes;
+        // Filter to only string keys for type safety
+        $filtered = [];
+        foreach ($attributes as $key => $value) {
+            if (\is_string($key)) {
+                $filtered[$key] = $value;
+            }
+        }
+        $this->attributes = $filtered;
     }
 
     public function hasAttribute(string $name): bool

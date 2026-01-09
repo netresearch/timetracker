@@ -112,7 +112,8 @@ final class CrudControllerTest extends AbstractWebTestCase
         self::assertArrayHasKey('id', $result);
         $entryIdValue = $result['id'];
         self::assertIsNumeric($entryIdValue);
-        $entryId = (int) $entryIdValue;
+        self::assertIsInt($entryIdValue);
+        $entryId = $entryIdValue;
 
         // Now perform the delete - form data is fine for delete
         $deleteParam = ['id' => $entryId];
@@ -293,8 +294,9 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         // Only count entries created after the bulk operation to ensure test isolation
         $preExistingCount = count($resultsBefore);
+        /** @var array<int, int> $idColumn */
         $idColumn = array_column($resultsBefore, 'id');
-        $maxPreExistingId = [] !== $idColumn ? (int) max($idColumn) : 0;
+        $maxPreExistingId = [] !== $idColumn ? max($idColumn) : 0;
 
         $query = 'SELECT *
             FROM `entries`
