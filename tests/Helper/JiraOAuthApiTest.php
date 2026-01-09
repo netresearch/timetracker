@@ -62,8 +62,8 @@ final class JiraOAuthApiTest extends TestCase
             }
 
             /**
-             * @param array<string, mixed> $options
-             * @param mixed                $uri
+             * @param array<mixed, mixed> $options
+             * @param mixed               $uri
              */
             public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
             {

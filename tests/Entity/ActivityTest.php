@@ -57,10 +57,12 @@ final class ActivityTest extends TestCase
     public function testConstantValues(): void
     {
         // Verify constants are non-empty strings (actual values tested via isSick/isHoliday)
-        self::assertNotEmpty(Activity::SICK);
-        self::assertNotEmpty(Activity::HOLIDAY);
-        self::assertIsString(Activity::SICK);
-        self::assertIsString(Activity::HOLIDAY);
+        $sickName = Activity::SICK;
+        $holidayName = Activity::HOLIDAY;
+        self::assertNotEmpty($sickName);
+        self::assertNotEmpty($holidayName);
+        self::assertIsString($sickName);
+        self::assertIsString($holidayName);
     }
 
     public function testIsSick(): void

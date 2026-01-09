@@ -48,8 +48,8 @@ trait JsonAssertionsTrait
      * 2. Nested structures: ['user' => ['id', 'name']]
      * 3. Expected values (associative): ['active' => true, 'count' => 5]
      *
-     * @param array<int|string, mixed>   $structure
-     * @param array<string, mixed>|null  $json      Optional - fetched from client response if not provided
+     * @param array<int|string, mixed>  $structure
+     * @param array<mixed, mixed>|null  $json      Optional - fetched from client response if not provided
      */
     protected function assertJsonStructure(array $structure, ?array $json = null): void
     {
@@ -108,7 +108,7 @@ trait JsonAssertionsTrait
     /**
      * Parse JSON response and return decoded array.
      *
-     * @return array<string, mixed>
+     * @return array<mixed, mixed>
      */
     protected function getJsonResponse(\Symfony\Component\HttpFoundation\Response $response): array
     {
@@ -124,7 +124,7 @@ trait JsonAssertionsTrait
     /**
      * Assert that response contains valid JSON.
      *
-     * @return array<string, mixed>
+     * @return array<mixed, mixed>
      */
     protected function assertValidJsonResponse(\Symfony\Component\HttpFoundation\Response $response): array
     {

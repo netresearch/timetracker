@@ -208,18 +208,6 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseRedirects\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Method Tests\\AbstractWebTestCase\:\:getJsonResponse\(\) should return array\<string, mixed\> but returns array\<mixed, mixed\>\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
 			identifier: varTag.type
 			count: 1
@@ -268,44 +256,14 @@ parameters:
 			path: tests/Entity/EntryTest.php
 
 		-
-			message: '#^Parameter \#1 \$attributes \(array\<string, mixed\>\) of method Tests\\Fixtures\\TokenStub\:\:setAttributes\(\) should be contravariant with parameter \$attributes \(array\) of method Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface\:\:setAttributes\(\)$#'
-			identifier: method.childParameterType
-			count: 1
-			path: tests/Fixtures/TokenStub.php
-
-		-
-			message: '#^Parameter \#1 \$data \(array\<string, mixed\>\) of method Tests\\Fixtures\\TokenStub\:\:__unserialize\(\) should be contravariant with parameter \$data \(array\) of method Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface\:\:__unserialize\(\)$#'
-			identifier: method.childParameterType
-			count: 1
-			path: tests/Fixtures/TokenStub.php
-
-		-
 			message: '#^Property Tests\\Fixtures\\TokenStub\:\:\$attributes \(array\<string, mixed\>\) does not accept array\<mixed, mixed\>\.$#'
 			identifier: assign.propertyType
-			count: 2
+			count: 1
 			path: tests/Fixtures/TokenStub.php
 
 		-
 			message: '#^Anonymous class extends @final class GuzzleHttp\\Client\.$#'
 			identifier: class.extendsFinalByPhpDoc
-			count: 1
-			path: tests/Helper/JiraOAuthApiTest.php
-
-		-
-			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:55\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\Client\:\:request\(\)$#'
-			identifier: method.childParameterType
-			count: 1
-			path: tests/Helper/JiraOAuthApiTest.php
-
-		-
-			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:55\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientInterface\:\:request\(\)$#'
-			identifier: method.childParameterType
-			count: 1
-			path: tests/Helper/JiraOAuthApiTest.php
-
-		-
-			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:55\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientTrait\:\:request\(\)$#'
-			identifier: method.childParameterType
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
 
@@ -320,12 +278,6 @@ parameters:
 			identifier: method.internal
 			count: 1
 			path: tests/Performance/ExportPerformanceTest.php
-
-		-
-			message: '#^Call to function is_scalar\(\) with \(int\|string\) will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 5
-			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
 			message: '#^Casting to float something that''s already float\.$#'

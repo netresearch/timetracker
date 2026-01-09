@@ -65,7 +65,7 @@ trait AuthenticationTestTrait
             'password' => $password,
         ]);
 
-        $this->assertResponseRedirects('/dashboard');
+        self::assertResponseRedirects('/dashboard');
     }
 
     /**
@@ -83,7 +83,7 @@ trait AuthenticationTestTrait
             ['username' => $username, 'password' => $password],
         );
 
-        $this->assertResponseRedirects();
+        self::assertResponseRedirects();
 
         return $kernelBrowser;
     }

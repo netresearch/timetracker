@@ -317,8 +317,8 @@ final class PerformanceBenchmarkRunner
                 $memoryBytes = $result['memory_usage_bytes'] ?? 0;
                 $memory = number_format((is_numeric($memoryBytes) ? (float) $memoryBytes : 0.0) / 1024 / 1024, 2);
 
-                // Fix cast.string #7: Safe string casting with type validation
-                $testNameStr = is_scalar($testName) ? (string) $testName : 'unknown_test';
+                // Cast array key to string (array keys are always int|string)
+                $testNameStr = (string) $testName;
 
                 $report[] = sprintf(
                     '%s %-40s %6.1fms %8sMB',
@@ -542,9 +542,9 @@ final class PerformanceBenchmarkRunner
                 );
 
                 if ($timeRegression > $this->regressionThresholds['execution_time']) {
-                    // Fix cast.string #9 & #10: Safe string casting with type validation
-                    $suiteNameStr = is_scalar($suiteName) ? (string) $suiteName : 'unknown_suite';
-                    $testNameStr = is_scalar($testName) ? (string) $testName : 'unknown_test';
+                    // Cast array keys to string (array keys are always int|string)
+                    $suiteNameStr = (string) $suiteName;
+                    $testNameStr = (string) $testName;
 
                     $regressions[] = sprintf(
                         '%s::%s execution time increased by %.1f%% (%.1fms → %.1fms)',
@@ -568,9 +568,9 @@ final class PerformanceBenchmarkRunner
                 );
 
                 if ($memoryRegression > $this->regressionThresholds['memory_usage']) {
-                    // Fix cast.string #11 & #12: Safe string casting with type validation
-                    $suiteNameStr = is_scalar($suiteName) ? (string) $suiteName : 'unknown_suite';
-                    $testNameStr = is_scalar($testName) ? (string) $testName : 'unknown_test';
+                    // Cast array keys to string (array keys are always int|string)
+                    $suiteNameStr = (string) $suiteName;
+                    $testNameStr = (string) $testName;
 
                     $regressions[] = sprintf(
                         '%s::%s memory usage increased by %.1f%% (%.2fMB → %.2fMB)',

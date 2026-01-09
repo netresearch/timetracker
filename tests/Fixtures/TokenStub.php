@@ -94,11 +94,13 @@ class TokenStub implements TokenInterface
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<mixed, mixed> $attributes
      */
     public function setAttributes(array $attributes): void
     {
-        $this->attributes = $attributes;
+        /** @var array<string, mixed> $typedAttributes */
+        $typedAttributes = $attributes;
+        $this->attributes = $typedAttributes;
     }
 
     public function hasAttribute(string $name): bool
@@ -151,14 +153,16 @@ class TokenStub implements TokenInterface
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<mixed, mixed> $data
      */
     public function __unserialize(array $data): void
     {
         $this->authenticated = (bool) ($data['authenticated'] ?? true);
         $attributes = $data['attributes'] ?? [];
         if (is_array($attributes)) {
-            $this->attributes = $attributes;
+            /** @var array<string, mixed> $typedAttributes */
+            $typedAttributes = $attributes;
+            $this->attributes = $typedAttributes;
         } else {
             $this->attributes = [];
         }
