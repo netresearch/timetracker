@@ -1,80 +1,80 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ContractRepository\<App\\Entity\\Contract\> but class App\\Repository\\ContractRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\ContractRepository is not subtype of type App\\Repository\\ContractRepository\<App\\Entity\\Contract\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetContractsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\> but class App\\Repository\\CustomerRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\CustomerRepository is not subtype of type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetCustomersAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\PresetRepository\<App\\Entity\\Preset\> but class App\\Repository\\PresetRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\PresetRepository is not subtype of type App\\Repository\\PresetRepository\<App\\Entity\\Preset\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetPresetsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TeamRepository\<App\\Entity\\Team\> but class App\\Repository\\TeamRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TeamRepository is not subtype of type App\\Repository\\TeamRepository\<App\\Entity\\Team\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetTeamsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\> but class App\\Repository\\TicketSystemRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TicketSystemRepository is not subtype of type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetTicketSystemsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\UserRepository\<App\\Entity\\User\> but class App\\Repository\\UserRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetUsersAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ActivityRepository\<App\\Entity\\Activity\> but class App\\Repository\\ActivityRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\ActivityRepository is not subtype of type App\\Repository\\ActivityRepository\<App\\Entity\\Activity\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveActivityAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ContractRepository\<App\\Entity\\Contract\> but class App\\Repository\\ContractRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\ContractRepository is not subtype of type App\\Repository\\ContractRepository\<App\\Entity\\Contract\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveContractAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\> but class App\\Repository\\CustomerRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\CustomerRepository is not subtype of type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveCustomerAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ProjectRepository\<App\\Entity\\Project\> but class App\\Repository\\ProjectRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\ProjectRepository is not subtype of type App\\Repository\\ProjectRepository\<App\\Entity\\Project\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveProjectAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TeamRepository\<App\\Entity\\Team\> but class App\\Repository\\TeamRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TeamRepository is not subtype of type App\\Repository\\TeamRepository\<App\\Entity\\Team\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveTeamAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\> but class App\\Repository\\TicketSystemRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TicketSystemRepository is not subtype of type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveTicketSystemAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\UserRepository\<App\\Entity\\User\> but class App\\Repository\\UserRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveUserAction.php
 

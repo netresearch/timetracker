@@ -17,7 +17,7 @@ final class GetCustomersAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
 
-        /** @var \App\Repository\CustomerRepository<\App\Entity\Customer> $objectRepository */
+        /** @var \App\Repository\CustomerRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(\App\Entity\Customer::class);
 
         return new JsonResponse($objectRepository->getAllCustomers());

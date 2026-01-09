@@ -53,7 +53,7 @@ final class SaveProjectAction extends BaseController
         $offer = $projectSaveDto->offer;
         $additionalInformationFromExternal = $projectSaveDto->additionalInformationFromExternal;
 
-        /** @var \App\Repository\ProjectRepository<\App\Entity\Project> $objectRepository */
+        /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
 
         $internalJiraTicketSystem = $projectSaveDto->internalJiraTicketSystem;

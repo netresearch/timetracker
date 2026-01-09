@@ -17,7 +17,7 @@ final class GetTeamsAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
 
-        /** @var \App\Repository\TeamRepository<\App\Entity\Team> $objectRepository */
+        /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(\App\Entity\Team::class);
 
         return new JsonResponse($objectRepository->getAllTeamsAsArray());
