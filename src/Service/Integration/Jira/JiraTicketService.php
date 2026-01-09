@@ -147,7 +147,7 @@ class JiraTicketService
                 $subtasks[] = [
                     'key' => $subtask->key ?? '',
                     'summary' => $subtask->fields?->summary ?? '',
-                    'status' => $subtask->fields?->status?->name ?? '',
+                    'status' => $subtask->fields?->status->name ?? '',
                     'assignee' => $subtask->fields?->assignee?->displayName,
                 ];
             }
@@ -248,7 +248,7 @@ class JiraTicketService
                     'name' => $transition->name ?? '',
                     'to' => [
                         'id' => $transition->to?->id !== null ? (string) $transition->to->id : '',
-                        'name' => $transition->to?->name ?? '',
+                        'name' => $transition->to->name ?? '',
                     ],
                 ];
             }
