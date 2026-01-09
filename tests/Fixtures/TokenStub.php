@@ -139,7 +139,14 @@ class TokenStub implements TokenInterface
         $this->authenticated = (bool) ($data['authenticated'] ?? true);
         $attributes = $data['attributes'] ?? [];
         if (is_array($attributes)) {
-            $this->attributes = $attributes;
+            // Filter to only string keys for type safety
+            $filtered = [];
+            foreach ($attributes as $key => $value) {
+                if (\is_string($key)) {
+                    $filtered[$key] = $value;
+                }
+            }
+            $this->attributes = $filtered;
         } else {
             $this->attributes = [];
         }

@@ -358,8 +358,9 @@ final class PerformanceDashboard
                 if (! is_array($result) || ! isset($result['success'])) {
                     continue;
                 }
-                $status = $result['success'] ? 'PASS' : 'FAIL';
-                $statusClass = $result['success'] ? 'status-success' : 'status-failure';
+                $isSuccess = isset($result['success']) && true === $result['success'];
+                $status = $isSuccess ? 'PASS' : 'FAIL';
+                $statusClass = $isSuccess ? 'status-success' : 'status-failure';
                 $executionTime = $result['execution_time_ms'] ?? 0;
                 $memoryBytes = $result['memory_usage_bytes'] ?? 0;
                 $duration = number_format(is_numeric($executionTime) ? (float) $executionTime : 0.0, 1);
@@ -404,10 +405,15 @@ final class PerformanceDashboard
 
         $trends = [];
 
-        foreach ($current['benchmarks'] ?? [] as $suiteName => $suite) {
-            if ((! is_string($suiteName) && ! is_int($suiteName)) || ! is_array($suite)) {
+        $currentBenchmarks = $current['benchmarks'] ?? [];
+        if (! is_array($currentBenchmarks)) {
+            return [];
+        }
+        foreach ($currentBenchmarks as $suiteName => $suite) {
+            if (! is_array($suite)) {
                 continue;
             }
+            // Array keys are always int|string, cast to string for type safety
             $stringKey = (string) $suiteName;
             $prevSuite = (is_array($previous['benchmarks']) && isset($previous['benchmarks'][$suiteName]) && is_array($previous['benchmarks'][$suiteName])) ? $previous['benchmarks'][$suiteName] : [];
             $trends[$stringKey] = [];
@@ -463,7 +469,7 @@ final class PerformanceDashboard
                     if (! is_array($result) || ! isset($result['success'])) {
                         continue;
                     }
-                    if ($result['success']) {
+                    if (true === $result['success']) {
                         $totalTime += (is_numeric($result['execution_time_ms'] ?? 0) ? (float) ($result['execution_time_ms'] ?? 0) : 0.0);
                         $totalMemory += (is_numeric($result['memory_usage_bytes'] ?? 0) ? (float) ($result['memory_usage_bytes'] ?? 0) : 0.0) / 1024 / 1024;
                         ++$totalTests;
@@ -556,8 +562,13 @@ final class PerformanceDashboard
     {
         $averages = [];
 
-        foreach ($run['benchmarks'] ?? [] as $suiteName => $suite) {
-            if ((is_string($suiteName) || is_int($suiteName)) && is_array($suite)) {
+        $runBenchmarks = $run['benchmarks'] ?? [];
+        if (! is_array($runBenchmarks)) {
+            return $averages;
+        }
+        foreach ($runBenchmarks as $suiteName => $suite) {
+            if (is_array($suite)) {
+                // Array keys are always int|string, cast to string for type safety
                 $stringKey = (string) $suiteName;
                 /* @var array<mixed> $suite */
                 $averages[$stringKey] = $this->calculateSuiteAverageTime($suite);
@@ -586,8 +597,10 @@ final class PerformanceDashboard
                 continue;
             }
             foreach ($suite as $result) {
-                assert(is_array($result) && isset($result['success']));
-                if ($result['success']) {
+                if (! is_array($result) || ! isset($result['success'])) {
+                    continue;
+                }
+                if (true === $result['success']) {
                     $memoryBytes = $result['memory_usage_bytes'] ?? 0;
                     $totalMemory += is_numeric($memoryBytes) ? (float) $memoryBytes : 0.0;
                     ++$totalTests;
@@ -612,7 +625,7 @@ final class PerformanceDashboard
             if (! is_array($result) || ! isset($result['success'])) {
                 continue;
             }
-            if ($result['success']) {
+            if (true === $result['success']) {
                 $totalTime += (is_numeric($result['execution_time_ms'] ?? 0) ? (float) ($result['execution_time_ms'] ?? 0) : 0.0);
                 ++$successfulTests;
             }

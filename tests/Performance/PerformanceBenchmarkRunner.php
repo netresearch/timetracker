@@ -217,7 +217,7 @@ final class PerformanceBenchmarkRunner
     private function formatBenchmarkResult(array $result): string
     {
         assert(isset($result['success']));
-        if (! $result['success']) {
+        if (true !== $result['success']) {
             assert(isset($result['error']));
             // Fix cast.string #1: Safe string casting with type validation
             $errorValue = $result['error'] ?? 'unknown error';
@@ -329,7 +329,7 @@ final class PerformanceBenchmarkRunner
                 );
 
                 // Fix offsetAccess.nonOffsetAccessible: Check if success and error keys exist
-                if (! isset($result['success']) || ! $result['success']) {
+                if (! isset($result['success']) || true !== $result['success']) {
                     if (isset($result['error'])) {
                         // Fix cast.string #8: Safe string casting with type validation (duplicate of #1)
                         $errorValue = $result['error'] ?? 'unknown';
@@ -526,7 +526,7 @@ final class PerformanceBenchmarkRunner
 
                 // Fix offsetAccess.nonOffsetAccessible: Check if success keys exist
                 if (! isset($result['success']) || ! isset($baselineResult['success'])
-                    || ! $result['success'] || ! $baselineResult['success']) {
+                    || true !== $result['success'] || true !== $baselineResult['success']) {
                     continue;
                 }
 
@@ -550,7 +550,7 @@ final class PerformanceBenchmarkRunner
                         '%s::%s execution time increased by %.1f%% (%.1fms → %.1fms)',
                         $suiteNameStr,
                         $testNameStr,
-                        (float) $timeRegression,
+                        $timeRegression,
                         (float) $baselineTime,
                         (float) $currentTime,
                     );
@@ -576,9 +576,9 @@ final class PerformanceBenchmarkRunner
                         '%s::%s memory usage increased by %.1f%% (%.2fMB → %.2fMB)',
                         $suiteNameStr,
                         $testNameStr,
-                        (float) $memoryRegression,
-                        (float) ($baselineMemory / 1024 / 1024),
-                        (float) ($currentMemory / 1024 / 1024),
+                        $memoryRegression,
+                        $baselineMemory / 1024 / 1024,
+                        $currentMemory / 1024 / 1024,
                     );
                 }
             }

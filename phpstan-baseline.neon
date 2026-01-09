@@ -232,22 +232,10 @@ parameters:
 			path: tests/Entity/EntryTest.php
 
 		-
-			message: '#^Property Tests\\Fixtures\\TokenStub\:\:\$attributes \(array\<string, mixed\>\) does not accept array\<mixed, mixed\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Fixtures/TokenStub.php
-
-		-
 			message: '#^Anonymous class extends @final class GuzzleHttp\\Client\.$#'
 			identifier: class.extendsFinalByPhpDoc
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
-
-		-
-			message: '#^Casting to float something that''s already float\.$#'
-			identifier: cast.useless
-			count: 2
-			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
 			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
@@ -256,34 +244,10 @@ parameters:
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
-			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 3
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
 			message: '#^Variable method call on object\.$#'
 			identifier: method.dynamicName
 			count: 1
 			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
-			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
-			identifier: foreach.nonIterable
-			count: 2
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			message: '#^Only booleans are allowed in a ternary operator condition, mixed given\.$#'
-			identifier: ternary.condNotBoolean
-			count: 2
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
-			identifier: if.condNotBoolean
-			count: 3
-			path: tests/Performance/PerformanceDashboard.php
 
 		-
 			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
