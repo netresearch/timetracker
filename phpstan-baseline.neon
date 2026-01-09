@@ -232,18 +232,6 @@ parameters:
 			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotEmpty\(\) with ''Krank'' will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 1
-			path: tests/Entity/ActivityTest.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotEmpty\(\) with ''Urlaub'' will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 1
-			path: tests/Entity/ActivityTest.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with arguments \*NEVER\*, mixed and ''End should be…'' will always evaluate to false\.$#'
 			identifier: staticMethod.impossibleType
 			count: 1

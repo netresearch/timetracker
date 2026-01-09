@@ -54,17 +54,6 @@ final class ActivityTest extends TestCase
         self::assertSame(1.5, $activity->getFactor());
     }
 
-    public function testConstantValues(): void
-    {
-        // Verify constants are non-empty strings (actual values tested via isSick/isHoliday)
-        $sickName = Activity::SICK;
-        $holidayName = Activity::HOLIDAY;
-        self::assertNotEmpty($sickName);
-        self::assertNotEmpty($holidayName);
-        self::assertIsString($sickName);
-        self::assertIsString($holidayName);
-    }
-
     public function testIsSick(): void
     {
         $activity = new Activity();
