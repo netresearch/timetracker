@@ -168,6 +168,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
     {
         // This test needs proper connection to the database which may be affected by environment settings
         try {
+            $expectedLinks = [];
+            $expectedData = [];
             $expectedLinks['links'] = [
                 'self' => 'http://localhost/interpretation/allEntries?page=0',
                 'last' => 'http://localhost/interpretation/allEntries?page=0',
@@ -287,6 +289,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
     public function testGetAllEntriesActionReturnDataWithParameter(): void
     {
         try {
+            $expectedLinks = [];
+            $expectedData = [];
             // test for parameter
             $parameter = [
                 'datestart=500-04-29',
@@ -380,6 +384,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
     public function testGetAllEntriesActionReturnLinksPageOne(): void
     {
+        $expectedData = [];
+        $expectedLinks = [];
         $parameter = [
             'maxResults=2',
             'page=0',
@@ -403,6 +409,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
     public function testGetAllEntriesActionReturnLinksPageTwo(): void
     {
+        $expectedData = [];
+        $expectedLinks = [];
         $parameter = [
             'maxResults=2',
             'page=1',
@@ -427,6 +435,8 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
     public function testGetAllEntriesActionReturnLinksLastPage(): void
     {
+        $expectedData = [];
+        $expectedLinks = [];
         $parameter = [
             'maxResults=2',
             'page=3',

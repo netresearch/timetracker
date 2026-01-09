@@ -269,7 +269,7 @@ class JiraOAuthApiService
         }
 
         $objectManager = $this->managerRegistry->getManager();
-        /** @var \App\Repository\EntryRepository<\App\Entity\Entry> $objectRepository */
+        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         $entries = $objectRepository->findByUserAndTicketSystemToSync((int) $this->user->getId(), (int) $this->ticketSystem->getId(), $entryLimit ?? 50);
 
@@ -363,7 +363,8 @@ class JiraOAuthApiService
             return;
         }
 
-        if ((int) $entry->getWorklogId() <= 0) {
+        $worklogId = $entry->getWorklogId();
+        if ($worklogId === null || $worklogId <= 0) {
             return;
         }
 

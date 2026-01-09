@@ -66,7 +66,7 @@ final readonly class TestCoverageAnalyzer
                 ++$totalActions;
                 $isTestedAction = $this->isActionTested($controllerClass, (string) $action, $tests);
 
-                if ($isTestedAction) {
+                if ($isTestedAction !== false) {
                     ++$testedActions;
                     $results['tested'][] = [
                         'controller' => $controllerClass,

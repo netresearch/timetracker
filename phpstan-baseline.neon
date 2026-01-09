@@ -271,8 +271,8 @@ parameters:
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\EntryRepository\<App\\Entity\\Entry\> but class App\\Repository\\EntryRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
@@ -412,12 +412,6 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 2
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
 			identifier: varTag.type
 			count: 1
@@ -520,27 +514,15 @@ parameters:
 			path: tests/Controller/DefaultControllerTest.php
 
 		-
-			message: '#^Cannot access offset ''data'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 5
-			path: tests/Controller/InterpretationControllerTest.php
-
-		-
 			message: '#^Cannot access offset ''links'' on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
-			count: 8
-			path: tests/Controller/InterpretationControllerTest.php
-
-		-
-			message: '#^Implicit array creation is not allowed \- variable \$expectedData does not exist\.$#'
-			identifier: variable.implicitArray
-			count: 5
+			count: 3
 			path: tests/Controller/InterpretationControllerTest.php
 
 		-
 			message: '#^Implicit array creation is not allowed \- variable \$expectedLinks does not exist\.$#'
 			identifier: variable.implicitArray
-			count: 8
+			count: 3
 			path: tests/Controller/InterpretationControllerTest.php
 
 		-
@@ -808,8 +790,8 @@ parameters:
 			path: tests/Performance/ExportWorkflowIntegrationTest.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$entryRepository contains generic type App\\Repository\\EntryRepository\<App\\Entity\\Entry\> but class App\\Repository\\EntryRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: tests/Performance/ExportWorkflowIntegrationTest.php
 
@@ -874,14 +856,8 @@ parameters:
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$repo contains generic type App\\Repository\\EntryRepository\<Tests\\Repository\\Entry\> but class App\\Repository\\EntryRepository is not generic\.$#'
-			identifier: generics.notGeneric
-			count: 2
-			path: tests/Repository/EntryRepositoryIntegrationTest.php
-
-		-
-			message: '#^PHPDoc tag @var for variable \$repo contains unknown class Tests\\Repository\\Entry\.$#'
-			identifier: class.notFound
+			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
+			identifier: varTag.type
 			count: 2
 			path: tests/Repository/EntryRepositoryIntegrationTest.php
 
@@ -904,19 +880,7 @@ parameters:
 			path: tests/Util/PhpSpreadsheet/LOReadFilterTest.php
 
 		-
-			message: '#^Only booleans are allowed in \|\|, string\|false given on the left side\.$#'
-			identifier: booleanOr.leftNotBoolean
-			count: 1
-			path: tests/parallel-bootstrap.php
-
-		-
 			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/tools/analyze-coverage.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, string\|false given\.$#'
-			identifier: if.condNotBoolean
 			count: 1
 			path: tests/tools/analyze-coverage.php
