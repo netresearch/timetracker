@@ -68,7 +68,7 @@ class EntryRepository extends ServiceEntityRepository
             ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -93,7 +93,7 @@ class EntryRepository extends ServiceEntityRepository
             ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -204,7 +204,7 @@ class EntryRepository extends ServiceEntityRepository
             ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -473,7 +473,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -729,7 +729,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -768,7 +768,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
@@ -852,7 +852,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
@@ -943,7 +943,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
@@ -1141,7 +1141,7 @@ class EntryRepository extends ServiceEntityRepository
 
         assert(is_array($result) && array_is_list($result));
 
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
         return $result;
     }
 
@@ -1173,7 +1173,7 @@ class EntryRepository extends ServiceEntityRepository
             ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -1338,7 +1338,7 @@ class EntryRepository extends ServiceEntityRepository
             ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -1422,7 +1422,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /* @var list<Entry> $result */
+        /** @var list<Entry> $result */
 
         return $result;
     }

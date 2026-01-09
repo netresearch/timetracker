@@ -75,7 +75,8 @@
         "pow_to_exponentiation": true,
         "random_api_migration": true,
         "simplified_null_return": true,
-        "get_class_to_class_keyword": true
+        "get_class_to_class_keyword": true,
+        "phpdoc_to_comment": false
     },
     "finder": {
         "include": [
