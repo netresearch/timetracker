@@ -115,7 +115,7 @@ final readonly class TestCoverageAnalyzer
                 continue;
             }
 
-            if (!$className || !class_exists($className)) {
+            if (null === $className || ! class_exists($className)) {
                 continue;
             }
 
@@ -202,7 +202,7 @@ final readonly class TestCoverageAnalyzer
     {
         $testMethods = [];
 
-        if (!is_dir($this->testsPath)) {
+        if (! is_dir($this->testsPath)) {
             return $testMethods;
         }
 
@@ -220,7 +220,7 @@ final readonly class TestCoverageAnalyzer
                 continue;
             }
 
-            if (!$className || !class_exists($className)) {
+            if (null === $className || ! class_exists($className)) {
                 continue;
             }
 
@@ -371,7 +371,7 @@ final readonly class TestCoverageAnalyzer
     private function extractTestArea(string $testClass): string
     {
         // Tests\Controller\SettingsControllerTest -> Settings
-        if (preg_match('/Tests\\\\Controller\\\\(\w+)ControllerTest/', $testClass, $matches)) {
+        if (1 === preg_match('/Tests\\\\Controller\\\\(\w+)ControllerTest/', $testClass, $matches)) {
             return $matches[1];
         }
 
@@ -448,7 +448,7 @@ final readonly class TestCoverageAnalyzer
         preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatches);
         preg_match('/class\s+(\w+)/', $content, $classMatches);
 
-        if (!isset($namespaceMatches[1], $classMatches[1])) {
+        if (! isset($namespaceMatches[1], $classMatches[1])) {
             return null;
         }
 
@@ -585,7 +585,7 @@ final readonly class OutputFormatter
 if (\PHP_SAPI === 'cli') {
     // Check for help argument
     if (in_array('--help', $argv ?? [], true) || in_array('-h', $argv ?? [], true)) {
-        echo <<<HELP
+        echo <<<'HELP'
 
             Test Coverage Analysis Script
             ============================

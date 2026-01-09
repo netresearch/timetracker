@@ -12,6 +12,7 @@ use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
+use function assert;
 use function count;
 use function is_array;
 use function is_scalar;
@@ -175,7 +176,7 @@ class ModernLdapService
             $ldap = $this->getConnectionWithServiceAccount();
 
             $userDn = $this->getUserDn($username);
-            if (!$userDn) {
+            if (null === $userDn || '' === $userDn) {
                 return [];
             }
 
@@ -190,7 +191,7 @@ class ModernLdapService
                 $description = $entry['description'] ?? [];
                 assert(is_array($cn));
                 assert(is_array($description));
-                
+
                 $groups[] = [
                     'name' => $cn[0] ?? '',
                     'description' => $description[0] ?? '',
@@ -298,7 +299,7 @@ class ModernLdapService
             'useSsl' => $this->config['useSsl'],
         ];
 
-        if ($this->config['useSsl']) {
+        if (true === $this->config['useSsl']) {
             $options['useStartTls'] = false;
         }
 
@@ -464,7 +465,7 @@ class ModernLdapService
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
-        if (!$this->logger instanceof LoggerInterface) {
+        if (! $this->logger instanceof LoggerInterface) {
             return;
         }
 

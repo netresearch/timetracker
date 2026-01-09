@@ -85,12 +85,6 @@ parameters:
 			path: src/Controller/Default/GetSummaryAction.php
 
 		-
-			message: '#^Only booleans are allowed in &&, int\|null given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
-			count: 2
-			path: src/EventSubscriber/EntryEventSubscriber.php
-
-		-
 			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -139,12 +133,6 @@ parameters:
 			path: src/EventSubscriber/ExceptionSubscriber.php
 
 		-
-			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
-			identifier: if.condNotBoolean
-			count: 1
-			path: src/Kernel.php
-
-		-
 			message: '#^Return type \(Generator\) of method App\\Kernel\:\:registerBundles\(\) should be covariant with return type \(iterable\<Symfony\\Component\\HttpKernel\\Bundle\\BundleInterface\>\) of method Symfony\\Component\\HttpKernel\\KernelInterface\:\:registerBundles\(\)$#'
 			identifier: method.childReturnType
 			count: 2
@@ -181,18 +169,6 @@ parameters:
 			path: src/Response/Error.php
 
 		-
-			message: '#^Only booleans are allowed in an if condition, string\|false given\.$#'
-			identifier: if.condNotBoolean
-			count: 1
-			path: src/Response/Error.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, string\|null given\.$#'
-			identifier: if.condNotBoolean
-			count: 1
-			path: src/Security/LdapAuthenticator.php
-
-		-
 			message: '#^Parameter \$message of logger method Psr\\Log\\LoggerInterface\:\:debug\(\) is not a static string$#'
 			identifier: sfpPsrLog.messageNotStaticString
 			count: 1
@@ -215,12 +191,6 @@ parameters:
 			identifier: varTag.type
 			count: 4
 			path: src/Service/Integration/Jira/JiraAuthenticationService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, int\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/Integration/Jira/JiraIntegrationService.php
 
 		-
 			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
@@ -385,18 +355,6 @@ parameters:
 			path: src/Service/Ldap/LdapClientService.php
 
 		-
-			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/Ldap/ModernLdapService.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, mixed given\.$#'
-			identifier: if.condNotBoolean
-			count: 1
-			path: src/Service/Ldap/ModernLdapService.php
-
-		-
 			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:debug\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -449,24 +407,6 @@ parameters:
 			identifier: varTag.type
 			count: 1
 			path: src/Service/Response/PaginationLinkService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, int\|false given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/Util/TicketService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, int\<0, max\>\|false given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/Util/TimeCalculationService.php
-
-		-
-			message: '#^Only booleans are allowed in a ternary operator condition, float\|int given\.$#'
-			identifier: ternary.condNotBoolean
-			count: 1
-			path: src/Service/Util/TimeCalculationService.php
 
 		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<T of object\> is not subtype of type App\\Repository\\ServiceEntityRepository\<T of object\>\.$#'
@@ -1048,24 +988,6 @@ parameters:
 			path: tests/Util/PhpSpreadsheet/LOReadFilterTest.php
 
 		-
-			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
-			count: 1
-			path: tests/bootstrap.php
-
-		-
-			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
-			count: 1
-			path: tests/parallel-bootstrap.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, int\|false given\.$#'
-			identifier: if.condNotBoolean
-			count: 1
-			path: tests/parallel-bootstrap.php
-
-		-
 			message: '#^Only booleans are allowed in \|\|, string\|false given on the left side\.$#'
 			identifier: booleanOr.leftNotBoolean
 			count: 1
@@ -1074,18 +996,6 @@ parameters:
 		-
 			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/tools/analyze-coverage.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 2
-			path: tests/tools/analyze-coverage.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, int\|false given\.$#'
-			identifier: if.condNotBoolean
 			count: 1
 			path: tests/tools/analyze-coverage.php
 

@@ -27,7 +27,7 @@ class TimeCalculationService
 
     public function readableToMinutes(string $readable): int|float
     {
-        if (!preg_match_all('/([0-9.,]+)([wdhm]|$)/iU', $readable, $matches)) {
+        if (0 === preg_match_all('/([0-9.,]+)([wdhm]|$)/iU', $readable, $matches)) {
             return 0;
         }
 
@@ -100,6 +100,6 @@ class TimeCalculationService
 
     public function formatQuota(int|float $amount, int|float $sum): string
     {
-        return number_format($sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';
+        return number_format(0.0 !== $sum && 0 !== $sum ? ($amount * 100.00 / $sum) : 0, 2) . '%';
     }
 }

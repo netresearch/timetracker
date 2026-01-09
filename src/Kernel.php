@@ -9,7 +9,9 @@ use Override;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 
+use function assert;
 use function dirname;
+use function is_array;
 
 class Kernel extends BaseKernel
 {
@@ -21,7 +23,7 @@ class Kernel extends BaseKernel
         assert(is_array($contents));
         foreach ($contents as $class => $envs) {
             assert(is_array($envs));
-            if ($envs[$this->environment] ?? $envs['all'] ?? false) {
+            if (($envs[$this->environment] ?? $envs['all'] ?? false) === true) {
                 yield new $class();
             }
         }

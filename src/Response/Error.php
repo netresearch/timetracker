@@ -34,7 +34,7 @@ class Error extends JsonResponse
             $message['forwardUrl'] = $forwardUrl;
         }
 
-        if (ini_get('display_errors')) {
+        if (false !== ini_get('display_errors') && '' !== ini_get('display_errors')) {
             $message['exception'] = $this->getExceptionAsArray($throwable);
         }
 
@@ -60,7 +60,7 @@ class Error extends JsonResponse
      */
     protected function getExceptionAsArray(?Throwable $throwable = null): ?array
     {
-        if (!$throwable instanceof Throwable) {
+        if (! $throwable instanceof Throwable) {
             return null;
         }
 

@@ -91,7 +91,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         // Update JIRA if already synced
-        if ($entry->getSyncedToTicketsystem() && $entry->getWorklogId()) {
+        if ($entry->getSyncedToTicketsystem() && null !== $entry->getWorklogId()) {
             try {
                 $this->jiraIntegrationService->saveWorklog($entry);
                 $this->log('JIRA worklog updated', ['entry_id' => $entry->getId()]);
@@ -121,7 +121,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         // Delete from JIRA if synced
-        if ($entry->getSyncedToTicketsystem() && $entry->getWorklogId()) {
+        if ($entry->getSyncedToTicketsystem() && null !== $entry->getWorklogId()) {
             try {
                 $this->jiraIntegrationService->deleteWorklog($entry);
                 $this->log('JIRA worklog deleted', ['entry_id' => $entry->getId()]);
@@ -164,19 +164,19 @@ class EntryEventSubscriber implements EventSubscriberInterface
     {
         // Check if project has auto-sync enabled
         $project = $entry->getProject();
-        if (!$project instanceof \App\Entity\Project) {
+        if (! $project instanceof \App\Entity\Project) {
             return false;
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (! $ticketSystem instanceof \App\Entity\TicketSystem) {
             return false;
         }
 
         // Check if ticket system has auto-sync enabled
         return $ticketSystem->getBookTime()
                && TicketSystemType::JIRA === $ticketSystem->getType()
-               && !in_array($entry->getTicket(), ['', '0'], true);
+               && ! in_array($entry->getTicket(), ['', '0'], true);
     }
 
     /**
@@ -184,7 +184,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
-        if (!$this->logger instanceof LoggerInterface) {
+        if (! $this->logger instanceof LoggerInterface) {
             return;
         }
 

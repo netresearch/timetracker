@@ -17,6 +17,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Psr\Log\LoggerInterface;
 
+use function assert;
 use function in_array;
 
 /**
@@ -41,14 +42,14 @@ class JiraIntegrationService
     public function saveWorklog(Entry $entry): bool
     {
         $project = $entry->getProject();
-        if (!$project instanceof Project) {
+        if (! $project instanceof Project) {
             $this->log('No project associated with entry', ['entry_id' => $entry->getId()], 'warning');
 
             return false;
         }
 
         $ticketSystem = $this->getTicketSystem($project);
-        if (!$this->shouldSyncWithJira($ticketSystem, $entry)) {
+        if (! $this->shouldSyncWithJira($ticketSystem, $entry)) {
             $this->log('Entry should not sync with JIRA', [
                 'entry_id' => $entry->getId(),
                 'project_id' => $project->getId(),
@@ -59,7 +60,7 @@ class JiraIntegrationService
         }
 
         $user = $entry->getUser();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             throw new JiraApiException('Entry has no associated user');
         }
 
@@ -89,24 +90,24 @@ class JiraIntegrationService
      */
     public function deleteWorklog(Entry $entry): bool
     {
-        if (!$entry->getWorklogId()) {
+        if (null === $entry->getWorklogId()) {
             $this->log('Entry has no worklog ID to delete', ['entry_id' => $entry->getId()]);
 
             return false;
         }
 
         $project = $entry->getProject();
-        if (!$project instanceof Project) {
+        if (! $project instanceof Project) {
             throw new JiraApiException('Entry has no associated project');
         }
 
         $ticketSystem = $this->getTicketSystem($project);
-        if (!$ticketSystem instanceof TicketSystem) {
+        if (! $ticketSystem instanceof TicketSystem) {
             throw new JiraApiException('Project has no ticket system configured');
         }
 
         $user = $entry->getUser();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             throw new JiraApiException('Entry has no associated user');
         }
 
@@ -144,7 +145,7 @@ class JiraIntegrationService
         $results = [];
 
         foreach ($entries as $entry) {
-            if (!$entry instanceof Entry) {
+            if (! $entry instanceof Entry) {
                 continue;
             }
 
@@ -172,7 +173,7 @@ class JiraIntegrationService
     public function getEntriesNeedingSync(?User $user = null, ?DateTime $since = null): array
     {
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        \assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         $criteria = [
             'syncedToTicketsystem' => false,
@@ -187,7 +188,7 @@ class JiraIntegrationService
         // Filter entries that should sync with JIRA
         $syncableEntries = [];
         foreach ($entries as $entry) {
-            if (!$entry instanceof Entry) {
+            if (! $entry instanceof Entry) {
                 continue;
             }
 
@@ -196,7 +197,7 @@ class JiraIntegrationService
             }
 
             $project = $entry->getProject();
-            if (!$project instanceof Project) {
+            if (! $project instanceof Project) {
                 continue;
             }
 
@@ -217,7 +218,7 @@ class JiraIntegrationService
         // Check for internal JIRA project configuration
         if ($project->hasInternalJiraProjectKey()) {
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-            \assert($ticketSystemRepo instanceof TicketSystemRepository);
+            assert($ticketSystemRepo instanceof TicketSystemRepository);
             $internalTicketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
 
             if ($internalTicketSystem instanceof TicketSystem) {
@@ -234,11 +235,11 @@ class JiraIntegrationService
      */
     private function shouldSyncWithJira(?TicketSystem $ticketSystem, Entry $entry): bool
     {
-        if (!$ticketSystem instanceof TicketSystem) {
+        if (! $ticketSystem instanceof TicketSystem) {
             return false;
         }
 
-        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
+        if (! $ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
             return false;
         }
 
@@ -248,7 +249,7 @@ class JiraIntegrationService
         }
 
         // Entry must have valid time data
-        if (!$entry->getStart() instanceof DateTime || !$entry->getEnd() instanceof DateTime) {
+        if (! $entry->getStart() instanceof DateTime || ! $entry->getEnd() instanceof DateTime) {
             return false;
         }
 
@@ -265,7 +266,7 @@ class JiraIntegrationService
      */
     private function log(string $message, array $context = [], string $level = 'info'): void
     {
-        if (!$this->logger instanceof LoggerInterface) {
+        if (! $this->logger instanceof LoggerInterface) {
             return;
         }
 

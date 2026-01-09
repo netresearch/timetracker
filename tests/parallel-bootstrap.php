@@ -7,7 +7,7 @@ use Symfony\Component\Dotenv\Dotenv;
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 // Force load mbstring polyfill for PHPUnit compatibility
-if (!extension_loaded('mbstring')) {
+if (! extension_loaded('mbstring')) {
     require dirname(__DIR__) . '/vendor/symfony/polyfill-mbstring/bootstrap.php';
 }
 
@@ -18,14 +18,14 @@ if (file_exists(dirname(__DIR__) . '/vendor/symfony/phpunit-bridge/bootstrap.php
 }
 
 // Load cached env vars if the .env.local.php file exists
-if (is_array($env = @include dirname(__DIR__) . '/.env.local.php') && (!isset($env['APP_ENV']) || ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? $env['APP_ENV']) === $env['APP_ENV'])) {
+if (is_array($env = @include dirname(__DIR__) . '/.env.local.php') && (! isset($env['APP_ENV']) || ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? $env['APP_ENV']) === $env['APP_ENV'])) {
     (new Dotenv())->usePutenv(false)->populate($env);
 } else {
     // load all the .env files
     (new Dotenv())->usePutenv(false)->loadEnv(dirname(__DIR__) . '/.env');
 }
 
-if (isset($_SERVER['APP_DEBUG']) && $_SERVER['APP_DEBUG']) {
+if (isset($_SERVER['APP_DEBUG']) && (bool) $_SERVER['APP_DEBUG']) {
     umask(0o000);
 }
 
@@ -33,7 +33,7 @@ if (isset($_SERVER['APP_DEBUG']) && $_SERVER['APP_DEBUG']) {
 if (getenv('PARATEST_PARALLEL') || isset($_ENV['PARATEST_PARALLEL'])) {
     // Ensure each process has a unique identifier for database isolation
     $envToken = getenv('TEST_TOKEN');
-    $processId = (false !== $envToken && '' !== $envToken) ? $envToken : uniqid('test_', true);
+    $processId = (is_string($envToken) && '' !== $envToken) ? $envToken : uniqid('test_', true);
     $_ENV['TEST_PROCESS_ID'] = $processId;
     $_SERVER['TEST_PROCESS_ID'] = $processId;
 
@@ -42,7 +42,7 @@ if (getenv('PARATEST_PARALLEL') || isset($_ENV['PARATEST_PARALLEL'])) {
         // Extract database name and add process suffix
         $databaseUrl = $_ENV['DATABASE_URL'];
         assert(is_string($databaseUrl));
-        if (preg_match('/\/([^?]+)(\?|$)/', $databaseUrl, $matches)) {
+        if (1 === preg_match('/\/([^?]+)(\?|$)/', $databaseUrl, $matches)) {
             $dbName = $matches[1];
             $newDbName = $dbName . '_' . substr(md5($processId), 0, 8);
             $newDatabaseUrl = str_replace('/' . $dbName, '/' . $newDbName, $databaseUrl);
