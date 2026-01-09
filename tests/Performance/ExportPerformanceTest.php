@@ -76,7 +76,7 @@ final class ExportPerformanceTest extends TestCase
     /**
      * Test export performance with small dataset (baseline scenario).
      *
-     * @covers \ExportService::exportEntries
+     * @covers \App\Service\ExportService::exportEntries
      */
     public function testSmallDatasetExportPerformance(): void
     {
@@ -119,7 +119,7 @@ final class ExportPerformanceTest extends TestCase
     /**
      * Test export performance with medium dataset.
      *
-     * @covers \ExportService::exportEntries
+     * @covers \App\Service\ExportService::exportEntries
      */
     public function testMediumDatasetExportPerformance(): void
     {
@@ -159,7 +159,7 @@ final class ExportPerformanceTest extends TestCase
     /**
      * Test export performance with large dataset (stress test).
      *
-     * @covers \ExportService::exportEntries
+     * @covers \App\Service\ExportService::exportEntries
      */
     public function testLargeDatasetExportPerformance(): void
     {
@@ -199,7 +199,7 @@ final class ExportPerformanceTest extends TestCase
     /**
      * Test ticket enrichment performance with small dataset.
      *
-     * @covers \ExportService::enrichEntriesWithTicketInformation
+     * @covers \App\Service\ExportService::enrichEntriesWithTicketInformation
      */
     public function testTicketEnrichmentSmallPerformance(): void
     {
@@ -236,7 +236,7 @@ final class ExportPerformanceTest extends TestCase
     /**
      * Test ticket enrichment performance with medium dataset.
      *
-     * @covers \ExportService::enrichEntriesWithTicketInformation
+     * @covers \App\Service\ExportService::enrichEntriesWithTicketInformation
      */
     public function testTicketEnrichmentMediumPerformance(): void
     {
@@ -273,7 +273,7 @@ final class ExportPerformanceTest extends TestCase
     /**
      * Test export without ticket enrichment (baseline comparison).
      *
-     * @covers \ExportService::enrichEntriesWithTicketInformation
+     * @covers \App\Service\ExportService::enrichEntriesWithTicketInformation
      */
     public function testExportWithoutEnrichmentPerformance(): void
     {

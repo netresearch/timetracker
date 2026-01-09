@@ -63,9 +63,9 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
     /**
      * Test complete export workflow with small dataset.
      *
-     * @covers \ExportAction::__invoke
-     * @covers \ExportService::exportEntries
-     * @covers \ExportService::enrichEntriesWithTicketInformation
+     * @covers \App\Controller\Controlling\ExportAction::__invoke
+     * @covers \App\Service\ExportService::exportEntries
+     * @covers \App\Service\ExportService::enrichEntriesWithTicketInformation
      */
     public function testSmallDatasetEndToEndPerformance(): void
     {
@@ -110,7 +110,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
     /**
      * Test complete export workflow with medium dataset.
      *
-     * @covers \ExportAction::__invoke
+     * @covers \App\Controller\Controlling\ExportAction::__invoke
      */
     public function testMediumDatasetEndToEndPerformance(): void
     {
@@ -155,7 +155,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
     /**
      * Test export with ticket enrichment (external API calls).
      *
-     * @covers \ExportService::enrichEntriesWithTicketInformation
+     * @covers \App\Service\ExportService::enrichEntriesWithTicketInformation
      */
     public function testExportWithTicketEnrichmentIntegration(): void
     {
@@ -196,7 +196,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
     /**
      * Test database query performance in isolation.
      *
-     * @covers \EntryRepository::findByDate
+     * @covers \App\Repository\EntryRepository::findByDate
      */
     public function testDatabaseQueryPerformance(): void
     {
