@@ -17,7 +17,6 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -119,7 +118,7 @@ final class ExportActionPerformanceTest extends TestCase
             'Small Excel export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        self::assertInstanceOf(Response::class, $response);
+        // Response type is guaranteed by method return type
         self::assertSame(200, $response->getStatusCode());
         $contentType = $response->headers->get('Content-Type');
         self::assertNotNull($contentType, 'Content-Type header should not be null');
@@ -166,7 +165,7 @@ final class ExportActionPerformanceTest extends TestCase
             'Medium Excel export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        self::assertInstanceOf(Response::class, $response);
+        // Response type is guaranteed by method return type
         $this->logPerformanceMetric('Medium Excel Export', $duration, $memoryUsage, 500);
     }
 
@@ -205,7 +204,7 @@ final class ExportActionPerformanceTest extends TestCase
             'Large Excel export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        self::assertInstanceOf(Response::class, $response);
+        // Response type is guaranteed by method return type
         $this->logPerformanceMetric('Large Excel Export', $duration, $memoryUsage, 5000);
     }
 
@@ -238,7 +237,7 @@ final class ExportActionPerformanceTest extends TestCase
             "Excel export with enrichment took {$duration}ms",
         );
 
-        self::assertInstanceOf(Response::class, $response);
+        // Response type is guaranteed by method return type
         $this->logPerformanceMetric('Excel Export with Ticket Enrichment', $duration, $memoryUsage, 200);
     }
 
@@ -272,7 +271,7 @@ final class ExportActionPerformanceTest extends TestCase
             "Export with statistics took {$duration}ms",
         );
 
-        self::assertInstanceOf(Response::class, $response);
+        // Response type is guaranteed by method return type
         $this->logPerformanceMetric('Export with Statistics Calculation', $duration, $memoryUsage, 1000);
     }
 
