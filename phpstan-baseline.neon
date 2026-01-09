@@ -262,12 +262,6 @@ parameters:
 			path: tests/Basic.php
 
 		-
-			message: '#^Variable \$syncService in PHPDoc tag @var does not exist\.$#'
-			identifier: varTag.variableNotFound
-			count: 1
-			path: tests/Command/TtSyncSubticketsCommandTest.php
-
-		-
 			message: '#^Casting to string something that''s already string\.$#'
 			identifier: cast.useless
 			count: 3
@@ -346,12 +340,6 @@ parameters:
 			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
-			message: '#^Casting to string something that''s already string\.$#'
-			identifier: cast.useless
-			count: 3
-			path: tests/Controller/DefaultControllerTest.php
-
-		-
 			message: '#^Cannot access offset ''links'' on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 3
@@ -366,12 +354,6 @@ parameters:
 		-
 			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseIsSuccessful\(\)\.$#'
 			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Controller/SecurityControllerTest.php
-
-		-
-			message: '#^Missing call to parent\:\:setUp\(\) method\.$#'
-			identifier: phpunit.callParent
 			count: 1
 			path: tests/Controller/SecurityControllerTest.php
 
@@ -446,12 +428,6 @@ parameters:
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: tests/Entity/HolidayDatabaseTest.php
-
-		-
-			message: '#^Call to method App\\Entity\\TicketSystem\:\:setTicketUrl\(\) with incorrect case\: setTicketurl$#'
-			identifier: method.nameCase
-			count: 1
-			path: tests/Entity/ProjectDatabaseTest.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotFalse\(\) with mixed and ''UserTicketsystem…'' will always evaluate to true\.$#'

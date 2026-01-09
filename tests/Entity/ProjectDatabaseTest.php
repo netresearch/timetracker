@@ -382,7 +382,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $ticketSystem->setUrl('https://jira.example.com');
         $ticketSystem->setLogin('test_login');
         $ticketSystem->setPassword('test_password');
-        $ticketSystem->setTicketurl('https://jira.example.com/ticket/{ticket}');
+        $ticketSystem->setTicketUrl('https://jira.example.com/ticket/{ticket}');
 
         $this->entityManager->persist($ticketSystem);
 

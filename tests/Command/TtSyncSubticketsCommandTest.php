@@ -33,7 +33,6 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
     {
         self::bootKernel();
 
-        /** @var SubticketSyncService&MockObject $syncService */
         /** @var SubticketSyncService&MockObject $mock */
         $mock = $this->getMockBuilder(SubticketSyncService::class)
             ->disableOriginalConstructor()

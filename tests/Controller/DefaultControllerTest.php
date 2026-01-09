@@ -24,7 +24,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', (string) $response);
+        self::assertStringContainsString('TimeTracker', $response);
     }
 
     public function testIndexActionNotAuthorized(): void
@@ -35,7 +35,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', (string) $response);
+        self::assertStringContainsString('TimeTracker', $response);
     }
 
     public function testIndexActionAsUserWithData(): void
@@ -45,7 +45,7 @@ final class DefaultControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $response = $this->client->getResponse()->getContent();
         self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', (string) $response);
+        self::assertStringContainsString('TimeTracker', $response);
     }
 
     public function testGetCustomersAction(): void

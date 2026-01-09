@@ -18,6 +18,8 @@ final class SecurityControllerTest extends AbstractWebTestCase
 {
     /**
      * Override setUp to not automatically log in for this test class.
+     *
+     * @phpstan-ignore phpunit.callParent (Intentionally bypassing parent to avoid auto-login)
      */
     protected function setUp(): void
     {

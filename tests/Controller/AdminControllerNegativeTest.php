@@ -26,7 +26,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -40,7 +40,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -53,7 +53,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -67,7 +67,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -101,7 +101,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
         $data = json_decode((string) $content, true);
         self::assertIsArray($data);
@@ -123,7 +123,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
         $data = json_decode((string) $content, true);
         self::assertIsArray($data);
@@ -145,7 +145,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
         $data = json_decode((string) $content, true);
         self::assertIsArray($data);
@@ -165,7 +165,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -178,7 +178,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -192,7 +192,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -208,7 +208,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         try {
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
             $this->assertStatusCode(422);
-            $content = (string) $this->client->getResponse()->getContent();
+            $content = $this->client->getResponse()->getContent();
             self::assertNotEmpty($content);
         } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException) {
             self::assertSame(422, $unprocessableEntityHttpException->getStatusCode());
