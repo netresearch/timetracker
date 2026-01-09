@@ -6,6 +6,7 @@ namespace Tests\Controller;
 
 use App\Model\JsonResponse;
 use App\Service\ExportService as Export;
+use DateTime;
 use Tests\AbstractWebTestCase;
 
 /**
@@ -69,35 +70,32 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $entry1 = (new \App\Entity\Entry())
             ->setId(4)
-            ->setDay(new \DateTime('2023-10-15'))
-            ->setStart(new \DateTime('2023-10-15 09:00:00'))
-            ->setEnd(new \DateTime('2023-10-15 10:30:00'))
+            ->setDay(new DateTime('2023-10-15'))
+            ->setStart(new DateTime('2023-10-15 09:00:00'))
+            ->setEnd(new DateTime('2023-10-15 10:30:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
             ->setTicket('TKT-1')
-            ->setDescription('Real Desc 1')
-        ;
+            ->setDescription('Real Desc 1');
         // ->setActivity(null) // Assuming default is fine or set if needed
 
         $entry2 = (new \App\Entity\Entry())
             ->setId(5)
-            ->setDay(new \DateTime('2023-10-20'))
-            ->setStart(new \DateTime('2023-10-20 11:00:00'))
-            ->setEnd(new \DateTime('2023-10-20 12:30:00'))
+            ->setDay(new DateTime('2023-10-20'))
+            ->setStart(new DateTime('2023-10-20 11:00:00'))
+            ->setEnd(new DateTime('2023-10-20 12:30:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
             ->setTicket('TKT-2')
-            ->setDescription('Real Desc 2')
-        ;
+            ->setDescription('Real Desc 2');
         // --- End of real entity prep --- //
 
         // Mock exportEntries - return the REAL entries
         $exportServiceMock->expects(self::once())
             ->method('exportEntries')
-            ->willReturn([$entry1, $entry2])
-        ;
+            ->willReturn([$entry1, $entry2]);
 
         // Mock enrichEntries - expect it called with correct parameters, use callback to call setters on REAL entries
         $exportServiceMock->expects(self::once())
@@ -117,15 +115,13 @@ final class ControllingControllerTest extends AbstractWebTestCase
                 }
 
                 return $entries;
-            })
-        ;
+            });
 
         // Mock getUsername method used for filename generation - matches current service interface
         $exportServiceMock->expects(self::once())
             ->method('getUsername')
             ->with(1) // userid from the request
-            ->willReturn('unittest')
-        ;
+            ->willReturn('unittest');
 
         // Ensure kernel is shut down before creating client
         self::ensureKernelShutdown();
@@ -184,23 +180,21 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
         $entry1 = (new \App\Entity\Entry())
             ->setId(6)
-            ->setDay(new \DateTime('2023-11-05'))
-            ->setStart(new \DateTime('2023-11-05 08:00:00'))
-            ->setEnd(new \DateTime('2023-11-05 09:30:00'))
+            ->setDay(new DateTime('2023-11-05'))
+            ->setStart(new DateTime('2023-11-05 08:00:00'))
+            ->setEnd(new DateTime('2023-11-05 09:30:00'))
             ->setUser($user)
             ->setCustomer($customer)
             ->setProject($project)
             ->setTicket('TKT-3')
-            ->setDescription('Test Desc 3')
-        ;
+            ->setDescription('Test Desc 3');
 
         // Mock exportEntries - return the mock entry
         $exportServiceMock->expects(self::once())
             ->method('exportEntries')
-            ->willReturn([$entry1])
-        ;
+            ->willReturn([$entry1]);
 
-        // Since showBillableField=false and tickettitles is not requested, 
+        // Since showBillableField=false and tickettitles is not requested,
         // enrichEntriesWithTicketInformation should NOT be called
         $exportServiceMock->expects(self::never())
             ->method('enrichEntriesWithTicketInformation');
@@ -209,8 +203,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $exportServiceMock->expects(self::once())
             ->method('getUsername')
             ->with(1) // userid from the request
-            ->willReturn('unittest')
-        ;
+            ->willReturn('unittest');
 
         // Ensure kernel is shut down before creating client
         self::ensureKernelShutdown();

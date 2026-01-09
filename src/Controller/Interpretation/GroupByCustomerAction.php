@@ -48,7 +48,7 @@ final class GroupByCustomerAction extends BaseInterpretationController
             }
 
             $cid = $customerEntity->getId();
-            if (!isset($customers[$cid])) {
+            if (! isset($customers[$cid])) {
                 $customers[$cid] = ['id' => $cid, 'name' => $customerEntity->getName(), 'hours' => 0, 'quota' => 0];
             }
 

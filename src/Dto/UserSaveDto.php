@@ -58,8 +58,7 @@ final readonly class UserSaveDto
         if ([] === $this->teams) {
             $executionContext->buildViolation('Every user must belong to at least one team')
                 ->atPath('teams')
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

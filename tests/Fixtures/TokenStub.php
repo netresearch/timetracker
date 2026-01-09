@@ -8,6 +8,8 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 use function array_key_exists;
+use function assert;
+use function is_array;
 
 class TokenStub implements TokenInterface
 {

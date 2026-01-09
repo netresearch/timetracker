@@ -37,12 +37,10 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
         /** @var SubticketSyncService&MockObject $mock */
         $mock = $this->getMockBuilder(SubticketSyncService::class)
             ->disableOriginalConstructor()
-            ->getMock()
-        ;
+            ->getMock();
         $mock->expects(self::exactly(2))
             ->method('syncProjectSubtickets')
-            ->willReturnOnConsecutiveCalls(['X-1', 'X-2'], [])
-        ;
+            ->willReturnOnConsecutiveCalls(['X-1', 'X-2'], []);
 
         // Repository mock that returns a minimal query builder-like object
         $project = (new Project())->setId(1)->setName('Alpha');
@@ -50,21 +48,18 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
         $projectRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['createQueryBuilder'])
-            ->getMock()
-        ;
+            ->getMock();
 
         $queryMock = $this->getMockBuilder(\Doctrine\ORM\Query::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getResult'])
-            ->getMock()
-        ;
+            ->getMock();
         $queryMock->method('getResult')->willReturn([$project, $p2]);
 
         $qbMock = $this->getMockBuilder(\Doctrine\ORM\QueryBuilder::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['where', 'getQuery'])
-            ->getMock()
-        ;
+            ->getMock();
         $qbMock->method('where')->willReturn($qbMock);
         $qbMock->method('getQuery')->willReturn($queryMock);
 
@@ -74,8 +69,7 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
         /** @var EntityManagerInterface&MockObject $em */
         $em = $this->getMockBuilder(EntityManagerInterface::class)
             ->disableOriginalConstructor()
-            ->getMock()
-        ;
+            ->getMock();
         $em->method('getRepository')->willReturn($projectRepo);
 
         $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);
@@ -95,22 +89,19 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
         /** @var SubticketSyncService&MockObject $mock */
         $mock = $this->getMockBuilder(SubticketSyncService::class)
             ->disableOriginalConstructor()
-            ->getMock()
-        ;
+            ->getMock();
 
         // Repository mock with find() returning null
         $projectRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['find'])
-            ->getMock()
-        ;
+            ->getMock();
         $projectRepo->method('find')->willReturn(null);
 
         /** @var EntityManagerInterface&MockObject $em */
         $em = $this->getMockBuilder(EntityManagerInterface::class)
             ->disableOriginalConstructor()
-            ->getMock()
-        ;
+            ->getMock();
         $em->method('getRepository')->willReturn($projectRepo);
 
         $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);

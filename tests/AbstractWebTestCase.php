@@ -13,14 +13,14 @@ use Tests\Traits\TestDataTrait;
 
 /**
  * Abstract base test case that combines all test functionality.
- * 
+ *
  * This class serves as a facade that uses focused traits for different responsibilities:
  * - DatabaseTestTrait: Transaction isolation, database reset, query builder setup
  * - AuthenticationTestTrait: User login, session management, authentication helpers
  * - JsonAssertionsTrait: JSON response validation, API testing helpers
  * - TestDataTrait: Fixture loading, test data management
  * - HttpClientTrait: Client setup, HTTP request helpers
- * 
+ *
  * Maintains backward compatibility while providing better separation of concerns.
  */
 abstract class AbstractWebTestCase extends SymfonyWebTestCase
@@ -40,7 +40,6 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         }
     }
 
-
     /**
      * Set up before each test.
      * Coordinates initialization across all traits.
@@ -51,7 +50,7 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
 
         // Initialize HTTP client (from HttpClientTrait)
         $this->initializeHttpClient();
-        
+
         // Initialize database and transactions (from DatabaseTestTrait)
         $this->initializeDatabase();
 
@@ -74,7 +73,6 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
         parent::tearDown();
     }
 
-
     /**
      * Clear static state between test runs (important for parallel testing).
      * This helps ensure isolated test environments for parallel runs.
@@ -84,10 +82,10 @@ abstract class AbstractWebTestCase extends SymfonyWebTestCase
     {
         // Clear database state (from DatabaseTestTrait)
         self::clearDatabaseState();
-        
+
         // Clear test data state (from TestDataTrait)
         self::clearTestDataState();
-        
+
         parent::tearDownAfterClass();
     }
 }

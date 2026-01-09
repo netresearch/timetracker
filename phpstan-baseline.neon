@@ -151,18 +151,6 @@ parameters:
 			path: src/Repository/ContractRepository.php
 
 		-
-			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\Customer\|null given\.$#'
-			identifier: ternary.condNotBoolean
-			count: 2
-			path: src/Repository/ProjectRepository.php
-
-		-
-			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\User\|null given\.$#'
-			identifier: ternary.condNotBoolean
-			count: 1
-			path: src/Repository/TeamRepository.php
-
-		-
 			message: '#^Method App\\Response\\Error\:\:getExceptionAsArray\(\) should return array\{message\: string, class\: class\-string\<Throwable\>, code\: int\|string, file\: string, line\: int, trace\: list\<array\{args\?\: array\<int, mixed\>, class\?\: class\-string, file\?\: string, function\?\: string, line\?\: int, type\?\: ''\-\>''\|''\:\:''\}\>, previous\: array\<string, mixed\>\|null\}\|null but returns array\{message\: string, class\: class\-string\<Throwable\>&literal\-string, code\: \(int\|string\), file\: string, line\: int, trace\: list\<array\{function\: string, line\?\: int, file\?\: string, class\?\: class\-string, type\?\: ''\-\>''\|''\:\:'', args\?\: array\<mixed\>, object\?\: object\}\>, previous\: array\{message\: string, class\: class\-string\<Throwable\>, code\: int\|string, file\: string, line\: int, trace\: list\<array\{args\?\: array\<int, mixed\>, class\?\: class\-string, file\?\: string, function\?\: string, line\?\: int, type\?\: ''\-\>''\|''\:\:''\}\>, previous\: array\<string, mixed\>\|null\}\|null\}\.$#'
 			identifier: return.type
 			count: 1
@@ -448,18 +436,6 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Only booleans are allowed in &&, Symfony\\Component\\DependencyInjection\\ContainerInterface\|null given on the left side\.$#'
-			identifier: booleanAnd.leftNotBoolean
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Only booleans are allowed in &&, Symfony\\Component\\DependencyInjection\\ContainerInterface\|null given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
 			identifier: booleanNot.exprNotBoolean
 			count: 2
@@ -718,25 +694,25 @@ parameters:
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			message: '#^AnonymousClassbb223187f3d0d498da3a2554d256c23f\:\:__construct\(\) does not call parent constructor from GuzzleHttp\\Client\.$#'
+			message: '#^AnonymousClass7251744c953788de42a1775760da7384\:\:__construct\(\) does not call parent constructor from GuzzleHttp\\Client\.$#'
 			identifier: constructor.missingParentCall
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:53\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\Client\:\:request\(\)$#'
+			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:55\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\Client\:\:request\(\)$#'
 			identifier: method.childParameterType
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:53\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientInterface\:\:request\(\)$#'
+			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:55\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientInterface\:\:request\(\)$#'
 			identifier: method.childParameterType
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:53\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientTrait\:\:request\(\)$#'
+			message: '#^Parameter \#3 \$options \(array\<string, mixed\>\) of method GuzzleHttp\\Client@anonymous/tests/Helper/JiraOAuthApiTest\.php\:55\:\:request\(\) should be contravariant with parameter \$options \(array\) of method GuzzleHttp\\ClientTrait\:\:request\(\)$#'
 			identifier: method.childParameterType
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
@@ -790,13 +766,13 @@ parameters:
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
-			message: '#^@covers value ExportService\:\:enrichEntriesWithTicketInformation references an invalid method\.$#'
+			message: '#^@covers value \\ExportService\:\:enrichEntriesWithTicketInformation references an invalid method\.$#'
 			identifier: phpunit.coversMethod
 			count: 3
 			path: tests/Performance/ExportPerformanceTest.php
 
 		-
-			message: '#^@covers value ExportService\:\:exportEntries references an invalid method\.$#'
+			message: '#^@covers value \\ExportService\:\:exportEntries references an invalid method\.$#'
 			identifier: phpunit.coversMethod
 			count: 3
 			path: tests/Performance/ExportPerformanceTest.php

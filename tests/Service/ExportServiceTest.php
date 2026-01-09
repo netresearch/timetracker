@@ -6,8 +6,8 @@ namespace Tests\Service;
 
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
-use App\Enum\TicketSystemType;
 use App\Entity\User;
+use App\Enum\TicketSystemType;
 use App\Repository\EntryRepository;
 use App\Service\ExportService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
@@ -15,6 +15,8 @@ use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\RouterInterface;
+
+use function array_key_exists;
 
 /**
  * @internal
@@ -24,10 +26,10 @@ use Symfony\Component\Routing\RouterInterface;
 final class ExportServiceTest extends TestCase
 {
     /**
-     * @param array<int, Entry> $entries
-     * @param array<int, string> $searchTickets
+     * @param array<int, Entry>                 $entries
+     * @param array<int, string>                $searchTickets
      * @param array<string, array<int, string>> $jiraLabelsByIssue
-     * @param array<string, string> $jiraSummariesByIssue
+     * @param array<string, string>             $jiraSummariesByIssue
      */
     private function makeSubject(
         array $entries,
@@ -65,7 +67,7 @@ final class ExportServiceTest extends TestCase
         $dummyUser = $currentUser;
         $dummyTs = new TicketSystem();
         $router->method('generate')->willReturn('/oauth-callback');
-        $jiraApi = new class($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
+        $jiraApi = new class ($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
             public function __construct(
                 User $user,
                 TicketSystem $ticketSystem,
@@ -95,17 +97,17 @@ final class ExportServiceTest extends TestCase
                 $issues = [];
                 foreach ($this->keys as $key) {
                     $fieldsObj = (object) [];
-                    
+
                     // Only set labels field if it exists in the mock data
                     if (array_key_exists($key, $this->labels)) {
                         $fieldsObj->labels = $this->labels[$key];
                     }
-                    
+
                     // Only set summary field if it exists in the mock data
                     if (array_key_exists($key, $this->summaries)) {
                         $fieldsObj->summary = $this->summaries[$key];
                     }
-                    
+
                     $issue = (object) [
                         'key' => $key,
                         'fields' => $fieldsObj,
@@ -142,13 +144,11 @@ final class ExportServiceTest extends TestCase
         $entry1 = (new Entry())
             ->setUser($user)
             ->setProject((new \App\Entity\Project())->setTicketSystem($ticketSystem))
-            ->setTicket('TT-123')
-        ;
+            ->setTicket('TT-123');
         $entry2 = (new Entry())
             ->setUser($user)
             ->setProject((new \App\Entity\Project())->setTicketSystem($ticketSystem))
-            ->setTicket('TT-999')
-        ;
+            ->setTicket('TT-999');
 
         $exportService = $this->makeSubject([$entry1, $entry2], ['TT-123', 'TT-999'], ['TT-123' => ['billable']], ['TT-123' => 'Summary 1']);
 

@@ -7,6 +7,9 @@ namespace Tests\Controller;
 use App\Entity\Entry;
 use Tests\AbstractWebTestCase;
 
+use function assert;
+use function is_array;
+
 /**
  * @internal
  *
@@ -21,7 +24,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $doctrine = $container->get('doctrine');
         $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if (!$entry) {
+        if (! $entry) {
             self::markTestSkipped('No entries found in the database.');
         }
 
@@ -54,7 +57,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $doctrine = $container->get('doctrine');
         $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if (!$entry) {
+        if (! $entry) {
             self::markTestSkipped('No entries found in the database.');
         }
 

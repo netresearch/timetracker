@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+
+use function assert;
 
 /**
  * @internal
@@ -108,8 +111,8 @@ final class SecurityControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         // Get CSRF token for logout (required with CSRF protection enabled)
-        if ($this->serviceContainer === null) {
-            throw new \RuntimeException('Service container not initialized');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
         }
         $csrfTokenManager = $this->serviceContainer->get('security.csrf.token_manager');
         assert($csrfTokenManager instanceof \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface);

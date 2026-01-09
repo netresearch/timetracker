@@ -6,6 +6,8 @@ namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
+use function is_array;
+
 /**
  * @internal
  *
@@ -43,8 +45,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $queryBuilder = $this->queryBuilder;
         $queryBuilder->select('*')
             ->from('users')->where('id = :userId')
-            ->setParameter('userId', 3)
-        ;
+            ->setParameter('userId', 3);
         $queryResult = $queryBuilder->executeQuery();
         $result = $queryResult->fetchAllAssociative();
         $expectedDbEntry = [
@@ -97,7 +98,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
 
         // Fix offsetAccess.nonOffsetAccessible: Check if response is array and has expected keys
-        if (!is_array($response)) {
+        if (! is_array($response)) {
             self::fail('Expected JSON response to be an array');
         }
 
@@ -105,7 +106,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         self::assertSame('en', $response['locale']);
 
         self::assertArrayHasKey('settings', $response, 'Response should contain settings key');
-        if (!is_array($response['settings'])) {
+        if (! is_array($response['settings'])) {
             self::fail('Expected settings to be an array');
         }
         self::assertArrayHasKey('locale', $response['settings'], 'Settings should contain locale key');

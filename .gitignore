@@ -54,3 +54,6 @@ chunkhound.json
 .chunkhound.db
 .chunkhound/
 results.txt
+
+# PHPStan cache directories
+config/quality/var/

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -34,8 +35,8 @@ trait AuthenticationTestTrait
         $userId = $userMap[$user] ?? '1';
 
         // Get the user entity from the database
-        if ($this->serviceContainer === null) {
-            throw new \RuntimeException('Service container not initialized');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
         }
         /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
         $doctrine = $this->serviceContainer->get('doctrine');
@@ -89,72 +90,78 @@ trait AuthenticationTestTrait
 
     /**
      * Authenticate as the standard unittest user (admin level).
-     * 
+     *
      * This is the most common authentication pattern (55% of usage),
      * providing full administrative access for testing.
      */
     protected function asUnittestUser(): self
     {
         $this->logInSession('unittest');
+
         return $this;
     }
 
     /**
      * Authenticate as a developer user (limited permissions).
-     * 
+     *
      * Used for testing role-based access control and permission boundaries.
      * Developer users have restricted access to admin functions.
      */
     protected function asDeveloperUser(): self
     {
         $this->logInSession('developer');
+
         return $this;
     }
 
     /**
      * Authenticate as the 'i.myself' admin user.
-     * 
-     * Used for specialized administrative scenarios and 
+     *
+     * Used for specialized administrative scenarios and
      * specific user-context testing.
      */
     protected function asAdminUser(): self
     {
         $this->logInSession('i.myself');
+
         return $this;
     }
 
     /**
      * Authenticate as a user without contract access.
-     * 
+     *
      * Used for testing contract-related permission boundaries.
      */
     protected function asUserWithoutContract(): self
     {
         $this->logInSession('noContract');
+
         return $this;
     }
 
     /**
      * Authenticate as a specific user by username.
-     * 
+     *
      * Provides flexibility for custom authentication scenarios
      * while maintaining the fluent interface pattern.
      */
     protected function asUser(string $username): self
     {
         $this->logInSession($username);
+
         return $this;
     }
 
     /**
      * Authenticate using the default user (unittest).
-     * 
+     *
      * Equivalent to calling logInSession() without parameters.
      * Provides explicit naming for clarity in test methods.
      */
     protected function asDefaultUser(): self
     {
         $this->logInSession();
+
         return $this;
     }
 }

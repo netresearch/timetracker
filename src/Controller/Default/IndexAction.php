@@ -10,6 +10,8 @@ use App\Entity\Project;
 use App\Entity\User;
 use Exception;
 
+use function assert;
+
 final class IndexAction extends BaseController
 {
     /**
@@ -21,7 +23,7 @@ final class IndexAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -30,11 +32,11 @@ final class IndexAction extends BaseController
         $settings = $user->getSettings();
 
         $objectRepository = $this->managerRegistry->getRepository(Customer::class);
-        \assert($objectRepository instanceof \App\Repository\CustomerRepository);
+        assert($objectRepository instanceof \App\Repository\CustomerRepository);
         $customers = $objectRepository->getCustomersByUser($userId);
 
         $projectRepo = $this->managerRegistry->getRepository(Project::class);
-        \assert($projectRepo instanceof \App\Repository\ProjectRepository);
+        assert($projectRepo instanceof \App\Repository\ProjectRepository);
         $projects = $projectRepo->getProjectStructure($userId, $customers);
 
         return $this->render('index.html.twig', [

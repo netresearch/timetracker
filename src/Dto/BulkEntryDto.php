@@ -60,15 +60,14 @@ final readonly class BulkEntryDto
     public function validateTimeRange(ExecutionContextInterface $executionContext): void
     {
         // Only validate time range if not using contract
-        if (!$this->isUseContract() && ('' !== $this->starttime && '0' !== $this->starttime) && ('' !== $this->endtime && '0' !== $this->endtime)) {
+        if (! $this->isUseContract() && ('' !== $this->starttime && '0' !== $this->starttime) && ('' !== $this->endtime && '0' !== $this->endtime)) {
             $startDateTime = DateTime::createFromFormat('H:i:s', $this->starttime);
             $endDateTime = DateTime::createFromFormat('H:i:s', $this->endtime);
 
-            if ($startDateTime !== false && $endDateTime !== false && $startDateTime >= $endDateTime) {
+            if (false !== $startDateTime && false !== $endDateTime && $startDateTime >= $endDateTime) {
                 $executionContext->buildViolation('Die Aktivität muss mindestens eine Minute angedauert haben!')
                     ->atPath('endtime')
-                    ->addViolation()
-                ;
+                    ->addViolation();
             }
         }
     }
@@ -83,11 +82,10 @@ final readonly class BulkEntryDto
             $startDate = DateTime::createFromFormat('Y-m-d', $this->startdate);
             $endDate = DateTime::createFromFormat('Y-m-d', $this->enddate);
 
-            if ($startDate !== false && $endDate !== false && $startDate > $endDate) {
+            if (false !== $startDate && false !== $endDate && $startDate > $endDate) {
                 $executionContext->buildViolation('Start date must be before or equal to end date')
                     ->atPath('enddate')
-                    ->addViolation()
-                ;
+                    ->addViolation();
             }
         }
     }

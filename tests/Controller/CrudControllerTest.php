@@ -8,7 +8,6 @@ use Tests\AbstractWebTestCase;
 
 use function array_column;
 use function count;
-use function is_array;
 use function json_encode;
 
 /**
@@ -304,7 +303,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `id` > ' . $maxPreExistingId . '
             ORDER BY `id` ASC';
         $results = $connection->executeQuery($query)->fetchAllAssociative();
-        
+
         self::assertSame(2, count($results));
 
         $staticExpected = [
@@ -475,7 +474,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ['day' => '2020-01-04', 'end' => '13:00:00', 'duration' => '300'],
             ['day' => '2020-01-05', 'end' => '09:00:00', 'duration' => '60'],
         ];
-        
+
         $counter = count($results);
         for ($i = 0; $i < $counter; ++$i) {
             self::assertArraySubset($staticExpected, $results[$i]);

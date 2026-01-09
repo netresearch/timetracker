@@ -43,8 +43,7 @@ class CustomerRepository extends ServiceEntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute()
-        ;
+            ->execute();
 
         $data = [];
         foreach ($result as $customer) {

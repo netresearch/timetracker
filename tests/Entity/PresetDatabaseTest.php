@@ -10,7 +10,10 @@ use App\Entity\Preset;
 use App\Entity\Project;
 use App\Enum\BillingType;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+
+use function assert;
 
 /**
  * @internal
@@ -21,11 +24,11 @@ final class PresetDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        if ($this->serviceContainer === null) {
-            throw new \RuntimeException('Service container not initialized');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
         }
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($entityManager instanceof EntityManagerInterface);
@@ -75,13 +78,13 @@ final class PresetDatabaseTest extends AbstractWebTestCase
 
         // Remove the test entities with null checks to satisfy PHPStan
         $this->entityManager->remove($fetchedPreset);
-        if ($fetchedActivity !== null) {
+        if (null !== $fetchedActivity) {
             $this->entityManager->remove($fetchedActivity);
         }
-        if ($fetchedProject !== null) {
+        if (null !== $fetchedProject) {
             $this->entityManager->remove($fetchedProject);
         }
-        if ($fetchedCustomer !== null) {
+        if (null !== $fetchedCustomer) {
             $this->entityManager->remove($fetchedCustomer);
         }
         $this->entityManager->flush();
@@ -129,13 +132,13 @@ final class PresetDatabaseTest extends AbstractWebTestCase
 
         // Remove the test entities with null checks to satisfy PHPStan
         $this->entityManager->remove($updatedPreset);
-        if ($fetchedActivity !== null) {
+        if (null !== $fetchedActivity) {
             $this->entityManager->remove($fetchedActivity);
         }
-        if ($fetchedProject !== null) {
+        if (null !== $fetchedProject) {
             $this->entityManager->remove($fetchedProject);
         }
-        if ($fetchedCustomer !== null) {
+        if (null !== $fetchedCustomer) {
             $this->entityManager->remove($fetchedCustomer);
         }
         $this->entityManager->flush();
@@ -182,13 +185,13 @@ final class PresetDatabaseTest extends AbstractWebTestCase
         $fetchedProject = $this->entityManager->getRepository(Project::class)->find($project->getId());
         $fetchedCustomer = $this->entityManager->getRepository(Customer::class)->find($customer->getId());
 
-        if ($fetchedActivity !== null) {
+        if (null !== $fetchedActivity) {
             $this->entityManager->remove($fetchedActivity);
         }
-        if ($fetchedProject !== null) {
+        if (null !== $fetchedProject) {
             $this->entityManager->remove($fetchedProject);
         }
-        if ($fetchedCustomer !== null) {
+        if (null !== $fetchedCustomer) {
             $this->entityManager->remove($fetchedCustomer);
         }
         $this->entityManager->flush();
@@ -234,13 +237,13 @@ final class PresetDatabaseTest extends AbstractWebTestCase
         // Clean up with null checks to satisfy PHPStan
         self::assertNotNull($fetchedPreset, 'Preset should not be null');
         $this->entityManager->remove($fetchedPreset);
-        if ($fetchedActivity !== null) {
+        if (null !== $fetchedActivity) {
             $this->entityManager->remove($fetchedActivity);
         }
-        if ($fetchedProject !== null) {
+        if (null !== $fetchedProject) {
             $this->entityManager->remove($fetchedProject);
         }
-        if ($fetchedCustomer !== null) {
+        if (null !== $fetchedCustomer) {
             $this->entityManager->remove($fetchedCustomer);
         }
         $this->entityManager->flush();

@@ -17,7 +17,7 @@ final class EntrySaveDtoTest extends KernelTestCase
 {
     private ValidatorInterface $validator;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         self::bootKernel();
         $this->validator = self::getContainer()->get('validator');
@@ -26,10 +26,10 @@ final class EntrySaveDtoTest extends KernelTestCase
     protected function tearDown(): void
     {
         // Clean up exception handlers that might have been set during validation
-        while (set_exception_handler(null) !== null) {
+        while (null !== set_exception_handler(null)) {
             // Loop to remove all custom exception handlers
         }
-        
+
         parent::tearDown();
     }
 
@@ -41,7 +41,7 @@ final class EntrySaveDtoTest extends KernelTestCase
             end: '17:00:00',
             ticket: 'JIRA-123',
             description: 'Working on feature',
-            project_id: 1
+            project_id: 1,
         );
 
         $violations = $this->validator->validate($dto);
@@ -54,7 +54,7 @@ final class EntrySaveDtoTest extends KernelTestCase
         $dto = new EntrySaveDto(
             date: 'invalid-date',
             start: '09:00:00',
-            end: '17:00:00'
+            end: '17:00:00',
         );
 
         $violations = $this->validator->validate($dto);
@@ -69,7 +69,7 @@ final class EntrySaveDtoTest extends KernelTestCase
             date: '2024-01-15',
             start: '09:00:00',
             end: '17:00:00',
-            ticket: 'ticket with spaces!@#'
+            ticket: 'ticket with spaces!@#',
         );
 
         $violations = $this->validator->validate($dto);
@@ -84,7 +84,7 @@ final class EntrySaveDtoTest extends KernelTestCase
             date: '2024-01-15',
             start: '09:00:00',
             end: '17:00:00',
-            ticket: str_repeat('A', 51)
+            ticket: str_repeat('A', 51),
         );
 
         $violations = $this->validator->validate($dto);
@@ -99,7 +99,7 @@ final class EntrySaveDtoTest extends KernelTestCase
             date: '2024-01-15',
             start: '09:00:00',
             end: '17:00:00',
-            description: str_repeat('a', 1001)
+            description: str_repeat('a', 1001),
         );
 
         $violations = $this->validator->validate($dto);
@@ -113,7 +113,7 @@ final class EntrySaveDtoTest extends KernelTestCase
         $dto = new EntrySaveDto(
             date: '2024-01-15',
             start: '17:00:00',
-            end: '09:00:00' // End before start
+            end: '09:00:00', // End before start
         );
 
         $violations = $this->validator->validate($dto);
@@ -128,7 +128,7 @@ final class EntrySaveDtoTest extends KernelTestCase
             date: '2024-01-15',
             start: '09:00:00',
             end: '17:00:00',
-            project_id: -1
+            project_id: -1,
         );
 
         $violations = $this->validator->validate($dto);

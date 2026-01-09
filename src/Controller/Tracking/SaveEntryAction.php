@@ -24,6 +24,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
 
+use function assert;
 use function sprintf;
 
 final class SaveEntryAction extends BaseTrackingController
@@ -44,7 +45,7 @@ final class SaveEntryAction extends BaseTrackingController
     ): Response|JsonResponse|Error {
 
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);
-        \assert($customerRepo instanceof \App\Repository\CustomerRepository);
+        assert($customerRepo instanceof \App\Repository\CustomerRepository);
 
         $customerId = $entrySaveDto->getCustomerId();
         if (null === $customerId) {
@@ -53,12 +54,12 @@ final class SaveEntryAction extends BaseTrackingController
 
         $customer = $customerRepo->findOneById($customerId);
 
-        if (!$customer instanceof Customer) {
+        if (! $customer instanceof Customer) {
             return new Error('Given customer does not exist.', Response::HTTP_BAD_REQUEST);
         }
 
         $projectRepo = $this->managerRegistry->getRepository(Project::class);
-        \assert($projectRepo instanceof \App\Repository\ProjectRepository);
+        assert($projectRepo instanceof \App\Repository\ProjectRepository);
 
         $projectId = $entrySaveDto->getProjectId();
         if (null === $projectId) {
@@ -67,12 +68,12 @@ final class SaveEntryAction extends BaseTrackingController
 
         $project = $projectRepo->findOneById($projectId);
 
-        if (!$project instanceof Project) {
+        if (! $project instanceof Project) {
             return new Error('Given project does not exist.', Response::HTTP_BAD_REQUEST);
         }
 
         $activityRepo = $this->managerRegistry->getRepository(Activity::class);
-        \assert($activityRepo instanceof \App\Repository\ActivityRepository);
+        assert($activityRepo instanceof \App\Repository\ActivityRepository);
 
         $activityId = $entrySaveDto->getActivityId();
         if (null === $activityId) {
@@ -81,7 +82,7 @@ final class SaveEntryAction extends BaseTrackingController
 
         $activity = $activityRepo->findOneById($activityId);
 
-        if (!$activity instanceof Activity) {
+        if (! $activity instanceof Activity) {
             return new Error('Given activity does not exist.', Response::HTTP_BAD_REQUEST);
         }
 
@@ -93,18 +94,18 @@ final class SaveEntryAction extends BaseTrackingController
             $prefix = $project->getJiraId();
 
             if (null !== $prefix && '' !== $prefix) {
-                if (!str_starts_with($entrySaveDto->ticket, $prefix)) {
+                if (! str_starts_with($entrySaveDto->ticket, $prefix)) {
                     return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
                 }
 
-                if (!str_contains($entrySaveDto->ticket, '-')) {
+                if (! str_contains($entrySaveDto->ticket, '-')) {
                     return new Error('Given ticket does not have a valid format.', Response::HTTP_BAD_REQUEST);
                 }
             }
         }
 
         $entryRepo = $this->managerRegistry->getRepository(Entry::class);
-        \assert($entryRepo instanceof \App\Repository\EntryRepository);
+        assert($entryRepo instanceof \App\Repository\EntryRepository);
 
         $entry = null;
         if (null !== $entryId) {
@@ -116,7 +117,7 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error('Entry is already owned by a different user.', Response::HTTP_BAD_REQUEST);
         }
 
-        if (!$entry instanceof Entry) {
+        if (! $entry instanceof Entry) {
             $entry = new Entry();
         }
 
@@ -161,7 +162,7 @@ final class SaveEntryAction extends BaseTrackingController
             $entry->setTicket($entrySaveDto->ticket);
         }
 
-        if (!$project->getActive()) {
+        if (! $project->getActive()) {
             return new Error('Project is no longer active.', Response::HTTP_BAD_REQUEST);
         }
 
@@ -197,9 +198,9 @@ final class SaveEntryAction extends BaseTrackingController
             $project = $entry->getProject();
             $activity = $entry->getActivity();
 
-            if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime
-                || !$user instanceof User || !$customer instanceof Customer
-                || !$project instanceof Project || !$activity instanceof Activity) {
+            if (! $day instanceof DateTime || ! $start instanceof DateTime || ! $end instanceof DateTime
+                || ! $user instanceof User || ! $customer instanceof Customer
+                || ! $project instanceof Project || ! $activity instanceof Activity) {
                 return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 

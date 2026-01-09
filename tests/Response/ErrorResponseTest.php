@@ -7,6 +7,9 @@ namespace Tests\Response;
 use App\Response\Error;
 use PHPUnit\Framework\TestCase;
 
+use function assert;
+use function is_array;
+
 /**
  * @internal
  *

@@ -12,6 +12,8 @@ use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class GetDataAction extends BaseController
 {
     /**
@@ -23,14 +25,14 @@ final class GetDataAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): JsonResponse
     {
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return new JsonResponse([]);
         }
 
         $userId = (int) $user->getId();
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        \assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         // Check if this is a filtered request (with year/month/user/customer/project parameters)
         $year = $request->query->get('year');

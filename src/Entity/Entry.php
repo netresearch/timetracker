@@ -296,7 +296,7 @@ class Entry extends Base
 
     public function setDay(DateTimeInterface|string $day): static
     {
-        if (!$day instanceof DateTimeInterface) {
+        if (! $day instanceof DateTimeInterface) {
             $day = new DateTime($day);
         }
 
@@ -312,7 +312,7 @@ class Entry extends Base
 
     public function setStart(DateTimeInterface|string $start): static
     {
-        if (!$start instanceof DateTimeInterface) {
+        if (! $start instanceof DateTimeInterface) {
             $start = new DateTime($start);
             $dayObj = $this->getDay();
             [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
@@ -332,7 +332,7 @@ class Entry extends Base
 
     public function setEnd(DateTimeInterface|string $end): static
     {
-        if (!$end instanceof DateTimeInterface) {
+        if (! $end instanceof DateTimeInterface) {
             $end = new DateTime($end);
             $dayObj = $this->getDay();
             [$year, $month, $day] = explode('-', $dayObj->format('Y-m-d'));
@@ -350,7 +350,7 @@ class Entry extends Base
      */
     protected function alignStartAndEnd(): static
     {
-        if (!isset($this->start) || !isset($this->end)) {
+        if (! isset($this->start) || ! isset($this->end)) {
             return $this;
         }
 
@@ -488,7 +488,7 @@ class Entry extends Base
      */
     public function calcDuration(float $factor = 1.0): static
     {
-        if (!isset($this->start) || !isset($this->end)) {
+        if (! isset($this->start) || ! isset($this->end)) {
             $this->setDuration(0);
 
             return $this;
@@ -548,7 +548,7 @@ class Entry extends Base
         $project = $this->getProject();
         $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
 
-        if (!$ticketSystem instanceof TicketSystem) {
+        if (! $ticketSystem instanceof TicketSystem) {
             return $this->getTicket();
         }
 
@@ -597,7 +597,7 @@ class Entry extends Base
     public function getPostDataForInternalJiraTicketCreation(): array
     {
         $project = $this->getProject();
-        if (!$project instanceof Project) {
+        if (! $project instanceof Project) {
             return [
                 'fields' => [
                     'project' => [

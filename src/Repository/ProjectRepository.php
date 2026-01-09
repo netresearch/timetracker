@@ -10,6 +10,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 use function assert;
+use function count;
 use function is_array;
 
 /**
@@ -49,7 +50,7 @@ class ProjectRepository extends ServiceEntityRepository
         $projects = [];
         foreach ($customers as $customer) {
             $customerData = $customer['customer'] ?? null;
-            if (!is_array($customerData)) {
+            if (! is_array($customerData)) {
                 continue;
             }
 
@@ -129,13 +130,11 @@ class ProjectRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('project')
             ->where('customer.global = 1 OR user.id = :userId')
-            ->setParameter('userId', $userId)
-        ;
+            ->setParameter('userId', $userId);
 
         if ($customerId > 0) {
             $queryBuilder->andWhere('project.global = 1 OR customer.id = :customerId')
-                ->setParameter('customerId', $customerId)
-            ;
+                ->setParameter('customerId', $customerId);
         }
 
         /** @var Project[] $result */
@@ -143,8 +142,7 @@ class ProjectRepository extends ServiceEntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute()
-        ;
+            ->execute();
 
         $data = [];
         foreach ($result as $project) {
@@ -168,12 +166,11 @@ class ProjectRepository extends ServiceEntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result));
         // All results are Project entities due to the repository context
-        assert(array_is_list($result) || count($result) === 0);
+        assert(array_is_list($result) || 0 === count($result));
         /** @var list<Project> $result */
 
         return $result;
@@ -186,8 +183,7 @@ class ProjectRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('p')
             ->leftJoin('p.customer', 'c')
-            ->orderBy('p.name', 'ASC')
-        ;
+            ->orderBy('p.name', 'ASC');
 
         /** @var Project[] $projects */
         $projects = $queryBuilder->getQuery()->execute();
@@ -198,8 +194,8 @@ class ProjectRepository extends ServiceEntityRepository
             $data[] = [
                 'id' => (int) ($project->getId() ?? 0),
                 'name' => (string) ($project->getName() ?? ''),
-                'customerId' => $customer ? (int) $customer->getId() : 0,
-                'customerName' => $customer ? (string) $customer->getName() : '',
+                'customerId' => null !== $customer ? (int) $customer->getId() : 0,
+                'customerName' => null !== $customer ? (string) $customer->getName() : '',
             ];
         }
 

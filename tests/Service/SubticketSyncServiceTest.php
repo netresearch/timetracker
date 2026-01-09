@@ -13,8 +13,9 @@ use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
 use Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+
+use function assert;
 
 /**
  * @internal
@@ -151,8 +152,7 @@ final class SubticketSyncServiceTest extends TestCase
 
         $mock = $this->getMockBuilder(Project::class)
             ->onlyMethods(['getTicketSystem', 'getJiraTicket', 'getProjectLead', 'setSubtickets'])
-            ->getMock()
-        ;
+            ->getMock();
         $mock->method('getTicketSystem')->willReturn($ticketSystem);
         $mock->method('getJiraTicket')->willReturn('DEF-2, ABC-1');
         $mock->method('getProjectLead')->willReturn($user);
@@ -179,8 +179,7 @@ final class SubticketSyncServiceTest extends TestCase
         $jiraApi = $this->createMock(\App\Service\Integration\Jira\JiraOAuthApiService::class);
         $jiraApi->expects(self::exactly(2))
             ->method('getSubtickets')
-            ->willReturnCallback(static fn (string $main): array => 'ABC-1' === $main ? ['ABC-2'] : [])
-        ;
+            ->willReturnCallback(static fn (string $main): array => 'ABC-1' === $main ? ['ABC-2'] : []);
 
         $factory = $this->createMock(JiraOAuthApiFactory::class);
         $factory->method('create')->willReturn($jiraApi);

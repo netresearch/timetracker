@@ -39,7 +39,9 @@ final class PerformanceBenchmarkRunner
      * @var array<string, mixed>
      */
     private array $benchmarkResults = [];
+
     private string $reportPath;
+
     /**
      * @var array<string, int|float>
      */
@@ -123,10 +125,10 @@ final class PerformanceBenchmarkRunner
         }
 
         // Fix offsetAccess.nonOffsetAccessible: Ensure benchmarks key exists and is array
-        if (!isset($this->benchmarkResults['benchmarks'])) {
+        if (! isset($this->benchmarkResults['benchmarks'])) {
             $this->benchmarkResults['benchmarks'] = [];
         }
-        if (!is_array($this->benchmarkResults['benchmarks'])) {
+        if (! is_array($this->benchmarkResults['benchmarks'])) {
             $this->benchmarkResults['benchmarks'] = [];
         }
         $this->benchmarkResults['benchmarks'][$suiteName] = $suiteResults;
@@ -142,7 +144,7 @@ final class PerformanceBenchmarkRunner
     private function getPerformanceTestMethods(string $testClass): array
     {
         // Fix argument.type: Ensure $testClass is a valid class string
-        if (!class_exists($testClass)) {
+        if (! class_exists($testClass)) {
             return [];
         }
 
@@ -215,7 +217,7 @@ final class PerformanceBenchmarkRunner
     private function formatBenchmarkResult(array $result): string
     {
         assert(isset($result['success']));
-        if (!$result['success']) {
+        if (! $result['success']) {
             assert(isset($result['error']));
             // Fix cast.string #1: Safe string casting with type validation
             $errorValue = $result['error'] ?? 'unknown error';
@@ -241,7 +243,7 @@ final class PerformanceBenchmarkRunner
     private function generateJsonReport(): void
     {
         $reportDir = dirname($this->reportPath);
-        if (!is_dir($reportDir)) {
+        if (! is_dir($reportDir)) {
             mkdir($reportDir, 0o777, true);
         }
 
@@ -290,7 +292,7 @@ final class PerformanceBenchmarkRunner
 
         // Fix offsetAccess.nonOffsetAccessible: Check if benchmarks key exists and is array
         $benchmarks = $this->benchmarkResults['benchmarks'] ?? [];
-        if (!is_array($benchmarks)) {
+        if (! is_array($benchmarks)) {
             $benchmarks = [];
         }
 
@@ -298,15 +300,17 @@ final class PerformanceBenchmarkRunner
             $report[] = "--- {$suiteName} Benchmarks ---";
 
             // Fix offsetAccess.nonOffsetAccessible: Check if suite is array
-            if (!is_array($suite)) {
+            if (! is_array($suite)) {
                 $report[] = 'Invalid suite data';
+
                 continue;
             }
 
             foreach ($suite as $testName => $result) {
                 // Fix offsetAccess.nonOffsetAccessible: Check if result is array and has required keys
-                if (!is_array($result)) {
+                if (! is_array($result)) {
                     $report[] = sprintf('❌ %-40s Invalid result data', $testName);
+
                     continue;
                 }
 
@@ -327,7 +331,7 @@ final class PerformanceBenchmarkRunner
                 );
 
                 // Fix offsetAccess.nonOffsetAccessible: Check if success and error keys exist
-                if (!isset($result['success']) || !$result['success']) {
+                if (! isset($result['success']) || ! $result['success']) {
                     if (isset($result['error'])) {
                         // Fix cast.string #8: Safe string casting with type validation (duplicate of #1)
                         $errorValue = $result['error'] ?? 'unknown';
@@ -358,7 +362,7 @@ final class PerformanceBenchmarkRunner
 
         // Fix offsetAccess.nonOffsetAccessible: Check if benchmarks exists and is array
         $benchmarks = $this->benchmarkResults['benchmarks'] ?? [];
-        if (!is_array($benchmarks)) {
+        if (! is_array($benchmarks)) {
             $report[] = 'No benchmark data available.';
 
             return;
@@ -409,7 +413,7 @@ final class PerformanceBenchmarkRunner
     {
         $historyFile = dirname($this->reportPath) . '/performance-history.json';
 
-        if (!file_exists($historyFile)) {
+        if (! file_exists($historyFile)) {
             // Create initial history file
             file_put_contents($historyFile, json_encode([$this->benchmarkResults], JSON_PRETTY_PRINT));
             echo "📈 Created initial performance history baseline.\n";
@@ -423,12 +427,12 @@ final class PerformanceBenchmarkRunner
         }
 
         $history = json_decode($historyContent, true);
-        if (!is_array($history) || [] === $history) {
+        if (! is_array($history) || [] === $history) {
             return;
         }
 
         $lastRun = end($history);
-        if (!is_array($lastRun)) {
+        if (! is_array($lastRun)) {
             return;
         }
 
@@ -473,7 +477,7 @@ final class PerformanceBenchmarkRunner
         }
 
         // Ensure required keys exist
-        if (!isset($validated['benchmarks'])) {
+        if (! isset($validated['benchmarks'])) {
             return null;
         }
 
@@ -497,18 +501,18 @@ final class PerformanceBenchmarkRunner
         $currentBenchmarks = $current['benchmarks'] ?? [];
         $baselineBenchmarks = $baseline['benchmarks'] ?? [];
 
-        if (!is_array($currentBenchmarks) || !is_array($baselineBenchmarks)) {
+        if (! is_array($currentBenchmarks) || ! is_array($baselineBenchmarks)) {
             return $regressions;
         }
 
         foreach ($currentBenchmarks as $suiteName => $suite) {
             // Fix offsetAccess.nonOffsetAccessible: Check if baseline suite exists
-            if (!isset($baselineBenchmarks[$suiteName]) || !is_array($baselineBenchmarks[$suiteName])) {
+            if (! isset($baselineBenchmarks[$suiteName]) || ! is_array($baselineBenchmarks[$suiteName])) {
                 continue;
             }
 
             // Fix offsetAccess.nonOffsetAccessible: Check if suite is array
-            if (!is_array($suite)) {
+            if (! is_array($suite)) {
                 continue;
             }
 
@@ -516,20 +520,20 @@ final class PerformanceBenchmarkRunner
                 // Fix offsetAccess.nonOffsetAccessible: Check if baseline result exists and is array
                 $baselineResult = $baselineBenchmarks[$suiteName][$testName] ?? null;
 
-                if (!is_array($baselineResult) || !is_array($result)) {
+                if (! is_array($baselineResult) || ! is_array($result)) {
                     continue;
                 }
 
                 // Fix offsetAccess.nonOffsetAccessible: Check if success keys exist
-                if (!isset($result['success']) || !isset($baselineResult['success'])
-                    || !$result['success'] || !$baselineResult['success']) {
+                if (! isset($result['success']) || ! isset($baselineResult['success'])
+                    || ! $result['success'] || ! $baselineResult['success']) {
                     continue;
                 }
 
                 // Check execution time regression
                 $baselineTime = $baselineResult['execution_time_ms'] ?? 0;
                 $currentTime = $result['execution_time_ms'] ?? 0;
-                if (!is_numeric($baselineTime) || !is_numeric($currentTime)) {
+                if (! is_numeric($baselineTime) || ! is_numeric($currentTime)) {
                     continue;
                 }
                 $timeRegression = $this->calculateRegression(
@@ -555,7 +559,7 @@ final class PerformanceBenchmarkRunner
                 // Check memory usage regression
                 $baselineMemory = $baselineResult['memory_usage_bytes'] ?? 0;
                 $currentMemory = $result['memory_usage_bytes'] ?? 0;
-                if (!is_numeric($baselineMemory) || !is_numeric($currentMemory)) {
+                if (! is_numeric($baselineMemory) || ! is_numeric($currentMemory)) {
                     continue;
                 }
                 $memoryRegression = $this->calculateRegression(

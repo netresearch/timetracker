@@ -7,6 +7,9 @@ namespace Tests\Controller;
 use Exception;
 use Tests\AbstractWebTestCase;
 
+use function assert;
+use function is_array;
+
 /**
  * @internal
  *
@@ -131,7 +134,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'datestart=not a date',
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
-        
+
         // Invalid dates are now silently ignored (more robust behavior)
         $this->assertStatusCode(200);
 
@@ -149,7 +152,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'dateend=1',
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries?' . implode('&', $parameter));
-        
+
         // Invalid dates are now silently ignored (more robust behavior)
         $this->assertStatusCode(200);
 

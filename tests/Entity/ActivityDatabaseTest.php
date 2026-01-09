@@ -7,13 +7,15 @@ namespace Tests\Entity;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
-use App\Enum\EntryClass;
 use App\Entity\Preset;
 use App\Entity\Project;
 use App\Enum\BillingType;
+use App\Enum\EntryClass;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Tests\AbstractWebTestCase;
 
+use function assert;
 use function count;
 
 /**
@@ -25,11 +27,11 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        if ($this->serviceContainer === null) {
-            throw new \RuntimeException('Service container not initialized');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
         }
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($entityManager instanceof EntityManagerInterface);

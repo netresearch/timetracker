@@ -44,7 +44,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
                       || str_contains($request->getPathInfo(), '/api/');
 
-        if (!$acceptsJson) {
+        if (! $acceptsJson) {
             // Let Symfony handle HTML error pages
             return;
         }
@@ -142,7 +142,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
     private function logException(Throwable $throwable, string $path): void
     {
-        if (!$this->logger instanceof LoggerInterface) {
+        if (! $this->logger instanceof LoggerInterface) {
             return;
         }
 

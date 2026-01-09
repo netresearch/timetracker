@@ -7,7 +7,9 @@ namespace App\Service\Integration\Jira;
 use App\Entity\Entry;
 use App\Exception\Integration\Jira\JiraApiException;
 
+use function is_array;
 use function is_object;
+use function is_scalar;
 use function sprintf;
 
 /**
@@ -30,13 +32,13 @@ class JiraTicketService
     {
         $project = $entry->getProject();
 
-        if (!$project instanceof \App\Entity\Project) {
+        if (! $project instanceof \App\Entity\Project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
         $projectJiraId = $project->getJiraId();
 
-        if ($projectJiraId === null || $projectJiraId === '') {
+        if (null === $projectJiraId || '' === $projectJiraId) {
             throw new JiraApiException('Project has no Jira ID configured', 400);
         }
 
@@ -63,7 +65,7 @@ class JiraTicketService
 
         $response = $this->jiraHttpClientService->post('issue', $ticketData);
 
-        if (!is_object($response) || !property_exists($response, 'key')) {
+        if (! is_object($response) || ! property_exists($response, 'key')) {
             throw new JiraApiException('Failed to create Jira ticket', 500);
         }
 
@@ -127,11 +129,11 @@ class JiraTicketService
         try {
             $issue = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
 
-            if (!is_object($issue) || !property_exists($issue, 'fields')) {
+            if (! is_object($issue) || ! property_exists($issue, 'fields')) {
                 return [];
             }
 
-            if (!is_object($issue->fields) || !property_exists($issue->fields, 'subtasks')) {
+            if (! is_object($issue->fields) || ! property_exists($issue->fields, 'subtasks')) {
                 return [];
             }
 
@@ -139,16 +141,16 @@ class JiraTicketService
 
             if (is_array($issue->fields->subtasks)) {
                 foreach ($issue->fields->subtasks as $subtask) {
-                if (!is_object($subtask)) {
-                    continue;
-                }
+                    if (! is_object($subtask)) {
+                        continue;
+                    }
 
-                $subtasks[] = [
-                    'key' => property_exists($subtask, 'key') ? $subtask->key : '',
-                    'summary' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'summary')) ? $subtask->fields->summary : '',
-                    'status' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'status') && is_object($subtask->fields->status) && property_exists($subtask->fields->status, 'name')) ? $subtask->fields->status->name : '',
-                    'assignee' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'assignee') && is_object($subtask->fields->assignee) && property_exists($subtask->fields->assignee, 'displayName')) ? $subtask->fields->assignee->displayName : null,
-                ];
+                    $subtasks[] = [
+                        'key' => property_exists($subtask, 'key') ? $subtask->key : '',
+                        'summary' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'summary')) ? $subtask->fields->summary : '',
+                        'status' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'status') && is_object($subtask->fields->status) && property_exists($subtask->fields->status, 'name')) ? $subtask->fields->status->name : '',
+                        'assignee' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'assignee') && is_object($subtask->fields->assignee) && property_exists($subtask->fields->assignee, 'displayName')) ? $subtask->fields->assignee->displayName : null,
+                    ];
                 }
             }
 
@@ -231,7 +233,7 @@ class JiraTicketService
         try {
             $response = $this->jiraHttpClientService->get(sprintf('issue/%s/transitions', $ticketKey));
 
-            if (!is_object($response) || !property_exists($response, 'transitions')) {
+            if (! is_object($response) || ! property_exists($response, 'transitions')) {
                 return [];
             }
 
@@ -239,19 +241,19 @@ class JiraTicketService
 
             if (is_array($response->transitions)) {
                 foreach ($response->transitions as $transition) {
-                if (!is_object($transition)) {
-                    continue;
-                }
+                    if (! is_object($transition)) {
+                        continue;
+                    }
 
-                $to = $transition->to ?? null;
-                $transitions[] = [
-                    'id' => property_exists($transition, 'id') && is_scalar($transition->id ?? '') ? (string) ($transition->id ?? '') : '',
-                    'name' => property_exists($transition, 'name') && is_scalar($transition->name ?? '') ? (string) ($transition->name ?? '') : '',
-                    'to' => [
-                        'id' => (is_object($to) && property_exists($to, 'id') && is_scalar($to->id ?? '')) ? (string) ($to->id ?? '') : '',
-                        'name' => (is_object($to) && property_exists($to, 'name') && is_scalar($to->name ?? '')) ? (string) ($to->name ?? '') : '',
-                    ],
-                ];
+                    $to = $transition->to ?? null;
+                    $transitions[] = [
+                        'id' => property_exists($transition, 'id') && is_scalar($transition->id ?? '') ? (string) ($transition->id ?? '') : '',
+                        'name' => property_exists($transition, 'name') && is_scalar($transition->name ?? '') ? (string) ($transition->name ?? '') : '',
+                        'to' => [
+                            'id' => (is_object($to) && property_exists($to, 'id') && is_scalar($to->id ?? '')) ? (string) ($to->id ?? '') : '',
+                            'name' => (is_object($to) && property_exists($to, 'name') && is_scalar($to->name ?? '')) ? (string) ($to->name ?? '') : '',
+                        ],
+                    ];
                 }
             }
 

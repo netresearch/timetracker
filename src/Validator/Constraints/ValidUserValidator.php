@@ -19,7 +19,7 @@ class ValidUserValidator extends ConstraintValidator
 
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (!$constraint instanceof ValidUser) {
+        if (! $constraint instanceof ValidUser) {
             throw new UnexpectedTypeException($constraint, ValidUser::class);
         }
 
@@ -31,8 +31,7 @@ class ValidUserValidator extends ConstraintValidator
         $user = $this->entityManager->getRepository(User::class)->find($value);
         if (null === $user) {
             $this->context->buildViolation($constraint->message)
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

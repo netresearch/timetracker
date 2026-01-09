@@ -88,40 +88,40 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
         $data = json_decode($string, true);
         unset($string);
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return (string) json_encode([]);
         }
 
         foreach ($data as $rowKey => $row) {
             // Ensure $row is an array before checking keys
-            if (!is_array($row)) {
+            if (! is_array($row)) {
                 continue;
             }
-            if (!array_key_exists($arrayKey, $row)) {
+            if (! array_key_exists($arrayKey, $row)) {
                 continue;
             }
             // Ensure the nested element is iterable
-            if (!is_iterable($row[$arrayKey])) {
+            if (! is_iterable($row[$arrayKey])) {
                 continue;
             }
 
             foreach ($row[$arrayKey] as $key => $value) {
                 // Ensure key is string and in the allowed keys
-                if (!is_string($key)) {
+                if (! is_string($key)) {
                     continue;
                 }
-                if (!in_array($key, $keys, true)) {
+                if (! in_array($key, $keys, true)) {
                     continue;
                 }
                 // Ensure value is string before translation
-                if (!is_string($value)) {
+                if (! is_string($value)) {
                     continue;
                 }
                 // Ensure we have array access to the nested structure
-                if (!is_array($data[$rowKey] ?? null)) {
+                if (! is_array($data[$rowKey] ?? null)) {
                     continue;
                 }
-                if (!is_array($data[$rowKey][$arrayKey] ?? null)) {
+                if (! is_array($data[$rowKey][$arrayKey] ?? null)) {
                     continue;
                 }
 

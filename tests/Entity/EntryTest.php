@@ -14,8 +14,6 @@ use App\Enum\EntryClass;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
-use function is_array;
-
 /**
  * @internal
  *
@@ -192,8 +190,7 @@ final class EntryTest extends TestCase
         $entry
             ->setId(5)
             ->setDescription('foo')
-            ->setTicket('TTT-51')
-        ;
+            ->setTicket('TTT-51');
         $result = $entry->toArray();
         self::assertSame(5, $result['id']);
         self::assertSame('foo', $result['description']);
@@ -203,8 +200,7 @@ final class EntryTest extends TestCase
 
         // test indirect getCustomerId call
         $entry
-            ->setProject($project)
-        ;
+            ->setProject($project);
         $result = $entry->toArray();
         self::assertSame(17, $result['customer']);
         self::assertSame(21, $result['project']);
@@ -212,8 +208,7 @@ final class EntryTest extends TestCase
         // test project and customer
         $entry
             ->setCustomer($customer)
-            ->setProject($project)
-        ;
+            ->setProject($project);
         $result = $entry->toArray();
         self::assertSame(17, $result['customer']);
         self::assertSame(21, $result['project']);

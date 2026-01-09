@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Entity;
 
 use App\Entity\Project;
-use App\Enum\BillingType;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\BillingType;
 use PHPUnit\Framework\TestCase;
 
 /**

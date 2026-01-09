@@ -40,8 +40,7 @@ class HolidayRepository extends ServiceEntityRepository
             ->setParameter('to', $to)
             ->orderBy('h.day', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
         /** @var list<Holiday> $result */

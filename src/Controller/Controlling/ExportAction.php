@@ -43,14 +43,13 @@ final class ExportAction extends BaseController
         // Map legacy path parameters to query parameters for backward compatibility
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
         foreach ($attributeKeysToMap as $attributeKeyToMap) {
-            if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
+            if ($request->attributes->has($attributeKeyToMap) && ! $request->query->has($attributeKeyToMap)) {
                 /** @var mixed $attributeValue */
                 $attributeValue = $request->attributes->get($attributeKeyToMap);
                 $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
                 $request->query->set($attributeKeyToMap, $stringValue);
             }
         }
-
 
         // Validate month parameter
         if ($exportQueryDto->month < 0 || $exportQueryDto->month > 12) {
@@ -126,8 +125,8 @@ final class ExportAction extends BaseController
         $lineNumber = 3;
         $stats = [];
         foreach ($entries as $entry) {
-            $abbr = $entry->getUser() !== null ? (string) $entry->getUser()->getAbbr() : '';
-            if (!isset($stats[$abbr])) {
+            $abbr = null !== $entry->getUser() ? (string) $entry->getUser()->getAbbr() : '';
+            if (! isset($stats[$abbr])) {
                 $stats[$abbr] = [
                     'holidays' => 0,
                     'sickdays' => 0,
@@ -209,8 +208,7 @@ final class ExportAction extends BaseController
             $sheet->setCellValue('D' . $lineNumber, '=SUMIF(ZE!$J$1:$J$5000,A' . $lineNumber . ',ZE!$I$1:$I$5000)');
             $sheet->getStyle('D' . $lineNumber)
                 ->getNumberFormat()
-                ->setFormatCode('[HH]:MM')
-            ;
+                ->setFormatCode('[HH]:MM');
             if ($userStats['holidays'] > 0) {
                 $sheet->setCellValue('E' . $lineNumber, $userStats['holidays']);
             }
@@ -249,8 +247,7 @@ final class ExportAction extends BaseController
         );
         $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode($format)
-        ;
+            ->setFormatCode($format);
     }
 
     protected static function setCellHours(Worksheet $worksheet, string $column, int $row, DateTimeInterface $date): void
@@ -260,7 +257,6 @@ final class ExportAction extends BaseController
         $worksheet->setCellValue($column . $row, $hourValue);
         $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode('HH:MM')
-        ;
+            ->setFormatCode('HH:MM');
     }
 }

@@ -6,16 +6,19 @@ namespace Tests\Entity;
 
 use App\Entity\Contract;
 use App\Entity\Entry;
-use App\Enum\EntryClass;
 use App\Entity\Team;
 use App\Entity\TicketSystem;
-use App\Enum\TicketSystemType;
 use App\Entity\User;
-use App\Enum\UserType;
 use App\Entity\UserTicketsystem;
+use App\Enum\EntryClass;
+use App\Enum\TicketSystemType;
+use App\Enum\UserType;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+
+use function assert;
 
 /**
  * @internal
@@ -26,11 +29,11 @@ final class UserDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        if ($this->serviceContainer === null) {
-            throw new \RuntimeException('Service container not initialized');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
         }
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($entityManager instanceof EntityManagerInterface);

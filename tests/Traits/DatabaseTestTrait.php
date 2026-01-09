@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Tests\Traits;
 
 use Exception;
+use RuntimeException;
 use Throwable;
-
-use function method_exists;
-use function trim;
 
 /**
  * Database test functionality trait.
@@ -18,9 +16,9 @@ use function trim;
  */
 trait DatabaseTestTrait
 {
-    protected \Doctrine\DBAL\Connection|null $connection = null;
+    protected ?\Doctrine\DBAL\Connection $connection = null;
 
-    protected \Doctrine\DBAL\Query\QueryBuilder|null $queryBuilder = null;
+    protected ?\Doctrine\DBAL\Query\QueryBuilder $queryBuilder = null;
 
     protected string $filepath = '/../sql/unittest/002_testdata.sql';
 
@@ -29,7 +27,7 @@ trait DatabaseTestTrait
      *
      * @var array<int, array<string, mixed>>|null
      */
-    protected array|null $tableInitialState = null;
+    protected ?array $tableInitialState = null;
 
     /**
      * Flag to track if database has been initialized.
@@ -47,8 +45,8 @@ trait DatabaseTestTrait
         $this->resetDatabase();
 
         // Ensure we have a Doctrine DBAL connection reference
-        if ($this->serviceContainer === null) {
-            throw new \RuntimeException('Service container not initialized');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
         }
         $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
 
@@ -74,11 +72,11 @@ trait DatabaseTestTrait
     protected function cleanupDatabase(): void
     {
         // Roll back the transaction to restore the database to its original state (via DBAL)
-        if ($this->useTransactions && $this->serviceContainer) {
+        if ($this->useTransactions && null !== $this->serviceContainer) {
             try {
                 if ($this->serviceContainer->has('doctrine.dbal.default_connection')) {
                     $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
-                                // Be tolerant: attempt rollback but ignore if not active
+                    // Be tolerant: attempt rollback but ignore if not active
                     try {
                         $dbal->rollBack();
                     } catch (Throwable) {
@@ -91,10 +89,10 @@ trait DatabaseTestTrait
 
         // Clear entity manager to prevent stale data between tests, tolerate shut down kernel
         try {
-            if ($this->serviceContainer && $this->serviceContainer->has('doctrine')) {
+            if (null !== $this->serviceContainer && $this->serviceContainer->has('doctrine')) {
                 $doctrine = $this->serviceContainer->get('doctrine');
-                        $entityManager = $doctrine->getManager();
-                        $entityManager->clear();
+                $entityManager = $doctrine->getManager();
+                $entityManager->clear();
             }
         } catch (Throwable) {
             // Ignore if kernel has been shut down during the test
@@ -106,11 +104,10 @@ trait DatabaseTestTrait
      */
     protected function setInitialDbState(string $tableName): void
     {
-        if ($this->queryBuilder !== null) {
+        if (null !== $this->queryBuilder) {
             $qb = $this->queryBuilder
                 ->select('*')
-                ->from($tableName)
-            ;
+                ->from($tableName);
             $result = $qb->executeQuery();
             $this->tableInitialState = $result->fetchAllAssociative();
         }
@@ -122,11 +119,10 @@ trait DatabaseTestTrait
      */
     protected function assertDbState(string $tableName): void
     {
-        if ($this->queryBuilder !== null) {
+        if (null !== $this->queryBuilder) {
             $qb = $this->queryBuilder
                 ->select('*')
-                ->from($tableName)
-            ;
+                ->from($tableName);
             $result = $qb->executeQuery();
             $newTableState = $result->fetchAllAssociative();
         } else {
@@ -141,13 +137,13 @@ trait DatabaseTestTrait
      */
     protected function resetDatabase(?string $filepath = null): void
     {
-        if (!self::$databaseInitialized || null !== $filepath) {
+        if (! self::$databaseInitialized || null !== $filepath) {
             $this->loadTestData($filepath);
             self::$databaseInitialized = true;
         } elseif (null === $this->queryBuilder || null === $this->connection) {
             // Ensure queryBuilder and connection are available even if loadTestData wasn't called
-            if ($this->serviceContainer === null) {
-                throw new \RuntimeException('Service container not initialized');
+            if (null === $this->serviceContainer) {
+                throw new RuntimeException('Service container not initialized');
             }
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
             $this->queryBuilder = $connection->createQueryBuilder();

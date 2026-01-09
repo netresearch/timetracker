@@ -9,7 +9,10 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\UserType;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+
+use function assert;
 
 /**
  * @internal
@@ -20,11 +23,11 @@ final class TeamDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        if ($this->serviceContainer === null) {
-            throw new \RuntimeException('Service container not initialized');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
         }
         $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($entityManager instanceof EntityManagerInterface);
@@ -93,7 +96,7 @@ final class TeamDatabaseTest extends AbstractWebTestCase
         // Clean up with null check to satisfy PHPStan
         $this->entityManager->remove($fetchedTeam);
         $leadUserFromTeam = $fetchedTeam->getLeadUser();
-        if ($leadUserFromTeam !== null) {
+        if (null !== $leadUserFromTeam) {
             $this->entityManager->remove($leadUserFromTeam);
         }
         $this->entityManager->flush();
@@ -144,8 +147,7 @@ final class TeamDatabaseTest extends AbstractWebTestCase
             ->where('t.id = :teamId')
             ->setParameter('teamId', $teamId)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         // Test user relationship
         assert(is_countable($users));

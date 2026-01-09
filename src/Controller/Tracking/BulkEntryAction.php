@@ -73,7 +73,7 @@ final class BulkEntryAction extends BaseTrackingController
             $contractHoursArray = [];
 
             $preset = $doctrine->getRepository(Preset::class)->find($bulkEntryDto->preset);
-            if (!$preset instanceof Preset) {
+            if (! $preset instanceof Preset) {
                 throw new Exception('Preset not found');
             }
 
@@ -84,17 +84,16 @@ final class BulkEntryAction extends BaseTrackingController
 
             if ($bulkEntryDto->isUseContract()) {
                 $contracts = $doctrine->getRepository(Contract::class)
-                    ->findBy(['user' => $currentUser->getId()], ['start' => 'ASC'])
-                ;
+                    ->findBy(['user' => $currentUser->getId()], ['start' => 'ASC']);
 
                 foreach ($contracts as $contract) {
-                    if (!$contract instanceof Contract) {
+                    if (! $contract instanceof Contract) {
                         continue;
                     }
 
                     $contractHoursArray[] = [
                         'start' => $contract->getStart(),
-                        'stop' => $contract->getEnd() ?? new DateTime($bulkEntryDto->enddate !== '' ? $bulkEntryDto->enddate : 'now'),
+                        'stop' => $contract->getEnd() ?? new DateTime('' !== $bulkEntryDto->enddate ? $bulkEntryDto->enddate : 'now'),
                         7 => $contract->getHours0(),
                         1 => $contract->getHours1(),
                         2 => $contract->getHours2(),
@@ -116,8 +115,8 @@ final class BulkEntryAction extends BaseTrackingController
             }
 
             $em = $doctrine->getManager();
-            $date = new DateTime($bulkEntryDto->startdate !== '' ? $bulkEntryDto->startdate : 'now');
-            $endDate = new DateTime($bulkEntryDto->enddate !== '' ? $bulkEntryDto->enddate : 'now');
+            $date = new DateTime('' !== $bulkEntryDto->startdate ? $bulkEntryDto->startdate : 'now');
+            $endDate = new DateTime('' !== $bulkEntryDto->enddate ? $bulkEntryDto->enddate : 'now');
 
             $c = 0;
             $weekend = ['0', '6', '7'];
@@ -133,17 +132,20 @@ final class BulkEntryAction extends BaseTrackingController
 
                 if ($bulkEntryDto->isSkipWeekend() && in_array($date->format('w'), $weekend, true)) {
                     $date->add(new DateInterval('P1D'));
+
                     continue;
                 }
 
                 if ($bulkEntryDto->isSkipHolidays()) {
                     if (in_array($date->format('m-d'), $regular_holidays, true)) {
                         $date->add(new DateInterval('P1D'));
+
                         continue;
                     }
 
                     if (in_array($date->format('Y-m-d'), $irregular_holidays, true)) {
                         $date->add(new DateInterval('P1D'));
+
                         continue;
                     }
                 }
@@ -157,8 +159,9 @@ final class BulkEntryAction extends BaseTrackingController
                         }
                     }
 
-                    if (!isset($workTime) || $workTime <= 0) {
+                    if (! isset($workTime) || $workTime <= 0) {
                         $date->add(new DateInterval('P1D'));
+
                         continue;
                     }
 
@@ -170,8 +173,8 @@ final class BulkEntryAction extends BaseTrackingController
                     $startTime = new DateTime('08:00:00');
                     $endTime = new DateTime('08:00:00')->add($hoursToAdd);
                 } else {
-                    $startTime = new DateTime($bulkEntryDto->starttime !== '' ? $bulkEntryDto->starttime : '00:00:00');
-                    $endTime = new DateTime($bulkEntryDto->endtime !== '' ? $bulkEntryDto->endtime : '00:00:00');
+                    $startTime = new DateTime('' !== $bulkEntryDto->starttime ? $bulkEntryDto->starttime : '00:00:00');
+                    $endTime = new DateTime('' !== $bulkEntryDto->endtime ? $bulkEntryDto->endtime : '00:00:00');
                 }
 
                 $entry = new Entry();
@@ -182,8 +185,7 @@ final class BulkEntryAction extends BaseTrackingController
                     ->setStart($startTime->format('H:i:s'))
                     ->setEnd($endTime->format('H:i:s'))
                     ->setClass(\App\Enum\EntryClass::DAYBREAK)
-                    ->calcDuration()
-                ;
+                    ->calcDuration();
 
                 if ($project instanceof Project) {
                     $entry->setProject($project);
@@ -207,7 +209,7 @@ final class BulkEntryAction extends BaseTrackingController
             } while ($date <= $endDate);
 
             $responseContent = $this->translator->trans('%num% entries have been added', ['%num%' => $numAdded]);
-            if ([] !== $contractHoursArray && (new DateTime($bulkEntryDto->startdate !== '' ? $bulkEntryDto->startdate : 'now')) < $contractHoursArray[0]['start']) {
+            if ([] !== $contractHoursArray && (new DateTime('' !== $bulkEntryDto->startdate ? $bulkEntryDto->startdate : 'now')) < $contractHoursArray[0]['start']) {
                 $responseContent .= '<br/>' . $this->translator->trans('Contract is valid from %date%.', ['%date%' => $contractHoursArray[0]['start']->format('d.m.Y')]);
             }
 

@@ -17,11 +17,11 @@ class CustomerTeamsRequiredValidator extends ConstraintValidator
      */
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (!$constraint instanceof CustomerTeamsRequired) {
+        if (! $constraint instanceof CustomerTeamsRequired) {
             throw new UnexpectedTypeException($constraint, CustomerTeamsRequired::class);
         }
 
-        if (!$value instanceof \App\Dto\CustomerSaveDto) {
+        if (! $value instanceof \App\Dto\CustomerSaveDto) {
             return;
         }
 
@@ -29,10 +29,9 @@ class CustomerTeamsRequiredValidator extends ConstraintValidator
         $global = $value->global;
         $teams = $value->teams;
 
-        if (!$global && [] === $teams) {
+        if (! $global && [] === $teams) {
             $this->context->buildViolation($constraint->message)
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

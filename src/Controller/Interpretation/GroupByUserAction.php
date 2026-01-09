@@ -49,7 +49,7 @@ final class GroupByUserAction extends BaseInterpretationController
             }
 
             $uid = $u->getId();
-            if (!isset($users[$uid])) {
+            if (! isset($users[$uid])) {
                 $users[$uid] = ['id' => $uid, 'name' => (string) $u->getUsername(), 'hours' => 0, 'quota' => 0];
             }
 

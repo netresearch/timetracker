@@ -18,7 +18,6 @@ class Contract
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
     public User $user;
 
-
     /**
      * @var int
      */

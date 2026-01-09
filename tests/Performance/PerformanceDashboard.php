@@ -27,6 +27,7 @@ use const PHP_SAPI;
 final class PerformanceDashboard
 {
     private string $historyFile;
+
     private string $outputPath;
 
     public function __construct(?string $historyFile = null, ?string $outputPath = null)
@@ -50,7 +51,7 @@ final class PerformanceDashboard
 
         // Ensure output directory exists
         $outputDir = dirname($this->outputPath);
-        if (!is_dir($outputDir)) {
+        if (! is_dir($outputDir)) {
             mkdir($outputDir, 0o777, true);
         }
 
@@ -66,7 +67,7 @@ final class PerformanceDashboard
      */
     private function loadPerformanceHistory(): array
     {
-        if (!file_exists($this->historyFile)) {
+        if (! file_exists($this->historyFile)) {
             return [];
         }
 
@@ -76,7 +77,7 @@ final class PerformanceDashboard
         }
 
         $history = json_decode($content, true);
-        if (!is_array($history)) {
+        if (! is_array($history)) {
             return [];
         }
 
@@ -107,7 +108,7 @@ final class PerformanceDashboard
     private function generateDashboardHtml(array $history): string
     {
         $latest = end($history);
-        if (!is_array($latest)) {
+        if (! is_array($latest)) {
             return $this->generateEmptyDashboard();
         }
         $trends = $this->calculateTrends($history);
@@ -265,7 +266,7 @@ final class PerformanceDashboard
      */
     private function generateEmptyDashboard(): string
     {
-        return <<<HTML
+        return <<<'HTML'
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -343,18 +344,18 @@ final class PerformanceDashboard
     {
         $html = '<table class="test-table"><thead><tr><th>Test Suite</th><th>Test Name</th><th>Status</th><th>Duration</th><th>Memory</th></tr></thead><tbody>';
 
-        if (!isset($latest['benchmarks']) || !is_array($latest['benchmarks'])) {
+        if (! isset($latest['benchmarks']) || ! is_array($latest['benchmarks'])) {
             $html .= '<tr><td colspan="5">No benchmark data available</td></tr>';
             $html .= '</tbody></table>';
 
             return $html;
         }
         foreach ($latest['benchmarks'] as $suiteName => $suite) {
-            if (!is_array($suite)) {
+            if (! is_array($suite)) {
                 continue;
             }
             foreach ($suite as $testName => $result) {
-                if (!is_array($result) || !isset($result['success'])) {
+                if (! is_array($result) || ! isset($result['success'])) {
                     continue;
                 }
                 $status = $result['success'] ? 'PASS' : 'FAIL';
@@ -397,14 +398,14 @@ final class PerformanceDashboard
         $current = end($history);
         $previous = $history[count($history) - 2];
 
-        if (!is_array($current) || !is_array($previous)) {
+        if (! is_array($current) || ! is_array($previous)) {
             return [];
         }
 
         $trends = [];
 
         foreach ($current['benchmarks'] ?? [] as $suiteName => $suite) {
-            if ((!is_string($suiteName) && !is_int($suiteName)) || !is_array($suite)) {
+            if ((! is_string($suiteName) && ! is_int($suiteName)) || ! is_array($suite)) {
                 continue;
             }
             $stringKey = (string) $suiteName;
@@ -441,7 +442,7 @@ final class PerformanceDashboard
         foreach ($history as $run) {
             // Fix argument.type: Ensure timestamp is string before passing to DateTime constructor
             $runTimestamp = $run['timestamp'] ?? '';
-            if (!is_string($runTimestamp)) {
+            if (! is_string($runTimestamp)) {
                 $runTimestamp = is_scalar($runTimestamp) ? (string) $runTimestamp : date('c');
             }
             $timestamps[] = (new DateTime($runTimestamp))->format('M d');
@@ -451,15 +452,15 @@ final class PerformanceDashboard
             $totalTests = 0;
             $totalMemory = 0;
 
-            if (!isset($run['benchmarks']) || !is_array($run['benchmarks'])) {
+            if (! isset($run['benchmarks']) || ! is_array($run['benchmarks'])) {
                 continue;
             }
             foreach ($run['benchmarks'] as $suite) {
-                if (!is_array($suite)) {
+                if (! is_array($suite)) {
                     continue;
                 }
                 foreach ($suite as $result) {
-                    if (!is_array($result) || !isset($result['success'])) {
+                    if (! is_array($result) || ! isset($result['success'])) {
                         continue;
                     }
                     if ($result['success']) {
@@ -577,11 +578,11 @@ final class PerformanceDashboard
         $totalMemory = 0;
         $totalTests = 0;
 
-        if (!isset($run['benchmarks']) || !is_array($run['benchmarks'])) {
+        if (! isset($run['benchmarks']) || ! is_array($run['benchmarks'])) {
             return 0;
         }
         foreach ($run['benchmarks'] as $suite) {
-            if (!is_array($suite)) {
+            if (! is_array($suite)) {
                 continue;
             }
             foreach ($suite as $result) {
@@ -607,7 +608,7 @@ final class PerformanceDashboard
         $successfulTests = 0;
 
         foreach ($suite as $result) {
-            if (!is_array($result) || !isset($result['success'])) {
+            if (! is_array($result) || ! isset($result['success'])) {
                 continue;
             }
             if ($result['success']) {

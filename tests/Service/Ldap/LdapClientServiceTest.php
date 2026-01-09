@@ -8,6 +8,8 @@ use App\Service\Ldap\LdapClientService;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function is_scalar;
+
 /**
  * @internal
  *
@@ -19,8 +21,7 @@ final class LdapClientServiceTest extends TestCase
     {
         $ldapClientService = new LdapClientService();
         $ldapClientService->setHost('ldap.example')->setPort(636)->setReadUser('reader')->setReadPass('secret')
-            ->setBaseDn('dc=example,dc=com')->setUseSSL(true)->setUserNameField('uid')
-        ;
+            ->setBaseDn('dc=example,dc=com')->setUseSSL(true)->setUserNameField('uid');
 
         $ldapClientService->setUserName(' Jürgen Müller');
         $ldapClientService->setUserPass('pass');

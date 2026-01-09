@@ -13,6 +13,8 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function assert;
+
 /**
  * Test proxy exposing protected API for assertions.
  */
@@ -50,7 +52,7 @@ final class JiraOAuthApiTest extends TestCase
         $router->method('generate')->willReturn('http://localhost/jiraoauthcallback');
 
         // Fake client that invokes provided handler with proper type specification
-        $fakeClient = new class($requestHandler) extends \GuzzleHttp\Client {
+        $fakeClient = new class ($requestHandler) extends \GuzzleHttp\Client {
             /**
              * @param callable $handler
              */
@@ -60,18 +62,20 @@ final class JiraOAuthApiTest extends TestCase
 
             /**
              * @param array<string, mixed> $options
+             * @param mixed                $uri
              */
             public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
             {
                 $fn = $this->handler;
                 $result = $fn($method, $uri, $options);
                 assert($result instanceof \Psr\Http\Message\ResponseInterface);
+
                 return $result;
             }
         };
 
         // Subclass to expose getResponse and return fake client
-        return new class($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
+        return new class ($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
             public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, private mixed $client)
             {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
@@ -80,6 +84,7 @@ final class JiraOAuthApiTest extends TestCase
             protected function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): \GuzzleHttp\Client
             {
                 assert($this->client instanceof \GuzzleHttp\Client);
+
                 return $this->client;
             }
 
@@ -115,7 +120,9 @@ final class JiraOAuthApiTest extends TestCase
     {
         $request = new Request('GET', 'https://jira.example');
         $requestException = new RequestException('Not found', $request, new Response(404));
-        $jiraOAuthApi = $this->makeSubject(static function () use ($requestException): void { throw $requestException; });
+        $jiraOAuthApi = $this->makeSubject(static function () use ($requestException): void {
+            throw $requestException;
+        });
         $this->expectException(JiraApiInvalidResourceException::class);
         $jiraOAuthApi->callGetResponse('GET', 'https://jira.example/rest/api/unknown');
     }
@@ -124,7 +131,9 @@ final class JiraOAuthApiTest extends TestCase
     {
         $request = new Request('GET', 'https://jira.example');
         $requestException = new RequestException('Other error', $request);
-        $jiraOAuthApi = $this->makeSubject(static function () use ($requestException): void { throw $requestException; });
+        $jiraOAuthApi = $this->makeSubject(static function () use ($requestException): void {
+            throw $requestException;
+        });
         $this->expectException(JiraApiException::class);
         $jiraOAuthApi->callGetResponse('GET', 'https://jira.example/rest/api');
     }

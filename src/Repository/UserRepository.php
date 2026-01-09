@@ -54,7 +54,7 @@ class UserRepository extends ServiceEntityRepository
         $data = [];
 
         foreach ($users as $user) {
-            if (!$user instanceof User) {
+            if (! $user instanceof User) {
                 continue;
             }
 
@@ -94,7 +94,7 @@ class UserRepository extends ServiceEntityRepository
 
         $data = [];
         foreach ($users as $user) {
-            if (!$user instanceof User) {
+            if (! $user instanceof User) {
                 continue;
             }
 

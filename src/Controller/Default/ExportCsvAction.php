@@ -13,6 +13,7 @@ use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
 use function chr;
 
 final class ExportCsvAction extends BaseController
@@ -24,7 +25,7 @@ final class ExportCsvAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): Response
     {
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return $this->getFailedLoginResponse();
         }
 
@@ -33,7 +34,7 @@ final class ExportCsvAction extends BaseController
             : 10000;
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        \assert($objectRepository instanceof EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
         $entries = $objectRepository->findByRecentDaysOfUser($user, $days);
 
         $content = $this->renderView('export.csv.twig', [

@@ -139,11 +139,10 @@ final readonly class EntrySaveDto
         $start = $this->getStartAsDateTime();
         $end = $this->getEndAsDateTime();
 
-        if ($start !== null && $end !== null && $start >= $end) {
+        if (null !== $start && null !== $end && $start >= $end) {
             $executionContext->buildViolation('Start time must be before end time')
                 ->atPath('end')
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }
