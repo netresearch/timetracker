@@ -208,12 +208,6 @@ parameters:
 			path: tests/Entity/EntryTest.php
 
 		-
-			message: '#^Anonymous class extends @final class GuzzleHttp\\Client\.$#'
-			identifier: class.extendsFinalByPhpDoc
-			count: 1
-			path: tests/Helper/JiraOAuthApiTest.php
-
-		-
 			message: '#^Variable method call on object\.$#'
 			identifier: method.dynamicName
 			count: 1

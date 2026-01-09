@@ -52,6 +52,7 @@ final class JiraOAuthApiTest extends TestCase
         $router->method('generate')->willReturn('http://localhost/jiraoauthcallback');
 
         // Fake client that invokes provided handler with proper type specification
+        // @phpstan-ignore class.extendsFinalByPhpDoc
         $fakeClient = new class ($requestHandler) extends \GuzzleHttp\Client {
             /**
              * @param callable $handler
