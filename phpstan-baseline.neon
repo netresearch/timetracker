@@ -271,8 +271,8 @@ parameters:
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
 		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
-			identifier: varTag.type
+			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\EntryRepository\<App\\Entity\\Entry\> but class App\\Repository\\EntryRepository is not generic\.$#'
+			identifier: generics.notGeneric
 			count: 1
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
@@ -844,8 +844,8 @@ parameters:
 			path: tests/Performance/ExportWorkflowIntegrationTest.php
 
 		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
-			identifier: varTag.type
+			message: '#^PHPDoc tag @var for variable \$entryRepository contains generic type App\\Repository\\EntryRepository\<App\\Entity\\Entry\> but class App\\Repository\\EntryRepository is not generic\.$#'
+			identifier: generics.notGeneric
 			count: 1
 			path: tests/Performance/ExportWorkflowIntegrationTest.php
 
@@ -910,8 +910,14 @@ parameters:
 			path: tests/Performance/PerformanceDashboard.php
 
 		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
-			identifier: varTag.type
+			message: '#^PHPDoc tag @var for variable \$repo contains generic type App\\Repository\\EntryRepository\<Tests\\Repository\\Entry\> but class App\\Repository\\EntryRepository is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 2
+			path: tests/Repository/EntryRepositoryIntegrationTest.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$repo contains unknown class Tests\\Repository\\Entry\.$#'
+			identifier: class.notFound
 			count: 2
 			path: tests/Repository/EntryRepositoryIntegrationTest.php
 
