@@ -35,7 +35,7 @@ final class LOReadFilterTest extends TestCase
     {
         $result = $this->filter->readCell($column, $row);
 
-        $this->assertTrue(
+        self::assertTrue(
             $result,
             sprintf('Column %s (row %d) should be accepted as it is within the 1024 column limit', $column, $row),
         );
@@ -49,7 +49,7 @@ final class LOReadFilterTest extends TestCase
     {
         $result = $this->filter->readCell($column, $row);
 
-        $this->assertFalse(
+        self::assertFalse(
             $result,
             sprintf('Column %s (row %d) should be rejected as it exceeds the 1024 column limit', $column, $row),
         );
@@ -61,13 +61,13 @@ final class LOReadFilterTest extends TestCase
     public function testExactBoundaryColumn1024(): void
     {
         // Column AMJ is exactly column 1024
-        $this->assertTrue(
+        self::assertTrue(
             $this->filter->readCell('AMJ', 1),
             'Column AMJ (1024) should be the last accepted column',
         );
 
         // Column AMK is column 1025 and should be rejected
-        $this->assertFalse(
+        self::assertFalse(
             $this->filter->readCell('AMK', 1),
             'Column AMK (1025) should be the first rejected column',
         );
@@ -84,7 +84,7 @@ final class LOReadFilterTest extends TestCase
         $rows = [1, 100, 1000, 10000, 1048576]; // Including Excel's max row
 
         foreach ($rows as $row) {
-            $this->assertTrue(
+            self::assertTrue(
                 $this->filter->readCell($testColumn, $row),
                 sprintf('Column %s should be accepted regardless of row %d', $testColumn, $row),
             );
@@ -97,17 +97,17 @@ final class LOReadFilterTest extends TestCase
     public function testWorksheetNameParameter(): void
     {
         // The worksheet name is optional and should not affect the result
-        $this->assertTrue(
+        self::assertTrue(
             $this->filter->readCell('A', 1, 'Sheet1'),
             'Worksheet name should not affect column filtering',
         );
 
-        $this->assertTrue(
+        self::assertTrue(
             $this->filter->readCell('A', 1, ''),
             'Empty worksheet name should not affect column filtering',
         );
 
-        $this->assertFalse(
+        self::assertFalse(
             $this->filter->readCell('ZZZ', 1, 'AnySheet'),
             'Column beyond limit should still be rejected regardless of worksheet name',
         );
@@ -131,7 +131,7 @@ final class LOReadFilterTest extends TestCase
         ];
 
         foreach ($commonColumns as $column => $description) {
-            $this->assertTrue(
+            self::assertTrue(
                 $this->filter->readCell($column, 1),
                 sprintf('Common template column %s (%s) should be accepted', $column, $description),
             );
@@ -190,7 +190,7 @@ final class LOReadFilterTest extends TestCase
         // Simulate reading a file with metadata in column 1025 (common in LibreOffice files)
         $libreOfficeMetadataColumn = 'AMK'; // Column 1025
 
-        $this->assertFalse(
+        self::assertFalse(
             $this->filter->readCell($libreOfficeMetadataColumn, 1),
             'Filter should prevent reading LibreOffice metadata columns that cause errors',
         );

@@ -50,7 +50,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $responseContent = $this->client->getResponse()->getContent();
         // Should return an error message about why deletion failed
-        $this->assertNotEmpty($responseContent);
+        self::assertNotEmpty($responseContent);
     }
 
     /**
@@ -94,7 +94,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertTrue($responseData['success'] ?? false, 'Expected successful customer deletion');
+        self::assertTrue($responseData['success'] ?? false, 'Expected successful customer deletion');
     }
 
     /**
@@ -138,7 +138,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertTrue($responseData['success'] ?? false, 'Expected successful project deletion');
+        self::assertTrue($responseData['success'] ?? false, 'Expected successful project deletion');
     }
 
     /**
@@ -182,7 +182,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertTrue($responseData['success'] ?? false, 'Expected successful user deletion');
+        self::assertTrue($responseData['success'] ?? false, 'Expected successful user deletion');
     }
 
     /**
@@ -226,7 +226,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertTrue($responseData['success'] ?? false, 'Expected successful ticket system deletion');
+        self::assertTrue($responseData['success'] ?? false, 'Expected successful ticket system deletion');
     }
 
     /**
@@ -270,7 +270,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertTrue($responseData['success'] ?? false, 'Expected successful team deletion');
+        self::assertTrue($responseData['success'] ?? false, 'Expected successful team deletion');
     }
 
     /**
@@ -314,7 +314,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertTrue($responseData['success'] ?? false, 'Expected successful preset deletion');
+        self::assertTrue($responseData['success'] ?? false, 'Expected successful preset deletion');
     }
 
     /**
@@ -358,7 +358,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertTrue($responseData['success'] ?? false, 'Expected successful contract deletion');
+        self::assertTrue($responseData['success'] ?? false, 'Expected successful contract deletion');
     }
 
     /**
@@ -409,8 +409,8 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertArrayHasKey('id', $responseData, 'Expected ticket system to be created with ID');
-        $this->assertEquals('SecurityTestSystem', $responseData['name'] ?? '', 'Expected correct ticket system name');
+        self::assertArrayHasKey('id', $responseData, 'Expected ticket system to be created with ID');
+        self::assertEquals('SecurityTestSystem', $responseData['name'] ?? '', 'Expected correct ticket system name');
     }
 
     /**
@@ -462,7 +462,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $responseContent = $this->client->getResponse()->getContent();
         $responseData = json_decode((string) $responseContent, true);
         assert(is_array($responseData));
-        $this->assertEquals('UpdatedTestSystem', $responseData['name'] ?? '', 'Expected ticket system name to be updated');
+        self::assertEquals('UpdatedTestSystem', $responseData['name'] ?? '', 'Expected ticket system name to be updated');
     }
 
     /**
@@ -707,7 +707,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         // Should return error for already deleted/non-existent item
         $this->assertStatusCode(422);
         $responseContent = $this->client->getResponse()->getContent();
-        $this->assertStringContainsString('Der Datensatz konnte nicht enfernt werden!', (string) $responseContent);
+        self::assertStringContainsString('Der Datensatz konnte nicht enfernt werden!', (string) $responseContent);
     }
 
     /**
@@ -730,7 +730,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         // Should redirect to login or return 401/403
         $response = $this->client->getResponse();
         $statusCode = $response->getStatusCode();
-        $this->assertTrue(
+        self::assertTrue(
             $response->isRedirection()
             || 401 === $statusCode
             || 403 === $statusCode,

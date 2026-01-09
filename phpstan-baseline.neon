@@ -232,36 +232,6 @@ parameters:
 			path: tests/Basic.php
 
 		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertEquals\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertNotEmpty\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 8
-			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
 			count: 1
@@ -274,18 +244,6 @@ parameters:
 			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
-			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseIsSuccessful\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Controller/SecurityControllerTest.php
-
-		-
-			message: '#^Dynamic call to static method Tests\\AbstractWebTestCase\:\:ensureKernelShutdown\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Controller/SettingsControllerTest.php
-
-		-
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -293,12 +251,6 @@ parameters:
 
 		-
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Controller/StatusControllerTest.php
-
-		-
-			message: '#^Dynamic call to static method Tests\\AbstractWebTestCase\:\:ensureKernelShutdown\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 2
 			path: tests/Controller/StatusControllerTest.php
@@ -518,15 +470,3 @@ parameters:
 			identifier: staticMethod.alreadyNarrowedType
 			count: 2
 			path: tests/Service/SystemClockTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertFalse\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 4
-			path: tests/Util/PhpSpreadsheet/LOReadFilterTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 6
-			path: tests/Util/PhpSpreadsheet/LOReadFilterTest.php

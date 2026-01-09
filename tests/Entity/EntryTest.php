@@ -129,12 +129,15 @@ final class EntryTest extends TestCase
         $entry->setEnd($end);
         self::assertSame($start, $entry->getStart()->format('H:i'), 'Start and end should not invert');
 
-        $start = '22:22';
-        $end = '11:11';
-        $entry->setStart($start);
-        $entry->setEnd($end);
-        self::assertSame($start, $entry->getStart()->format('H:i'), 'End should be greater or equal start');
-        self::assertSame($start, $entry->getEnd()->format('H:i'), 'End should be greater or equal start');
+        // Test inverted times: when start > end, end should be clamped to start
+        $invertedStart = '22:22';
+        $invertedEnd = '11:11';
+        $entry->setStart($invertedStart);
+        $entry->setEnd($invertedEnd);
+        self::assertSame($invertedStart, $entry->getStart()->format('H:i'), 'Start should remain as set');
+        // When end < start, the Entry entity clamps end to equal start
+        $actualEnd = $entry->getEnd()->format('H:i');
+        self::assertSame($invertedStart, $actualEnd, 'End should be clamped to start when end < start');
     }
 
     public function testCalcDuration(): void

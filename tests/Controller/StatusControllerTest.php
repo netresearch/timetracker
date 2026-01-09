@@ -51,7 +51,7 @@ final class StatusControllerTest extends AbstractWebTestCase
 
     public function testPageActionWithLoggedOutUserReturnsInactiveStatus(): void
     {
-        $this->ensureKernelShutdown();
+        self::ensureKernelShutdown();
         $this->client = self::createClient();
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/page');
@@ -70,7 +70,7 @@ final class StatusControllerTest extends AbstractWebTestCase
 
     public function testCheckActionWithLoggedOutUserReturnsInactiveStatus(): void
     {
-        $this->ensureKernelShutdown();
+        self::ensureKernelShutdown();
         $this->client = self::createClient();
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/status/check');

@@ -71,7 +71,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
     public function testSaveActionUnauthenticated(): void
     {
         // Reboot client without session to simulate unauthenticated
-        $this->ensureKernelShutdown();
+        self::ensureKernelShutdown();
         $this->client = self::createClient();
 
         $parameter = [

@@ -88,7 +88,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
         // Use the crawler provided by the client request
         $kernelBrowser->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/login');
 
-        $this->assertResponseIsSuccessful(); // Asserts 2xx status code
+        self::assertResponseIsSuccessful(); // Asserts 2xx status code
 
         // Check the JS config for the form URL
         $content = $kernelBrowser->getResponse()->getContent();
