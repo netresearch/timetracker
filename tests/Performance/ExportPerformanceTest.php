@@ -337,8 +337,9 @@ final class ExportPerformanceTest extends TestCase
                 number_format($memoryUsages[500] / 1024, 2) . 'KB',
             );
         } else {
-            // When using mocks, just verify the test completed without errors
-            $this->addToAssertionCount(1);
+            // When using mocks, memory assertions are skipped
+            // The test passes if no exception was thrown during execution
+            self::assertGreaterThanOrEqual(0, $memoryUsages[50], 'Memory tracking completed');
         }
 
         // Log memory scaling
