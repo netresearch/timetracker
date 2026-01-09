@@ -29,8 +29,7 @@ final class DeleteActivityAction extends BaseController
             $doctrine = $this->doctrineRegistry;
 
             $activity = $doctrine->getRepository(Activity::class)
-                ->find($id)
-            ;
+                ->find($id);
 
             $em = $this->doctrineRegistry->getManager();
             if ($activity instanceof Activity) {

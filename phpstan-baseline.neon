@@ -1,100 +1,88 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ContractRepository\<App\\Entity\\Contract\> but class App\\Repository\\ContractRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\ContractRepository is not subtype of type App\\Repository\\ContractRepository\<App\\Entity\\Contract\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetContractsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\> but class App\\Repository\\CustomerRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\CustomerRepository is not subtype of type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetCustomersAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\PresetRepository\<App\\Entity\\Preset\> but class App\\Repository\\PresetRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\PresetRepository is not subtype of type App\\Repository\\PresetRepository\<App\\Entity\\Preset\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetPresetsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TeamRepository\<App\\Entity\\Team\> but class App\\Repository\\TeamRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TeamRepository is not subtype of type App\\Repository\\TeamRepository\<App\\Entity\\Team\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetTeamsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\> but class App\\Repository\\TicketSystemRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TicketSystemRepository is not subtype of type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetTicketSystemsAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\UserRepository\<App\\Entity\\User\> but class App\\Repository\\UserRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/GetUsersAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ActivityRepository\<App\\Entity\\Activity\> but class App\\Repository\\ActivityRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\ActivityRepository is not subtype of type App\\Repository\\ActivityRepository\<App\\Entity\\Activity\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveActivityAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ContractRepository\<App\\Entity\\Contract\> but class App\\Repository\\ContractRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\ContractRepository is not subtype of type App\\Repository\\ContractRepository\<App\\Entity\\Contract\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveContractAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\> but class App\\Repository\\CustomerRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\CustomerRepository is not subtype of type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveCustomerAction.php
 
 		-
-			message: '#^Only booleans are allowed in &&, int\<0, max\> given on the left side\.$#'
-			identifier: booleanAnd.leftNotBoolean
+			message: '#^PHPDoc tag @var with type App\\Repository\\ProjectRepository is not subtype of type App\\Repository\\ProjectRepository\<App\\Entity\\Project\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveProjectAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\ProjectRepository\<App\\Entity\\Project\> but class App\\Repository\\ProjectRepository is not generic\.$#'
-			identifier: generics.notGeneric
-			count: 1
-			path: src/Controller/Admin/SaveProjectAction.php
-
-		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TeamRepository\<App\\Entity\\Team\> but class App\\Repository\\TeamRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TeamRepository is not subtype of type App\\Repository\\TeamRepository\<App\\Entity\\Team\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveTeamAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\> but class App\\Repository\\TicketSystemRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\TicketSystemRepository is not subtype of type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveTicketSystemAction.php
 
 		-
-			message: '#^PHPDoc tag @var for variable \$objectRepository contains generic type App\\Repository\\UserRepository\<App\\Entity\\User\> but class App\\Repository\\UserRepository is not generic\.$#'
-			identifier: generics.notGeneric
+			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
+			identifier: varTag.type
 			count: 1
 			path: src/Controller/Admin/SaveUserAction.php
 
 		-
-			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
+			message: '#^Strict comparison using \!\=\= between null and mixed will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Controller/Default/GetSummaryAction.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 4
-			path: src/Controller/Interpretation/BaseInterpretationController.php
 
 		-
 			message: '#^Only booleans are allowed in &&, int\|null given on the right side\.$#'
@@ -187,21 +175,75 @@ parameters:
 			path: src/Repository/ContractRepository.php
 
 		-
-			message: '#^Only booleans are allowed in an if condition, array\<string, mixed\>\|false given\.$#'
-			identifier: if.condNotBoolean
-			count: 4
-			path: src/Repository/EntryRepository.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
-			identifier: if.condNotBoolean
+			message: '#^Method App\\Repository\\EntryRepository\:\:findByDate\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
 			count: 1
 			path: src/Repository/EntryRepository.php
 
 		-
-			message: '#^Only booleans are allowed in an if condition, string\|null given\.$#'
-			identifier: if.condNotBoolean
-			count: 2
+			message: '#^Method App\\Repository\\EntryRepository\:\:findByDatePaginated\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:findByDay\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:findByFilterArray\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:findByIds\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:findByRecentDaysOfUser\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:findByUserAndTicketSystemToSync\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:findOverlappingEntries\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:getEntriesByUser\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:getEntriesForDay\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:getEntriesForMonth\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/EntryRepository.php
+
+		-
+			message: '#^Method App\\Repository\\EntryRepository\:\:getFilteredEntries\(\) should return list\<App\\Entity\\Entry\> but returns list\.$#'
+			identifier: return.type
+			count: 1
 			path: src/Repository/EntryRepository.php
 
 		-
@@ -251,30 +293,6 @@ parameters:
 			identifier: sfpPsrLog.messageNotStaticString
 			count: 1
 			path: src/Service/Cache/QueryCacheService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Project\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, int\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, string given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/ExportService.php
-
-		-
-			message: '#^Only booleans are allowed in a ternary operator condition, App\\Entity\\User\|null given\.$#'
-			identifier: ternary.condNotBoolean
-			count: 1
-			path: src/Service/ExportService.php
 
 		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\> is not subtype of type App\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\>\.$#'
@@ -368,12 +386,6 @@ parameters:
 
 		-
 			message: '#^Casting to int something that''s already int\<min, \-1\>\|int\<1, max\>\.$#'
-			identifier: cast.useless
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Casting to string something that''s already string\.$#'
 			identifier: cast.useless
 			count: 1
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php

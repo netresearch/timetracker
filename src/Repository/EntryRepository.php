@@ -65,11 +65,10 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('day', $day)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }
@@ -91,11 +90,10 @@ class EntryRepository extends ServiceEntityRepository
             ->orderBy('e.day', 'ASC')
             ->addOrderBy('e.start', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }
@@ -110,8 +108,7 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.user = :user')
             ->setParameter('user', $user)
             ->getQuery()
-            ->getSingleScalarResult()
-        ;
+            ->getSingleScalarResult();
     }
 
     /**
@@ -124,8 +121,7 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.user = :user')
             ->setParameter('user', $user)
             ->getQuery()
-            ->execute()
-        ;
+            ->execute();
     }
 
     /**
@@ -138,8 +134,7 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.activity = :activity')
             ->setParameter('activity', $activity)
             ->getQuery()
-            ->execute()
-        ;
+            ->execute();
     }
 
     /**
@@ -152,8 +147,7 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.project = :project')
             ->setParameter('project', $project)
             ->getQuery()
-            ->execute()
-        ;
+            ->execute();
     }
 
     /**
@@ -166,8 +160,7 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.customer = :customer')
             ->setParameter('customer', $customer)
             ->getQuery()
-            ->execute()
-        ;
+            ->execute();
     }
 
     /**
@@ -181,13 +174,11 @@ class EntryRepository extends ServiceEntityRepository
             ->leftJoin('e.user', 'u')
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
-            ->leftJoin('e.activity', 'a')
-        ;
+            ->leftJoin('e.activity', 'a');
 
         foreach ($conditions as $field => $value) {
             $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
-                ->setParameter($field, $value)
-            ;
+                ->setParameter($field, $value);
         }
 
         return $queryBuilder;
@@ -210,11 +201,10 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.id IN (:ids)')
             ->setParameter('ids', $ids)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }
@@ -227,13 +217,11 @@ class EntryRepository extends ServiceEntityRepository
     public function getTotalDuration(array $conditions = []): float
     {
         $queryBuilder = $this->createQueryBuilder('e')
-            ->select('SUM(e.duration)')
-        ;
+            ->select('SUM(e.duration)');
 
         foreach ($conditions as $field => $value) {
             $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
-                ->setParameter($field, $value)
-            ;
+                ->setParameter($field, $value);
         }
 
         return (float) $queryBuilder->getQuery()->getSingleScalarResult();
@@ -247,13 +235,11 @@ class EntryRepository extends ServiceEntityRepository
     public function existsWithConditions(array $conditions): bool
     {
         $queryBuilder = $this->createQueryBuilder('e')
-            ->select('1')
-        ;
+            ->select('1');
 
         foreach ($conditions as $field => $value) {
             $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
-                ->setParameter($field, $value)
-            ;
+                ->setParameter($field, $value);
         }
 
         return null !== $queryBuilder->setMaxResults(1)->getQuery()->getOneOrNullResult();
@@ -456,12 +442,10 @@ class EntryRepository extends ServiceEntityRepository
                     $operator = 'startDate' === $field ? '>=' : '<=';
                     $fieldName = 'day';
                     $queryBuilder->andWhere(sprintf('e.%s %s :%s', $fieldName, $operator, $field))
-                        ->setParameter($field, $value)
-                    ;
+                        ->setParameter($field, $value);
                 } else {
                     $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
-                        ->setParameter($field, $value)
-                    ;
+                        ->setParameter($field, $value);
                 }
             }
         }
@@ -470,7 +454,7 @@ class EntryRepository extends ServiceEntityRepository
         $validOrderFields = ['id', 'day', 'start', 'end', 'duration'];
         if (in_array($orderBy, $validOrderFields, true)) {
             $orderDirection = strtoupper($orderDirection);
-            if (!in_array($orderDirection, ['ASC', 'DESC'], true)) {
+            if (! in_array($orderDirection, ['ASC', 'DESC'], true)) {
                 $orderDirection = 'DESC';
             }
 
@@ -489,7 +473,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }
@@ -510,8 +494,7 @@ class EntryRepository extends ServiceEntityRepository
                 'AVG(e.duration) as avgDuration',
                 'MIN(e.day) as minDate',
                 'MAX(e.day) as maxDate',
-            ])
-        ;
+            ]);
 
         foreach ($filters as $field => $value) {
             if (null !== $value && '' !== $value) {
@@ -519,12 +502,10 @@ class EntryRepository extends ServiceEntityRepository
                     $operator = 'startDate' === $field ? '>=' : '<=';
                     $fieldName = 'day';
                     $queryBuilder->andWhere(sprintf('e.%s %s :%s', $fieldName, $operator, $field))
-                        ->setParameter($field, $value)
-                    ;
+                        ->setParameter($field, $value);
                 } else {
                     $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
-                        ->setParameter($field, $value)
-                    ;
+                        ->setParameter($field, $value);
                 }
             }
         }
@@ -574,7 +555,7 @@ class EntryRepository extends ServiceEntityRepository
             'week' => $functions['weekFunction'],
         ];
 
-        if (!isset($periodFunctions[$period])) {
+        if (! isset($periodFunctions[$period])) {
             throw new InvalidArgumentException('Invalid period: ' . $period);
         }
 
@@ -590,12 +571,12 @@ class EntryRepository extends ServiceEntityRepository
         $paramCounter = 1;
 
         // Add date range filters
-        if ($startDate) {
+        if (null !== $startDate) {
             $sql .= ' AND e.day >= ?';
             $params[$paramCounter++] = $startDate;
         }
 
-        if ($endDate) {
+        if (null !== $endDate) {
             $sql .= ' AND e.day <= ?';
             $params[$paramCounter++] = $endDate;
         }
@@ -633,13 +614,11 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder = $this->getEntityManager()->createQueryBuilder()
             ->update(Entry::class, 'e')
             ->where('e.id IN (:ids)')
-            ->setParameter('ids', $entryIds)
-        ;
+            ->setParameter('ids', $entryIds);
 
         foreach ($updateData as $field => $value) {
             $queryBuilder->set('e.' . $field, ':' . $field)
-                ->setParameter($field, $value)
-            ;
+                ->setParameter($field, $value);
         }
 
         $result = $queryBuilder->getQuery()->execute();
@@ -660,56 +639,47 @@ class EntryRepository extends ServiceEntityRepository
             ->leftJoin('e.user', 'u')
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
-            ->leftJoin('e.activity', 'a')
-        ;
+            ->leftJoin('e.activity', 'a');
 
         // Apply filters
         if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
             if (is_object($arFilter['customer'])) {
                 $queryBuilder->andWhere('e.customer = :customer')
-                    ->setParameter('customer', $arFilter['customer'])
-                ;
+                    ->setParameter('customer', $arFilter['customer']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.customer) = :customer')
-                    ->setParameter('customer', $arFilter['customer'])
-                ;
+                    ->setParameter('customer', $arFilter['customer']);
             }
         }
 
         if (isset($arFilter['project']) && '' !== $arFilter['project']) {
             if (is_object($arFilter['project'])) {
                 $queryBuilder->andWhere('e.project = :project')
-                    ->setParameter('project', $arFilter['project'])
-                ;
+                    ->setParameter('project', $arFilter['project']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.project) = :project')
-                    ->setParameter('project', $arFilter['project'])
-                ;
+                    ->setParameter('project', $arFilter['project']);
             }
         }
 
         if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
             if (is_object($arFilter['activity'])) {
                 $queryBuilder->andWhere('e.activity = :activity')
-                    ->setParameter('activity', $arFilter['activity'])
-                ;
+                    ->setParameter('activity', $arFilter['activity']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.activity) = :activity')
-                    ->setParameter('activity', $arFilter['activity'])
-                ;
+                    ->setParameter('activity', $arFilter['activity']);
             }
         }
 
         if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
             $queryBuilder->andWhere('e.day >= :datestart')
-                ->setParameter('datestart', $arFilter['datestart'])
-            ;
+                ->setParameter('datestart', $arFilter['datestart']);
         }
 
         if (isset($arFilter['dateend']) && '' !== $arFilter['dateend']) {
             $queryBuilder->andWhere('e.day <= :dateend')
-                ->setParameter('dateend', $arFilter['dateend'])
-            ;
+                ->setParameter('dateend', $arFilter['dateend']);
         }
 
         // Apply pagination with safe casting
@@ -720,8 +690,7 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder->setMaxResults($maxResults)
             ->setFirstResult($offset)
             ->orderBy('e.day', 'DESC')
-            ->addOrderBy('e.start', 'DESC')
-        ;
+            ->addOrderBy('e.start', 'DESC');
 
         /* @phpstan-ignore-next-line */
         return $queryBuilder->getQuery();
@@ -750,19 +719,17 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('day', $day)
             ->setParameter('start', $start)
-            ->setParameter('end', $end)
-        ;
+            ->setParameter('end', $end);
 
-        if ($excludeId) {
+        if (null !== $excludeId) {
             $queryBuilder->andWhere('e.id != :excludeId')
-                ->setParameter('excludeId', $excludeId)
-            ;
+                ->setParameter('excludeId', $excludeId);
         }
 
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }
@@ -783,8 +750,7 @@ class EntryRepository extends ServiceEntityRepository
             ->where('e.user = :user')
             ->setParameter('user', $user)
             ->orderBy('e.day', 'ASC')
-            ->addOrderBy('e.start', 'ASC')
-        ;
+            ->addOrderBy('e.start', 'ASC');
 
         // Calculate date range
         $today = new DateTime();
@@ -792,19 +758,17 @@ class EntryRepository extends ServiceEntityRepository
         $startDate->sub(new DateInterval('P' . $days . 'D'));
 
         $queryBuilder->andWhere('e.day >= :startDate')
-            ->setParameter('startDate', $startDate->format('Y-m-d'))
-        ;
+            ->setParameter('startDate', $startDate->format('Y-m-d'));
 
-        if (!$showFuture) {
+        if (! $showFuture) {
             $queryBuilder->andWhere('e.day <= :endDate')
-                ->setParameter('endDate', $today->format('Y-m-d'))
-            ;
+                ->setParameter('endDate', $today->format('Y-m-d'));
         }
 
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
         return $result;
     }
 
@@ -831,13 +795,11 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder->andWhere('e.day >= :startOfYear')
             ->andWhere('e.day <= :endOfYear')
             ->setParameter('startOfYear', $startOfYear)
-            ->setParameter('endOfYear', $endOfYear)
-        ;
+            ->setParameter('endOfYear', $endOfYear);
 
         if (0 !== $user) {
             $queryBuilder->andWhere('e.user = :user')
-                ->setParameter('user', $user)
-            ;
+                ->setParameter('user', $user);
         }
 
         if (null !== $month && $month > 0) {
@@ -848,20 +810,17 @@ class EntryRepository extends ServiceEntityRepository
             $queryBuilder->andWhere('e.day >= :startOfMonth')
                 ->andWhere('e.day <= :endOfMonth')
                 ->setParameter('startOfMonth', $startOfMonth)
-                ->setParameter('endOfMonth', $endOfMonth)
-            ;
+                ->setParameter('endOfMonth', $endOfMonth);
         }
 
         if (null !== $project) {
             $queryBuilder->andWhere('e.project = :project')
-                ->setParameter('project', $project)
-            ;
+                ->setParameter('project', $project);
         }
 
         if (null !== $customer) {
             $queryBuilder->andWhere('e.customer = :customer')
-                ->setParameter('customer', $customer)
-            ;
+                ->setParameter('customer', $customer);
         }
 
         // Apply sorting
@@ -887,14 +846,13 @@ class EntryRepository extends ServiceEntityRepository
             }
         } else {
             $queryBuilder->orderBy('e.day', 'DESC')
-                ->addOrderBy('e.start', 'DESC')
-            ;
+                ->addOrderBy('e.start', 'DESC');
         }
 
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
         return $result;
     }
 
@@ -923,13 +881,11 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder->andWhere('e.day >= :startOfYear')
             ->andWhere('e.day <= :endOfYear')
             ->setParameter('startOfYear', $startOfYear)
-            ->setParameter('endOfYear', $endOfYear)
-        ;
+            ->setParameter('endOfYear', $endOfYear);
 
         if (0 !== $user) {
             $queryBuilder->andWhere('e.user = :user')
-                ->setParameter('user', $user)
-            ;
+                ->setParameter('user', $user);
         }
 
         if (null !== $month && $month > 0) {
@@ -940,29 +896,26 @@ class EntryRepository extends ServiceEntityRepository
             $queryBuilder->andWhere('e.day >= :startOfMonth')
                 ->andWhere('e.day <= :endOfMonth')
                 ->setParameter('startOfMonth', $startOfMonth)
-                ->setParameter('endOfMonth', $endOfMonth)
-            ;
+                ->setParameter('endOfMonth', $endOfMonth);
         }
 
         if (null !== $project) {
             $queryBuilder->andWhere('e.project = :project')
-                ->setParameter('project', $project)
-            ;
+                ->setParameter('project', $project);
         }
 
         if (null !== $customer) {
             $queryBuilder->andWhere('e.customer = :customer')
-                ->setParameter('customer', $customer)
-            ;
+                ->setParameter('customer', $customer);
         }
 
         // Apply sorting
         if (is_array($arSort) && [] !== $arSort) {
             foreach ($arSort as $field => $direction) {
-                if (!is_string($field)) {
+                if (! is_string($field)) {
                     continue;
                 }
-                if (!is_string($direction)) {
+                if (! is_string($direction)) {
                     continue;
                 }
                 $direction = 'ASC' === strtoupper($direction) ? 'ASC' : 'DESC';
@@ -980,18 +933,17 @@ class EntryRepository extends ServiceEntityRepository
             }
         } else {
             $queryBuilder->orderBy('e.day', 'DESC')
-                ->addOrderBy('e.start', 'DESC')
-            ;
+                ->addOrderBy('e.start', 'DESC');
         }
 
         // Apply pagination
         $queryBuilder->setFirstResult($offset)
-           ->setMaxResults($limit);
+            ->setMaxResults($limit);
 
         $result = $queryBuilder->getQuery()->getResult();
         assert(is_array($result) && array_is_list($result));
 
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
         return $result;
     }
 
@@ -1005,14 +957,13 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, COALESCE(SUM(e.duration), 0) as duration')
             ->where('e.user = :user')
-            ->setParameter('user', $userId)
-        ;
+            ->setParameter('user', $userId);
 
         $this->applyPeriodFilter($queryBuilder, $period);
 
         $result = $queryBuilder->getQuery()->getSingleResult();
 
-        if (!is_array($result)) {
+        if (! is_array($result)) {
             return ['duration' => 0, 'count' => 0];
         }
 
@@ -1142,8 +1093,7 @@ class EntryRepository extends ServiceEntityRepository
         switch ($period) {
             case Period::DAY:
                 $queryBuilder->andWhere('e.day = :today')
-                    ->setParameter('today', $today->format('Y-m-d'))
-                ;
+                    ->setParameter('today', $today->format('Y-m-d'));
                 break;
 
             case Period::WEEK:
@@ -1154,8 +1104,7 @@ class EntryRepository extends ServiceEntityRepository
 
                 $queryBuilder->andWhere('e.day BETWEEN :start AND :end')
                     ->setParameter('start', $startOfWeek->format('Y-m-d'))
-                    ->setParameter('end', $endOfWeek->format('Y-m-d'))
-                ;
+                    ->setParameter('end', $endOfWeek->format('Y-m-d'));
                 break;
 
             case Period::MONTH:
@@ -1166,8 +1115,7 @@ class EntryRepository extends ServiceEntityRepository
                 $queryBuilder->andWhere('e.day >= :startOfMonth')
                     ->andWhere('e.day <= :endOfMonth')
                     ->setParameter('startOfMonth', $startOfMonth)
-                    ->setParameter('endOfMonth', $endOfMonth)
-                ;
+                    ->setParameter('endOfMonth', $endOfMonth);
                 break;
         }
     }
@@ -1189,12 +1137,11 @@ class EntryRepository extends ServiceEntityRepository
             ->orderBy('e.day', 'ASC')
             ->addOrderBy('e.start', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
 
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
         return $result;
     }
 
@@ -1223,11 +1170,10 @@ class EntryRepository extends ServiceEntityRepository
             ->addOrderBy('e.start', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }
@@ -1242,7 +1188,7 @@ class EntryRepository extends ServiceEntityRepository
     public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
         $entry = $this->find($entryId);
-        if (!$entry instanceof Entry) {
+        if (! $entry instanceof Entry) {
             return $data;
         }
 
@@ -1258,7 +1204,7 @@ class EntryRepository extends ServiceEntityRepository
                    WHERE e.customer_id = ?';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId()])->fetchAssociative();
-            if ($result) {
+            if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
                 $own = $result['own'] ?? 0;
@@ -1288,7 +1234,7 @@ class EntryRepository extends ServiceEntityRepository
                    WHERE e.project_id = ?';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId()])->fetchAssociative();
-            if ($result) {
+            if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
                 $own = $result['own'] ?? 0;
@@ -1320,7 +1266,7 @@ class EntryRepository extends ServiceEntityRepository
                    WHERE e.activity_id = ?';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId()])->fetchAssociative();
-            if ($result) {
+            if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
                 $own = $result['own'] ?? 0;
@@ -1341,14 +1287,14 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Get ticket summary
-        if (!in_array($entry->getTicket(), ['', '0'], true)) {
+        if (! in_array($entry->getTicket(), ['', '0'], true)) {
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own
                    FROM entries e
                    WHERE e.ticket = ?';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getTicket()])->fetchAssociative();
-            if ($result) {
+            if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
                 $own = $result['own'] ?? 0;
@@ -1389,11 +1335,10 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('day', $day)
             ->orderBy('e.start', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }
@@ -1430,38 +1375,32 @@ class EntryRepository extends ServiceEntityRepository
         // Apply filters similar to queryByFilterArray but return results directly
         if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
             $queryBuilder->andWhere('e.customer = :customer')
-                ->setParameter('customer', $arFilter['customer'])
-            ;
+                ->setParameter('customer', $arFilter['customer']);
         }
 
         if (isset($arFilter['project']) && '' !== $arFilter['project']) {
             $queryBuilder->andWhere('e.project = :project')
-                ->setParameter('project', $arFilter['project'])
-            ;
+                ->setParameter('project', $arFilter['project']);
         }
 
         if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
             $queryBuilder->andWhere('e.activity = :activity')
-                ->setParameter('activity', $arFilter['activity'])
-            ;
+                ->setParameter('activity', $arFilter['activity']);
         }
 
         if (isset($arFilter['user']) && '' !== $arFilter['user']) {
             $queryBuilder->andWhere('e.user = :user')
-                ->setParameter('user', $arFilter['user'])
-            ;
+                ->setParameter('user', $arFilter['user']);
         }
 
         if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
             $queryBuilder->andWhere('e.day >= :datestart')
-                ->setParameter('datestart', $arFilter['datestart'])
-            ;
+                ->setParameter('datestart', $arFilter['datestart']);
         }
 
         if (isset($arFilter['dateend']) && '' !== $arFilter['dateend']) {
             $queryBuilder->andWhere('e.day <= :dateend')
-                ->setParameter('dateend', $arFilter['dateend'])
-            ;
+                ->setParameter('dateend', $arFilter['dateend']);
         }
 
         // Apply limit if specified with safe casting
@@ -1478,13 +1417,12 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         $queryBuilder->orderBy('e.day', 'DESC')
-            ->addOrderBy('e.start', 'DESC')
-        ;
+            ->addOrderBy('e.start', 'DESC');
 
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
-        /** @var list<Entry> $result */
+        /* @var list<Entry> $result */
 
         return $result;
     }

@@ -35,11 +35,11 @@ final class SaveUserAction extends BaseController
     public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
 
-        /** @var \App\Repository\UserRepository<User> $objectRepository */
+        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
 
         $user = 0 !== $userSaveDto->id ? $objectRepository->find($userSaveDto->id) : new User();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 

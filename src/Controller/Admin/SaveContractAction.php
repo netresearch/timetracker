@@ -39,18 +39,18 @@ final class SaveContractAction extends BaseController
         /** @var User $user */
         $user = $this->doctrineRegistry->getRepository(User::class)->find($contractSaveDto->user_id);
 
-        /** @var \App\Repository\ContractRepository<Contract> $objectRepository */
+        /** @var \App\Repository\ContractRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         if (0 !== $contractId) {
             $contract = $objectRepository->find($contractId);
-            if ($contract === null) {
+            if (null === $contract) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (!$contract instanceof Contract) {
+            if (! $contract instanceof Contract) {
                 return new \App\Response\Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {
@@ -89,8 +89,7 @@ final class SaveContractAction extends BaseController
             ->setHours3($contractSaveDto->hours_3)
             ->setHours4($contractSaveDto->hours_4)
             ->setHours5($contractSaveDto->hours_5)
-            ->setHours6($contractSaveDto->hours_6)
-        ;
+            ->setHours6($contractSaveDto->hours_6);
 
         $objectManager = $this->doctrineRegistry->getManager();
         $objectManager->persist($contract);
@@ -127,7 +126,7 @@ final class SaveContractAction extends BaseController
 
         /** @var array<int, Contract> $contractsOld */
         $contractsOld = $objectRepository->findBy(['user' => $user]);
-        if ($contractsOld === []) {
+        if ([] === $contractsOld) {
             return '';
         }
 
@@ -139,7 +138,7 @@ final class SaveContractAction extends BaseController
             return $this->translate('There is already an ongoing contract with a closed end date in the future.');
         }
 
-        $contractsOld = array_filter($contractsOld, static fn (Contract $contract): bool => (!$contract->getEnd() instanceof DateTime));
+        $contractsOld = array_filter($contractsOld, static fn (Contract $contract): bool => (! $contract->getEnd() instanceof DateTime));
         if (count($contractsOld) > 1) {
             return $this->translate('There is more than one open-ended contract for the user.');
         }
@@ -169,7 +168,7 @@ final class SaveContractAction extends BaseController
     {
         $filteredContracts = [];
         foreach ($contracts as $contract) {
-            if (!$contract instanceof Contract) {
+            if (! $contract instanceof Contract) {
                 continue;
             }
 
@@ -193,7 +192,7 @@ final class SaveContractAction extends BaseController
     {
         $filteredContracts = [];
         foreach ($contracts as $contract) {
-            if (!$contract instanceof Contract) {
+            if (! $contract instanceof Contract) {
                 continue;
             }
 

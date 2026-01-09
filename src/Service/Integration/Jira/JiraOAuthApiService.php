@@ -23,7 +23,9 @@ use Symfony\Component\Routing\RouterInterface;
 use Throwable;
 use UnexpectedValueException;
 
+use function assert;
 use function is_object;
+use function is_scalar;
 use function is_string;
 use function sprintf;
 
@@ -262,7 +264,7 @@ class JiraOAuthApiService
      */
     public function updateEntriesJiraWorkLogsLimited(?int $entryLimit = null): void
     {
-        if (!$this->checkUserTicketSystem()) {
+        if (! $this->checkUserTicketSystem()) {
             return;
         }
 
@@ -295,11 +297,11 @@ class JiraOAuthApiService
             return;
         }
 
-        if (!$this->checkUserTicketSystem()) {
+        if (! $this->checkUserTicketSystem()) {
             return;
         }
 
-        if (!$this->doesTicketExist($sTicket)) {
+        if (! $this->doesTicketExist($sTicket)) {
             return;
         }
 
@@ -311,7 +313,7 @@ class JiraOAuthApiService
             return;
         }
 
-        if (null !== $entry->getWorklogId() && !$this->doesWorkLogExist($sTicket, $entry->getWorklogId())) {
+        if (null !== $entry->getWorklogId() && ! $this->doesWorkLogExist($sTicket, $entry->getWorklogId())) {
             $entry->setWorklogId(null);
         }
 
@@ -331,7 +333,7 @@ class JiraOAuthApiService
             $workLog = $this->post(sprintf('issue/%s/worklog', $sTicket), $arData);
         }
 
-        if (!isset($workLog->id)) {
+        if (! isset($workLog->id)) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
@@ -365,7 +367,7 @@ class JiraOAuthApiService
             return;
         }
 
-        if (!$this->checkUserTicketSystem()) {
+        if (! $this->checkUserTicketSystem()) {
             return;
         }
 
@@ -389,7 +391,7 @@ class JiraOAuthApiService
     public function createTicket(Entry $entry): mixed
     {
         $project = $entry->getProject();
-        if (!$project instanceof \App\Entity\Project) {
+        if (! $project instanceof \App\Entity\Project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
@@ -398,7 +400,7 @@ class JiraOAuthApiService
             [
                 'fields' => [
                     'project' => [
-                        'key' => is_scalar($project->getInternalJiraProjectKey()) ? (string) $project->getInternalJiraProjectKey() : '',
+                        'key' => $project->getInternalJiraProjectKey() ?? '',
                     ],
                     'summary' => $entry->getTicket(),
                     'description' => $entry->getTicketSystemIssueLink(),
@@ -447,14 +449,14 @@ class JiraOAuthApiService
      */
     public function getSubtickets(string $sTicket): array
     {
-        if (!$this->doesTicketExist($sTicket)) {
+        if (! $this->doesTicketExist($sTicket)) {
             return [];
         }
 
         $ticket = $this->get('issue/' . $sTicket);
 
         // Ensure ticket response is an object with expected structure
-        if (!is_object($ticket) || !isset($ticket->fields)) {
+        if (! is_object($ticket) || ! isset($ticket->fields)) {
             return [];
         }
 
@@ -611,7 +613,7 @@ class JiraOAuthApiService
         }
 
         $decoded = json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
-        if (!is_object($decoded)) {
+        if (! is_object($decoded)) {
             throw new JiraApiException('Unexpected non-object response from Jira API', 500);
         }
 
@@ -629,22 +631,19 @@ class JiraOAuthApiService
         $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         /** @var UserTicketsystem $userTicketSystem */
         $userTicketSystem = $repository->findOneBy([
-                'user' => $this->user,
-                'ticketSystem' => $this->ticketSystem,
-            ])
-        ;
+            'user' => $this->user,
+            'ticketSystem' => $this->ticketSystem,
+        ]);
 
-        if ($userTicketSystem === null) {
+        if (null === $userTicketSystem) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($this->user)
-                ->setTicketSystem($this->ticketSystem)
-            ;
+                ->setTicketSystem($this->ticketSystem);
         }
 
         $userTicketSystem->setTokenSecret($tokenSecret)
             ->setAccessToken($accessToken)
-            ->setAvoidConnection($avoidConnection)
-        ;
+            ->setAvoidConnection($avoidConnection);
 
         $objectManager = $this->managerRegistry->getManager();
         $objectManager->persist($userTicketSystem);
@@ -747,13 +746,12 @@ class JiraOAuthApiService
         $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         /** @var UserTicketsystem $userTicketSystem */
         $userTicketSystem = $repository->findOneBy([
-                'user' => $this->user,
-                'ticketSystem' => $this->ticketSystem,
-            ])
-        ;
+            'user' => $this->user,
+            'ticketSystem' => $this->ticketSystem,
+        ]);
 
         return $this->ticketSystem->getBookTime()
-            && (!$userTicketSystem || !$userTicketSystem->getAvoidConnection());
+            && (! $userTicketSystem || ! $userTicketSystem->getAvoidConnection());
     }
 
     /**

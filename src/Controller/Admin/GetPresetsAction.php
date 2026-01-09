@@ -17,7 +17,7 @@ final class GetPresetsAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
 
-        /** @var \App\Repository\PresetRepository<\App\Entity\Preset> $objectRepository */
+        /** @var \App\Repository\PresetRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(\App\Entity\Preset::class);
 
         return new JsonResponse($objectRepository->getAllPresets());

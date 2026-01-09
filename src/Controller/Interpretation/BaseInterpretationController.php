@@ -13,6 +13,7 @@ use DateInterval;
 use DateTime;
 use Exception;
 
+use function assert;
 use function is_string;
 
 abstract class BaseInterpretationController extends BaseController
@@ -90,12 +91,12 @@ abstract class BaseInterpretationController extends BaseController
             $arParams['dateend'] = $dateend->format('Y-m-d');
         }
 
-        if (!$arParams['customer'] && !$arParams['project'] && !$arParams['user'] && !$arParams['ticket']) {
+        if (null === $arParams['customer'] && null === $arParams['project'] && null === $arParams['user'] && null === $arParams['ticket']) {
             throw new Exception($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        \assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         return $objectRepository->findByFilterArray($arParams);
     }

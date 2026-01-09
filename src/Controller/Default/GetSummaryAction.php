@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
 use function is_array;
 
 final class GetSummaryAction extends BaseController
@@ -36,7 +37,7 @@ final class GetSummaryAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (! $user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -55,7 +56,7 @@ final class GetSummaryAction extends BaseController
         }
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        \assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
         if (null === $objectRepository->find($entryId)) {
             $message = $this->translator->trans('No entry for id.');
 
@@ -65,7 +66,7 @@ final class GetSummaryAction extends BaseController
         $data = $objectRepository->getEntrySummary((int) $entryId, $userId, $data);
 
         // Priority 1: Fix PossiblyUndefinedArrayOffset with proper array access validation
-        if (isset($data['project']) && is_array($data['project']) && isset($data['project']['estimation']) && $data['project']['estimation']) {
+        if (isset($data['project']) && is_array($data['project']) && isset($data['project']['estimation']) && 0 !== $data['project']['estimation'] && null !== $data['project']['estimation']) {
             // Safely access nested array values with null coalescing and type validation
             $projectTotal = null;
             $projectEstimation = null;

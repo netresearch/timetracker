@@ -36,7 +36,7 @@ final class SyncJiraEntriesAction extends BaseController
         $user = $this->doctrineRegistry->getRepository(\App\Entity\User::class)->find($userId);
         /** @var \App\Entity\TicketSystem|null $ticketSystem */
         $ticketSystem = $this->doctrineRegistry->getRepository(\App\Entity\TicketSystem::class)->findOneBy([]);
-        $jiraApi = ($user !== null && $ticketSystem !== null) ? $this->jiraOAuthApiFactory->create($user, $ticketSystem) : null;
+        $jiraApi = (null !== $user && null !== $ticketSystem) ? $this->jiraOAuthApiFactory->create($user, $ticketSystem) : null;
         if ($jiraApi instanceof \App\Service\Integration\Jira\JiraOAuthApiService) {
             // Mirror earlier behavior: update entries limited window
             // Choose a reasonable limit (null => all pending)

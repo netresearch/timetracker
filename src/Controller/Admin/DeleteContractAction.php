@@ -29,8 +29,7 @@ final class DeleteContractAction extends BaseController
             $doctrine = $this->doctrineRegistry;
 
             $contract = $doctrine->getRepository(Contract::class)
-                ->find($id)
-            ;
+                ->find($id);
 
             $em = $this->doctrineRegistry->getManager();
             if ($contract instanceof Contract) {

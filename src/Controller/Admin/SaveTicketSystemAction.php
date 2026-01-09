@@ -29,20 +29,20 @@ final class SaveTicketSystemAction extends BaseController
     public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
 
-        /** @var \App\Repository\TicketSystemRepository<TicketSystem> $objectRepository */
+        /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
         $id = $ticketSystemSaveDto->id;
 
         if (null !== $id) {
             $ticketSystem = $objectRepository->find($id);
-            if ($ticketSystem === null) {
+            if (null === $ticketSystem) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (!$ticketSystem instanceof TicketSystem) {
+            if (! $ticketSystem instanceof TicketSystem) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {

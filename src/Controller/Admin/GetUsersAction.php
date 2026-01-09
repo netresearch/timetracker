@@ -17,7 +17,7 @@ final class GetUsersAction extends BaseController
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): Response|JsonResponse
     {
 
-        /** @var \App\Repository\UserRepository<\App\Entity\User> $objectRepository */
+        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(\App\Entity\User::class);
 
         return new JsonResponse($objectRepository->getAllUsers());
