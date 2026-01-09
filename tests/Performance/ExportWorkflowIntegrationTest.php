@@ -94,8 +94,8 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertLessThan(
+        self::assertSame(200, $response->getStatusCode());
+        self::assertLessThan(
             $this->performanceBaselines['end_to_end_small'],
             $duration,
             "Small dataset end-to-end export took {$duration}ms",
@@ -134,8 +134,8 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertLessThan(
+        self::assertSame(200, $response->getStatusCode());
+        self::assertLessThan(
             $this->performanceBaselines['end_to_end_medium'],
             $duration,
             "Medium dataset end-to-end export took {$duration}ms",
@@ -143,7 +143,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 
         // Check response size is reasonable
         $contentLength = strlen((string) ($response->getContent() ?? ''));
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['http_response_size'],
             $contentLength,
             'Response size too large: ' . number_format($contentLength / 1024 / 1024, 2) . 'MB',
@@ -181,10 +181,10 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
 
         // Enrichment should add some overhead but still be reasonable
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['end_to_end_medium'],
             $duration,
             "Export with ticket enrichment took {$duration}ms",
@@ -205,7 +205,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 
         $this->stopwatch->start('database_query');
 
-        $entryRepository = $this->getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
+        $entryRepository = self::getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
         \assert($entryRepository instanceof \App\Repository\EntryRepository);
 
         // Query entries directly from repository using the actual created user ID
@@ -220,13 +220,13 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         // Performance assertions
         $duration = $event->getDuration();
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['database_query'],
             $duration,
             "Database query took {$duration}ms",
         );
 
-        $this->assertGreaterThan(0, count($entries));
+        self::assertGreaterThan(0, count($entries));
 
         $this->logPerformanceMetric('Database Query Performance', $duration, 0, count($entries));
     }
@@ -255,7 +255,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             $response = $this->client->getResponse();
             $responses[] = $response;
 
-            $this->assertSame(200, $response->getStatusCode());
+            self::assertSame(200, $response->getStatusCode());
         }
 
         $memoryAfter = memory_get_usage(true);
@@ -266,13 +266,13 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $memoryUsage = $memoryAfter - $memoryBefore;
 
         // Should handle multiple requests efficiently
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['end_to_end_medium'] * 3 * 1.5, // Allow 50% overhead
             $duration,
             "Concurrent requests took {$duration}ms",
         );
 
-        $this->assertCount(3, $responses);
+        self::assertCount(3, $responses);
 
         $this->logPerformanceMetric('Concurrent Export Requests', $duration, $memoryUsage, 600);
     }
@@ -306,10 +306,10 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             $event = $this->stopwatch->stop("filter_test_{$index}");
             $response = $this->client->getResponse();
 
-            $this->assertSame(200, $response->getStatusCode());
+            self::assertSame(200, $response->getStatusCode());
 
             $duration = $event->getDuration();
-            $this->assertLessThan(
+            self::assertLessThan(
                 $this->performanceBaselines['end_to_end_medium'],
                 $duration,
                 'Export with filters ' . json_encode($filters) . " took {$duration}ms",
@@ -345,13 +345,13 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $peakAfter = memory_get_peak_usage(true);
 
         $response = $this->client->getResponse();
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
 
         $memoryUsage = $memoryAfter - $memoryBefore;
         $peakMemoryIncrease = $peakAfter - $peakBefore;
 
         // Memory usage should be reasonable for large datasets
-        $this->assertLessThan(
+        self::assertLessThan(
             100 * 1024 * 1024, // 100MB
             $peakMemoryIncrease,
             'Peak memory increase too high: ' . number_format($peakMemoryIncrease / 1024 / 1024, 2) . 'MB',
@@ -370,7 +370,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
      */
     private function createTestDataForExport(int $entryCount, bool $withTickets = false): int
     {
-        $entityManager = $this->getContainer()->get('doctrine')->getManager();
+        $entityManager = self::getContainer()->get('doctrine')->getManager();
 
         // Create test user with ID 1 to match query expectations
         $user = new \App\Entity\User();
@@ -471,8 +471,8 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $response = $this->client->getResponse();
         $headerValue = $response->headers->get($headerName);
 
-        $this->assertNotNull($headerValue, "Header {$headerName} not found");
-        $this->assertStringContainsString(
+        self::assertNotNull($headerValue, "Header {$headerName} not found");
+        self::assertStringContainsString(
             $expectedValue,
             $headerValue,
             "Header {$headerName} does not contain '{$expectedValue}'. Actual: {$headerValue}",

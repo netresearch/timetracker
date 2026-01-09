@@ -98,19 +98,19 @@ final class ExportPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['small_dataset_export'],
             $duration,
             "Small dataset export took {$duration}ms, expected < {$this->performanceBaselines['small_dataset_export']}ms",
         );
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['memory_usage_threshold'] / 10, // 5MB for small dataset
             $memoryUsage,
             'Small dataset export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        $this->assertCount(50, $result);
+        self::assertCount(50, $result);
 
         // Log performance metrics
         $this->logPerformanceMetric('Small Dataset Export', $duration, $memoryUsage, 50);
@@ -140,19 +140,19 @@ final class ExportPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['medium_dataset_export'],
             $duration,
             "Medium dataset export took {$duration}ms, expected < {$this->performanceBaselines['medium_dataset_export']}ms",
         );
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['memory_usage_threshold'] / 2, // 25MB for medium dataset
             $memoryUsage,
             'Medium dataset export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        $this->assertCount(500, $result);
+        self::assertCount(500, $result);
         $this->logPerformanceMetric('Medium Dataset Export', $duration, $memoryUsage, 500);
     }
 
@@ -180,19 +180,19 @@ final class ExportPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['large_dataset_export'],
             $duration,
             "Large dataset export took {$duration}ms, expected < {$this->performanceBaselines['large_dataset_export']}ms",
         );
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['memory_usage_threshold'],
             $memoryUsage,
             'Large dataset export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        $this->assertCount(5000, $result);
+        self::assertCount(5000, $result);
         $this->logPerformanceMetric('Large Dataset Export', $duration, $memoryUsage, 5000);
     }
 
@@ -223,13 +223,13 @@ final class ExportPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['ticket_enrichment_small'],
             $duration,
             "Small ticket enrichment took {$duration}ms, expected < {$this->performanceBaselines['ticket_enrichment_small']}ms",
         );
 
-        $this->assertCount(10, $result);
+        self::assertCount(10, $result);
         $this->logPerformanceMetric('Small Ticket Enrichment', $duration, $memoryUsage, 10);
     }
 
@@ -260,13 +260,13 @@ final class ExportPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['ticket_enrichment_medium'],
             $duration,
             "Medium ticket enrichment took {$duration}ms, expected < {$this->performanceBaselines['ticket_enrichment_medium']}ms",
         );
 
-        $this->assertCount(100, $result);
+        self::assertCount(100, $result);
         $this->logPerformanceMetric('Medium Ticket Enrichment', $duration, $memoryUsage, 100);
     }
 
@@ -297,13 +297,13 @@ final class ExportPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             50, // 50ms threshold for no enrichment
             $duration,
             "Export without enrichment took {$duration}ms, expected < 50ms",
         );
 
-        $this->assertCount(100, $result);
+        self::assertCount(100, $result);
         $this->logPerformanceMetric('Export Without Enrichment', $duration, $memoryUsage, 100);
     }
 
@@ -329,7 +329,7 @@ final class ExportPerformanceTest extends TestCase
         // Memory usage should scale roughly linearly
         // Skip memory scaling assertions when using mocks (memory usage will be 0)
         if ($memoryUsages[50] > 0 && $memoryUsages[500] > 0) {
-            $this->assertLessThan(
+            self::assertLessThan(
                 $memoryUsages[50] * 5, // Allow some overhead but should be roughly proportional
                 $memoryUsages[500],
                 'Memory usage scaling appears non-linear: 50 entries = ' .
@@ -370,15 +370,15 @@ final class ExportPerformanceTest extends TestCase
         $memoryUsage = $memoryAfter - $memoryBefore;
 
         // Should handle multiple exports without excessive memory usage
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['memory_usage_threshold'],
             $memoryUsage,
             'Concurrent export simulation used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        $this->assertCount(5, $results);
+        self::assertCount(5, $results);
         foreach ($results as $result) {
-            $this->assertCount(200, $result);
+            self::assertCount(200, $result);
         }
 
         $this->logPerformanceMetric('Concurrent Export Simulation', $duration, $memoryUsage, 1000);

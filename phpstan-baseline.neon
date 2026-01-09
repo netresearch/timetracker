@@ -322,33 +322,9 @@ parameters:
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\HttpFoundation\\\\Response'' and App\\Model\\Response will always evaluate to true\.$#'
-			identifier: method.alreadyNarrowedType
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\HttpFoundation\\\\Response'' and App\\Model\\Response will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
 			count: 5
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 5
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertLessThan\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 10
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
@@ -356,60 +332,6 @@ parameters:
 			identifier: method.internal
 			count: 1
 			path: tests/Performance/ExportPerformanceTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertCount\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 8
-			path: tests/Performance/ExportPerformanceTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertLessThan\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 11
-			path: tests/Performance/ExportPerformanceTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertCount\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertGreaterThan\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertLessThan\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 8
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertNotNull\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 6
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\KernelTestCase\:\:getContainer\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
 
 		-
 			message: '#^Call to function is_scalar\(\) with \(int\|string\) will always evaluate to true\.$#'

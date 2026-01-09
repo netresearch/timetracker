@@ -107,23 +107,23 @@ final class ExportActionPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['small_excel_export'],
             $duration,
             "Small Excel export took {$duration}ms, expected < {$this->performanceBaselines['small_excel_export']}ms",
         );
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['excel_memory_threshold'] / 4, // 25MB for small dataset
             $memoryUsage,
             'Small Excel export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        $this->assertInstanceOf(Response::class, $response);
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertInstanceOf(Response::class, $response);
+        self::assertSame(200, $response->getStatusCode());
         $contentType = $response->headers->get('Content-Type');
         self::assertNotNull($contentType, 'Content-Type header should not be null');
-        $this->assertStringContainsString(
+        self::assertStringContainsString(
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             $contentType,
         );
@@ -154,19 +154,19 @@ final class ExportActionPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['medium_excel_export'],
             $duration,
             "Medium Excel export took {$duration}ms, expected < {$this->performanceBaselines['medium_excel_export']}ms",
         );
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['excel_memory_threshold'] / 2, // 50MB for medium dataset
             $memoryUsage,
             'Medium Excel export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        $this->assertInstanceOf(Response::class, $response);
+        self::assertInstanceOf(Response::class, $response);
         $this->logPerformanceMetric('Medium Excel Export', $duration, $memoryUsage, 500);
     }
 
@@ -193,19 +193,19 @@ final class ExportActionPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['large_excel_export'],
             $duration,
             "Large Excel export took {$duration}ms, expected < {$this->performanceBaselines['large_excel_export']}ms",
         );
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['excel_memory_threshold'],
             $memoryUsage,
             'Large Excel export used ' . number_format($memoryUsage / 1024 / 1024, 2) . 'MB memory',
         );
 
-        $this->assertInstanceOf(Response::class, $response);
+        self::assertInstanceOf(Response::class, $response);
         $this->logPerformanceMetric('Large Excel Export', $duration, $memoryUsage, 5000);
     }
 
@@ -232,13 +232,13 @@ final class ExportActionPerformanceTest extends TestCase
         $duration = $event->getDuration();
         $memoryUsage = $memoryAfter - $memoryBefore;
 
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['medium_excel_export'], // Should still be within medium baseline
             $duration,
             "Excel export with enrichment took {$duration}ms",
         );
 
-        $this->assertInstanceOf(Response::class, $response);
+        self::assertInstanceOf(Response::class, $response);
         $this->logPerformanceMetric('Excel Export with Ticket Enrichment', $duration, $memoryUsage, 200);
     }
 
@@ -266,13 +266,13 @@ final class ExportActionPerformanceTest extends TestCase
         $memoryUsage = $memoryAfter - $memoryBefore;
 
         // Should handle statistics without significant performance impact
-        $this->assertLessThan(
+        self::assertLessThan(
             $this->performanceBaselines['large_excel_export'],
             $duration,
             "Export with statistics took {$duration}ms",
         );
 
-        $this->assertInstanceOf(Response::class, $response);
+        self::assertInstanceOf(Response::class, $response);
         $this->logPerformanceMetric('Export with Statistics Calculation', $duration, $memoryUsage, 1000);
     }
 
@@ -296,7 +296,7 @@ final class ExportActionPerformanceTest extends TestCase
         }
 
         // File size should scale reasonably (not exponentially)
-        $this->assertLessThan(
+        self::assertLessThan(
             $fileSizes[200] * 10, // Allow reasonable overhead but not exponential growth
             $fileSizes[1000],
             'Excel file size scaling appears excessive: 200 entries = ' .
@@ -334,7 +334,7 @@ final class ExportActionPerformanceTest extends TestCase
         $peakUsage = $memoryPeak - $memoryBefore;
 
         // Memory should be mostly cleaned up
-        $this->assertLessThan(
+        self::assertLessThan(
             $peakUsage / 2, // Should retain less than 50% of peak memory usage
             $memoryDifference,
             'Memory not properly cleaned up. Peak usage: ' .
