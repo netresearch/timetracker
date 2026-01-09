@@ -126,7 +126,6 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
-        assert(is_array($data));
         self::assertArrayHasKey('today', $data);
         self::assertArrayHasKey('week', $data);
         self::assertArrayHasKey('month', $data);

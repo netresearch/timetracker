@@ -232,18 +232,6 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Call to function is_array\(\) with array\<mixed, mixed\> will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Call to function property_exists\(\) with \$this\(Tests\\AbstractWebTestCase\) and ''client'' will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseRedirects\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 2
@@ -266,18 +254,6 @@ parameters:
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
 			path: tests/Basic.php
-
-		-
-			message: '#^Casting to string something that''s already string\.$#'
-			identifier: cast.useless
-			count: 3
-			path: tests/Controller/AdminControllerNegativeTest.php
-
-		-
-			message: '#^Call to function is_array\(\) with array\<mixed, mixed\> will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/Controller/ApiSmokeTest.php
 
 		-
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\)\.$#'

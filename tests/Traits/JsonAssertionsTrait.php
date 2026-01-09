@@ -110,7 +110,6 @@ trait JsonAssertionsTrait
 
         $decoded = json_decode($content, true);
         self::assertIsArray($decoded, 'Response should contain valid JSON');
-        assert(is_array($decoded));
 
         return $decoded;
     }
@@ -283,6 +282,7 @@ trait JsonAssertionsTrait
     protected function assertLength(int $expectedLength, ?string $property = null): void
     {
         // Get response from the HTTP client (available via HttpClientTrait composition)
+        // @phpstan-ignore function.alreadyNarrowedType (Defensive check for trait composition)
         if (! property_exists($this, 'client')) {
             throw new LogicException('HttpClientTrait must be used alongside JsonAssertionsTrait to access client');
         }
