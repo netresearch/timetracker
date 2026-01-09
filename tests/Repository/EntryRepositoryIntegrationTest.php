@@ -18,8 +18,8 @@ final class EntryRepositoryIntegrationTest extends AbstractWebTestCase
 {
     public function testFindByRecentDaysOfUserReturnsExpected(): void
     {
-        /** @var EntryRepository $repo */
         $repo = self::getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
+        assert($repo instanceof EntryRepository);
 
         // Get the User entity from the repository instead of passing raw ID
         $userRepository = self::getContainer()->get('doctrine')->getRepository(\App\Entity\User::class);
@@ -41,8 +41,8 @@ final class EntryRepositoryIntegrationTest extends AbstractWebTestCase
 
     public function testFindByFilterArrayBasicFilters(): void
     {
-        /** @var EntryRepository $repo */
         $repo = self::getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
+        assert($repo instanceof EntryRepository);
 
         // Use the queryByFilterArray method instead
         $query = $repo->queryByFilterArray([

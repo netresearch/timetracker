@@ -38,7 +38,7 @@ trait AuthenticationTestTrait
         if (null === $this->serviceContainer) {
             throw new RuntimeException('Service container not initialized');
         }
-        /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
         $doctrine = $this->serviceContainer->get('doctrine');
         $userRepository = $doctrine->getRepository(\App\Entity\User::class);
         $userEntity = $userRepository->find($userId);

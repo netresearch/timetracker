@@ -208,18 +208,6 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
-			identifier: varTag.type
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
-			identifier: varTag.type
-			count: 2
-			path: tests/Controller/DefaultControllerSummaryTest.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with arguments \*NEVER\*, mixed and ''End should be…'' will always evaluate to false\.$#'
 			identifier: staticMethod.impossibleType
 			count: 1
@@ -248,9 +236,3 @@ parameters:
 			identifier: method.dynamicName
 			count: 1
 			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
-			identifier: varTag.type
-			count: 2
-			path: tests/Repository/EntryRepositoryIntegrationTest.php

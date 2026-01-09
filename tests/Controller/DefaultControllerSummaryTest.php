@@ -20,7 +20,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
     public function testGetSummaryActionWithProjectEstimationComputesQuota(): void
     {
         $container = $this->client->getContainer();
-        /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
         $doctrine = $container->get('doctrine');
         $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
@@ -53,7 +53,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
     public function testGetSummaryActionWithoutEstimationLeavesZeroQuota(): void
     {
         $container = $this->client->getContainer();
-        /** @var \Doctrine\Persistence\ManagerRegistry $doctrine */
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
         $doctrine = $container->get('doctrine');
         $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
