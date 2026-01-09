@@ -370,6 +370,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
     public function testGetAllEntriesActionReturnLinksNoParameter(): void
     {
+        $expectedLinks = [];
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?page=0',
             'last' => 'http://localhost/interpretation/allEntries?page=0',
@@ -464,6 +465,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $parameter = [
             'project_id=42',
         ];
+        $expectedLinks = [];
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?project_id=42&page=0',
             'last' => null,
@@ -482,6 +484,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'maxResults=2',
             'page=42',
         ];
+        $expectedLinks = [];
         $expectedLinks['links'] = [
             'self' => 'http://localhost/interpretation/allEntries?maxResults=2&page=42',
             'last' => 'http://localhost/interpretation/allEntries?maxResults=2&page=3',

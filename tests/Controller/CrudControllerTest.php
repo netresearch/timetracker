@@ -181,7 +181,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        self::assertSame(10, count($results));
+        self::assertCount(10, $results);
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -235,7 +235,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
-        self::assertSame(8, count($results));
+        self::assertCount(8, $results);
 
         // Assert days for the expected entries
         $staticExpected = [
@@ -304,7 +304,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $connection->executeQuery($query)->fetchAllAssociative();
 
-        self::assertSame(2, count($results));
+        self::assertCount(2, $results);
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -366,7 +366,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        self::assertSame(10, count($results));
+        self::assertCount(10, $results);
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -422,7 +422,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ORDER BY `id` ASC';
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        self::assertSame(0, count($results));
+        self::assertCount(0, $results);
     }
 
     public function testBulkentryActionContractEndedDuringBulkentry(): void
@@ -453,7 +453,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         // Update count expectation to match actual: 5 instead of 4
-        self::assertSame(5, count($results));
+        self::assertCount(5, $results);
 
         // Common expected fields
         $staticExpected = [

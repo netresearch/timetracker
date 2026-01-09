@@ -53,7 +53,7 @@ final class BaseTest extends TestCase
         $testModel = new TestModel();
         $result = $testModel->toArray();
 
-        self::assertSame(4, count($result));
+        self::assertCount(4, $result);
         self::assertTrue(array_key_exists('id', $result));
         self::assertSame(500, $result['id']);
         self::assertTrue($result['active']);

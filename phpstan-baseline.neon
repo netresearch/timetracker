@@ -280,34 +280,10 @@ parameters:
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			message: '#^Method Tests\\AbstractWebTestCase\:\:assertJsonStructure\(\) invoked with 1 parameter, 2 required\.$#'
-			identifier: arguments.count
-			count: 4
-			path: tests/Controller/CrudControllerTest.php
-
-		-
-			message: '#^You should use assertCount\(\$expectedCount, \$variable\) instead of assertSame\(\$expectedCount, count\(\$variable\)\)\.$#'
-			identifier: phpunit.assertCount
-			count: 6
-			path: tests/Controller/CrudControllerTest.php
-
-		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
 			identifier: varTag.type
 			count: 2
 			path: tests/Controller/DefaultControllerSummaryTest.php
-
-		-
-			message: '#^Cannot access offset ''links'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 3
-			path: tests/Controller/InterpretationControllerTest.php
-
-		-
-			message: '#^Implicit array creation is not allowed \- variable \$expectedLinks does not exist\.$#'
-			identifier: variable.implicitArray
-			count: 3
-			path: tests/Controller/InterpretationControllerTest.php
 
 		-
 			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase\:\:assertResponseIsSuccessful\(\)\.$#'
@@ -428,12 +404,6 @@ parameters:
 			identifier: method.childParameterType
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
-
-		-
-			message: '#^You should use assertCount\(\$expectedCount, \$variable\) instead of assertSame\(\$expectedCount, count\(\$variable\)\)\.$#'
-			identifier: phpunit.assertCount
-			count: 1
-			path: tests/Model/BaseTest.php
 
 		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\HttpFoundation\\\\Response'' and App\\Model\\Response will always evaluate to true\.$#'
