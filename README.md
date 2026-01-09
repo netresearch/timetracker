@@ -8,6 +8,7 @@
 [![Code Quality](https://img.shields.io/badge/phpstan-level%209-green.svg)](phpstan.neon)
 [![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 **Professional time tracking solution for teams and enterprises with advanced LDAP integration, JIRA synchronization, and comprehensive reporting.**
 
@@ -120,6 +121,7 @@ symfony server:start
 - **Code Quality**: PHPStan Level 9, Laravel Pint, Rector
 [![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 ### Project Structure
 ```
@@ -274,6 +276,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ### Code Quality Standards
 [![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 - **PSR-12** code style with Laravel Pint
 - **PHPStan Level 9** static analysis
 - **PHPUnit** tests with >80% coverage target
