@@ -15,7 +15,8 @@
       "ocramius/package-versions": true,
       "php-http/discovery": true,
       "phpstan/extension-installer": true,
-      "symfony/flex": true
+      "symfony/flex": true,
+      "captainhook/plugin-composer": true
     }
   },
   "prefer-stable": true,
@@ -73,6 +74,8 @@
   },
   "require-dev": {
     "brianium/paratest": "^7.11",
+    "captainhook/captainhook": "^5.27",
+    "captainhook/plugin-composer": "^5.3",
     "dg/bypass-finals": "*",
     "laravel/pint": "^1.18",
     "phpat/phpat": "^0.11",
