@@ -157,18 +157,6 @@ parameters:
 			path: src/Model/Base.php
 
 		-
-			message: '#^Only booleans are allowed in a ternary operator condition, DateTime given\.$#'
-			identifier: ternary.condNotBoolean
-			count: 1
-			path: src/Repository/ContractRepository.php
-
-		-
-			message: '#^Only booleans are allowed in a ternary operator condition, DateTime\|null given\.$#'
-			identifier: ternary.condNotBoolean
-			count: 1
-			path: src/Repository/ContractRepository.php
-
-		-
 			message: '#^PHPDoc tag @var with type Doctrine\\ORM\\Query\<\(int\|string\), mixed\> is not subtype of type Doctrine\\ORM\\Query\<null, mixed\>\.$#'
 			identifier: varTag.type
 			count: 1
@@ -373,18 +361,6 @@ parameters:
 			path: src/Service/Integration/Jira/JiraWorkLogService.php
 
 		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Project\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 2
-			path: src/Service/Integration/Jira/JiraWorkLogService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\User\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 2
-			path: src/Service/Integration/Jira/JiraWorkLogService.php
-
-		-
 			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
 			identifier: if.condNotBoolean
 			count: 1
@@ -399,7 +375,7 @@ parameters:
 		-
 			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
 			identifier: booleanNot.exprNotBoolean
-			count: 2
+			count: 1
 			path: src/Service/Ldap/LdapClientService.php
 
 		-

@@ -13,7 +13,9 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 
+use function assert;
 use function is_object;
+use function is_scalar;
 use function sprintf;
 
 /**
@@ -47,7 +49,7 @@ class JiraWorkLogService
         TicketSystem $ticketSystem,
         ?int $entryLimit = null,
     ): void {
-        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (! $this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
@@ -96,22 +98,22 @@ class JiraWorkLogService
         $user = $entry->getUser();
         $project = $entry->getProject();
 
-        if (!$user || !$project) {
+        if (null === $user || null === $project) {
             return;
         }
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (!$ticketSystem instanceof TicketSystem) {
+        if (! $ticketSystem instanceof TicketSystem) {
             return;
         }
 
-        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (! $this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
         // Verify ticket exists in Jira
-        if (!$this->jiraTicketService->doesTicketExist($ticket)) {
+        if (! $this->jiraTicketService->doesTicketExist($ticket)) {
             return;
         }
 
@@ -123,7 +125,7 @@ class JiraWorkLogService
         }
 
         // Verify existing work log ID is still valid
-        if (null !== $entry->getWorklogId() && !$this->doesWorkLogExist($ticket, $entry->getWorklogId())) {
+        if (null !== $entry->getWorklogId() && ! $this->doesWorkLogExist($ticket, $entry->getWorklogId())) {
             $entry->setWorklogId(null);
         }
 
@@ -137,7 +139,7 @@ class JiraWorkLogService
             $workLog = $this->createWorkLog($ticket, $workLogData);
         }
 
-        if (!is_object($workLog) || !property_exists($workLog, 'id')) {
+        if (! is_object($workLog) || ! property_exists($workLog, 'id')) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
@@ -163,29 +165,29 @@ class JiraWorkLogService
 
         $workLogId = $entry->getWorklogId();
 
-        if ($workLogId === null) {
+        if (null === $workLogId) {
             return;
         }
 
         $user = $entry->getUser();
         $project = $entry->getProject();
 
-        if (!$user || !$project) {
+        if (null === $user || null === $project) {
             return;
         }
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (!$ticketSystem instanceof TicketSystem) {
+        if (! $ticketSystem instanceof TicketSystem) {
             return;
         }
 
-        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (! $this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
         // Only delete if work log exists
-        if (!$this->doesWorkLogExist($ticket, $workLogId)) {
+        if (! $this->doesWorkLogExist($ticket, $workLogId)) {
             $entry->setWorklogId(null);
 
             return;
@@ -221,7 +223,7 @@ class JiraWorkLogService
     {
         $response = $this->jiraHttpClientService->post(sprintf('issue/%s/worklog', $ticket), $data);
 
-        if (!is_object($response)) {
+        if (! is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when creating work log', 500);
         }
 
@@ -237,7 +239,7 @@ class JiraWorkLogService
     {
         $response = $this->jiraHttpClientService->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
 
-        if (!is_object($response)) {
+        if (! is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when updating work log', 500);
         }
 
@@ -358,7 +360,7 @@ class JiraWorkLogService
             $this->jiraAuthenticationService->authenticate($user, $ticketSystem);
             $response = $this->jiraHttpClientService->get(sprintf('project/%s', $projectKey));
 
-            if (!is_object($response)) {
+            if (! is_object($response)) {
                 return [];
             }
 

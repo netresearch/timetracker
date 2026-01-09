@@ -146,7 +146,7 @@ class LdapClientService
             ['cn', 'distinguishedName', 'dn'],
         );
 
-        if (!is_object($collection) || (0 === $collection->count())) {
+        if (! is_object($collection) || (0 === $collection->count())) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: User search failed or returned no results.', [
                     'filter' => $searchFilter,
@@ -208,7 +208,7 @@ class LdapClientService
                   null;
 
         // If DN extraction failed or returned invalid data, construct it from username
-        if (!$userDn || strlen($userDn) < 10) {
+        if (null === $userDn || '' === $userDn || strlen($userDn) < 10) {
             // Construct DN using the original username and our known structure
             $userDn = sprintf('uid=%s,ou=users,%s', $this->_userName, $this->_baseDn);
             if ($this->logger instanceof LoggerInterface) {
@@ -437,7 +437,7 @@ class LdapClientService
             $this->verifyUsername(),
         );
         // verifyPassword returns bool true; enforce literal true for signature
-        if (!$result) {
+        if (true !== $result) {
             throw new RuntimeException('LDAP verification did not return true');
         }
 
@@ -458,7 +458,7 @@ class LdapClientService
     protected function setTeamsByLdapResponse(array $ldapRespsonse): void
     {
         $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
-        if (!$dn) {
+        if (! $dn) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
             }
@@ -476,7 +476,7 @@ class LdapClientService
 
             try {
                 $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
-                if (!$arMapping || !is_array($arMapping)) {
+                if (! $arMapping || ! is_array($arMapping)) {
                     if ($this->logger instanceof LoggerInterface) {
                         $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
                     }

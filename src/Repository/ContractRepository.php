@@ -33,8 +33,7 @@ class ContractRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('contracts')
             ->join('contracts.user', 'users')
             ->orderBy('users.username', 'ASC')
-            ->addOrderBy('contracts.start', 'ASC')
-        ;
+            ->addOrderBy('contracts.start', 'ASC');
 
         /** @var \Doctrine\ORM\Query<array-key, mixed> $query */
         $query = $queryBuilder->getQuery();
@@ -47,10 +46,10 @@ class ContractRepository extends ServiceEntityRepository
             $data[] = ['contract' => [
                 'id' => (int) $contract->getId(),
                 'user_id' => (int) $contract->getUser()->getId(),
-                'start' => $contract->getStart()
+                'start' => null !== $contract->getStart()
                     ? $contract->getStart()->format('Y-m-d')
                     : null,
-                'end' => $contract->getEnd()
+                'end' => null !== $contract->getEnd()
                     ? $contract->getEnd()->format('Y-m-d')
                     : null,
                 'hours_0' => (float) $contract->getHours0(),
