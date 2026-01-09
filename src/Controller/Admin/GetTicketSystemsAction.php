@@ -22,7 +22,7 @@ final class GetTicketSystemsAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
 
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
+        /** @var \App\Repository\TicketSystemRepository<\App\Entity\TicketSystem> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
         $ticketSystems = $objectRepository->getAllTicketSystems();
 

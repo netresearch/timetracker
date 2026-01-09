@@ -26,7 +26,7 @@ final class SaveActivityAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-        /** @var \App\Repository\ActivityRepository $objectRepository */
+        /** @var \App\Repository\ActivityRepository<\App\Entity\Activity> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
 
         $id = $activitySaveDto->id;

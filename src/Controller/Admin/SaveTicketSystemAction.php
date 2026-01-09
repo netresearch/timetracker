@@ -29,7 +29,7 @@ final class SaveTicketSystemAction extends BaseController
     public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
 
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
+        /** @var \App\Repository\TicketSystemRepository<\App\Entity\TicketSystem> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
 
         $id = $ticketSystemSaveDto->id;

@@ -39,7 +39,7 @@ final class SaveContractAction extends BaseController
         /** @var User $user */
         $user = $this->doctrineRegistry->getRepository(User::class)->find($contractSaveDto->user_id);
 
-        /** @var \App\Repository\ContractRepository $objectRepository */
+        /** @var \App\Repository\ContractRepository<\App\Entity\Contract> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
 
         if (0 !== $contractId) {

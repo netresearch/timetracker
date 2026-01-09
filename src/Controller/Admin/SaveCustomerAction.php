@@ -37,7 +37,7 @@ final class SaveCustomerAction extends BaseController
         $customerId = $customerSaveDto->id;
         $teamIds = $customerSaveDto->teams;
 
-        /** @var \App\Repository\CustomerRepository $objectRepository */
+        /** @var \App\Repository\CustomerRepository<\App\Entity\Customer> $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
 
         if (0 !== $customerId) {
