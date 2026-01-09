@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 use function array_merge;
+use function is_array;
 use function json_encode;
+use function sprintf;
 
 /**
  * HTTP client functionality trait.
@@ -38,7 +41,7 @@ trait HttpClientTrait
     /**
      * Helper method to create JSON request.
      *
-     * @param array<string, mixed> $content
+     * @param array<string, mixed>  $content
      * @param array<string, string> $headers
      */
     protected function createJsonRequest(
@@ -50,8 +53,8 @@ trait HttpClientTrait
         $jsonContent = null;
         if ([] !== $content) {
             $encodedContent = json_encode($content);
-            if ($encodedContent === false) {
-                throw new \RuntimeException('Failed to encode JSON content');
+            if (false === $encodedContent) {
+                throw new RuntimeException('Failed to encode JSON content');
             }
             $jsonContent = $encodedContent;
         }
@@ -88,8 +91,8 @@ trait HttpClientTrait
                 'Expected HTTP status code %d, got %d. Response: %s',
                 $expectedCode,
                 $actualCode,
-                $response->getContent() ?: '(empty)'
-            )
+                (false !== $response->getContent() && '' !== $response->getContent()) ? $response->getContent() : '(empty)',
+            ),
         );
     }
 
@@ -102,15 +105,16 @@ trait HttpClientTrait
         $response = $this->client->getResponse();
         $content = $response->getContent();
 
-        if ($content === false) {
+        if (false === $content) {
             self::fail('Response content is empty');
         }
 
         // Check if response is JSON and has a message property
-        if ($response->headers->get('Content-Type') === 'application/json') {
+        if ('application/json' === $response->headers->get('Content-Type')) {
             $jsonData = json_decode($content, true);
             if (is_array($jsonData) && isset($jsonData['message'])) {
                 self::assertSame($expectedMessage, $jsonData['message'], 'JSON message should match expected value');
+
                 return;
             }
         }

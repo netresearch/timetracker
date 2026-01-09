@@ -207,7 +207,7 @@ trait JsonAssertionsTrait
             if (str_contains($message, str_replace('%num%', '', $german))) {
                 // Extract the number from the expected message
                 preg_match('/(\d+)/', $message, $matches);
-                if (!empty($matches)) {
+                if ([] !== $matches) {
                     $expectedEnglish = str_replace('%num%', $matches[1], $english);
                     self::assertSame($expectedEnglish, $responseContentString);
 
@@ -283,7 +283,7 @@ trait JsonAssertionsTrait
     protected function assertLength(int $expectedLength, ?string $property = null): void
     {
         // Get response from the HTTP client (available via HttpClientTrait composition)
-        if (!property_exists($this, 'client')) {
+        if (! property_exists($this, 'client')) {
             throw new LogicException('HttpClientTrait must be used alongside JsonAssertionsTrait to access client');
         }
 

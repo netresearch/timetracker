@@ -18,10 +18,9 @@ declare(strict_types=1);
 namespace Tests\Extension;
 
 use App\Extension\NrArrayTranslator;
-use Symfony\Component\Translation\Translator;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Translator;
 
-use function array_key_exists;
 use function is_array;
 
 /**
@@ -53,7 +52,7 @@ final class NrArrayTranslatorTest extends TestCase
     /**
      * setup the symfony translator and the NrArrayTranslator for this test.
      */
-    public function setUp(): void
+    protected function setUp(): void
     {
         $this->translator = new Translator('de');
         $this->nrArrayTranslator = new NrArrayTranslator($this->translator);
@@ -79,7 +78,7 @@ final class NrArrayTranslatorTest extends TestCase
         self::assertTrue(is_array($filters));
         self::assertCount(1, $filters);
         self::assertInstanceOf(\Twig\TwigFilter::class, $filters[0]);
-        self::assertEquals('nr_array_translator', $filters[0]->getName());
+        self::assertSame('nr_array_translator', $filters[0]->getName());
     }
 
     /**

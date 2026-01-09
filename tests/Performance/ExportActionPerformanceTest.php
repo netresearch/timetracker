@@ -41,10 +41,12 @@ use const STDERR;
 final class ExportActionPerformanceTest extends TestCase
 {
     private Stopwatch $stopwatch;
+
     /**
      * @var array<string, int>
      */
     private array $performanceBaselines;
+
     private string $tempDir;
 
     protected function setUp(): void
@@ -52,7 +54,7 @@ final class ExportActionPerformanceTest extends TestCase
         $this->stopwatch = new Stopwatch();
         $this->setupPerformanceBaselines();
         $this->tempDir = sys_get_temp_dir() . '/export_performance_test_' . uniqid();
-        if (!is_dir($this->tempDir)) {
+        if (! is_dir($this->tempDir)) {
             mkdir($this->tempDir, 0o777, true);
         }
     }
@@ -118,7 +120,7 @@ final class ExportActionPerformanceTest extends TestCase
         );
 
         $this->assertInstanceOf(Response::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertSame(200, $response->getStatusCode());
         $contentType = $response->headers->get('Content-Type');
         self::assertNotNull($contentType, 'Content-Type header should not be null');
         $this->assertStringContainsString(
@@ -421,7 +423,7 @@ final class ExportActionPerformanceTest extends TestCase
     {
         // Create public directory structure to match real application
         $publicDir = $this->tempDir . '/public';
-        if (!is_dir($publicDir)) {
+        if (! is_dir($publicDir)) {
             mkdir($publicDir, 0o777, true);
         }
 
