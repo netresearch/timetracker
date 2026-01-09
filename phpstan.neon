@@ -16,7 +16,7 @@ parameters:
     # Doctrine specific
     doctrine:
         objectManagerLoader: null
-        repositoryClass: App\Repository\ServiceEntityRepository
+        repositoryClass: Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository
 
     # Strict rules are enabled via extension-installer
 
