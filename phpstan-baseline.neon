@@ -530,9 +530,3 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 6
 			path: tests/Util/PhpSpreadsheet/LOReadFilterTest.php
-
-		-
-			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/tools/analyze-coverage.php

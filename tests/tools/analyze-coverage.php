@@ -255,12 +255,8 @@ final readonly class TestCoverageAnalyzer
             // Match by controller area (Settings, Admin, Default, etc.)
             $testArea = $this->extractTestArea($testClass);
 
-            assert(is_string($controllerInfo['area']));
-            assert(is_string($testArea));
             if ($this->areasMatch($controllerInfo['area'], $testArea)) {
                 foreach ($testMethods as $testMethod) {
-                    assert(is_string($controllerInfo['action']));
-                    assert(is_string($testMethod));
                     if ($this->matchesTestPattern($controllerInfo['action'], $action, $testMethod)) {
                         return "{$testClass}::{$testMethod}";
                     }
