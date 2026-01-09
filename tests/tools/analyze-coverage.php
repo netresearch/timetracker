@@ -108,7 +108,6 @@ final readonly class TestCoverageAnalyzer
         foreach ($phpFiles as $file) {
             if ($file instanceof SplFileInfo) {
                 $pathname = $file->getPathname();
-                assert(is_string($pathname));
                 $relativePath = str_replace($this->controllersPath . '/', '', $pathname);
                 $className = $this->getClassNameFromFile($pathname);
             } else {
@@ -214,7 +213,6 @@ final readonly class TestCoverageAnalyzer
         foreach ($phpFiles as $file) {
             if ($file instanceof SplFileInfo) {
                 $pathname = $file->getPathname();
-                assert(is_string($pathname));
                 $className = $this->getClassNameFromFile($pathname, 'Tests');
             } else {
                 continue;

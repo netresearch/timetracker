@@ -226,7 +226,7 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with 1 and 1 will always evaluate to true\.$#'
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
 			path: tests/Basic.php
@@ -260,18 +260,6 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 8
 			path: tests/Controller/AuthorizationSecurityTest.php
-
-		-
-			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:markTestSkipped\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 9
-			path: tests/Controller/ControllingControllerTest.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 9
-			path: tests/Controller/ControllingControllerTest.php
 
 		-
 			message: '#^Cannot cast mixed to int\.$#'
@@ -316,13 +304,13 @@ parameters:
 			path: tests/Controller/StatusControllerTest.php
 
 		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''Krank'' and ''Krank'' will always evaluate to true\.$#'
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotEmpty\(\) with ''Krank'' will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
 			path: tests/Entity/ActivityTest.php
 
 		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''Urlaub'' and ''Urlaub'' will always evaluate to true\.$#'
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotEmpty\(\) with ''Urlaub'' will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
 			path: tests/Entity/ActivityTest.php
@@ -338,18 +326,6 @@ parameters:
 			identifier: argument.unresolvableType
 			count: 1
 			path: tests/Entity/EntryTest.php
-
-		-
-			message: '#^Call to function is_array\(\) with non\-empty\-array\<string, mixed\> will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: tests/Entity/HolidayDatabaseTest.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotFalse\(\) with mixed and ''UserTicketsystem…'' will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 1
-			path: tests/Entity/UserDatabaseTest.php
 
 		-
 			message: '#^Parameter \#1 \$attributes \(array\<string, mixed\>\) of method Tests\\Fixtures\\TokenStub\:\:setAttributes\(\) should be contravariant with parameter \$attributes \(array\) of method Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface\:\:setAttributes\(\)$#'

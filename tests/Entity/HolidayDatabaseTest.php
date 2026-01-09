@@ -10,7 +10,6 @@ use RuntimeException;
 use Tests\AbstractWebTestCase;
 
 use function assert;
-use function is_array;
 
 /**
  * @internal
@@ -35,8 +34,8 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
         $conn->insert('holidays', ['day' => $day, 'name' => 'Christmas']);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
+        self::assertIsArray($row);
         self::assertNotEmpty($row);
-        assert(is_array($row));
         self::assertSame('Christmas', $row['name']);
 
         // Clean up

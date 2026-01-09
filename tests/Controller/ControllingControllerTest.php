@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
-use App\Model\JsonResponse;
 use App\Service\ExportService as Export;
 use DateTime;
 use Tests\AbstractWebTestCase;
@@ -243,242 +242,46 @@ final class ControllingControllerTest extends AbstractWebTestCase
 
     public function testLandingPage(): void
     {
-        $this->markTestSkipped('Route /controlling never existed - fictional test');
-        $this->logInSession();
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling');
-        $this->assertStatusCode(200);
-        $response = $this->client->getResponse()->getContent();
-        self::assertIsString($response);
-        self::assertStringContainsString('Controlling', (string) $response);
+        self::markTestSkipped('Route /controlling never existed - fictional test');
     }
 
     public function testLandingPageNotAuthorized(): void
     {
-        $this->markTestSkipped('Route /controlling never existed - fictional test');
-        $this->logInSession('developer');
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling');
-        $this->assertStatusCode(403);
-        $response = $this->client->getResponse()->getContent();
-        self::assertIsString($response);
-        self::assertStringContainsString('You are not allowed', (string) $response);
+        self::markTestSkipped('Route /controlling never existed - fictional test');
     }
 
     public function testLandingPageAsUserWithData(): void
     {
-        $this->markTestSkipped('Route /controlling never existed - fictional test');
-        $this->logInSession('unittest'); // Admin User
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling');
-        $this->assertStatusCode(200);
-        $response = $this->client->getResponse()->getContent();
-        self::assertIsString($response);
-        self::assertStringContainsString('Controlling', (string) $response);
-        // test menu title
-        self::assertStringContainsString('Export', (string) $response);
-
-        $this->logInSession('developer'); // Normal User
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling');
-        $this->assertStatusCode(403);
-        $response = $this->client->getResponse()->getContent();
-        self::assertIsString($response);
-        self::assertStringContainsString('You are not allowed', (string) $response);
+        self::markTestSkipped('Route /controlling never existed - fictional test');
     }
 
     public function testGetDataForBrowsingByCustomer(): void
     {
-        $this->markTestSkipped('Route /getDataForBrowsingByCustomer never existed - fictional test');
-        $this->logInSession('unittest');
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getDataForBrowsingByCustomer', [
-            'year' => 2020,
-            'month' => 2,
-            'customer' => 1,
-        ]);
-
-        $response = $this->client->getResponse();
-        self::assertSame(200, $response->getStatusCode());
-        $data = json_decode((string) ($response->getContent() ?: ''), true);
-        self::assertArraySubset([
-            'content' => [
-                [
-                    'customer' => [
-                        'name' => 'Der Bäcker von nebenan',
-                        'id' => 1,
-                        'color' => '#333',
-                        'global' => false,
-                    ],
-                ],
-            ],
-            'totalWorkTime' => '2020-02-01: 0h 0m, 2020-02-08: 5h 30m, 2020-02-10: 0h 0m, 2020-02-15: 0h 0m',
-        ], (array) $data);
+        self::markTestSkipped('Route /getDataForBrowsingByCustomer never existed - fictional test');
     }
 
     public function testGetDataForBrowsingByProject(): void
     {
-        $this->markTestSkipped('Route /getDataForBrowsingByProject never existed - fictional test');
-        $this->logInSession('unittest');
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getDataForBrowsingByProject', [
-            'year' => 2020,
-            'month' => 2,
-            'project' => 1,
-        ]);
-
-        $response = $this->client->getResponse();
-        self::assertSame(200, $response->getStatusCode());
-        $data = json_decode((string) ($response->getContent() ?: ''), true);
-        self::assertArraySubset([
-            'content' => [
-                [
-                    'customer' => [
-                        'name' => 'Der Bäcker von nebenan',
-                        'id' => 1,
-                        'color' => '#333',
-                        'global' => false,
-                    ],
-                    'project' => [
-                        'name' => 'Das Kuchenbacken',
-                        'id' => 1,
-                        'active' => true,
-                        'global' => false,
-                    ],
-                ],
-            ],
-            'totalWorkTime' => '2020-02-01: 0h 0m, 2020-02-08: 5h 30m, 2020-02-10: 0h 0m, 2020-02-15: 0h 0m',
-        ], (array) $data);
+        self::markTestSkipped('Route /getDataForBrowsingByProject never existed - fictional test');
     }
 
     public function testGetDataForBrowsingByUser(): void
     {
-        $this->markTestSkipped('Route /getDataForBrowsingByUser never existed - fictional test');
-        $this->logInSession('unittest');
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getDataForBrowsingByUser', [
-            'year' => 2020,
-            'month' => 2,
-            'user' => 2,
-        ]);
-
-        $response = $this->client->getResponse();
-        self::assertSame(200, $response->getStatusCode());
-        $data = json_decode((string) ($response->getContent() ?: ''), true);
-
-        self::assertArraySubset([
-            'content' => [
-                [
-                    'customer' => [
-                        'name' => 'Der Bäcker von nebenan',
-                        'id' => 1,
-                        'color' => '#333',
-                        'global' => false,
-                    ],
-                    'project' => [
-                        'name' => 'Das Kuchenbacken',
-                        'id' => 1,
-                        'active' => true,
-                        'global' => false,
-                    ],
-                    'user' => [
-                        'username' => 'i.myself',
-                        'id' => 2,
-                        'abbr' => 'IMY',
-                        'type' => 'PL',
-                    ],
-                ],
-            ],
-            'totalWorkTime' => '2020-02-01: 0h 0m, 2020-02-08: 5h 30m, 2020-02-10: 0h 0m, 2020-02-15: 0h 0m',
-        ], (array) $data);
+        self::markTestSkipped('Route /getDataForBrowsingByUser never existed - fictional test');
     }
 
     public function testGetDataForBrowsingByTeam(): void
     {
-        $this->markTestSkipped('Route /getDataForBrowsingByTeam never existed - fictional test');
-        $this->logInSession('unittest');
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getDataForBrowsingByTeam', [
-            'year' => 2020,
-            'month' => 2,
-            'team' => 1,
-        ]);
-
-        $response = $this->client->getResponse();
-        self::assertSame(200, $response->getStatusCode());
-        $data = json_decode((string) ($response->getContent() ?: ''), true);
-        self::assertArraySubset([
-            'content' => [
-                [
-                    'customer' => [
-                        'name' => 'Der Bäcker von nebenan',
-                        'id' => 1,
-                        'color' => '#333',
-                        'global' => false,
-                    ],
-                    'project' => [
-                        'name' => 'Das Kuchenbacken',
-                        'id' => 1,
-                        'active' => true,
-                        'global' => false,
-                    ],
-                    'user' => [
-                        'username' => 'i.myself',
-                        'id' => 2,
-                        'abbr' => 'IMY',
-                        'type' => 'PL',
-                    ],
-                    'team' => [
-                        'name' => 'Hackerman',
-                        'id' => 1,
-                        'lead_user_id' => 2,
-                    ],
-                ],
-            ],
-            'totalWorkTime' => '2020-02-01: 0h 0m, 2020-02-08: 5h 30m, 2020-02-10: 0h 0m, 2020-02-15: 0h 0m',
-        ], (array) $data);
+        self::markTestSkipped('Route /getDataForBrowsingByTeam never existed - fictional test');
     }
 
     public function testGetDataForBrowsingByPeriod(): void
     {
-        $this->markTestSkipped('Route /getDataForBrowsingByPeriod never existed - fictional test');
-        $this->logInSession('unittest');
-        $response = $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getDataForBrowsingByPeriod', [
-            'start' => '2020-02-01',
-            'end' => '2020-02-29',
-        ]);
-        self::assertInstanceOf(JsonResponse::class, $response);
-        self::assertSame(200, $this->client->getResponse()->getStatusCode());
-        $data = json_decode((string) ($response->getContent() ?: ''), true);
-
-        self::assertArraySubset([
-            'content' => [
-                [
-                    'customer' => [
-                        'name' => 'Der Bäcker von nebenan',
-                        'id' => 1,
-                        'color' => '#333',
-                        'global' => false,
-                    ],
-                    'project' => [
-                        'name' => 'Das Kuchenbacken',
-                        'id' => 1,
-                        'active' => true,
-                        'global' => false,
-                    ],
-                    'user' => [
-                        'username' => 'i.myself',
-                        'id' => 2,
-                        'abbr' => 'IMY',
-                        'type' => 'PL',
-                    ],
-                ],
-            ],
-            'totalWorkTime' => 330,
-        ], (array) $data);
+        self::markTestSkipped('Route /getDataForBrowsingByPeriod never existed - fictional test');
     }
 
     public function testGetDataForBrowsingByPeriodInvalidPeriod(): void
     {
-        $this->markTestSkipped('Route /getDataForBrowsingByPeriod never existed - fictional test');
-        $this->logInSession('unittest');
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getDataForBrowsingByPeriod', [
-            'start' => '2019-01-01',
-            'end' => '2018-01-01',
-        ]);
-        $this->assertStatusCode(422);
-        $this->assertMessage('End date has to be greater than the start date.');
+        self::markTestSkipped('Route /getDataForBrowsingByPeriod never existed - fictional test');
     }
 }

@@ -14,6 +14,6 @@ final class Basic extends AbstractWebTestCase
     public function testBasic(): void
     {
         // Basic smoke test - just verify the test framework is working
-        self::assertSame(1, 1);
+        self::assertTrue(true);
     }
 }
