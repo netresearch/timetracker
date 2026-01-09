@@ -312,7 +312,7 @@ final class PerformanceBenchmarkRunner
                     continue;
                 }
 
-                $status = isset($result['success']) && $result['success'] ? '✅' : '❌';
+                $status = isset($result['success']) && true === $result['success'] ? '✅' : '❌';
                 $time = $result['execution_time_ms'] ?? 0;
                 $memoryBytes = $result['memory_usage_bytes'] ?? 0;
                 $memory = number_format((is_numeric($memoryBytes) ? (float) $memoryBytes : 0.0) / 1024 / 1024, 2);
@@ -374,7 +374,7 @@ final class PerformanceBenchmarkRunner
         }
 
         // Fix offsetAccess.nonOffsetAccessible: Filter results with proper type checking
-        $successfulResults = array_filter($allResults, static fn ($r) => is_array($r) && isset($r['success']) && $r['success']);
+        $successfulResults = array_filter($allResults, static fn ($r) => is_array($r) && isset($r['success']) && true === $r['success']);
 
         if ([] === $successfulResults) {
             $report[] = 'No successful benchmarks to analyze.';

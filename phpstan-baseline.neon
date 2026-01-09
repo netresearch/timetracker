@@ -226,12 +226,6 @@ parameters:
 			path: tests/Helper/JiraOAuthApiTest.php
 
 		-
-			message: '#^Only booleans are allowed in &&, mixed given on the right side\.$#'
-			identifier: booleanAnd.rightNotBoolean
-			count: 2
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
 			message: '#^Variable method call on object\.$#'
 			identifier: method.dynamicName
 			count: 1
