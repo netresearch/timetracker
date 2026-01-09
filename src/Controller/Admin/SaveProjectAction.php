@@ -91,7 +91,7 @@ final class SaveProjectAction extends BaseController
 
         // Validation is now handled by the DTO with MapRequestPayload
 
-        if ('' !== $jiraId && false === $objectRepository->isValidJiraPrefix($jiraId)) {
+        if ('' !== $jiraId && 0 === $objectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 

@@ -1,18 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Result of && is always false\.$#'
-			identifier: booleanAnd.alwaysFalse
-			count: 1
-			path: src/Controller/Admin/SaveProjectAction.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between false and int will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/Controller/Admin/SaveProjectAction.php
-
-		-
 			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -580,12 +568,6 @@ parameters:
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
-			message: '#^Variable \$content on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
 			message: '#^Call to internal method PHPUnit\\Framework\\TestCase\:\:addToAssertionCount\(\) from outside its root namespace PHPUnit\.$#'
 			identifier: method.internal
 			count: 1
@@ -679,12 +661,6 @@ parameters:
 			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'
 			identifier: booleanNot.exprNotBoolean
 			count: 3
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
-			message: '#^Variable \$time on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
 			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-

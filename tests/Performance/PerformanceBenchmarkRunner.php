@@ -230,9 +230,7 @@ final class PerformanceBenchmarkRunner
         $time = $result['execution_time_ms'];
         $memory = number_format((is_numeric($result['memory_usage_bytes']) ? (float) $result['memory_usage_bytes'] : 0.0) / 1024 / 1024, 2);
 
-        // Fix cast.string #2: Safe string casting with type validation
-        $timeValue = $time ?? '0';
-        $timeStr = is_scalar($timeValue) ? (string) $timeValue : '0';
+        $timeStr = is_scalar($time) ? (string) $time : '0';
 
         return '✅ ' . $timeStr . "ms, {$memory}MB";
     }
