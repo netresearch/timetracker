@@ -724,12 +724,6 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Part \$value \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
 			message: '#^Short ternary operator is not allowed\. Use null coalesce operator if applicable or consider using long ternary\.$#'
 			identifier: ternary.shortNotAllowed
 			count: 5
