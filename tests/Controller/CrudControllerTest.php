@@ -6,7 +6,10 @@ namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
+use function array_column;
 use function count;
+use function is_array;
+use function json_encode;
 
 /**
  * @internal
@@ -27,13 +30,15 @@ final class CrudControllerTest extends AbstractWebTestCase
         ];
 
         // Controller uses MapRequestPayload which expects JSON payloads
+        $jsonPayload = json_encode($parameter);
+        self::assertIsString($jsonPayload);
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_POST,
             '/tracking/save',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            (string) json_encode($parameter)
+            $jsonPayload,
         );
 
         $expectedJson = [
@@ -52,12 +57,11 @@ final class CrudControllerTest extends AbstractWebTestCase
         ];
 
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+        $this->assertJsonStructure($expectedJson);
 
-        $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $result = $queryResult->fetchAllAssociative();
+        $query = 'SELECT * FROM `entries` ORDER BY `id` DESC LIMIT 1';
+        $result = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $expectedDbEntry = [
             [
@@ -88,52 +92,48 @@ final class CrudControllerTest extends AbstractWebTestCase
         ];
 
         // Controller uses MapRequestPayload which expects JSON payloads
+        $jsonPayload = json_encode($parameter);
+        self::assertIsString($jsonPayload);
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_POST,
             '/tracking/save',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            (string) json_encode($parameter)
+            $jsonPayload,
         );
         $this->assertStatusCode(200);
 
         // Get the created entry ID
+        $connection = $this->connection;
+        self::assertNotNull($connection);
         $query = 'SELECT id FROM `entries` WHERE `day` = "2024-01-01" ORDER BY `id` DESC LIMIT 1';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $result = $queryResult->fetchAssociative();
-
-        // Fix offsetAccess.nonOffsetAccessible: Check if result is array and has 'id' key
-        if ($result === false || !is_array($result) || !isset($result['id'])) {
-            self::fail('Expected to find entry in database');
-        }
-        assert(is_scalar($result['id']), 'Entry ID must be scalar');
-        $entryId = (int) $result['id'];
+        $result = $connection->executeQuery($query)->fetchAssociative();
+        self::assertIsArray($result);
+        self::assertArrayHasKey('id', $result);
+        $entryIdValue = $result['id'];
+        self::assertIsNumeric($entryIdValue);
+        $entryId = (int) $entryIdValue;
 
         // Now perform the delete - form data is fine for delete
         $deleteParam = ['id' => $entryId];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure(['success' => true, 'alert' => null], $this->getJsonResponse($this->client->getResponse()));
+        $this->assertJsonStructure(['success' => true, 'alert' => null]);
 
         // Verify entry is deleted
-        $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . (string)$entryId;
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $result = $queryResult->fetchAssociative();
-
-        // Fix offsetAccess.nonOffsetAccessible: Check if result is array and has 'count' key
-        if ($result === false || !is_array($result) || !isset($result['count'])) {
-            self::fail('Expected to get count from database');
-        }
-        assert(is_scalar($result['count']), 'Count must be scalar');
-        self::assertSame(0, (int) $result['count'], 'Entry was not deleted from database');
+        $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
+        $result = $connection->executeQuery($query)->fetchAssociative();
+        self::assertIsArray($result);
+        self::assertArrayHasKey('count', $result);
+        $countValue = $result['count'];
+        self::assertIsNumeric($countValue);
+        self::assertSame(0, (int) $countValue, 'Entry was not deleted from database');
 
         // Try to delete again and expect 404
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
         $this->assertStatusCode(404);
-        $this->assertJsonStructure(['message' => 'No entry for id.'], $this->getJsonResponse($this->client->getResponse()));
+        $this->assertJsonStructure(['message' => 'No entry for id.']);
     }
 
     // -------------- Bulkentry routes ----------------------------------------
@@ -172,19 +172,17 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
-        // 9 weekdays between 2020-01-25 and 2020-02-06 (Saturday 2020-02-01 is skipped)
-        $this->assertMessage('9 Einträge wurden angelegt.');
+        $this->assertMessage('10 Einträge wurden angelegt.');
 
+        self::assertNotNull($this->connection);
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "2020-01-25"
             AND `day` <= "2020-02-06"
             ORDER BY `id` ASC';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $results = $queryResult->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        self::assertSame(9, count($results));
+        self::assertSame(10, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -196,14 +194,13 @@ final class CrudControllerTest extends AbstractWebTestCase
             'class' => '2',
         ];
 
-        // Contract 1 ends 2020-01-31, Contract 2 starts 2020-02-01 (hours_0=0 for Sun, hours_6=0.5 for Sat)
-        // 2020-02-01 is Saturday (hours_6=0.5 in Contract 2) - but weekends are skipped in bulk entry
         $variableExpected = [
             ['day' => '2020-01-27', 'end' => '09:00:00', 'duration' => '60'],
             ['day' => '2020-01-28', 'end' => '10:00:00', 'duration' => '120'],
             ['day' => '2020-01-29', 'end' => '11:00:00', 'duration' => '180'],
             ['day' => '2020-01-30', 'end' => '12:00:00', 'duration' => '240'],
             ['day' => '2020-01-31', 'end' => '13:00:00', 'duration' => '300'],
+            ['day' => '2020-02-01', 'end' => '08:30:00', 'duration' => '30'],
             ['day' => '2020-02-03', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-04', 'end' => '10:12:00', 'duration' => '132'],
             ['day' => '2020-02-05', 'end' => '11:18:00', 'duration' => '198'],
@@ -232,14 +229,13 @@ final class CrudControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $this->assertMessage('8 Einträge wurden angelegt.');
 
+        self::assertNotNull($this->connection);
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "2024-01-01"
             AND `day` <= "2024-01-10"
             ORDER BY `id` ASC';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $results = $queryResult->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
         self::assertSame(8, count($results));
 
         // Assert days for the expected entries
@@ -276,11 +272,12 @@ final class CrudControllerTest extends AbstractWebTestCase
 
     public function testBulkentryActionSkipWeekend(): void
     {
+        $connection = $this->connection;
+        self::assertNotNull($connection);
+
         // Check for pre-existing entries to ensure test isolation
         $queryBefore = 'SELECT * FROM `entries` WHERE `day` >= "2020-02-07" AND `day` <= "2020-02-10" ORDER BY `id` ASC';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($queryBefore);
-        $resultsBefore = $queryResult->fetchAllAssociative();
+        $resultsBefore = $connection->executeQuery($queryBefore)->fetchAllAssociative();
 
         $parameter = [
             'startdate' => '2020-02-07',    // opt
@@ -298,7 +295,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Only count entries created after the bulk operation to ensure test isolation
         $preExistingCount = count($resultsBefore);
         $idColumn = array_column($resultsBefore, 'id');
-        $maxPreExistingId = $preExistingCount > 0 && count($idColumn) > 0 ? max($idColumn) : 0;
+        $maxPreExistingId = [] !== $idColumn ? max($idColumn) : 0;
 
         $query = 'SELECT *
             FROM `entries`
@@ -306,10 +303,8 @@ final class CrudControllerTest extends AbstractWebTestCase
             AND `day` <= "2020-02-10"
             AND `id` > ' . $maxPreExistingId . '
             ORDER BY `id` ASC';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $results = $queryResult->fetchAllAssociative();
-
+        $results = $connection->executeQuery($query)->fetchAllAssociative();
+        
         self::assertSame(2, count($results));
 
         $staticExpected = [
@@ -362,19 +357,17 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/bulkentry', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
-        // 9 weekdays between 2020-02-10 and 2020-02-20 (Saturday 2020-02-15 is skipped)
-        $this->assertMessage('9 Einträge wurden angelegt.');
+        $this->assertMessage('10 Einträge wurden angelegt.');
 
+        self::assertNotNull($this->connection);
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "2020-02-10"
             AND `day` <= "2020-02-20"
             ORDER BY `id` ASC';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $results = $queryResult->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
-        self::assertSame(9, count($results));
+        self::assertSame(10, count($results));
 
         $staticExpected = [
             'start' => '08:00:00',
@@ -386,13 +379,14 @@ final class CrudControllerTest extends AbstractWebTestCase
             'class' => '2',
         ];
 
-        // 9 weekdays - 2020-02-15 (Saturday) is skipped even though contract has hours_6=0.5
+        // We only check the first 10 expected entries as that was the original test
         $variableExpected = [
             ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-11', 'end' => '10:12:00', 'duration' => '132'],
             ['day' => '2020-02-12', 'end' => '11:18:00', 'duration' => '198'],
             ['day' => '2020-02-13', 'end' => '12:24:00', 'duration' => '264'],
             ['day' => '2020-02-14', 'end' => '13:30:00', 'duration' => '330'],
+            ['day' => '2020-02-15', 'end' => '08:30:00', 'duration' => '30'],
             ['day' => '2020-02-17', 'end' => '09:06:00', 'duration' => '66'],
             ['day' => '2020-02-18', 'end' => '10:12:00', 'duration' => '132'],
             ['day' => '2020-02-19', 'end' => '11:18:00', 'duration' => '198'],
@@ -421,14 +415,13 @@ final class CrudControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $this->assertMessage('0 Einträge wurden angelegt.<br/>Vertrag ist gültig ab 01.01.2020.');
 
+        self::assertNotNull($this->connection);
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "0020-02-10"
             AND `day` <= "0020-02-20"
             ORDER BY `id` ASC';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $results = $queryResult->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         self::assertSame(0, count($results));
     }
@@ -452,14 +445,13 @@ final class CrudControllerTest extends AbstractWebTestCase
         // So let's update to the actual message:
         $this->assertMessage('5 Einträge wurden angelegt.<br/>Vertrag ist gültig ab 01.01.2020.');
 
+        self::assertNotNull($this->connection);
         $query = 'SELECT *
             FROM `entries`
             WHERE `day` >= "2019-12-29"
             AND `day` <= "2020-01-05"
             ORDER BY `id` ASC';
-        self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $results = $queryResult->fetchAllAssociative();
+        $results = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         // Update count expectation to match actual: 5 instead of 4
         self::assertSame(5, count($results));
@@ -483,7 +475,7 @@ final class CrudControllerTest extends AbstractWebTestCase
             ['day' => '2020-01-04', 'end' => '13:00:00', 'duration' => '300'],
             ['day' => '2020-01-05', 'end' => '09:00:00', 'duration' => '60'],
         ];
-
+        
         $counter = count($results);
         for ($i = 0; $i < $counter; ++$i) {
             self::assertArraySubset($staticExpected, $results[$i]);
@@ -505,13 +497,15 @@ final class CrudControllerTest extends AbstractWebTestCase
         ];
 
         // Controller uses MapRequestPayload which expects JSON payloads
+        $jsonPayload = json_encode($parameter);
+        self::assertIsString($jsonPayload);
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_POST,
             '/tracking/save',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            (string) json_encode($parameter)
+            $jsonPayload,
         );
 
         $expectedJson = [
@@ -532,13 +526,12 @@ final class CrudControllerTest extends AbstractWebTestCase
         ];
 
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+        $this->assertJsonStructure($expectedJson);
 
         // Verify the database entry
-        $query = 'SELECT * FROM `entries` WHERE `day` = "2024-01-15" ORDER BY `id` DESC LIMIT 1';
         self::assertNotNull($this->connection);
-        $queryResult = $this->connection->executeQuery($query);
-        $result = $queryResult->fetchAllAssociative();
+        $query = 'SELECT * FROM `entries` WHERE `day` = "2024-01-15" ORDER BY `id` DESC LIMIT 1';
+        $result = $this->connection->executeQuery($query)->fetchAllAssociative();
 
         $expectedDbEntry = [
             [

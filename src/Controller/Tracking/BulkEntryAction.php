@@ -157,7 +157,7 @@ final class BulkEntryAction extends BaseTrackingController
                         }
                     }
 
-                    if (!isset($workTime) || 0 === (int) $workTime) {
+                    if (!isset($workTime) || $workTime <= 0) {
                         $date->add(new DateInterval('P1D'));
                         continue;
                     }

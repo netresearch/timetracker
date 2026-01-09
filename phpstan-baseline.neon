@@ -802,12 +802,6 @@ parameters:
 			path: tests/Controller/CrudControllerTest.php
 
 		-
-			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 2
-			path: tests/Controller/CrudControllerTest.php
-
-		-
 			message: '#^You should use assertCount\(\$expectedCount, \$variable\) instead of assertSame\(\$expectedCount, count\(\$variable\)\)\.$#'
 			identifier: phpunit.assertCount
 			count: 6
