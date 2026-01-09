@@ -79,12 +79,6 @@ parameters:
 			path: src/Controller/Admin/SaveUserAction.php
 
 		-
-			message: '#^Strict comparison using \!\=\= between null and mixed will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: src/Controller/Default/GetSummaryAction.php
-
-		-
 			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -484,8 +478,8 @@ parameters:
 			path: tests/Controller/ControllingControllerTest.php
 
 		-
-			message: '#^Binary operation "\." between "SELECT \*\\n          …" and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
 			count: 1
 			path: tests/Controller/CrudControllerTest.php
 
@@ -642,12 +636,6 @@ parameters:
 		-
 			message: '#^Anonymous class extends @final class GuzzleHttp\\Client\.$#'
 			identifier: class.extendsFinalByPhpDoc
-			count: 1
-			path: tests/Helper/JiraOAuthApiTest.php
-
-		-
-			message: '#^AnonymousClass7251744c953788de42a1775760da7384\:\:__construct\(\) does not call parent constructor from GuzzleHttp\\Client\.$#'
-			identifier: constructor.missingParentCall
 			count: 1
 			path: tests/Helper/JiraOAuthApiTest.php
 
@@ -835,12 +823,6 @@ parameters:
 			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
 			identifier: foreach.nonIterable
 			count: 2
-			path: tests/Performance/PerformanceDashboard.php
-
-		-
-			message: '#^Binary operation "\+\=" between \(float\|int\) and mixed results in an error\.$#'
-			identifier: assignOp.invalid
-			count: 1
 			path: tests/Performance/PerformanceDashboard.php
 
 		-

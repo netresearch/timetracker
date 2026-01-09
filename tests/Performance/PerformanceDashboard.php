@@ -588,7 +588,8 @@ final class PerformanceDashboard
             foreach ($suite as $result) {
                 assert(is_array($result) && isset($result['success']));
                 if ($result['success']) {
-                    $totalMemory += ($result['memory_usage_bytes'] ?? 0);
+                    $memoryBytes = $result['memory_usage_bytes'] ?? 0;
+                    $totalMemory += is_numeric($memoryBytes) ? (float) $memoryBytes : 0.0;
                     ++$totalTests;
                 }
             }

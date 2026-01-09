@@ -58,6 +58,7 @@ final class JiraOAuthApiTest extends TestCase
              */
             public function __construct(private $handler)
             {
+                parent::__construct();
             }
 
             /**

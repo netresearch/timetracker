@@ -294,7 +294,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Only count entries created after the bulk operation to ensure test isolation
         $preExistingCount = count($resultsBefore);
         $idColumn = array_column($resultsBefore, 'id');
-        $maxPreExistingId = [] !== $idColumn ? max($idColumn) : 0;
+        $maxPreExistingId = [] !== $idColumn ? (int) max($idColumn) : 0;
 
         $query = 'SELECT *
             FROM `entries`
