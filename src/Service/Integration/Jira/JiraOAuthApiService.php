@@ -744,14 +744,14 @@ class JiraOAuthApiService
     {
         /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
         $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
-        /** @var UserTicketsystem $userTicketSystem */
+        /** @var UserTicketsystem|null $userTicketSystem */
         $userTicketSystem = $repository->findOneBy([
             'user' => $this->user,
             'ticketSystem' => $this->ticketSystem,
         ]);
 
         return $this->ticketSystem->getBookTime()
-            && (! $userTicketSystem || ! $userTicketSystem->getAvoidConnection());
+            && ($userTicketSystem === null || ! $userTicketSystem->getAvoidConnection());
     }
 
     /**

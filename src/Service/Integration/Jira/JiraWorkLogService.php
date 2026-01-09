@@ -133,7 +133,7 @@ class JiraWorkLogService
         $workLogData = $this->prepareWorkLogData($entry);
 
         // Create or update work log
-        if ($entry->getWorklogId()) {
+        if ($entry->getWorklogId() !== null) {
             $workLog = $this->updateWorkLog($ticket, $entry->getWorklogId(), $workLogData);
         } else {
             $workLog = $this->createWorkLog($ticket, $workLogData);

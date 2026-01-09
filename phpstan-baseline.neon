@@ -265,12 +265,6 @@ parameters:
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
 		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\UserTicketsystem given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
 			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
 			identifier: if.condNotBoolean
 			count: 1
@@ -317,24 +311,6 @@ parameters:
 			identifier: property.notFound
 			count: 1
 			path: src/Service/Integration/Jira/JiraWorkLogService.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
-			identifier: if.condNotBoolean
-			count: 1
-			path: src/Service/Integration/Jira/JiraWorkLogService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, mixed given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/Ldap/LdapClientService.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, string\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 1
-			path: src/Service/Ldap/LdapClientService.php
 
 		-
 			message: '#^PHPDoc tag @var with type Laminas\\Ldap\\Collection\<array\<string, array\<int, string\>\>\> is not subtype of type Laminas\\Ldap\\Collection\<array\{dn\: string\}\>\.$#'
@@ -530,12 +506,6 @@ parameters:
 			identifier: phpunit.assertCount
 			count: 6
 			path: tests/Controller/CrudControllerTest.php
-
-		-
-			message: '#^Only booleans are allowed in a negated boolean, App\\Entity\\Entry\|null given\.$#'
-			identifier: booleanNot.exprNotBoolean
-			count: 2
-			path: tests/Controller/DefaultControllerSummaryTest.php
 
 		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Persistence\\ManagerRegistry is not subtype of type Doctrine\\Bundle\\DoctrineBundle\\Registry\.$#'
