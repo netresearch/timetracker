@@ -4,11 +4,12 @@
 [![Symfony](https://img.shields.io/badge/symfony-7.3-green.svg)](https://symfony.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-red.svg)](LICENSE)
 [![CI Status](https://github.com/netresearch/timetracker/workflows/CI/badge.svg)](https://github.com/netresearch/timetracker/actions)
-[![Test Coverage](https://img.shields.io/badge/coverage-38%25-orange.svg)](docs/TESTING_GUIDE.md)
+[![codecov](https://codecov.io/gh/netresearch/timetracker/graph/badge.svg)](https://codecov.io/gh/netresearch/timetracker)
 [![Code Quality](https://img.shields.io/badge/phpstan-level%209-green.svg)](phpstan.neon)
 [![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
 **Professional time tracking solution for teams and enterprises with advanced LDAP integration, JIRA synchronization, and comprehensive reporting.**
 
