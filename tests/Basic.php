@@ -13,7 +13,9 @@ final class Basic extends AbstractWebTestCase
 {
     public function testBasic(): void
     {
-        // Basic smoke test - just verify the test framework is working
-        self::assertTrue(true);
+        // Basic smoke test - verify the test client can make a request
+        $this->client->request('GET', '/');
+        $response = $this->client->getResponse();
+        self::assertNotNull($response);
     }
 }

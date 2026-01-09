@@ -214,7 +214,7 @@ parameters:
 			path: tests/AbstractWebTestCase.php
 
 		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertNotNull\(\) with object will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
 			path: tests/Basic.php
@@ -326,9 +326,3 @@ parameters:
 			identifier: varTag.type
 			count: 2
 			path: tests/Repository/EntryRepositoryIntegrationTest.php
-
-		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''DateTimeImmutable'' and DateTimeImmutable will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 2
-			path: tests/Service/SystemClockTest.php
