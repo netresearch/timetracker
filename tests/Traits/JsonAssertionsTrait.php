@@ -6,6 +6,9 @@ namespace Tests\Traits;
 
 use PHPUnit\Framework\Assert;
 
+use function is_array;
+use function is_int;
+
 /**
  * JSON assertions helper trait for test cases.
  */
@@ -38,6 +41,11 @@ trait JsonAssertionsTrait
     /**
      * Assert JSON response structure.
      *
+     * Supports three formats:
+     * 1. List of property names: ['id', 'name', 'email']
+     * 2. Nested structures: ['user' => ['id', 'name']]
+     * 3. Expected values (associative): ['active' => true, 'count' => 5]
+     *
      * @param array<int|string, mixed> $structure
      * @param array<string, mixed> $json
      */
@@ -45,16 +53,22 @@ trait JsonAssertionsTrait
     {
         foreach ($structure as $key => $value) {
             if (is_array($value)) {
-                // Convert key to string for array access
+                // Nested structure: key => [nested properties]
                 $stringKey = (string) $key;
                 self::assertArrayHasKey($stringKey, $json, "JSON should contain property '$stringKey'");
                 self::assertIsArray($json[$stringKey], "Property '$stringKey' should be an array");
-                // Cast to ensure type compatibility - we've verified it's an array above
                 /** @var array<string, mixed> $nestedJson */
                 $nestedJson = $json[$stringKey];
                 $this->assertJsonStructure($value, $nestedJson);
+            } elseif (is_int($key)) {
+                // List format: [0 => 'propertyName'] - just check property exists
+                $propertyName = (string) $value;
+                self::assertArrayHasKey($propertyName, $json, "JSON should contain property '$propertyName'");
             } else {
-                self::assertArrayHasKey($value, $json, "JSON should contain property '$value'");
+                // Associative format: ['propertyName' => expectedValue]
+                $stringKey = (string) $key;
+                self::assertArrayHasKey($stringKey, $json, "JSON should contain property '$stringKey'");
+                self::assertSame($value, $json[$stringKey], "Property '$stringKey' should have expected value");
             }
         }
     }
