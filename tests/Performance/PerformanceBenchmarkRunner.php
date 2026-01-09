@@ -398,10 +398,10 @@ final class PerformanceBenchmarkRunner
         }
 
         $report[] = sprintf('Total Tests: %d (✅ %d, ❌ %d)', $totalTests, $successfulTests, $failedTests);
-        $report[] = sprintf('Average Execution Time: %.1fms', (float) (array_sum($executionTimes) / count($executionTimes)));
+        $report[] = sprintf('Average Execution Time: %.1fms', array_sum($executionTimes) / count($executionTimes));
         $maxExecutionTime = max($executionTimes);
         $report[] = sprintf('Max Execution Time: %.1fms', is_numeric($maxExecutionTime) ? (float) $maxExecutionTime : 0.0);
-        $report[] = sprintf('Average Memory Usage: %.2fMB', (float) (array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024));
+        $report[] = sprintf('Average Memory Usage: %.2fMB', array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024);
         $maxMemoryUsage = max($memoryUsages);
         $report[] = sprintf('Max Memory Usage: %.2fMB', is_numeric($maxMemoryUsage) ? (float) ($maxMemoryUsage / 1024 / 1024) : 0.0);
     }

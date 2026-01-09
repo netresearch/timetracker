@@ -205,8 +205,8 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
 
         $this->stopwatch->start('database_query');
 
-        /** @var \App\Repository\EntryRepository $entryRepository */
         $entryRepository = $this->getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
+        \assert($entryRepository instanceof \App\Repository\EntryRepository);
 
         // Query entries directly from repository using the actual created user ID
         $entries = $entryRepository->findByDate($userId, 2025, 8, null, null, [

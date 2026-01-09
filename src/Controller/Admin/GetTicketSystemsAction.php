@@ -8,6 +8,7 @@ use App\Controller\BaseController;
 use App\Entity\TicketSystem;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\TicketSystemRepository;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -21,9 +22,8 @@ final class GetTicketSystemsAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): Response|JsonResponse
     {
-
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
+        \assert($objectRepository instanceof TicketSystemRepository);
         $ticketSystems = $objectRepository->getAllTicketSystems();
 
         // Since this controller requires ROLE_ADMIN, all users accessing it are admins

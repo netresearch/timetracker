@@ -10,6 +10,7 @@ use App\Entity\Contract;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\ContractRepository;
 use DateInterval;
 use DateTime;
 use Exception;
@@ -31,7 +32,6 @@ final class SaveContractAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|\App\Response\Error
     {
-
         $contractId = $contractSaveDto->id;
         $start = $contractSaveDto->start;
         $end = $contractSaveDto->end;
@@ -39,8 +39,8 @@ final class SaveContractAction extends BaseController
         /** @var User $user */
         $user = $this->doctrineRegistry->getRepository(User::class)->find($contractSaveDto->user_id);
 
-        /** @var \App\Repository\ContractRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
+        \assert($objectRepository instanceof ContractRepository);
 
         if (0 !== $contractId) {
             $contract = $objectRepository->find($contractId);

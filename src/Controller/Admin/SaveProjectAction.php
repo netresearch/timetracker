@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Repository\ProjectRepository;
 use Symfony\Contracts\Service\Attribute\Required;
 
 final class SaveProjectAction extends BaseController
@@ -33,7 +34,6 @@ final class SaveProjectAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $projectSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-
         $projectId = $projectSaveDto->id;
 
         $this->doctrineRegistry->getRepository(TicketSystem::class);
@@ -53,8 +53,8 @@ final class SaveProjectAction extends BaseController
         $offer = $projectSaveDto->offer;
         $additionalInformationFromExternal = $projectSaveDto->additionalInformationFromExternal;
 
-        /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
+        \assert($objectRepository instanceof ProjectRepository);
 
         $internalJiraTicketSystem = $projectSaveDto->internalJiraTicketSystem;
         $internalJiraProjectKey = $projectSaveDto->internalJiraProjectKey;

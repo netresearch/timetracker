@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraIssue;
+use App\DTO\Jira\JiraSearchResult;
+use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Entry;
 use App\Entity\UserTicketsystem;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -269,8 +272,8 @@ class JiraOAuthApiService
         }
 
         $objectManager = $this->managerRegistry->getManager();
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        \assert($objectRepository instanceof \App\Repository\EntryRepository);
         $entries = $objectRepository->findByUserAndTicketSystemToSync((int) $this->user->getId(), (int) $this->ticketSystem->getId(), $entryLimit ?? 50);
 
         foreach ($entries as $entry) {
@@ -323,22 +326,23 @@ class JiraOAuthApiService
             'timeSpentSeconds' => $entry->getDuration() * 60,
         ];
 
-        if ($entry->getWorklogId()) {
-            $workLogId = (int) $entry->getWorklogId();
-            $workLog = $this->put(
+        $workLogId = $entry->getWorklogId();
+        if ($workLogId !== null) {
+            $response = $this->put(
                 sprintf('issue/%s/worklog/%d', $sTicket, $workLogId),
                 $arData,
             );
         } else {
-            $workLog = $this->post(sprintf('issue/%s/worklog', $sTicket), $arData);
+            $response = $this->post(sprintf('issue/%s/worklog', $sTicket), $arData);
         }
 
-        if (! isset($workLog->id)) {
+        $workLog = is_object($response) ? JiraWorkLog::fromApiResponse($response) : null;
+
+        if ($workLog === null || ! $workLog->hasValidId()) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
-        assert(is_scalar($workLog->id), 'Work log ID must be scalar');
-        $entry->setWorklogId((int) $workLog->id);
+        $entry->setWorklogId($workLog->id);
         $entry->setSyncedToTicketsystem(true);
     }
 
@@ -454,51 +458,30 @@ class JiraOAuthApiService
             return [];
         }
 
-        $ticket = $this->get('issue/' . $sTicket);
+        $response = $this->get('issue/' . $sTicket);
 
-        // Ensure ticket response is an object with expected structure
-        if (! is_object($ticket) || ! isset($ticket->fields)) {
+        // Convert response to DTO
+        if (! is_object($response)) {
             return [];
         }
 
-        $subtickets = [];
-
-        // Check if subtasks exist and is iterable
-        if (is_object($ticket->fields)
-            && property_exists($ticket->fields, 'subtasks')
-            && is_iterable($ticket->fields->subtasks)) {
-            foreach ($ticket->fields->subtasks as $subtask) {
-                if (is_object($subtask) && property_exists($subtask, 'key')) {
-                    $subtickets[] = $subtask->key;
-                }
-            }
-        }
+        $ticket = JiraIssue::fromApiResponse($response);
+        $subtickets = $ticket->subtaskKeys;
 
         // Check for epic type tickets
-        if (is_object($ticket->fields)
-            && property_exists($ticket->fields, 'issuetype')
-            && is_object($ticket->fields->issuetype)
-            && property_exists($ticket->fields->issuetype, 'name')
-            && is_scalar($ticket->fields->issuetype->name)
-            && 'epic' === strtolower((string) $ticket->fields->issuetype->name)) {
-            $epicSubs = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
+        if ($ticket->isEpic()) {
+            $epicSearchResponse = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
 
-            // Ensure epic search results have expected structure
-            if (is_object($epicSubs) && isset($epicSubs->issues) && is_iterable($epicSubs->issues)) {
-                foreach ($epicSubs->issues as $epicSubtask) {
-                    if (is_object($epicSubtask) && isset($epicSubtask->key)) {
+            if (is_object($epicSearchResponse)) {
+                $epicSearchResult = JiraSearchResult::fromApiResponse($epicSearchResponse);
+
+                foreach ($epicSearchResult->issues as $epicSubtask) {
+                    if ($epicSubtask->key !== null) {
                         $subtickets[] = $epicSubtask->key;
 
-                        // Check for nested subtasks
-                        if (isset($epicSubtask->fields)
-                            && is_object($epicSubtask->fields)
-                            && isset($epicSubtask->fields->subtasks)
-                            && is_iterable($epicSubtask->fields->subtasks)) {
-                            foreach ($epicSubtask->fields->subtasks as $subtask) {
-                                if (is_object($subtask) && isset($subtask->key)) {
-                                    $subtickets[] = $subtask->key;
-                                }
-                            }
+                        // Add nested subtasks
+                        foreach ($epicSubtask->subtaskKeys as $nestedKey) {
+                            $subtickets[] = $nestedKey;
                         }
                     }
                 }

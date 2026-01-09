@@ -10,6 +10,7 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\UserRepository;
 use App\Response\Error;
 use Exception;
 use InvalidArgumentException;
@@ -34,9 +35,8 @@ final class SaveUserAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-
-        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
+        \assert($objectRepository instanceof UserRepository);
 
         $user = 0 !== $userSaveDto->id ? $objectRepository->find($userSaveDto->id) : new User();
         if (! $user instanceof User) {

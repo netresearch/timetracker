@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraIssue;
+use App\DTO\Jira\JiraTransition;
 use App\Entity\Entry;
 use App\Exception\Integration\Jira\JiraApiException;
 
@@ -127,31 +129,27 @@ class JiraTicketService
         }
 
         try {
-            $issue = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
+            $response = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
 
-            if (! is_object($issue) || ! property_exists($issue, 'fields')) {
+            if (! is_object($response)) {
                 return [];
             }
 
-            if (! is_object($issue->fields) || ! property_exists($issue->fields, 'subtasks')) {
+            $issue = JiraIssue::fromApiResponse($response);
+
+            if ($issue->fields === null) {
                 return [];
             }
 
             $subtasks = [];
 
-            if (is_array($issue->fields->subtasks)) {
-                foreach ($issue->fields->subtasks as $subtask) {
-                    if (! is_object($subtask)) {
-                        continue;
-                    }
-
-                    $subtasks[] = [
-                        'key' => property_exists($subtask, 'key') ? $subtask->key : '',
-                        'summary' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'summary')) ? $subtask->fields->summary : '',
-                        'status' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'status') && is_object($subtask->fields->status) && property_exists($subtask->fields->status, 'name')) ? $subtask->fields->status->name : '',
-                        'assignee' => (is_object($subtask->fields ?? null) && property_exists($subtask->fields, 'assignee') && is_object($subtask->fields->assignee) && property_exists($subtask->fields->assignee, 'displayName')) ? $subtask->fields->assignee->displayName : null,
-                    ];
-                }
+            foreach ($issue->fields->subtasks as $subtask) {
+                $subtasks[] = [
+                    'key' => $subtask->key ?? '',
+                    'summary' => $subtask->fields?->summary ?? '',
+                    'status' => $subtask->fields?->status?->name ?? '',
+                    'assignee' => $subtask->fields?->assignee?->displayName,
+                ];
             }
 
             return $subtasks;
@@ -233,28 +231,26 @@ class JiraTicketService
         try {
             $response = $this->jiraHttpClientService->get(sprintf('issue/%s/transitions', $ticketKey));
 
-            if (! is_object($response) || ! property_exists($response, 'transitions')) {
+            if (! is_object($response) || ! isset($response->transitions) || ! is_iterable($response->transitions)) {
                 return [];
             }
 
             $transitions = [];
 
-            if (is_array($response->transitions)) {
-                foreach ($response->transitions as $transition) {
-                    if (! is_object($transition)) {
-                        continue;
-                    }
-
-                    $to = $transition->to ?? null;
-                    $transitions[] = [
-                        'id' => property_exists($transition, 'id') && is_scalar($transition->id ?? '') ? (string) ($transition->id ?? '') : '',
-                        'name' => property_exists($transition, 'name') && is_scalar($transition->name ?? '') ? (string) ($transition->name ?? '') : '',
-                        'to' => [
-                            'id' => (is_object($to) && property_exists($to, 'id') && is_scalar($to->id ?? '')) ? (string) ($to->id ?? '') : '',
-                            'name' => (is_object($to) && property_exists($to, 'name') && is_scalar($to->name ?? '')) ? (string) ($to->name ?? '') : '',
-                        ],
-                    ];
+            foreach ($response->transitions as $transitionData) {
+                if (! is_object($transitionData)) {
+                    continue;
                 }
+
+                $transition = JiraTransition::fromApiResponse($transitionData);
+                $transitions[] = [
+                    'id' => $transition->id !== null ? (string) $transition->id : '',
+                    'name' => $transition->name ?? '',
+                    'to' => [
+                        'id' => $transition->to?->id !== null ? (string) $transition->to->id : '',
+                        'name' => $transition->to?->name ?? '',
+                    ],
+                ];
             }
 
             return $transitions;

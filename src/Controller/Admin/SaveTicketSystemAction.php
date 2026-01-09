@@ -9,6 +9,7 @@ use App\Dto\TicketSystemSaveDto;
 use App\Entity\TicketSystem;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\TicketSystemRepository;
 use App\Response\Error;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,9 +29,8 @@ final class SaveTicketSystemAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
+        \assert($objectRepository instanceof TicketSystemRepository);
 
         $id = $ticketSystemSaveDto->id;
 

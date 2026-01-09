@@ -1,82 +1,16 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\ContractRepository is not subtype of type App\\Repository\\ContractRepository\<App\\Entity\\Contract\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/GetContractsAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\CustomerRepository is not subtype of type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/GetCustomersAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\PresetRepository is not subtype of type App\\Repository\\PresetRepository\<App\\Entity\\Preset\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/GetPresetsAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\TeamRepository is not subtype of type App\\Repository\\TeamRepository\<App\\Entity\\Team\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/GetTeamsAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\TicketSystemRepository is not subtype of type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/GetTicketSystemsAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/GetUsersAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\ActivityRepository is not subtype of type App\\Repository\\ActivityRepository\<App\\Entity\\Activity\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/SaveActivityAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\ContractRepository is not subtype of type App\\Repository\\ContractRepository\<App\\Entity\\Contract\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/SaveContractAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\CustomerRepository is not subtype of type App\\Repository\\CustomerRepository\<App\\Entity\\Customer\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/SaveCustomerAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\ProjectRepository is not subtype of type App\\Repository\\ProjectRepository\<App\\Entity\\Project\>\.$#'
-			identifier: varTag.type
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
 			count: 1
 			path: src/Controller/Admin/SaveProjectAction.php
 
 		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\TeamRepository is not subtype of type App\\Repository\\TeamRepository\<App\\Entity\\Team\>\.$#'
-			identifier: varTag.type
+			message: '#^Strict comparison using \=\=\= between false and int will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
 			count: 1
-			path: src/Controller/Admin/SaveTeamAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\TicketSystemRepository is not subtype of type App\\Repository\\TicketSystemRepository\<App\\Entity\\TicketSystem\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/SaveTicketSystemAction.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\UserRepository is not subtype of type App\\Repository\\UserRepository\<App\\Entity\\User\>\.$#'
-			identifier: varTag.type
-			count: 1
-			path: src/Controller/Admin/SaveUserAction.php
+			path: src/Controller/Admin/SaveProjectAction.php
 
 		-
 			message: '#^Parameter \#2 \$context of method Psr\\Log\\LoggerInterface\:\:error\(\) expects array\{exception\?\: Throwable\}, non\-empty\-array\<string, mixed\> given\.$#'
@@ -223,50 +157,8 @@ parameters:
 			path: src/Service/Integration/Jira/JiraIntegrationService.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$fields\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$issues\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$key\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$subtasks\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Casting to int something that''s already int\<min, \-1\>\|int\<1, max\>\.$#'
-			identifier: cast.useless
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^Only booleans are allowed in an if condition, int\|null given\.$#'
-			identifier: if.condNotBoolean
-			count: 1
-			path: src/Service/Integration/Jira/JiraOAuthApiService.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
-			identifier: varTag.type
+			message: '#^Call to function is_object\(\) with object will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
 			count: 1
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
@@ -277,34 +169,22 @@ parameters:
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$fields\.$#'
-			identifier: property.notFound
-			count: 3
-			path: src/Service/Integration/Jira/JiraTicketService.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$to\.$#'
+			message: '#^Access to an undefined property object\:\:\$transitions\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Service/Integration/Jira/JiraTicketService.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Integration/Jira/JiraWorkLogService.php
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Service/Integration/Jira/JiraTicketService.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$key\.$#'
-			identifier: property.notFound
+			message: '#^Using nullsafe property access "\?\-\>summary" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
-			path: src/Service/Integration/Jira/JiraWorkLogService.php
-
-		-
-			message: '#^Access to an undefined property object\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Integration/Jira/JiraWorkLogService.php
+			path: src/Service/Integration/Jira/JiraTicketService.php
 
 		-
 			message: '#^PHPDoc tag @var with type Laminas\\Ldap\\Collection\<array\<string, array\<int, string\>\>\> is not subtype of type Laminas\\Ldap\\Collection\<array\{dn\: string\}\>\.$#'
@@ -670,12 +550,6 @@ parameters:
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
-			message: '#^Casting to int something that''s already int\.$#'
-			identifier: cast.useless
-			count: 5
-			path: tests/Performance/ExportActionPerformanceTest.php
-
-		-
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 5
@@ -700,6 +574,12 @@ parameters:
 			path: tests/Performance/ExportActionPerformanceTest.php
 
 		-
+			message: '#^Parameter \#2 \$durationMs of method Tests\\Performance\\ExportActionPerformanceTest\:\:logPerformanceMetric\(\) expects int, float\|int given\.$#'
+			identifier: argument.type
+			count: 5
+			path: tests/Performance/ExportActionPerformanceTest.php
+
+		-
 			message: '#^Variable \$content on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
@@ -712,12 +592,6 @@ parameters:
 			path: tests/Performance/ExportPerformanceTest.php
 
 		-
-			message: '#^Casting to int something that''s already int\.$#'
-			identifier: cast.useless
-			count: 7
-			path: tests/Performance/ExportPerformanceTest.php
-
-		-
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertCount\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 8
@@ -727,6 +601,12 @@ parameters:
 			message: '#^Dynamic call to static method PHPUnit\\Framework\\Assert\:\:assertLessThan\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 11
+			path: tests/Performance/ExportPerformanceTest.php
+
+		-
+			message: '#^Parameter \#2 \$durationMs of method Tests\\Performance\\ExportPerformanceTest\:\:logPerformanceMetric\(\) expects int, float\|int given\.$#'
+			identifier: argument.type
+			count: 7
 			path: tests/Performance/ExportPerformanceTest.php
 
 		-
@@ -775,12 +655,6 @@ parameters:
 			message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\KernelTestCase\:\:getContainer\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 2
-			path: tests/Performance/ExportWorkflowIntegrationTest.php
-
-		-
-			message: '#^PHPDoc tag @var with type App\\Repository\\EntryRepository is not subtype of type App\\Repository\\EntryRepository\<App\\Entity\\Entry\>\.$#'
-			identifier: varTag.type
-			count: 1
 			path: tests/Performance/ExportWorkflowIntegrationTest.php
 
 		-

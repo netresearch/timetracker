@@ -9,6 +9,7 @@ use App\Dto\ActivitySaveDto;
 use App\Entity\Activity;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\ActivityRepository;
 use App\Response\Error;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,8 +27,8 @@ final class SaveActivityAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-        /** @var \App\Repository\ActivityRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
+        \assert($objectRepository instanceof ActivityRepository);
 
         $id = $activitySaveDto->id;
 

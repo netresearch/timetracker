@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraProject;
+use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
@@ -13,9 +15,7 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 
-use function assert;
 use function is_object;
-use function is_scalar;
 use function sprintf;
 
 /**
@@ -139,14 +139,18 @@ class JiraWorkLogService
             $workLog = $this->createWorkLog($ticket, $workLogData);
         }
 
-        if (! is_object($workLog) || ! property_exists($workLog, 'id')) {
+        if (! is_object($workLog)) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
-        // Update entry with work log ID
-        /* @var object{id: int|string} $workLog */
-        assert(is_scalar($workLog->id), 'Work log ID must be scalar');
-        $entry->setWorklogId((int) $workLog->id);
+        // Convert response to DTO and update entry
+        $workLogDto = JiraWorkLog::fromApiResponse($workLog);
+
+        if (! $workLogDto->hasValidId()) {
+            throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
+        }
+
+        $entry->setWorklogId($workLogDto->id);
         $entry->setSyncedToTicketsystem(true);
     }
 
@@ -364,11 +368,7 @@ class JiraWorkLogService
                 return [];
             }
 
-            return [
-                'key' => $response->key ?? '',
-                'name' => $response->name ?? '',
-                'id' => $response->id ?? '',
-            ];
+            return JiraProject::fromApiResponse($response)->toArray();
         } catch (Exception $exception) {
             throw new JiraApiException('Failed to get JIRA project info: ' . $exception->getMessage(), 0, null, $exception);
         }

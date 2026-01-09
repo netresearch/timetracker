@@ -10,6 +10,7 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\TeamRepository;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -25,8 +26,8 @@ final class SaveTeamAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
-        /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
+        \assert($objectRepository instanceof TeamRepository);
 
         $id = $teamSaveDto->id;
         $name = $teamSaveDto->name;
