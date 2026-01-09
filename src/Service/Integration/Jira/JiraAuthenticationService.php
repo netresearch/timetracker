@@ -163,7 +163,6 @@ class JiraAuthenticationService
     ): array {
         $objectManager = $this->managerRegistry->getManager();
 
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
         $repository = $objectManager->getRepository(UserTicketsystem::class);
         $userTicketSystem = $repository->findOneBy([
             'user' => $user,
@@ -204,7 +203,6 @@ class JiraAuthenticationService
     {
         $objectManager = $this->managerRegistry->getManager();
 
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
         $repository = $objectManager->getRepository(UserTicketsystem::class);
         $userTicketSystem = $repository->findOneBy([
             'user' => $user,
@@ -238,7 +236,6 @@ class JiraAuthenticationService
     {
         $objectManager = $this->managerRegistry->getManager();
 
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
         $repository = $objectManager->getRepository(UserTicketsystem::class);
         $userTicketSystem = $repository->findOneBy([
             'user' => $user,

@@ -91,9 +91,15 @@ parameters:
 			path: src/Service/Cache/QueryCacheService.php
 
 		-
+			message: '#^Call to method findOneBy\(\) on an unknown class App\\Repository\\ServiceEntityRepository\.$#'
+			identifier: class.notFound
+			count: 3
+			path: src/Service/Integration/Jira/JiraAuthenticationService.php
+
+		-
 			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\> is not subtype of type App\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\>\.$#'
 			identifier: varTag.type
-			count: 4
+			count: 1
 			path: src/Service/Integration/Jira/JiraAuthenticationService.php
 
 		-
@@ -145,8 +151,8 @@ parameters:
 			path: src/Service/Integration/Jira/JiraIntegrationService.php
 
 		-
-			message: '#^PHPDoc tag @var with type Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\> is not subtype of type App\\Repository\\ServiceEntityRepository\<App\\Entity\\UserTicketsystem\>\.$#'
-			identifier: varTag.type
+			message: '#^Call to method findOneBy\(\) on an unknown class App\\Repository\\ServiceEntityRepository\.$#'
+			identifier: class.notFound
 			count: 2
 			path: src/Service/Integration/Jira/JiraOAuthApiService.php
 

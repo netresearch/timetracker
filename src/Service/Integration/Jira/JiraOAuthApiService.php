@@ -611,15 +611,13 @@ class JiraOAuthApiService
      */
     protected function storeToken(string $tokenSecret, string $accessToken = 'token_request_unfinished', bool $avoidConnection = false): array
     {
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
         $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
-        /** @var UserTicketsystem $userTicketSystem */
         $userTicketSystem = $repository->findOneBy([
             'user' => $this->user,
             'ticketSystem' => $this->ticketSystem,
         ]);
 
-        if (null === $userTicketSystem) {
+        if (! $userTicketSystem instanceof UserTicketsystem) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($this->user)
                 ->setTicketSystem($this->ticketSystem);
@@ -726,13 +724,12 @@ class JiraOAuthApiService
      */
     protected function checkUserTicketSystem(): bool
     {
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
         $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
-        /** @var UserTicketsystem|null $userTicketSystem */
-        $userTicketSystem = $repository->findOneBy([
+        $result = $repository->findOneBy([
             'user' => $this->user,
             'ticketSystem' => $this->ticketSystem,
         ]);
+        $userTicketSystem = $result instanceof UserTicketsystem ? $result : null;
 
         return $this->ticketSystem->getBookTime()
             && ($userTicketSystem === null || ! $userTicketSystem->getAvoidConnection());
