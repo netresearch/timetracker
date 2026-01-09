@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
+use LogicException;
 use PHPUnit\Framework\Assert;
 
+use function assert;
 use function is_array;
 use function is_int;
 
@@ -28,7 +30,7 @@ trait JsonAssertionsTrait
     /**
      * Assert JSON contains specific properties.
      *
-     * @param array<int, string> $properties
+     * @param array<int, string>   $properties
      * @param array<string, mixed> $json
      */
     protected function assertJsonHasProperties(array $properties, array $json): void
@@ -47,7 +49,7 @@ trait JsonAssertionsTrait
      * 3. Expected values (associative): ['active' => true, 'count' => 5]
      *
      * @param array<int|string, mixed> $structure
-     * @param array<string, mixed> $json
+     * @param array<string, mixed>     $json
      */
     protected function assertJsonStructure(array $structure, array $json): void
     {
@@ -62,13 +64,14 @@ trait JsonAssertionsTrait
                 $this->assertJsonStructure($value, $nestedJson);
             } elseif (is_int($key)) {
                 // List format: [0 => 'propertyName'] - just check property exists
-                $propertyName = (string) $value;
-                self::assertArrayHasKey($propertyName, $json, "JSON should contain property '$propertyName'");
+                // Value should be a string property name when key is int
+                self::assertIsString($value, 'List format values at int keys must be property name strings');
+                self::assertArrayHasKey($value, $json, "JSON should contain property '$value'");
             } else {
                 // Associative format: ['propertyName' => expectedValue]
-                $stringKey = (string) $key;
-                self::assertArrayHasKey($stringKey, $json, "JSON should contain property '$stringKey'");
-                self::assertSame($value, $json[$stringKey], "Property '$stringKey' should have expected value");
+                // When key is not int, it's already string (array keys can only be int|string)
+                self::assertArrayHasKey($key, $json, "JSON should contain property '$key'");
+                self::assertSame($value, $json[$key], "Property '$key' should have expected value");
             }
         }
     }
@@ -105,12 +108,11 @@ trait JsonAssertionsTrait
         $content = $response->getContent();
         self::assertIsString($content, 'Response content should be a string');
 
-        $json = json_decode($content, true);
-        self::assertIsArray($json, 'Response should contain valid JSON');
+        $decoded = json_decode($content, true);
+        self::assertIsArray($decoded, 'Response should contain valid JSON');
+        assert(is_array($decoded));
 
-        // Ensure we return the expected array format
-        /** @var array<string, mixed> $json */
-        return $json;
+        return $decoded;
     }
 
     /**
@@ -121,6 +123,7 @@ trait JsonAssertionsTrait
     protected function assertValidJsonResponse(\Symfony\Component\HttpFoundation\Response $response): array
     {
         self::assertSame('application/json', $response->headers->get('Content-Type'), 'Response should be JSON');
+
         return $this->getJsonResponse($response);
     }
 
@@ -131,7 +134,7 @@ trait JsonAssertionsTrait
      */
     protected function assertJsonCount(int $expectedCount, array $json, ?string $property = null): void
     {
-        if ($property !== null) {
+        if (null !== $property) {
             self::assertArrayHasKey($property, $json, "JSON should contain property '$property'");
             self::assertIsArray($json[$property], "Property '$property' should be an array");
             self::assertCount($expectedCount, $json[$property], "Property '$property' should have $expectedCount items");
@@ -163,7 +166,7 @@ trait JsonAssertionsTrait
         self::assertIsString($responseContentString, 'Response content should be a string');
 
         // Handle JSON error responses
-        if ($response->headers->get('Content-Type') === 'application/json') {
+        if ('application/json' === $response->headers->get('Content-Type')) {
             $jsonData = json_decode($responseContentString, true);
             if (is_array($jsonData) && isset($jsonData['message'])) {
                 $jsonMessage = $jsonData['message'];
@@ -183,6 +186,7 @@ trait JsonAssertionsTrait
 
                 // Direct comparison for other messages
                 self::assertSame($message, $jsonMessage);
+
                 return;
             }
         }
@@ -200,12 +204,13 @@ trait JsonAssertionsTrait
 
         // Check if there's a known translation mapping
         foreach ($translationMap as $german => $english) {
-            if (strpos($message, str_replace('%num%', '', $german)) !== false) {
+            if (str_contains($message, str_replace('%num%', '', $german))) {
                 // Extract the number from the expected message
                 preg_match('/(\d+)/', $message, $matches);
                 if (!empty($matches)) {
                     $expectedEnglish = str_replace('%num%', $matches[1], $english);
                     self::assertSame($expectedEnglish, $responseContentString);
+
                     return;
                 }
             }
@@ -272,20 +277,20 @@ trait JsonAssertionsTrait
      * Assert array or JSON property length matches expected count.
      * This method expects the HTTP client to be available via trait composition.
      *
-     * @param int $expectedLength Expected number of items
-     * @param string|null $property Optional property name to check within JSON response
+     * @param int         $expectedLength Expected number of items
+     * @param string|null $property       Optional property name to check within JSON response
      */
     protected function assertLength(int $expectedLength, ?string $property = null): void
     {
         // Get response from the HTTP client (available via HttpClientTrait composition)
         if (!property_exists($this, 'client')) {
-            throw new \LogicException('HttpClientTrait must be used alongside JsonAssertionsTrait to access client');
+            throw new LogicException('HttpClientTrait must be used alongside JsonAssertionsTrait to access client');
         }
 
         $response = $this->client->getResponse();
         $json = $this->getJsonResponse($response);
 
-        if ($property !== null) {
+        if (null !== $property) {
             self::assertArrayHasKey($property, $json, "JSON should contain property '$property'");
             self::assertIsArray($json[$property], "Property '$property' should be an array");
             self::assertCount($expectedLength, $json[$property], "Property '$property' should have $expectedLength items");
@@ -304,13 +309,13 @@ trait JsonAssertionsTrait
     protected static function assertArraySubset(array $subset, array $array, string $message = ''): void
     {
         foreach ($subset as $key => $value) {
-            self::assertArrayHasKey($key, $array, $message ?: "Array should contain key '$key'");
+            self::assertArrayHasKey($key, $array, '' !== $message ? $message : "Array should contain key '$key'");
 
             if (is_array($value)) {
-                self::assertIsArray($array[$key], $message ?: "Value at key '$key' should be an array");
+                self::assertIsArray($array[$key], '' !== $message ? $message : "Value at key '$key' should be an array");
                 self::assertArraySubset($value, $array[$key], $message);
             } else {
-                self::assertSame($value, $array[$key], $message ?: "Value at key '$key' should match expected value");
+                self::assertSame($value, $array[$key], '' !== $message ? $message : "Value at key '$key' should match expected value");
             }
         }
     }
