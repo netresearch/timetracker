@@ -177,14 +177,17 @@ final class PerformanceBenchmarkRunner
             // Create test instance and run method
             /** @var object $test */
             $test = new $testClass();
-            if (method_exists($test, 'setUp')) {
-                $test->setUp();
+            $setUpCallable = [$test, 'setUp'];
+            if (is_callable($setUpCallable)) {
+                $setUpCallable();
             }
-            if (method_exists($test, $method)) {
-                $test->$method();
+            $methodCallable = [$test, $method];
+            if (is_callable($methodCallable)) {
+                $methodCallable();
             }
-            if (method_exists($test, 'tearDown')) {
-                $test->tearDown();
+            $tearDownCallable = [$test, 'tearDown'];
+            if (is_callable($tearDownCallable)) {
+                $tearDownCallable();
             }
 
             $success = true;

@@ -29,11 +29,12 @@ class Base
         $data = [];
         foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $reflectionProperty) {
             $method = 'get' . ucwords($reflectionProperty->getName());
-            if (!method_exists($this, $method)) {
+            $callable = [$this, $method];
+            if (!is_callable($callable)) {
                 continue;
             }
             /** @var mixed $value */
-            $value = $this->{$method}();
+            $value = $callable();
             if (is_object($value) && method_exists($value, 'getId')) {
                 $value = $value->getId();
             }
