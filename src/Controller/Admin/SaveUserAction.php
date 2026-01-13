@@ -40,7 +40,7 @@ final class SaveUserAction extends BaseController
         assert($objectRepository instanceof UserRepository);
 
         $user = 0 !== $userSaveDto->id ? $objectRepository->find($userSaveDto->id) : new User();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 

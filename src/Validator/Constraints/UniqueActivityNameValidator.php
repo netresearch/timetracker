@@ -26,7 +26,7 @@ class UniqueActivityNameValidator extends ConstraintValidator
      */
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (! $constraint instanceof UniqueActivityName) {
+        if (!$constraint instanceof UniqueActivityName) {
             throw new UnexpectedTypeException($constraint, UniqueActivityName::class);
         }
 
@@ -36,7 +36,7 @@ class UniqueActivityNameValidator extends ConstraintValidator
         }
 
         // Ensure value is string for repository query
-        if (! is_string($value)) {
+        if (!is_string($value)) {
             return; // Let other validators handle non-string values
         }
 

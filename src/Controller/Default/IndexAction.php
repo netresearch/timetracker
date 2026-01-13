@@ -23,7 +23,7 @@ final class IndexAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 

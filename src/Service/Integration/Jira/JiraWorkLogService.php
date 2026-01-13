@@ -49,7 +49,7 @@ class JiraWorkLogService
         TicketSystem $ticketSystem,
         ?int $entryLimit = null,
     ): void {
-        if (! $this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
@@ -104,16 +104,16 @@ class JiraWorkLogService
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (! $ticketSystem instanceof TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return;
         }
 
-        if (! $this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
         // Verify ticket exists in Jira
-        if (! $this->jiraTicketService->doesTicketExist($ticket)) {
+        if (!$this->jiraTicketService->doesTicketExist($ticket)) {
             return;
         }
 
@@ -125,7 +125,7 @@ class JiraWorkLogService
         }
 
         // Verify existing work log ID is still valid
-        if (null !== $entry->getWorklogId() && ! $this->doesWorkLogExist($ticket, $entry->getWorklogId())) {
+        if (null !== $entry->getWorklogId() && !$this->doesWorkLogExist($ticket, $entry->getWorklogId())) {
             $entry->setWorklogId(null);
         }
 
@@ -139,14 +139,14 @@ class JiraWorkLogService
             $workLog = $this->createWorkLog($ticket, $workLogData);
         }
 
-        if (! is_object($workLog)) {
+        if (!is_object($workLog)) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
         // Convert response to DTO and update entry
         $workLogDto = JiraWorkLog::fromApiResponse($workLog);
 
-        if (! $workLogDto->hasValidId()) {
+        if (!$workLogDto->hasValidId()) {
             throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
         }
 
@@ -182,16 +182,16 @@ class JiraWorkLogService
 
         $ticketSystem = $project->getTicketSystem();
 
-        if (! $ticketSystem instanceof TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return;
         }
 
-        if (! $this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
+        if (!$this->jiraAuthenticationService->checkUserTicketSystem($user, $ticketSystem)) {
             return;
         }
 
         // Only delete if work log exists
-        if (! $this->doesWorkLogExist($ticket, $workLogId)) {
+        if (!$this->doesWorkLogExist($ticket, $workLogId)) {
             $entry->setWorklogId(null);
 
             return;
@@ -227,7 +227,7 @@ class JiraWorkLogService
     {
         $response = $this->jiraHttpClientService->post(sprintf('issue/%s/worklog', $ticket), $data);
 
-        if (! is_object($response)) {
+        if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when creating work log', 500);
         }
 
@@ -243,7 +243,7 @@ class JiraWorkLogService
     {
         $response = $this->jiraHttpClientService->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
 
-        if (! is_object($response)) {
+        if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when updating work log', 500);
         }
 
@@ -364,7 +364,7 @@ class JiraWorkLogService
             $this->jiraAuthenticationService->authenticate($user, $ticketSystem);
             $response = $this->jiraHttpClientService->get(sprintf('project/%s', $projectKey));
 
-            if (! is_object($response)) {
+            if (!is_object($response)) {
                 return [];
             }
 

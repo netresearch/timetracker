@@ -25,7 +25,7 @@ class UniqueCustomerNameValidator extends ConstraintValidator
      */
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (! $constraint instanceof UniqueCustomerName) {
+        if (!$constraint instanceof UniqueCustomerName) {
             throw new UnexpectedTypeException($constraint, UniqueCustomerName::class);
         }
 

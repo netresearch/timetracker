@@ -57,3 +57,8 @@ results.txt
 
 # PHPStan cache directories
 config/quality/var/
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###

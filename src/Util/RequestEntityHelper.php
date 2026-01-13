@@ -23,7 +23,7 @@ final class RequestEntityHelper
     public static function id(Request $request, string $key): ?string
     {
         $raw = $request->request->get($key);
-        if (! is_scalar($raw)) {
+        if (!is_scalar($raw)) {
             return null;
         }
 

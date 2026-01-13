@@ -18,7 +18,6 @@ final class SyncAllProjectSubticketsAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): JsonResponse
     {
-
         // Legacy route syncs all projects; mirror behavior by iterating all
         $projects = $this->doctrineRegistry->getRepository(\App\Entity\Project::class)->findAll();
         $result = true;

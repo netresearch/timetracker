@@ -51,7 +51,7 @@ final class SaveContractAction extends BaseController
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (! $contract instanceof Contract) {
+            if (!$contract instanceof Contract) {
                 return new \App\Response\Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {
@@ -139,7 +139,7 @@ final class SaveContractAction extends BaseController
             return $this->translate('There is already an ongoing contract with a closed end date in the future.');
         }
 
-        $contractsOld = array_filter($contractsOld, static fn (Contract $contract): bool => (! $contract->getEnd() instanceof DateTime));
+        $contractsOld = array_filter($contractsOld, static fn (Contract $contract): bool => (!$contract->getEnd() instanceof DateTime));
         if (count($contractsOld) > 1) {
             return $this->translate('There is more than one open-ended contract for the user.');
         }
@@ -169,7 +169,7 @@ final class SaveContractAction extends BaseController
     {
         $filteredContracts = [];
         foreach ($contracts as $contract) {
-            if (! $contract instanceof Contract) {
+            if (!$contract instanceof Contract) {
                 continue;
             }
 
@@ -193,7 +193,7 @@ final class SaveContractAction extends BaseController
     {
         $filteredContracts = [];
         foreach ($contracts as $contract) {
-            if (! $contract instanceof Contract) {
+            if (!$contract instanceof Contract) {
                 continue;
             }
 

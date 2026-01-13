@@ -35,7 +35,6 @@ final class GetLastEntriesAction extends BaseInterpretationController
         #[CurrentUser]
         User $currentUser,
     ): ModelResponse|JsonResponse {
-
         try {
             $entries = $this->getEntries($request, $currentUser, 50);
         } catch (Exception $exception) {

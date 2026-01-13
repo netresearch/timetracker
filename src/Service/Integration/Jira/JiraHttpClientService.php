@@ -259,7 +259,7 @@ class JiraHttpClientService
         try {
             $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
 
-            if (! is_array($data)) {
+            if (!is_array($data)) {
                 return $body;
             }
 

@@ -30,7 +30,6 @@ final class SavePresetAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] PresetSaveDto $presetSaveDto, ObjectMapperInterface $objectMapper): Response|JsonResponse|\App\Response\Error
     {
-
         $id = $presetSaveDto->id;
         $customer = null !== $presetSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($presetSaveDto->customer) : null;
         $project = null !== $presetSaveDto->project ? $this->doctrineRegistry->getRepository(Project::class)->find($presetSaveDto->project) : null;
@@ -42,19 +41,19 @@ final class SavePresetAction extends BaseController
 
         if (0 !== $id) {
             $preset = $objectRepository->find($id);
-            if (! $preset instanceof Preset) {
+            if (!$preset instanceof Preset) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            // $preset is already instance of Preset due to the check above
+        // $preset is already instance of Preset due to the check above
         } else {
             $preset = new Preset();
         }
 
         try {
-            if (! $customer instanceof Customer || ! $project instanceof Project || ! $activity instanceof Activity) {
+            if (!$customer instanceof Customer || !$project instanceof Project || !$activity instanceof Activity) {
                 throw new Exception('Please choose a customer, a project and an activity.');
             }
 

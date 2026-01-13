@@ -62,7 +62,7 @@ class JiraAuthenticationService
 
         $tokens = $this->extractTokens($response);
 
-        if (! isset($tokens['oauth_token'])) {
+        if (!isset($tokens['oauth_token'])) {
             throw new JiraApiException('Could not fetch OAuth request token', 500);
         }
 
@@ -99,7 +99,7 @@ class JiraAuthenticationService
 
         $tokens = $this->extractTokens($response);
 
-        if (! isset($tokens['oauth_token'], $tokens['oauth_token_secret'])) {
+        if (!isset($tokens['oauth_token'], $tokens['oauth_token_secret'])) {
             throw new JiraApiException('Could not fetch OAuth access token', 500);
         }
 
@@ -169,7 +169,7 @@ class JiraAuthenticationService
             'ticketSystem' => $ticketSystem,
         ]);
 
-        if (! $userTicketSystem instanceof UserTicketsystem) {
+        if (!$userTicketSystem instanceof UserTicketsystem) {
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($user);
             $userTicketSystem->setTicketSystem($ticketSystem);
@@ -209,7 +209,7 @@ class JiraAuthenticationService
             'ticketSystem' => $ticketSystem,
         ]);
 
-        if (! $userTicketSystem instanceof UserTicketsystem) {
+        if (!$userTicketSystem instanceof UserTicketsystem) {
             return ['token' => '', 'secret' => ''];
         }
 
@@ -260,7 +260,7 @@ class JiraAuthenticationService
             'ticketSystem' => $ticketSystem,
         ]);
 
-        return $userTicketSystem instanceof UserTicketsystem && ! $userTicketSystem->getAvoidConnection();
+        return $userTicketSystem instanceof UserTicketsystem && !$userTicketSystem->getAvoidConnection();
     }
 
     /**
@@ -320,7 +320,7 @@ class JiraAuthenticationService
      */
     public function authenticate(User $user, TicketSystem $ticketSystem): void
     {
-        if (! $this->checkUserTicketSystem($user, $ticketSystem)) {
+        if (!$this->checkUserTicketSystem($user, $ticketSystem)) {
             $this->throwUnauthorizedRedirect($ticketSystem);
         }
 

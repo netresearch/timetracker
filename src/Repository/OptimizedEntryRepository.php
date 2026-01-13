@@ -136,7 +136,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     public function getEntrySummaryOptimized(int $entryId, int $userId): array
     {
         $entry = $this->find($entryId);
-        if (! $entry instanceof Entry) {
+        if (!$entry instanceof Entry) {
             $emptyData = $this->getEmptySummaryData();
             assert([] !== $emptyData);
 
@@ -233,7 +233,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $result = $queryBuilder->getQuery()->getSingleResult();
 
-        if (! is_array($result)) {
+        if (!is_array($result)) {
             $result = ['duration' => 0, 'count' => 0];
         }
 

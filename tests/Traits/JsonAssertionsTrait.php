@@ -290,7 +290,7 @@ trait JsonAssertionsTrait
     {
         // Get response from the HTTP client (available via HttpClientTrait composition)
         // @phpstan-ignore function.alreadyNarrowedType (Defensive check for trait composition)
-        if (! property_exists($this, 'client')) {
+        if (!property_exists($this, 'client')) {
             throw new LogicException('HttpClientTrait must be used alongside JsonAssertionsTrait to access client');
         }
 

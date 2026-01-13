@@ -136,7 +136,7 @@ trait DatabaseTestTrait
      */
     protected function resetDatabase(?string $filepath = null): void
     {
-        if (! self::$databaseInitialized || null !== $filepath) {
+        if (!self::$databaseInitialized || null !== $filepath) {
             $this->loadTestData($filepath);
             self::$databaseInitialized = true;
         } elseif (null === $this->queryBuilder || null === $this->connection) {

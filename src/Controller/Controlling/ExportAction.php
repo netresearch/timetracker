@@ -43,7 +43,7 @@ final class ExportAction extends BaseController
         // Map legacy path parameters to query parameters for backward compatibility
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
         foreach ($attributeKeysToMap as $attributeKeyToMap) {
-            if ($request->attributes->has($attributeKeyToMap) && ! $request->query->has($attributeKeyToMap)) {
+            if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
                 /** @var mixed $attributeValue */
                 $attributeValue = $request->attributes->get($attributeKeyToMap);
                 $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
@@ -126,7 +126,7 @@ final class ExportAction extends BaseController
         $stats = [];
         foreach ($entries as $entry) {
             $abbr = null !== $entry->getUser() ? (string) $entry->getUser()->getAbbr() : '';
-            if (! isset($stats[$abbr])) {
+            if (!isset($stats[$abbr])) {
                 $stats[$abbr] = [
                     'holidays' => 0,
                     'sickdays' => 0,

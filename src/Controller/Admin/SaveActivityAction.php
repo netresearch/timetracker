@@ -42,7 +42,7 @@ final class SaveActivityAction extends BaseController
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (! $activity instanceof Activity) {
+            if (!$activity instanceof Activity) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {

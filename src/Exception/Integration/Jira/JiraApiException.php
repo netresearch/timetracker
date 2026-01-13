@@ -25,7 +25,7 @@ class JiraApiException extends Exception
         protected ?string $redirectUrl = null,
         ?Throwable $throwable = null,
     ) {
-        if (! str_starts_with($message, 'Jira:')) {
+        if (!str_starts_with($message, 'Jira:')) {
             $message = 'Jira: ' . $message;
         }
 

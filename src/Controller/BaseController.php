@@ -94,7 +94,7 @@ class BaseController extends AbstractController
     {
         $user = $this->getUser();
 
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             throw new AccessDeniedException('No user logged in');
         }
 
@@ -109,8 +109,8 @@ class BaseController extends AbstractController
      */
     protected function login(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|Response
     {
-        if (! $request->isXmlHttpRequest()
-            && ! $this->isJsonRequest($request)
+        if (!$request->isXmlHttpRequest()
+            && !$this->isJsonRequest($request)
         ) {
             return $this->redirectToRoute('_login');
         }

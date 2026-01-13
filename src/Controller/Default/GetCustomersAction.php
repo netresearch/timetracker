@@ -14,7 +14,7 @@ final class GetCustomersAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getCustomers', name: '_getCustomers_attr', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse
     {
-        if (! $user instanceof \App\Entity\User) {
+        if (!$user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 

@@ -45,7 +45,7 @@ final class SaveTeamAction extends BaseController
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (! $team instanceof Team) {
+            if (!$team instanceof Team) {
                 return new \App\Response\Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {
@@ -60,7 +60,7 @@ final class SaveTeamAction extends BaseController
             return $response;
         }
 
-        if (! $teamLead instanceof User) {
+        if (!$teamLead instanceof User) {
             $response = new Response($this->translate('Please provide a valid user as team leader.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 

@@ -60,7 +60,7 @@ class Error extends JsonResponse
      */
     protected function getExceptionAsArray(?Throwable $throwable = null): ?array
     {
-        if (! $throwable instanceof Throwable) {
+        if (!$throwable instanceof Throwable) {
             return null;
         }
 

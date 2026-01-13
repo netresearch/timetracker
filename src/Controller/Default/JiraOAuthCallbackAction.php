@@ -35,13 +35,13 @@ final class JiraOAuthCallbackAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response
     {
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 
         /** @var TicketSystem $ticketSystem */
         $ticketSystem = $this->managerRegistry->getRepository(TicketSystem::class)->find($request->query->get('tsid'));
-        if (! $ticketSystem instanceof TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return new \App\Model\Response('Ticket system not found', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 
@@ -49,7 +49,7 @@ final class JiraOAuthCallbackAction extends BaseController
             $jiraOAuthApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
             $oauthToken = $request->query->get('oauth_token');
             $oauthVerifier = $request->query->get('oauth_verifier');
-            if (! is_string($oauthToken) || '' === $oauthToken || ! is_string($oauthVerifier) || '' === $oauthVerifier) {
+            if (!is_string($oauthToken) || '' === $oauthToken || !is_string($oauthVerifier) || '' === $oauthVerifier) {
                 return new \App\Model\Response('Invalid OAuth callback parameters', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
             }
 

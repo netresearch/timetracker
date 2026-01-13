@@ -9,6 +9,7 @@ use Tests\AbstractWebTestCase;
 
 use function assert;
 use function is_array;
+use function is_string;
 
 /**
  * @internal
@@ -26,7 +27,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $this->connection->executeStatement(
             "INSERT INTO entries (day, start, end, customer_id, project_id, activity_id, description, ticket, duration, user_id, class, synced_to_ticketsystem, internal_jira_ticket_original_key)
              VALUES (CURDATE(), '08:00:00', '08:50:00', 1, 1, 1, 'Test description', :ticket, 50, 1, 1, 0, '')",
-            ['ticket' => $testTicket]
+            ['ticket' => $testTicket],
         );
 
         $parameter = [

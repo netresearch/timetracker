@@ -114,7 +114,7 @@ final readonly class TestCoverageAnalyzer
                 continue;
             }
 
-            if (null === $className || ! class_exists($className)) {
+            if (null === $className || !class_exists($className)) {
                 continue;
             }
 
@@ -201,7 +201,7 @@ final readonly class TestCoverageAnalyzer
     {
         $testMethods = [];
 
-        if (! is_dir($this->testsPath)) {
+        if (!is_dir($this->testsPath)) {
             return $testMethods;
         }
 
@@ -218,7 +218,7 @@ final readonly class TestCoverageAnalyzer
                 continue;
             }
 
-            if (null === $className || ! class_exists($className)) {
+            if (null === $className || !class_exists($className)) {
                 continue;
             }
 
@@ -442,7 +442,7 @@ final readonly class TestCoverageAnalyzer
         preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatches);
         preg_match('/class\s+(\w+)/', $content, $classMatches);
 
-        if (! isset($namespaceMatches[1], $classMatches[1])) {
+        if (!isset($namespaceMatches[1], $classMatches[1])) {
             return null;
         }
 
@@ -628,7 +628,6 @@ if (\PHP_SAPI === 'cli') {
         // Exit with appropriate code
         $exitCode = $results['summary']['untested_actions'] > 0 ? 1 : 0;
         exit($exitCode);
-
     } catch (Throwable $e) {
         echo '❌ Error during analysis: ' . $e->getMessage() . "\n";
         if (isset($argv) && in_array('--verbose', $argv, true)) {

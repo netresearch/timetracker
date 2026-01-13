@@ -152,7 +152,7 @@ class QueryCacheService
         $cacheKey = $this->getCacheKey($key);
 
         foreach ($tags as $tag) {
-            if (! isset($this->tags[$tag])) {
+            if (!isset($this->tags[$tag])) {
                 $this->tags[$tag] = [];
             }
 
@@ -167,7 +167,7 @@ class QueryCacheService
      */
     public function invalidateTag(string $tag): void
     {
-        if (! isset($this->tags[$tag])) {
+        if (!isset($this->tags[$tag])) {
             return;
         }
 
