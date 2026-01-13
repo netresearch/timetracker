@@ -30,7 +30,6 @@ final class GroupByTicketAction extends BaseInterpretationController
         #[CurrentUser]
         User $currentUser,
     ): ModelResponse|JsonResponse {
-
         try {
             $entries = $this->getEntries($request, $currentUser);
         } catch (Exception $exception) {
@@ -44,7 +43,7 @@ final class GroupByTicketAction extends BaseInterpretationController
         foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
             if ('' !== $ticket && '-' !== $ticket) {
-                if (! isset($tickets[$ticket])) {
+                if (!isset($tickets[$ticket])) {
                     $tickets[$ticket] = ['id' => $entry->getId(), 'name' => $ticket, 'hours' => 0, 'quota' => 0];
                 }
 

@@ -83,7 +83,7 @@ class LOReadFilter implements IReadFilter
         $shouldRead = $columnIndex <= self::MAX_LIBREOFFICE_COLUMNS;
 
         // Log when columns are filtered out to track actual impact
-        if (! $shouldRead) {
+        if (!$shouldRead) {
             $this->logger->debug('LOReadFilter blocked column beyond LibreOffice limit', [
                 'column' => $columnAddress,
                 'column_index' => $columnIndex,

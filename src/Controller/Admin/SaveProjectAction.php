@@ -63,7 +63,7 @@ final class SaveProjectAction extends BaseController
 
         if (0 !== $projectId) {
             $project = $objectRepository->find($projectId);
-            if (! $project instanceof Project) {
+            if (!$project instanceof Project) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
@@ -73,7 +73,7 @@ final class SaveProjectAction extends BaseController
 
             /** @var Customer $customer */
             $customer = null !== $projectSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($projectSaveDto->customer) : null;
-            if (! $customer instanceof Customer) {
+            if (!$customer instanceof Customer) {
                 $response = new Response($this->translate('Please choose a customer.'));
                 $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -84,7 +84,7 @@ final class SaveProjectAction extends BaseController
         }
 
         $projectCustomer = $project->getCustomer();
-        if (! $projectCustomer instanceof Customer) {
+        if (!$projectCustomer instanceof Customer) {
             $response = new Response($this->translate('Please choose a customer.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 

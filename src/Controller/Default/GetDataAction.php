@@ -25,7 +25,7 @@ final class GetDataAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): JsonResponse
     {
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             return new JsonResponse([]);
         }
 

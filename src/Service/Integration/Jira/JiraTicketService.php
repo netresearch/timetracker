@@ -32,7 +32,7 @@ class JiraTicketService
     {
         $project = $entry->getProject();
 
-        if (! $project instanceof \App\Entity\Project) {
+        if (!$project instanceof \App\Entity\Project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
@@ -65,7 +65,7 @@ class JiraTicketService
 
         $response = $this->jiraHttpClientService->post('issue', $ticketData);
 
-        if (! is_object($response) || ! property_exists($response, 'key')) {
+        if (!is_object($response) || !property_exists($response, 'key')) {
             throw new JiraApiException('Failed to create Jira ticket', 500);
         }
 
@@ -129,7 +129,7 @@ class JiraTicketService
         try {
             $response = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
 
-            if (! is_object($response)) {
+            if (!is_object($response)) {
                 return [];
             }
 
@@ -229,21 +229,21 @@ class JiraTicketService
         try {
             $response = $this->jiraHttpClientService->get(sprintf('issue/%s/transitions', $ticketKey));
 
-            if (! is_object($response)) {
+            if (!is_object($response)) {
                 return [];
             }
 
             /** @var array<string, mixed> $responseData */
             $responseData = (array) $response;
 
-            if (! isset($responseData['transitions']) || ! is_iterable($responseData['transitions'])) {
+            if (!isset($responseData['transitions']) || !is_iterable($responseData['transitions'])) {
                 return [];
             }
 
             $transitions = [];
 
             foreach ($responseData['transitions'] as $transitionData) {
-                if (! is_object($transitionData)) {
+                if (!is_object($transitionData)) {
                     continue;
                 }
 

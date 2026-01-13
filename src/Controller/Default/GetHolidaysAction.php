@@ -26,7 +26,7 @@ final class GetHolidaysAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): JsonResponse|RedirectResponse
     {
-        if (! $user instanceof \App\Entity\User) {
+        if (!$user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 

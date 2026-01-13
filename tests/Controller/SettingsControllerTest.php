@@ -98,7 +98,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
 
         // Fix offsetAccess.nonOffsetAccessible: Check if response is array and has expected keys
-        if (! is_array($response)) {
+        if (!is_array($response)) {
             self::fail('Expected JSON response to be an array');
         }
 
@@ -106,7 +106,7 @@ final class SettingsControllerTest extends AbstractWebTestCase
         self::assertSame('en', $response['locale']);
 
         self::assertArrayHasKey('settings', $response, 'Response should contain settings key');
-        if (! is_array($response['settings'])) {
+        if (!is_array($response['settings'])) {
             self::fail('Expected settings to be an array');
         }
         self::assertArrayHasKey('locale', $response['settings'], 'Settings should contain locale key');

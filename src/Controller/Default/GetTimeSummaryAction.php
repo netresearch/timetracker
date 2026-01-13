@@ -22,7 +22,7 @@ final class GetTimeSummaryAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
     {
-        if (! $user instanceof \App\Entity\User) {
+        if (!$user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 

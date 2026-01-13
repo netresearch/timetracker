@@ -77,7 +77,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         }
 
         // Validate username format
-        if (! $this->isValidUsername($username)) {
+        if (!$this->isValidUsername($username)) {
             $this->logger->warning('Invalid username format attempted', ['username' => substr($username, 0, 3) . '***']);
             throw new CustomUserMessageAuthenticationException('Invalid username format.');
         }
@@ -105,7 +105,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                     return $user;
                 }
 
-                if (! (bool) $this->parameterBag->get('ldap_create_user')) {
+                if (!(bool) $this->parameterBag->get('ldap_create_user')) {
                     throw new UserNotFoundException(sprintf('User "%s" authenticated via LDAP but not found locally and creation is disabled.', $userIdentifier));
                 }
 

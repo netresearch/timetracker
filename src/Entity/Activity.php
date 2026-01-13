@@ -130,7 +130,7 @@ class Activity
 
     public function addEntry(Entry $entry): static
     {
-        if (! $this->entriesRelation->contains($entry)) {
+        if (!$this->entriesRelation->contains($entry)) {
             $this->entriesRelation->add($entry);
         }
 
@@ -139,7 +139,7 @@ class Activity
 
     public function addPreset(Preset $preset): static
     {
-        if (! $this->presetsRelation->contains($preset)) {
+        if (!$this->presetsRelation->contains($preset)) {
             $this->presetsRelation->add($preset);
         }
 

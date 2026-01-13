@@ -53,7 +53,7 @@ final class JiraOAuthApiTest extends TestCase
 
         // Fake client that invokes provided handler with proper type specification
         // @phpstan-ignore class.extendsFinalByPhpDoc
-        $fakeClient = new class ($requestHandler) extends \GuzzleHttp\Client {
+        $fakeClient = new class($requestHandler) extends \GuzzleHttp\Client {
             /**
              * @param callable $handler
              */
@@ -77,7 +77,7 @@ final class JiraOAuthApiTest extends TestCase
         };
 
         // Subclass to expose getResponse and return fake client
-        return new class ($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
+        return new class($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
             public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, private mixed $client)
             {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);

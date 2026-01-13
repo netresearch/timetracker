@@ -19,7 +19,7 @@ class ValidUserValidator extends ConstraintValidator
 
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (! $constraint instanceof ValidUser) {
+        if (!$constraint instanceof ValidUser) {
             throw new UnexpectedTypeException($constraint, ValidUser::class);
         }
 

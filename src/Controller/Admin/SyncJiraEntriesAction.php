@@ -24,7 +24,6 @@ final class SyncJiraEntriesAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): JsonResponse
     {
-
         $from = $request->query->get('from');
         $to = $request->query->get('to');
         null !== $from ? new DateTime((string) $from) : new DateTime()->modify('-3 days');

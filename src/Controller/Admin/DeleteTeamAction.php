@@ -23,7 +23,6 @@ final class DeleteTeamAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
     {
-
         try {
             $id = $idDto->id;
             $doctrine = $this->doctrineRegistry;

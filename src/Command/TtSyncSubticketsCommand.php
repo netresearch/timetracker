@@ -45,7 +45,7 @@ class TtSyncSubticketsCommand extends Command
             ->getRepository(\App\Entity\Project::class);
         if (null !== $projectId && '' !== $projectId) {
             $project = $entityRepository->find($projectId);
-            if (! $project instanceof \App\Entity\Project) {
+            if (!$project instanceof \App\Entity\Project) {
                 $symfonyStyle->error('Project does not exist');
 
                 return 1;

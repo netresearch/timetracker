@@ -11,7 +11,6 @@
     "sort-packages": true,
     "allow-plugins": {
       "composer/package-versions-deprecated": true,
-      "laravel/pint": true,
       "ocramius/package-versions": true,
       "php-http/discovery": true,
       "phpstan/extension-installer": true,
@@ -77,7 +76,7 @@
     "captainhook/captainhook": "^5.27",
     "captainhook/plugin-composer": "^5.3",
     "dg/bypass-finals": "*",
-    "laravel/pint": "^1.18",
+    "friendsofphp/php-cs-fixer": "^3.65",
     "phpat/phpat": "^0.11",
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan": "^2.1",
@@ -108,15 +107,8 @@
     "post-update-cmd": [
       "@auto-scripts"
     ],
-    "cs-check": "php -d memory_limit=512M vendor/laravel/pint/builds/pint --test --config=config/quality/pint.json",
-    "cs-fix": "php -d memory_limit=512M vendor/laravel/pint/builds/pint --config=config/quality/pint.json",
-    "cs-check-batch": [
-      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Entity --test --config=config/quality/pint.json",
-      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Controller --test --config=config/quality/pint.json",
-      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Repository --test --config=config/quality/pint.json",
-      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Service --test --config=config/quality/pint.json",
-      "php -d memory_limit=256M vendor/laravel/pint/builds/pint src/Command src/Dto src/Enum src/Event src/EventSubscriber src/Exception src/Extension src/Model src/Response src/Security src/Util src/Validator src/ValueObject src/Kernel.php --test --config=config/quality/pint.json"
-    ],
+    "cs-check": "php -d memory_limit=512M bin/php-cs-fixer fix --dry-run --diff",
+    "cs-fix": "php -d memory_limit=512M bin/php-cs-fixer fix",
     "analyze": "php -d memory_limit=1G bin/phpstan analyze",
     "analyze:arch": "php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php",
     "rector": "rector process src --config=config/quality/rector.php",

@@ -145,7 +145,7 @@ class LdapClientService
             ['cn', 'distinguishedName', 'dn'],
         );
 
-        if (! is_object($collection) || (0 === $collection->count())) {
+        if (!is_object($collection) || (0 === $collection->count())) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: User search failed or returned no results.', [
                     'filter' => $searchFilter,
@@ -474,7 +474,7 @@ class LdapClientService
 
             try {
                 $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
-                if (null === $arMapping || ! is_array($arMapping)) {
+                if (null === $arMapping || !is_array($arMapping)) {
                     if ($this->logger instanceof LoggerInterface) {
                         $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
                     }

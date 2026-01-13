@@ -50,7 +50,7 @@ class ProjectRepository extends ServiceEntityRepository
         $projects = [];
         foreach ($customers as $customer) {
             $customerData = $customer['customer'] ?? null;
-            if (! is_array($customerData)) {
+            if (!is_array($customerData)) {
                 continue;
             }
 

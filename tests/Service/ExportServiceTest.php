@@ -67,7 +67,7 @@ final class ExportServiceTest extends TestCase
         $dummyUser = $currentUser;
         $dummyTs = new TicketSystem();
         $router->method('generate')->willReturn('/oauth-callback');
-        $jiraApi = new class ($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
+        $jiraApi = new class($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
             public function __construct(
                 User $user,
                 TicketSystem $ticketSystem,

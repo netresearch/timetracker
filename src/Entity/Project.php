@@ -699,7 +699,7 @@ class Project extends Base
      */
     public function matchesInternalJiraProject(string $jiraId): bool
     {
-        if (! $this->hasInternalJiraProjectKey()) {
+        if (!$this->hasInternalJiraProjectKey()) {
             return false;
         }
 

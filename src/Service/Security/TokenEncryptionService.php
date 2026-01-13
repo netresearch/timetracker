@@ -30,7 +30,7 @@ class TokenEncryptionService
         $key = $parameterBag->get('app.encryption_key') ?? $parameterBag->get('APP_SECRET');
 
         // Ensure we have a valid key
-        if (! is_string($key) || '' === $key) {
+        if (!is_string($key) || '' === $key) {
             throw new RuntimeException('Encryption key not configured. Set APP_ENCRYPTION_KEY in environment.');
         }
 

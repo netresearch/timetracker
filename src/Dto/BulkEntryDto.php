@@ -60,7 +60,7 @@ final readonly class BulkEntryDto
     public function validateTimeRange(ExecutionContextInterface $executionContext): void
     {
         // Only validate time range if not using contract
-        if (! $this->isUseContract() && ('' !== $this->starttime && '0' !== $this->starttime) && ('' !== $this->endtime && '0' !== $this->endtime)) {
+        if (!$this->isUseContract() && ('' !== $this->starttime && '0' !== $this->starttime) && ('' !== $this->endtime && '0' !== $this->endtime)) {
             $startDateTime = DateTime::createFromFormat('H:i:s', $this->starttime);
             $endDateTime = DateTime::createFromFormat('H:i:s', $this->endtime);
 

@@ -30,7 +30,6 @@ final class DeleteEntryAction extends BaseTrackingController
         #[CurrentUser]
         User $currentUser,
     ): Response|JsonResponse|Error {
-
         $alert = null;
 
         $entryId = RequestEntityHelper::id($request, 'id');
@@ -38,7 +37,7 @@ final class DeleteEntryAction extends BaseTrackingController
             $doctrine = $this->managerRegistry;
             $entry = RequestEntityHelper::findById($doctrine, Entry::class, $entryId);
 
-            if (! $entry instanceof Entry) {
+            if (!$entry instanceof Entry) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);

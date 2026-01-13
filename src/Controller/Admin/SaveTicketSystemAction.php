@@ -44,7 +44,7 @@ final class SaveTicketSystemAction extends BaseController
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (! $ticketSystem instanceof TicketSystem) {
+            if (!$ticketSystem instanceof TicketSystem) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {

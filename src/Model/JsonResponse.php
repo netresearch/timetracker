@@ -65,7 +65,7 @@ class JsonResponse extends Response
     public function send(bool $flush = true): static
     {
         // Ensure Content-Type is always set for JSON responses
-        if (! $this->headers->has('Content-Type')) {
+        if (!$this->headers->has('Content-Type')) {
             $this->headers->set('Content-Type', 'application/json');
         }
 

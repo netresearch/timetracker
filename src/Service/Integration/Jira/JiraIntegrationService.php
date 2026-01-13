@@ -42,21 +42,21 @@ class JiraIntegrationService
     public function saveWorklog(Entry $entry): bool
     {
         $project = $entry->getProject();
-        if (! $project instanceof Project) {
+        if (!$project instanceof Project) {
             $this->logger?->warning('No project associated with entry');
 
             return false;
         }
 
         $ticketSystem = $this->getTicketSystem($project);
-        if (! $this->shouldSyncWithJira($ticketSystem, $entry)) {
+        if (!$this->shouldSyncWithJira($ticketSystem, $entry)) {
             $this->logger?->debug('Entry should not sync with JIRA');
 
             return false;
         }
 
         $user = $entry->getUser();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             throw new JiraApiException('Entry has no associated user');
         }
 
@@ -87,17 +87,17 @@ class JiraIntegrationService
         }
 
         $project = $entry->getProject();
-        if (! $project instanceof Project) {
+        if (!$project instanceof Project) {
             throw new JiraApiException('Entry has no associated project');
         }
 
         $ticketSystem = $this->getTicketSystem($project);
-        if (! $ticketSystem instanceof TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             throw new JiraApiException('Project has no ticket system configured');
         }
 
         $user = $entry->getUser();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             throw new JiraApiException('Entry has no associated user');
         }
 
@@ -132,7 +132,7 @@ class JiraIntegrationService
         $results = [];
 
         foreach ($entries as $entry) {
-            if (! $entry instanceof Entry) {
+            if (!$entry instanceof Entry) {
                 continue;
             }
 
@@ -172,7 +172,7 @@ class JiraIntegrationService
         // Filter entries that should sync with JIRA
         $syncableEntries = [];
         foreach ($entries as $entry) {
-            if (! $entry instanceof Entry) {
+            if (!$entry instanceof Entry) {
                 continue;
             }
 
@@ -181,7 +181,7 @@ class JiraIntegrationService
             }
 
             $project = $entry->getProject();
-            if (! $project instanceof Project) {
+            if (!$project instanceof Project) {
                 continue;
             }
 
@@ -219,11 +219,11 @@ class JiraIntegrationService
      */
     private function shouldSyncWithJira(?TicketSystem $ticketSystem, Entry $entry): bool
     {
-        if (! $ticketSystem instanceof TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return false;
         }
 
-        if (! $ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
+        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
             return false;
         }
 
@@ -233,7 +233,7 @@ class JiraIntegrationService
         }
 
         // Entry must have valid time data
-        if (! $entry->getStart() instanceof DateTime || ! $entry->getEnd() instanceof DateTime) {
+        if (!$entry->getStart() instanceof DateTime || !$entry->getEnd() instanceof DateTime) {
             return false;
         }
 

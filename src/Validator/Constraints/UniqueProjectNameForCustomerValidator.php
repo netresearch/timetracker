@@ -24,11 +24,11 @@ class UniqueProjectNameForCustomerValidator extends ConstraintValidator
      */
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (! $constraint instanceof UniqueProjectNameForCustomer) {
+        if (!$constraint instanceof UniqueProjectNameForCustomer) {
             throw new UnexpectedTypeException($constraint, UniqueProjectNameForCustomer::class);
         }
 
-        if (! $value instanceof \App\Dto\ProjectSaveDto) {
+        if (!$value instanceof \App\Dto\ProjectSaveDto) {
             return;
         }
 

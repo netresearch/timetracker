@@ -30,7 +30,6 @@ final class GroupByProjectAction extends BaseInterpretationController
         #[CurrentUser]
         User $currentUser,
     ): ModelResponse|JsonResponse {
-
         try {
             $entries = $this->getEntries($request, $currentUser);
         } catch (Exception $exception) {
@@ -48,7 +47,7 @@ final class GroupByProjectAction extends BaseInterpretationController
             }
 
             $pid = $projectEntity->getId();
-            if (! isset($projects[$pid])) {
+            if (!isset($projects[$pid])) {
                 $projects[$pid] = ['id' => $pid, 'name' => $projectEntity->getName(), 'hours' => 0, 'quota' => 0];
             }
 

@@ -18,11 +18,11 @@ class ContractDatesValidValidator extends ConstraintValidator
      */
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (! $constraint instanceof ContractDatesValid) {
+        if (!$constraint instanceof ContractDatesValid) {
             throw new UnexpectedTypeException($constraint, ContractDatesValid::class);
         }
 
-        if (! $value instanceof \App\Dto\ContractSaveDto) {
+        if (!$value instanceof \App\Dto\ContractSaveDto) {
             return;
         }
 

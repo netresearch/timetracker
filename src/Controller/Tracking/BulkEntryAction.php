@@ -43,7 +43,6 @@ final class BulkEntryAction extends BaseTrackingController
         #[CurrentUser]
         User $currentUser,
     ): Response {
-
         // Create DTO from request data
         $bulkEntryDto = new BulkEntryDto(
             preset: (int) $request->request->get('preset', 0),
@@ -73,7 +72,7 @@ final class BulkEntryAction extends BaseTrackingController
             $contractHoursArray = [];
 
             $preset = $doctrine->getRepository(Preset::class)->find($bulkEntryDto->preset);
-            if (! $preset instanceof Preset) {
+            if (!$preset instanceof Preset) {
                 throw new Exception('Preset not found');
             }
 
@@ -87,7 +86,7 @@ final class BulkEntryAction extends BaseTrackingController
                     ->findBy(['user' => $currentUser->getId()], ['start' => 'ASC']);
 
                 foreach ($contracts as $contract) {
-                    if (! $contract instanceof Contract) {
+                    if (!$contract instanceof Contract) {
                         continue;
                     }
 
@@ -159,7 +158,7 @@ final class BulkEntryAction extends BaseTrackingController
                         }
                     }
 
-                    if (! isset($workTime) || $workTime <= 0) {
+                    if (!isset($workTime) || $workTime <= 0) {
                         $date->add(new DateInterval('P1D'));
 
                         continue;

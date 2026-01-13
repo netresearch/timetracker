@@ -146,18 +146,18 @@ class EntryEventSubscriber implements EventSubscriberInterface
     {
         // Check if project has auto-sync enabled
         $project = $entry->getProject();
-        if (! $project instanceof \App\Entity\Project) {
+        if (!$project instanceof \App\Entity\Project) {
             return false;
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (! $ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             return false;
         }
 
         // Check if ticket system has auto-sync enabled
         return $ticketSystem->getBookTime()
                && TicketSystemType::JIRA === $ticketSystem->getType()
-               && ! in_array($entry->getTicket(), ['', '0'], true);
+               && !in_array($entry->getTicket(), ['', '0'], true);
     }
 }

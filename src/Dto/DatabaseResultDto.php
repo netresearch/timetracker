@@ -80,7 +80,7 @@ final readonly class DatabaseResultDto
      */
     public static function safeDateTime(mixed $value, string $default = ''): string
     {
-        if (! is_string($value)) {
+        if (!is_string($value)) {
             return $default;
         }
         if ('' === $value || '0' === $value) {

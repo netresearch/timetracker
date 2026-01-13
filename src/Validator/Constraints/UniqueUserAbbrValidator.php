@@ -19,7 +19,7 @@ class UniqueUserAbbrValidator extends ConstraintValidator
 
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (! $constraint instanceof UniqueUserAbbr) {
+        if (!$constraint instanceof UniqueUserAbbr) {
             throw new UnexpectedTypeException($constraint, UniqueUserAbbr::class);
         }
 

@@ -36,12 +36,12 @@ class SubticketSyncService
                 ->find($projectOrProjectId);
         }
 
-        if (! $project instanceof Project) {
+        if (!$project instanceof Project) {
             throw new Exception('Project does not exist', 404);
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (! $ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
             throw new Exception('No ticket system configured for project', 400);
         }
 
@@ -59,7 +59,7 @@ class SubticketSyncService
         }
 
         $userWithJiraAccess = $project->getProjectLead();
-        if (! $userWithJiraAccess instanceof \App\Entity\User) {
+        if (!$userWithJiraAccess instanceof \App\Entity\User) {
             throw new Exception('Project has no lead user: ' . $project->getName(), 400);
         }
 

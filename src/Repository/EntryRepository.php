@@ -454,7 +454,7 @@ class EntryRepository extends ServiceEntityRepository
         $validOrderFields = ['id', 'day', 'start', 'end', 'duration'];
         if (in_array($orderBy, $validOrderFields, true)) {
             $orderDirection = strtoupper($orderDirection);
-            if (! in_array($orderDirection, ['ASC', 'DESC'], true)) {
+            if (!in_array($orderDirection, ['ASC', 'DESC'], true)) {
                 $orderDirection = 'DESC';
             }
 
@@ -555,7 +555,7 @@ class EntryRepository extends ServiceEntityRepository
             'week' => $functions['weekFunction'],
         ];
 
-        if (! isset($periodFunctions[$period])) {
+        if (!isset($periodFunctions[$period])) {
             throw new InvalidArgumentException('Invalid period: ' . $period);
         }
 
@@ -760,7 +760,7 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder->andWhere('e.day >= :startDate')
             ->setParameter('startDate', $startDate->format('Y-m-d'));
 
-        if (! $showFuture) {
+        if (!$showFuture) {
             $queryBuilder->andWhere('e.day <= :endDate')
                 ->setParameter('endDate', $today->format('Y-m-d'));
         }
@@ -912,10 +912,10 @@ class EntryRepository extends ServiceEntityRepository
         // Apply sorting
         if (is_array($arSort) && [] !== $arSort) {
             foreach ($arSort as $field => $direction) {
-                if (! is_string($field)) {
+                if (!is_string($field)) {
                     continue;
                 }
-                if (! is_string($direction)) {
+                if (!is_string($direction)) {
                     continue;
                 }
                 $direction = 'ASC' === strtoupper($direction) ? 'ASC' : 'DESC';
@@ -963,7 +963,7 @@ class EntryRepository extends ServiceEntityRepository
 
         $result = $queryBuilder->getQuery()->getSingleResult();
 
-        if (! is_array($result)) {
+        if (!is_array($result)) {
             return ['duration' => 0, 'count' => 0];
         }
 
@@ -1188,7 +1188,7 @@ class EntryRepository extends ServiceEntityRepository
     public function getEntrySummary(int $entryId, int $userId, array $data): array
     {
         $entry = $this->find($entryId);
-        if (! $entry instanceof Entry) {
+        if (!$entry instanceof Entry) {
             return $data;
         }
 
@@ -1287,7 +1287,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Get ticket summary
-        if (! in_array($entry->getTicket(), ['', '0'], true)) {
+        if (!in_array($entry->getTicket(), ['', '0'], true)) {
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own
                    FROM entries e

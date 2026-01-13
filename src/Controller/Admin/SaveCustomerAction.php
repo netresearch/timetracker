@@ -49,7 +49,7 @@ final class SaveCustomerAction extends BaseController
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (! $customer instanceof Customer) {
+            if (!$customer instanceof Customer) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);

@@ -24,7 +24,7 @@ final class ArrayTypeHelper
      */
     public static function getInt(array $array, string $key, ?int $default = null): ?int
     {
-        if (! array_key_exists($key, $array)) {
+        if (!array_key_exists($key, $array)) {
             return $default;
         }
 
@@ -53,7 +53,7 @@ final class ArrayTypeHelper
      */
     public static function getString(array $array, string $key, ?string $default = null): ?string
     {
-        if (! array_key_exists($key, $array)) {
+        if (!array_key_exists($key, $array)) {
             return $default;
         }
 
