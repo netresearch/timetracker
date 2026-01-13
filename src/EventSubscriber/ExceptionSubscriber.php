@@ -7,6 +7,7 @@ namespace App\EventSubscriber;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,7 +22,7 @@ use Throwable;
 class ExceptionSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly ?LoggerInterface $logger = null,
+        private readonly LoggerInterface $logger = new NullLogger(),
         private readonly string $environment = 'prod',
     ) {
     }
@@ -143,10 +144,6 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
     private function logException(Throwable $throwable): void
     {
-        if (!$this->logger instanceof LoggerInterface) {
-            return;
-        }
-
         // PSR-3 compliant: static message with exception in context
         // Path info is available in exception stack trace
         if ($throwable instanceof HttpExceptionInterface) {

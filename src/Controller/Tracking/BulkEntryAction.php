@@ -33,6 +33,7 @@ final class BulkEntryAction extends BaseTrackingController
     public function __construct(
         private readonly ValidatorInterface $validator,
     ) {
+        parent::__construct();
     }
 
     /**

@@ -9,6 +9,7 @@ use Exception;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 use UnitEnum;
@@ -57,7 +58,7 @@ class LdapClientService
     /** @var array<string> */
     protected $teams = [];
 
-    public function __construct(protected ?LoggerInterface $logger = null, protected string $projectDir = '')
+    public function __construct(protected LoggerInterface $logger = new NullLogger(), protected string $projectDir = '')
     {
     }
 
@@ -99,44 +100,36 @@ class LdapClientService
         putenv('LDAPTLS_REQCERT=never');
 
         try {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->debug('LDAP: Attempting read-only bind', [
-                    'host' => $this->_host,
-                    'port' => $this->_port,
-                    'useSSL' => $this->_useSSL,
-                    'bindDn' => $this->_readUser,
-                    'baseDn' => $this->_baseDn,
-                ]);
-            }
+            $this->logger->debug('LDAP: Attempting read-only bind', [
+                'host' => $this->_host,
+                'port' => $this->_port,
+                'useSSL' => $this->_useSSL,
+                'bindDn' => $this->_readUser,
+                'baseDn' => $this->_baseDn,
+            ]);
 
             $ldap->bind();
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->info('LDAP: Read-only bind successful.');
-            }
+            $this->logger->info('LDAP: Read-only bind successful.');
         } catch (LdapException $ldapException) {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->error('LDAP: Read-only bind failed', [
-                    'error' => $ldapException->getMessage(),
-                    'code' => $ldapException->getCode(),
-                    'host' => $this->_host,
-                    'port' => $this->_port,
-                    'useSSL' => $this->_useSSL,
-                    'bindDn' => $this->_readUser,
-                    'baseDn' => $this->_baseDn,
-                ]);
-            }
+            $this->logger->error('LDAP: Read-only bind failed', [
+                'error' => $ldapException->getMessage(),
+                'code' => $ldapException->getCode(),
+                'host' => $this->_host,
+                'port' => $this->_port,
+                'useSSL' => $this->_useSSL,
+                'bindDn' => $this->_readUser,
+                'baseDn' => $this->_baseDn,
+            ]);
 
             throw new Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $ldapException->getMessage() . '', $ldapException->getCode(), $ldapException);
         }
 
         $searchFilter = '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')';
-        if ($this->logger instanceof LoggerInterface) {
-            $this->logger->debug('LDAP: Searching for user', [
-                'baseDn' => $this->_baseDn,
-                'filter' => $searchFilter,
-                'scope' => 'sub',
-            ]);
-        }
+        $this->logger->debug('LDAP: Searching for user', [
+            'baseDn' => $this->_baseDn,
+            'filter' => $searchFilter,
+            'scope' => 'sub',
+        ]);
 
         $collection = $ldap->search(
             $searchFilter,
@@ -146,17 +139,15 @@ class LdapClientService
         );
 
         if (!is_object($collection) || (0 === $collection->count())) {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->warning('LDAP: User search failed or returned no results.', [
-                    'filter' => $searchFilter,
-                    'baseDn' => $this->_baseDn,
-                ]);
-            }
+            $this->logger->warning('LDAP: User search failed or returned no results.', [
+                'filter' => $searchFilter,
+                'baseDn' => $this->_baseDn,
+            ]);
 
             throw new Exception('Username unknown.');
         }
 
-        if ($collection->count() > 1 && $this->logger instanceof LoggerInterface) {
+        if ($collection->count() > 1) {
             $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
                 'filter' => $searchFilter,
                 'baseDn' => $this->_baseDn,
@@ -165,18 +156,16 @@ class LdapClientService
         }
 
         $ldapEntry = $this->normalizeFirstEntry($collection->getFirst());
-        if ($this->logger instanceof LoggerInterface) {
-            $returnedDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? 'N/A');
-            $this->logger->info('LDAP: User found.', [
-                'dn_returned' => $returnedDn,
-                'cn' => $ldapEntry['cn'][0] ?? 'N/A',
-            ]);
-            // Debug: log the complete LDAP entry structure
-            $this->logger->debug('LDAP: Complete entry structure for debugging.', [
-                'entry_keys' => array_keys($ldapEntry),
-                'entry_sample' => array_map(static fn (array $val): string => implode(', ', array_slice($val, 0, 2)), $ldapEntry),
-            ]);
-        }
+        $returnedDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? 'N/A');
+        $this->logger->info('LDAP: User found.', [
+            'dn_returned' => $returnedDn,
+            'cn' => $ldapEntry['cn'][0] ?? 'N/A',
+        ]);
+        // Debug: log the complete LDAP entry structure
+        $this->logger->debug('LDAP: Complete entry structure for debugging.', [
+            'entry_keys' => array_keys($ldapEntry),
+            'entry_sample' => array_map(static fn (array $val): string => implode(', ', array_slice($val, 0, 2)), $ldapEntry),
+        ]);
 
         $this->setTeamsByLdapResponse($ldapEntry);
 
@@ -209,23 +198,19 @@ class LdapClientService
         if (null === $userDn || '' === $userDn || strlen($userDn) < 10) {
             // Construct DN using the original username and our known structure
             $userDn = sprintf('uid=%s,ou=users,%s', $this->_userName, $this->_baseDn);
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->debug('LDAP: Constructed DN from username and base DN.', [
-                    'original_dn' => $ldapEntry['dn'][0] ?? 'N/A',
-                    'constructed_dn' => $userDn,
-                    'username' => $this->_userName,
-                    'base_dn' => $this->_baseDn,
-                ]);
-            }
+            $this->logger->debug('LDAP: Constructed DN from username and base DN.', [
+                'original_dn' => $ldapEntry['dn'][0] ?? 'N/A',
+                'constructed_dn' => $userDn,
+                'username' => $this->_userName,
+                'base_dn' => $this->_baseDn,
+            ]);
         }
 
         if ('' === $userDn || '0' === $userDn) {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->error('LDAP: Could not extract or construct DN from user entry.', [
-                    'entry_keys' => array_keys($ldapEntry),
-                    'entry' => array_map(static fn (array $val): string => implode(', ', $val), $ldapEntry),
-                ]);
-            }
+            $this->logger->error('LDAP: Could not extract or construct DN from user entry.', [
+                'entry_keys' => array_keys($ldapEntry),
+                'entry' => array_map(static fn (array $val): string => implode(', ', $val), $ldapEntry),
+            ]);
 
             throw new Exception('Could not determine user DN for authentication.');
         }
@@ -237,30 +222,24 @@ class LdapClientService
         $ldap = new Ldap($ldapOptions);
 
         try {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->debug('LDAP: Attempting user bind.', [
-                    'host' => $this->_host,
-                    'port' => $this->_port,
-                    'useSSL' => $this->_useSSL,
-                    'bindDn' => $userDn,
-                ]);
-            }
+            $this->logger->debug('LDAP: Attempting user bind.', [
+                'host' => $this->_host,
+                'port' => $this->_port,
+                'useSSL' => $this->_useSSL,
+                'bindDn' => $userDn,
+            ]);
 
             $ldap->bind();
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->info('LDAP: User bind successful.', ['bindDn' => $userDn]);
-            }
+            $this->logger->info('LDAP: User bind successful.', ['bindDn' => $userDn]);
         } catch (LdapException $ldapException) {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->error('LDAP: User bind failed.', [
-                    'error' => $ldapException->getMessage(),
-                    'code' => $ldapException->getCode(),
-                    'host' => $this->_host,
-                    'port' => $this->_port,
-                    'useSSL' => $this->_useSSL,
-                    'bindDn' => $userDn,
-                ]);
-            }
+            $this->logger->error('LDAP: User bind failed.', [
+                'error' => $ldapException->getMessage(),
+                'code' => $ldapException->getCode(),
+                'host' => $this->_host,
+                'port' => $this->_port,
+                'useSSL' => $this->_useSSL,
+                'bindDn' => $userDn,
+            ]);
 
             throw new Exception('Login data could not be validated: ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
         }
@@ -457,9 +436,7 @@ class LdapClientService
     {
         $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
         if (null === $dn || '' === $dn) {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
-            }
+            $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
 
             return;
         }
@@ -468,16 +445,12 @@ class LdapClientService
 
         $this->teams = [];
         if (file_exists($mappingFile)) {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
-            }
+            $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
 
             try {
                 $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
                 if (null === $arMapping || !is_array($arMapping)) {
-                    if ($this->logger instanceof LoggerInterface) {
-                        $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
-                    }
+                    $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
 
                     return;
                 }
@@ -486,24 +459,20 @@ class LdapClientService
                 foreach ($arMapping as $group => $teamName) {
                     if (str_contains(strtolower($dn), 'ou=' . strtolower($group))) {
                         $this->teams[] = $teamName;
-                        if ($this->logger instanceof LoggerInterface) {
-                            $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
-                        }
+                        $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
                     }
                 }
 
-                if ([] === $this->teams && $this->logger instanceof LoggerInterface) {
+                if ([] === $this->teams) {
                     $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
                 }
             } catch (Exception $e) {
-                if ($this->logger instanceof LoggerInterface) {
-                    $this->logger->error('LDAP: Failed to parse team mapping file.', [
-                        'mappingFile' => $mappingFile,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                $this->logger->error('LDAP: Failed to parse team mapping file.', [
+                    'mappingFile' => $mappingFile,
+                    'error' => $e->getMessage(),
+                ]);
             }
-        } elseif ($this->logger instanceof LoggerInterface) {
+        } else {
             $this->logger->warning('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
         }
     }

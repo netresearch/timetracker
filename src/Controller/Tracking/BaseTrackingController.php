@@ -20,6 +20,7 @@ use DateInterval;
 use DateTime;
 use Exception;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use RuntimeException;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -31,9 +32,14 @@ abstract class BaseTrackingController extends BaseController
 {
     protected ?TicketService $ticketService = null;
 
-    protected ?LoggerInterface $logger = null;
+    protected LoggerInterface $logger;
 
     protected ?JiraOAuthApiFactory $jiraOAuthApiFactory = null;
+
+    public function __construct()
+    {
+        $this->logger = new NullLogger();
+    }
 
     #[Required]
     public function setLogger(LoggerInterface $trackingLogger): void
@@ -218,12 +224,10 @@ abstract class BaseTrackingController extends BaseController
             $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
             $jiraOAuthApiService->createEntryJiraWorkLog($entry);
         } catch (Exception $exception) {
-            if ($this->logger instanceof LoggerInterface) {
-                $this->logger->error('Failed to create JIRA work log', [
-                    'entry_id' => $entry->getId(),
-                    'error' => $exception->getMessage(),
-                ]);
-            }
+            $this->logger->error('Failed to create JIRA work log', [
+                'entry_id' => $entry->getId(),
+                'error' => $exception->getMessage(),
+            ]);
 
             throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0);
         }
@@ -285,9 +289,7 @@ abstract class BaseTrackingController extends BaseController
             'data' => $data,
         ];
 
-        if ($this->logger instanceof LoggerInterface) {
-            $this->logger->info('Tracking data', $context);
-        }
+        $this->logger->info('Tracking data', $context);
     }
 
     /**
