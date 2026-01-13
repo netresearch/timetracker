@@ -19,10 +19,9 @@ doctrine:
         # backtrace queries in profiler (increases memory usage per request)
         #profiling_collect_backtrace: '%kernel.debug%'
     orm:
-        # Use native lazy ghost objects instead of deprecated proxy classes
-        # This eliminates the proxy deprecation warnings
-        enable_lazy_ghost_objects: true
-        # Explicitly disable proxy generation since we're using ghost objects
+        # Use native lazy objects (PHP 8.4+) instead of deprecated proxy/ghost classes
+        enable_native_lazy_objects: true
+        # Explicitly disable proxy generation since we're using native lazy objects
         auto_generate_proxy_classes: false
         # Disable deprecated controller resolver automapping
         controller_resolver:
