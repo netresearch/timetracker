@@ -10,6 +10,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use function array_key_exists;
 use function assert;
 use function is_array;
+use function is_string;
 
 class TokenStub implements TokenInterface
 {
@@ -101,7 +102,7 @@ class TokenStub implements TokenInterface
         // Filter to only string keys for type safety
         $filtered = [];
         foreach ($attributes as $key => $value) {
-            if (\is_string($key)) {
+            if (is_string($key)) {
                 $filtered[$key] = $value;
             }
         }
@@ -142,7 +143,7 @@ class TokenStub implements TokenInterface
             // Filter to only string keys for type safety
             $filtered = [];
             foreach ($attributes as $key => $value) {
-                if (\is_string($key)) {
+                if (is_string($key)) {
                     $filtered[$key] = $value;
                 }
             }

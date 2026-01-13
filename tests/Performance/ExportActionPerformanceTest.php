@@ -290,7 +290,7 @@ final class ExportActionPerformanceTest extends TestCase
 
             $response = $exportAction($request, $exportQueryDto);
             $content = $response->getContent();
-            $fileSize = $content !== false ? strlen($content) : 0;
+            $fileSize = false !== $content ? strlen($content) : 0;
             $fileSizes[$size] = $fileSize;
         }
 

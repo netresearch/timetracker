@@ -28,7 +28,6 @@ use UnexpectedValueException;
 
 use function assert;
 use function is_object;
-use function is_scalar;
 use function is_string;
 use function sprintf;
 
@@ -273,7 +272,7 @@ class JiraOAuthApiService
 
         $objectManager = $this->managerRegistry->getManager();
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        \assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
         $entries = $objectRepository->findByUserAndTicketSystemToSync((int) $this->user->getId(), (int) $this->ticketSystem->getId(), $entryLimit ?? 50);
 
         foreach ($entries as $entry) {
@@ -327,7 +326,7 @@ class JiraOAuthApiService
         ];
 
         $workLogId = $entry->getWorklogId();
-        if ($workLogId !== null) {
+        if (null !== $workLogId) {
             $response = $this->put(
                 sprintf('issue/%s/worklog/%d', $sTicket, $workLogId),
                 $arData,
@@ -368,7 +367,7 @@ class JiraOAuthApiService
         }
 
         $worklogId = $entry->getWorklogId();
-        if ($worklogId === null || $worklogId <= 0) {
+        if (null === $worklogId || $worklogId <= 0) {
             return;
         }
 
@@ -476,7 +475,7 @@ class JiraOAuthApiService
                 $epicSearchResult = JiraSearchResult::fromApiResponse($epicSearchResponse);
 
                 foreach ($epicSearchResult->issues as $epicSubtask) {
-                    if ($epicSubtask->key !== null) {
+                    if (null !== $epicSubtask->key) {
                         $subtickets[] = $epicSubtask->key;
 
                         // Add nested subtasks
@@ -732,7 +731,7 @@ class JiraOAuthApiService
         $userTicketSystem = $result instanceof UserTicketsystem ? $result : null;
 
         return $this->ticketSystem->getBookTime()
-            && ($userTicketSystem === null || ! $userTicketSystem->getAvoidConnection());
+            && (null === $userTicketSystem || ! $userTicketSystem->getAvoidConnection());
     }
 
     /**

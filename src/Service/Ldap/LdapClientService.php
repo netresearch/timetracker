@@ -456,7 +456,7 @@ class LdapClientService
     protected function setTeamsByLdapResponse(array $ldapRespsonse): void
     {
         $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
-        if ($dn === null || $dn === '') {
+        if (null === $dn || '' === $dn) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
             }
@@ -474,7 +474,7 @@ class LdapClientService
 
             try {
                 $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
-                if ($arMapping === null || ! is_array($arMapping)) {
+                if (null === $arMapping || ! is_array($arMapping)) {
                     if ($this->logger instanceof LoggerInterface) {
                         $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
                     }

@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
 use function count;
 
 final class SaveContractAction extends BaseController
@@ -40,7 +41,7 @@ final class SaveContractAction extends BaseController
         $user = $this->doctrineRegistry->getRepository(User::class)->find($contractSaveDto->user_id);
 
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
-        \assert($objectRepository instanceof ContractRepository);
+        assert($objectRepository instanceof ContractRepository);
 
         if (0 !== $contractId) {
             $contract = $objectRepository->find($contractId);

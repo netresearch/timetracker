@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\DTO\Jira;
 
+use function is_scalar;
+use function is_string;
+
 /**
  * Data Transfer Object for Jira Work Log responses.
  *
@@ -44,6 +47,6 @@ final readonly class JiraWorkLog
      */
     public function hasValidId(): bool
     {
-        return $this->id !== null && $this->id > 0;
+        return null !== $this->id && $this->id > 0;
     }
 }

@@ -10,6 +10,7 @@ use RuntimeException;
 use Tests\AbstractWebTestCase;
 
 use function assert;
+use function is_array;
 
 /**
  * @internal

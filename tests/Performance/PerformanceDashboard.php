@@ -7,7 +7,6 @@ namespace Tests\Performance;
 use DateTime;
 use Exception;
 
-use function assert;
 use function count;
 use function dirname;
 use function is_array;

@@ -8,6 +8,7 @@ use DateTime;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Tests\AbstractWebTestCase;
 
+use function assert;
 use function count;
 use function sprintf;
 use function strlen;
@@ -206,7 +207,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         $this->stopwatch->start('database_query');
 
         $entryRepository = self::getContainer()->get('doctrine')->getRepository(\App\Entity\Entry::class);
-        \assert($entryRepository instanceof \App\Repository\EntryRepository);
+        assert($entryRepository instanceof \App\Repository\EntryRepository);
 
         // Query entries directly from repository using the actual created user ID
         $entries = $entryRepository->findByDate($userId, 2025, 8, null, null, [

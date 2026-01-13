@@ -7,6 +7,9 @@ namespace App\Service\Response;
 use App\ValueObject\PaginatedEntryCollection;
 use Symfony\Component\HttpFoundation\Request;
 
+use function is_scalar;
+use function is_string;
+
 /**
  * Service for generating pagination links in API responses.
  */
@@ -28,7 +31,7 @@ final readonly class PaginationLinkService
             unset($parsedParams['page']); // Remove existing page parameter
             // Ensure query params are string-keyed for type safety
             foreach ($parsedParams as $key => $value) {
-                if (\is_string($key) && is_scalar($value)) {
+                if (is_string($key) && is_scalar($value)) {
                     $queryParams[$key] = $value;
                 }
             }

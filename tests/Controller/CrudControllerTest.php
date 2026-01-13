@@ -67,12 +67,12 @@ final class CrudControllerTest extends AbstractWebTestCase
                 'day' => '2024-01-01',
                 'start' => '09:25:00',
                 'end' => '09:55:00',
-                'customer_id' => '1',
-                'project_id' => '1',
-                'activity_id' => '1',
-                'duration' => '30',
-                'user_id' => '1',
-                'class' => '2',
+                'customer_id' => 1,
+                'project_id' => 1,
+                'activity_id' => 1,
+                'duration' => 30,
+                'user_id' => 1,
+                'class' => 2,
             ],
         ];
         self::assertArraySubset($expectedDbEntry, $result);
@@ -186,25 +186,25 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $staticExpected = [
             'start' => '08:00:00',
-            'customer_id' => '1',
-            'project_id' => '1',
-            'activity_id' => '1',
+            'customer_id' => 1,
+            'project_id' => 1,
+            'activity_id' => 1,
             'description' => 'Urlaub',
-            'user_id' => '1',
-            'class' => '2',
+            'user_id' => 1,
+            'class' => 2,
         ];
 
         $variableExpected = [
-            ['day' => '2020-01-27', 'end' => '09:00:00', 'duration' => '60'],
-            ['day' => '2020-01-28', 'end' => '10:00:00', 'duration' => '120'],
-            ['day' => '2020-01-29', 'end' => '11:00:00', 'duration' => '180'],
-            ['day' => '2020-01-30', 'end' => '12:00:00', 'duration' => '240'],
-            ['day' => '2020-01-31', 'end' => '13:00:00', 'duration' => '300'],
-            ['day' => '2020-02-01', 'end' => '08:30:00', 'duration' => '30'],
-            ['day' => '2020-02-03', 'end' => '09:06:00', 'duration' => '66'],
-            ['day' => '2020-02-04', 'end' => '10:12:00', 'duration' => '132'],
-            ['day' => '2020-02-05', 'end' => '11:18:00', 'duration' => '198'],
-            ['day' => '2020-02-06', 'end' => '12:24:00', 'duration' => '264'],
+            ['day' => '2020-01-27', 'end' => '09:00:00', 'duration' => 60],
+            ['day' => '2020-01-28', 'end' => '10:00:00', 'duration' => 120],
+            ['day' => '2020-01-29', 'end' => '11:00:00', 'duration' => 180],
+            ['day' => '2020-01-30', 'end' => '12:00:00', 'duration' => 240],
+            ['day' => '2020-01-31', 'end' => '13:00:00', 'duration' => 300],
+            ['day' => '2020-02-01', 'end' => '08:30:00', 'duration' => 30],
+            ['day' => '2020-02-03', 'end' => '09:06:00', 'duration' => 66],
+            ['day' => '2020-02-04', 'end' => '10:12:00', 'duration' => 132],
+            ['day' => '2020-02-05', 'end' => '11:18:00', 'duration' => 198],
+            ['day' => '2020-02-06', 'end' => '12:24:00', 'duration' => 264],
         ];
         $counter = count($results);
 
@@ -242,13 +242,13 @@ final class CrudControllerTest extends AbstractWebTestCase
         $staticExpected = [
             'start' => '08:00:00',
             'end' => '10:00:00',
-            'customer_id' => '1',
-            'project_id' => '1',
-            'activity_id' => '1',
+            'customer_id' => 1,
+            'project_id' => 1,
+            'activity_id' => 1,
             'description' => 'Urlaub',
-            'duration' => '120',
-            'user_id' => '1',
-            'class' => '2',
+            'duration' => 120,
+            'user_id' => 1,
+            'class' => 2,
         ];
 
         // We'll just validate the first 8 entries since that's what's in the test
@@ -310,17 +310,17 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $staticExpected = [
             'start' => '08:00:00',
-            'customer_id' => '1',
-            'project_id' => '1',
-            'activity_id' => '1',
+            'customer_id' => 1,
+            'project_id' => 1,
+            'activity_id' => 1,
             'description' => 'Urlaub',
-            'user_id' => '1',
-            'class' => '2',
+            'user_id' => 1,
+            'class' => 2,
         ];
 
         $variableExpected = [
-            ['day' => '2020-02-07', 'end' => '13:30:00', 'duration' => '330'],
-            ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
+            ['day' => '2020-02-07', 'end' => '13:30:00', 'duration' => 330],
+            ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => 66],
         ];
         $counter = count($results);
 
@@ -372,26 +372,26 @@ final class CrudControllerTest extends AbstractWebTestCase
 
         $staticExpected = [
             'start' => '08:00:00',
-            'customer_id' => '1',
-            'project_id' => '1',
-            'activity_id' => '1',
+            'customer_id' => 1,
+            'project_id' => 1,
+            'activity_id' => 1,
             'description' => 'Urlaub',
-            'user_id' => '1',
-            'class' => '2',
+            'user_id' => 1,
+            'class' => 2,
         ];
 
         // We only check the first 10 expected entries as that was the original test
         $variableExpected = [
-            ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => '66'],
-            ['day' => '2020-02-11', 'end' => '10:12:00', 'duration' => '132'],
-            ['day' => '2020-02-12', 'end' => '11:18:00', 'duration' => '198'],
-            ['day' => '2020-02-13', 'end' => '12:24:00', 'duration' => '264'],
-            ['day' => '2020-02-14', 'end' => '13:30:00', 'duration' => '330'],
-            ['day' => '2020-02-15', 'end' => '08:30:00', 'duration' => '30'],
-            ['day' => '2020-02-17', 'end' => '09:06:00', 'duration' => '66'],
-            ['day' => '2020-02-18', 'end' => '10:12:00', 'duration' => '132'],
-            ['day' => '2020-02-19', 'end' => '11:18:00', 'duration' => '198'],
-            ['day' => '2020-02-20', 'end' => '12:24:00', 'duration' => '264'],
+            ['day' => '2020-02-10', 'end' => '09:06:00', 'duration' => 66],
+            ['day' => '2020-02-11', 'end' => '10:12:00', 'duration' => 132],
+            ['day' => '2020-02-12', 'end' => '11:18:00', 'duration' => 198],
+            ['day' => '2020-02-13', 'end' => '12:24:00', 'duration' => 264],
+            ['day' => '2020-02-14', 'end' => '13:30:00', 'duration' => 330],
+            ['day' => '2020-02-15', 'end' => '08:30:00', 'duration' => 30],
+            ['day' => '2020-02-17', 'end' => '09:06:00', 'duration' => 66],
+            ['day' => '2020-02-18', 'end' => '10:12:00', 'duration' => 132],
+            ['day' => '2020-02-19', 'end' => '11:18:00', 'duration' => 198],
+            ['day' => '2020-02-20', 'end' => '12:24:00', 'duration' => 264],
         ];
         $counter = count($results);
 
@@ -460,21 +460,21 @@ final class CrudControllerTest extends AbstractWebTestCase
         // Common expected fields
         $staticExpected = [
             'start' => '08:00:00',
-            'customer_id' => '1',
-            'project_id' => '1',
-            'activity_id' => '1',
+            'customer_id' => 1,
+            'project_id' => 1,
+            'activity_id' => 1,
             'description' => 'Urlaub',
-            'user_id' => '2',
-            'class' => '2',
+            'user_id' => 2,
+            'class' => 2,
         ];
 
         // Expected data with actual dates (contract valid from 2020-01-01), end times, and durations
         $expectedEntries = [
-            ['day' => '2020-01-01', 'end' => '12:00:00', 'duration' => '240'],
-            ['day' => '2020-01-02', 'end' => '13:00:00', 'duration' => '300'],
-            ['day' => '2020-01-03', 'end' => '13:00:00', 'duration' => '300'],
-            ['day' => '2020-01-04', 'end' => '13:00:00', 'duration' => '300'],
-            ['day' => '2020-01-05', 'end' => '09:00:00', 'duration' => '60'],
+            ['day' => '2020-01-01', 'end' => '12:00:00', 'duration' => 240],
+            ['day' => '2020-01-02', 'end' => '13:00:00', 'duration' => 300],
+            ['day' => '2020-01-03', 'end' => '13:00:00', 'duration' => 300],
+            ['day' => '2020-01-04', 'end' => '13:00:00', 'duration' => 300],
+            ['day' => '2020-01-05', 'end' => '09:00:00', 'duration' => 60],
         ];
 
         $counter = count($results);
@@ -539,12 +539,12 @@ final class CrudControllerTest extends AbstractWebTestCase
                 'day' => '2024-01-15',
                 'start' => '08:00:00',
                 'end' => '09:00:00',
-                'customer_id' => '1',
-                'project_id' => '1',
-                'activity_id' => '1',
-                'duration' => '60',
-                'user_id' => '1',
-                'class' => '2',
+                'customer_id' => 1,
+                'project_id' => 1,
+                'activity_id' => 1,
+                'duration' => 60,
+                'user_id' => 1,
+                'class' => 2,
                 'ticket' => 'SA-123',
                 'description' => 'Test ticket entry',
             ],

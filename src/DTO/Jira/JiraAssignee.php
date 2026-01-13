@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\DTO\Jira;
 
+use function is_string;
+
 /**
  * Data Transfer Object for Jira Assignee.
  */

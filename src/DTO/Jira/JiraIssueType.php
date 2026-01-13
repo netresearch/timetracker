@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\DTO\Jira;
 
+use function is_bool;
+use function is_scalar;
+use function is_string;
+
 /**
  * Data Transfer Object for Jira Issue Type.
  */

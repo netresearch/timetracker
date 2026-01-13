@@ -15,6 +15,7 @@ use function count;
 use function dirname;
 use function ini_get;
 use function is_array;
+use function is_callable;
 use function is_scalar;
 use function is_string;
 use function sprintf;

@@ -20,6 +20,7 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use UnexpectedValueException;
 
+use function assert;
 use function sprintf;
 
 final class SaveUserAction extends BaseController
@@ -36,7 +37,7 @@ final class SaveUserAction extends BaseController
     public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
-        \assert($objectRepository instanceof UserRepository);
+        assert($objectRepository instanceof UserRepository);
 
         $user = 0 !== $userSaveDto->id ? $objectRepository->find($userSaveDto->id) : new User();
         if (! $user instanceof User) {

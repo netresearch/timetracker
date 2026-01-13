@@ -30,7 +30,7 @@ if (isset($_SERVER['APP_DEBUG']) && (bool) $_SERVER['APP_DEBUG']) {
 }
 
 // Parallel execution enhancements
-if (getenv('PARATEST_PARALLEL') !== false || isset($_ENV['PARATEST_PARALLEL'])) {
+if (false !== getenv('PARATEST_PARALLEL') || isset($_ENV['PARATEST_PARALLEL'])) {
     // Ensure each process has a unique identifier for database isolation
     $envToken = getenv('TEST_TOKEN');
     $processId = (is_string($envToken) && '' !== $envToken) ? $envToken : uniqid('test_', true);

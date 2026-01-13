@@ -12,6 +12,8 @@ use App\Repository\TeamRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class GetTeamsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllTeams', name: '_getAllTeams_attr', methods: ['GET'])]
@@ -19,7 +21,7 @@ final class GetTeamsAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
-        \assert($objectRepository instanceof TeamRepository);
+        assert($objectRepository instanceof TeamRepository);
 
         return new JsonResponse($objectRepository->getAllTeamsAsArray());
     }

@@ -17,6 +17,8 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class SaveTicketSystemAction extends BaseController
 {
     /**
@@ -30,7 +32,7 @@ final class SaveTicketSystemAction extends BaseController
     public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
-        \assert($objectRepository instanceof TicketSystemRepository);
+        assert($objectRepository instanceof TicketSystemRepository);
 
         $id = $ticketSystemSaveDto->id;
 

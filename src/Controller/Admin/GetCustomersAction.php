@@ -12,6 +12,8 @@ use App\Repository\CustomerRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class GetCustomersAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllCustomers', name: '_getAllCustomers_attr', methods: ['GET'])]
@@ -19,7 +21,7 @@ final class GetCustomersAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
-        \assert($objectRepository instanceof CustomerRepository);
+        assert($objectRepository instanceof CustomerRepository);
 
         return new JsonResponse($objectRepository->getAllCustomers());
     }

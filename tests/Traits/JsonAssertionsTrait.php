@@ -48,13 +48,13 @@ trait JsonAssertionsTrait
      * 2. Nested structures: ['user' => ['id', 'name']]
      * 3. Expected values (associative): ['active' => true, 'count' => 5]
      *
-     * @param array<int|string, mixed>  $structure
-     * @param array<mixed, mixed>|null  $json      Optional - fetched from client response if not provided
+     * @param array<int|string, mixed> $structure
+     * @param array<mixed, mixed>|null $json      Optional - fetched from client response if not provided
      */
     protected function assertJsonStructure(array $structure, ?array $json = null): void
     {
         // Auto-fetch from response if not provided
-        if ($json === null) {
+        if (null === $json) {
             // @phpstan-ignore property.notFound (client provided by HttpClientTrait)
             $response = $this->client->getResponse();
             $json = $this->getJsonResponse($response);

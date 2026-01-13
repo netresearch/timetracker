@@ -9,9 +9,7 @@ use App\DTO\Jira\JiraTransition;
 use App\Entity\Entry;
 use App\Exception\Integration\Jira\JiraApiException;
 
-use function is_array;
 use function is_object;
-use function is_scalar;
 use function sprintf;
 
 /**
@@ -137,7 +135,7 @@ class JiraTicketService
 
             $issue = JiraIssue::fromApiResponse($response);
 
-            if ($issue->fields === null) {
+            if (null === $issue->fields) {
                 return [];
             }
 
@@ -251,10 +249,10 @@ class JiraTicketService
 
                 $transition = JiraTransition::fromApiResponse($transitionData);
                 $transitions[] = [
-                    'id' => $transition->id !== null ? (string) $transition->id : '',
+                    'id' => null !== $transition->id ? (string) $transition->id : '',
                     'name' => $transition->name ?? '',
                     'to' => [
-                        'id' => $transition->to?->id !== null ? (string) $transition->to->id : '',
+                        'id' => null !== $transition->to?->id ? (string) $transition->to->id : '',
                         'name' => $transition->to->name ?? '',
                     ],
                 ];

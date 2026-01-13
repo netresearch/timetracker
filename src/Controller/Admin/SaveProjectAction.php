@@ -13,6 +13,7 @@ use App\Entity\User;
 use App\Enum\BillingType;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\ProjectRepository;
 use App\Response\Error;
 use App\Service\SubticketSyncService;
 use App\Service\Util\TimeCalculationService;
@@ -21,8 +22,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Repository\ProjectRepository;
 use Symfony\Contracts\Service\Attribute\Required;
+
+use function assert;
 
 final class SaveProjectAction extends BaseController
 {
@@ -54,7 +56,7 @@ final class SaveProjectAction extends BaseController
         $additionalInformationFromExternal = $projectSaveDto->additionalInformationFromExternal;
 
         $objectRepository = $this->doctrineRegistry->getRepository(Project::class);
-        \assert($objectRepository instanceof ProjectRepository);
+        assert($objectRepository instanceof ProjectRepository);
 
         $internalJiraTicketSystem = $projectSaveDto->internalJiraTicketSystem;
         $internalJiraProjectKey = $projectSaveDto->internalJiraProjectKey;

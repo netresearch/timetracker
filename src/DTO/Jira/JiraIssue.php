@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\DTO\Jira;
 
+use function is_object;
+use function is_scalar;
+use function is_string;
+
 /**
  * Data Transfer Object for Jira Issue responses.
  *
@@ -39,7 +43,7 @@ final readonly class JiraIssue
         }
 
         $subtaskKeys = [];
-        if ($fields !== null) {
+        if (null !== $fields) {
             $subtaskKeys = $fields->getSubtaskKeys();
         }
 
@@ -57,7 +61,7 @@ final readonly class JiraIssue
      */
     public function isEpic(): bool
     {
-        return $this->fields !== null && $this->fields->isEpic();
+        return null !== $this->fields && $this->fields->isEpic();
     }
 
     /**

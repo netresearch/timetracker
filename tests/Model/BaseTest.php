@@ -8,7 +8,6 @@ use App\Model\Base;
 use PHPUnit\Framework\TestCase;
 
 use function array_key_exists;
-use function count;
 
 class TestModel extends Base
 {

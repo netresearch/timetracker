@@ -8,6 +8,7 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 
+use function is_callable;
 use function is_object;
 
 /**

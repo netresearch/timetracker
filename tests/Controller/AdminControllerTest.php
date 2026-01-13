@@ -101,7 +101,7 @@ class AdminControllerTest extends AbstractWebTestCase
         // Use admin route that returns all customers with full data
         $this->client->request('GET', '/getAllCustomers');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+        self::assertEquals($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetCustomersActionWithNonPl(): void
@@ -210,7 +210,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
         $this->client->request('GET', '/getProjects');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+        self::assertEquals($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetProjectsActionWithNonPl(): void
@@ -284,9 +284,9 @@ class AdminControllerTest extends AbstractWebTestCase
         // Make the request - should work with our authentication from setUp
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getAllUsers');
 
-        // Assert response status and expected JSON structure
+        // Assert response status and expected JSON
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+        self::assertEquals($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     // -------------- teams routes ----------------------------------------
@@ -311,7 +311,7 @@ class AdminControllerTest extends AbstractWebTestCase
 
         $this->client->request('GET', '/getAllTeams');
         $this->assertStatusCode(200);
-        $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+        self::assertEquals($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGetTeamsActionWithNonPl(): void

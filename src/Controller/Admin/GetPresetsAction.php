@@ -12,6 +12,8 @@ use App\Repository\PresetRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class GetPresetsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllPresets', name: '_getAllPresets_attr', methods: ['GET'])]
@@ -19,7 +21,7 @@ final class GetPresetsAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Preset::class);
-        \assert($objectRepository instanceof PresetRepository);
+        assert($objectRepository instanceof PresetRepository);
 
         return new JsonResponse($objectRepository->getAllPresets());
     }

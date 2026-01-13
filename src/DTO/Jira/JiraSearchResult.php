@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\DTO\Jira;
 
+use function is_int;
+use function is_object;
+
 /**
  * Data Transfer Object for Jira Search/JQL Results.
  */
@@ -56,7 +59,7 @@ final readonly class JiraSearchResult
     {
         $keys = [];
         foreach ($this->issues as $issue) {
-            if ($issue->key !== null) {
+            if (null !== $issue->key) {
                 $keys[] = $issue->key;
             }
         }

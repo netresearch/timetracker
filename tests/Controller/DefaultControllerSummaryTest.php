@@ -24,7 +24,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $doctrine = $container->get('doctrine');
         $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if ($entry === null) {
+        if (null === $entry) {
             self::markTestSkipped('No entries found in the database.');
         }
 
@@ -57,7 +57,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $doctrine = $container->get('doctrine');
         $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if ($entry === null) {
+        if (null === $entry) {
             self::markTestSkipped('No entries found in the database.');
         }
 

@@ -442,5 +442,4 @@ class ModernLdapService
             'useSsl' => $useSslValue,
         ];
     }
-
 }

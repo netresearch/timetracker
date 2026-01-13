@@ -77,7 +77,7 @@ final class GetSummaryAction extends BaseController
                 : null;
 
             // Only calculate quota if both values are available and valid
-            if ($projectTotal !== null && $projectEstimation !== null) {
+            if (null !== $projectTotal && null !== $projectEstimation) {
                 $data['project']['quota'] = $this->timeCalculationService->formatQuota(
                     $projectTotal,
                     $projectEstimation,

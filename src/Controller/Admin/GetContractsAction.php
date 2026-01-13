@@ -12,6 +12,8 @@ use App\Repository\ContractRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class GetContractsAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getContracts', name: '_getContracts_attr', methods: ['GET'])]
@@ -19,7 +21,7 @@ final class GetContractsAction extends BaseController
     public function __invoke(Request $request): Response|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
-        \assert($objectRepository instanceof ContractRepository);
+        assert($objectRepository instanceof ContractRepository);
 
         return new JsonResponse($objectRepository->getContracts());
     }

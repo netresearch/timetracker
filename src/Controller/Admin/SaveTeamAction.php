@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class SaveTeamAction extends BaseController
 {
     /**
@@ -27,7 +29,7 @@ final class SaveTeamAction extends BaseController
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
-        \assert($objectRepository instanceof TeamRepository);
+        assert($objectRepository instanceof TeamRepository);
 
         $id = $teamSaveDto->id;
         $name = $teamSaveDto->name;

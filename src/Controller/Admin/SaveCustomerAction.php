@@ -20,6 +20,7 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use UnexpectedValueException;
 
+use function assert;
 use function sprintf;
 
 final class SaveCustomerAction extends BaseController
@@ -38,7 +39,7 @@ final class SaveCustomerAction extends BaseController
         $teamIds = $customerSaveDto->teams;
 
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
-        \assert($objectRepository instanceof CustomerRepository);
+        assert($objectRepository instanceof CustomerRepository);
 
         if (0 !== $customerId) {
             $customer = $objectRepository->find($customerId);

@@ -7,6 +7,7 @@ namespace Tests\Repository;
 use App\Repository\EntryRepository;
 use Tests\AbstractWebTestCase;
 
+use function assert;
 use function count;
 
 /**

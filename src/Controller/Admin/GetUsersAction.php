@@ -13,6 +13,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class GetUsersAction extends BaseController
 {
     #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllUsers', name: '_getAllUsers_attr', methods: ['GET'])]
@@ -20,7 +22,7 @@ final class GetUsersAction extends BaseController
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
-        \assert($objectRepository instanceof UserRepository);
+        assert($objectRepository instanceof UserRepository);
 
         return new JsonResponse($objectRepository->getAllUsers());
     }

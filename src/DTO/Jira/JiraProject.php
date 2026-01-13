@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\DTO\Jira;
 
+use function is_scalar;
+use function is_string;
+
 /**
  * Data Transfer Object for Jira Project.
  */
@@ -45,7 +48,7 @@ final readonly class JiraProject
         return [
             'key' => $this->key ?? '',
             'name' => $this->name ?? '',
-            'id' => $this->id !== null ? (string) $this->id : '',
+            'id' => null !== $this->id ? (string) $this->id : '',
         ];
     }
 }

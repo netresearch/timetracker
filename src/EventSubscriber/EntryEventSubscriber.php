@@ -12,6 +12,7 @@ use App\Service\Integration\Jira\JiraIntegrationService;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
 
 use function in_array;
 
@@ -132,7 +133,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         $context = $entryEvent->getContext();
         $exception = $context['exception'] ?? null;
 
-        if ($exception instanceof \Throwable) {
+        if ($exception instanceof Throwable) {
             $this->logger?->error('Entry sync to JIRA failed', ['exception' => $exception]);
         } else {
             $this->logger?->error('Entry sync to JIRA failed');

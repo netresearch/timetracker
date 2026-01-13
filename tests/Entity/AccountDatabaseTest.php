@@ -79,7 +79,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         // Get user from database
         $userRepository = $this->entityManager->getRepository(User::class);
         $user = $userRepository->find(1);
-        if ($user === null) {
+        if (null === $user) {
             // Create a test user if it doesn't exist
             $user = new User();
             $user->setUsername('test_user');

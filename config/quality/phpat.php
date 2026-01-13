@@ -6,7 +6,7 @@ use PHPat\Selector\Selector;
 use PHPat\Test\Builder\Rule;
 use PHPat\Test\PHPat;
 
-final class ArchitectureTest extends PHPat
+final class ArchitectureTest
 {
     public function test_controllers_should_only_depend_on_business_logic(): Rule
     {

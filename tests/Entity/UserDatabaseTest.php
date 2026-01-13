@@ -385,7 +385,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         self::assertCount(1, $fetchedUser->getUserTicketsystems());
         $userTs = $fetchedUser->getUserTicketsystems()->first();
         // After assertCount(1), first() cannot be false - validated by collection state
-        self::assertInstanceOf(\App\Entity\UserTicketsystem::class, $userTs, 'UserTicketsystem should exist');
+        self::assertInstanceOf(UserTicketsystem::class, $userTs, 'UserTicketsystem should exist');
         self::assertSame('test-token', $userTs->getAccessToken());
         self::assertNotNull($userTs->getTicketSystem(), 'TicketSystem should exist');
         self::assertSame('Test Ticket System', $userTs->getTicketSystem()->getName());

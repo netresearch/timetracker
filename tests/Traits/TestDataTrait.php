@@ -40,7 +40,7 @@ trait TestDataTrait
         // Determine file path - handle parallel execution path issues
         $testFilePath = $this->resolveTestDataPath($filepath);
 
-        if ($testFilePath === null || $testFilePath === '' || ! is_file($testFilePath)) {
+        if (null === $testFilePath || '' === $testFilePath || ! is_file($testFilePath)) {
             // Skip loading if file doesn't exist (parallel execution might not need all data)
             error_log('Test data file not found: ' . (null !== $testFilePath && '' !== $testFilePath ? $testFilePath : 'unknown'));
 
@@ -106,7 +106,7 @@ trait TestDataTrait
         // Use provided filepath or default from instance
         $targetPath = $filepath ?? ($this->filepath ?? null);
 
-        if ($targetPath === null || $targetPath === '') {
+        if (null === $targetPath || '' === $targetPath) {
             return null;
         }
 
