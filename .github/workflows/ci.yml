@@ -10,9 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  qa-and-tests:
+  lint:
+    name: Lint & Static Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -20,30 +21,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
 
-      - name: Show Docker version
+      - name: Prepare config files
         run: |
-          docker --version
-          docker compose version
-
-      - name: Prepare config files and SQL
-        run: |
-          # Ensure PHPStan config exists
           if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
-          # Ensure PHPUnit config exists
-          if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
-          # Generate unittest SQL file (matches local development)
-          sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
 
-      - name: Set up development environment
+      - name: Install dependencies
         env:
-          COMPOSE_PROFILES: dev
+          COMPOSE_PROFILES: tools
         run: |
-          # Use profile-based setup matching local development
-          make install
-          # Explicitly bring up all required services for CI
-          docker compose up -d
-          # Wait for databases to be healthy
-          docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
+          docker compose run --rm app-tools composer install --no-interaction --prefer-dist
+
+      - name: Composer audit (security)
+        env:
+          COMPOSE_PROFILES: tools
+        run: |
+          docker compose run --rm app-tools composer audit --format=plain
 
       - name: Static analysis (PHPStan)
         env:
@@ -57,17 +49,48 @@ jobs:
         run: |
           make phpat
 
-      - name: Code style (ECS)
+      - name: Code style (PHP-CS-Fixer)
         env:
           COMPOSE_PROFILES: tools
         run: |
           make cs-check
+
+      - name: Rector (dry-run)
+        env:
+          COMPOSE_PROFILES: tools
+        run: |
+          docker compose run --rm app-tools php -d memory_limit=1G bin/rector process src --config=config/quality/rector.php --dry-run
 
       - name: Lint Twig templates
         env:
           COMPOSE_PROFILES: tools
         run: |
           make twig-lint
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Prepare config files and SQL
+        run: |
+          if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
+          sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
+
+      - name: Set up development environment
+        env:
+          COMPOSE_PROFILES: dev
+        run: |
+          make install
+          docker compose up -d
+          docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
 
       - name: Run tests (PHPUnit)
         env:

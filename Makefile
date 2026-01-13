@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -35,9 +35,12 @@ help:
 	@echo "  make reset-test-db    # reset test database (for schema changes)"
 	@echo "  make stan|phpat       # static analysis & architecture (fast - no DB)"
 	@echo "  make cs-check|cs-fix  # coding standards (fast - no DB)"
-	@echo "  make check-all        # stan + phpat + pint + twig (fast - no DB)"
+	@echo "  make check-all        # stan + phpat + cs-check + twig (fast - no DB)"
 	@echo "  make twig-lint        # lint twig templates (fast - no DB)"
-	@echo "  make fix-all          # pint + rector (modern stack, fast - no DB)"
+	@echo "  make rector           # rector dry-run for code improvements (fast - no DB)"
+	@echo "  make rector-fix       # rector apply fixes (fast - no DB)"
+	@echo "  make audit            # composer audit for security vulnerabilities"
+	@echo "  make fix-all          # cs-fix + rector (modern stack, fast - no DB)"
 	@echo "  make validate-stack   # validate entire modern toolchain"
 	@echo "  make analyze-coverage # analyze test coverage report"
 
@@ -155,6 +158,18 @@ twig-lint:
 	@echo "Running Twig template linting (lightweight - no DB)..."
 	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer twig:lint
 
+rector:
+	@echo "Running Rector (dry-run) to check for improvements..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools php -d memory_limit=1G bin/rector process src --config=config/quality/rector.php --dry-run
+
+rector-fix:
+	@echo "Running Rector to apply fixes..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools php -d memory_limit=1G bin/rector process src --config=config/quality/rector.php
+
+audit:
+	@echo "Running Composer audit for security vulnerabilities..."
+	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer audit --format=plain
+
 fix-all:
 	@echo "Running modern code fixing suite (lightweight - no DB)..."
 	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer fix:all
@@ -200,7 +215,7 @@ validate-stack:
 	@$(MAKE) stan
 	@echo "✅ PHPStan analysis passed"
 	@echo ""
-	@echo "▶ Running Pint code style check..."
+	@echo "▶ Running PHP-CS-Fixer code style check..."
 	@$(MAKE) cs-check
 	@echo "✅ Code style check passed"
 	@echo ""

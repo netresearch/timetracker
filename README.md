@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-red.svg)](LICENSE)
 [![CI Status](https://github.com/netresearch/timetracker/workflows/CI/badge.svg)](https://github.com/netresearch/timetracker/actions)
 [![codecov](https://codecov.io/gh/netresearch/timetracker/graph/badge.svg)](https://codecov.io/gh/netresearch/timetracker)
-[![Code Quality](https://img.shields.io/badge/phpstan-level%209-green.svg)](phpstan.neon)
+[![Code Quality](https://img.shields.io/badge/phpstan-level%2010-green.svg)](phpstan.neon)
 [![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11719/badge)](https://www.bestpractices.dev/projects/11719)
@@ -120,10 +120,7 @@ symfony server:start
 - **Database**: MySQL/MariaDB with optimized indexes
 - **Authentication**: LDAP/AD with JWT token support
 - **Testing**: PHPUnit 12, Parallel test execution
-- **Code Quality**: PHPStan Level 9, Laravel Pint, Rector
-[![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+- **Code Quality**: PHPStan Level 10, PHP-CS-Fixer, Rector
 
 ### Project Structure
 ```
@@ -149,14 +146,14 @@ timetracker/
 ## 📚 Documentation
 
 ### 🎓 **Getting Started**
-- [**Developer Onboarding**](docs/DEVELOPER_ONBOARDING_GUIDE.md) - Complete setup guide
+- [**Development Guide**](docs/development.md) - Complete setup guide
 - [**Configuration Guide**](docs/configuration.md) - Environment and feature configuration
 - [**Architecture Overview**](docs/PROJECT_INDEX.md) - System design and patterns
 
 ### 🔧 **Development**
-- [**API Documentation**](docs/API_DOCUMENTATION.md) - Complete API reference with examples
-- [**Testing Guide**](docs/TESTING_GUIDE.md) - Testing strategy and best practices
-- [**Security Implementation**](docs/SECURITY_IMPLEMENTATION_GUIDE.md) - Security patterns
+- [**API Documentation**](docs/api.md) - Complete API reference with examples
+- [**Testing Guide**](docs/testing.md) - Testing strategy and best practices
+- [**Security Guide**](docs/security.md) - Security patterns and implementation
 
 ### 🚀 **Operations**
 - [**Docker Deployment**](docker/README.md) - Production deployment guide
@@ -187,7 +184,7 @@ make perf:benchmark
 
 ### Test Categories
 - **Unit Tests** (70%): Individual component testing
-- **Integration Tests** (25%): Service interaction testing  
+- **Integration Tests** (25%): Service interaction testing
 - **Functional Tests** (5%): End-to-end user journey testing
 
 ---
@@ -260,7 +257,7 @@ curl -X POST http://localhost:8765/api/entries/bulk \
   }'
 ```
 
-**📖 Full API Documentation**: [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
+**📖 Full API Documentation**: [docs/api.md](docs/api.md)
 
 ---
 
@@ -276,11 +273,8 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 5. **Submit** a pull request with clear description
 
 ### Code Quality Standards
-[![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
-- **PSR-12** code style with Laravel Pint
-- **PHPStan Level 9** static analysis
+- **PSR-12** code style with PHP-CS-Fixer
+- **PHPStan Level 10** static analysis
 - **PHPUnit** tests with >80% coverage target
 - **Conventional Commits** for clear change history
 
@@ -331,7 +325,8 @@ For commercial use without AGPL restrictions, please contact [licensing@netresea
 - [ ] **Multi-language Support** for international teams
 
 ### Version History
-- **v4.x** - Symfony 7.3, PHP 8.4, Modern architecture
+- **v5.x** - Symfony 7.3, PHP 8.4, Modern architecture
+- **v4.x** - Symfony 6.x, PHP 8.1+, Legacy maintenance
 - **v3.x** - Enhanced JIRA integration, Performance improvements
 - **v2.x** - LDAP authentication, Team management
 - **v1.x** - Core time tracking functionality
