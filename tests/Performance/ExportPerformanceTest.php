@@ -541,7 +541,7 @@ final class ExportPerformanceTest extends TestCase
         fwrite(STDERR, sprintf(
             "\n[PERFORMANCE] %s: %dms, %sMB memory, %d records, %s records/sec\n",
             $testName,
-            $durationMs,
+            (int) $durationMs,
             $memoryMB,
             $recordCount,
             $throughput,

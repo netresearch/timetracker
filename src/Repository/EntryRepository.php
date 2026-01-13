@@ -805,7 +805,7 @@ class EntryRepository extends ServiceEntityRepository
         if (null !== $month && $month > 0) {
             // Use date range instead of MONTH function for DQL compatibility
             $startOfMonth = sprintf('%04d-%02d-01', $year, $month);
-            $lastDay = new DateTime(sprintf('%d-%d-01', $year, $month))->format('t');
+            $lastDay = (int) (new DateTime(sprintf('%d-%d-01', $year, $month))->format('t'));
             $endOfMonth = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
             $queryBuilder->andWhere('e.day >= :startOfMonth')
                 ->andWhere('e.day <= :endOfMonth')
@@ -891,7 +891,7 @@ class EntryRepository extends ServiceEntityRepository
         if (null !== $month && $month > 0) {
             // Use date range instead of MONTH function for DQL compatibility
             $startOfMonth = sprintf('%04d-%02d-01', $year, $month);
-            $lastDay = new DateTime(sprintf('%d-%d-01', $year, $month))->format('t');
+            $lastDay = (int) (new DateTime(sprintf('%d-%d-01', $year, $month))->format('t'));
             $endOfMonth = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
             $queryBuilder->andWhere('e.day >= :startOfMonth')
                 ->andWhere('e.day <= :endOfMonth')

@@ -384,7 +384,7 @@ class Entry extends Base
     public function getDurationString(): string
     {
         $nMinutes = $this->getDuration();
-        $nHours = floor($nMinutes / 60);
+        $nHours = (int) floor($nMinutes / 60);
         $nMinutes %= 60;
 
         return sprintf('%02d:%02d', $nHours, $nMinutes);

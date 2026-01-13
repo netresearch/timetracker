@@ -71,7 +71,7 @@ class JiraWorkLogService
                 // This prevents one failed entry from blocking all others
                 error_log(sprintf(
                     'Failed to sync work log for entry %d: %s',
-                    $entry->getId(),
+                    $entry->getId() ?? 0,
                     $e->getMessage(),
                 ));
             } finally {

@@ -491,7 +491,7 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         fwrite(STDERR, sprintf(
             "\n[INTEGRATION PERFORMANCE] %s: %dms, %sMB memory, %d records, %s records/sec\n",
             $testName,
-            $durationMs,
+            (int) $durationMs,
             $memoryMB,
             $recordCount,
             $throughput,

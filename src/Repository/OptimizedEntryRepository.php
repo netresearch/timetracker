@@ -54,7 +54,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
-        $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId(), $days);
+        $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId() ?? 0, $days);
 
         if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult) && array_is_list($cachedResult));
