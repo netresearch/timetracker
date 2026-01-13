@@ -9,7 +9,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\Customer>
+ * @extends ServiceEntityRepository<Customer>
  */
 class CustomerRepository extends ServiceEntityRepository
 {
@@ -43,8 +43,7 @@ class CustomerRepository extends ServiceEntityRepository
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')
             ->getQuery()
-            ->execute()
-        ;
+            ->execute();
 
         $data = [];
         foreach ($result as $customer) {

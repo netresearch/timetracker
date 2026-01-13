@@ -9,10 +9,10 @@ use Rector\Symfony\Set\SymfonySetList;
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__.'/../../src',
-        __DIR__.'/../../tests',
+        __DIR__ . '/../../src',
+        __DIR__ . '/../../tests',
     ])
-    #->withPHPStanConfigs([__DIR__.'/phpstan.neon'])
+    // ->withPHPStanConfigs([__DIR__.'/phpstan.neon'])
     ->withSets([
         LevelSetList::UP_TO_PHP_84,
         SetList::CODE_QUALITY,

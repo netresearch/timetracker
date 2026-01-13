@@ -9,12 +9,15 @@ use App\Dto\ActivitySaveDto;
 use App\Entity\Activity;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\ActivityRepository;
 use App\Response\Error;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+use function assert;
 
 final class SaveActivityAction extends BaseController
 {
@@ -26,20 +29,20 @@ final class SaveActivityAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-        /** @var \App\Repository\ActivityRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
+        assert($objectRepository instanceof ActivityRepository);
 
         $id = $activitySaveDto->id;
 
         if (0 !== $id) {
             $activity = $objectRepository->find($id);
-            if (!$activity) {
+            if (null === $activity) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (!$activity instanceof Activity) {
+            if (! $activity instanceof Activity) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {

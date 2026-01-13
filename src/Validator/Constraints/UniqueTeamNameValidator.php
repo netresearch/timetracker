@@ -26,7 +26,7 @@ class UniqueTeamNameValidator extends ConstraintValidator
      */
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (!$constraint instanceof UniqueTeamName) {
+        if (! $constraint instanceof UniqueTeamName) {
             throw new UnexpectedTypeException($constraint, UniqueTeamName::class);
         }
 
@@ -35,7 +35,7 @@ class UniqueTeamNameValidator extends ConstraintValidator
         }
 
         // Ensure value is string for repository query
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return; // Let other validators handle non-string values
         }
 
@@ -53,8 +53,7 @@ class UniqueTeamNameValidator extends ConstraintValidator
 
             $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ value }}', $value)
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

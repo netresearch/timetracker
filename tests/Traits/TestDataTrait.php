@@ -5,18 +5,19 @@ declare(strict_types=1);
 namespace Tests\Traits;
 
 use Exception;
+use RuntimeException;
 
+use function dirname;
 use function explode;
-use function file_get_contents;
 use function file_exists;
+use function file_get_contents;
 use function function_exists;
 use function is_file;
-use function method_exists;
 use function trim;
 
 /**
  * Test data management trait.
- * 
+ *
  * Provides fixture loading and test data management functionality
  * for test cases requiring specific test data.
  */
@@ -29,7 +30,7 @@ trait TestDataTrait
 
     /**
      * Load test data from SQL file.
-     * 
+     *
      * Each test has a path to the file with the SQL test data.
      * When executing loadTestData() the file from the $filepath
      * of current scope will be imported.
@@ -38,17 +39,19 @@ trait TestDataTrait
     {
         // Determine file path - handle parallel execution path issues
         $testFilePath = $this->resolveTestDataPath($filepath);
-        
-        if (!$testFilePath || !is_file($testFilePath)) {
+
+        if (null === $testFilePath || '' === $testFilePath || ! is_file($testFilePath)) {
             // Skip loading if file doesn't exist (parallel execution might not need all data)
-            error_log("Test data file not found: " . ($testFilePath ?: 'unknown'));
+            error_log('Test data file not found: ' . (null !== $testFilePath && '' !== $testFilePath ? $testFilePath : 'unknown'));
+
             return;
         }
 
         $file = file_get_contents($testFilePath);
-        
+
         if (false === $file) {
-            error_log("Failed to read test data file: " . $testFilePath);
+            error_log('Failed to read test data file: ' . $testFilePath);
+
             return;
         }
 
@@ -58,6 +61,9 @@ trait TestDataTrait
         }
 
         try {
+            if (null === $this->serviceContainer) {
+                throw new RuntimeException('Service container not initialized');
+            }
             $connection = $this->serviceContainer->get('doctrine.dbal.default_connection');
 
             // Execute SQL file statements using DBAL (avoid native connection handling)
@@ -66,15 +72,11 @@ trait TestDataTrait
                 $statement = trim($statement);
                 if ('' !== $statement && '0' !== $statement) {
                     try {
-                        if (method_exists($connection, 'executeStatement')) {
-                            $connection->executeStatement($statement);
-                        } else {
-                            $connection->executeQuery($statement);
-                        }
+                        $connection->executeStatement($statement);
                     } catch (Exception $e) {
                         // In parallel execution, some statements might fail due to race conditions
                         // Log but don't fail completely
-                        error_log('Database statement warning: ' . $e->getMessage() . " for: " . substr($statement, 0, 100));
+                        error_log('Database statement warning: ' . $e->getMessage() . ' for: ' . substr($statement, 0, 100));
                     }
                 }
             }
@@ -100,39 +102,39 @@ trait TestDataTrait
     private function resolveTestDataPath(?string $filepath = null): ?string
     {
         $baseDir = __DIR__;
-        
+
         // Use provided filepath or default from instance
         $targetPath = $filepath ?? ($this->filepath ?? null);
-        
-        if (!$targetPath) {
+
+        if (null === $targetPath || '' === $targetPath) {
             return null;
         }
-        
+
         // Try the direct path first
         $fullPath = $baseDir . $targetPath;
         if (file_exists($fullPath)) {
             return $fullPath;
         }
-        
+
         // Try relative to project root (for parallel execution)
-        $rootPath = dirname(dirname($baseDir)) . '/sql/unittest/002_testdata.sql';
+        $rootPath = dirname($baseDir, 2) . '/sql/unittest/002_testdata.sql';
         if (file_exists($rootPath)) {
             return $rootPath;
         }
-        
+
         // Try alternative paths for parallel execution
         $alternativePaths = [
-            dirname(dirname($baseDir)) . $targetPath,
-            dirname(dirname(dirname($baseDir))) . $targetPath,
+            dirname($baseDir, 2) . $targetPath,
+            dirname($baseDir, 3) . $targetPath,
             $targetPath, // Absolute path
         ];
-        
+
         foreach ($alternativePaths as $path) {
             if (file_exists($path)) {
                 return $path;
             }
         }
-        
+
         return null;
     }
 

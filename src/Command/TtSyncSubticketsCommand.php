@@ -42,11 +42,10 @@ class TtSyncSubticketsCommand extends Command
         $projectId = is_scalar($projectArg) ? $projectArg : null;
 
         $entityRepository = $this->entityManager
-            ->getRepository(\App\Entity\Project::class)
-        ;
+            ->getRepository(\App\Entity\Project::class);
         if (null !== $projectId && '' !== $projectId) {
             $project = $entityRepository->find($projectId);
-            if (!$project instanceof \App\Entity\Project) {
+            if (! $project instanceof \App\Entity\Project) {
                 $symfonyStyle->error('Project does not exist');
 
                 return 1;
@@ -57,8 +56,7 @@ class TtSyncSubticketsCommand extends Command
             $projects = $entityRepository->createQueryBuilder('p')
                 ->where('p.ticketSystem IS NOT NULL')
                 ->getQuery()
-                ->getResult()
-            ;
+                ->getResult();
         }
 
         /** @var array<int, \App\Entity\Project> $projects */

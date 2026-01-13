@@ -12,6 +12,7 @@ use App\Service\Integration\Jira\JiraIntegrationService;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
 
 use function in_array;
 
@@ -42,10 +43,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
     {
         $entry = $entryEvent->getEntry();
 
-        $this->log('Entry created', [
-            'entry_id' => $entry->getId(),
-            'user_id' => $entry->getUser()?->getId(),
-        ]);
+        $this->logger?->info('Entry created');
 
         // Invalidate cache for user entries
         $user = $entry->getUser();
@@ -61,12 +59,9 @@ class EntryEventSubscriber implements EventSubscriberInterface
         if ($this->shouldAutoSync($entry)) {
             try {
                 $this->jiraIntegrationService->saveWorklog($entry);
-                $this->log('Entry auto-synced to JIRA', ['entry_id' => $entry->getId()]);
+                $this->logger?->info('Entry auto-synced to JIRA');
             } catch (Exception $e) {
-                $this->log('Auto-sync failed', [
-                    'entry_id' => $entry->getId(),
-                    'error' => $e->getMessage(),
-                ], 'error');
+                $this->logger?->error('Auto-sync to JIRA failed', ['exception' => $e]);
             }
         }
     }
@@ -75,10 +70,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
     {
         $entry = $entryEvent->getEntry();
 
-        $this->log('Entry updated', [
-            'entry_id' => $entry->getId(),
-            'changes' => $entryEvent->getContext()['changes'] ?? [],
-        ]);
+        $this->logger?->info('Entry updated');
 
         // Invalidate cache
         $user = $entry->getUser();
@@ -91,15 +83,12 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         // Update JIRA if already synced
-        if ($entry->getSyncedToTicketsystem() && $entry->getWorklogId()) {
+        if ($entry->getSyncedToTicketsystem() && null !== $entry->getWorklogId()) {
             try {
                 $this->jiraIntegrationService->saveWorklog($entry);
-                $this->log('JIRA worklog updated', ['entry_id' => $entry->getId()]);
+                $this->logger?->info('JIRA worklog updated');
             } catch (Exception $e) {
-                $this->log('JIRA update failed', [
-                    'entry_id' => $entry->getId(),
-                    'error' => $e->getMessage(),
-                ], 'warning');
+                $this->logger?->warning('JIRA worklog update failed', ['exception' => $e]);
             }
         }
     }
@@ -108,7 +97,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
     {
         $entry = $entryEvent->getEntry();
 
-        $this->log('Entry deleted', ['entry_id' => $entry->getId()]);
+        $this->logger?->info('Entry deleted');
 
         // Invalidate cache
         $user = $entry->getUser();
@@ -121,27 +110,19 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         // Delete from JIRA if synced
-        if ($entry->getSyncedToTicketsystem() && $entry->getWorklogId()) {
+        if ($entry->getSyncedToTicketsystem() && null !== $entry->getWorklogId()) {
             try {
                 $this->jiraIntegrationService->deleteWorklog($entry);
-                $this->log('JIRA worklog deleted', ['entry_id' => $entry->getId()]);
+                $this->logger?->info('JIRA worklog deleted');
             } catch (Exception $e) {
-                $this->log('JIRA deletion failed', [
-                    'entry_id' => $entry->getId(),
-                    'error' => $e->getMessage(),
-                ], 'warning');
+                $this->logger?->warning('JIRA worklog deletion failed', ['exception' => $e]);
             }
         }
     }
 
     public function onEntrySynced(EntryEvent $entryEvent): void
     {
-        $entry = $entryEvent->getEntry();
-
-        $this->log('Entry synced to JIRA', [
-            'entry_id' => $entry->getId(),
-            'worklog_id' => $entry->getWorklogId(),
-        ]);
+        $this->logger?->info('Entry synced to JIRA');
 
         // Clear sync-related cache
         $this->queryCacheService->invalidateTag('jira_sync');
@@ -149,13 +130,14 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
     public function onEntrySyncFailed(EntryEvent $entryEvent): void
     {
-        $entry = $entryEvent->getEntry();
         $context = $entryEvent->getContext();
+        $exception = $context['exception'] ?? null;
 
-        $this->log('Entry sync failed', [
-            'entry_id' => $entry->getId(),
-            'error' => $context['error'] ?? 'Unknown error',
-        ], 'error');
+        if ($exception instanceof Throwable) {
+            $this->logger?->error('Entry sync to JIRA failed', ['exception' => $exception]);
+        } else {
+            $this->logger?->error('Entry sync to JIRA failed');
+        }
 
         // Could trigger notification or retry logic here
     }
@@ -164,36 +146,18 @@ class EntryEventSubscriber implements EventSubscriberInterface
     {
         // Check if project has auto-sync enabled
         $project = $entry->getProject();
-        if (!$project instanceof \App\Entity\Project) {
+        if (! $project instanceof \App\Entity\Project) {
             return false;
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (! $ticketSystem instanceof \App\Entity\TicketSystem) {
             return false;
         }
 
         // Check if ticket system has auto-sync enabled
         return $ticketSystem->getBookTime()
                && TicketSystemType::JIRA === $ticketSystem->getType()
-               && !in_array($entry->getTicket(), ['', '0'], true);
-    }
-
-    /**
-     * @param array<string, mixed> $context
-     */
-    private function log(string $message, array $context = [], string $level = 'info'): void
-    {
-        if (!$this->logger instanceof LoggerInterface) {
-            return;
-        }
-
-        $context['subscriber'] = 'EntryEventSubscriber';
-
-        match ($level) {
-            'error' => $this->logger->error($message, $context),
-            'warning' => $this->logger->warning($message, $context),
-            default => $this->logger->info($message, $context),
-        };
+               && ! in_array($entry->getTicket(), ['', '0'], true);
     }
 }

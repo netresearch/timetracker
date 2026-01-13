@@ -32,12 +32,12 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
     {
         $throwable = $exceptionEvent->getThrowable();
 
-        if (!$throwable instanceof AccessDeniedException) {
+        if (! $throwable instanceof AccessDeniedException) {
             return;
         }
 
         // If user is not authenticated, redirect to login instead of showing 403
-        if (!$this->security->getUser() instanceof \Symfony\Component\Security\Core\User\UserInterface) {
+        if (! $this->security->getUser() instanceof \Symfony\Component\Security\Core\User\UserInterface) {
             $loginUrl = $this->router->generate('_login');
             $response = new RedirectResponse($loginUrl);
             $exceptionEvent->setResponse($response);

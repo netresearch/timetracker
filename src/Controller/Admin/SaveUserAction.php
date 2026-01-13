@@ -10,6 +10,7 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\UserRepository;
 use App\Response\Error;
 use Exception;
 use InvalidArgumentException;
@@ -19,6 +20,7 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use UnexpectedValueException;
 
+use function assert;
 use function sprintf;
 
 final class SaveUserAction extends BaseController
@@ -34,12 +36,11 @@ final class SaveUserAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-
-        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
+        assert($objectRepository instanceof UserRepository);
 
         $user = 0 !== $userSaveDto->id ? $objectRepository->find($userSaveDto->id) : new User();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 

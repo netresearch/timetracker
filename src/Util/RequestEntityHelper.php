@@ -23,7 +23,7 @@ final class RequestEntityHelper
     public static function id(Request $request, string $key): ?string
     {
         $raw = $request->request->get($key);
-        if (!is_scalar($raw)) {
+        if (! is_scalar($raw)) {
             return null;
         }
 
@@ -50,7 +50,9 @@ final class RequestEntityHelper
             return null;
         }
 
-        $entity = $managerRegistry->getRepository($entityClass)->find($id);
+        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<T> $repository */
+        $repository = $managerRegistry->getRepository($entityClass);
+        $entity = $repository->find($id);
 
         return $entity instanceof $entityClass ? $entity : null;
     }

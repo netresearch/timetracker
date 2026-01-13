@@ -80,8 +80,6 @@ final readonly class EntrySaveDto
 
     /**
      * Convert date string to DateTime object.
-     *
-     * @throws Exception
      */
     public function getDateAsDateTime(): ?DateTimeInterface
     {
@@ -91,13 +89,11 @@ final readonly class EntrySaveDto
 
         $date = DateTime::createFromFormat('Y-m-d', $this->date);
 
-        return $date ?: null;
+        return false !== $date ? $date : null;
     }
 
     /**
      * Convert start time string to DateTime object.
-     *
-     * @throws Exception
      */
     public function getStartAsDateTime(): ?DateTimeInterface
     {
@@ -111,13 +107,11 @@ final readonly class EntrySaveDto
             $time = DateTime::createFromFormat('H:i', $this->start);
         }
 
-        return $time ?: null;
+        return false !== $time ? $time : null;
     }
 
     /**
      * Convert end time string to DateTime object.
-     *
-     * @throws Exception
      */
     public function getEndAsDateTime(): ?DateTimeInterface
     {
@@ -131,7 +125,7 @@ final readonly class EntrySaveDto
             $time = DateTime::createFromFormat('H:i', $this->end);
         }
 
-        return $time ?: null;
+        return false !== $time ? $time : null;
     }
 
     /**
@@ -145,11 +139,10 @@ final readonly class EntrySaveDto
         $start = $this->getStartAsDateTime();
         $end = $this->getEndAsDateTime();
 
-        if ($start && $end && $start >= $end) {
+        if (null !== $start && null !== $end && $start >= $end) {
             $executionContext->buildViolation('Start time must be before end time')
                 ->atPath('end')
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

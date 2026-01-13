@@ -138,7 +138,6 @@ class LdapClientService
             ]);
         }
 
-        /** @var \Laminas\Ldap\Collection<array<string, array<int, string>>> $collection */
         $collection = $ldap->search(
             $searchFilter,
             $this->_baseDn,
@@ -146,7 +145,7 @@ class LdapClientService
             ['cn', 'distinguishedName', 'dn'],
         );
 
-        if (!is_object($collection) || (0 === $collection->count())) {
+        if (! is_object($collection) || (0 === $collection->count())) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: User search failed or returned no results.', [
                     'filter' => $searchFilter,
@@ -157,7 +156,7 @@ class LdapClientService
             throw new Exception('Username unknown.');
         }
 
-        if ($collection->count() > 1 && $this->logger) {
+        if ($collection->count() > 1 && null !== $this->logger) {
             $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
                 'filter' => $searchFilter,
                 'baseDn' => $this->_baseDn,
@@ -165,8 +164,7 @@ class LdapClientService
             ]);
         }
 
-        /** @var array<string, array<int, string>> $ldapEntry */
-        $ldapEntry = $collection->getFirst();
+        $ldapEntry = $this->normalizeFirstEntry($collection->getFirst());
         if ($this->logger instanceof LoggerInterface) {
             $returnedDn = $ldapEntry['distinguishedname'][0] ?? ($ldapEntry['dn'][0] ?? 'N/A');
             $this->logger->info('LDAP: User found.', [
@@ -208,7 +206,7 @@ class LdapClientService
                   null;
 
         // If DN extraction failed or returned invalid data, construct it from username
-        if (!$userDn || strlen($userDn) < 10) {
+        if (null === $userDn || '' === $userDn || strlen($userDn) < 10) {
             // Construct DN using the original username and our known structure
             $userDn = sprintf('uid=%s,ou=users,%s', $this->_userName, $this->_baseDn);
             if ($this->logger instanceof LoggerInterface) {
@@ -437,7 +435,7 @@ class LdapClientService
             $this->verifyUsername(),
         );
         // verifyPassword returns bool true; enforce literal true for signature
-        if (!$result) {
+        if (true !== $result) {
             throw new RuntimeException('LDAP verification did not return true');
         }
 
@@ -445,7 +443,7 @@ class LdapClientService
     }
 
     /**
-     * @return array<int, string>
+     * @return array<string>
      */
     public function getTeams()
     {
@@ -458,7 +456,7 @@ class LdapClientService
     protected function setTeamsByLdapResponse(array $ldapRespsonse): void
     {
         $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
-        if (!$dn) {
+        if (null === $dn || '' === $dn) {
             if ($this->logger instanceof LoggerInterface) {
                 $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
             }
@@ -476,7 +474,7 @@ class LdapClientService
 
             try {
                 $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
-                if (!$arMapping || !is_array($arMapping)) {
+                if (null === $arMapping || ! is_array($arMapping)) {
                     if ($this->logger instanceof LoggerInterface) {
                         $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
                     }
@@ -494,7 +492,7 @@ class LdapClientService
                     }
                 }
 
-                if ([] === $this->teams && $this->logger) {
+                if ([] === $this->teams && null !== $this->logger) {
                     $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
                 }
             } catch (Exception $e) {
@@ -508,5 +506,53 @@ class LdapClientService
         } elseif ($this->logger instanceof LoggerInterface) {
             $this->logger->warning('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
         }
+    }
+
+    /**
+     * Normalize LDAP entry from getFirst() to expected array structure.
+     *
+     * Laminas LDAP stubs declare getFirst() returns array{dn: string}|null,
+     * but actual runtime returns richer structure. This method validates
+     * and transforms the raw result with proper type safety.
+     *
+     * @param mixed $rawEntry Raw entry from Collection::getFirst()
+     *
+     * @throws Exception When entry is null or invalid
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function normalizeFirstEntry(mixed $rawEntry): array
+    {
+        if (null === $rawEntry || !is_array($rawEntry)) {
+            throw new Exception('LDAP entry is null or not an array');
+        }
+
+        // The actual runtime type is richer than stubs declare.
+        // Validate and transform each key-value pair.
+        $normalized = [];
+        foreach ($rawEntry as $key => $value) {
+            if (!is_string($key)) {
+                continue;
+            }
+
+            if (is_array($value)) {
+                // Already in expected format: array<int, string>
+                $stringValues = [];
+                foreach ($value as $item) {
+                    if (is_string($item)) {
+                        $stringValues[] = $item;
+                    } elseif (is_int($item) || is_float($item) || is_bool($item)) {
+                        $stringValues[] = (string) $item;
+                    }
+                    // Skip non-stringable values
+                }
+                $normalized[$key] = $stringValues;
+            } elseif (is_string($value)) {
+                // Single string value, wrap in array
+                $normalized[$key] = [$value];
+            }
+        }
+
+        return $normalized;
     }
 }

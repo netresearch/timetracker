@@ -29,8 +29,7 @@ class ControllingController extends BaseController
         );
         $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode($format)
-        ;
+            ->setFormatCode($format);
     }
 
     /**
@@ -47,7 +46,6 @@ class ControllingController extends BaseController
         $worksheet->setCellValue($column . $row, $hourValue);
         $worksheet->getStyle($column . $row)
             ->getNumberFormat()
-            ->setFormatCode('HH:MM')
-        ;
+            ->setFormatCode('HH:MM');
     }
 }

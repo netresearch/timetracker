@@ -9,7 +9,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\Team>
+ * @extends ServiceEntityRepository<Team>
  */
 class TeamRepository extends ServiceEntityRepository
 {
@@ -34,7 +34,7 @@ class TeamRepository extends ServiceEntityRepository
             $data[] = ['team' => [
                 'id' => (int) ($team->getId() ?? 0),
                 'name' => (string) ($team->getName() ?? ''),
-                'lead_user_id' => (int) ($team->getLeadUser() ? $team->getLeadUser()->getId() : 0),
+                'lead_user_id' => null !== $team->getLeadUser() ? (int) $team->getLeadUser()->getId() : 0,
             ]];
         }
 

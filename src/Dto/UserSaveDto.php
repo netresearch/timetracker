@@ -40,7 +40,7 @@ final readonly class UserSaveDto
     public static function fromRequest(Request $request): self
     {
         /** @var list<int|string> $teams */
-        $teams = $request->request->all('teams') ?: [];
+        $teams = [] !== $request->request->all('teams') ? $request->request->all('teams') : [];
 
         return new self(
             id: (int) ($request->request->get('id') ?? 0),
@@ -58,8 +58,7 @@ final readonly class UserSaveDto
         if ([] === $this->teams) {
             $executionContext->buildViolation('Every user must belong to at least one team')
                 ->atPath('teams')
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

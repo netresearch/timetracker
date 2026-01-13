@@ -7,6 +7,9 @@ namespace Tests\Response;
 use App\Response\Error;
 use PHPUnit\Framework\TestCase;
 
+use function assert;
+use function is_array;
+
 /**
  * @internal
  *
@@ -29,6 +32,7 @@ final class ErrorResponseTest extends TestCase
     {
         $error = new Error('Forbidden', \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN, '/login');
         $data = json_decode((string) $error->getContent(), true);
+        assert(is_array($data));
         self::assertSame('/login', $data['forwardUrl'] ?? null);
     }
 }

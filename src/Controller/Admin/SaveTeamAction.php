@@ -10,10 +10,13 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\TeamRepository;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+use function assert;
 
 final class SaveTeamAction extends BaseController
 {
@@ -25,8 +28,8 @@ final class SaveTeamAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
     {
-        /** @var \App\Repository\TeamRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
+        assert($objectRepository instanceof TeamRepository);
 
         $id = $teamSaveDto->id;
         $name = $teamSaveDto->name;
@@ -36,13 +39,13 @@ final class SaveTeamAction extends BaseController
 
         if (0 !== $id) {
             $team = $objectRepository->find($id);
-            if (!$team) {
+            if (null === $team) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (!$team instanceof Team) {
+            if (! $team instanceof Team) {
                 return new \App\Response\Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {
@@ -57,7 +60,7 @@ final class SaveTeamAction extends BaseController
             return $response;
         }
 
-        if (!$teamLead instanceof User) {
+        if (! $teamLead instanceof User) {
             $response = new Response($this->translate('Please provide a valid user as team leader.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 
@@ -67,8 +70,7 @@ final class SaveTeamAction extends BaseController
         try {
             $team
                 ->setName($name)
-                ->setLeadUser($teamLead)
-            ;
+                ->setLeadUser($teamLead);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($team);

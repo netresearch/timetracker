@@ -41,7 +41,7 @@ final class SyncProjectSubticketsAction extends BaseController
                 ],
             );
         } catch (Exception $exception) {
-            return new Error($exception->getMessage(), (int) ($exception->getCode() ?: 500));
+            return new Error($exception->getMessage(), (int) (0 !== $exception->getCode() ? $exception->getCode() : 500));
         }
     }
 }

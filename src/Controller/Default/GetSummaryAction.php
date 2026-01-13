@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
 use function is_array;
 
 final class GetSummaryAction extends BaseController
@@ -36,7 +37,7 @@ final class GetSummaryAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (! $user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -54,9 +55,9 @@ final class GetSummaryAction extends BaseController
             return new JsonResponse($data);
         }
 
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        if (!$objectRepository->find($entryId)) {
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        if (null === $objectRepository->find($entryId)) {
             $message = $this->translator->trans('No entry for id.');
 
             return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
@@ -65,18 +66,15 @@ final class GetSummaryAction extends BaseController
         $data = $objectRepository->getEntrySummary((int) $entryId, $userId, $data);
 
         // Priority 1: Fix PossiblyUndefinedArrayOffset with proper array access validation
-        if (isset($data['project']) && is_array($data['project']) && isset($data['project']['estimation']) && $data['project']['estimation']) {
-            // Safely access nested array values with null coalescing and type validation
-            $projectTotal = null;
-            $projectEstimation = null;
+        if (isset($data['project']) && is_array($data['project']) && isset($data['project']['estimation']) && 0 !== $data['project']['estimation']) {
+            // Safely access nested array values with type validation
+            $projectTotal = isset($data['project']['total']) && is_numeric($data['project']['total'])
+                ? (float) $data['project']['total']
+                : null;
 
-            if (isset($data['project']['total'])) {
-                $projectTotal = is_numeric($data['project']['total']) ? (float) $data['project']['total'] : 0.0;
-            }
-
-            if (isset($data['project']['estimation'])) {
-                $projectEstimation = is_numeric($data['project']['estimation']) ? (float) $data['project']['estimation'] : 0.0;
-            }
+            $projectEstimation = is_numeric($data['project']['estimation'])
+                ? (float) $data['project']['estimation']
+                : null;
 
             // Only calculate quota if both values are available and valid
             if (null !== $projectTotal && null !== $projectEstimation) {

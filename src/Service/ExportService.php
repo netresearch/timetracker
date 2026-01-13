@@ -11,10 +11,13 @@ use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Generator;
 
+use function assert;
 use function count;
 use function in_array;
 use function is_array;
+use function is_int;
 use function is_object;
+use function is_string;
 use function sprintf;
 
 class ExportService
@@ -34,8 +37,8 @@ class ExportService
      */
     public function getEntries(\App\Entity\User $currentUser, ?array $arSort = null, string $strStart = '', string $strEnd = '', ?array $arProjects = null, ?array $arUsers = null): array
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         $arFilter = [];
 
@@ -68,7 +71,7 @@ class ExportService
 
         $arReturn = [];
         foreach ($arEntries as $arEntry) {
-            if (!$arEntry instanceof Entry) {
+            if (! $arEntry instanceof Entry) {
                 continue;
             }
 
@@ -100,19 +103,19 @@ class ExportService
         }
 
         $project = $entry->getProject();
-        if (!$project instanceof \App\Entity\Project) {
+        if (! $project instanceof \App\Entity\Project) {
             return '';
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (! $ticketSystem instanceof \App\Entity\TicketSystem) {
             return '';
         }
 
         if ($ticketSystem->getBookTime()
             && TicketSystemType::JIRA === $ticketSystem->getType()
         ) {
-            if (!isset($arApi[$ticketSystem->getId()])) {
+            if (! isset($arApi[$ticketSystem->getId()])) {
                 $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
             }
 
@@ -130,30 +133,30 @@ class ExportService
      */
     private function getWorklogUrl(Entry $entry, array &$arApi, \App\Entity\User $currentUser): string
     {
-        if ('' === $entry->getTicket() || !$entry->getWorklogId()) {
+        if ('' === $entry->getTicket() || null === $entry->getWorklogId()) {
             return '';
         }
 
         $project = $entry->getProject();
-        if (!$project instanceof \App\Entity\Project) {
+        if (! $project instanceof \App\Entity\Project) {
             return '';
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (! $ticketSystem instanceof \App\Entity\TicketSystem) {
             return '';
         }
 
-        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
+        if (! $ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
             return '';
         }
 
-        if (!isset($arApi[$ticketSystem->getId()])) {
+        if (! isset($arApi[$ticketSystem->getId()])) {
             $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
         }
 
         $apiService = $arApi[$ticketSystem->getId()] ?? null;
-        if (!$apiService) {
+        if (null === $apiService) {
             return '';
         }
 
@@ -173,8 +176,8 @@ class ExportService
      */
     public function exportEntries(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null): array
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         return $objectRepository->findByDate($userId, $year, $month, $projectId, $customerId, $arSort);
     }
@@ -188,13 +191,13 @@ class ExportService
      */
     public function exportEntriesBatched(int $userId, int $year, int $month, ?int $projectId = null, ?int $customerId = null, ?array $arSort = null, int $batchSize = 1000): Generator
     {
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
 
         $offset = 0;
         do {
             $batch = $objectRepository->findByDatePaginated($userId, $year, $month, $projectId, $customerId, $arSort, $offset, $batchSize);
-            if (!empty($batch)) {
+            if ([] !== $batch) {
                 yield $batch;
             }
 
@@ -211,27 +214,27 @@ class ExportService
      */
     public function enrichEntriesWithTicketInformation(int $userId, array $entries, bool $includeBillable = false, bool $includeTicketTitle = false, bool $searchTickets = false): array
     {
-        if (!$searchTickets) {
+        if (! $searchTickets) {
             return $entries;
         }
 
         // Group entries by ticket system to minimize API calls
         $entriesByTicketSystem = [];
         foreach ($entries as $entry) {
-            if (!$entry instanceof Entry) {
+            if (! $entry instanceof Entry) {
                 continue;
             }
-            if (!$entry->getTicket()) {
+            if ('' === $entry->getTicket()) {
                 continue;
             }
-            if (!$entry->getProject()) {
+            if (null === $entry->getProject()) {
                 continue;
             }
             $ticketSystem = $entry->getProject()->getTicketSystem();
-            if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+            if (! $ticketSystem instanceof \App\Entity\TicketSystem) {
                 continue;
             }
-            if (!$ticketSystem->getBookTime()) {
+            if (! $ticketSystem->getBookTime()) {
                 continue;
             }
             if (TicketSystemType::JIRA !== $ticketSystem->getType()) {
@@ -239,7 +242,7 @@ class ExportService
             }
 
             $ticketSystemId = $ticketSystem->getId();
-            if (!isset($entriesByTicketSystem[$ticketSystemId])) {
+            if (! isset($entriesByTicketSystem[$ticketSystemId])) {
                 $entriesByTicketSystem[$ticketSystemId] = [
                     'ticketSystem' => $ticketSystem,
                     'entries' => [],
@@ -252,10 +255,10 @@ class ExportService
         }
 
         // Get user for API calls
-        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
+        assert($objectRepository instanceof \App\Repository\UserRepository);
         $user = $objectRepository->find($userId);
-        if (!$user) {
+        if (null === $user) {
             return $entries;
         }
 
@@ -287,28 +290,39 @@ class ExportService
                 $result = $jiraApi->searchTicket($jql, $fields, count($tickets));
                 $ticketData = [];
 
-                if (is_object($result) && property_exists($result, 'issues')) {
+                if (is_object($result) && property_exists($result, 'issues') && is_array($result->issues)) {
                     foreach ($result->issues as $issue) {
-                        $ticketData[$issue->key] = $issue->fields;
+                        if (is_object($issue) && property_exists($issue, 'key') && property_exists($issue, 'fields')) {
+                            $key = $issue->key;
+                            if (is_string($key) || is_int($key)) {
+                                $ticketData[$key] = $issue->fields;
+                            }
+                        }
                     }
                 }
 
                 // Update entries with ticket information
                 foreach ($ticketSystemData['entries'] as $entry) {
                     $ticket = $entry->getTicket();
-                    if (!isset($ticketData[$ticket])) {
+                    if (! isset($ticketData[$ticket])) {
                         continue;
                     }
 
                     $fields = $ticketData[$ticket];
 
-                    if ($includeBillable && isset($fields->labels)) {
-                        $isBillable = in_array('billable', $fields->labels, true);
-                        $entry->setBillable($isBillable);
+                    if ($includeBillable && is_object($fields) && property_exists($fields, 'labels')) {
+                        $labels = $fields->labels;
+                        if (is_array($labels)) {
+                            $isBillable = in_array('billable', $labels, true);
+                            $entry->setBillable($isBillable);
+                        }
                     }
 
-                    if ($includeTicketTitle && isset($fields->summary)) {
-                        $entry->setTicketTitle($fields->summary);
+                    if ($includeTicketTitle && is_object($fields) && property_exists($fields, 'summary')) {
+                        $summary = $fields->summary;
+                        if (is_string($summary) || null === $summary) {
+                            $entry->setTicketTitle($summary);
+                        }
                     }
                 }
             } catch (Exception) {
@@ -326,10 +340,10 @@ class ExportService
      */
     public function getUsername(int $userId): ?string
     {
-        /** @var \App\Repository\UserRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(\App\Entity\User::class);
+        assert($objectRepository instanceof \App\Repository\UserRepository);
         $user = $objectRepository->find($userId);
 
-        return $user ? $user->getUsername() : null;
+        return $user instanceof \App\Entity\User ? $user->getUsername() : null;
     }
 }

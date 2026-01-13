@@ -10,6 +10,8 @@ use App\Entity\Project;
 use App\Entity\User;
 use Exception;
 
+use function assert;
+
 final class IndexAction extends BaseController
 {
     /**
@@ -21,21 +23,20 @@ final class IndexAction extends BaseController
     #[\Symfony\Component\Routing\Attribute\Route(path: '/', name: '_start', methods: ['GET'])]
     public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|\Symfony\Component\HttpFoundation\Response
     {
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 
         $userId = (int) $user->getId();
-        $managerRegistry = $this->managerRegistry;
 
         $settings = $user->getSettings();
 
-        /** @var \App\Repository\CustomerRepository $objectRepository */
-        $objectRepository = $managerRegistry->getRepository(Customer::class);
+        $objectRepository = $this->managerRegistry->getRepository(Customer::class);
+        assert($objectRepository instanceof \App\Repository\CustomerRepository);
         $customers = $objectRepository->getCustomersByUser($userId);
 
-        /** @var \App\Repository\ProjectRepository $projectRepo */
-        $projectRepo = $managerRegistry->getRepository(Project::class);
+        $projectRepo = $this->managerRegistry->getRepository(Project::class);
+        assert($projectRepo instanceof \App\Repository\ProjectRepository);
         $projects = $projectRepo->getProjectStructure($userId, $customers);
 
         return $this->render('index.html.twig', [

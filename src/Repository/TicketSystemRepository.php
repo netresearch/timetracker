@@ -10,7 +10,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use ReflectionException;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\TicketSystem>
+ * @extends ServiceEntityRepository<TicketSystem>
  */
 class TicketSystemRepository extends ServiceEntityRepository
 {

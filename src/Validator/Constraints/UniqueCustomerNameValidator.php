@@ -25,7 +25,7 @@ class UniqueCustomerNameValidator extends ConstraintValidator
      */
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (!$constraint instanceof UniqueCustomerName) {
+        if (! $constraint instanceof UniqueCustomerName) {
             throw new UnexpectedTypeException($constraint, UniqueCustomerName::class);
         }
 
@@ -44,21 +44,18 @@ class UniqueCustomerNameValidator extends ConstraintValidator
         $entityRepository = $this->entityManager->getRepository(Customer::class);
         $queryBuilder = $entityRepository->createQueryBuilder('c')
             ->where('c.name = :name')
-            ->setParameter('name', $value)
-        ;
+            ->setParameter('name', $value);
 
         if ($customerId > 0) {
             $queryBuilder->andWhere('c.id != :id')
-                ->setParameter('id', $customerId)
-            ;
+                ->setParameter('id', $customerId);
         }
 
         $existingCustomer = $queryBuilder->getQuery()->getOneOrNullResult();
 
         if (null !== $existingCustomer) {
             $this->context->buildViolation($constraint->message)
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

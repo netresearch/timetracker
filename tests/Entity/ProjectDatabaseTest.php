@@ -6,16 +6,19 @@ namespace Tests\Entity;
 
 use App\Entity\Customer;
 use App\Entity\Entry;
-use App\Enum\EntryClass;
 use App\Entity\Preset;
 use App\Entity\Project;
-use App\Enum\BillingType;
 use App\Entity\TicketSystem;
-use App\Enum\TicketSystemType;
 use App\Entity\User;
+use App\Enum\BillingType;
+use App\Enum\EntryClass;
+use App\Enum\TicketSystemType;
 use App\Enum\UserType;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+
+use function assert;
 
 /**
  * @internal
@@ -26,10 +29,15 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
+        $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        assert($entityManager instanceof EntityManagerInterface);
+        $this->entityManager = $entityManager;
     }
 
     public function testPersistAndFind(): void
@@ -130,6 +138,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
 
         // Fetch and verify updates
         $updatedProject = $this->entityManager->getRepository(Project::class)->find($id);
+        self::assertNotNull($updatedProject, 'Updated project should exist');
         self::assertSame('Updated Project', $updatedProject->getName());
         self::assertFalse($updatedProject->getActive());
         self::assertTrue($updatedProject->getGlobal());
@@ -253,6 +262,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
+        self::assertNotNull($fetchedProject, 'Project should exist');
 
         // Test entry relationship
         self::assertCount(2, $fetchedProject->getEntries());
@@ -269,6 +279,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         $customer = $this->entityManager->find(Customer::class, $customer->getId());
+        self::assertNotNull($customer, 'Customer should not be null');
         $this->entityManager->remove($customer);
         $this->entityManager->flush();
     }
@@ -321,6 +332,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
+        self::assertNotNull($fetchedProject, 'Project should exist');
 
         // Test relationships
         self::assertNotNull($fetchedProject->getProjectLead());
@@ -370,7 +382,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $ticketSystem->setUrl('https://jira.example.com');
         $ticketSystem->setLogin('test_login');
         $ticketSystem->setPassword('test_password');
-        $ticketSystem->setTicketurl('https://jira.example.com/ticket/{ticket}');
+        $ticketSystem->setTicketUrl('https://jira.example.com/ticket/{ticket}');
 
         $this->entityManager->persist($ticketSystem);
 
@@ -397,6 +409,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
+        self::assertNotNull($fetchedProject, 'Project should exist');
 
         // Test ticket system relationship
         self::assertNotNull($fetchedProject->getTicketSystem());
@@ -479,6 +492,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         // Clear entity manager and fetch from database
         $this->entityManager->clear();
         $fetchedProject = $this->entityManager->find(Project::class, $projectId);
+        self::assertNotNull($fetchedProject, 'Project should exist');
 
         // Test presets relationship
         self::assertCount(2, $fetchedProject->getPresets());

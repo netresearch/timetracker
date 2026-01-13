@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+
+use function assert;
 
 /**
  * @internal
@@ -15,6 +18,8 @@ final class SecurityControllerTest extends AbstractWebTestCase
 {
     /**
      * Override setUp to not automatically log in for this test class.
+     *
+     * @phpstan-ignore phpunit.callParent (Intentionally bypassing parent to avoid auto-login)
      */
     protected function setUp(): void
     {
@@ -34,12 +39,15 @@ final class SecurityControllerTest extends AbstractWebTestCase
     {
         // Session is already cleared in setUp, just verify we're not logged in
         $session = $this->client->getContainer()->get('session');
+        assert($session instanceof \Symfony\Component\HttpFoundation\Session\SessionInterface);
         $session->clear();
         $session->save();
 
         // Also clear the security token to ensure full logout in test env
         if ($this->client->getContainer()->has('security.token_storage')) {
-            $this->client->getContainer()->get('security.token_storage')->setToken(null);
+            $tokenStorage = $this->client->getContainer()->get('security.token_storage');
+            assert($tokenStorage instanceof \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface);
+            $tokenStorage->setToken(null);
         }
 
         // Try to access a protected route with only text/html accept header
@@ -80,18 +88,18 @@ final class SecurityControllerTest extends AbstractWebTestCase
         // Use the crawler provided by the client request
         $kernelBrowser->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/login');
 
-        $this->assertResponseIsSuccessful(); // Asserts 2xx status code
+        self::assertResponseIsSuccessful(); // Asserts 2xx status code
 
         // Check the JS config for the form URL
         $content = $kernelBrowser->getResponse()->getContent();
 
         // The form is created with ExtJS, so check for the right script elements
-        self::assertStringContainsString('Ext.form.Panel', $content);
-        self::assertStringContainsString("name: '_username'", $content);
-        self::assertStringContainsString("name: '_password'", $content);
-        self::assertStringContainsString("name: '_csrf_token'", $content);
+        self::assertStringContainsString('Ext.form.Panel', (string) $content);
+        self::assertStringContainsString("name: '_username'", (string) $content);
+        self::assertStringContainsString("name: '_password'", (string) $content);
+        self::assertStringContainsString("name: '_csrf_token'", (string) $content);
         // Ensure the form URL now points to /login
-        self::assertStringContainsString('url: "/login"', $content);
+        self::assertStringContainsString('url: "/login"', (string) $content);
     }
 
     #[\PHPUnit\Framework\Attributes\Group('network')]
@@ -105,7 +113,11 @@ final class SecurityControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         // Get CSRF token for logout (required with CSRF protection enabled)
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
         $csrfTokenManager = $this->serviceContainer->get('security.csrf.token_manager');
+        assert($csrfTokenManager instanceof \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface);
         $csrfToken = $csrfTokenManager->getToken('logout')->getValue();
 
         // After logging out with CSRF token
@@ -120,6 +132,7 @@ final class SecurityControllerTest extends AbstractWebTestCase
 
         // Ensure token cleared to avoid sticky authentication across requests
         $tokenStorage = $this->client->getContainer()->get('security.token_storage');
+        assert($tokenStorage instanceof \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface);
         self::assertNull($tokenStorage->getToken());
 
         // Try to access a protected route again with browser-like headers

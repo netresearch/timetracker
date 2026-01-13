@@ -10,9 +10,8 @@ use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Class UserRepository.
- */
-/**
- * @extends ServiceEntityRepository<\App\Entity\User>
+ *
+ * @extends ServiceEntityRepository<User>
  */
 class UserRepository extends ServiceEntityRepository
 {
@@ -55,7 +54,7 @@ class UserRepository extends ServiceEntityRepository
         $data = [];
 
         foreach ($users as $user) {
-            if (!$user instanceof User) {
+            if (! $user instanceof User) {
                 continue;
             }
 
@@ -95,7 +94,7 @@ class UserRepository extends ServiceEntityRepository
 
         $data = [];
         foreach ($users as $user) {
-            if (!$user instanceof User) {
+            if (! $user instanceof User) {
                 continue;
             }
 

@@ -44,12 +44,12 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         $times = [];
         foreach ($entries as $entry) {
             $day = $entry->getDay();
-            if (!$day instanceof DateTimeInterface) {
+            if (! $day instanceof DateTimeInterface) {
                 continue;
             }
 
             $key = $day->format('y-m-d');
-            if (!isset($times[$key])) {
+            if (! isset($times[$key])) {
                 $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'hours' => 0.0, 'minutes' => 0.0, 'quota' => 0];
             }
 

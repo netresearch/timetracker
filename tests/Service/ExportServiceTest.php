@@ -6,8 +6,8 @@ namespace Tests\Service;
 
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
-use App\Enum\TicketSystemType;
 use App\Entity\User;
+use App\Enum\TicketSystemType;
 use App\Repository\EntryRepository;
 use App\Service\ExportService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
@@ -16,6 +16,8 @@ use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\RouterInterface;
 
+use function array_key_exists;
+
 /**
  * @internal
  *
@@ -23,6 +25,12 @@ use Symfony\Component\Routing\RouterInterface;
  */
 final class ExportServiceTest extends TestCase
 {
+    /**
+     * @param array<int, Entry>                 $entries
+     * @param array<int, string>                $searchTickets
+     * @param array<string, array<int, string>> $jiraLabelsByIssue
+     * @param array<string, string>             $jiraSummariesByIssue
+     */
     private function makeSubject(
         array $entries,
         array $searchTickets = [],
@@ -37,15 +45,15 @@ final class ExportServiceTest extends TestCase
 
         // Provide appropriate repositories based on requested class
         $currentUser = new User();
-        $mock = $this->getMockBuilder(\Doctrine\Persistence\ObjectRepository::class)->getMock();
-        $mock->method('find')->willReturn($currentUser);
-        $doctrine->method('getRepository')->willReturnCallback(static function (string $class) use ($repo, $mock): \PHPUnit\Framework\MockObject\MockObject {
+        $userRepoMock = $this->createMock(\App\Repository\UserRepository::class);
+        $userRepoMock->method('find')->willReturn($currentUser);
+        $doctrine->method('getRepository')->willReturnCallback(static function (string $class) use ($repo, $userRepoMock): \PHPUnit\Framework\MockObject\MockObject {
             if (Entry::class === $class) {
                 return $repo;
             }
 
             if (User::class === $class) {
-                return $mock;
+                return $userRepoMock;
             }
 
             return $repo;
@@ -59,35 +67,47 @@ final class ExportServiceTest extends TestCase
         $dummyUser = $currentUser;
         $dummyTs = new TicketSystem();
         $router->method('generate')->willReturn('/oauth-callback');
-        $jiraApi = new class($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
+        $jiraApi = new class ($dummyUser, $dummyTs, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue) extends JiraOAuthApi {
             public function __construct(
                 User $user,
                 TicketSystem $ticketSystem,
                 ManagerRegistry $managerRegistry,
                 RouterInterface $router,
+                /**
+                 * @var array<int, string>
+                 */
                 private readonly array $keys,
+                /**
+                 * @var array<string, array<int, string>>
+                 */
                 private array $labels,
+                /**
+                 * @var array<string, string>
+                 */
                 private array $summaries,
             ) {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router);
             }
 
+            /**
+             * @param array<int, string> $fields
+             */
             public function searchTicket(string $jql, array $fields, int $limit = 1): object
             {
                 $issues = [];
                 foreach ($this->keys as $key) {
                     $fieldsObj = (object) [];
-                    
+
                     // Only set labels field if it exists in the mock data
                     if (array_key_exists($key, $this->labels)) {
                         $fieldsObj->labels = $this->labels[$key];
                     }
-                    
+
                     // Only set summary field if it exists in the mock data
                     if (array_key_exists($key, $this->summaries)) {
                         $fieldsObj->summary = $this->summaries[$key];
                     }
-                    
+
                     $issue = (object) [
                         'key' => $key,
                         'fields' => $fieldsObj,
@@ -124,13 +144,11 @@ final class ExportServiceTest extends TestCase
         $entry1 = (new Entry())
             ->setUser($user)
             ->setProject((new \App\Entity\Project())->setTicketSystem($ticketSystem))
-            ->setTicket('TT-123')
-        ;
+            ->setTicket('TT-123');
         $entry2 = (new Entry())
             ->setUser($user)
             ->setProject((new \App\Entity\Project())->setTicketSystem($ticketSystem))
-            ->setTicket('TT-999')
-        ;
+            ->setTicket('TT-999');
 
         $exportService = $this->makeSubject([$entry1, $entry2], ['TT-123', 'TT-999'], ['TT-123' => ['billable']], ['TT-123' => 'Summary 1']);
 

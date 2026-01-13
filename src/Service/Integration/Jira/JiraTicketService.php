@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraIssue;
+use App\DTO\Jira\JiraTransition;
 use App\Entity\Entry;
 use App\Exception\Integration\Jira\JiraApiException;
 
@@ -30,17 +32,17 @@ class JiraTicketService
     {
         $project = $entry->getProject();
 
-        if (!$project instanceof \App\Entity\Project) {
+        if (! $project instanceof \App\Entity\Project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
         $projectJiraId = $project->getJiraId();
 
-        if (!$projectJiraId) {
+        if (null === $projectJiraId || '' === $projectJiraId) {
             throw new JiraApiException('Project has no Jira ID configured', 400);
         }
 
-        $description = $entry->getDescription() ?: 'No description provided';
+        $description = '' !== $entry->getDescription() ? $entry->getDescription() : 'No description provided';
 
         $ticketData = [
             'fields' => [
@@ -63,7 +65,7 @@ class JiraTicketService
 
         $response = $this->jiraHttpClientService->post('issue', $ticketData);
 
-        if (!is_object($response) || !property_exists($response, 'key')) {
+        if (! is_object($response) || ! property_exists($response, 'key')) {
             throw new JiraApiException('Failed to create Jira ticket', 500);
         }
 
@@ -116,7 +118,7 @@ class JiraTicketService
      *
      * @throws JiraApiException
      *
-     * @return array<int, array{key: string, summary: string, status: string, assignee: string|null}>
+     * @return list<array{key: mixed, summary: mixed, status: mixed, assignee: mixed}>
      */
     public function getSubtickets(string $ticketKey): array
     {
@@ -125,9 +127,15 @@ class JiraTicketService
         }
 
         try {
-            $issue = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
+            $response = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
 
-            if (!is_object($issue) || !property_exists($issue, 'fields') || !property_exists($issue->fields, 'subtasks')) {
+            if (! is_object($response)) {
+                return [];
+            }
+
+            $issue = JiraIssue::fromApiResponse($response);
+
+            if (null === $issue->fields) {
                 return [];
             }
 
@@ -137,8 +145,8 @@ class JiraTicketService
                 $subtasks[] = [
                     'key' => $subtask->key ?? '',
                     'summary' => $subtask->fields->summary ?? '',
-                    'status' => $subtask->fields->status->name ?? '',
-                    'assignee' => $subtask->fields->assignee->displayName ?? null,
+                    'status' => $subtask->fields?->status->name ?? '',
+                    'assignee' => $subtask->fields?->assignee?->displayName,
                 ];
             }
 
@@ -221,24 +229,31 @@ class JiraTicketService
         try {
             $response = $this->jiraHttpClientService->get(sprintf('issue/%s/transitions', $ticketKey));
 
-            if (!is_object($response) || !property_exists($response, 'transitions')) {
+            if (! is_object($response)) {
+                return [];
+            }
+
+            /** @var array<string, mixed> $responseData */
+            $responseData = (array) $response;
+
+            if (! isset($responseData['transitions']) || ! is_iterable($responseData['transitions'])) {
                 return [];
             }
 
             $transitions = [];
 
-            foreach ($response->transitions as $transition) {
-                if (!is_object($transition)) {
+            foreach ($responseData['transitions'] as $transitionData) {
+                if (! is_object($transitionData)) {
                     continue;
                 }
 
-                $to = $transition->to ?? null;
+                $transition = JiraTransition::fromApiResponse($transitionData);
                 $transitions[] = [
-                    'id' => property_exists($transition, 'id') ? (string) ($transition->id ?? '') : '',
-                    'name' => property_exists($transition, 'name') ? (string) ($transition->name ?? '') : '',
+                    'id' => null !== $transition->id ? (string) $transition->id : '',
+                    'name' => $transition->name ?? '',
                     'to' => [
-                        'id' => (is_object($to) && property_exists($to, 'id')) ? (string) ($to->id ?? '') : '',
-                        'name' => (is_object($to) && property_exists($to, 'name')) ? (string) ($to->name ?? '') : '',
+                        'id' => null !== $transition->to?->id ? (string) $transition->to->id : '',
+                        'name' => $transition->to->name ?? '',
                     ],
                 ];
             }

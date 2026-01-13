@@ -44,7 +44,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
                       || str_contains($request->getPathInfo(), '/api/');
 
-        if (!$acceptsJson) {
+        if (! $acceptsJson) {
             // Let Symfony handle HTML error pages
             return;
         }
@@ -75,7 +75,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         // Handle HTTP exceptions
         if ($throwable instanceof HttpExceptionInterface) {
             $statusCode = $throwable->getStatusCode();
-            $message = $throwable->getMessage() ?: $this->getDefaultMessageForStatusCode($statusCode);
+            $message = '' !== $throwable->getMessage() ? $throwable->getMessage() : $this->getDefaultMessageForStatusCode($statusCode);
 
             return new JsonResponse([
                 'error' => $this->getErrorTypeForStatusCode($statusCode),
@@ -142,28 +142,21 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
     private function logException(Throwable $throwable, string $path): void
     {
-        if (!$this->logger instanceof LoggerInterface) {
+        if (! $this->logger instanceof LoggerInterface) {
             return;
         }
 
-        $context = [
-            'exception' => $throwable::class,
-            'message' => $throwable->getMessage(),
-            'path' => $path,
-            'file' => $throwable->getFile(),
-            'line' => $throwable->getLine(),
-        ];
-
-        // Determine log level based on exception type
+        // PSR-3 compliant: static message with exception in context
+        // Path info is available in exception stack trace
         if ($throwable instanceof HttpExceptionInterface) {
             $statusCode = $throwable->getStatusCode();
             if ($statusCode >= 500) {
-                $this->logger->error('Server error occurred', $context);
+                $this->logger->error('Server error occurred', ['exception' => $throwable]);
             } elseif ($statusCode >= 400) {
-                $this->logger->warning('Client error occurred', $context);
+                $this->logger->warning('Client error occurred', ['exception' => $throwable]);
             }
         } else {
-            $this->logger->error('Unexpected exception occurred', $context);
+            $this->logger->error('Unexpected exception occurred', ['exception' => $throwable]);
         }
     }
 }

@@ -53,12 +53,12 @@ class QueryCacheService
         $item = $this->cacheItemPool->getItem($cacheKey);
 
         if ($item->isHit()) {
-            $this->log('Cache hit', ['key' => $cacheKey]);
+            $this->logger?->debug('Cache hit');
 
             return $item->get();
         }
 
-        $this->log('Cache miss', ['key' => $cacheKey]);
+        $this->logger?->debug('Cache miss');
 
         $value = $callback();
 
@@ -67,7 +67,7 @@ class QueryCacheService
 
         $this->cacheItemPool->save($item);
 
-        $this->log('Cache set', ['key' => $cacheKey, 'ttl' => $ttl]);
+        $this->logger?->debug('Cache set');
 
         return $value;
     }
@@ -81,12 +81,12 @@ class QueryCacheService
         $item = $this->cacheItemPool->getItem($cacheKey);
 
         if ($item->isHit()) {
-            $this->log('Cache hit', ['key' => $cacheKey]);
+            $this->logger?->debug('Cache hit');
 
             return $item->get();
         }
 
-        $this->log('Cache miss', ['key' => $cacheKey]);
+        $this->logger?->debug('Cache miss');
 
         return null;
     }
@@ -104,7 +104,7 @@ class QueryCacheService
 
         $this->cacheItemPool->save($item);
 
-        $this->log('Cache set', ['key' => $cacheKey, 'ttl' => $ttl]);
+        $this->logger?->debug('Cache set');
     }
 
     /**
@@ -125,7 +125,7 @@ class QueryCacheService
         $cacheKey = $this->getCacheKey($key);
         $this->cacheItemPool->deleteItem($cacheKey);
 
-        $this->log('Cache delete', ['key' => $cacheKey]);
+        $this->logger?->debug('Cache delete');
     }
 
     /**
@@ -135,7 +135,7 @@ class QueryCacheService
     {
         if (null === $pattern) {
             $this->cacheItemPool->clear();
-            $this->log('Cache cleared');
+            $this->logger?->debug('Cache cleared');
 
             return;
         }
@@ -152,14 +152,14 @@ class QueryCacheService
         $cacheKey = $this->getCacheKey($key);
 
         foreach ($tags as $tag) {
-            if (!isset($this->tags[$tag])) {
+            if (! isset($this->tags[$tag])) {
                 $this->tags[$tag] = [];
             }
 
             $this->tags[$tag][] = $cacheKey;
         }
 
-        $this->log('Cache tagged', ['key' => $cacheKey, 'tags' => $tags]);
+        $this->logger?->debug('Cache tagged');
     }
 
     /**
@@ -167,7 +167,7 @@ class QueryCacheService
      */
     public function invalidateTag(string $tag): void
     {
-        if (!isset($this->tags[$tag])) {
+        if (! isset($this->tags[$tag])) {
             return;
         }
 
@@ -177,7 +177,7 @@ class QueryCacheService
 
         unset($this->tags[$tag]);
 
-        $this->log('Tag invalidated', ['tag' => $tag]);
+        $this->logger?->debug('Tag invalidated');
     }
 
     /**
@@ -188,7 +188,7 @@ class QueryCacheService
         $pattern = sprintf('%s_%s_%d_*', self::DEFAULT_PREFIX, $this->getEntityPrefix($entityClass), $entityId);
         $this->clearByPattern($pattern);
 
-        $this->log('Entity cache invalidated', ['entity' => $entityClass, 'id' => $entityId]);
+        $this->logger?->debug('Entity cache invalidated');
     }
 
     /**
@@ -204,7 +204,7 @@ class QueryCacheService
             }
         }
 
-        $this->log('Cache warmed up', ['keys' => array_keys($callbacks)]);
+        $this->logger?->debug('Cache warmed up');
     }
 
     /**
@@ -260,18 +260,6 @@ class QueryCacheService
             }
         }
 
-        $this->log('Cache cleared by pattern', ['pattern' => $pattern]);
-    }
-
-    /**
-     * Logs cache operations.
-     *
-     * @param array<string, mixed> $context
-     */
-    private function log(string $message, array $context = []): void
-    {
-        if ($this->logger instanceof LoggerInterface) {
-            $this->logger->debug('[QueryCache] ' . $message, $context);
-        }
+        $this->logger?->debug('Cache cleared by pattern');
     }
 }

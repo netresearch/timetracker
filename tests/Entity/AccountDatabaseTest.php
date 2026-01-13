@@ -12,8 +12,11 @@ use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\EntryClass;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+use TypeError;
 
+use function assert;
 use function count;
 
 /**
@@ -25,10 +28,15 @@ final class AccountDatabaseTest extends AbstractWebTestCase
 {
     private EntityManagerInterface $entityManager;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        $this->entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
+        $entityManager = $this->serviceContainer->get('doctrine.orm.entity_manager');
+        assert($entityManager instanceof EntityManagerInterface);
+        $this->entityManager = $entityManager;
     }
 
     public function testPersistAndFind(): void
@@ -47,15 +55,16 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Verify ID was assigned
-        static::assertNotNull($account->getId());
+        self::assertNotNull($account->getId());
 
         // Find by ID
         $foundAccount = $this->entityManager->find(Account::class, $account->getId());
-        static::assertNotNull($foundAccount);
-        static::assertEquals($accountData['name'], $foundAccount->getName());
-        
+        self::assertNotNull($foundAccount);
+        assert($foundAccount instanceof Account);
+        self::assertSame($accountData['name'], $foundAccount->getName());
+
         // Test legacy method still works
-        static::assertEquals($accountData['name'], $foundAccount->getAccountName());
+        self::assertSame($accountData['name'], $foundAccount->getAccountName());
     }
 
     public function testAccountEntryRelationship(): void
@@ -70,7 +79,7 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         // Get user from database
         $userRepository = $this->entityManager->getRepository(User::class);
         $user = $userRepository->find(1);
-        if (!$user) {
+        if (null === $user) {
             // Create a test user if it doesn't exist
             $user = new User();
             $user->setUsername('test_user');
@@ -79,25 +88,25 @@ final class AccountDatabaseTest extends AbstractWebTestCase
             $this->entityManager->persist($user);
             $this->entityManager->flush();
         }
-        
+
         // Create required entities for the entry
         $customer = new Customer();
         $customer->setName('Test Customer');
         $customer->setActive(true);
         $this->entityManager->persist($customer);
-        
+
         $project = new Project();
         $project->setName('Test Project');
         $project->setCustomer($customer);
         $project->setActive(true);
         $this->entityManager->persist($project);
-        
+
         $activity = new Activity();
         $activity->setName('Development');
         $activity->setNeedsTicket(false);
         $activity->setFactor(1.0);
         $this->entityManager->persist($activity);
-        
+
         // Create entry associated with account
         $entry = new Entry();
         $entry->setUser($user);
@@ -117,14 +126,20 @@ final class AccountDatabaseTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         // Verify relationship
-        static::assertEquals($account->getId(), $entry->getAccount()->getId());
+        $entryAccount = $entry->getAccount();
+        self::assertNotNull($entryAccount);
+        self::assertSame($account->getId(), $entryAccount->getId());
 
         // Test the relationship from account side
         $refreshedAccount = $this->entityManager->find(Account::class, $account->getId());
+        self::assertNotNull($refreshedAccount);
+        assert($refreshedAccount instanceof Account);
         $accountEntries = $refreshedAccount->getEntries();
 
-        static::assertCount(1, $accountEntries);
-        static::assertEquals($entry->getId(), $accountEntries->first()->getId());
+        self::assertCount(1, $accountEntries);
+        $firstEntry = $accountEntries->first();
+        self::assertNotFalse($firstEntry);
+        self::assertSame($entry->getId(), $firstEntry->getId());
     }
 
     public function testFindByName(): void
@@ -142,16 +157,18 @@ final class AccountDatabaseTest extends AbstractWebTestCase
             'name' => 'Name Test Account',
         ]);
 
-        static::assertNotNull($foundByName);
-        static::assertEquals('Name Test Account', $foundByName->getName());
+        self::assertNotNull($foundByName);
+        assert($foundByName instanceof Account);
+        self::assertSame('Name Test Account', $foundByName->getName());
     }
 
     public function testAccountValidation(): void
     {
         $account = new Account();
 
-        // Test required fields
-        static::expectException(\TypeError::class);
+        // Test required fields - setName expects string, passing null should cause TypeError
+        self::expectException(TypeError::class);
+        /** @phpstan-ignore-next-line Intentionally passing null to test TypeError */
         $account->setName(null);
     }
 
@@ -177,16 +194,17 @@ final class AccountDatabaseTest extends AbstractWebTestCase
 
         // Verify all accounts were created
         foreach ($createdAccounts as $account) {
-            static::assertNotNull($account->getId());
+            self::assertNotNull($account->getId());
         }
 
         // Verify count
         $repository = $this->entityManager->getRepository(Account::class);
-        $totalCount = $repository->createQueryBuilder('a')
+        $queryBuilder = $repository->createQueryBuilder('a');
+        $query = $queryBuilder
             ->select('COUNT(a.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->getQuery();
+        $totalCount = $query->getSingleScalarResult();
 
-        static::assertGreaterThanOrEqual(count($accountsData), $totalCount);
+        self::assertGreaterThanOrEqual(count($accountsData), $totalCount);
     }
 }

@@ -8,34 +8,33 @@ use App\Model\Base;
 use PHPUnit\Framework\TestCase;
 
 use function array_key_exists;
-use function count;
 
 class TestModel extends Base
 {
-    protected $name = 'Name';
+    protected string $name = 'Name';
 
-    protected $id = 500;
+    protected int $id = 500;
 
-    protected $workspace = 'internal';
+    protected string $workspace = 'internal';
 
-    protected $active = true;
+    protected bool $active = true;
 
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getWorkspace()
+    public function getWorkspace(): string
     {
         return $this->workspace;
     }
 
-    public function getActive()
+    public function getActive(): bool
     {
         return $this->active;
     }
@@ -53,7 +52,7 @@ final class BaseTest extends TestCase
         $testModel = new TestModel();
         $result = $testModel->toArray();
 
-        self::assertSame(4, count($result));
+        self::assertCount(4, $result);
         self::assertTrue(array_key_exists('id', $result));
         self::assertSame(500, $result['id']);
         self::assertTrue($result['active']);

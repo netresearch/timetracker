@@ -32,7 +32,7 @@ class Holiday extends Base
     {
         // For readonly properties, we cannot reassign after construction
         // This method exists for backward compatibility but should not be used
-        if (!$day instanceof DateTime) {
+        if (! $day instanceof DateTime) {
             $day = new DateTime($day);
         }
 

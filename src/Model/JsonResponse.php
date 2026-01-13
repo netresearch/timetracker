@@ -48,7 +48,7 @@ class JsonResponse extends Response
         // Encode content first to ensure we have a string for parent constructor
         $encoded = match ($content) {
             null => 'null',
-            default => json_encode($content) ?: 'null',
+            default => false !== json_encode($content) ? json_encode($content) : 'null',
         };
 
         // Initialize base Response with proper content - this resolves PropertyNotSetInConstructor
@@ -65,7 +65,7 @@ class JsonResponse extends Response
     public function send(bool $flush = true): static
     {
         // Ensure Content-Type is always set for JSON responses
-        if (!$this->headers->has('Content-Type')) {
+        if (! $this->headers->has('Content-Type')) {
             $this->headers->set('Content-Type', 'application/json');
         }
 

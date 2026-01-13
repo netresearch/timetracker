@@ -12,6 +12,7 @@ use App\Service\Util\TimeCalculationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
+use function assert;
 use function count;
 use function is_string;
 
@@ -34,7 +35,7 @@ final class GetTicketTimeSummaryAction extends BaseController
     #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): Response|\Symfony\Component\HttpFoundation\RedirectResponse
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (! $user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -44,8 +45,8 @@ final class GetTicketTimeSummaryAction extends BaseController
         $ticketParam = $attributes->has('ticket') ? $attributes->get('ticket') : null;
         $ticket = is_string($ticketParam) ? $ticketParam : '';
 
-        /** @var \App\Repository\EntryRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
+        assert($objectRepository instanceof \App\Repository\EntryRepository);
         $activities = $objectRepository->getActivitiesWithTime($ticket);
         $users = $objectRepository->getUsersWithTime($ticket);
 

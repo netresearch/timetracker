@@ -78,7 +78,7 @@ class Account
 
     public function addEntry(Entry $entry): static
     {
-        if (!$this->entries->contains($entry)) {
+        if (! $this->entries->contains($entry)) {
             $this->entries->add($entry);
         }
 

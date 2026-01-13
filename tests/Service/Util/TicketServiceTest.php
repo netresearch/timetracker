@@ -22,6 +22,9 @@ final class TicketServiceTest extends TestCase
         self::assertSame($expected, $ticketService->checkFormat($ticket));
     }
 
+    /**
+     * @return iterable<array{bool, string}>
+     */
     public static function provideCheckTicketFormatCases(): iterable
     {
         return [
@@ -47,6 +50,9 @@ final class TicketServiceTest extends TestCase
         self::assertSame($expectedPrefix, $ticketService->getPrefix($ticket));
     }
 
+    /**
+     * @return iterable<array{string|null, string}>
+     */
     public static function provideGetPrefixCases(): iterable
     {
         return [

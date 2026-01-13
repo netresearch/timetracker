@@ -19,7 +19,7 @@ class UniqueUserAbbrValidator extends ConstraintValidator
 
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (!$constraint instanceof UniqueUserAbbr) {
+        if (! $constraint instanceof UniqueUserAbbr) {
             throw new UnexpectedTypeException($constraint, UniqueUserAbbr::class);
         }
 
@@ -38,21 +38,18 @@ class UniqueUserAbbrValidator extends ConstraintValidator
         $entityRepository = $this->entityManager->getRepository(User::class);
         $queryBuilder = $entityRepository->createQueryBuilder('u')
             ->where('u.abbr = :abbr')
-            ->setParameter('abbr', $value)
-        ;
+            ->setParameter('abbr', $value);
 
         if ($userId > 0) {
             $queryBuilder->andWhere('u.id != :id')
-                ->setParameter('id', $userId)
-            ;
+                ->setParameter('id', $userId);
         }
 
         $existingUser = $queryBuilder->getQuery()->getOneOrNullResult();
 
         if (null !== $existingUser) {
             $this->context->buildViolation($constraint->message)
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

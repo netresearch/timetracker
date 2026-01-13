@@ -10,6 +10,7 @@ use App\Entity\Customer;
 use App\Entity\Team;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\CustomerRepository;
 use App\Response\Error;
 use Exception;
 use InvalidArgumentException;
@@ -19,6 +20,7 @@ use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use UnexpectedValueException;
 
+use function assert;
 use function sprintf;
 
 final class SaveCustomerAction extends BaseController
@@ -33,22 +35,21 @@ final class SaveCustomerAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] CustomerSaveDto $customerSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-
         $customerId = $customerSaveDto->id;
         $teamIds = $customerSaveDto->teams;
 
-        /** @var \App\Repository\CustomerRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Customer::class);
+        assert($objectRepository instanceof CustomerRepository);
 
         if (0 !== $customerId) {
             $customer = $objectRepository->find($customerId);
-            if (!$customer) {
+            if (null === $customer) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (!$customer instanceof Customer) {
+            if (! $customer instanceof Customer) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);

@@ -42,7 +42,7 @@ final class SavePresetAction extends BaseController
 
         if (0 !== $id) {
             $preset = $objectRepository->find($id);
-            if (!$preset instanceof Preset) {
+            if (! $preset instanceof Preset) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
@@ -54,7 +54,7 @@ final class SavePresetAction extends BaseController
         }
 
         try {
-            if (!$customer instanceof Customer || !$project instanceof Project || !$activity instanceof Activity) {
+            if (! $customer instanceof Customer || ! $project instanceof Project || ! $activity instanceof Activity) {
                 throw new Exception('Please choose a customer, a project and an activity.');
             }
 
@@ -63,8 +63,7 @@ final class SavePresetAction extends BaseController
             // Relations set explicitly
             $preset->setCustomer($customer)
                 ->setProject($project)
-                ->setActivity($activity)
-            ;
+                ->setActivity($activity);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($preset);

@@ -37,7 +37,7 @@ final class BasicAccessTest extends AbstractWebTestCase
             '/getAllUsers',
             [],
             [],
-            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'],
         );
         $this->assertStatusCode(302); // Should redirect to login when not authenticated
 
@@ -61,7 +61,7 @@ final class BasicAccessTest extends AbstractWebTestCase
             '/getAllUsers',
             [],
             [],
-            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8']
+            ['HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'],
         );
 
         // Assert we get a successful response, not a redirect

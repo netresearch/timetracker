@@ -22,18 +22,6 @@
                 ]
             },
             {
-                "action": "php -d memory_limit=512M vendor/laravel/pint/builds/pint --test --config=config/quality/pint.json {$STAGED_FILES|of-type:php}",
-                "options": {
-                    "label": "Pint: Check code style"
-                },
-                "conditions": [
-                    {
-                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
-                        "args": ["php"]
-                    }
-                ]
-            },
-            {
                 "action": "php -d memory_limit=1G bin/phpstan analyze --no-progress",
                 "options": {
                     "label": "PHPStan: Static analysis"

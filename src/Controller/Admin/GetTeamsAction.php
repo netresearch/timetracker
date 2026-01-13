@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
+use App\Entity\Team;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\TeamRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+use function assert;
 
 final class GetTeamsAction extends BaseController
 {
@@ -16,9 +20,8 @@ final class GetTeamsAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): Response|JsonResponse
     {
-
-        /** @var \App\Repository\TeamRepository $objectRepository */
-        $objectRepository = $this->doctrineRegistry->getRepository(\App\Entity\Team::class);
+        $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
+        assert($objectRepository instanceof TeamRepository);
 
         return new JsonResponse($objectRepository->getAllTeamsAsArray());
     }

@@ -8,8 +8,11 @@ use App\Controller\BaseController;
 use App\Entity\Contract;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\ContractRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+use function assert;
 
 final class GetContractsAction extends BaseController
 {
@@ -17,8 +20,8 @@ final class GetContractsAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): Response|JsonResponse
     {
-        /** @var \App\Repository\ContractRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(Contract::class);
+        assert($objectRepository instanceof ContractRepository);
 
         return new JsonResponse($objectRepository->getContracts());
     }

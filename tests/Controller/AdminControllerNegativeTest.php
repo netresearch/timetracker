@@ -6,6 +6,9 @@ namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
+use function assert;
+use function is_string;
+
 /**
  * @internal
  *
@@ -23,7 +26,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -37,7 +40,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -50,7 +53,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -64,7 +67,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -98,12 +101,13 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
         $data = json_decode($content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized, just ensure we got a validation error
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/Zeichen|characters|abbr/i', $data['message']);
     }
 
@@ -119,12 +123,13 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
         $data = json_decode($content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/exists|existiert|bereits/i', $data['message']);
     }
 
@@ -140,12 +145,13 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
         $data = json_decode($content, true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         // Validation message may be localized
+        assert(is_string($data['message']));
         self::assertMatchesRegularExpression('/teams|Team|sollte nicht leer sein/i', $data['message']);
     }
 
@@ -159,7 +165,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -172,7 +178,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -186,7 +192,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         ];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
-        $content = (string) $this->client->getResponse()->getContent();
+        $content = $this->client->getResponse()->getContent();
         self::assertNotEmpty($content);
     }
 
@@ -202,7 +208,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         try {
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
             $this->assertStatusCode(422);
-            $content = (string) $this->client->getResponse()->getContent();
+            $content = $this->client->getResponse()->getContent();
             self::assertNotEmpty($content);
         } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException) {
             self::assertSame(422, $unprocessableEntityHttpException->getStatusCode());

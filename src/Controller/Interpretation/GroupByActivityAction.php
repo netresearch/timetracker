@@ -43,12 +43,12 @@ final class GroupByActivityAction extends BaseInterpretationController
         $activities = [];
         foreach ($entries as $entry) {
             $activityObj = $entry->getActivity();
-            if (!$activityObj instanceof \App\Entity\Activity) {
+            if (! $activityObj instanceof \App\Entity\Activity) {
                 continue;
             }
 
             $aid = $activityObj->getId();
-            if (!isset($activities[$aid])) {
+            if (! isset($activities[$aid])) {
                 $activities[$aid] = ['id' => $aid, 'name' => $activityObj->getName(), 'hours' => 0];
             }
 

@@ -8,9 +8,15 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 use function array_key_exists;
+use function assert;
+use function is_array;
+use function is_string;
 
 class TokenStub implements TokenInterface
 {
+    /**
+     * @var array<string, mixed>
+     */
     private array $attributes = [];
 
     private bool $authenticated = true;
@@ -24,11 +30,17 @@ class TokenStub implements TokenInterface
         return 'token-stub';
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getRoles(): array
     {
         return [];
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function getRoleNames(): array
     {
         return [];
@@ -51,22 +63,12 @@ class TokenStub implements TokenInterface
 
     public function getUsername(): string
     {
-        return method_exists($this->user, 'getUsername') ? $this->user->getUserIdentifier() : '';
+        return $this->user?->getUserIdentifier() ?? '';
     }
 
     public function getUserIdentifier(): string
     {
-        if ($this->user instanceof UserInterface) {
-            if (method_exists($this->user, 'getUserIdentifier')) {
-                return $this->user->getUserIdentifier();
-            }
-
-            if (method_exists($this->user, 'getUsername')) {
-                return $this->user->getUserIdentifier();
-            }
-        }
-
-        return '';
+        return $this->user?->getUserIdentifier() ?? '';
     }
 
     public function isAuthenticated(): bool
@@ -74,9 +76,9 @@ class TokenStub implements TokenInterface
         return $this->authenticated;
     }
 
-    public function setAuthenticated($isAuthenticated): void
+    public function setAuthenticated(bool $isAuthenticated): void
     {
-        $this->authenticated = (bool) $isAuthenticated;
+        $this->authenticated = $isAuthenticated;
     }
 
     public function eraseCredentials(): void
@@ -84,29 +86,42 @@ class TokenStub implements TokenInterface
         // no-op
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAttributes(): array
     {
         return $this->attributes;
     }
 
+    /**
+     * @param array<mixed, mixed> $attributes
+     */
     public function setAttributes(array $attributes): void
     {
-        $this->attributes = $attributes;
+        // Filter to only string keys for type safety
+        $filtered = [];
+        foreach ($attributes as $key => $value) {
+            if (is_string($key)) {
+                $filtered[$key] = $value;
+            }
+        }
+        $this->attributes = $filtered;
     }
 
-    public function hasAttribute($name): bool
+    public function hasAttribute(string $name): bool
     {
-        return array_key_exists((string) $name, $this->attributes);
+        return array_key_exists($name, $this->attributes);
     }
 
-    public function getAttribute($name): mixed
+    public function getAttribute(string $name): mixed
     {
-        return $this->attributes[(string) $name] ?? null;
+        return $this->attributes[$name] ?? null;
     }
 
-    public function setAttribute($name, $value): void
+    public function setAttribute(string $name, mixed $value): void
     {
-        $this->attributes[(string) $name] = $value;
+        $this->attributes[$name] = $value;
     }
 
     // Legacy Serializable interface methods (required by Symfony 4.4 TokenInterface)
@@ -118,14 +133,30 @@ class TokenStub implements TokenInterface
         ]);
     }
 
-    public function unserialize($serialized): void
+    public function unserialize(string $serialized): void
     {
-        $data = unserialize((string) $serialized);
+        $data = unserialize($serialized);
+        assert(is_array($data));
         $this->authenticated = (bool) ($data['authenticated'] ?? true);
-        $this->attributes = (array) ($data['attributes'] ?? []);
+        $attributes = $data['attributes'] ?? [];
+        if (is_array($attributes)) {
+            // Filter to only string keys for type safety
+            $filtered = [];
+            foreach ($attributes as $key => $value) {
+                if (is_string($key)) {
+                    $filtered[$key] = $value;
+                }
+            }
+            $this->attributes = $filtered;
+        } else {
+            $this->attributes = [];
+        }
     }
 
     // New PHP 7.4+/8.x serialization
+    /**
+     * @return array<string, mixed>
+     */
     public function __serialize(): array
     {
         return [
@@ -134,9 +165,19 @@ class TokenStub implements TokenInterface
         ];
     }
 
+    /**
+     * @param array<mixed, mixed> $data
+     */
     public function __unserialize(array $data): void
     {
         $this->authenticated = (bool) ($data['authenticated'] ?? true);
-        $this->attributes = (array) ($data['attributes'] ?? []);
+        $attributes = $data['attributes'] ?? [];
+        if (is_array($attributes)) {
+            /** @var array<string, mixed> $typedAttributes */
+            $typedAttributes = $attributes;
+            $this->attributes = $typedAttributes;
+        } else {
+            $this->attributes = [];
+        }
     }
 }

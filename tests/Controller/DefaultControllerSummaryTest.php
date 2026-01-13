@@ -7,6 +7,9 @@ namespace Tests\Controller;
 use App\Entity\Entry;
 use Tests\AbstractWebTestCase;
 
+use function assert;
+use function is_array;
+
 /**
  * @internal
  *
@@ -17,13 +20,16 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
     public function testGetSummaryActionWithProjectEstimationComputesQuota(): void
     {
         $container = $this->client->getContainer();
-        $em = $container->get('doctrine')->getManager();
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
+        $doctrine = $container->get('doctrine');
+        $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if (!$entry) {
+        if (null === $entry) {
             self::markTestSkipped('No entries found in the database.');
         }
 
         $project = $entry->getProject();
+        self::assertNotNull($project, 'Project should not be null');
         // Ensure estimation is set to a non-zero value
         $project->setEstimation(300);
 
@@ -36,6 +42,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($response);
         self::assertArrayHasKey('project', $response);
+        assert(is_array($response['project']));
         self::assertArrayHasKey('quota', $response['project']);
         $quota = $response['project']['quota'];
         // When estimation is set, quota should be a percentage string
@@ -46,13 +53,16 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
     public function testGetSummaryActionWithoutEstimationLeavesZeroQuota(): void
     {
         $container = $this->client->getContainer();
-        $em = $container->get('doctrine')->getManager();
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
+        $doctrine = $container->get('doctrine');
+        $em = $doctrine->getManager();
         $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if (!$entry) {
+        if (null === $entry) {
             self::markTestSkipped('No entries found in the database.');
         }
 
         $project = $entry->getProject();
+        self::assertNotNull($project, 'Project should not be null');
         // Remove estimation (set to 0)
         $project->setEstimation(0);
 
@@ -65,6 +75,7 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($response);
         self::assertArrayHasKey('project', $response);
+        assert(is_array($response['project']));
         // Without estimation set, quota remains numeric zero according to default data
         self::assertSame(0, $response['project']['quota'] ?? 0);
     }

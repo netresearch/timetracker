@@ -105,7 +105,7 @@ class Team
 
     public function addCustomer(Customer $customer): static
     {
-        if (!$this->customersRelation->contains($customer)) {
+        if (! $this->customersRelation->contains($customer)) {
             $this->customersRelation->add($customer);
         }
 

@@ -12,6 +12,8 @@ use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function assert;
+
 final class GetProjectsAction extends BaseController
 {
     /**
@@ -23,20 +25,20 @@ final class GetProjectsAction extends BaseController
     #[IsGranted('ROLE_USER')]
     public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|Response|JsonResponse
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (! $user instanceof \App\Entity\User) {
             return $this->redirectToRoute('_login');
         }
 
         // Check if user is either admin or PL type
-        if (!$this->isGranted('ROLE_ADMIN') && 'PL' !== $user->getType()->value) {
+        if (! $this->isGranted('ROLE_ADMIN') && 'PL' !== $user->getType()->value) {
             $response = new Response($this->translate('You are not allowed to perform this action.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
 
             return $response;
         }
 
-        /** @var \App\Repository\ProjectRepository $objectRepository */
         $objectRepository = $this->managerRegistry->getRepository(Project::class);
+        assert($objectRepository instanceof \App\Repository\ProjectRepository);
         $data = $objectRepository->getAllProjectsForAdmin();
 
         return new JsonResponse($data);

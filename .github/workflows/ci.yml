@@ -57,7 +57,7 @@ jobs:
         run: |
           make phpat
 
-      - name: Code style (Laravel Pint)
+      - name: Code style (ECS)
         env:
           COMPOSE_PROFILES: tools
         run: |

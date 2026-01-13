@@ -50,14 +50,15 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Returns work log entries for user and recent days with optimized query.
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByRecentDaysOfUser(User $user, int $days = 3): array
     {
         $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId(), $days);
 
-        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
+        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult) && array_is_list($cachedResult));
+            /** @var list<Entry> $cachedResult */
 
             return $cachedResult;
         }
@@ -70,13 +71,12 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('fromDate', $fromDate)
             ->orderBy('e.day', 'ASC')
-            ->addOrderBy('e.start', 'ASC')
-        ;
+            ->addOrderBy('e.start', 'ASC');
 
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
-
+        /** @var list<Entry> $result */
         $this->setCached($cacheKey, $result);
 
         return $result;
@@ -87,7 +87,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, string>|null $arSort
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByDate(
         int $userId,
@@ -101,25 +101,21 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->where('e.user = :user')
             ->andWhere($this->generateYearExpression('e.day') . ' = :year')
             ->setParameter('user', $userId)
-            ->setParameter('year', $year)
-        ;
+            ->setParameter('year', $year);
 
         if (null !== $month) {
             $queryBuilder->andWhere($this->generateMonthExpression('e.day') . ' = :month')
-                ->setParameter('month', $month)
-            ;
+                ->setParameter('month', $month);
         }
 
         if (null !== $projectId) {
             $queryBuilder->andWhere('e.project = :project')
-                ->setParameter('project', $projectId)
-            ;
+                ->setParameter('project', $projectId);
         }
 
         if (null !== $customerId) {
             $queryBuilder->andWhere('e.customer = :customer')
-                ->setParameter('customer', $customerId)
-            ;
+                ->setParameter('customer', $customerId);
         }
 
         $this->applySort($queryBuilder, $arSort);
@@ -127,6 +123,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -134,21 +131,25 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Gets entry summary with optimized single query instead of multiple UNION queries.
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     public function getEntrySummaryOptimized(int $entryId, int $userId): array
     {
         $entry = $this->find($entryId);
-        if (!$entry instanceof Entry) {
-            return $this->getEmptySummaryData();
+        if (! $entry instanceof Entry) {
+            $emptyData = $this->getEmptySummaryData();
+            assert([] !== $emptyData);
+
+            return $emptyData;
         }
 
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
 
-        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
+        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
-            assert(array_is_list($cachedResult) || array_key_exists('customer', $cachedResult));
+            assert(array_key_exists('customer', $cachedResult));
 
+            /** @var non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}> $cachedResult */
             return $cachedResult;
         }
 
@@ -198,7 +199,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $result = $connection->executeQuery($sql, $params)->fetchAssociative();
 
-        $data = $this->formatSummaryData($result ?: null, $entry);
+        $data = $this->formatSummaryData(false !== $result ? $result : null, $entry);
+        assert([] !== $data);
 
         $this->setCached($cacheKey, $data);
 
@@ -214,7 +216,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
 
-        if ($this->cacheItemPool && $cachedResult = $this->getCached($cacheKey)) {
+        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
             assert(isset($cachedResult['duration'], $cachedResult['count']));
             assert(is_int($cachedResult['duration']) && is_int($cachedResult['count']));
@@ -225,20 +227,23 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, SUM(e.duration) as duration')
             ->where('e.user = :user')
-            ->setParameter('user', $userId)
-        ;
+            ->setParameter('user', $userId);
 
         $this->applyPeriodFilter($queryBuilder, $period);
 
         $result = $queryBuilder->getQuery()->getSingleResult();
 
-        if (!is_array($result)) {
+        if (! is_array($result)) {
             $result = ['duration' => 0, 'count' => 0];
         }
 
+        // Ensure result is properly typed as array<string, mixed>
+        /** @var array<string, mixed> $typedResult */
+        $typedResult = $result;
+
         $data = [
-            'duration' => ArrayTypeHelper::getInt($result, 'duration', 0) ?? 0,
-            'count' => ArrayTypeHelper::getInt($result, 'count', 0) ?? 0,
+            'duration' => ArrayTypeHelper::getInt($typedResult, 'duration', 0) ?? 0,
+            'count' => ArrayTypeHelper::getInt($typedResult, 'count', 0) ?? 0,
         ];
 
         $this->setCached($cacheKey, $data, 60); // Shorter cache for work stats
@@ -251,7 +256,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed> $filter
      *
-     * @return array<int, Entry>
+     * @return list<Entry>
      */
     public function findByFilterArrayOptimized(array $filter = []): array
     {
@@ -260,59 +265,54 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         // Apply filters with index-aware ordering
         if (isset($filter['user_id'])) {
             $queryBuilder->andWhere('e.user = :user')
-                ->setParameter('user', $filter['user_id'])
-            ;
+                ->setParameter('user', $filter['user_id']);
         }
 
         if (isset($filter['customer_id'])) {
             $queryBuilder->andWhere('e.customer = :customer')
-                ->setParameter('customer', $filter['customer_id'])
-            ;
+                ->setParameter('customer', $filter['customer_id']);
         }
 
         if (isset($filter['project_id'])) {
             $queryBuilder->andWhere('e.project = :project')
-                ->setParameter('project', $filter['project_id'])
-            ;
+                ->setParameter('project', $filter['project_id']);
         }
 
         if (isset($filter['activity_id'])) {
             $queryBuilder->andWhere('e.activity = :activity')
-                ->setParameter('activity', $filter['activity_id'])
-            ;
+                ->setParameter('activity', $filter['activity_id']);
         }
 
         if (isset($filter['date_from'])) {
             $queryBuilder->andWhere('e.day >= :date_from')
-                ->setParameter('date_from', $filter['date_from'])
-            ;
+                ->setParameter('date_from', $filter['date_from']);
         }
 
         if (isset($filter['date_to'])) {
             $queryBuilder->andWhere('e.day <= :date_to')
-                ->setParameter('date_to', $filter['date_to'])
-            ;
+                ->setParameter('date_to', $filter['date_to']);
         }
 
         if (isset($filter['ticket'])) {
             $queryBuilder->andWhere('e.ticket = :ticket')
-                ->setParameter('ticket', $filter['ticket'])
-            ;
+                ->setParameter('ticket', $filter['ticket']);
         }
 
         // Optimize sorting for indexed columns
         $queryBuilder->orderBy('e.day', 'DESC')
-            ->addOrderBy('e.start', 'DESC')
-        ;
+            ->addOrderBy('e.start', 'DESC');
 
         // Add limit if specified
         if (isset($filter['limit'])) {
-            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
+            /** @var array<string, mixed> $typedFilter */
+            $typedFilter = $filter;
+            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($typedFilter, 'limit', 100));
         }
 
         $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
 
         return $result;
     }
@@ -327,8 +327,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->leftJoin($alias . '.user', 'u')
             ->leftJoin($alias . '.customer', 'c')
             ->leftJoin($alias . '.project', 'p')
-            ->leftJoin($alias . '.activity', 'a')
-        ;
+            ->leftJoin($alias . '.activity', 'a');
     }
 
     /**
@@ -341,28 +340,25 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         switch ($period) {
             case Period::DAY:
                 $queryBuilder->andWhere('e.day = :today')
-                    ->setParameter('today', $today)
-                ;
+                    ->setParameter('today', $today);
                 break;
 
             case Period::WEEK:
                 $startOfWeek = clone $today;
-                $startOfWeek = $startOfWeek->modify('monday this week') ?: $startOfWeek;
+                $startOfWeek = false !== $startOfWeek->modify('monday this week') ? $startOfWeek->modify('monday this week') : $startOfWeek;
                 $endOfWeek = clone $startOfWeek;
-                $endOfWeek = $endOfWeek->modify('+6 days') ?: $endOfWeek;
+                $endOfWeek = false !== $endOfWeek->modify('+6 days') ? $endOfWeek->modify('+6 days') : $endOfWeek;
 
                 $queryBuilder->andWhere('e.day BETWEEN :start AND :end')
                     ->setParameter('start', $startOfWeek)
-                    ->setParameter('end', $endOfWeek)
-                ;
+                    ->setParameter('end', $endOfWeek);
                 break;
 
             case Period::MONTH:
                 $queryBuilder->andWhere($this->generateYearExpression('e.day') . ' = :year')
                     ->andWhere($this->generateMonthExpression('e.day') . ' = :month')
                     ->setParameter('year', $today->format('Y'))
-                    ->setParameter('month', $today->format('m'))
-                ;
+                    ->setParameter('month', $today->format('m'));
                 break;
         }
     }
@@ -376,8 +372,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         if (null === $sort || [] === $sort) {
             $queryBuilder->orderBy('e.day', 'DESC')
-                ->addOrderBy('e.start', 'DESC')
-            ;
+                ->addOrderBy('e.start', 'DESC');
 
             return;
         }
@@ -436,11 +431,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed>|null $result
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function formatSummaryData(?array $result, Entry $entry): array
     {
-        if (!$result) {
+        if (null === $result) {
             return $this->getEmptySummaryData();
         }
 
@@ -473,7 +468,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ],
             'ticket' => [
                 'scope' => 'ticket',
-                'name' => $entry->getTicket() ?: '',
+                'name' => '' !== $entry->getTicket() ? $entry->getTicket() : '',
                 'entries' => ArrayTypeHelper::getInt($result, 'ticket_entries', 0) ?? 0,
                 'total' => ArrayTypeHelper::getInt($result, 'ticket_total', 0) ?? 0,
                 'own' => ArrayTypeHelper::getInt($result, 'ticket_own', 0) ?? 0,
@@ -485,7 +480,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Returns empty summary data structure.
      *
-     * @return array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
+     * @return non-empty-array<string, array{scope: string, name: string, entries: int, total: int, own: int, estimation: int}>
      */
     private function getEmptySummaryData(): array
     {
@@ -547,7 +542,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function getCached(string $key): mixed
     {
-        if (!$this->cacheItemPool) {
+        if (null === $this->cacheItemPool) {
             return null;
         }
 
@@ -561,7 +556,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function setCached(string $key, mixed $data, int $ttl = self::CACHE_TTL): void
     {
-        if (!$this->cacheItemPool) {
+        if (null === $this->cacheItemPool) {
             return;
         }
 

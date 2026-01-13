@@ -15,7 +15,7 @@ class TicketService
 
     public function getPrefix(string $ticket): ?string
     {
-        if (!preg_match(self::TICKET_REGEXP, $ticket, $matches)) {
+        if (1 !== preg_match(self::TICKET_REGEXP, $ticket, $matches)) {
             return null;
         }
 

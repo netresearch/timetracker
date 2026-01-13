@@ -26,7 +26,7 @@ class HolidayRepository extends ServiceEntityRepository
     /**
      * get all holidays in a given year and month.
      *
-     * @return array<int, Holiday>
+     * @return list<Holiday>
      */
     public function findByMonth(int $year, int $month): array
     {
@@ -40,10 +40,10 @@ class HolidayRepository extends ServiceEntityRepository
             ->setParameter('to', $to)
             ->orderBy('h.day', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
 
         assert(is_array($result) && array_is_list($result));
+        /** @var list<Holiday> $result */
 
         return $result;
     }

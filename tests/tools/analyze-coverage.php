@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 /**
- * Test Coverage Analysis Script
- * 
+ * Test Coverage Analysis Script.
+ *
  * Analyzes controller files to identify untested public action methods.
  * Compares controller actions with existing test methods to find coverage gaps.
  */
@@ -13,7 +13,7 @@ declare(strict_types=1);
 $autoloadPaths = [
     __DIR__ . '/vendor/autoload.php',
     __DIR__ . '/../../../autoload.php',
-    __DIR__ . '/../../vendor/autoload.php'
+    __DIR__ . '/../../vendor/autoload.php',
 ];
 
 foreach ($autoloadPaths as $autoloadPath) {
@@ -24,10 +24,10 @@ foreach ($autoloadPaths as $autoloadPath) {
 }
 
 // Suppress warnings about unused use statements in global scope
-use ReflectionClass;
-use ReflectionMethod; 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use ReflectionClass;
+use ReflectionMethod;
 use RegexIterator;
 use Throwable;
 
@@ -35,15 +35,18 @@ final readonly class TestCoverageAnalyzer
 {
     public function __construct(
         private string $controllersPath = __DIR__ . '/src/Controller',
-        private string $testsPath = __DIR__ . '/tests/Controller'
+        private string $testsPath = __DIR__ . '/tests/Controller',
     ) {
     }
 
+    /**
+     * @return array{summary: array<string, mixed>, untested: array<int, array<string, mixed>>, tested: array<int, array<string, mixed>>}
+     */
     public function analyze(): array
     {
         $controllers = $this->findControllers();
         $tests = $this->findTestMethods();
-        
+
         $results = [
             'summary' => [
                 'total_controllers' => count($controllers),
@@ -60,11 +63,11 @@ final readonly class TestCoverageAnalyzer
 
         foreach ($controllers as $controllerClass => $actions) {
             foreach ($actions as $action) {
-                $totalActions++;
-                $isTestedAction = $this->isActionTested($controllerClass, $action, $tests);
-                
-                if ($isTestedAction) {
-                    $testedActions++;
+                ++$totalActions;
+                $isTestedAction = $this->isActionTested($controllerClass, (string) $action, $tests);
+
+                if (false !== $isTestedAction) {
+                    ++$testedActions;
                     $results['tested'][] = [
                         'controller' => $controllerClass,
                         'action' => $action,
@@ -81,45 +84,53 @@ final readonly class TestCoverageAnalyzer
         }
 
         $results['summary']['untested_actions'] = count($results['untested']);
-        $results['summary']['coverage_percentage'] = $totalActions > 0 
-            ? round(($testedActions / $totalActions) * 100, 2) 
+        $results['summary']['coverage_percentage'] = $totalActions > 0
+            ? round(($testedActions / $totalActions) * 100, 2)
             : 0.0;
 
         return $results;
     }
 
     /**
-     * Find all controller classes and their public action methods
+     * Find all controller classes and their public action methods.
+     */
+    /**
+     * @return array<string, array<int, string>>
      */
     private function findControllers(): array
     {
         $controllers = [];
         $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($this->controllersPath)
+            new RecursiveDirectoryIterator($this->controllersPath),
         );
         $phpFiles = new RegexIterator($iterator, '/\.php$/');
 
         foreach ($phpFiles as $file) {
-            $relativePath = str_replace($this->controllersPath . '/', '', $file->getPathname());
-            $className = $this->getClassNameFromFile($file->getPathname());
-            
-            if (!$className || !class_exists($className)) {
+            if ($file instanceof SplFileInfo) {
+                $pathname = $file->getPathname();
+                $relativePath = str_replace($this->controllersPath . '/', '', $pathname);
+                $className = $this->getClassNameFromFile($pathname);
+            } else {
+                continue;
+            }
+
+            if (null === $className || ! class_exists($className)) {
                 continue;
             }
 
             try {
                 $reflection = new ReflectionClass($className);
-                
+
                 // Skip abstract classes and base controllers
-                if ($reflection->isAbstract() || $className === 'App\Controller\BaseController') {
+                if ($reflection->isAbstract() || 'App\Controller\BaseController' === $className) {
                     continue;
                 }
 
                 $actions = $this->extractPublicActions($reflection);
-                if (!empty($actions)) {
+                if ([] !== $actions) {
                     $controllers[$className] = $actions;
                 }
-            } catch (\ReflectionException $e) {
+            } catch (ReflectionException $e) {
                 echo "Warning: Could not analyze {$className}: {$e->getMessage()}\n";
             }
         }
@@ -128,7 +139,10 @@ final readonly class TestCoverageAnalyzer
     }
 
     /**
-     * Extract public action methods from a controller
+     * Extract public action methods from a controller.
+     */
+    /**
+     * @return array<int, string>
      */
     private function extractPublicActions(ReflectionClass $reflection): array
     {
@@ -137,21 +151,21 @@ final readonly class TestCoverageAnalyzer
 
         foreach ($methods as $method) {
             // Skip inherited methods from parent classes (except __invoke)
-            if ($method->getDeclaringClass()->getName() !== $reflection->getName() 
-                && $method->getName() !== '__invoke') {
+            if ($method->getDeclaringClass()->getName() !== $reflection->getName()
+                && '__invoke' !== $method->getName()) {
                 continue;
             }
 
             // Skip magic methods (except __invoke), constructors, and setters
             $methodName = $method->getName();
-            if ($methodName === '__construct' 
-                || str_starts_with($methodName, 'set') 
-                || (str_starts_with($methodName, '__') && $methodName !== '__invoke')) {
+            if ('__construct' === $methodName
+                || str_starts_with($methodName, 'set')
+                || (str_starts_with($methodName, '__') && '__invoke' !== $methodName)) {
                 continue;
             }
 
             // Include methods that look like actions
-            if ($methodName === '__invoke' 
+            if ('__invoke' === $methodName
                 || str_ends_with($methodName, 'Action')
                 || $this->hasRouteAttribute($method)) {
                 $actions[] = $methodName;
@@ -162,7 +176,7 @@ final readonly class TestCoverageAnalyzer
     }
 
     /**
-     * Check if a method has a Route attribute
+     * Check if a method has a Route attribute.
      */
     private function hasRouteAttribute(ReflectionMethod $method): bool
     {
@@ -173,29 +187,38 @@ final readonly class TestCoverageAnalyzer
                 return true;
             }
         }
+
         return false;
     }
 
     /**
-     * Find all test methods in test files
+     * Find all test methods in test files.
+     */
+    /**
+     * @return array<string, array<int, string>>
      */
     private function findTestMethods(): array
     {
         $testMethods = [];
-        
-        if (!is_dir($this->testsPath)) {
+
+        if (! is_dir($this->testsPath)) {
             return $testMethods;
         }
 
         $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($this->testsPath)
+            new RecursiveDirectoryIterator($this->testsPath),
         );
         $phpFiles = new RegexIterator($iterator, '/Test\.php$/');
 
         foreach ($phpFiles as $file) {
-            $className = $this->getClassNameFromFile($file->getPathname(), 'Tests');
-            
-            if (!$className || !class_exists($className)) {
+            if ($file instanceof SplFileInfo) {
+                $pathname = $file->getPathname();
+                $className = $this->getClassNameFromFile($pathname, 'Tests');
+            } else {
+                continue;
+            }
+
+            if (null === $className || ! class_exists($className)) {
                 continue;
             }
 
@@ -209,7 +232,7 @@ final readonly class TestCoverageAnalyzer
                         $testMethods[$className][] = $methodName;
                     }
                 }
-            } catch (\ReflectionException $e) {
+            } catch (ReflectionException $e) {
                 echo "Warning: Could not analyze test {$className}: {$e->getMessage()}\n";
             }
         }
@@ -218,17 +241,20 @@ final readonly class TestCoverageAnalyzer
     }
 
     /**
-     * Check if an action is tested by matching patterns
+     * Check if an action is tested by matching patterns.
+     */
+    /**
+     * @param array<string, array<int, string>> $tests
      */
     private function isActionTested(string $controllerClass, string $action, array $tests): string|false
     {
         // Extract controller area and action name for better matching
         $controllerInfo = $this->extractControllerInfo($controllerClass);
-        
+
         foreach ($tests as $testClass => $testMethods) {
             // Match by controller area (Settings, Admin, Default, etc.)
             $testArea = $this->extractTestArea($testClass);
-            
+
             if ($this->areasMatch($controllerInfo['area'], $testArea)) {
                 foreach ($testMethods as $testMethod) {
                     if ($this->matchesTestPattern($controllerInfo['action'], $action, $testMethod)) {
@@ -242,7 +268,7 @@ final readonly class TestCoverageAnalyzer
     }
 
     /**
-     * Match action method with test method patterns
+     * Match action method with test method patterns.
      */
     private function matchesTestPattern(string $actionName, string $methodName, string $testMethod): bool
     {
@@ -258,7 +284,7 @@ final readonly class TestCoverageAnalyzer
         $exactMatches = [
             'savesettings' => ['save', 'saveaction'],
             'saveentry' => ['save', 'saveaction'],
-            'saveactivity' => ['save', 'saveaction'], 
+            'saveactivity' => ['save', 'saveaction'],
             'savecustomer' => ['save', 'saveaction'],
             'saveuser' => ['save', 'saveaction'],
             'saveproject' => ['save', 'saveaction'],
@@ -290,7 +316,7 @@ final readonly class TestCoverageAnalyzer
         // Common verb patterns with stricter matching
         $strictPatterns = [
             'get' => ['get', 'load', 'fetch'],
-            'save' => ['save', 'create', 'post'], 
+            'save' => ['save', 'create', 'post'],
             'delete' => ['delete', 'remove'],
             'export' => ['export'],
             'sync' => ['sync'],
@@ -310,7 +336,10 @@ final readonly class TestCoverageAnalyzer
     }
 
     /**
-     * Extract controller area and action information
+     * Extract controller area and action information.
+     */
+    /**
+     * @return array<string, string>
      */
     private function extractControllerInfo(string $controllerClass): array
     {
@@ -318,11 +347,11 @@ final readonly class TestCoverageAnalyzer
         $parts = explode('\\', $controllerClass);
         $className = end($parts);
         $area = count($parts) > 3 ? $parts[2] : 'Default'; // Extract area from namespace
-        
+
         // Extract action name from class name
         $actionName = str_replace('Action', '', $className);
-        $actionName = strtolower(preg_replace('/([a-z])([A-Z])/', '$1$2', $actionName));
-        
+        $actionName = strtolower(preg_replace('/([a-z])([A-Z])/', '$1$2', $actionName) ?? '');
+
         return [
             'area' => $area,
             'action' => $actionName,
@@ -331,33 +360,49 @@ final readonly class TestCoverageAnalyzer
     }
 
     /**
-     * Extract test area from test class name
+     * Extract test area from test class name.
      */
     private function extractTestArea(string $testClass): string
     {
         // Tests\Controller\SettingsControllerTest -> Settings
-        if (preg_match('/Tests\\\\Controller\\\\(\w+)ControllerTest/', $testClass, $matches)) {
+        if (1 === preg_match('/Tests\\\\Controller\\\\(\w+)ControllerTest/', $testClass, $matches)) {
             return $matches[1];
         }
-        
+
         // Fallback patterns
         $parts = explode('\\', $testClass);
         $className = end($parts);
-        
-        if (str_contains($className, 'Settings')) return 'Settings';
-        if (str_contains($className, 'Admin')) return 'Admin';
-        if (str_contains($className, 'Default')) return 'Default';
-        if (str_contains($className, 'Controlling')) return 'Controlling';
-        if (str_contains($className, 'Tracking') || str_contains($className, 'Crud')) return 'Tracking';
-        if (str_contains($className, 'Interpretation')) return 'Interpretation';
-        if (str_contains($className, 'Status')) return 'Status';
-        if (str_contains($className, 'Security')) return 'Security';
-        
+
+        if (str_contains($className, 'Settings')) {
+            return 'Settings';
+        }
+        if (str_contains($className, 'Admin')) {
+            return 'Admin';
+        }
+        if (str_contains($className, 'Default')) {
+            return 'Default';
+        }
+        if (str_contains($className, 'Controlling')) {
+            return 'Controlling';
+        }
+        if (str_contains($className, 'Tracking') || str_contains($className, 'Crud')) {
+            return 'Tracking';
+        }
+        if (str_contains($className, 'Interpretation')) {
+            return 'Interpretation';
+        }
+        if (str_contains($className, 'Status')) {
+            return 'Status';
+        }
+        if (str_contains($className, 'Security')) {
+            return 'Security';
+        }
+
         return 'Default';
     }
 
     /**
-     * Check if controller area matches test area
+     * Check if controller area matches test area.
      */
     private function areasMatch(string $controllerArea, string $testArea): bool
     {
@@ -365,31 +410,31 @@ final readonly class TestCoverageAnalyzer
         if ($controllerArea === $testArea) {
             return true;
         }
-        
+
         // Special mappings
         $mappings = [
             'Tracking' => ['Crud'],
             'Default' => ['Security'], // Some default actions might be tested in security tests
         ];
-        
+
         if (isset($mappings[$controllerArea])) {
             return in_array($testArea, $mappings[$controllerArea], true);
         }
-        
+
         if (isset($mappings[$testArea])) {
             return in_array($controllerArea, $mappings[$testArea], true);
         }
-        
+
         return false;
     }
 
     /**
-     * Extract class name from file path
+     * Extract class name from file path.
      */
     private function getClassNameFromFile(string $filePath, string $namespace = 'App'): ?string
     {
         $content = file_get_contents($filePath);
-        if ($content === false) {
+        if (false === $content) {
             return null;
         }
 
@@ -397,39 +442,42 @@ final readonly class TestCoverageAnalyzer
         preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatches);
         preg_match('/class\s+(\w+)/', $content, $classMatches);
 
-        if (!isset($namespaceMatches[1], $classMatches[1])) {
+        if (! isset($namespaceMatches[1], $classMatches[1])) {
             return null;
         }
 
         return $namespaceMatches[1] . '\\' . $classMatches[1];
     }
 
-
     /**
-     * Get the file path for a controller class
+     * Get the file path for a controller class.
      */
     private function getControllerFile(string $controllerClass): string
     {
         $relativePath = str_replace(['App\\Controller\\', '\\'], ['', '/'], $controllerClass);
+
         return "src/Controller/{$relativePath}.php";
     }
 }
 
 /**
- * Output formatter for analysis results
+ * Output formatter for analysis results.
  */
 final readonly class OutputFormatter
 {
+    /**
+     * @param array{summary: array<string, mixed>, untested: array<int, array<string, mixed>>, tested: array<int, array<string, mixed>>} $results
+     */
     public function formatResults(array $results): void
     {
         $this->printHeader();
         $this->printSummary($results['summary']);
-        
-        if (!empty($results['untested'])) {
+
+        if ([] !== $results['untested']) {
             $this->printUntestedActions($results['untested']);
         }
-        
-        if (!empty($results['tested'])) {
+
+        if ([] !== $results['tested']) {
             $this->printTestedActions($results['tested']);
         }
     }
@@ -441,53 +489,76 @@ final readonly class OutputFormatter
         echo str_repeat('=', 80) . "\n";
     }
 
+    /**
+     * @param array<string, mixed> $summary
+     */
     private function printSummary(array $summary): void
     {
         echo "\n📊 SUMMARY:\n";
         echo str_repeat('-', 40) . "\n";
+        assert(is_int($summary['total_controllers']));
+        assert(is_int($summary['total_tests']));
+        assert(is_int($summary['untested_actions']));
+        assert(is_float($summary['coverage_percentage']));
         echo sprintf("Total Controllers: %d\n", $summary['total_controllers']);
         echo sprintf("Total Test Classes: %d\n", $summary['total_tests']);
         echo sprintf("Untested Actions: %d\n", $summary['untested_actions']);
         echo sprintf("Coverage: %.2f%%\n", $summary['coverage_percentage']);
-        
+
         $coverageBar = $this->generateCoverageBar($summary['coverage_percentage']);
         echo "Progress: {$coverageBar}\n";
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $untested
+     */
     private function printUntestedActions(array $untested): void
     {
         echo "\n❌ UNTESTED CONTROLLER ACTIONS:\n";
         echo str_repeat('-', 60) . "\n";
-        
+
         $groupedByController = [];
         foreach ($untested as $item) {
-            $groupedByController[$item['controller']][] = $item;
+            if (is_array($item) && isset($item['controller'])) {
+                $controller = $item['controller'];
+                if (is_string($controller)) {
+                    $groupedByController[$controller][] = $item;
+                }
+            }
         }
 
         foreach ($groupedByController as $controller => $actions) {
             echo "\n🎯 {$controller}:\n";
             foreach ($actions as $action) {
-                echo "   • {$action['action']}()\n";
-                echo "     📁 {$action['file']}\n";
+                $actionName = is_scalar($action['action']) ? (string) $action['action'] : 'unknown';
+                $fileName = is_scalar($action['file']) ? (string) $action['file'] : 'unknown';
+                echo "   • {$actionName}()\n";
+                echo "     📁 {$fileName}\n";
             }
         }
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $tested
+     */
     private function printTestedActions(array $tested): void
     {
-        if (empty($tested)) {
+        if ([] === $tested) {
             return;
         }
 
         echo "\n✅ TESTED CONTROLLER ACTIONS:\n";
         echo str_repeat('-', 60) . "\n";
-        
+
         foreach ($tested as $item) {
+            $controller = is_scalar($item['controller']) ? (string) $item['controller'] : 'unknown';
+            $action = is_scalar($item['action']) ? (string) $item['action'] : 'unknown';
+            $testMethod = is_scalar($item['test_method']) ? (string) $item['test_method'] : 'unknown';
             echo sprintf(
                 "• %s::%s() → %s\n",
-                basename(str_replace('\\', '/', $item['controller'])),
-                $item['action'],
-                $item['test_method']
+                basename(str_replace('\\', '/', $controller)),
+                $action,
+                $testMethod,
             );
         }
     }
@@ -497,69 +568,71 @@ final readonly class OutputFormatter
         $width = 30;
         $filled = (int) round(($percentage / 100) * $width);
         $empty = $width - $filled;
-        
+
         $bar = '[' . str_repeat('█', $filled) . str_repeat('░', $empty) . ']';
+
         return sprintf('%s %.1f%%', $bar, $percentage);
     }
 }
 
 // Main execution
-if (PHP_SAPI === 'cli') {
+if (\PHP_SAPI === 'cli') {
     // Check for help argument
-    if (in_array('--help', $argv ?? []) || in_array('-h', $argv ?? [])) {
-        echo <<<HELP
+    if (in_array('--help', $argv ?? [], true) || in_array('-h', $argv ?? [], true)) {
+        echo <<<'HELP'
 
-Test Coverage Analysis Script
-============================
+            Test Coverage Analysis Script
+            ============================
 
-Usage: php analyze-coverage.php [options]
-   or: docker compose run --rm app php analyze-coverage.php [options]
+            Usage: php analyze-coverage.php [options]
+               or: docker compose run --rm app php analyze-coverage.php [options]
 
-Options:
-  --help, -h    Show this help message
-  
-Description:
-  Analyzes controller files to identify untested public action methods.
-  Scans src/Controller/ for PHP controllers and checks if corresponding 
-  test methods exist in tests/Controller/.
+            Options:
+              --help, -h    Show this help message
 
-Exit Codes:
-  0 = All controllers have test coverage
-  1 = Some controllers lack test coverage  
-  2 = Analysis error occurred
+            Description:
+              Analyzes controller files to identify untested public action methods.
+              Scans src/Controller/ for PHP controllers and checks if corresponding
+              test methods exist in tests/Controller/.
 
-HELP;
+            Exit Codes:
+              0 = All controllers have test coverage
+              1 = Some controllers lack test coverage
+              2 = Analysis error occurred
+
+            HELP;
         exit(0);
     }
 
     try {
         echo "🔍 Analyzing test coverage...\n";
-        
+
         $analyzer = new TestCoverageAnalyzer();
         $results = $analyzer->analyze();
-        
+
         $formatter = new OutputFormatter();
         $formatter->formatResults($results);
-        
+
         echo "\n" . str_repeat('=', 80) . "\n";
         echo "Analysis complete! Use this report to identify testing gaps.\n";
-        
+
+        assert(is_array($results['summary']) && isset($results['summary']['untested_actions']));
         if ($results['summary']['untested_actions'] > 0) {
             echo "💡 Tip: Consider adding tests for untested controller actions above.\n";
         } else {
             echo "🎉 Excellent! All controller actions have corresponding tests.\n";
         }
-        
+
         echo str_repeat('=', 80) . "\n\n";
-        
+
         // Exit with appropriate code
         $exitCode = $results['summary']['untested_actions'] > 0 ? 1 : 0;
         exit($exitCode);
-        
+
     } catch (Throwable $e) {
-        echo "❌ Error during analysis: " . $e->getMessage() . "\n";
-        if (isset($argv) && in_array('--verbose', $argv)) {
-            echo "Stack trace: " . $e->getTraceAsString() . "\n";
+        echo '❌ Error during analysis: ' . $e->getMessage() . "\n";
+        if (isset($argv) && in_array('--verbose', $argv, true)) {
+            echo 'Stack trace: ' . $e->getTraceAsString() . "\n";
         }
         exit(2);
     }

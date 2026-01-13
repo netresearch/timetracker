@@ -14,8 +14,6 @@ use App\Enum\EntryClass;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
-use function is_array;
-
 /**
  * @internal
  *
@@ -131,12 +129,17 @@ final class EntryTest extends TestCase
         $entry->setEnd($end);
         self::assertSame($start, $entry->getStart()->format('H:i'), 'Start and end should not invert');
 
-        $start = '22:22';
-        $end = '11:11';
-        $entry->setStart($start);
-        $entry->setEnd($end);
-        self::assertSame($start, $entry->getStart()->format('H:i'), 'End should be greater or equal start');
-        self::assertSame($start, $entry->getEnd()->format('H:i'), 'End should be greater or equal start');
+        // Test inverted times: when start > end, end should be clamped to start
+        $invertedStart = '22:22';
+        $invertedEnd = '11:11';
+        $entry->setStart($invertedStart);
+        $entry->setEnd($invertedEnd);
+        self::assertSame($invertedStart, $entry->getStart()->format('H:i'), 'Start should remain as set');
+        // When end < start, the Entry entity clamps end to equal start
+        // Use expected value directly to avoid PHPStan type narrowing issues
+        $expectedEnd = '22:22';
+        $actualEnd = $entry->getEnd()->format('H:i');
+        self::assertSame($expectedEnd, $actualEnd, 'End should be clamped to start when end < start');
     }
 
     public function testCalcDuration(): void
@@ -177,7 +180,6 @@ final class EntryTest extends TestCase
 
         // empty case
         $result = $entry->toArray();
-        self::assertTrue(is_array($result));
         self::assertNull($result['customer']);
         self::assertNull($result['project']);
 
@@ -193,10 +195,8 @@ final class EntryTest extends TestCase
         $entry
             ->setId(5)
             ->setDescription('foo')
-            ->setTicket('TTT-51')
-        ;
+            ->setTicket('TTT-51');
         $result = $entry->toArray();
-        self::assertTrue(is_array($result));
         self::assertSame(5, $result['id']);
         self::assertSame('foo', $result['description']);
         self::assertSame('TTT-51', $result['ticket']);
@@ -205,8 +205,7 @@ final class EntryTest extends TestCase
 
         // test indirect getCustomerId call
         $entry
-            ->setProject($project)
-        ;
+            ->setProject($project);
         $result = $entry->toArray();
         self::assertSame(17, $result['customer']);
         self::assertSame(21, $result['project']);
@@ -214,8 +213,7 @@ final class EntryTest extends TestCase
         // test project and customer
         $entry
             ->setCustomer($customer)
-            ->setProject($project)
-        ;
+            ->setProject($project);
         $result = $entry->toArray();
         self::assertSame(17, $result['customer']);
         self::assertSame(21, $result['project']);

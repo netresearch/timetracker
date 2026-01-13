@@ -6,7 +6,11 @@ namespace Tests\Entity;
 
 use App\Entity\Holiday;
 use DateTime;
+use RuntimeException;
 use Tests\AbstractWebTestCase;
+
+use function assert;
+use function is_array;
 
 /**
  * @internal
@@ -15,18 +19,23 @@ use Tests\AbstractWebTestCase;
  */
 final class HolidayDatabaseTest extends AbstractWebTestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
     }
 
     public function testPersistAndFind(): void
     {
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-12-25';
         $conn->insert('holidays', ['day' => $day, 'name' => 'Christmas']);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
+        self::assertIsArray($row);
         self::assertNotEmpty($row);
         self::assertSame('Christmas', $row['name']);
 
@@ -36,19 +45,28 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testUpdate(): void
     {
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-01-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'New Year']);
         $conn->update('holidays', ['name' => 'Updated Holiday'], ['day' => $day]);
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
+        assert(is_array($row));
         self::assertSame('Updated Holiday', $row['name']);
         $conn->delete('holidays', ['day' => $day]);
     }
 
     public function testDelete(): void
     {
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $day = '2023-05-01';
         $conn->insert('holidays', ['day' => $day, 'name' => 'Labor Day']);
         $conn->delete('holidays', ['day' => $day]);
@@ -59,7 +77,11 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
     public function testFindByYear(): void
     {
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
         $conn = $this->serviceContainer->get('doctrine.dbal.default_connection');
+        assert($conn instanceof \Doctrine\DBAL\Connection);
         $rows = [
             ['day' => '2022-12-25', 'name' => 'Christmas 2022'],
             ['day' => '2023-01-01', 'name' => 'New Year 2023'],

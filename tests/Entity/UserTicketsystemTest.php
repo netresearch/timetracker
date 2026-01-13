@@ -22,8 +22,7 @@ final class UserTicketsystemTest extends TestCase
         $userTicketsystem->setId(42)
             ->setAccessToken('tok')
             ->setTokenSecret('sec')
-            ->setAvoidConnection(true)
-        ;
+            ->setAvoidConnection(true);
 
         self::assertSame(42, $userTicketsystem->getId());
         self::assertSame('tok', $userTicketsystem->getAccessToken());

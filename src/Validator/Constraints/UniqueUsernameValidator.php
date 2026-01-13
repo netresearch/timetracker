@@ -19,7 +19,7 @@ class UniqueUsernameValidator extends ConstraintValidator
 
     public function validate(mixed $value, Constraint $constraint): void
     {
-        if (!$constraint instanceof UniqueUsername) {
+        if (! $constraint instanceof UniqueUsername) {
             throw new UnexpectedTypeException($constraint, UniqueUsername::class);
         }
 
@@ -38,21 +38,18 @@ class UniqueUsernameValidator extends ConstraintValidator
         $entityRepository = $this->entityManager->getRepository(User::class);
         $queryBuilder = $entityRepository->createQueryBuilder('u')
             ->where('u.username = :username')
-            ->setParameter('username', $value)
-        ;
+            ->setParameter('username', $value);
 
         if ($userId > 0) {
             $queryBuilder->andWhere('u.id != :id')
-                ->setParameter('id', $userId)
-            ;
+                ->setParameter('id', $userId);
         }
 
         $existingUser = $queryBuilder->getQuery()->getOneOrNullResult();
 
         if (null !== $existingUser) {
             $this->context->buildViolation($constraint->message)
-                ->addViolation()
-            ;
+                ->addViolation();
         }
     }
 }

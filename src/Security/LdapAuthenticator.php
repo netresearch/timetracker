@@ -54,7 +54,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         $isLoginSubmit = $isLoginRoute && $isPostMethod;
 
         if ($isLoginSubmit) {
-            $this->logger->debug('LdapAuthenticator: supports() returned true for POST on ' . $route);
+            $this->logger->debug('LdapAuthenticator: supports() returned true for POST on login route');
         }
 
         return $isLoginSubmit;
@@ -77,7 +77,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         }
 
         // Validate username format
-        if (!$this->isValidUsername($username)) {
+        if (! $this->isValidUsername($username)) {
             $this->logger->warning('Invalid username format attempted', ['username' => substr($username, 0, 3) . '***']);
             throw new CustomUserMessageAuthenticationException('Invalid username format.');
         }
@@ -96,8 +96,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                     ->setUserPass($this->currentPassword ?? '')
                     ->setUseSSL((bool) ($this->parameterBag->get('ldap_usessl') ?? false))
                     ->setUserNameField((string) (is_scalar($this->parameterBag->get('ldap_usernamefield')) ? $this->parameterBag->get('ldap_usernamefield') : ''))
-                    ->login()
-                ;
+                    ->login();
 
                 $this->logger->info('LDAP authentication successful.', ['username' => $userIdentifier]);
 
@@ -106,17 +105,16 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                     return $user;
                 }
 
-                if (!(bool) $this->parameterBag->get('ldap_create_user')) {
+                if (! (bool) $this->parameterBag->get('ldap_create_user')) {
                     throw new UserNotFoundException(sprintf('User "%s" authenticated via LDAP but not found locally and creation is disabled.', $userIdentifier));
                 }
 
                 $newUser = new User()
                     ->setUsername($userIdentifier)
                     ->setType('DEV')
-                    ->setLocale('de')
-                ;
+                    ->setLocale('de');
 
-                if (!empty($this->ldapClientService->getTeams())) {
+                if ([] !== $this->ldapClientService->getTeams()) {
                     $teamRepo = $this->entityManager->getRepository(Team::class);
                     foreach ($this->ldapClientService->getTeams() as $teamname) {
                         $team = $teamRepo->findOneBy(['name' => $teamname]);
@@ -170,7 +168,8 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, \Symfony\Component\Security\Core\Authentication\Token\TokenInterface $token, string $firewallName): RedirectResponse
     {
-        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+        $targetPath = $this->getTargetPath($request->getSession(), $firewallName);
+        if (null !== $targetPath && '' !== $targetPath) {
             return new RedirectResponse($targetPath);
         }
 

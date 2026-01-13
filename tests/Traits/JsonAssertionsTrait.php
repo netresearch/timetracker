@@ -4,175 +4,202 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
-use function count;
-use function explode;
+use LogicException;
+use PHPUnit\Framework\Assert;
+
+use function assert;
 use function is_array;
-use function json_decode;
-use function json_last_error;
-use function preg_match;
-use function preg_quote;
-use function range;
-use function sprintf;
-use function str_contains;
-use function str_ends_with;
-use function str_replace;
-use function str_starts_with;
+use function is_int;
 
 /**
- * JSON response assertion trait.
- * 
- * Provides JSON response validation, API testing helpers, and response assertions
- * for test cases working with JSON APIs.
+ * JSON assertions helper trait for test cases.
  */
 trait JsonAssertionsTrait
 {
     /**
-     * Assert that $subset is contained within $array (recursive subset match).
+     * Assert JSON property value.
      *
-     * - If $subset is an associative array, all its keys must exist in $array with matching values (recursively for arrays).
-     * - If $subset is a list and $array is a list:
-     *   - When $subset has one element, assert that there exists at least one element in $array containing that subset.
-     *   - Otherwise, check elements in order (index-wise) for being a subset.
+     * @param array<string, mixed> $json
      */
-    protected function assertArraySubset(array $subset, array $array, string $message = ''): void
+    protected function assertJsonProperty(string $property, mixed $expectedValue, array $json): void
     {
-        $isAssoc = static function (array $a): bool {
-            if ([] === $a) {
-                return false;
-            }
+        self::assertArrayHasKey($property, $json, "JSON should contain property '$property'");
+        self::assertSame($expectedValue, $json[$property], "Property '$property' should match expected value");
+    }
 
-            return array_keys($a) !== range(0, count($a) - 1);
-        };
+    /**
+     * Assert JSON contains specific properties.
+     *
+     * @param array<int, string>   $properties
+     * @param array<string, mixed> $json
+     */
+    protected function assertJsonHasProperties(array $properties, array $json): void
+    {
+        foreach ($properties as $property) {
+            self::assertArrayHasKey($property, $json, "JSON should contain property '$property'");
+        }
+    }
 
-        $valuesEqual = static function ($expected, $actual): bool {
-            if (is_numeric($expected) && is_numeric($actual)) {
-                return (string) $expected === (string) $actual;
-            }
-
-            return $expected === $actual;
-        };
-
-        $assertSubset = function (array $needle, array $haystack) use (&$assertSubset, $isAssoc, $valuesEqual): void {
-            if ($isAssoc($needle)) {
-                // Associative: each key/value in needle must match in haystack
-                foreach ($needle as $key => $value) {
-                    $this->assertArrayHasKey($key, $haystack, sprintf("Missing key '%s'", $key));
-                    if (is_array($value)) {
-                        $this->assertIsArray($haystack[$key]);
-                        $assertSubset($value, $haystack[$key]);
-                    } else {
-                        $this->assertTrue($valuesEqual($value, $haystack[$key]), sprintf("Value mismatch at key '%s'", $key));
-                    }
-                }
-            } else {
-                // List: compare in-order by index
-                $this->assertGreaterThanOrEqual(count($needle), count($haystack));
-                foreach ($needle as $index => $value) {
-                    if (is_array($value)) {
-                        $this->assertIsArray($haystack[$index]);
-                        $assertSubset($value, $haystack[$index]);
-                    } else {
-                        $this->assertTrue($valuesEqual($value, $haystack[$index]), 'Value mismatch at index ' . $index);
-                    }
-                }
-            }
-        };
-
-        if (!$isAssoc($subset) && !$isAssoc($array)) {
-            // Both lists: allow order-insensitive subset matching
-            $remaining = $subset;
-            $haystack = $array;
-
-            $matchElement = static function ($needle, array $hay) use ($assertSubset, $valuesEqual): int|string|null {
-                foreach ($hay as $idx => $candidate) {
-                    try {
-                        if (is_array($needle)) {
-                            if (!is_array($candidate)) {
-                                continue;
-                            }
-
-                            $assertSubset($needle, $candidate);
-
-                            return $idx;
-                        }
-
-                        if ($valuesEqual($needle, $candidate)) {
-                            return $idx;
-                        }
-                    } catch (\Throwable) {
-                        // try next
-                    }
-                }
-
-                return null;
-            };
-
-            foreach ($remaining as $needle) {
-                $idx = $matchElement($needle, $haystack);
-                if (null === $idx) {
-                    self::fail('' !== $message ? $message : 'Subset element not found in array');
-                }
-
-                unset($haystack[$idx]);
-            }
-
-            return;
+    /**
+     * Assert JSON response structure.
+     *
+     * Supports three formats:
+     * 1. List of property names: ['id', 'name', 'email']
+     * 2. Nested structures: ['user' => ['id', 'name']]
+     * 3. Expected values (associative): ['active' => true, 'count' => 5]
+     *
+     * @param array<int|string, mixed> $structure
+     * @param array<mixed, mixed>|null $json      Optional - fetched from client response if not provided
+     */
+    protected function assertJsonStructure(array $structure, ?array $json = null): void
+    {
+        // Auto-fetch from response if not provided
+        if (null === $json) {
+            // @phpstan-ignore property.notFound (client provided by HttpClientTrait)
+            $response = $this->client->getResponse();
+            $json = $this->getJsonResponse($response);
         }
 
-        $assertSubset($subset, $array);
+        foreach ($structure as $key => $value) {
+            if (is_array($value)) {
+                // Nested structure: key => [nested properties]
+                $stringKey = (string) $key;
+                self::assertArrayHasKey($stringKey, $json, "JSON should contain property '$stringKey'");
+                self::assertIsArray($json[$stringKey], "Property '$stringKey' should be an array");
+                /** @var array<string, mixed> $nestedJson */
+                $nestedJson = $json[$stringKey];
+                $this->assertJsonStructure($value, $nestedJson);
+            } elseif (is_int($key)) {
+                // List format: [0 => 'propertyName'] - just check property exists
+                // Value should be a string property name when key is int
+                self::assertIsString($value, 'List format values at int keys must be property name strings');
+                self::assertArrayHasKey($value, $json, "JSON should contain property '$value'");
+            } else {
+                // Associative format: ['propertyName' => expectedValue]
+                // When key is not int, it's already string (array keys can only be int|string)
+                self::assertArrayHasKey($key, $json, "JSON should contain property '$key'");
+                self::assertSame($value, $json[$key], "Property '$key' should have expected value");
+            }
+        }
     }
 
     /**
-     * Tests $statusCode against response status code.
+     * Assert that JSON contains error message.
+     *
+     * @param array<string, mixed> $json
      */
-    protected function assertStatusCode(int $statusCode, string $message = ''): void
+    protected function assertJsonError(string $expectedMessage, array $json): void
     {
-        self::assertSame(
-            $statusCode,
-            $this->client->getResponse()->getStatusCode(),
-            $message,
-        );
+        self::assertArrayHasKey('error', $json, 'JSON should contain error property');
+        self::assertSame($expectedMessage, $json['error'], 'Error message should match expected value');
     }
 
     /**
-     * Assert that a message matches the response content.
+     * Assert JSON success response.
+     *
+     * @param array<string, mixed> $json
      */
-    protected function assertMessage(string $message): void
+    protected function assertJsonSuccess(array $json): void
     {
-        $responseContent = $this->client->getResponse()->getContent();
-        $response = $this->client->getResponse();
-        
-        // Check if response is JSON (validation errors return JSON)
-        $contentType = $response->headers->get('Content-Type', '');
-        if (str_contains($contentType, 'application/json') || (str_starts_with($responseContent, '{') && str_ends_with($responseContent, '}'))) {
-            $json = json_decode($responseContent, true);
-            if (JSON_ERROR_NONE === json_last_error() && isset($json['message'])) {
-                $jsonMessage = $json['message'];
-                
-                // Handle translation mapping for contract validation messages
+        self::assertArrayHasKey('success', $json, 'JSON should contain success property');
+        self::assertTrue($json['success'], 'Success should be true');
+    }
+
+    /**
+     * Parse JSON response and return decoded array.
+     *
+     * @return array<mixed, mixed>
+     */
+    protected function getJsonResponse(\Symfony\Component\HttpFoundation\Response $response): array
+    {
+        $content = $response->getContent();
+        self::assertIsString($content, 'Response content should be a string');
+
+        $decoded = json_decode($content, true);
+        self::assertIsArray($decoded, 'Response should contain valid JSON');
+
+        return $decoded;
+    }
+
+    /**
+     * Assert that response contains valid JSON.
+     *
+     * @return array<mixed, mixed>
+     */
+    protected function assertValidJsonResponse(\Symfony\Component\HttpFoundation\Response $response): array
+    {
+        self::assertSame('application/json', $response->headers->get('Content-Type'), 'Response should be JSON');
+
+        return $this->getJsonResponse($response);
+    }
+
+    /**
+     * Assert JSON array count.
+     *
+     * @param array<string, mixed> $json
+     */
+    protected function assertJsonCount(int $expectedCount, array $json, ?string $property = null): void
+    {
+        if (null !== $property) {
+            self::assertArrayHasKey($property, $json, "JSON should contain property '$property'");
+            self::assertIsArray($json[$property], "Property '$property' should be an array");
+            self::assertCount($expectedCount, $json[$property], "Property '$property' should have $expectedCount items");
+        } else {
+            self::assertCount($expectedCount, $json, "JSON should have $expectedCount items");
+        }
+    }
+
+    /**
+     * Assert that JSON contains pagination data.
+     *
+     * @param array<string, mixed> $json
+     */
+    protected function assertJsonPagination(array $json): void
+    {
+        $requiredKeys = ['page', 'pages', 'perPage', 'total'];
+        foreach ($requiredKeys as $key) {
+            self::assertArrayHasKey($key, $json, "JSON should contain pagination property '$key'");
+            self::assertIsInt($json[$key], "Pagination property '$key' should be an integer");
+        }
+    }
+
+    /**
+     * Assert response content matches expected message (with translation handling).
+     */
+    protected function assertResponseMessage(string $message, \Symfony\Component\HttpFoundation\Response $response): void
+    {
+        $responseContentString = $response->getContent();
+        self::assertIsString($responseContentString, 'Response content should be a string');
+
+        // Handle JSON error responses
+        if ('application/json' === $response->headers->get('Content-Type')) {
+            $jsonData = json_decode($responseContentString, true);
+            if (is_array($jsonData) && isset($jsonData['message'])) {
+                $jsonMessage = $jsonData['message'];
+
+                // Contract translation mappings for German to English
                 $contractTranslations = [
                     'Das Vertragsende muss nach dem Vertragsbeginn liegen.' => 'End date has to be greater than the start date.',
                     'Es besteht bereits ein laufender Vertrag mit einem Startdatum in der Zukunft, das sich mit dem neuen Vertrag überschneidet.' => 'There is already an ongoing contract with a start date in the future that overlaps with the new contract.',
                     'Es besteht bereits ein laufender Vertrag mit einem Enddatum in der Zukunft.' => 'There is already an ongoing contract with a closed end date in the future.',
                     'Für den Nutzer besteht mehr als ein unbefristeter Vertrag.' => 'There is more than one open-ended contract for the user.',
                 ];
-                
+
                 // Check if the expected German message matches the English JSON message
                 if (isset($contractTranslations[$message]) && $contractTranslations[$message] === $jsonMessage) {
-                    self::assertTrue(true);
-                    return;
+                    return; // Translation matched - test passed
                 }
-                
+
                 // Direct comparison for other messages
                 self::assertSame($message, $jsonMessage);
+
                 return;
             }
         }
 
         // Try direct comparison first
-        if ($message === $responseContent) {
-            self::assertTrue(true);
-            return;
+        if ($message === $responseContentString) {
+            return; // Direct match - test passed
         }
 
         // Handle specific translation issues based on the messages.de.yml
@@ -181,60 +208,122 @@ trait JsonAssertionsTrait
             'Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.' => 'No contract for user found. Please use custome time.',
         ];
 
+        // Check if there's a known translation mapping
         foreach ($translationMap as $german => $english) {
-            // Replace %num% with actual number in pattern
-            $germanPattern = str_replace('%num%', '(\\d+)', preg_quote($german, '/'));
-            $englishPattern = str_replace('%num%', '$1', preg_quote($english, '/'));
+            if (str_contains($message, str_replace('%num%', '', $german))) {
+                // Extract the number from the expected message
+                preg_match('/(\d+)/', $message, $matches);
+                if ([] !== $matches) {
+                    $expectedEnglish = str_replace('%num%', $matches[1], $english);
+                    self::assertSame($expectedEnglish, $responseContentString);
 
-            if (preg_match('/^' . $germanPattern . '$/', $message, $germanMatches)
-                && preg_match('/^' . $englishPattern . '$/', (string) $responseContent, $englishMatches)) {
-                self::assertTrue(true, 'Translation matched via pattern');
-                return;
+                    return;
+                }
             }
         }
 
-        // Fall back to direct comparison
-        self::assertSame($message, $responseContent);
+        // If no translation mapping found, compare directly
+        self::assertSame($message, $responseContentString);
     }
 
     /**
-     * Assert that the response has the expected content type.
+     * Assert response contains expected validation errors.
+     *
+     * @param array<string, string> $expectedErrors
      */
-    protected function assertContentType(string $contentType): void
+    protected function assertValidationErrors(array $expectedErrors, \Symfony\Component\HttpFoundation\Response $response): void
     {
-        self::assertStringContainsString(
-            $contentType,
-            $this->client->getResponse()->headers->get('content-type'),
-        );
+        $json = $this->getJsonResponse($response);
+
+        self::assertArrayHasKey('errors', $json, 'Response should contain validation errors');
+        self::assertIsArray($json['errors'], 'Errors should be an array');
+
+        foreach ($expectedErrors as $field => $expectedMessage) {
+            self::assertArrayHasKey($field, $json['errors'], "Validation errors should contain field '$field'");
+            self::assertSame($expectedMessage, $json['errors'][$field], "Validation error for field '$field' should match expected message");
+        }
     }
 
     /**
-     * Takes a JSON in array and compares it against the response content.
+     * Assert JSON data contains expected user fields.
+     *
+     * @param array<string, mixed> $userData
      */
-    protected function assertJsonStructure(array $json): void
+    protected function assertUserJsonStructure(array $userData): void
     {
-        $responseJson = json_decode(
-            (string) $this->client->getResponse()->getContent(),
-            true,
-        );
-        self::assertArraySubset($json, $responseJson);
+        $requiredFields = ['id', 'username', 'abbr', 'type', 'locale'];
+        $this->assertJsonHasProperties($requiredFields, $userData);
+
+        self::assertIsInt($userData['id'], 'User ID should be an integer');
+        self::assertIsString($userData['username'], 'Username should be a string');
+        self::assertIsString($userData['abbr'], 'Abbreviation should be a string');
+        self::assertIsString($userData['type'], 'User type should be a string');
+        self::assertIsString($userData['locale'], 'Locale should be a string');
     }
 
     /**
-     * Assert the length of the response or a specific path in the response.
+     * Assert JSON data contains expected entry fields.
+     *
+     * @param array<string, mixed> $entryData
      */
-    protected function assertLength(int $length, ?string $path = null): void
+    protected function assertEntryJsonStructure(array $entryData): void
     {
-        $response = json_decode(
-            (string) $this->client->getResponse()->getContent(),
-            true,
-        );
-        if ($path) {
-            foreach (explode('.', $path) as $key) {
-                $response = $response[$key];
-            }
+        $requiredFields = ['id', 'day', 'start', 'end', 'duration', 'description'];
+        $this->assertJsonHasProperties($requiredFields, $entryData);
+
+        self::assertIsInt($entryData['id'], 'Entry ID should be an integer');
+        self::assertIsString($entryData['day'], 'Day should be a string');
+        self::assertIsString($entryData['start'], 'Start time should be a string');
+        self::assertIsString($entryData['end'], 'End time should be a string');
+        self::assertIsInt($entryData['duration'], 'Duration should be an integer');
+        self::assertIsString($entryData['description'], 'Description should be a string');
+    }
+
+    /**
+     * Assert array or JSON property length matches expected count.
+     * This method expects the HTTP client to be available via trait composition.
+     *
+     * @param int         $expectedLength Expected number of items
+     * @param string|null $property       Optional property name to check within JSON response
+     */
+    protected function assertLength(int $expectedLength, ?string $property = null): void
+    {
+        // Get response from the HTTP client (available via HttpClientTrait composition)
+        // @phpstan-ignore function.alreadyNarrowedType (Defensive check for trait composition)
+        if (! property_exists($this, 'client')) {
+            throw new LogicException('HttpClientTrait must be used alongside JsonAssertionsTrait to access client');
         }
 
-        self::assertSame($length, count($response));
+        $response = $this->client->getResponse();
+        $json = $this->getJsonResponse($response);
+
+        if (null !== $property) {
+            self::assertArrayHasKey($property, $json, "JSON should contain property '$property'");
+            self::assertIsArray($json[$property], "Property '$property' should be an array");
+            self::assertCount($expectedLength, $json[$property], "Property '$property' should have $expectedLength items");
+        } else {
+            self::assertCount($expectedLength, $json, "JSON should have $expectedLength items");
+        }
+    }
+
+    /**
+     * Assert that subset array is contained within the larger array.
+     * Replacement for deprecated PHPUnit assertArraySubset method.
+     *
+     * @param array<int|string, mixed> $subset
+     * @param array<int|string, mixed> $array
+     */
+    protected static function assertArraySubset(array $subset, array $array, string $message = ''): void
+    {
+        foreach ($subset as $key => $value) {
+            self::assertArrayHasKey($key, $array, '' !== $message ? $message : "Array should contain key '$key'");
+
+            if (is_array($value)) {
+                self::assertIsArray($array[$key], '' !== $message ? $message : "Value at key '$key' should be an array");
+                self::assertArraySubset($value, $array[$key], $message);
+            } else {
+                self::assertSame($value, $array[$key], '' !== $message ? $message : "Value at key '$key' should match expected value");
+            }
+        }
     }
 }

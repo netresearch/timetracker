@@ -54,12 +54,6 @@ final class ActivityTest extends TestCase
         self::assertSame(1.5, $activity->getFactor());
     }
 
-    public function testConstantValues(): void
-    {
-        self::assertSame('Krank', Activity::SICK);
-        self::assertSame('Urlaub', Activity::HOLIDAY);
-    }
-
     public function testIsSick(): void
     {
         $activity = new Activity();

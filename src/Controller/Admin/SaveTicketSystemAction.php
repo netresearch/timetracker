@@ -9,12 +9,15 @@ use App\Dto\TicketSystemSaveDto;
 use App\Entity\TicketSystem;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\TicketSystemRepository;
 use App\Response\Error;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+use function assert;
 
 final class SaveTicketSystemAction extends BaseController
 {
@@ -28,21 +31,20 @@ final class SaveTicketSystemAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
     {
-
-        /** @var \App\Repository\TicketSystemRepository $objectRepository */
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
+        assert($objectRepository instanceof TicketSystemRepository);
 
         $id = $ticketSystemSaveDto->id;
 
         if (null !== $id) {
             $ticketSystem = $objectRepository->find($id);
-            if (!$ticketSystem) {
+            if (null === $ticketSystem) {
                 $message = $this->translator->trans('No entry for id.');
 
                 return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
-            if (!$ticketSystem instanceof TicketSystem) {
+            if (! $ticketSystem instanceof TicketSystem) {
                 return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {
