@@ -17,9 +17,7 @@ $finder = PhpCsFixer\Finder::create()
     ->notName([
         '*.css',
         '*.js',
-    ])
-    ->notPath([
-        'config/quality/phpat.php', // PHPat requires specific class name
+        'phpat.php', // PHPat requires specific class name
     ]);
 
 return (new PhpCsFixer\Config())
