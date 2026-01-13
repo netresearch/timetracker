@@ -50,8 +50,7 @@ trait DatabaseTestTrait
         }
         $dbal = $this->serviceContainer->get('doctrine.dbal.default_connection');
 
-        // Enable savepoints to speed nested transactions
-        $dbal->setNestTransactionsWithSavepoints(true);
+        // Note: Nested transactions with savepoints are enabled by default in Doctrine DBAL 4.x
 
         $this->connection = $dbal;
         $this->queryBuilder = $dbal->createQueryBuilder();

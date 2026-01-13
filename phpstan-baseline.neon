@@ -1,34 +1,19 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Return type \(Generator\) of method App\\Kernel\:\:registerBundles\(\) should be covariant with return type \(iterable\<Symfony\\Component\\HttpKernel\\Bundle\\BundleInterface\>\) of method Symfony\\Component\\HttpKernel\\KernelInterface\:\:registerBundles\(\)$#'
-			identifier: method.childReturnType
-			count: 2
-			path: src/Kernel.php
-
-		-
-			message: '#^Variable method call on \$this\(App\\Model\\Base\)\.$#'
+			rawMessage: 'Variable method call on $this(App\Model\Base).'
 			identifier: method.dynamicName
 			count: 1
 			path: src/Model/Base.php
 
 		-
-			message: '#^PHPDoc tag @var with type array\<string, array\<int, string\>\> is not subtype of type array\{dn\: string\}\|null\.$#'
+			rawMessage: 'PHPDoc tag @var with type array<string, array<int, string>> is not subtype of type array{dn: string}|null.'
 			identifier: varTag.type
 			count: 1
 			path: src/Service/Ldap/LdapClientService.php
 
 		-
-			message: '''
-				#^Call to deprecated method setNestTransactionsWithSavepoints\(\) of class Doctrine\\DBAL\\Connection\:
-				No replacement planned$#
-			'''
-			identifier: method.deprecated
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
-			message: '#^Variable method call on object\.$#'
+			rawMessage: Variable method call on object.
 			identifier: method.dynamicName
 			count: 1
 			path: tests/Performance/PerformanceBenchmarkRunner.php

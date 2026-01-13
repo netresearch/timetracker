@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App;
 
-use Generator;
 use Override;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 
 use function assert;
@@ -17,14 +17,20 @@ class Kernel extends BaseKernel
 {
     use MicroKernelTrait;
 
-    public function registerBundles(): Generator
+    /**
+     * @return iterable<BundleInterface>
+     */
+    #[Override]
+    public function registerBundles(): iterable
     {
         $contents = require $this->getProjectDir() . '/config/bundles.php';
         assert(is_array($contents));
         foreach ($contents as $class => $envs) {
             assert(is_array($envs));
             if (($envs[$this->environment] ?? $envs['all'] ?? false) === true) {
-                yield new $class();
+                $bundle = new $class();
+                assert($bundle instanceof BundleInterface);
+                yield $bundle;
             }
         }
     }
