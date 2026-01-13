@@ -140,15 +140,11 @@ phpat:
 	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer analyze:arch
 
 cs-check:
-	@echo "Running Laravel Pint code style check (batched - lightweight - no DB)..."
-	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-check-batch
-
-cs-check-full:
-	@echo "Running Laravel Pint code style check (full codebase - may fail due to memory)..."
+	@echo "Running PHP-CS-Fixer code style check..."
 	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-check
 
 cs-fix:
-	@echo "Running Laravel Pint code style fix (lightweight - no DB)..."
+	@echo "Running PHP-CS-Fixer code style fix..."
 	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-fix
 
 check-all:
