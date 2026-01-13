@@ -8,6 +8,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class JiraOAuthApiFactory
 {
@@ -15,7 +16,7 @@ class JiraOAuthApiFactory
 
     public RouterInterface $router;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setDependencies(ManagerRegistry $managerRegistry, RouterInterface $router): void
     {
         $this->managerRegistry = $managerRegistry;

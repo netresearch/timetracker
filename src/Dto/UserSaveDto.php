@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\User;
 use App\Validator\Constraints\UniqueUserAbbr;
 use App\Validator\Constraints\UniqueUsername;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 // \ Note: Validation handled at controller/service layer to preserve legacy HTTP codes
-#[Map(target: \App\Entity\User::class)]
+#[Map(target: User::class)]
 final readonly class UserSaveDto
 {
     public function __construct(
@@ -35,12 +37,12 @@ final readonly class UserSaveDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws BadRequestException
      */
     public static function fromRequest(Request $request): self
     {
         /** @var list<int|string> $teams */
-        $teams = [] !== $request->request->all('teams') ? $request->request->all('teams') : [];
+        $teams = $request->request->all('teams');
 
         return new self(
             id: (int) ($request->request->get('id') ?? 0),

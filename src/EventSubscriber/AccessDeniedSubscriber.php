@@ -12,6 +12,7 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
 {
@@ -37,7 +38,7 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
         }
 
         // If user is not authenticated, redirect to login instead of showing 403
-        if (!$this->security->getUser() instanceof \Symfony\Component\Security\Core\User\UserInterface) {
+        if (!$this->security->getUser() instanceof UserInterface) {
             $loginUrl = $this->router->generate('_login');
             $response = new RedirectResponse($loginUrl);
             $exceptionEvent->setResponse($response);

@@ -37,7 +37,7 @@ final readonly class JiraIssueType
             name: isset($data['name']) && is_string($data['name']) ? $data['name'] : null,
             self: isset($data['self']) && is_string($data['self']) ? $data['self'] : null,
             description: isset($data['description']) && is_string($data['description']) ? $data['description'] : null,
-            subtask: isset($data['subtask']) && is_bool($data['subtask']) ? $data['subtask'] : false,
+            subtask: isset($data['subtask']) && is_bool($data['subtask']) && $data['subtask'],
         );
     }
 }

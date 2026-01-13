@@ -12,22 +12,27 @@ use App\Model\Response;
 use App\Repository\ActivityRepository;
 use App\Response\Error;
 use Exception;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function assert;
 
 final class SaveActivityAction extends BaseController
 {
+    public function __construct(private readonly ObjectMapperInterface $objectMapper)
+    {
+    }
+
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws BadRequestException
      * @throws Exception
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
+    #[Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] ActivitySaveDto $activitySaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
+    public function __invoke(#[MapRequestPayload] ActivitySaveDto $activitySaveDto): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);
         assert($objectRepository instanceof ActivityRepository);
@@ -58,7 +63,7 @@ final class SaveActivityAction extends BaseController
         }
 
         try {
-            $objectMapper->map($activitySaveDto, $activity);
+            $this->objectMapper->map($activitySaveDto, $activity);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($activity);

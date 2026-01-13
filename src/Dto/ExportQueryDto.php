@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Dto;
 
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use UnexpectedValueException;
 
@@ -26,9 +27,9 @@ final readonly class ExportQueryDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws InvalidArgumentException                                        When query parameters are invalid types
-     * @throws UnexpectedValueException                                        When parameter conversion fails
+     * @throws BadRequestException      When request parameters are malformed
+     * @throws InvalidArgumentException When query parameters are invalid types
+     * @throws UnexpectedValueException When parameter conversion fails
      */
     public static function fromRequest(Request $request): self
     {

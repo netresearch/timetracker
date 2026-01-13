@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Enum\TicketSystemType;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
+use App\Repository\EntryRepository;
 use App\Repository\TicketSystemRepository;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -157,7 +158,7 @@ class JiraIntegrationService
     public function getEntriesNeedingSync(?User $user = null, ?DateTime $since = null): array
     {
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
 
         $criteria = [
             'syncedToTicketsystem' => false,

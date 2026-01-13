@@ -4,26 +4,29 @@ declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
 
+use App\Entity\Activity;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 final class GroupByActivityAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
         $this->timeCalculationService = $timeCalculationService;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/activity', name: 'interpretation_activity_attr', methods: ['GET'])]
+    #[Route(path: '/interpretation/activity', name: 'interpretation_activity_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
@@ -42,7 +45,7 @@ final class GroupByActivityAction extends BaseInterpretationController
         $activities = [];
         foreach ($entries as $entry) {
             $activityObj = $entry->getActivity();
-            if (!$activityObj instanceof \App\Entity\Activity) {
+            if (!$activityObj instanceof Activity) {
                 continue;
             }
 

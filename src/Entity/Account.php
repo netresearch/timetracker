@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -23,7 +24,7 @@ class Account
     protected string $name = '';
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Entry>
+     * @var Collection<int, Entry>
      */
     #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'account')]
     protected $entries;
@@ -69,9 +70,9 @@ class Account
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     * @return Collection<int, Entry>
      */
-    public function getEntries(): \Doctrine\Common\Collections\Collection
+    public function getEntries(): Collection
     {
         return $this->entries;
     }

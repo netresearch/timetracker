@@ -21,13 +21,16 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Enum\UserType;
 use App\Model\Response;
+use Deprecated;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const E_USER_DEPRECATED;
@@ -54,7 +57,7 @@ class BaseController extends AbstractController
 
     protected ManagerRegistry $doctrineRegistry;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setCoreDependencies(
         ManagerRegistry $managerRegistry,
         ParameterBagInterface $parameterBag,
@@ -71,10 +74,9 @@ class BaseController extends AbstractController
     /**
      * Check if user is logged in using Symfony Security.
      *
-     * @deprecated Use isGranted('IS_AUTHENTICATED_FULLY') directly
-     *
      * @throws Exception
      */
+    #[Deprecated(message: "Use isGranted('IS_AUTHENTICATED_FULLY') directly")]
     protected function isLoggedIn(Request $request): bool
     {
         @trigger_error('Method ' . __METHOD__ . ' is deprecated, use isGranted(\'IS_AUTHENTICATED_FULLY\') directly', E_USER_DEPRECATED);
@@ -107,7 +109,7 @@ class BaseController extends AbstractController
      *
      * @throws Exception
      */
-    protected function login(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse|Response
+    protected function login(Request $request): RedirectResponse|Response
     {
         if (!$request->isXmlHttpRequest()
             && !$this->isJsonRequest($request)
@@ -120,9 +122,8 @@ class BaseController extends AbstractController
 
     /**
      * Check if the current user has a specific user type.
-     *
-     * @deprecated Use Security expressions with #[Security] attribute instead
      */
+    #[Deprecated(message: 'Use Security expressions with #[Security] attribute instead')]
     protected function hasUserType(Request $request, UserType $userType): bool
     {
         @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with expressions instead', E_USER_DEPRECATED);
@@ -137,9 +138,8 @@ class BaseController extends AbstractController
 
     /**
      * Checks the user type to be PL.
-     *
-     * @deprecated Use #[Security("is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType() == 'PL')")] instead
      */
+    #[Deprecated(message: "Use #[Security(\"is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType() == 'PL')\")] instead")]
     protected function isPl(Request $request): bool
     {
         @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with user type check instead', E_USER_DEPRECATED);
@@ -149,9 +149,8 @@ class BaseController extends AbstractController
 
     /**
      * Checks the user type to be DEV.
-     *
-     * @deprecated Use #[Security("is_granted('ROLE_USER') and user.getType() == 'DEV')")] instead
      */
+    #[Deprecated(message: "Use #[Security(\"is_granted('ROLE_USER') and user.getType() == 'DEV')\")] instead")]
     protected function isDEV(Request $request): bool
     {
         @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with user type check instead', E_USER_DEPRECATED);
@@ -171,9 +170,8 @@ class BaseController extends AbstractController
 
     /**
      * Checks if the user is logged in via Symfony Security.
-     *
-     * @deprecated Use isGranted('IS_AUTHENTICATED_FULLY') directly
      */
+    #[Deprecated(message: "Use isGranted('IS_AUTHENTICATED_FULLY') directly")]
     protected function checkLogin(Request $request): bool
     {
         @trigger_error('Method ' . __METHOD__ . ' is deprecated, use isGranted(\'IS_AUTHENTICATED_FULLY\') directly', E_USER_DEPRECATED);

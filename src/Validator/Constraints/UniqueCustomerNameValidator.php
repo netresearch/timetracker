@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\CustomerSaveDto;
 use App\Entity\Customer;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -37,7 +38,7 @@ class UniqueCustomerNameValidator extends ConstraintValidator
         $dto = $this->context->getObject();
         $customerId = 0;
 
-        if ($dto instanceof \App\Dto\CustomerSaveDto) {
+        if ($dto instanceof CustomerSaveDto) {
             $customerId = $dto->id;
         }
 

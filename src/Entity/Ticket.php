@@ -51,9 +51,9 @@ class Ticket extends Base
         private string $ticketNumber,
         #[ORM\Column(type: 'string', length: 127)]
         private string $name,
-        #[ORM\Column(type: 'integer', name: 'estimation')]
+        #[ORM\Column(name: 'estimation', type: 'integer')]
         private int $estimatedDuration = 0,
-        #[ORM\Column(type: 'string', name: 'parent', length: 31)]
+        #[ORM\Column(name: 'parent', type: 'string', length: 31)]
         private string $parentTicketNumber = '',
     ) {
     }
@@ -78,7 +78,7 @@ class Ticket extends Base
      *
      * @return $this
      */
-    public function setEstimatedDuration($estimatedDuration): static
+    public function setEstimatedDuration(int $estimatedDuration): static
     {
         $this->estimatedDuration = $estimatedDuration;
 
@@ -87,50 +87,38 @@ class Ticket extends Base
 
     /**
      * Get the estimated duration.
-     *
-     * @return int
      */
-    public function getEstimatedDuration()
+    public function getEstimatedDuration(): int
     {
         return $this->estimatedDuration;
     }
 
     /**
-     * @param string $name
-     *
      * @return $this
      */
-    public function setName($name): static
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
-     * @param string $parentTicketNumber
-     *
      * @return $this
      */
-    public function setParentTicketNumber($parentTicketNumber): static
+    public function setParentTicketNumber(string $parentTicketNumber): static
     {
         $this->parentTicketNumber = $parentTicketNumber;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getParentTicketNumber()
+    public function getParentTicketNumber(): string
     {
         return $this->parentTicketNumber;
     }
@@ -156,41 +144,31 @@ class Ticket extends Base
     }
 
     /**
-     * @param string $ticketNumber
-     *
      * @return $this
      */
-    public function setTicketNumber($ticketNumber): static
+    public function setTicketNumber(string $ticketNumber): static
     {
         $this->ticketNumber = $ticketNumber;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getTicketNumber()
+    public function getTicketNumber(): string
     {
         return $this->ticketNumber;
     }
 
     /**
-     * @param int $ticketSystemId
-     *
      * @return $this
      */
-    public function setTicketSystemId($ticketSystemId): static
+    public function setTicketSystemId(int $ticketSystemId): static
     {
         $this->ticketSystemId = $ticketSystemId;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getTicketSystemId()
+    public function getTicketSystemId(): int
     {
         return $this->ticketSystemId;
     }

@@ -9,6 +9,7 @@ use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -38,7 +39,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $request = $exceptionEvent->getRequest();
 
         // Log the exception
-        $this->logException($throwable, $request->getPathInfo());
+        $this->logException($throwable);
 
         // Determine if we should return JSON response
         $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
@@ -62,14 +63,14 @@ class ExceptionSubscriber implements EventSubscriberInterface
                 'error' => 'JIRA authentication required',
                 'message' => $throwable->getMessage(),
                 'redirect_url' => $throwable->getRedirectUrl(),
-            ], \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         if ($throwable instanceof JiraApiException) {
             return new JsonResponse([
                 'error' => 'JIRA API error',
                 'message' => $throwable->getMessage(),
-            ], \Symfony\Component\HttpFoundation\Response::HTTP_BAD_GATEWAY);
+            ], Response::HTTP_BAD_GATEWAY);
         }
 
         // Handle HTTP exceptions
@@ -92,14 +93,14 @@ class ExceptionSubscriber implements EventSubscriberInterface
                 'file' => $throwable->getFile(),
                 'line' => $throwable->getLine(),
                 'trace' => $throwable->getTraceAsString(),
-            ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         // Production mode - hide internal details
         return new JsonResponse([
             'error' => 'Internal server error',
             'message' => 'An unexpected error occurred. Please try again later.',
-        ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
+        ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     private function getErrorTypeForStatusCode(int $statusCode): string
@@ -140,7 +141,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         };
     }
 
-    private function logException(Throwable $throwable, string $path): void
+    private function logException(Throwable $throwable): void
     {
         if (!$this->logger instanceof LoggerInterface) {
             return;

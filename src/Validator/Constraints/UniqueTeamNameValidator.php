@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\TeamSaveDto;
 use App\Repository\TeamRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -46,7 +47,7 @@ class UniqueTeamNameValidator extends ConstraintValidator
             $object = $this->context->getObject();
 
             // Type-safe check for TeamSaveDto
-            if ($object instanceof \App\Dto\TeamSaveDto && $object->id > 0 && $existingTeam->getId() === $object->id) {
+            if ($object instanceof TeamSaveDto && $object->id > 0 && $existingTeam->getId() === $object->id) {
                 return;
                 // Same team being updated
             }

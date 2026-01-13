@@ -12,6 +12,7 @@ use App\Service\TypeSafety\ArrayTypeHelper;
 use DateInterval;
 use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Cache\CacheItemPoolInterface;
@@ -56,7 +57,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId() ?? 0, $days);
 
-        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
+        if ($this->cacheItemPool instanceof CacheItemPoolInterface && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult) && array_is_list($cachedResult));
             /** @var list<Entry> $cachedResult */
 
@@ -145,7 +146,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $cacheKey = sprintf('%s_summary_%d_%d', self::CACHE_PREFIX, $entryId, $userId);
 
-        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
+        if ($this->cacheItemPool instanceof CacheItemPoolInterface && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
             assert(array_key_exists('customer', $cachedResult));
 
@@ -216,7 +217,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
 
-        if (null !== $this->cacheItemPool && null !== ($cachedResult = $this->getCached($cacheKey))) {
+        if ($this->cacheItemPool instanceof CacheItemPoolInterface && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
             assert(isset($cachedResult['duration'], $cachedResult['count']));
             assert(is_int($cachedResult['duration']) && is_int($cachedResult['count']));
@@ -468,7 +469,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ],
             'ticket' => [
                 'scope' => 'ticket',
-                'name' => '' !== $entry->getTicket() ? $entry->getTicket() : '',
+                'name' => $entry->getTicket(),
                 'entries' => ArrayTypeHelper::getInt($result, 'ticket_entries', 0) ?? 0,
                 'total' => ArrayTypeHelper::getInt($result, 'ticket_total', 0) ?? 0,
                 'own' => ArrayTypeHelper::getInt($result, 'ticket_own', 0) ?? 0,
@@ -501,7 +502,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
+        if ($platform instanceof MySQLPlatform) {
             return sprintf('YEAR(%s)', $field);
         }
 
@@ -515,7 +516,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
+        if ($platform instanceof MySQLPlatform) {
             return sprintf('MONTH(%s)', $field);
         }
 
@@ -529,7 +530,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     {
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform) {
+        if ($platform instanceof MySQLPlatform) {
             return 'CONCAT(' . implode(', ', $fields) . ')';
         }
 
@@ -542,7 +543,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function getCached(string $key): mixed
     {
-        if (null === $this->cacheItemPool) {
+        if (!$this->cacheItemPool instanceof CacheItemPoolInterface) {
             return null;
         }
 
@@ -556,7 +557,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      */
     private function setCached(string $key, mixed $data, int $ttl = self::CACHE_TTL): void
     {
-        if (null === $this->cacheItemPool) {
+        if (!$this->cacheItemPool instanceof CacheItemPoolInterface) {
             return;
         }
 

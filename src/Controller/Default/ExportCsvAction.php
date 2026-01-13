@@ -11,6 +11,8 @@ use App\Model\Response;
 use App\Repository\EntryRepository;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function assert;
@@ -21,9 +23,9 @@ final class ExportCsvAction extends BaseController
     /**
      * @throws Exception
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
+    #[Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): Response
+    public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response
     {
         if (!$user instanceof User) {
             return $this->getFailedLoginResponse();

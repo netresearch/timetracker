@@ -17,6 +17,9 @@ use DateInterval;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use InvalidArgumentException;
@@ -255,8 +258,8 @@ class EntryRepository extends ServiceEntityRepository
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
         // Check for MySQL/MariaDB platforms (MariaDB is detected as MySQL platform)
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
-            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+        if ($platform instanceof MySQLPlatform
+            || $platform instanceof MariaDBPlatform) {
             return [
                 'dateFormat' => "DATE_FORMAT(e.day, '%d/%m/%Y')",
                 'timeFormat' => "DATE_FORMAT(e.{field},'%H:%i')",
@@ -280,8 +283,8 @@ class EntryRepository extends ServiceEntityRepository
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
         // Check for MySQL/MariaDB platforms
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
-            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+        if ($platform instanceof MySQLPlatform
+            || $platform instanceof MariaDBPlatform) {
             return [
                 'yearFunction' => 'YEAR({field})',
                 'monthFunction' => 'MONTH({field})',
@@ -309,8 +312,8 @@ class EntryRepository extends ServiceEntityRepository
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
         // Check for MySQL/MariaDB platforms
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
-            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+        if ($platform instanceof MySQLPlatform
+            || $platform instanceof MariaDBPlatform) {
             return sprintf('YEAR(%s)', $field);
         }
 
@@ -325,8 +328,8 @@ class EntryRepository extends ServiceEntityRepository
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
         // Check for MySQL/MariaDB platforms
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
-            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+        if ($platform instanceof MySQLPlatform
+            || $platform instanceof MariaDBPlatform) {
             return sprintf('MONTH(%s)', $field);
         }
 
@@ -341,8 +344,8 @@ class EntryRepository extends ServiceEntityRepository
         $platform = $this->getEntityManager()->getConnection()->getDatabasePlatform();
 
         // Check for MySQL/MariaDB platforms
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
-            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+        if ($platform instanceof MySQLPlatform
+            || $platform instanceof MariaDBPlatform) {
             return sprintf('WEEK(%s, 1)', $field);
         }
 
@@ -631,9 +634,9 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @param array<string, mixed> $arFilter
      *
-     * @phpstan-return \Doctrine\ORM\Query<int, Entry>
+     * @phpstan-return Query<int, Entry>
      */
-    public function queryByFilterArray(array $arFilter): \Doctrine\ORM\Query
+    public function queryByFilterArray(array $arFilter): Query
     {
         $queryBuilder = $this->createQueryBuilder('e')
             ->leftJoin('e.user', 'u')

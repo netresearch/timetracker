@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Dto;
 
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 
 use function is_scalar;
@@ -38,8 +39,8 @@ final readonly class InterpretationFiltersDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
-     * @throws InvalidArgumentException                                        When parameter conversion fails
+     * @throws BadRequestException      When query parameters are invalid
+     * @throws InvalidArgumentException When parameter conversion fails
      */
     public static function fromRequest(Request $request): self
     {

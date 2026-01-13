@@ -10,12 +10,14 @@ use App\Service\Ldap\LdapClientService;
 use BackedEnum;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Laminas\Ldap\Exception\LdapException;
 use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
@@ -128,7 +130,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 $this->entityManager->flush();
 
                 return $newUser;
-            } catch (\Laminas\Ldap\Exception\LdapException $ldapException) {
+            } catch (LdapException $ldapException) {
                 // Specific LDAP errors
                 $this->logger->error('LDAP authentication error', [
                     'username' => substr($userIdentifier, 0, 3) . '***',
@@ -166,7 +168,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         );
     }
 
-    public function onAuthenticationSuccess(Request $request, \Symfony\Component\Security\Core\Authentication\Token\TokenInterface $token, string $firewallName): RedirectResponse
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): RedirectResponse
     {
         $targetPath = $this->getTargetPath($request->getSession(), $firewallName);
         if (null !== $targetPath && '' !== $targetPath) {

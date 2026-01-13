@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\TicketSystem;
 use App\Validator\Constraints\UniqueTicketSystemName;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[Map(target: \App\Entity\TicketSystem::class)]
+#[Map(target: TicketSystem::class)]
 final readonly class TicketSystemSaveDto
 {
     public function __construct(

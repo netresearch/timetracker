@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\UserSaveDto;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Constraint;
@@ -31,7 +32,7 @@ class UniqueUsernameValidator extends ConstraintValidator
         $dto = $this->context->getObject();
         $userId = 0;
 
-        if ($dto instanceof \App\Dto\UserSaveDto) {
+        if ($dto instanceof UserSaveDto) {
             $userId = $dto->id;
         }
 

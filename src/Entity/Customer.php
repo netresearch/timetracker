@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Model\Base;
+use App\Repository\CustomerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: \App\Repository\CustomerRepository::class)]
+#[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[ORM\Table(name: 'customers')]
 class Customer extends Base
 {
@@ -36,25 +38,25 @@ class Customer extends Base
     protected $global = false;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Project>
+     * @var Collection<int, Project>
      */
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'customer')]
     protected $projects;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Entry>
+     * @var Collection<int, Entry>
      */
     #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'customer')]
     protected $entries;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Preset>
+     * @var Collection<int, Preset>
      */
     #[ORM\OneToMany(targetEntity: Preset::class, mappedBy: 'customer')]
     protected $presets;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Team>
+     * @var Collection<int, Team>
      */
     #[ORM\ManyToMany(targetEntity: Team::class, inversedBy: 'customers')]
     #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
@@ -177,7 +179,7 @@ class Customer extends Base
     /**
      * Get projects.
      *
-     * @return \Doctrine\Common\Collections\Collection<int, Project>
+     * @return Collection<int, Project>
      */
     public function getProjects()
     {
@@ -187,7 +189,7 @@ class Customer extends Base
     /**
      * Get entries.
      *
-     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     * @return Collection<int, Entry>
      */
     public function getEntries()
     {
@@ -221,7 +223,7 @@ class Customer extends Base
     /**
      * Get teams.
      *
-     * @return \Doctrine\Common\Collections\Collection<int, Team>
+     * @return Collection<int, Team>
      */
     public function getTeams()
     {
@@ -273,7 +275,7 @@ class Customer extends Base
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Preset>
+     * @return Collection<int, Preset>
      */
     public function getPresets()
     {

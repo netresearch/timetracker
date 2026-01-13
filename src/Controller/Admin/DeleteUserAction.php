@@ -8,18 +8,19 @@ use App\Controller\BaseController;
 use App\Dto\IdDto;
 use App\Entity\User;
 use App\Model\JsonResponse;
+use App\Model\Response;
 use App\Response\Error;
 use Exception;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class DeleteUserAction extends BaseController
 {
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/user/delete', name: 'deleteUser_attr', methods: ['POST'])]
+    #[Route(path: '/user/delete', name: 'deleteUser_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(#[MapRequestPayload] IdDto $idDto): JsonResponse|Error|Response
     {
         try {
             $id = $idDto->id;

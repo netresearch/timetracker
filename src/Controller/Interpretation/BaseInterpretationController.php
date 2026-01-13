@@ -9,9 +9,11 @@ use App\Dto\InterpretationFiltersDto;
 use App\Entity\Entry;
 use App\Entity\User;
 use App\Enum\UserType;
+use App\Repository\EntryRepository;
 use DateInterval;
 use DateTime;
 use Exception;
+use Symfony\Component\HttpFoundation\Request;
 
 use function assert;
 use function is_string;
@@ -58,7 +60,7 @@ abstract class BaseInterpretationController extends BaseController
      *
      * @return list<Entry>
      */
-    protected function getEntries(\Symfony\Component\HttpFoundation\Request $request, ?User $currentUser = null, ?int $maxResults = null): array
+    protected function getEntries(Request $request, ?User $currentUser = null, ?int $maxResults = null): array
     {
         $interpretationFiltersDto = InterpretationFiltersDto::fromRequest($request);
         $userId = (UserType::DEV === $currentUser?->getType()) ? $currentUser->getId() : null;
@@ -96,7 +98,7 @@ abstract class BaseInterpretationController extends BaseController
         }
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
 
         return $objectRepository->findByFilterArray($arParams);
     }

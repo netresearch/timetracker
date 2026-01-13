@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Enum\TicketSystemType;
 use App\Model\Base;
+use App\Repository\TicketSystemRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 use function is_string;
@@ -13,7 +14,7 @@ use function is_string;
 /**
  * App\Entity\TicketSystem.
  */
-#[ORM\Entity(repositoryClass: \App\Repository\TicketSystemRepository::class)]
+#[ORM\Entity(repositoryClass: TicketSystemRepository::class)]
 #[ORM\Table(name: 'ticket_systems')]
 class TicketSystem extends Base
 {
@@ -64,10 +65,10 @@ class TicketSystem extends Base
     #[ORM\Column(type: 'string', length: 63)]
     protected $password;
 
-    #[ORM\Column(type: 'text', name: 'public_key')]
+    #[ORM\Column(name: 'public_key', type: 'text')]
     protected string $publicKey = '';
 
-    #[ORM\Column(type: 'text', name: 'private_key')]
+    #[ORM\Column(name: 'private_key', type: 'text')]
     protected string $privateKey = '';
 
     #[ORM\Column(name: 'oauth_consumer_key', type: 'string', length: 255, nullable: true)]

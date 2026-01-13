@@ -10,6 +10,7 @@ use App\Entity\UserTicketsystem;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Security\TokenEncryptionService;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -253,7 +254,7 @@ class JiraAuthenticationService
      */
     public function checkUserTicketSystem(User $user, TicketSystem $ticketSystem): bool
     {
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<UserTicketsystem> $repository */
+        /** @var ServiceEntityRepository<UserTicketsystem> $repository */
         $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         $userTicketSystem = $repository->findOneBy([
             'user' => $user,

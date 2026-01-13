@@ -10,10 +10,12 @@ use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use JsonException;
+use Psr\Http\Message\ResponseInterface;
 use stdClass;
 use UnexpectedValueException;
 
@@ -222,11 +224,11 @@ class JiraHttpClientService
     {
         // Check if this is a RequestException with a response
         $response = null;
-        if ($guzzleException instanceof \GuzzleHttp\Exception\RequestException) {
+        if ($guzzleException instanceof RequestException) {
             $response = $guzzleException->getResponse();
         }
 
-        if (null === $response) {
+        if (!$response instanceof ResponseInterface) {
             throw new JiraApiException('Network error connecting to Jira: ' . $guzzleException->getMessage(), 500, null, $guzzleException);
         }
 

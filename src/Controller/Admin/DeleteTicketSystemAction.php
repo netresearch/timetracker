@@ -8,20 +8,21 @@ use App\Controller\BaseController;
 use App\Dto\IdDto;
 use App\Entity\TicketSystem;
 use App\Model\JsonResponse;
+use App\Model\Response;
 use App\Response\Error;
 use Exception;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function sprintf;
 
 final class DeleteTicketSystemAction extends BaseController
 {
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/delete', name: 'deleteTicketSystem_attr', methods: ['POST'])]
+    #[Route(path: '/ticketsystem/delete', name: 'deleteTicketSystem_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] IdDto $idDto): JsonResponse|Error|\App\Model\Response
+    public function __invoke(#[MapRequestPayload] IdDto $idDto): JsonResponse|Error|Response
     {
         try {
             $id = $idDto->id;

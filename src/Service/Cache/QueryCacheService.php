@@ -6,6 +6,7 @@ namespace App\Service\Cache;
 
 use Exception;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 use function count;
@@ -42,8 +43,8 @@ class QueryCacheService
      *
      * @param callable(): T $callback
      *
-     * @throws \Psr\Cache\InvalidArgumentException When cache key is invalid
-     * @throws Exception                           When callback execution fails
+     * @throws InvalidArgumentException When cache key is invalid
+     * @throws Exception                When callback execution fails
      *
      * @return T
      */

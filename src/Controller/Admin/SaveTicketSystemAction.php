@@ -12,24 +12,31 @@ use App\Model\Response;
 use App\Repository\TicketSystemRepository;
 use App\Response\Error;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function assert;
 
 final class SaveTicketSystemAction extends BaseController
 {
+    public function __construct(private readonly ObjectMapperInterface $objectMapper)
+    {
+    }
+
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException          When request payload is malformed
-     * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws Exception                                                                When database operations fail
-     * @throws Exception                                                                When object mapping or persistence operations fail
+     * @throws BadRequestException              When request payload is malformed
+     * @throws UnprocessableEntityHttpException When DTO validation fails
+     * @throws Exception                        When database operations fail
+     * @throws Exception                        When object mapping or persistence operations fail
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/ticketsystem/save', name: 'saveTicketSystem_attr', methods: ['POST'])]
+    #[Route(path: '/ticketsystem/save', name: 'saveTicketSystem_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
+    public function __invoke(#[MapRequestPayload] TicketSystemSaveDto $ticketSystemSaveDto): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(TicketSystem::class);
         assert($objectRepository instanceof TicketSystemRepository);
@@ -62,7 +69,7 @@ final class SaveTicketSystemAction extends BaseController
         }
 
         try {
-            $objectMapper->map($ticketSystemSaveDto, $ticketSystem);
+            $this->objectMapper->map($ticketSystemSaveDto, $ticketSystem);
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);

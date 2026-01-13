@@ -8,30 +8,19 @@ declare(strict_types=1);
 
 namespace App\Extension;
 
-use Twig\Extension\AbstractExtension;
+use Twig\Attribute\AsTwigFilter;
 
 /**
  * Class TwigCsvEscapingExtension.
  */
-class TwigCsvEscapingExtension extends AbstractExtension
+class TwigCsvEscapingExtension
 {
     public function getName(): string
     {
         return 'csv_escaper';
     }
 
-    /**
-     * Returns a list of filters to add to the existing list.
-     *
-     * @return array<\Twig\TwigFilter>
-     */
-    public function getFilters(): array
-    {
-        return [
-            new \Twig\TwigFilter('csv_escape', [$this, 'csvEscape']),
-        ];
-    }
-
+    #[AsTwigFilter(name: 'csv_escape')]
     public function csvEscape(string $string): string
     {
         return str_replace('"', '""', $string);

@@ -6,24 +6,32 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Contracts\Service\Attribute\Required;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 class SecurityController extends AbstractController
 {
     private TokenStorageInterface $tokenStorage;
 
     private RequestStack $requestStack;
+    private AuthenticationUtils $authenticationUtils;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
-    public function setTokenStorage(TokenStorageInterface $tokenStorage): void
+    #[Required]
+    public function setTokenStorage(TokenStorageInterface $tokenStorage, AuthenticationUtils $authenticationUtils): void
     {
         $this->tokenStorage = $tokenStorage;
+        $this->authenticationUtils = $authenticationUtils;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setRequestStack(RequestStack $requestStack): void
     {
         $this->requestStack = $requestStack;
@@ -33,14 +41,14 @@ class SecurityController extends AbstractController
      * Unified login action handling both GET (form display) and POST (authentication).
      * The actual authentication is handled by LdapAuthenticator on POST requests.
      *
-     * @throws \Twig\Error\LoaderError  When template loading fails
-     * @throws \Twig\Error\RuntimeError When template rendering fails
-     * @throws \Twig\Error\SyntaxError  When template syntax is invalid
+     * @throws LoaderError  When template loading fails
+     * @throws RuntimeError When template rendering fails
+     * @throws SyntaxError  When template syntax is invalid
      */
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    public function login(): Response
     {
         // If user is already authenticated, redirect to start page
-        if (null !== $this->getUser()) {
+        if ($this->getUser() instanceof UserInterface) {
             return $this->redirectToRoute('_start');
         }
 
@@ -49,8 +57,8 @@ class SecurityController extends AbstractController
         return $this->render('login.html.twig', [
             'locale' => 'en',
             'apptitle' => 'Netresearch TimeTracker',
-            'last_username' => $authenticationUtils->getLastUsername(),
-            'error' => $authenticationUtils->getLastAuthenticationError(),
+            'last_username' => $this->authenticationUtils->getLastUsername(),
+            'error' => $this->authenticationUtils->getLastAuthenticationError(),
         ]);
     }
 
@@ -65,7 +73,7 @@ class SecurityController extends AbstractController
         // In tests (firewall disabled), perform a manual logout and redirect.
         $this->tokenStorage->setToken(null);
         $request = $this->requestStack->getCurrentRequest();
-        if ($request instanceof \Symfony\Component\HttpFoundation\Request && $request->hasSession()) {
+        if ($request instanceof Request && $request->hasSession()) {
             $request->getSession()->invalidate();
         }
 

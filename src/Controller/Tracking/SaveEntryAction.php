@@ -13,13 +13,18 @@ use App\Entity\User;
 use App\Enum\EntryClass;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\ActivityRepository;
+use App\Repository\CustomerRepository;
+use App\Repository\EntryRepository;
+use App\Repository\ProjectRepository;
 use App\Response\Error;
 use BadMethodCallException;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
@@ -30,21 +35,20 @@ use function sprintf;
 final class SaveEntryAction extends BaseTrackingController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws BadRequestException
      * @throws BadMethodCallException
      * @throws InvalidArgumentException
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
+    #[Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
-        Request $request,
         #[MapRequestPayload]
         EntrySaveDto $entrySaveDto,
         #[CurrentUser]
         User $user,
     ): Response|JsonResponse|Error {
         $customerRepo = $this->managerRegistry->getRepository(Customer::class);
-        assert($customerRepo instanceof \App\Repository\CustomerRepository);
+        assert($customerRepo instanceof CustomerRepository);
 
         $customerId = $entrySaveDto->getCustomerId();
         if (null === $customerId) {
@@ -58,7 +62,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $projectRepo = $this->managerRegistry->getRepository(Project::class);
-        assert($projectRepo instanceof \App\Repository\ProjectRepository);
+        assert($projectRepo instanceof ProjectRepository);
 
         $projectId = $entrySaveDto->getProjectId();
         if (null === $projectId) {
@@ -72,7 +76,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $activityRepo = $this->managerRegistry->getRepository(Activity::class);
-        assert($activityRepo instanceof \App\Repository\ActivityRepository);
+        assert($activityRepo instanceof ActivityRepository);
 
         $activityId = $entrySaveDto->getActivityId();
         if (null === $activityId) {
@@ -104,7 +108,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $entryRepo = $this->managerRegistry->getRepository(Entry::class);
-        assert($entryRepo instanceof \App\Repository\EntryRepository);
+        assert($entryRepo instanceof EntryRepository);
 
         $entry = null;
         if (null !== $entryId) {
@@ -140,7 +144,7 @@ final class SaveEntryAction extends BaseTrackingController
                 $startTime = new DateTime($entrySaveDto->start);
                 $entry->setStart($startTime);
             }
-        } catch (Exception $exception) {
+        } catch (Exception) {
             return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 

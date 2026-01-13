@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\Project;
 use App\Validator\Constraints\UniqueProjectNameForCustomer;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 use UnexpectedValueException;
 
-#[Map(target: \App\Entity\Project::class)]
+#[Map(target: Project::class)]
 #[UniqueProjectNameForCustomer]
 final readonly class ProjectSaveDto
 {
@@ -46,9 +48,9 @@ final readonly class ProjectSaveDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws InvalidArgumentException                                        When request data conversion fails
-     * @throws UnexpectedValueException                                        When parameter type conversion fails
+     * @throws BadRequestException      When request parameters are malformed
+     * @throws InvalidArgumentException When request data conversion fails
+     * @throws UnexpectedValueException When parameter type conversion fails
      */
     public static function fromRequest(Request $request): self
     {

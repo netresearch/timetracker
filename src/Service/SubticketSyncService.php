@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Project;
+use App\Entity\TicketSystem;
+use App\Entity\User;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 
 class SubticketSyncService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly Integration\Jira\JiraOAuthApiFactory $jiraOAuthApiFactory)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
     {
     }
 
@@ -41,7 +44,7 @@ class SubticketSyncService
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             throw new Exception('No ticket system configured for project', 400);
         }
 
@@ -59,7 +62,7 @@ class SubticketSyncService
         }
 
         $userWithJiraAccess = $project->getProjectLead();
-        if (!$userWithJiraAccess instanceof \App\Entity\User) {
+        if (!$userWithJiraAccess instanceof User) {
             throw new Exception('Project has no lead user: ' . $project->getName(), 400);
         }
 
@@ -71,7 +74,7 @@ class SubticketSyncService
         // Create the Jira API service with our service's dependencies
         $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($userWithJiraAccess, $ticketSystem);
 
-        $mainTickets = array_map('trim', explode(',', $mainTickets));
+        $mainTickets = array_map(trim(...), explode(',', $mainTickets));
         $allSubtickets = [];
         foreach ($mainTickets as $mainTicket) {
             // we want to make it easy to find matching tickets,

@@ -11,20 +11,22 @@ use App\Service\Util\TimeCalculationService;
 use DateTimeInterface;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 final class GroupByWorktimeAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
         $this->timeCalculationService = $timeCalculationService;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/time', name: 'interpretation_time_attr', methods: ['GET'])]
+    #[Route(path: '/interpretation/time', name: 'interpretation_time_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,

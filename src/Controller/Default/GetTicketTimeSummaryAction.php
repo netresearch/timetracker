@@ -6,11 +6,19 @@ namespace App\Controller\Default;
 
 use App\Controller\BaseController;
 use App\Entity\Entry;
+use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Repository\EntryRepository;
 use App\Service\Util\TimeCalculationService;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
 use function count;
@@ -20,22 +28,22 @@ final class GetTicketTimeSummaryAction extends BaseController
 {
     private TimeCalculationService $timeCalculationService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
         $this->timeCalculationService = $timeCalculationService;
     }
 
     /**
-     * @throws Exception                                                       When database operations fail
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When route parameters are invalid
-     * @throws Exception                                                       When time calculation operations fail
+     * @throws Exception           When database operations fail
+     * @throws BadRequestException When route parameters are invalid
+     * @throws Exception           When time calculation operations fail
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
-    #[\Symfony\Component\Security\Http\Attribute\IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): Response|\Symfony\Component\HttpFoundation\RedirectResponse
+    #[Route(path: '/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response|RedirectResponse
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -46,7 +54,7 @@ final class GetTicketTimeSummaryAction extends BaseController
         $ticket = is_string($ticketParam) ? $ticketParam : '';
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
         $activities = $objectRepository->getActivitiesWithTime($ticket);
         $users = $objectRepository->getUsersWithTime($ticket);
 

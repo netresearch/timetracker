@@ -6,14 +6,16 @@ namespace App\Entity;
 
 use App\Enum\BillingType;
 use App\Model\Base;
+use App\Repository\ProjectRepository;
 use App\Service\Util\TimeCalculationService;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Override;
 
 use function in_array;
 
-#[ORM\Entity(repositoryClass: \App\Repository\ProjectRepository::class)]
+#[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
 class Project extends Base
 {
@@ -44,13 +46,13 @@ class Project extends Base
     /**
      * @var string|null
      */
-    #[ORM\Column(type: 'string', name: 'jira_id', length: 63, nullable: true)]
+    #[ORM\Column(name: 'jira_id', type: 'string', length: 63, nullable: true)]
     protected $jiraId;
 
     /**
      * @var string|null
      */
-    #[ORM\Column(type: 'string', name: 'jira_ticket', length: 255, nullable: true)]
+    #[ORM\Column(name: 'jira_ticket', type: 'string', length: 255, nullable: true)]
     protected $jiraTicket;
 
     /**
@@ -60,7 +62,7 @@ class Project extends Base
      *
      * @var string|null
      */
-    #[ORM\Column(type: 'string', name: 'subtickets', length: 255, nullable: true)]
+    #[ORM\Column(name: 'subtickets', type: 'string', length: 255, nullable: true)]
     protected $subtickets;
 
     /**
@@ -71,13 +73,13 @@ class Project extends Base
     protected $ticketSystem;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Entry>
+     * @var Collection<int, Entry>
      */
     #[ORM\OneToMany(targetEntity: Entry::class, mappedBy: 'project')]
     protected $entries;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Preset>
+     * @var Collection<int, Preset>
      */
     #[ORM\OneToMany(targetEntity: Preset::class, mappedBy: 'project')]
     protected $presets;
@@ -85,7 +87,7 @@ class Project extends Base
     /**
      * Estimated project duration in minutes.
      */
-    #[ORM\Column(type: 'integer', name: 'estimation', options: ['default' => 0])]
+    #[ORM\Column(name: 'estimation', type: 'integer', options: ['default' => 0])]
     protected int $estimation = 0;
 
     /**
@@ -97,7 +99,7 @@ class Project extends Base
     /**
      * Used billing method.
      */
-    #[ORM\Column(type: 'smallint', name: 'billing', nullable: true, options: ['default' => 0], enumType: BillingType::class)]
+    #[ORM\Column(name: 'billing', type: 'smallint', nullable: true, enumType: BillingType::class, options: ['default' => 0])]
     protected ?BillingType $billing = BillingType::NONE;
 
     /**
@@ -442,9 +444,9 @@ class Project extends Base
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Entry>
+     * @return Collection<int, Entry>
      */
-    public function getEntries(): \Doctrine\Common\Collections\Collection
+    public function getEntries(): Collection
     {
         return $this->entries;
     }
@@ -709,15 +711,15 @@ class Project extends Base
         }
 
         // Support comma-separated list of project keys
-        $projectKeys = array_map('trim', explode(',', $internalKey));
+        $projectKeys = array_map(trim(...), explode(',', $internalKey));
 
         return in_array($jiraId, $projectKeys, true);
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Preset>
+     * @return Collection<int, Preset>
      */
-    public function getPresets(): \Doctrine\Common\Collections\Collection
+    public function getPresets(): Collection
     {
         return $this->presets;
     }

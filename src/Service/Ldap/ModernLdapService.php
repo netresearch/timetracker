@@ -234,7 +234,7 @@ class ModernLdapService
      */
     private function getConnection(): Ldap
     {
-        if (null === $this->ldap) {
+        if (!$this->ldap instanceof Ldap) {
             $options = $this->buildLdapOptions();
             $this->ldap = new Ldap($options);
         }
@@ -264,7 +264,7 @@ class ModernLdapService
      */
     private function disconnect(): void
     {
-        if (null !== $this->ldap) {
+        if ($this->ldap instanceof Ldap) {
             $this->ldap->disconnect();
             $this->ldap = null;
         }

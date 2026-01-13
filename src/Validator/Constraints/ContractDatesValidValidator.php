@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\ContractSaveDto;
 use DateTime;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -22,7 +23,7 @@ class ContractDatesValidValidator extends ConstraintValidator
             throw new UnexpectedTypeException($constraint, ContractDatesValid::class);
         }
 
-        if (!$value instanceof \App\Dto\ContractSaveDto) {
+        if (!$value instanceof ContractSaveDto) {
             return;
         }
 

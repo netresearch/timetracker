@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Contract;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -29,7 +30,7 @@ class ContractRepository extends ServiceEntityRepository
      */
     public function getContracts(): array
     {
-        /** @var \Doctrine\ORM\QueryBuilder $queryBuilder */
+        /** @var QueryBuilder $queryBuilder */
         $queryBuilder = $this->createQueryBuilder('contracts')
             ->join('contracts.user', 'users')
             ->orderBy('users.username', 'ASC')

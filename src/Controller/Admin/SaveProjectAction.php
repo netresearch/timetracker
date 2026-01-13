@@ -18,9 +18,10 @@ use App\Response\Error;
 use App\Service\SubticketSyncService;
 use App\Service\Util\TimeCalculationService;
 use Exception;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
@@ -28,13 +29,15 @@ use function assert;
 
 final class SaveProjectAction extends BaseController
 {
+    private ObjectMapperInterface $objectMapper;
+
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws BadRequestException
      * @throws Exception
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
+    #[Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] ProjectSaveDto $projectSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
+    public function __invoke(#[MapRequestPayload] ProjectSaveDto $projectSaveDto): Response|Error|JsonResponse
     {
         $projectId = $projectSaveDto->id;
 
@@ -101,7 +104,7 @@ final class SaveProjectAction extends BaseController
         }
 
         // Map scalar fields from DTO to entity - but skip the billing field since we need enum conversion
-        $objectMapper->map($projectSaveDto, $project);
+        $this->objectMapper->map($projectSaveDto, $project);
         // Then set computed/relations and the converted billing enum
         $project
             ->setJiraId($jiraId)
@@ -148,9 +151,10 @@ final class SaveProjectAction extends BaseController
     private SubticketSyncService $subticketSyncService;
 
     #[Required]
-    public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
+    public function setTimeCalculationService(TimeCalculationService $timeCalculationService, ObjectMapperInterface $objectMapper): void
     {
         $this->timeCalculationService = $timeCalculationService;
+        $this->objectMapper = $objectMapper;
     }
 
     #[Required]

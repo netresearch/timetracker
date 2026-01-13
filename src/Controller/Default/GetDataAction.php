@@ -8,8 +8,12 @@ use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\User;
 use App\Model\JsonResponse;
+use App\Repository\EntryRepository;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function assert;
@@ -17,22 +21,22 @@ use function assert;
 final class GetDataAction extends BaseController
 {
     /**
-     * @throws InvalidArgumentException                                        When query parameters are invalid
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are malformed
+     * @throws InvalidArgumentException When query parameters are invalid
+     * @throws BadRequestException      When query parameters are malformed
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getData', name: '_getData_attr', methods: ['GET', 'POST'])]
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getData/days/{days}', name: '_getDataDays_attr', defaults: ['days' => 3], methods: ['GET'])]
+    #[Route(path: '/getData', name: '_getData_attr', methods: ['GET', 'POST'])]
+    #[Route(path: '/getData/days/{days}', name: '_getDataDays_attr', defaults: ['days' => 3], methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?User $user = null): JsonResponse
+    public function __invoke(Request $request, #[CurrentUser] ?User $user = null): JsonResponse
     {
         if (!$user instanceof User) {
             return new JsonResponse([]);
         }
 
-        $userId = (int) $user->getId();
+        $user->getId();
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
 
         // Check if this is a filtered request (with year/month/user/customer/project parameters)
         $year = $request->query->get('year');

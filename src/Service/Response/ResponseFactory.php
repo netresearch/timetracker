@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Response;
 
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
@@ -94,7 +96,7 @@ class ResponseFactory
 
         if ([] !== $errors) {
             $errorMessages = array_map(
-                static fn ($field, $error): string => sprintf('%s: %s', $field, $error),
+                static fn (string $field, $error): string => sprintf('%s: %s', $field, $error),
                 array_keys($errors),
                 array_values($errors),
             );
@@ -174,11 +176,11 @@ class ResponseFactory
         Exception $exception,
         string $fallbackMessage = 'JIRA API error occurred',
     ): Error {
-        if ($exception instanceof \App\Exception\Integration\Jira\JiraApiUnauthorizedException) {
+        if ($exception instanceof JiraApiUnauthorizedException) {
             return $this->forbidden($exception->getMessage(), $exception->getRedirectUrl());
         }
 
-        if ($exception instanceof \App\Exception\Integration\Jira\JiraApiException) {
+        if ($exception instanceof JiraApiException) {
             $message = $exception->getMessage() . '<br />' .
                       $this->translator->trans('Dataset was modified in Timetracker anyway');
 

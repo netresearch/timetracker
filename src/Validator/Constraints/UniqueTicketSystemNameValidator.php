@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\TicketSystemSaveDto;
 use App\Repository\TicketSystemRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -46,7 +47,7 @@ class UniqueTicketSystemNameValidator extends ConstraintValidator
             $object = $this->context->getObject();
 
             // Type-safe check for TicketSystemSaveDto
-            if ($object instanceof \App\Dto\TicketSystemSaveDto && $object->id > 0 && $existingSystem->getId() === $object->id) {
+            if ($object instanceof TicketSystemSaveDto && $object->id > 0 && $existingSystem->getId() === $object->id) {
                 return;
                 // Same ticket system being updated
             }

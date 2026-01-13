@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace App\Extension;
 
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Attribute\AsTwigFilter;
 
 use function array_key_exists;
 use function in_array;
@@ -35,7 +36,7 @@ use function is_string;
  *
  * @see     http://www.netresearch.de
  */
-class NrArrayTranslator extends \Twig\Extension\AbstractExtension
+class NrArrayTranslator
 {
     /**
      * constructor.
@@ -59,18 +60,6 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
     }
 
     /**
-     * Returns a list of filters to add to the existing list.
-     *
-     * @return array<\Twig\TwigFilter>
-     */
-    public function getFilters(): array
-    {
-        return [
-            new \Twig\TwigFilter('nr_array_translator', [$this, 'filterArray']),
-        ];
-    }
-
-    /**
      * Decodes the JSON string to an array and iterates over it to translate the
      * defined keys of each row.
      *
@@ -79,6 +68,7 @@ class NrArrayTranslator extends \Twig\Extension\AbstractExtension
      * @param string             $languageFile language file for translation
      * @param array<int, string> $keys
      */
+    #[AsTwigFilter(name: 'nr_array_translator')]
     public function filterArray(
         string $string,
         string $arrayKey,

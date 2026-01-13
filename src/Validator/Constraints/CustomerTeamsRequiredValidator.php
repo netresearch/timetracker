@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\CustomerSaveDto;
 use Exception;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -21,7 +22,7 @@ class CustomerTeamsRequiredValidator extends ConstraintValidator
             throw new UnexpectedTypeException($constraint, CustomerTeamsRequired::class);
         }
 
-        if (!$value instanceof \App\Dto\CustomerSaveDto) {
+        if (!$value instanceof CustomerSaveDto) {
             return;
         }
 

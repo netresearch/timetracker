@@ -12,6 +12,8 @@ use App\Entity\User;
 use App\Enum\EntryClass;
 use App\Enum\TicketSystemType;
 use App\Exception\Integration\Jira\JiraApiException;
+use App\Repository\EntryRepository;
+use App\Repository\TicketSystemRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Util\TicketService;
 use DateInterval;
@@ -19,6 +21,7 @@ use DateTime;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
 use function count;
@@ -32,19 +35,19 @@ abstract class BaseTrackingController extends BaseController
 
     protected ?JiraOAuthApiFactory $jiraOAuthApiFactory = null;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setLogger(LoggerInterface $trackingLogger): void
     {
         $this->logger = $trackingLogger;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
     {
         $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
     }
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTicketService(TicketService $ticketService): void
     {
         $this->ticketService = $ticketService;
@@ -66,9 +69,9 @@ abstract class BaseTrackingController extends BaseController
             $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
         }
 
-        if (null !== $project && $project->hasInternalJiraProjectKey()) {
+        if ($project instanceof Project && $project->hasInternalJiraProjectKey()) {
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-            assert($ticketSystemRepo instanceof \App\Repository\TicketSystemRepository);
+            assert($ticketSystemRepo instanceof TicketSystemRepository);
             $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
         }
 
@@ -101,7 +104,7 @@ abstract class BaseTrackingController extends BaseController
 
         $objectManager = $this->managerRegistry->getManager();
         $objectRepository = $objectManager->getRepository(Entry::class);
-        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
         $entries = $objectRepository->findByDay($userId, $day);
 
         if (0 === count($entries)) {
@@ -195,7 +198,7 @@ abstract class BaseTrackingController extends BaseController
             $this->validateTicketProjectMatch($entry, $project);
 
             $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-            assert($ticketSystemRepo instanceof \App\Repository\TicketSystemRepository);
+            assert($ticketSystemRepo instanceof TicketSystemRepository);
             $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
         }
 
@@ -222,7 +225,7 @@ abstract class BaseTrackingController extends BaseController
                 ]);
             }
 
-            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0, null);
+            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0);
         }
     }
 
@@ -365,7 +368,7 @@ abstract class BaseTrackingController extends BaseController
         }
 
         $objectRepository = $this->managerRegistry->getRepository(TicketSystem::class);
-        assert($objectRepository instanceof \App\Repository\TicketSystemRepository);
+        assert($objectRepository instanceof TicketSystemRepository);
         $ticketSystem = $objectRepository->find($project->getInternalJiraTicketSystem());
 
         if (!$ticketSystem instanceof TicketSystem) {

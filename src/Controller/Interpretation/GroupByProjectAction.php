@@ -10,20 +10,22 @@ use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 final class GroupByProjectAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
         $this->timeCalculationService = $timeCalculationService;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/project', name: 'interpretation_project_attr', methods: ['GET'])]
+    #[Route(path: '/interpretation/project', name: 'interpretation_project_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,

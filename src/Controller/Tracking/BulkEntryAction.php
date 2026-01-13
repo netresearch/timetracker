@@ -12,11 +12,14 @@ use App\Entity\Entry;
 use App\Entity\Preset;
 use App\Entity\Project;
 use App\Entity\User;
+use App\Enum\EntryClass;
 use App\Model\Response;
 use DateInterval;
 use DateTime;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -33,10 +36,10 @@ final class BulkEntryAction extends BaseTrackingController
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
-     * @throws Exception                                                       when entry creation or validation fails
+     * @throws BadRequestException
+     * @throws Exception           when entry creation or validation fails
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
+    #[Route(path: '/tracking/bulkentry', name: 'timetracking_bulkentry_attr', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
@@ -183,7 +186,7 @@ final class BulkEntryAction extends BaseTrackingController
                     ->setDay($date->format('Y-m-d'))
                     ->setStart($startTime->format('H:i:s'))
                     ->setEnd($endTime->format('H:i:s'))
-                    ->setClass(\App\Enum\EntryClass::DAYBREAK)
+                    ->setClass(EntryClass::DAYBREAK)
                     ->calcDuration();
 
                 if ($project instanceof Project) {

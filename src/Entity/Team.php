@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\TeamRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: \App\Repository\TeamRepository::class)]
+#[ORM\Entity(repositoryClass: TeamRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Table(name: 'teams')]
 class Team
 {
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, Customer>
+     * @var Collection<int, Customer>
      */
     #[ORM\ManyToMany(targetEntity: Customer::class, mappedBy: 'teams')]
     protected $customersRelation;
@@ -36,7 +39,7 @@ class Team
     protected $leadUser;
 
     /**
-     * @var \Doctrine\Common\Collections\Collection<int, User>
+     * @var Collection<int, User>
      */
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'teams')]
     protected $users;
@@ -96,9 +99,9 @@ class Team
     }
 
     /**
-     * @return \Doctrine\Common\Collections\Collection<int, Customer>
+     * @return Collection<int, Customer>
      */
-    public function getCustomers(): \Doctrine\Common\Collections\Collection
+    public function getCustomers(): Collection
     {
         return $this->customersRelation;
     }
@@ -117,7 +120,7 @@ class Team
      */
     public function __construct()
     {
-        $this->customersRelation = new \Doctrine\Common\Collections\ArrayCollection();
-        $this->users = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->customersRelation = new ArrayCollection();
+        $this->users = new ArrayCollection();
     }
 }

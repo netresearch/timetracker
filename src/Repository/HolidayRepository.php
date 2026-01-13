@@ -14,7 +14,7 @@ use function is_array;
 use function sprintf;
 
 /**
- * @extends ServiceEntityRepository<\App\Entity\Holiday>
+ * @extends ServiceEntityRepository<Holiday>
  */
 class HolidayRepository extends ServiceEntityRepository
 {

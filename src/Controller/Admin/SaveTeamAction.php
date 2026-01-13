@@ -11,9 +11,11 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\TeamRepository;
+use App\Response\Error;
 use Exception;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function assert;
@@ -21,12 +23,12 @@ use function assert;
 final class SaveTeamAction extends BaseController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws BadRequestException
      * @throws Exception
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
+    #[Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|\App\Response\Error
+    public function __invoke(#[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|Error
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);
         assert($objectRepository instanceof TeamRepository);
@@ -42,11 +44,11 @@ final class SaveTeamAction extends BaseController
             if (null === $team) {
                 $message = $this->translator->trans('No entry for id.');
 
-                return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
             if (!$team instanceof Team) {
-                return new \App\Response\Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+                return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {
             $team = new Team();

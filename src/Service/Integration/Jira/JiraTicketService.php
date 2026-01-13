@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Service\Integration\Jira;
 
 use App\DTO\Jira\JiraIssue;
+use App\DTO\Jira\JiraIssueFields;
 use App\DTO\Jira\JiraTransition;
+use App\Entity\Activity;
+use App\Entity\Customer;
 use App\Entity\Entry;
+use App\Entity\Project;
 use App\Exception\Integration\Jira\JiraApiException;
 
 use function is_object;
@@ -32,7 +36,7 @@ class JiraTicketService
     {
         $project = $entry->getProject();
 
-        if (!$project instanceof \App\Entity\Project) {
+        if (!$project instanceof Project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
@@ -135,7 +139,7 @@ class JiraTicketService
 
             $issue = JiraIssue::fromApiResponse($response);
 
-            if (null === $issue->fields) {
+            if (!$issue->fields instanceof JiraIssueFields) {
                 return [];
             }
 
@@ -302,17 +306,17 @@ class JiraTicketService
         $parts = [];
 
         $customer = $entry->getCustomer();
-        if ($customer instanceof \App\Entity\Customer) {
+        if ($customer instanceof Customer) {
             $parts[] = $customer->getName();
         }
 
         $project = $entry->getProject();
-        if ($project instanceof \App\Entity\Project) {
+        if ($project instanceof Project) {
             $parts[] = $project->getName();
         }
 
         $activity = $entry->getActivity();
-        if ($activity instanceof \App\Entity\Activity) {
+        if ($activity instanceof Activity) {
             $parts[] = $activity->getName();
         }
 
@@ -331,7 +335,7 @@ class JiraTicketService
         // This could be configurable per project or activity
         $activity = $entry->getActivity();
 
-        if ($activity instanceof \App\Entity\Activity) {
+        if ($activity instanceof Activity) {
             $activityName = strtolower($activity->getName());
 
             if (str_contains($activityName, 'bug') || str_contains($activityName, 'fix')) {

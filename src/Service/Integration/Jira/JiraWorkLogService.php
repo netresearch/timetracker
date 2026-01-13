@@ -6,7 +6,10 @@ namespace App\Service\Integration\Jira;
 
 use App\DTO\Jira\JiraProject;
 use App\DTO\Jira\JiraWorkLog;
+use App\Entity\Activity;
+use App\Entity\Customer;
 use App\Entity\Entry;
+use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -98,7 +101,7 @@ class JiraWorkLogService
         $user = $entry->getUser();
         $project = $entry->getProject();
 
-        if (null === $user || null === $project) {
+        if (!$user instanceof User || !$project instanceof Project) {
             return;
         }
 
@@ -176,7 +179,7 @@ class JiraWorkLogService
         $user = $entry->getUser();
         $project = $entry->getProject();
 
-        if (null === $user || null === $project) {
+        if (!$user instanceof User || !$project instanceof Project) {
             return;
         }
 
@@ -281,15 +284,15 @@ class JiraWorkLogService
 
         $parts = [];
 
-        if ($customer instanceof \App\Entity\Customer) {
+        if ($customer instanceof Customer) {
             $parts[] = $customer->getName();
         }
 
-        if ($project instanceof \App\Entity\Project) {
+        if ($project instanceof Project) {
             $parts[] = $project->getName();
         }
 
-        if ($activity instanceof \App\Entity\Activity) {
+        if ($activity instanceof Activity) {
             $parts[] = $activity->getName();
         }
 

@@ -7,11 +7,16 @@ namespace App\Service\Integration\Jira;
 use App\DTO\Jira\JiraIssue;
 use App\DTO\Jira\JiraSearchResult;
 use App\DTO\Jira\JiraWorkLog;
+use App\Entity\Activity;
 use App\Entity\Entry;
+use App\Entity\Project;
+use App\Entity\TicketSystem;
+use App\Entity\User;
 use App\Entity\UserTicketsystem;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
+use App\Repository\EntryRepository;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
@@ -52,8 +57,8 @@ class JiraOAuthApiService
     protected array $clients = [];
 
     public function __construct(
-        protected \App\Entity\User $user,
-        protected \App\Entity\TicketSystem $ticketSystem,
+        protected User $user,
+        protected TicketSystem $ticketSystem,
         protected ManagerRegistry $managerRegistry,
         RouterInterface $router,
     ) {
@@ -94,7 +99,7 @@ class JiraOAuthApiService
             $oAuthTokenSecret = $this->getTokenSecret();
             $oAuthToken = $this->getToken();
             if ('' === $oAuthToken && '' === $oAuthTokenSecret) {
-                $this->throwUnauthorizedRedirect(null);
+                $this->throwUnauthorizedRedirect();
             }
         } elseif ('new' === $tokenMode) {
             $oAuthToken = '';
@@ -272,7 +277,7 @@ class JiraOAuthApiService
 
         $objectManager = $this->managerRegistry->getManager();
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
         $entries = $objectRepository->findByUserAndTicketSystemToSync((int) $this->user->getId(), (int) $this->ticketSystem->getId(), $entryLimit ?? 50);
 
         foreach ($entries as $entry) {
@@ -395,7 +400,7 @@ class JiraOAuthApiService
     public function createTicket(Entry $entry): mixed
     {
         $project = $entry->getProject();
-        if (!$project instanceof \App\Entity\Project) {
+        if (!$project instanceof Project) {
             throw new JiraApiException('Entry has no project', 400);
         }
 
@@ -586,7 +591,7 @@ class JiraOAuthApiService
             $response = $this->getClient()->request($method, $url, $additionalParameter);
         } catch (GuzzleException $guzzleException) {
             if (401 === $guzzleException->getCode()) {
-                $this->throwUnauthorizedRedirect(null);
+                $this->throwUnauthorizedRedirect();
             } elseif (404 === $guzzleException->getCode()) {
                 $message = '404 - Resource is not available: (' . $url . ')';
                 throw new JiraApiInvalidResourceException($message, 404, null, $guzzleException);
@@ -691,7 +696,7 @@ class JiraOAuthApiService
      */
     protected function getTicketSystemWorkLogComment(Entry $entry): string
     {
-        $activity = $entry->getActivity() instanceof \App\Entity\Activity
+        $activity = $entry->getActivity() instanceof Activity
             ? $entry->getActivity()->getName()
             : 'no activity specified';
 
@@ -731,7 +736,7 @@ class JiraOAuthApiService
         $userTicketSystem = $result instanceof UserTicketsystem ? $result : null;
 
         return $this->ticketSystem->getBookTime()
-            && (null === $userTicketSystem || !$userTicketSystem->getAvoidConnection());
+            && (!$userTicketSystem instanceof UserTicketsystem || !$userTicketSystem->getAvoidConnection());
     }
 
     /**

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use App\Entity\Entry;
+use App\Entity\Project;
+use App\Entity\TicketSystem;
 use App\Enum\TicketSystemType;
 use App\Event\EntryEvent;
 use App\Service\Cache\QueryCacheService;
@@ -146,12 +148,12 @@ class EntryEventSubscriber implements EventSubscriberInterface
     {
         // Check if project has auto-sync enabled
         $project = $entry->getProject();
-        if (!$project instanceof \App\Entity\Project) {
+        if (!$project instanceof Project) {
             return false;
         }
 
         $ticketSystem = $project->getTicketSystem();
-        if (!$ticketSystem instanceof \App\Entity\TicketSystem) {
+        if (!$ticketSystem instanceof TicketSystem) {
             return false;
         }
 

@@ -11,23 +11,24 @@ use App\Model\Response as ModelResponse;
 use App\Response\Error;
 use App\Service\SubticketSyncService;
 use Exception;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 final class SyncProjectSubticketsAction extends BaseController
 {
     private SubticketSyncService $subticketSyncService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setSubticketSyncService(SubticketSyncService $subticketSyncService): void
     {
         $this->subticketSyncService = $subticketSyncService;
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
+    #[Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapQueryString] AdminSyncDto $adminSyncDto): JsonResponse|Error|ModelResponse
+    public function __invoke(#[MapQueryString] AdminSyncDto $adminSyncDto): JsonResponse|Error|ModelResponse
     {
         $projectId = $adminSyncDto->project;
 

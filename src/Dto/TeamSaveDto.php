@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\Team;
 use App\Validator\Constraints\UniqueTeamName;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[Map(target: \App\Entity\Team::class)]
+#[Map(target: Team::class)]
 final readonly class TeamSaveDto
 {
     public function __construct(
@@ -25,7 +27,7 @@ final readonly class TeamSaveDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws BadRequestException
      */
     public static function fromRequest(Request $request): self
     {

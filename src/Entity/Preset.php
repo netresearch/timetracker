@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Model\Base;
+use App\Repository\PresetRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Override;
 
-#[ORM\Entity(repositoryClass: \App\Repository\PresetRepository::class)]
+#[ORM\Entity(repositoryClass: PresetRepository::class)]
 #[ORM\Table(name: 'presets')]
 class Preset extends Base
 {

@@ -86,7 +86,7 @@ class LdapClientService
      *
      * @return array<string, array<int, string>>
      */
-    protected function verifyUsername()
+    protected function verifyUsername(): array
     {
         // Security check: ensure username is properly set
         if ('' === $this->_userName) {
@@ -156,7 +156,7 @@ class LdapClientService
             throw new Exception('Username unknown.');
         }
 
-        if ($collection->count() > 1 && null !== $this->logger) {
+        if ($collection->count() > 1 && $this->logger instanceof LoggerInterface) {
             $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
                 'filter' => $searchFilter,
                 'baseDn' => $this->_baseDn,
@@ -435,7 +435,7 @@ class LdapClientService
             $this->verifyUsername(),
         );
         // verifyPassword returns bool true; enforce literal true for signature
-        if (true !== $result) {
+        if (!$result) {
             throw new RuntimeException('LDAP verification did not return true');
         }
 
@@ -492,7 +492,7 @@ class LdapClientService
                     }
                 }
 
-                if ([] === $this->teams && null !== $this->logger) {
+                if ([] === $this->teams && $this->logger instanceof LoggerInterface) {
                     $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
                 }
             } catch (Exception $e) {

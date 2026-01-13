@@ -6,10 +6,14 @@ namespace App\Controller\Default;
 
 use App\Controller\BaseController;
 use App\Entity\Entry;
+use App\Entity\User;
 use App\Enum\Period;
 use App\Model\JsonResponse;
 use App\Repository\EntryRepository;
 use Exception;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 use function assert;
 
@@ -19,10 +23,10 @@ final class GetTimeSummaryAction extends BaseController
      * @throws Exception When database operations fail
      * @throws Exception When user ID retrieval or time calculation fails
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
-    public function __invoke(#[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
+    #[Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
+    public function __invoke(#[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\Project;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\SubticketSyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use LogicException;
+use Symfony\Component\Console\Attribute\Argument;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use function count;
 use function is_scalar;
 
-#[\Symfony\Component\Console\Attribute\AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
+#[AsCommand(name: 'tt:sync-subtickets', description: 'Update project subtickets from Jira')]
 class TtSyncSubticketsCommand extends Command
 {
     /**
@@ -33,7 +36,7 @@ class TtSyncSubticketsCommand extends Command
      *
      * @psalm-return 0|1
      */
-    public function __invoke(#[\Symfony\Component\Console\Attribute\Argument(name: 'project', description: 'Single project ID to update')]
+    public function __invoke(#[Argument(description: 'Single project ID to update', name: 'project')]
         ?string $project, InputInterface $input, OutputInterface $output): int
     {
         $projectArg = $project;
@@ -42,10 +45,10 @@ class TtSyncSubticketsCommand extends Command
         $projectId = is_scalar($projectArg) ? $projectArg : null;
 
         $entityRepository = $this->entityManager
-            ->getRepository(\App\Entity\Project::class);
+            ->getRepository(Project::class);
         if (null !== $projectId && '' !== $projectId) {
             $project = $entityRepository->find($projectId);
-            if (!$project instanceof \App\Entity\Project) {
+            if (!$project instanceof Project) {
                 $symfonyStyle->error('Project does not exist');
 
                 return 1;
@@ -59,7 +62,7 @@ class TtSyncSubticketsCommand extends Command
                 ->getResult();
         }
 
-        /** @var array<int, \App\Entity\Project> $projects */
+        /** @var array<int, Project> $projects */
         $count = count($projects);
         $output->writeln(
             'Found ' . $count . ' projects with ticket system',

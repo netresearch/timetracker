@@ -7,6 +7,7 @@ namespace App\Dto;
 use App\Validator\Constraints\ContractDatesValid;
 use App\Validator\Constraints\ValidUser;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
 use UnexpectedValueException;
@@ -34,9 +35,9 @@ final readonly class ContractSaveDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws InvalidArgumentException                                        When request data conversion fails
-     * @throws UnexpectedValueException                                        When numeric string conversion fails
+     * @throws BadRequestException      When request parameters are malformed
+     * @throws InvalidArgumentException When request data conversion fails
+     * @throws UnexpectedValueException When numeric string conversion fails
      */
     public static function fromRequest(Request $request): self
     {

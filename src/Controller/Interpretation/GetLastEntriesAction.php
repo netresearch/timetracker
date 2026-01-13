@@ -9,26 +9,29 @@ use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Service\Util\TimeCalculationService;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 final class GetLastEntriesAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
         $this->timeCalculationService = $timeCalculationService;
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are invalid
-     * @throws Exception                                                       When database operations fail
-     * @throws Exception                                                       When entry retrieval or time calculation fails
+     * @throws BadRequestException When request parameters are invalid
+     * @throws Exception           When database operations fail
+     * @throws Exception           When entry retrieval or time calculation fails
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
+    #[Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,

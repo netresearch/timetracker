@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Enum\EntryClass;
 use App\Model\Base;
+use App\Repository\EntryRepository;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,7 +15,7 @@ use Override;
 
 use function sprintf;
 
-#[ORM\Entity(repositoryClass: \App\Repository\EntryRepository::class)]
+#[ORM\Entity(repositoryClass: EntryRepository::class)]
 #[ORM\Table(name: 'entries')]
 class Entry extends Base
 {
@@ -87,7 +88,7 @@ class Entry extends Base
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected ?Activity $activity = null;
 
-    #[ORM\Column(name: 'class', type: 'smallint', nullable: false, options: ['unsigned' => true, 'default' => 1], enumType: EntryClass::class)]
+    #[ORM\Column(name: 'class', type: 'smallint', nullable: false, enumType: EntryClass::class, options: ['unsigned' => true, 'default' => 1])]
     protected EntryClass $class = EntryClass::PLAIN;
 
     /**

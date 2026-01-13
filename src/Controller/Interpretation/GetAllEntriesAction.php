@@ -6,6 +6,7 @@ namespace App\Controller\Interpretation;
 
 use App\Controller\BaseController;
 use App\Dto\InterpretationFiltersDto;
+use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Response\Error;
@@ -14,6 +15,7 @@ use App\Service\Response\PaginationLinkService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -25,15 +27,13 @@ final class GetAllEntriesAction extends BaseController
     ) {
     }
 
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
+    #[Route(path: '/interpretation/allEntries', name: 'interpretation_all_entries_attr', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $interpretationFiltersDto, #[CurrentUser] ?\App\Entity\User $user = null): ModelResponse|JsonResponse|Error
+    public function __invoke(Request $request, #[MapQueryString] InterpretationFiltersDto $interpretationFiltersDto, #[CurrentUser] ?User $user = null): ModelResponse|JsonResponse|Error
     {
         // Check if user is either admin or PL type
-        if (!$this->isGranted('ROLE_ADMIN')) {
-            if (null === $user || !$user->getType()->isPl()) {
-                return new Error($this->translate('You are not allowed to perform this action.'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
-            }
+        if (!$this->isGranted('ROLE_ADMIN') && (!$user instanceof User || !$user->getType()->isPl())) {
+            return new Error($this->translate('You are not allowed to perform this action.'), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);
         }
 
         try {

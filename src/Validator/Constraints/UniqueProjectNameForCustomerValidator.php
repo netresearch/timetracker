@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\ProjectSaveDto;
 use App\Repository\ProjectRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -28,7 +29,7 @@ class UniqueProjectNameForCustomerValidator extends ConstraintValidator
             throw new UnexpectedTypeException($constraint, UniqueProjectNameForCustomer::class);
         }
 
-        if (!$value instanceof \App\Dto\ProjectSaveDto) {
+        if (!$value instanceof ProjectSaveDto) {
             return;
         }
 

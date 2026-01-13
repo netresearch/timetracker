@@ -9,7 +9,7 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\UserRepository;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -17,9 +17,9 @@ use function assert;
 
 final class GetUsersAction extends BaseController
 {
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getAllUsers', name: '_getAllUsers_attr', methods: ['GET'])]
+    #[Route(path: '/getAllUsers', name: '_getAllUsers_attr', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response|JsonResponse
+    public function __invoke(#[CurrentUser] ?User $user = null): Response|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
         assert($objectRepository instanceof UserRepository);

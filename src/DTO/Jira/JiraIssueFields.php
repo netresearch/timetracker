@@ -76,7 +76,7 @@ final readonly class JiraIssueFields
      */
     public function isEpic(): bool
     {
-        return null !== $this->issuetype
+        return $this->issuetype instanceof JiraIssueType
             && null !== $this->issuetype->name
             && 'epic' === strtolower($this->issuetype->name);
     }

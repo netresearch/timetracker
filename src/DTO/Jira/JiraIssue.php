@@ -43,7 +43,7 @@ final readonly class JiraIssue
         }
 
         $subtaskKeys = [];
-        if (null !== $fields) {
+        if ($fields instanceof JiraIssueFields) {
             $subtaskKeys = $fields->getSubtaskKeys();
         }
 
@@ -61,7 +61,7 @@ final readonly class JiraIssue
      */
     public function isEpic(): bool
     {
-        return null !== $this->fields && $this->fields->isEpic();
+        return $this->fields instanceof JiraIssueFields && $this->fields->isEpic();
     }
 
     /**

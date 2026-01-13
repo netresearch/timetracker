@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\Customer;
 use App\Validator\Constraints\CustomerTeamsRequired;
 use App\Validator\Constraints\UniqueCustomerName;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 use UnexpectedValueException;
 
-#[Map(target: \App\Entity\Customer::class)]
+#[Map(target: Customer::class)]
 #[CustomerTeamsRequired]
 final readonly class CustomerSaveDto
 {
@@ -32,14 +34,14 @@ final readonly class CustomerSaveDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws InvalidArgumentException                                        When request data conversion fails
-     * @throws UnexpectedValueException                                        When array parameter extraction fails
+     * @throws BadRequestException      When request parameters are malformed
+     * @throws InvalidArgumentException When request data conversion fails
+     * @throws UnexpectedValueException When array parameter extraction fails
      */
     public static function fromRequest(Request $request): self
     {
         /** @var list<int|string> $teams */
-        $teams = [] !== $request->request->all('teams') ? $request->request->all('teams') : [];
+        $teams = $request->request->all('teams');
 
         return new self(
             id: (int) ($request->request->get('id') ?? 0),

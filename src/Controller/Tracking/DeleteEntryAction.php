@@ -6,24 +6,28 @@ namespace App\Controller\Tracking;
 
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use App\Util\RequestEntityHelper;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class DeleteEntryAction extends BaseTrackingController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are invalid
-     * @throws Exception                                                       When database operations fail
-     * @throws \App\Exception\Integration\Jira\JiraApiException                When Jira API operations fail
-     * @throws Exception                                                       When entry processing or deletion fails
+     * @throws BadRequestException When request parameters are invalid
+     * @throws Exception           When database operations fail
+     * @throws JiraApiException    When Jira API operations fail
+     * @throws Exception           When entry processing or deletion fails
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
+    #[Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
@@ -45,9 +49,9 @@ final class DeleteEntryAction extends BaseTrackingController
 
             try {
                 $this->deleteJiraWorklog($entry);
-            } catch (\App\Exception\Integration\Jira\JiraApiUnauthorizedException $e) {
+            } catch (JiraApiUnauthorizedException $e) {
                 return new Error($e->getMessage(), \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN, $e->getRedirectUrl());
-            } catch (\App\Exception\Integration\Jira\JiraApiException $e) {
+            } catch (JiraApiException $e) {
                 $alert = $e->getMessage() . '<br />' .
                     $this->translator->trans('Dataset was modified in Timetracker anyway');
             }

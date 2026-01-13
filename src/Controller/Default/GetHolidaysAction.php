@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace App\Controller\Default;
 
 use App\Controller\BaseController;
+use App\Entity\User;
 use App\Model\JsonResponse;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function sprintf;
@@ -18,15 +24,15 @@ use function sprintf;
 final class GetHolidaysAction extends BaseController
 {
     /**
-     * @throws Exception                                                       When database operations fail
-     * @throws InvalidArgumentException                                        When request parameters are invalid
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are malformed
+     * @throws Exception                When database operations fail
+     * @throws InvalidArgumentException When request parameters are invalid
+     * @throws BadRequestException      When query parameters are malformed
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
+    #[Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): JsonResponse|RedirectResponse
+    public function __invoke(Request $request, #[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -44,8 +50,8 @@ final class GetHolidaysAction extends BaseController
 
         // Use database-agnostic date filtering
         $platform = $connection->getDatabasePlatform();
-        if ($platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform
-            || $platform instanceof \Doctrine\DBAL\Platforms\MariaDBPlatform) {
+        if ($platform instanceof MySQLPlatform
+            || $platform instanceof MariaDBPlatform) {
             $sql = 'SELECT name, day FROM holidays WHERE YEAR(day) = ? AND MONTH(day) = ? ORDER BY day ASC';
         } else {
             // SQLite

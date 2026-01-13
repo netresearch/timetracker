@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\ContractRepository;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A user contract (working hours).
  */
-#[ORM\Entity(repositoryClass: \App\Repository\ContractRepository::class)]
+#[ORM\Entity(repositoryClass: ContractRepository::class)]
 #[ORM\Table(name: 'contracts')]
 class Contract
 {

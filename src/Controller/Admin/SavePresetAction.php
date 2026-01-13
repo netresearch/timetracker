@@ -12,23 +12,31 @@ use App\Entity\Preset;
 use App\Entity\Project;
 use App\Model\JsonResponse;
 use App\Model\Response;
+use App\Response\Error;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class SavePresetAction extends BaseController
 {
+    public function __construct(private readonly ObjectMapperInterface $objectMapper)
+    {
+    }
+
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException          When request payload is malformed
-     * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws Exception                                                                When database operations fail
-     * @throws Exception                                                                When entity relationships are invalid or persistence operations fail
+     * @throws BadRequestException              When request payload is malformed
+     * @throws UnprocessableEntityHttpException When DTO validation fails
+     * @throws Exception                        When database operations fail
+     * @throws Exception                        When entity relationships are invalid or persistence operations fail
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
+    #[Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] PresetSaveDto $presetSaveDto, ObjectMapperInterface $objectMapper): Response|JsonResponse|\App\Response\Error
+    public function __invoke(#[MapRequestPayload] PresetSaveDto $presetSaveDto): Response|JsonResponse|Error
     {
         $id = $presetSaveDto->id;
         $customer = null !== $presetSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($presetSaveDto->customer) : null;
@@ -44,7 +52,7 @@ final class SavePresetAction extends BaseController
             if (!$preset instanceof Preset) {
                 $message = $this->translator->trans('No entry for id.');
 
-                return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
         // $preset is already instance of Preset due to the check above
@@ -58,7 +66,7 @@ final class SavePresetAction extends BaseController
             }
 
             // Map scalar fields (name, description)
-            $objectMapper->map($presetSaveDto, $preset);
+            $this->objectMapper->map($presetSaveDto, $preset);
             // Relations set explicitly
             $preset->setCustomer($customer)
                 ->setProject($project)

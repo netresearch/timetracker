@@ -21,8 +21,6 @@ use App\Extension\NrArrayTranslator;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 
-use function is_array;
-
 /**
  * Class NrArrayTranslatorTest.
  *
@@ -67,18 +65,6 @@ final class NrArrayTranslatorTest extends TestCase
             $this->nrArrayTranslator->getName(),
             'nr_array_translator',
         );
-    }
-
-    /**
-     * checks the getFilters.
-     */
-    public function testGetFilters(): void
-    {
-        $filters = $this->nrArrayTranslator->getFilters();
-        self::assertTrue(is_array($filters));
-        self::assertCount(1, $filters);
-        self::assertInstanceOf(\Twig\TwigFilter::class, $filters[0]);
-        self::assertSame('nr_array_translator', $filters[0]->getName());
     }
 
     /**

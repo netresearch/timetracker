@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\Activity;
 use App\Validator\Constraints\UniqueActivityName;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[Map(target: \App\Entity\Activity::class)]
+#[Map(target: Activity::class)]
 final readonly class ActivitySaveDto
 {
     public function __construct(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validator\Constraints;
 
+use App\Dto\ActivitySaveDto;
 use App\Repository\ActivityRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -47,7 +48,7 @@ class UniqueActivityNameValidator extends ConstraintValidator
             $object = $this->context->getObject();
 
             // Type-safe check for ActivitySaveDto
-            if ($object instanceof \App\Dto\ActivitySaveDto && $object->id > 0 && $existingActivity->getId() === $object->id) {
+            if ($object instanceof ActivitySaveDto && $object->id > 0 && $existingActivity->getId() === $object->id) {
                 return;
                 // Same activity being updated
             }

@@ -5,22 +5,27 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
+use App\Entity\TicketSystem;
+use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Service\Integration\Jira\JiraOAuthApiService;
 use DateTime;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
 final class SyncJiraEntriesAction extends BaseController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When query parameters are invalid
-     * @throws Exception                                                       When database operations fail
-     * @throws Exception                                                       When date parsing or Jira API operations fail
+     * @throws BadRequestException When query parameters are invalid
+     * @throws Exception           When database operations fail
+     * @throws Exception           When date parsing or Jira API operations fail
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/syncentries/jira', name: 'syncJiraEntries_attr', methods: ['GET'])]
+    #[Route(path: '/syncentries/jira', name: 'syncJiraEntries_attr', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): JsonResponse
     {
@@ -31,12 +36,12 @@ final class SyncJiraEntriesAction extends BaseController
 
         // Use current user as admin context if available
         $userId = $this->getUserId($request);
-        /** @var \App\Entity\User|null $user */
-        $user = $this->doctrineRegistry->getRepository(\App\Entity\User::class)->find($userId);
-        /** @var \App\Entity\TicketSystem|null $ticketSystem */
-        $ticketSystem = $this->doctrineRegistry->getRepository(\App\Entity\TicketSystem::class)->findOneBy([]);
+        /** @var User|null $user */
+        $user = $this->doctrineRegistry->getRepository(User::class)->find($userId);
+        /** @var TicketSystem|null $ticketSystem */
+        $ticketSystem = $this->doctrineRegistry->getRepository(TicketSystem::class)->findOneBy([]);
         $jiraApi = (null !== $user && null !== $ticketSystem) ? $this->jiraOAuthApiFactory->create($user, $ticketSystem) : null;
-        if ($jiraApi instanceof \App\Service\Integration\Jira\JiraOAuthApiService) {
+        if ($jiraApi instanceof JiraOAuthApiService) {
             // Mirror earlier behavior: update entries limited window
             // Choose a reasonable limit (null => all pending)
             $jiraApi->updateEntriesJiraWorkLogsLimited();

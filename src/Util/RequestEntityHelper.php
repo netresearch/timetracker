@@ -6,9 +6,11 @@ namespace App\Util;
 
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 
 use function is_scalar;
@@ -18,7 +20,7 @@ final class RequestEntityHelper
     /**
      * Extract a scalar id value from request for a given key; returns null for empty/non-scalar values.
      *
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request is malformed
+     * @throws BadRequestException When request is malformed
      */
     public static function id(Request $request, string $key): ?string
     {
@@ -50,7 +52,7 @@ final class RequestEntityHelper
             return null;
         }
 
-        /** @var \Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository<T> $repository */
+        /** @var ServiceEntityRepository<T> $repository */
         $repository = $managerRegistry->getRepository($entityClass);
         $entity = $repository->find($id);
 

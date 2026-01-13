@@ -6,17 +6,24 @@ namespace App\Controller\Controlling;
 
 use App\Controller\BaseController;
 use App\Dto\ExportQueryDto;
+use App\Entity\Customer;
 use App\Entity\Entry;
+use App\Entity\Project;
 use App\Model\Response;
 use App\Service\ExportService as Export;
 use App\Util\PhpSpreadsheet\LOReadFilter;
 use DateTimeInterface;
 use InvalidArgumentException;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 use function is_scalar;
 
@@ -26,7 +33,7 @@ final class ExportAction extends BaseController
 {
     private Export $export;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setExportService(Export $export): void
     {
         $this->export = $export;
@@ -36,8 +43,8 @@ final class ExportAction extends BaseController
      * @throws InvalidArgumentException When export parameters are invalid or file operations fail
      */
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', methods: ['GET'], requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0])]
+    #[Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
+    #[Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0], methods: ['GET'])]
     public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response
     {
         // Map legacy path parameters to query parameters for backward compatibility
@@ -97,7 +104,7 @@ final class ExportAction extends BaseController
             . str_replace(' ', '-', $username),
         );
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         // Apply LibreOffice column limit filter (prevents >1024 column errors)
         $reader->setReadFilter(new LOReadFilter());
 
@@ -162,11 +169,11 @@ final class ExportAction extends BaseController
 
             $customerName = '';
             $customerEntity = $entry->getCustomer();
-            if ($customerEntity instanceof \App\Entity\Customer) {
+            if ($customerEntity instanceof Customer) {
                 $customerName = (string) $customerEntity->getName();
             } else {
                 $projectEntity = $entry->getProject();
-                if ($projectEntity instanceof \App\Entity\Project && $projectEntity->getCustomer() instanceof \App\Entity\Customer) {
+                if ($projectEntity instanceof Project && $projectEntity->getCustomer() instanceof Customer) {
                     $customerName = (string) $projectEntity->getCustomer()->getName();
                 }
             }
@@ -175,7 +182,7 @@ final class ExportAction extends BaseController
 
             $projectName = '';
             $projectEntity = $entry->getProject();
-            if ($projectEntity instanceof \App\Entity\Project) {
+            if ($projectEntity instanceof Project) {
                 $projectName = $projectEntity->getName();
             }
 
@@ -239,11 +246,11 @@ final class ExportAction extends BaseController
         return $response;
     }
 
-    protected static function setCellDate(Worksheet $worksheet, string $column, int $row, DateTimeInterface $date, string $format = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD): void
+    protected static function setCellDate(Worksheet $worksheet, string $column, int $row, DateTimeInterface $date, string $format = NumberFormat::FORMAT_DATE_YYYYMMDD): void
     {
         $worksheet->setCellValue(
             $column . $row,
-            \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date),
+            Date::PHPToExcel($date),
         );
         $worksheet->getStyle($column . $row)
             ->getNumberFormat()
@@ -252,7 +259,7 @@ final class ExportAction extends BaseController
 
     protected static function setCellHours(Worksheet $worksheet, string $column, int $row, DateTimeInterface $date): void
     {
-        $dateValue = (float) \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date);
+        $dateValue = (float) Date::PHPToExcel($date);
         $hourValue = $dateValue - floor($dateValue);
         $worksheet->setCellValue($column . $row, $hourValue);
         $worksheet->getStyle($column . $row)

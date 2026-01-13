@@ -6,13 +6,21 @@ namespace App\Controller\Default;
 
 use App\Controller\BaseController;
 use App\Entity\Entry;
+use App\Entity\User;
 use App\Model\JsonResponse;
+use App\Model\Response;
+use App\Repository\EntryRepository;
 use App\Response\Error;
 use App\Service\Util\TimeCalculationService;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
 use function is_array;
@@ -21,23 +29,23 @@ final class GetSummaryAction extends BaseController
 {
     private TimeCalculationService $timeCalculationService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
         $this->timeCalculationService = $timeCalculationService;
     }
 
     /**
-     * @throws InvalidArgumentException                                        When request parameters are invalid
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws Exception                                                       When database operations fail
-     * @throws Exception                                                       When time calculation operations fail
+     * @throws InvalidArgumentException When request parameters are invalid
+     * @throws BadRequestException      When request parameters are malformed
+     * @throws Exception                When database operations fail
+     * @throws Exception                When time calculation operations fail
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
+    #[Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function __invoke(Request $request, #[\Symfony\Component\Security\Http\Attribute\CurrentUser] ?\App\Entity\User $user = null): \Symfony\Component\HttpFoundation\RedirectResponse|\App\Model\Response|JsonResponse|Error
+    public function __invoke(Request $request, #[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse|Error
     {
-        if (!$user instanceof \App\Entity\User) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('_login');
         }
 
@@ -56,7 +64,7 @@ final class GetSummaryAction extends BaseController
         }
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
-        assert($objectRepository instanceof \App\Repository\EntryRepository);
+        assert($objectRepository instanceof EntryRepository);
         if (null === $objectRepository->find($entryId)) {
             $message = $this->translator->trans('No entry for id.');
 

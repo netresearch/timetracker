@@ -14,9 +14,12 @@ use App\Repository\UserRepository;
 use App\Response\Error;
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use UnexpectedValueException;
 
@@ -25,16 +28,20 @@ use function sprintf;
 
 final class SaveUserAction extends BaseController
 {
+    public function __construct(private readonly ObjectMapperInterface $objectMapper)
+    {
+    }
+
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException          When request payload is malformed
-     * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException When DTO validation fails
-     * @throws Exception                                                                When database operations fail
-     * @throws InvalidArgumentException                                                 When team IDs are invalid or missing teams are found
-     * @throws UnexpectedValueException                                                 When user data mapping fails or validation errors occur
+     * @throws BadRequestException              When request payload is malformed
+     * @throws UnprocessableEntityHttpException When DTO validation fails
+     * @throws Exception                        When database operations fail
+     * @throws InvalidArgumentException         When team IDs are invalid or missing teams are found
+     * @throws UnexpectedValueException         When user data mapping fails or validation errors occur
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
+    #[Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] UserSaveDto $userSaveDto, ObjectMapperInterface $objectMapper): Response|Error|JsonResponse
+    public function __invoke(#[MapRequestPayload] UserSaveDto $userSaveDto): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);
         assert($objectRepository instanceof UserRepository);
@@ -47,7 +54,7 @@ final class SaveUserAction extends BaseController
         // Validation is now handled by the DTO with MapRequestPayload
         // Uniqueness checks are performed via custom validators
 
-        $objectMapper->map($userSaveDto, $user);
+        $this->objectMapper->map($userSaveDto, $user);
 
         $user->resetTeams();
 

@@ -9,19 +9,24 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Service\Util\LocalizationService;
 use Exception;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 final class SaveSettingsAction extends BaseController
 {
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException  When request is malformed
-     * @throws \Symfony\Component\Security\Core\Exception\AccessDeniedException When user is not authenticated
-     * @throws Exception                                                        When database operations fail
-     * @throws Exception                                                        When user retrieval or persistence operations fail
+     * @throws BadRequestException   When request is malformed
+     * @throws AccessDeniedException When user is not authenticated
+     * @throws Exception             When database operations fail
+     * @throws Exception             When user retrieval or persistence operations fail
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/settings/save', name: 'saveSettings', methods: ['POST'])]
+    #[Route(path: '/settings/save', name: 'saveSettings', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         Request $request,
@@ -33,7 +38,7 @@ final class SaveSettingsAction extends BaseController
                 'success' => false,
                 'message' => $this->translator->trans('The configuration could not be saved.'),
             ]);
-            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_SERVICE_UNAVAILABLE);
+            $response->setStatusCode(Response::HTTP_SERVICE_UNAVAILABLE);
 
             return $response;
         }
@@ -61,7 +66,7 @@ final class SaveSettingsAction extends BaseController
 
     private LocalizationService $localizationService;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setLocalizationService(LocalizationService $localizationService): void
     {
         $this->localizationService = $localizationService;

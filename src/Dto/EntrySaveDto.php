@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\Entry;
 use DateTime;
 use DateTimeInterface;
 use Exception;
@@ -15,7 +16,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * DTO for saving/updating time tracking entries.
  * Uses Symfony ObjectMapper for automatic mapping and validation.
  */
-#[Map(target: \App\Entity\Entry::class)]
+#[Map(target: Entry::class)]
 final readonly class EntrySaveDto
 {
     public function __construct(
@@ -139,7 +140,7 @@ final readonly class EntrySaveDto
         $start = $this->getStartAsDateTime();
         $end = $this->getEndAsDateTime();
 
-        if (null !== $start && null !== $end && $start >= $end) {
+        if ($start instanceof DateTimeInterface && $end instanceof DateTimeInterface && $start >= $end) {
             $executionContext->buildViolation('Start time must be before end time')
                 ->atPath('end')
                 ->addViolation();

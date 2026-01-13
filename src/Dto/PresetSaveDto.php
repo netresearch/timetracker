@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Dto;
 
+use App\Entity\Preset;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Validator\Constraints as Assert;
 use UnexpectedValueException;
 
-#[Map(target: \App\Entity\Preset::class)]
+#[Map(target: Preset::class)]
 final readonly class PresetSaveDto
 {
     public function __construct(
@@ -31,9 +33,9 @@ final readonly class PresetSaveDto
     }
 
     /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException When request parameters are malformed
-     * @throws InvalidArgumentException                                        When request data conversion fails
-     * @throws UnexpectedValueException                                        When parameter type conversion fails
+     * @throws BadRequestException      When request parameters are malformed
+     * @throws InvalidArgumentException When request data conversion fails
+     * @throws UnexpectedValueException When parameter type conversion fails
      */
     public static function fromRequest(Request $request): self
     {

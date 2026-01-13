@@ -11,12 +11,14 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\ContractRepository;
+use App\Response\Error;
 use DateInterval;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 use function assert;
@@ -26,12 +28,12 @@ final class SaveContractAction extends BaseController
 {
     /**
      * @throws InvalidArgumentException
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
+     * @throws BadRequestException
      * @throws Exception
      */
-    #[\Symfony\Component\Routing\Attribute\Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
+    #[Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Request $request, #[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|\App\Response\Error
+    public function __invoke(#[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|Error
     {
         $contractId = $contractSaveDto->id;
         $start = $contractSaveDto->start;
@@ -48,11 +50,11 @@ final class SaveContractAction extends BaseController
             if (null === $contract) {
                 $message = $this->translator->trans('No entry for id.');
 
-                return new \App\Response\Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
 
             if (!$contract instanceof Contract) {
-                return new \App\Response\Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+                return new Error($this->translate('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
             }
         } else {
             $contract = new Contract();
