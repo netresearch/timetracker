@@ -43,18 +43,14 @@ class JiraIntegrationService
     {
         $project = $entry->getProject();
         if (! $project instanceof Project) {
-            $this->log('No project associated with entry', ['entry_id' => $entry->getId()], 'warning');
+            $this->logger?->warning('No project associated with entry');
 
             return false;
         }
 
         $ticketSystem = $this->getTicketSystem($project);
         if (! $this->shouldSyncWithJira($ticketSystem, $entry)) {
-            $this->log('Entry should not sync with JIRA', [
-                'entry_id' => $entry->getId(),
-                'project_id' => $project->getId(),
-                'ticket' => $entry->getTicket(),
-            ]);
+            $this->logger?->debug('Entry should not sync with JIRA');
 
             return false;
         }
@@ -68,17 +64,11 @@ class JiraIntegrationService
             // Use the public method to update entry worklog
             $this->jiraWorkLogService->updateEntryWorkLog($entry);
 
-            $this->log('JIRA worklog synced', [
-                'entry_id' => $entry->getId(),
-                'worklog_id' => $entry->getWorklogId(),
-            ]);
+            $this->logger?->info('JIRA worklog synced');
 
             return true;
         } catch (Exception $exception) {
-            $this->log('JIRA sync failed', [
-                'entry_id' => $entry->getId(),
-                'error' => $exception->getMessage(),
-            ], 'error');
+            $this->logger?->error('JIRA sync failed', ['exception' => $exception]);
             throw $exception;
         }
     }
@@ -91,7 +81,7 @@ class JiraIntegrationService
     public function deleteWorklog(Entry $entry): bool
     {
         if (null === $entry->getWorklogId()) {
-            $this->log('Entry has no worklog ID to delete', ['entry_id' => $entry->getId()]);
+            $this->logger?->info('Entry has no worklog ID to delete');
 
             return false;
         }
@@ -121,14 +111,11 @@ class JiraIntegrationService
             $this->managerRegistry->getManager()->persist($entry);
             $this->managerRegistry->getManager()->flush();
 
-            $this->log('JIRA worklog deleted', ['entry_id' => $entry->getId()]);
+            $this->logger?->info('JIRA worklog deleted');
 
             return true;
         } catch (Exception $exception) {
-            $this->log('JIRA worklog deletion failed', [
-                'entry_id' => $entry->getId(),
-                'error' => $exception->getMessage(),
-            ], 'error');
+            $this->logger?->error('JIRA worklog deletion failed', ['exception' => $exception]);
             throw $exception;
         }
     }
@@ -155,10 +142,7 @@ class JiraIntegrationService
             } catch (Exception $e) {
                 $entryId = $entry->getId() ?? 0;
                 $results[$entryId] = false;
-                $this->log('Batch sync failed for entry', [
-                    'entry_id' => $entry->getId(),
-                    'error' => $e->getMessage(),
-                ], 'error');
+                $this->logger?->error('Batch sync failed for entry', ['exception' => $e]);
             }
         }
 
@@ -260,27 +244,6 @@ class JiraIntegrationService
     }
 
     /**
-     * Helper method for logging.
-     *
-     * @param array<string, mixed> $context
-     */
-    private function log(string $message, array $context = [], string $level = 'info'): void
-    {
-        if (! $this->logger instanceof LoggerInterface) {
-            return;
-        }
-
-        $context['service'] = 'JiraIntegrationService';
-
-        match ($level) {
-            'error' => $this->logger->error($message, $context),
-            'warning' => $this->logger->warning($message, $context),
-            'debug' => $this->logger->debug($message, $context),
-            default => $this->logger->info($message, $context),
-        };
-    }
-
-    /**
      * Validates JIRA connection for a ticket system.
      */
     public function validateJiraConnection(TicketSystem $ticketSystem, User $user): bool
@@ -292,11 +255,7 @@ class JiraIntegrationService
         try {
             return $this->jiraWorkLogService->validateConnection($user, $ticketSystem);
         } catch (Exception $exception) {
-            $this->log('JIRA connection validation failed', [
-                'ticket_system_id' => $ticketSystem->getId(),
-                'user_id' => $user->getId(),
-                'error' => $exception->getMessage(),
-            ], 'error');
+            $this->logger?->error('JIRA connection validation failed', ['exception' => $exception]);
 
             return false;
         }
@@ -316,12 +275,7 @@ class JiraIntegrationService
         try {
             return $this->jiraWorkLogService->getProjectInfo($projectKey, $user, $ticketSystem);
         } catch (Exception $exception) {
-            $this->log('Failed to get JIRA project info', [
-                'project_key' => $projectKey,
-                'ticket_system_id' => $ticketSystem->getId(),
-                'user_id' => $user->getId(),
-                'error' => $exception->getMessage(),
-            ], 'error');
+            $this->logger?->error('Failed to get JIRA project info', ['exception' => $exception]);
 
             return null;
         }

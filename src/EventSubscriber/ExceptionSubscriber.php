@@ -146,24 +146,17 @@ class ExceptionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $context = [
-            'exception' => $throwable::class,
-            'message' => $throwable->getMessage(),
-            'path' => $path,
-            'file' => $throwable->getFile(),
-            'line' => $throwable->getLine(),
-        ];
-
-        // Determine log level based on exception type
+        // PSR-3 compliant: static message with exception in context
+        // Path info is available in exception stack trace
         if ($throwable instanceof HttpExceptionInterface) {
             $statusCode = $throwable->getStatusCode();
             if ($statusCode >= 500) {
-                $this->logger->error('Server error occurred', $context);
+                $this->logger->error('Server error occurred', ['exception' => $throwable]);
             } elseif ($statusCode >= 400) {
-                $this->logger->warning('Client error occurred', $context);
+                $this->logger->warning('Client error occurred', ['exception' => $throwable]);
             }
         } else {
-            $this->logger->error('Unexpected exception occurred', $context);
+            $this->logger->error('Unexpected exception occurred', ['exception' => $throwable]);
         }
     }
 }

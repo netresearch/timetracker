@@ -55,19 +55,16 @@ class ModernLdapService
             // Build DN for authentication
             $dn = $this->buildUserDn($username);
 
-            $this->log('Attempting LDAP authentication', ['username' => $username]);
+            $this->logger?->debug('Attempting LDAP authentication');
 
             // Attempt to bind with user credentials
             $ldap->bind($dn, $password);
 
-            $this->log('LDAP authentication successful', ['username' => $username]);
+            $this->logger?->info('LDAP authentication successful');
 
             return true;
         } catch (LdapException $ldapException) {
-            $this->log('LDAP authentication failed', [
-                'username' => $username,
-                'error' => $ldapException->getMessage(),
-            ], 'warning');
+            $this->logger?->warning('LDAP authentication failed', ['exception' => $ldapException]);
 
             return false;
         } finally {
@@ -95,7 +92,7 @@ class ModernLdapService
             $result = $ldap->search($filter, $baseDn);
 
             if (0 === $result->count()) {
-                $this->log('User not found in LDAP', ['username' => $username]);
+                $this->logger?->info('User not found in LDAP');
 
                 return null;
             }
@@ -104,10 +101,7 @@ class ModernLdapService
 
             return $this->normalizeUserData($entry);
         } catch (LdapException $ldapException) {
-            $this->log('LDAP search failed', [
-                'username' => $username,
-                'error' => $ldapException->getMessage(),
-            ], 'error');
+            $this->logger?->error('LDAP search failed', ['exception' => $ldapException]);
 
             throw $ldapException;
         } finally {
@@ -143,17 +137,11 @@ class ModernLdapService
                 $users[] = $this->normalizeUserData($entry);
             }
 
-            $this->log('LDAP search completed', [
-                'filter' => $filter,
-                'results' => count($users),
-            ]);
+            $this->logger?->info('LDAP search completed');
 
             return $users;
         } catch (LdapException $ldapException) {
-            $this->log('LDAP search failed', [
-                'criteria' => $criteria,
-                'error' => $ldapException->getMessage(),
-            ], 'error');
+            $this->logger?->error('LDAP search failed', ['exception' => $ldapException]);
 
             throw $ldapException;
         } finally {
@@ -200,10 +188,7 @@ class ModernLdapService
 
             return $groups;
         } catch (LdapException $ldapException) {
-            $this->log('Failed to get user groups', [
-                'username' => $username,
-                'error' => $ldapException->getMessage(),
-            ], 'error');
+            $this->logger?->error('Failed to get user groups', ['exception' => $ldapException]);
 
             throw $ldapException;
         } finally {
@@ -230,11 +215,11 @@ class ModernLdapService
                 Ldap::SEARCH_SCOPE_BASE,
             );
 
-            $this->log('LDAP connection test successful');
+            $this->logger?->info('LDAP connection test successful');
 
             return $result->count() > 0;
         } catch (LdapException $ldapException) {
-            $this->log('LDAP connection test failed', ['error' => $ldapException->getMessage()], 'error');
+            $this->logger?->error('LDAP connection test failed', ['exception' => $ldapException]);
 
             return false;
         } finally {
@@ -458,24 +443,4 @@ class ModernLdapService
         ];
     }
 
-    /**
-     * Logs messages with context.
-     *
-     * @param array<string, mixed> $context
-     */
-    private function log(string $message, array $context = [], string $level = 'info'): void
-    {
-        if (! $this->logger instanceof LoggerInterface) {
-            return;
-        }
-
-        $context['service'] = 'ModernLdapService';
-
-        match ($level) {
-            'error' => $this->logger->error($message, $context),
-            'warning' => $this->logger->warning($message, $context),
-            'debug' => $this->logger->debug($message, $context),
-            default => $this->logger->info($message, $context),
-        };
-    }
 }
