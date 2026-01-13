@@ -58,10 +58,7 @@ class LOReadFilter implements IReadFilter
      */
     private const int MAX_LIBREOFFICE_COLUMNS = 1024;
 
-    /**
-     * @param LoggerInterface|null $logger Optional logger for tracking filtered columns
-     */
-    public function __construct(private readonly ?LoggerInterface $logger = new NullLogger())
+    public function __construct(private readonly LoggerInterface $logger = new NullLogger())
     {
     }
 
@@ -79,8 +76,7 @@ class LOReadFilter implements IReadFilter
         $columnIndex = Coordinate::columnIndexFromString($columnAddress);
         $shouldRead = $columnIndex <= self::MAX_LIBREOFFICE_COLUMNS;
 
-        // Log when columns are filtered out to track actual impact
-        if (!$shouldRead && $this->logger instanceof LoggerInterface) {
+        if (!$shouldRead) {
             $this->logger->debug('LOReadFilter blocked column beyond LibreOffice limit', [
                 'column' => $columnAddress,
                 'column_index' => $columnIndex,
