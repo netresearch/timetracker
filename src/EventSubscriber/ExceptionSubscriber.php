@@ -61,7 +61,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         // Handle JIRA API exceptions
         if ($throwable instanceof JiraApiUnauthorizedException) {
             return new JsonResponse([
-                'error' => 'JIRA authentication required',
+                'error' => 'Jira authentication required',
                 'message' => $throwable->getMessage(),
                 'redirect_url' => $throwable->getRedirectUrl(),
             ], Response::HTTP_UNAUTHORIZED);
@@ -69,7 +69,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
         if ($throwable instanceof JiraApiException) {
             return new JsonResponse([
-                'error' => 'JIRA API error',
+                'error' => 'Jira API error',
                 'message' => $throwable->getMessage(),
             ], Response::HTTP_BAD_GATEWAY);
         }

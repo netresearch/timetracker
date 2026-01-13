@@ -224,12 +224,12 @@ abstract class BaseTrackingController extends BaseController
             $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
             $jiraOAuthApiService->createEntryJiraWorkLog($entry);
         } catch (Exception $exception) {
-            $this->logger->error('Failed to create JIRA work log', [
+            $this->logger->error('Failed to create Jira work log', [
                 'entry_id' => $entry->getId(),
                 'error' => $exception->getMessage(),
             ]);
 
-            throw new JiraApiException('Failed to create JIRA work log: ' . $exception->getMessage(), 0);
+            throw new JiraApiException('Failed to create Jira work log: ' . $exception->getMessage(), 0);
         }
     }
 
@@ -348,7 +348,7 @@ abstract class BaseTrackingController extends BaseController
         }
 
         if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
-            throw new JiraApiException('JIRA API factory or user not available');
+            throw new JiraApiException('Jira API factory or user not available');
         }
 
         $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);

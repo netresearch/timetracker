@@ -20,7 +20,7 @@ enum TicketSystemType: string
     {
         return match ($this) {
             self::UNKNOWN => 'Unknown/Not Configured',
-            self::JIRA => 'Atlassian JIRA',
+            self::JIRA => 'Atlassian Jira',
             self::OTRS => 'OTRS (Open Ticket Request System)',
         };
     }

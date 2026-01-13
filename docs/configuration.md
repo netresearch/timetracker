@@ -8,7 +8,7 @@
 
 1. [Environment Configuration](#environment-configuration)
 2. [LDAP/Active Directory Setup](#ldapactive-directory-setup)
-3. [JIRA Integration](#jira-integration)
+3. [Jira Integration](#jira-integration)
 4. [Database Configuration](#database-configuration)
 5. [Security Settings](#security-settings)
 6. [Performance Tuning](#performance-tuning)
@@ -203,7 +203,7 @@ php bin/console app:ldap:import --limit=100
 
 ---
 
-## JIRA Integration
+## Jira Integration
 
 ### OAuth 2.0 Configuration
 
@@ -225,7 +225,7 @@ JIRA_API_RATE_LIMIT=100              # requests per minute
 JIRA_BULK_SYNC_BATCH_SIZE=50         # entries per batch
 ```
 
-### Setting up JIRA OAuth
+### Setting up Jira OAuth
 
 1. **Generate RSA Key Pair**:
 ```bash
@@ -238,11 +238,11 @@ openssl req -newkey rsa:1024 -x509 -key jira_private.pem -out jira_public.cer -d
 # Convert to PKCS#8 format
 openssl pkcs8 -topk8 -nocrypt -in jira_private.pem -out jira_private.pkcs8
 
-# Extract public key for JIRA
+# Extract public key for Jira
 openssl x509 -pubkey -noout -in jira_public.cer > jira_public.pem
 ```
 
-2. **JIRA Application Link Setup**:
+2. **Jira Application Link Setup**:
 ```
 URL: https://timetracker.company.com
 Application Name: TimeTracker
@@ -256,14 +256,14 @@ Public Key: [contents of jira_public.pem]
 ```sql
 -- Create ticket system in TimeTracker
 INSERT INTO ticket_systems (name, type, url, timebooking, oauth_consumer_key, oauth_consumer_secret) 
-VALUES ('Company JIRA', 'jira', 'https://company.atlassian.net/browse/%s', 1, 'timetracker', '[private_key_content]');
+VALUES ('Company Jira', 'jira', 'https://company.atlassian.net/browse/%s', 1, 'timetracker', '[private_key_content]');
 
 -- Assign to projects
 INSERT INTO project_ticket_systems (project_id, ticket_system_id) 
 VALUES (1, 1);
 ```
 
-### Advanced JIRA Features
+### Advanced Jira Features
 
 ```env
 # Project Mapping (External → Internal)

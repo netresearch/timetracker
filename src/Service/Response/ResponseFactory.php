@@ -174,7 +174,7 @@ class ResponseFactory
      */
     public function jiraApiError(
         Exception $exception,
-        string $fallbackMessage = 'JIRA API error occurred',
+        string $fallbackMessage = 'Jira API error occurred',
     ): Error {
         if ($exception instanceof JiraApiUnauthorizedException) {
             return $this->forbidden($exception->getMessage(), $exception->getRedirectUrl());

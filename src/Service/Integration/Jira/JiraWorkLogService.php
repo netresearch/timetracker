@@ -350,7 +350,7 @@ class JiraWorkLogService
 
             return is_object($response) && property_exists($response, 'name');
         } catch (Exception $exception) {
-            throw new JiraApiException('JIRA connection validation failed: ' . $exception->getMessage(), 0, null, $exception);
+            throw new JiraApiException('Jira connection validation failed: ' . $exception->getMessage(), 0, null, $exception);
         }
     }
 
@@ -373,7 +373,7 @@ class JiraWorkLogService
 
             return JiraProject::fromApiResponse($response)->toArray();
         } catch (Exception $exception) {
-            throw new JiraApiException('Failed to get JIRA project info: ' . $exception->getMessage(), 0, null, $exception);
+            throw new JiraApiException('Failed to get Jira project info: ' . $exception->getMessage(), 0, null, $exception);
         }
     }
 }

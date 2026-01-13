@@ -11,7 +11,7 @@
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11719/badge)](https://www.bestpractices.dev/projects/11719)
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 
-**Professional time tracking solution for teams and enterprises with advanced LDAP integration, JIRA synchronization, and comprehensive reporting.**
+**Professional time tracking solution for teams and enterprises with advanced LDAP integration, Jira synchronization, and comprehensive reporting.**
 
 ---
 
@@ -21,7 +21,7 @@
 - **Bulk Operations** - Efficient handling of vacation, sick leave, and recurring tasks
 - **XLSX Export** - Export reports for controlling and compliance
 - **LDAP/Active Directory** - Seamless authentication with automatic user provisioning
-- **JIRA Synchronization** - Bidirectional worklog sync with OAuth 2.0 support
+- **Jira Synchronization** - Bidirectional worklog sync with OAuth 2.0 support
 - **Role-based Access Control** - Developer, Controller, and Project Leader roles
 - **Multi-tenant Architecture** - Support for multiple customers and projects
 
