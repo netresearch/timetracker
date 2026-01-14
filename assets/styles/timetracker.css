@@ -1,11 +1,216 @@
+/* ==========================================================================
+   Skip Link (WCAG 2.4.1)
+   ========================================================================== */
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #00889A;
+    color: #fff;
+    padding: 8px 16px;
+    z-index: 10000;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 0 0 4px 0;
+    transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+    top: 0;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Header Container
+   ========================================================================== */
+
 #header .x-panel-body {
-	background-color: #D2D2D2 !important;
+    background-color: #D2D2D2 !important;
+}
+
+/* ==========================================================================
+   App Header - Flexbox Layout
+   ========================================================================== */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 16px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    gap: 16px;
+}
+
+/* Logo Section */
+.header-logo {
+    flex-shrink: 0;
 }
 
 #logo {
     height: 43px;
-    margin: 7px 0 0 7px;
+    display: block;
 }
+
+/* Status Indicator */
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.header-status .status-icon {
+    width: 16px;
+    height: 16px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.header-status.status_active {
+    background-color: rgba(0, 128, 0, 0.1);
+    color: #006600;
+}
+
+.header-status.status_active .status-icon {
+    background-image: url(../images/connected.png);
+}
+
+.header-status.status_inactive {
+    background-color: rgba(176, 0, 0, 0.1);
+    color: #B00000;
+}
+
+.header-status.status_inactive .status-icon {
+    background-image: url(../images/inactive.png);
+}
+
+/* Working Time Section */
+.header-worktime {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.worktime-list {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.worktime-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 12px;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    min-width: 70px;
+}
+
+.worktime-item dt {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #666;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.worktime-item dd {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.worktime-link {
+    font-size: 12px;
+    color: #00889A;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.worktime-link:hover,
+.worktime-link:focus {
+    background-color: rgba(0, 136, 154, 0.1);
+    text-decoration: underline;
+}
+
+/* User Navigation (Logout) */
+.header-user {
+    flex-shrink: 0;
+}
+
+.logout-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.logout-link:hover,
+.logout-link:focus {
+    background-color: rgba(176, 0, 0, 0.1);
+    color: #B00000;
+}
+
+.logout-link:focus {
+    outline: 2px solid #00889A;
+    outline-offset: 2px;
+}
+
+.logout-icon {
+    width: 16px;
+    height: 16px;
+    display: none; /* Hidden until logout.png is added */
+}
+
+/* External Navigation iFrame */
+#nrnavi {
+    height: 30px;
+    width: 100%;
+    border: 0;
+    margin: 0;
+    display: block;
+}
+
+/* ==========================================================================
+   Legacy Support (deprecated, remove when safe)
+   ========================================================================== */
+
+#statusfrm {
+    display: none; /* Deprecated - replaced by #login-status */
+}
+
+#logout {
+    /* Legacy selector - kept for backwards compatibility */
+}
+
+#worktime {
+    /* Legacy selector - kept for backwards compatibility */
+}
+
+/* ==========================================================================
+   Icon Classes
+   ========================================================================== */
 
 .icon-info {
     background-image: url(/build/images/information.png) !important;
@@ -37,44 +242,6 @@
 
 .icon-delete {
     background-image: url(../images/delete2.png) !important;
-}
-
-#statusfrm {
-    position: absolute;
-	top: 42px;
-    left:250px;
-    width: 140px;
-    height: 50px;
-	border: 0px;
-	margin: 0px;
-    scrolling: no;
-}
-
-#login-status {
-    position: absolute;
-    top: 42px;
-    left: 250px;
-    font-family: Arial, Sans-Serif;
-    font-size: 10pt;
-}
-
-#logout {
-	position: absolute;
-	right: 10px;
-	top: 35px;
-}
-
-#worktime {
-	position: absolute;
-	right: 100px;
-	top: 35px;
-	width: 400px;
-	text-align: right;
-}
-
-#logout a {
-	color: #000000;
-	text-decoration: none;
 }
 
 .x-grid-checkheader {
@@ -134,35 +301,7 @@
     background-image: none;
 }
 
-.status_active {
-    width: 80px;
-    height: 20px;
-    padding-left: 22px;
-    color:#006600;
-    background-image: url(../images/connected.png) !important;
-    background-repeat:no-repeat;
-    background-position:top left;
-}
-
-.status_inactive {
-    width: 80px;
-    height: 20px;
-    padding-left: 22px;
-    color:#B00000;
-    background-image: url(../images/inactive.png) !important;
-    background-repeat:no-repeat;
-    background-position:top left;
-}
-
-.status_page {
-    background-color: #d2d2d2;
-    width:140px;
-    height:45px;
-    border:0px;
-    margin:0px;
-    font-family: Arial, Sans-Serif;
-    font-size: 10pt;
-}
+/* Status classes are now defined in the header section above */
 
 .x-message-box, .x-window {
     border: 3px solid #00889A;

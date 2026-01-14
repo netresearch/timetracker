@@ -39,7 +39,12 @@ let strings = {
     'Week': 'Week',
     'Month': 'Month',
     'Monthly overview': 'Monthly overview',
-    'Logout': 'Logout'
+    'Logout': 'Logout',
+    'Logged in': 'Logged in',
+    'Not logged in': 'Not logged in',
+    'Login status': 'Login status',
+    'Working time': 'Working time',
+    'User menu': 'User menu'
 };
 
 if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
@@ -48,13 +53,77 @@ if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
         'Week': 'Woche',
         'Month': 'Monat',
         'Monthly overview': 'Monatsauswertung',
-        'Logout': 'Logout'
+        'Logout': 'Abmelden',
+        'Logged in': 'Angemeldet',
+        'Not logged in': 'Nicht angemeldet',
+        'Login status': 'Anmeldestatus',
+        'Working time': 'Arbeitszeit',
+        'User menu': 'Benutzermenü'
     };
 }
 
 let ttt_container = undefined;
 let ttt_tabpanel = undefined;
 let ttt_items = [];
+
+/**
+ * Builds semantic, accessible header HTML.
+ * Uses <header>, proper ARIA attributes, and flexbox-ready structure.
+ */
+function buildHeaderHtml() {
+    const parts = [];
+
+    // External header iframe (if configured)
+    if (globalConfig.header_url && globalConfig.header_url !== '') {
+        parts.push('<iframe id="nrnavi" src="' + globalConfig.header_url + '" title="Navigation"></iframe>');
+    }
+
+    // Main header with semantic structure
+    parts.push('<header class="app-header" role="banner">');
+
+    // Logo section
+    parts.push('<div class="header-logo">');
+    parts.push('<img id="logo" src="' + globalConfig.logo_url + '" alt="' + (globalConfig.app_name || 'TimeTracker') + ' - Home">');
+    parts.push('</div>');
+
+    // Login status indicator
+    if (typeof statusUrlJson !== 'undefined') {
+        parts.push('<div id="login-status" class="header-status status_inactive" role="status" aria-live="polite" aria-label="' + strings['Login status'] + '">');
+        parts.push('<span class="status-icon" aria-hidden="true"></span>');
+        parts.push('<span class="status-text">' + strings['Not logged in'] + '</span>');
+        parts.push('</div>');
+    }
+
+    // Working time section
+    parts.push('<section class="header-worktime" aria-label="' + strings['Working time'] + '">');
+    parts.push('<dl class="worktime-list">');
+    parts.push('<div class="worktime-item"><dt>' + strings['Today'] + '</dt><dd id="worktime-day">0:00</dd></div>');
+    parts.push('<div class="worktime-item"><dt>' + strings['Week'] + '</dt><dd id="worktime-week">0:00</dd></div>');
+    parts.push('<div class="worktime-item"><dt>' + strings['Month'] + '</dt><dd id="worktime-month">0:00</dd></div>');
+    parts.push('</dl>');
+
+    // Monthly overview link
+    if (typeof globalConfig.monthly_overview_url !== 'undefined' &&
+        globalConfig.monthly_overview_url != null &&
+        globalConfig.monthly_overview_url !== '') {
+        parts.push('<a id="sumlink" href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_blank" rel="noopener noreferrer" class="worktime-link">' + strings['Monthly overview'] + '</a>');
+    }
+    parts.push('</section>');
+
+    // User navigation (logout)
+    if (typeof logoutUrlHtml !== 'undefined') {
+        parts.push('<nav class="header-user" aria-label="' + strings['User menu'] + '">');
+        parts.push('<a href="' + logoutUrlHtml + '" class="logout-link">');
+        parts.push('<span class="logout-icon" aria-hidden="true"></span>');
+        parts.push('<span class="logout-text">' + strings['Logout'] + '</span>');
+        parts.push('</a>');
+        parts.push('</nav>');
+    }
+
+    parts.push('</header>');
+
+    return parts.join('');
+}
 
 function switchTab(number) {
     number = parseInt(number);
@@ -113,6 +182,7 @@ Ext.onReady(function () {
     Ext.tip.QuickTipManager.init();
 
     ttt_tabpanel = Ext.create('Ext.tab.Panel', {
+        id: 'main-content',
         region: 'center',
         activeTab: 0,
         items: ttt_items,
@@ -129,25 +199,18 @@ Ext.onReady(function () {
         }
     });
 
+    /* Build semantic header HTML */
+    const headerHtml = buildHeaderHtml();
+
     /* Render whole layout into grid div */
     ttt_container = Ext.create('Ext.container.Viewport', {
         layout: 'border',
         renderTo: Ext.get('grid'),
         items: [{
             region: 'north',
-            height: 100,
+            height: 80,
             id: 'header',
-            html: (globalConfig.header_url != '' ? '<iframe id="nrnavi" src="' + globalConfig.header_url + '"></iframe>' : '')
-                + '<div><img id="logo" src="' + globalConfig.logo_url + '" title="logo" alt="logo"></div>'
-                + (typeof statusUrlJson !== 'undefined'
-                    ? '<div id="login-status" class="status_inactive">Login-Status</div>' : '')
-                + '<div id="worktime">'
-                + '<span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
-                + (typeof globalConfig.monthly_overview_url !== 'undefined' && globalConfig.monthly_overview_url != null && globalConfig.monthly_overview_url != ''
-                    ? '<br><span id="sumlink"><a href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_new">' + strings['Monthly overview'] + '</a></span>' : '')
-                + '</div>'
-                + (typeof logoutUrlHtml !== 'undefined'
-                    ? '<div id="logout"><a href="' + logoutUrlHtml + '">' + strings['Logout'] + '</a></div>' : '')
+            html: headerHtml
         },
             ttt_tabpanel
         ]
@@ -280,7 +343,7 @@ function formatDuration(duration, inDays) {
 }
 
 /*
- * Counts and displays worktime for today, this week and this month in the upper right corner
+ * Counts and displays worktime for today, this week and this month in the header
  */
 function countTime() {
     Ext.Ajax.request({
@@ -288,9 +351,9 @@ function countTime() {
         scope: this,
         success: function (response) {
             const data = Ext.decode(response.responseText);
-            Ext.get('worktime-day').update(strings['Today'] + ': ' + formatDuration(data.today.duration, false));
-            Ext.get('worktime-week').update(strings['Week'] + ': ' + formatDuration(data.week.duration, false));
-            Ext.get('worktime-month').update(strings['Month'] + ': ' + formatDuration(data.month.duration, true));
+            Ext.get('worktime-day').update(formatDuration(data.today.duration, false));
+            Ext.get('worktime-week').update(formatDuration(data.week.duration, false));
+            Ext.get('worktime-month').update(formatDuration(data.month.duration, true));
         }
     });
 }
@@ -310,21 +373,32 @@ function checkLoginStatus() {
         success: function (response) {
             const data = Ext.decode(response.responseText);
             const statusEl = Ext.get('login-status');
+            const statusTextEl = document.querySelector('#login-status .status-text');
             if (statusEl) {
                 if (data.loginStatus) {
                     statusEl.removeCls('status_inactive');
                     statusEl.addCls('status_active');
+                    if (statusTextEl) {
+                        statusTextEl.textContent = strings['Logged in'];
+                    }
                 } else {
                     statusEl.removeCls('status_active');
                     statusEl.addCls('status_inactive');
+                    if (statusTextEl) {
+                        statusTextEl.textContent = strings['Not logged in'];
+                    }
                 }
             }
         },
         failure: function () {
             const statusEl = Ext.get('login-status');
+            const statusTextEl = document.querySelector('#login-status .status-text');
             if (statusEl) {
                 statusEl.removeCls('status_active');
                 statusEl.addCls('status_inactive');
+                if (statusTextEl) {
+                    statusTextEl.textContent = strings['Not logged in'];
+                }
             }
         }
     });
