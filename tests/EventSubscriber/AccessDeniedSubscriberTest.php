@@ -37,8 +37,10 @@ final class AccessDeniedSubscriberTest extends TestCase
 
         $this->router
             ->method('generate')
-            ->with('_login')
-            ->willReturn('/login');
+            ->willReturnMap([
+                ['_login', [], '/login'],
+                ['_logout', [], '/logout'],
+            ]);
 
         $this->subscriber = new AccessDeniedSubscriber(
             $this->security,
@@ -109,7 +111,7 @@ final class AccessDeniedSubscriberTest extends TestCase
         self::assertTrue($rememberMeCookie->isCleared(), 'REMEMBERME cookie should be marked as cleared');
     }
 
-    public function testRememberedUserNeedingFullAuthRedirectsToLoginAndClearsCookie(): void
+    public function testRememberedUserNeedingFullAuthRedirectsToLogout(): void
     {
         $user = new User();
         $user->setUsername('testuser');
@@ -131,20 +133,8 @@ final class AccessDeniedSubscriberTest extends TestCase
 
         $response = $event->getResponse();
         self::assertInstanceOf(RedirectResponse::class, $response);
-        self::assertSame('/login', $response->getTargetUrl());
-
-        // Verify the REMEMBERME cookie is cleared to prevent redirect loop
-        $cookies = $response->headers->getCookies();
-        $rememberMeCookie = null;
-        foreach ($cookies as $cookie) {
-            if ('REMEMBERME' === $cookie->getName()) {
-                $rememberMeCookie = $cookie;
-                break;
-            }
-        }
-
-        self::assertNotNull($rememberMeCookie, 'REMEMBERME cookie should be cleared');
-        self::assertTrue($rememberMeCookie->isCleared(), 'REMEMBERME cookie should be marked as cleared');
+        // Redirect to logout to properly clear session and all cookies
+        self::assertSame('/logout', $response->getTargetUrl());
     }
 
     public function testFullyAuthenticatedUserWithoutPermissionGets403(): void
