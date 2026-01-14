@@ -12,6 +12,7 @@ enum TicketSystemType: string
     case UNKNOWN = '';
     case JIRA = 'JIRA';
     case OTRS = 'OTRS';
+    case FRESHDESK = 'FRESHDESK';
 
     /**
      * Get display name for this ticket system type.
@@ -22,6 +23,7 @@ enum TicketSystemType: string
             self::UNKNOWN => 'Unknown/Not Configured',
             self::JIRA => 'Atlassian Jira',
             self::OTRS => 'OTRS (Open Ticket Request System)',
+            self::FRESHDESK => 'Freshdesk',
         };
     }
 
@@ -34,6 +36,7 @@ enum TicketSystemType: string
             self::UNKNOWN => '',
             self::JIRA => 'https://jira.company.com/browse/%s',
             self::OTRS => 'https://otrs.company.com/otrs/index.pl?Action=AgentTicketZoom;TicketNumber=%s',
+            self::FRESHDESK => 'https://company.freshdesk.com/a/tickets/%s',
         };
     }
 
@@ -46,6 +49,7 @@ enum TicketSystemType: string
             self::UNKNOWN => '',
             self::JIRA => '/rest/api/2/issue/%s',
             self::OTRS => '/otrs/nph-genericinterface.pl/Webservice/GenericTicketConnector/Ticket/%s',
+            self::FRESHDESK => '/api/v2/tickets/%s',
         };
     }
 
@@ -58,6 +62,7 @@ enum TicketSystemType: string
             self::UNKNOWN => false,
             self::JIRA => true,
             self::OTRS => false,
+            self::FRESHDESK => false,
         };
     }
 
@@ -70,6 +75,7 @@ enum TicketSystemType: string
             self::UNKNOWN => false,
             self::JIRA => true,
             self::OTRS => false,
+            self::FRESHDESK => false,
         };
     }
 
@@ -84,6 +90,7 @@ enum TicketSystemType: string
             self::UNKNOWN => [],
             self::JIRA => ['username', 'api_token'],
             self::OTRS => ['username', 'password'],
+            self::FRESHDESK => ['api_key'],
         };
     }
 
@@ -96,6 +103,7 @@ enum TicketSystemType: string
             self::UNKNOWN => '/^.*$/',
             self::JIRA => '/^([A-Z]+)-(\d+)$/',
             self::OTRS => '/^(\d{4,})$/',
+            self::FRESHDESK => '/^(\d+)$/',
         };
     }
 

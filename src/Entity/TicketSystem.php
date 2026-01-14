@@ -38,8 +38,11 @@ class TicketSystem extends Base
     #[ORM\Column(name: 'book_time', type: 'boolean', nullable: false, options: ['default' => 0])]
     protected $bookTime = false;
 
-    #[ORM\Column(type: 'string', length: 15, enumType: TicketSystemType::class)]
-    protected TicketSystemType $type = TicketSystemType::JIRA;
+    /**
+     * Stored as string to handle unknown/user-entered values gracefully.
+     */
+    #[ORM\Column(type: 'string', length: 31)]
+    protected string $type = 'JIRA';
 
     /**
      * @var string $url
@@ -142,17 +145,23 @@ class TicketSystem extends Base
      */
     public function setType(TicketSystemType|string $type): static
     {
-        $this->type = is_string($type) ? TicketSystemType::from($type) : $type;
+        $this->type = $type instanceof TicketSystemType ? $type->value : $type;
 
         return $this;
     }
 
     /**
-     * Get type.
-     *
-     * @return TicketSystemType $type
+     * Get type as enum (unknown values fallback to UNKNOWN).
      */
     public function getType(): TicketSystemType
+    {
+        return TicketSystemType::tryFrom($this->type) ?? TicketSystemType::UNKNOWN;
+    }
+
+    /**
+     * Get raw type string (for display/debugging unknown types).
+     */
+    public function getTypeRaw(): string
     {
         return $this->type;
     }
