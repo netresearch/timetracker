@@ -3,6 +3,7 @@
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@hotwired/stimulus": "^3.2.2",
+    "@playwright/test": "^1.50.0",
     "@symfony/stimulus-bridge": "^4.0.1",
     "@symfony/webpack-encore": "^5.2.0",
     "core-js": "^3.38.1",
@@ -22,6 +23,10 @@
     "dev-server": "encore dev-server",
     "dev": "encore dev",
     "watch": "encore dev --watch",
-    "build": "encore production --progress"
+    "build": "encore production --progress",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:ui": "playwright test --ui",
+    "e2e:debug": "playwright test --debug"
   }
 }

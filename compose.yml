@@ -186,6 +186,8 @@ services:
     volumes:
       - ldap-dev-data:/var/lib/ldap
       - ldap-dev-config:/etc/ldap/slapd.d
+      # Bootstrap LDIF for dev users (loaded on first container start)
+      - ./docker/ldap/users-only.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/users.ldif:ro
     ports:
       - "3389:389"
     restart: "no"

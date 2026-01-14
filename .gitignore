@@ -62,3 +62,10 @@ config/quality/var/
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
+
+###> playwright ###
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+###< playwright ###

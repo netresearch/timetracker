@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -31,6 +31,8 @@ help:
 	@echo "  make test-parallel    # run unit tests in parallel (full CPU)"
 	@echo "  make test-parallel-safe # run unit tests in parallel (4 cores)"
 	@echo "  make test-parallel-all  # run all tests optimally (parallel + sequential)"
+	@echo "  make e2e              # run Playwright e2e tests (requires app running)"
+	@echo "  make e2e-install      # install Playwright browsers"
 	@echo "  make coverage         # run tests with coverage"
 	@echo "  make reset-test-db    # reset test database (for schema changes)"
 	@echo "  make stan|phpat       # static analysis & architecture (fast - no DB)"
@@ -121,6 +123,17 @@ test-parallel-all: prepare-test-sql
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 	@echo "Phase 2: Sequential controller tests..."
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
+
+# E2E tests with Playwright (requires app to be running)
+e2e:
+	@echo "Running Playwright e2e tests..."
+	@echo "Note: App must be running (make up) before running e2e tests"
+	npm run e2e
+
+# Install Playwright browsers
+e2e-install:
+	@echo "Installing Playwright browsers..."
+	npx playwright install chromium
 
 # Coverage with parallel execution (using PCOV for speed)
 coverage: prepare-test-sql
