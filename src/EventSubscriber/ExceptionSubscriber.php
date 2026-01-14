@@ -43,8 +43,17 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $this->logException($throwable);
 
         // Determine if we should return JSON response
+        // Include API-like routes used by ExtJS frontend
+        $pathInfo = $request->getPathInfo();
         $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
-                      || str_contains($request->getPathInfo(), '/api/');
+                      || 'XMLHttpRequest' === $request->headers->get('X-Requested-With')
+                      || str_contains($pathInfo, '/api/')
+                      || str_contains($pathInfo, '/tracking/')
+                      || str_contains($pathInfo, '/interpretation/')
+                      || str_contains($pathInfo, '/settings/')
+                      || str_starts_with($pathInfo, '/get')
+                      || str_ends_with($pathInfo, '/save')
+                      || str_ends_with($pathInfo, '/delete');
 
         if (!$acceptsJson) {
             // Let Symfony handle HTML error pages
