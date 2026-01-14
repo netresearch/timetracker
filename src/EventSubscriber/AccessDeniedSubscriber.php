@@ -37,8 +37,30 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // If user is not authenticated, redirect to login instead of showing 403
-        if (!$this->security->getUser() instanceof UserInterface) {
+        $request = $exceptionEvent->getRequest();
+        $hasRememberMeCookie = $request->cookies->has('REMEMBERME');
+        $user = $this->security->getUser();
+
+        // Case 1: User is not authenticated at all
+        // If they have a stale remember_me cookie, clear it and redirect to login
+        if (!$user instanceof UserInterface) {
+            $loginUrl = $this->router->generate('_login');
+            $response = new RedirectResponse($loginUrl);
+
+            // Clear invalid remember_me cookie if present
+            if ($hasRememberMeCookie) {
+                $response->headers->clearCookie('REMEMBERME', '/');
+            }
+
+            $exceptionEvent->setResponse($response);
+
+            return;
+        }
+
+        // Case 2: User is authenticated via remember_me but not fully authenticated
+        // This happens when IS_AUTHENTICATED_FULLY is required but user only has remember_me
+        // UX: Redirect to login so they can re-authenticate (not show 403)
+        if (!$this->security->isGranted('IS_AUTHENTICATED_FULLY')) {
             $loginUrl = $this->router->generate('_login');
             $response = new RedirectResponse($loginUrl);
             $exceptionEvent->setResponse($response);
@@ -46,7 +68,8 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Preserve legacy 403 message behavior for authenticated users (used in tests)
+        // Case 3: User is fully authenticated but lacks required permissions
+        // This is a real "forbidden" case (e.g., non-admin accessing /admin)
         $response = new Response('You are not allowed to perform this action.', Response::HTTP_FORBIDDEN);
         $exceptionEvent->setResponse($response);
     }
