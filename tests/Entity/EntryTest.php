@@ -218,4 +218,51 @@ final class EntryTest extends TestCase
         self::assertSame(17, $result['customer']);
         self::assertSame(21, $result['project']);
     }
+
+    /**
+     * Regression test: duration must be returned as formatted string (H:i) for ExtJS model compatibility.
+     * The ExtJS Entry model expects duration with type: 'date', dateFormat: 'H:i'.
+     *
+     * @see assets/js/netresearch/model/Entry.js - {name: 'duration', type: 'date', dateFormat: 'H:i'}
+     */
+    public function testToArrayDurationFormat(): void
+    {
+        $entry = new Entry();
+
+        // Test zero duration
+        $entry->setDuration(0);
+        $result = $entry->toArray();
+        self::assertSame('00:00', $result['duration'], 'duration must be formatted string H:i');
+        self::assertSame(0, $result['durationMinutes'], 'durationMinutes must be integer');
+
+        // Test 30 minutes
+        $entry->setDuration(30);
+        $result = $entry->toArray();
+        self::assertSame('00:30', $result['duration'], 'duration must be formatted string H:i');
+        self::assertSame(30, $result['durationMinutes'], 'durationMinutes must be integer');
+
+        // Test 1 hour (60 minutes)
+        $entry->setDuration(60);
+        $result = $entry->toArray();
+        self::assertSame('01:00', $result['duration'], 'duration must be formatted string H:i');
+        self::assertSame(60, $result['durationMinutes'], 'durationMinutes must be integer');
+
+        // Test 8 hours (480 minutes) - typical workday
+        $entry->setDuration(480);
+        $result = $entry->toArray();
+        self::assertSame('08:00', $result['duration'], 'duration must be formatted string H:i');
+        self::assertSame(480, $result['durationMinutes'], 'durationMinutes must be integer');
+
+        // Test 2 hours 50 minutes (170 minutes)
+        $entry->setDuration(170);
+        $result = $entry->toArray();
+        self::assertSame('02:50', $result['duration'], 'duration must be formatted string H:i');
+        self::assertSame(170, $result['durationMinutes'], 'durationMinutes must be integer');
+
+        // Test large duration: 10+ hours
+        $entry->setDuration(625); // 10:25
+        $result = $entry->toArray();
+        self::assertSame('10:25', $result['duration'], 'duration must be formatted string H:i');
+        self::assertSame(625, $result['durationMinutes'], 'durationMinutes must be integer');
+    }
 }
