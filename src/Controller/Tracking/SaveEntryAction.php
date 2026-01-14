@@ -207,8 +207,12 @@ final class SaveEntryAction extends BaseTrackingController
                 return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 
+            $durationMinutes = $entry->getDuration();
+            $durationString = sprintf('%02d:%02d', (int) ($durationMinutes / 60), $durationMinutes % 60);
+
             $data = [
                 'result' => [
+                    'id' => $entry->getId(),
                     'date' => $day->format('d/m/Y'),
                     'start' => $start->format('H:i'),
                     'end' => $end->format('H:i'),
@@ -216,8 +220,8 @@ final class SaveEntryAction extends BaseTrackingController
                     'customer' => $customer->getId(),
                     'project' => $project->getId(),
                     'activity' => $activity->getId(),
-                    'duration' => $entry->getDuration(),
-                    'durationString' => sprintf('%02d:%02d', (int) ($entry->getDuration() / 60), $entry->getDuration() % 60),
+                    'duration' => $durationString,
+                    'durationMinutes' => $durationMinutes,
                     'class' => $entry->getClass()->value,
                 ],
             ];

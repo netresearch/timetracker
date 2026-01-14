@@ -51,8 +51,7 @@ final class GetLastEntriesAction extends BaseInterpretationController
         $entryList = [];
         foreach ($entries as $entry) {
             $flatEntry = $entry->toArray();
-            $flatEntry['quota'] = $this->timeCalculationService->formatQuota($flatEntry['duration'], $sum);
-            $flatEntry['duration'] = $this->timeCalculationService->formatDuration($flatEntry['duration']);
+            $flatEntry['quota'] = $this->timeCalculationService->formatQuota($flatEntry['durationMinutes'], $sum);
             $entryList[] = ['entry' => $flatEntry];
         }
 
