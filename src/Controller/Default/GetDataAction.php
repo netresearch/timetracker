@@ -76,7 +76,14 @@ final class GetDataAction extends BaseController
             ? (int) $request->attributes->get('days')
             : 3;
 
-        $data = $objectRepository->getEntriesByUser($user, $days, $user->getShowFuture());
+        $entries = $objectRepository->getEntriesByUser($user, $days, $user->getShowFuture());
+
+        // Convert Entry entities to arrays for JSON serialization
+        // Entry has protected properties that don't serialize with json_encode
+        $data = [];
+        foreach ($entries as $entry) {
+            $data[] = $entry->toArray();
+        }
 
         return new JsonResponse($data);
     }
