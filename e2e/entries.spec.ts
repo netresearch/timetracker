@@ -65,25 +65,29 @@ test.describe('Entry Visibility', () => {
     // Wait for grid
     await page.waitForSelector('.x-grid', { timeout: 15000 });
 
-    // Wait a moment for data to load
+    // Wait for data to load
     await page.waitForTimeout(2000);
 
     // Check if there are any grid rows with data
-    // ExtJS grid rows have class 'x-grid-row' or similar
     const gridRows = page.locator('.x-grid-row, .x-grid-item');
     const rowCount = await gridRows.count();
 
-    // Log the row count for debugging
     console.log(`Found ${rowCount} grid rows`);
 
-    // If entries exist, verify they show actual data (not empty cells)
-    if (rowCount > 0) {
-      // Get first row's text content - should not be empty
-      const firstRow = gridRows.first();
-      const rowText = await firstRow.textContent();
-      expect(rowText).toBeTruthy();
-      expect(rowText?.trim().length).toBeGreaterThan(0);
-    }
+    // MUST have at least one entry (we created test data)
+    expect(rowCount).toBeGreaterThan(0);
+
+    // Get first row's text content
+    const firstRow = gridRows.first();
+    const rowText = await firstRow.textContent();
+
+    // Row must have actual content, not be empty
+    expect(rowText).toBeTruthy();
+    expect(rowText?.trim().length).toBeGreaterThan(0);
+
+    // Verify specific entry data is visible (our test entry has 'TEST-001' ticket)
+    const pageContent = await page.locator('body').textContent();
+    expect(pageContent).toContain('TEST-001');
   });
 
   test('API /getData should return properly formatted JSON', async ({ page }) => {
