@@ -293,14 +293,17 @@ class User implements UserInterface
     /**
      * return all relevant settings in an array.
      *
-     * @return array{show_empty_line: bool, suggest_time: bool, show_future: bool, user_id: int, user_name: string, type: string, roles: string[], locale: string}
+     * Note: show_empty_line, suggest_time, show_future are returned as integers (1/0)
+     * because the frontend ExtJS combo boxes expect numeric values to match their stores.
+     *
+     * @return array{show_empty_line: int, suggest_time: int, show_future: int, user_id: int, user_name: string, type: string, roles: string[], locale: string}
      */
     public function getSettings(): array
     {
         return [
-            'show_empty_line' => $this->getShowEmptyLine(),
-            'suggest_time' => $this->getSuggestTime(),
-            'show_future' => $this->getShowFuture(),
+            'show_empty_line' => (int) $this->getShowEmptyLine(),
+            'suggest_time' => (int) $this->getSuggestTime(),
+            'show_future' => (int) $this->getShowFuture(),
             'user_id' => $this->getId() ?? 0,
             'user_name' => $this->getUsername() ?? '',
             'type' => $this->getType()->value,
