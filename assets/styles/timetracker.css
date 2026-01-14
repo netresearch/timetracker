@@ -48,11 +48,17 @@
 /* Logo Section */
 .header-logo {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 #logo {
-    height: 43px;
     display: block;
+    max-height: 50px;
+    max-width: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 /* Status Indicator */
