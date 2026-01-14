@@ -35,6 +35,7 @@ final readonly class InterpretationFiltersDto
         public ?string $month = null,
         public ?int $maxResults = null,
         public ?int $page = null,
+        public ?int $start = null, // ExtJS offset parameter
     ) {
     }
 
@@ -61,6 +62,7 @@ final readonly class InterpretationFiltersDto
             month: self::toNullableString($request->query->get('month')),
             maxResults: self::toNullableInt($request->query->get('maxResults')),
             page: self::toNullableInt($request->query->get('page')),
+            start: self::toNullableInt($request->query->get('start')),
         );
     }
 
@@ -85,6 +87,7 @@ final readonly class InterpretationFiltersDto
             'visibility_user' => $visibilityUserId,
             'maxResults' => $overrideMaxResults ?? $this->maxResults,
             'page' => $this->page,
+            'start' => $this->start,
         ];
     }
 

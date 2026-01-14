@@ -93,6 +93,12 @@ final readonly class EntryQueryService
             $searchArray['customer'] = $customer;
         }
 
+        // Add user filter if specified
+        $user = $interpretationFiltersDto->user ?? 0;
+        if (0 !== $user) {
+            $searchArray['user'] = $user;
+        }
+
         // Add string filters if they're valid
         if (is_string($interpretationFiltersDto->datestart) && '' !== $interpretationFiltersDto->datestart) {
             $searchArray['datestart'] = $interpretationFiltersDto->datestart;
