@@ -169,3 +169,112 @@ test.describe('Entry Grid Data Verification', () => {
     await expect(page.locator('.x-grid')).toBeVisible();
   });
 });
+
+/**
+ * Regression tests for duration format.
+ *
+ * The ExtJS Entry model expects 'duration' as a formatted string (H:i format like "08:00")
+ * not as an integer. This is defined in assets/js/netresearch/model/Entry.js:
+ *   {name: 'duration', type: 'date', dateFormat: 'H:i'}
+ *
+ * If duration is returned as integer (e.g., 480), ExtJS cannot parse it and the
+ * duration column will be empty in the grid.
+ */
+test.describe('Duration Format Regression', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page, 'developer', 'dev123');
+  });
+
+  test('API /getData should return duration as formatted string H:i', async ({ page }) => {
+    const response = await page.request.get('/getData');
+    expect(response.ok()).toBe(true);
+
+    const json = await response.json();
+    expect(Array.isArray(json)).toBe(true);
+
+    if (json.length > 0) {
+      const entry = json[0].entry;
+
+      // CRITICAL: duration must be a formatted string like "08:00", NOT an integer like 480
+      // The ExtJS model uses {type: 'date', dateFormat: 'H:i'} which requires string format
+      expect(entry).toHaveProperty('duration');
+      expect(typeof entry.duration).toBe('string');
+      expect(entry.duration).toMatch(/^\d{2}:\d{2}$/); // H:i format like "08:00"
+
+      // durationMinutes should be the integer value for calculations
+      expect(entry).toHaveProperty('durationMinutes');
+      expect(typeof entry.durationMinutes).toBe('number');
+      expect(Number.isInteger(entry.durationMinutes)).toBe(true);
+
+      console.log(`Duration format check: duration="${entry.duration}", durationMinutes=${entry.durationMinutes}`);
+    }
+  });
+
+  test('duration column should display formatted time in grid', async ({ page }) => {
+    // Wait for grid to load
+    await page.waitForSelector('.x-grid', { timeout: 15000 });
+    await page.waitForTimeout(2000); // Wait for data to load
+
+    // Find grid rows
+    const gridRows = page.locator('.x-grid-item, .x-grid-row');
+    const rowCount = await gridRows.count();
+
+    if (rowCount > 0) {
+      // Get the duration column content from the grid
+      // The duration column should show time in HH:MM format, not empty
+      const gridContent = await page.locator('.x-grid').textContent();
+
+      // Duration should be displayed as time format (e.g., "08:00", "00:30")
+      // If duration were returned as integer, the column would be empty
+      const hasTimeFormat = /\d{1,2}:\d{2}/.test(gridContent || '');
+
+      console.log(`Grid contains time format: ${hasTimeFormat}`);
+      console.log(`Sample grid content: ${gridContent?.substring(0, 500)}`);
+
+      // Should find at least one time format in the grid (duration column)
+      expect(hasTimeFormat).toBe(true);
+    }
+  });
+
+  test('API save should return duration in correct format', async ({ page }) => {
+    // Get initial data to find an entry we can inspect
+    const getResponse = await page.request.get('/getData');
+    const entries = await getResponse.json();
+
+    if (entries.length > 0) {
+      // Find an entry to use as reference for save format
+      const testEntry = entries[0].entry;
+
+      // Simulate what would be returned after save
+      // The save endpoint should return the same duration format as getData
+      const saveResponse = await page.request.post('/tracking/save', {
+        form: {
+          id: testEntry.id,
+          date: testEntry.date,
+          start: testEntry.start,
+          end: testEntry.end,
+          customer: testEntry.customer,
+          project: testEntry.project,
+          activity: testEntry.activity,
+          description: testEntry.description || '',
+          ticket: testEntry.ticket || '',
+        }
+      });
+
+      if (saveResponse.ok()) {
+        const result = await saveResponse.json();
+
+        if (result.result) {
+          // CRITICAL: Save response duration must also be string format
+          expect(typeof result.result.duration).toBe('string');
+          expect(result.result.duration).toMatch(/^\d{2}:\d{2}$/);
+
+          // durationMinutes must be integer for JS Date conversion
+          expect(typeof result.result.durationMinutes).toBe('number');
+
+          console.log(`Save response format: duration="${result.result.duration}", durationMinutes=${result.result.durationMinutes}`);
+        }
+      }
+    }
+  });
+});
