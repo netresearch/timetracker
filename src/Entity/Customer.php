@@ -58,7 +58,7 @@ class Customer extends Base
     /**
      * @var Collection<int, Team>
      */
-    #[ORM\ManyToMany(targetEntity: Team::class, inversedBy: 'customers')]
+    #[ORM\ManyToMany(targetEntity: Team::class, inversedBy: 'customersRelation')]
     #[ORM\JoinTable(name: 'teams_customers', joinColumns: [new ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')], inverseJoinColumns: [new ORM\JoinColumn(name: 'team_id', referencedColumnName: 'id')])]
     protected $teams;
 

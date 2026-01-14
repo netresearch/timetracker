@@ -34,7 +34,7 @@ class Team
     /**
      * @var User|null
      */
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'leadTeams')]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'lead_user_id', referencedColumnName: 'id')]
     protected $leadUser;
 

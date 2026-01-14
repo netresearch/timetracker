@@ -76,7 +76,7 @@ class Entry extends Base
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]
     protected ?Customer $customer = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'entries')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'entriesRelation')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected ?User $user = null;
 
@@ -84,7 +84,7 @@ class Entry extends Base
     #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id')]
     protected ?Account $account = null;
 
-    #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'entries')]
+    #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'entriesRelation')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected ?Activity $activity = null;
 

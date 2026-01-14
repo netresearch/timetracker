@@ -35,7 +35,7 @@ class Preset extends Base
     #[ORM\JoinColumn(name: 'customer_id', referencedColumnName: 'id', nullable: true)]
     protected ?Customer $customer = null;
 
-    #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'presets')]
+    #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'presetsRelation')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id', nullable: true)]
     protected ?Activity $activity = null;
 
