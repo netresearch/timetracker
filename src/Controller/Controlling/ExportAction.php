@@ -20,7 +20,6 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -45,9 +44,10 @@ final class ExportAction extends BaseController
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     #[Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0], methods: ['GET'])]
-    public function __invoke(Request $request, #[MapQueryString] ExportQueryDto $exportQueryDto): Response
+    public function __invoke(Request $request): Response
     {
         // Map legacy path parameters to query parameters for backward compatibility
+        // This must happen BEFORE creating the DTO (hence we can't use #[MapQueryString])
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
         foreach ($attributeKeysToMap as $attributeKeyToMap) {
             if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
@@ -57,6 +57,9 @@ final class ExportAction extends BaseController
                 $request->query->set($attributeKeyToMap, $stringValue);
             }
         }
+
+        // Create DTO from query params (which now includes mapped path params)
+        $exportQueryDto = ExportQueryDto::fromRequest($request);
 
         // Validate month parameter
         if ($exportQueryDto->month < 0 || $exportQueryDto->month > 12) {

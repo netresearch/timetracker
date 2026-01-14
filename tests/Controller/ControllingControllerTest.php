@@ -55,6 +55,61 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
     }
 
+    /**
+     * Test legacy URL format with path parameters.
+     *
+     * Bug: /controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}
+     * was returning "Year must be between 1900 and 2100" for valid year 2025
+     * because path parameters weren't being mapped to the DTO.
+     */
+    public function testExportActionLegacyUrlFormat(): void
+    {
+        $this->logInSession('unittest');
+        // Legacy URL: /controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}
+        $this->client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            '/controlling/export/0/2025/12/0/0/0'
+        );
+
+        // Should NOT return 422 for valid year 2025
+        $response = $this->client->getResponse();
+        $content = (string) $response->getContent();
+
+        // The bug caused: "Year must be between 1900 and 2100" for year=2025
+        self::assertStringNotContainsString(
+            'Year must be between 1900 and 2100',
+            $content,
+            'Valid year 2025 in path parameters should not trigger validation error'
+        );
+
+        // Should return 200 (successful export)
+        $this->assertStatusCode(200);
+    }
+
+    /**
+     * Test that various valid years work with legacy URL format.
+     */
+    public function testExportActionLegacyUrlFormatVariousYears(): void
+    {
+        $this->logInSession('unittest');
+
+        foreach ([2020, 2024, 2025, 2026] as $year) {
+            $this->client->request(
+                \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+                "/controlling/export/0/{$year}/1/0/0/0"
+            );
+
+            $response = $this->client->getResponse();
+            $content = (string) $response->getContent();
+
+            self::assertStringNotContainsString(
+                'Year must be between 1900 and 2100',
+                $content,
+                "Year {$year} should be valid in legacy URL format"
+            );
+        }
+    }
+
     public function testExportActionWithBillableAndTicketTitles(): void
     {
         $_ENV['APP_SHOW_BILLABLE_FIELD_IN_EXPORT'] = 'true';

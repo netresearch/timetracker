@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Performance;
 
 use App\Controller\Controlling\ExportAction;
-use App\Dto\ExportQueryDto;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
@@ -92,12 +91,11 @@ final class ExportActionPerformanceTest extends TestCase
     {
         $exportAction = $this->createExportActionWithMocks(50, false);
         $request = $this->createExportRequest(1, 2025, 8);
-        $exportQueryDto = $this->createExportQueryDto(1, 2025, 8);
 
         $this->stopwatch->start('small_excel_export');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request, $exportQueryDto);
+        $response = $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('small_excel_export');
@@ -139,12 +137,11 @@ final class ExportActionPerformanceTest extends TestCase
     {
         $exportAction = $this->createExportActionWithMocks(500, false);
         $request = $this->createExportRequest(1, 2025, 8);
-        $exportQueryDto = $this->createExportQueryDto(1, 2025, 8);
 
         $this->stopwatch->start('medium_excel_export');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request, $exportQueryDto);
+        $response = $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('medium_excel_export');
@@ -178,12 +175,11 @@ final class ExportActionPerformanceTest extends TestCase
     {
         $exportAction = $this->createExportActionWithMocks(5000, false);
         $request = $this->createExportRequest(1, 2025, 8);
-        $exportQueryDto = $this->createExportQueryDto(1, 2025, 8);
 
         $this->stopwatch->start('large_excel_export');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request, $exportQueryDto);
+        $response = $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('large_excel_export');
@@ -216,13 +212,12 @@ final class ExportActionPerformanceTest extends TestCase
     public function testExcelExportWithTicketEnrichmentPerformance(): void
     {
         $exportAction = $this->createExportActionWithMocks(200, true);
-        $request = $this->createExportRequest(1, 2025, 8);
-        $exportQueryDto = $this->createExportQueryDto(1, 2025, 8, true, true);
+        $request = $this->createExportRequest(1, 2025, 8, true, true);
 
         $this->stopwatch->start('excel_export_enriched');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request, $exportQueryDto);
+        $response = $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('excel_export_enriched');
@@ -250,12 +245,11 @@ final class ExportActionPerformanceTest extends TestCase
     {
         $exportAction = $this->createExportActionWithMocks(1000, false, true);
         $request = $this->createExportRequest(1, 2025, 8);
-        $exportQueryDto = $this->createExportQueryDto(1, 2025, 8);
 
         $this->stopwatch->start('statistics_calculation');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request, $exportQueryDto);
+        $response = $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('statistics_calculation');
@@ -286,9 +280,8 @@ final class ExportActionPerformanceTest extends TestCase
         foreach ($sizes as $size) {
             $exportAction = $this->createExportActionWithMocks($size, false);
             $request = $this->createExportRequest(1, 2025, 8);
-            $exportQueryDto = $this->createExportQueryDto(1, 2025, 8);
-
-            $response = $exportAction($request, $exportQueryDto);
+    
+            $response = $exportAction($request);
             $content = $response->getContent();
             $fileSize = false !== $content ? strlen($content) : 0;
             $fileSizes[$size] = $fileSize;
@@ -316,12 +309,11 @@ final class ExportActionPerformanceTest extends TestCase
     {
         $exportAction = $this->createExportActionWithMocks(500, false);
         $request = $this->createExportRequest(1, 2025, 8);
-        $exportQueryDto = $this->createExportQueryDto(1, 2025, 8);
 
         $memoryBefore = memory_get_usage(true);
 
         // Generate Excel file
-        $response = $exportAction($request, $exportQueryDto);
+        $response = $exportAction($request);
         $memoryPeak = memory_get_peak_usage(true);
 
         // Force garbage collection
@@ -460,12 +452,14 @@ final class ExportActionPerformanceTest extends TestCase
     /**
      * Create test request for export.
      */
-    private function createExportRequest(int $userId, int $year, int $month): Request
+    private function createExportRequest(int $userId, int $year, int $month, bool $billable = false, bool $ticketTitles = false): Request
     {
         $request = new Request();
         $request->query->set('userid', (string) $userId);
         $request->query->set('year', (string) $year);
         $request->query->set('month', (string) $month);
+        $request->query->set('billable', $billable ? '1' : '0');
+        $request->query->set('tickettitles', $ticketTitles ? '1' : '0');
 
         // Mock session for authentication check
         $session = $this->createMock(\Symfony\Component\HttpFoundation\Session\SessionInterface::class);
@@ -473,24 +467,6 @@ final class ExportActionPerformanceTest extends TestCase
         $request->setSession($session);
 
         return $request;
-    }
-
-    /**
-     * Create ExportQueryDto for testing.
-     */
-    private function createExportQueryDto(int $userId, int $year, int $month, bool $billable = false, bool $ticketTitles = false): ExportQueryDto
-    {
-        $dto = new ExportQueryDto(
-            userid: $userId,
-            year: $year,
-            month: $month,
-            project: 0,
-            customer: 0,
-            billable: $billable,
-            tickettitles: $ticketTitles,
-        );
-
-        return $dto;
     }
 
     /**
