@@ -60,6 +60,7 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/logout, roles: PUBLIC_ACCESS }
         - { path: ^/css, roles: PUBLIC_ACCESS }
         - { path: ^/js, roles: PUBLIC_ACCESS }
         - { path: ^/images, roles: PUBLIC_ACCESS }
