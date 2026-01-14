@@ -9,6 +9,11 @@ namespace App\Enum;
  */
 enum EntryClass: int
 {
+    /**
+     * Legacy/default entry class for entries without explicit classification.
+     * Exists in database from before enum was introduced.
+     */
+    case DEFAULT = 0;
     case PLAIN = 1;
     case DAYBREAK = 2;
     case PAUSE = 4;
@@ -20,6 +25,7 @@ enum EntryClass: int
     public function getDisplayName(): string
     {
         return match ($this) {
+            self::DEFAULT => 'Default',
             self::PLAIN => 'Regular Work',
             self::DAYBREAK => 'Day Break',
             self::PAUSE => 'Break/Pause',
@@ -33,6 +39,7 @@ enum EntryClass: int
     public function getCssClass(): string
     {
         return match ($this) {
+            self::DEFAULT => 'entry-default',
             self::PLAIN => 'entry-plain',
             self::DAYBREAK => 'entry-daybreak',
             self::PAUSE => 'entry-pause',
@@ -45,7 +52,7 @@ enum EntryClass: int
      */
     public function isRegularWork(): bool
     {
-        return self::PLAIN === $this;
+        return self::PLAIN === $this || self::DEFAULT === $this;
     }
 
     /**
@@ -81,7 +88,7 @@ enum EntryClass: int
      */
     public static function workTypes(): array
     {
-        return [self::PLAIN];
+        return [self::DEFAULT, self::PLAIN];
     }
 
     /**
