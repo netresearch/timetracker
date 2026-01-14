@@ -61,42 +61,70 @@
     object-fit: contain;
 }
 
-/* Status Indicator */
-.header-status {
+/* User Badge (status + logout merged) */
+.user-badge {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     padding: 6px 12px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
+    flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+
+.user-badge .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     flex-shrink: 0;
 }
 
-.header-status .status-icon {
-    width: 16px;
-    height: 16px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+.user-badge .user-name {
+    white-space: nowrap;
 }
 
-.header-status.status_active {
-    background-color: rgba(0, 128, 0, 0.1);
-    color: #006600;
+.user-badge.status_active {
+    background-color: rgba(0, 128, 0, 0.08);
+    color: #333;
 }
 
-.header-status.status_active .status-icon {
-    background-image: url(../images/connected.png);
+.user-badge.status_active .status-indicator {
+    background-color: #22c55e;
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
 }
 
-.header-status.status_inactive {
+.user-badge.status_inactive {
+    background-color: rgba(176, 0, 0, 0.08);
+    color: #666;
+}
+
+.user-badge.status_inactive .status-indicator {
+    background-color: #9ca3af;
+}
+
+.user-badge .badge-logout {
+    margin-left: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #666;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+
+.user-badge .badge-logout:hover,
+.user-badge .badge-logout:focus {
     background-color: rgba(176, 0, 0, 0.1);
+    border-color: #B00000;
     color: #B00000;
 }
 
-.header-status.status_inactive .status-icon {
-    background-image: url(../images/inactive.png);
+.user-badge .badge-logout:focus {
+    outline: 2px solid #00889A;
+    outline-offset: 1px;
 }
 
 /* Working Time Section */
@@ -155,40 +183,6 @@
     text-decoration: underline;
 }
 
-/* User Navigation (Logout) */
-.header-user {
-    flex-shrink: 0;
-}
-
-.logout-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    color: #333;
-    text-decoration: none;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: background-color 0.2s, color 0.2s;
-}
-
-.logout-link:hover,
-.logout-link:focus {
-    background-color: rgba(176, 0, 0, 0.1);
-    color: #B00000;
-}
-
-.logout-link:focus {
-    outline: 2px solid #00889A;
-    outline-offset: 2px;
-}
-
-.logout-icon {
-    width: 16px;
-    height: 16px;
-    display: none; /* Hidden until logout.png is added */
-}
-
 /* External Navigation iFrame */
 #nrnavi {
     height: 30px;
@@ -203,11 +197,7 @@
    ========================================================================== */
 
 #statusfrm {
-    display: none; /* Deprecated - replaced by #login-status */
-}
-
-#logout {
-    /* Legacy selector - kept for backwards compatibility */
+    display: none; /* Deprecated - replaced by #user-badge */
 }
 
 #worktime {

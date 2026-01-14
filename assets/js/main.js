@@ -40,11 +40,9 @@ let strings = {
     'Month': 'Month',
     'Monthly overview': 'Monthly overview',
     'Logout': 'Logout',
-    'Logged in': 'Logged in',
     'Not logged in': 'Not logged in',
-    'Login status': 'Login status',
-    'Working time': 'Working time',
-    'User menu': 'User menu'
+    'User status': 'User status',
+    'Working time': 'Working time'
 };
 
 if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
@@ -54,11 +52,9 @@ if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
         'Month': 'Monat',
         'Monthly overview': 'Monatsauswertung',
         'Logout': 'Abmelden',
-        'Logged in': 'Angemeldet',
         'Not logged in': 'Nicht angemeldet',
-        'Login status': 'Anmeldestatus',
-        'Working time': 'Arbeitszeit',
-        'User menu': 'Benutzermenü'
+        'User status': 'Benutzerstatus',
+        'Working time': 'Arbeitszeit'
     };
 }
 
@@ -86,11 +82,14 @@ function buildHeaderHtml() {
     parts.push('<img id="logo" src="' + globalConfig.logo_url + '" alt="' + (globalConfig.app_name || 'TimeTracker') + ' - Home">');
     parts.push('</div>');
 
-    // Login status indicator
-    if (typeof statusUrlJson !== 'undefined') {
-        parts.push('<div id="login-status" class="header-status status_inactive" role="status" aria-live="polite" aria-label="' + strings['Login status'] + '">');
-        parts.push('<span class="status-icon" aria-hidden="true"></span>');
-        parts.push('<span class="status-text">' + strings['Not logged in'] + '</span>');
+    // User badge (status + logout merged)
+    if (typeof statusUrlJson !== 'undefined' || typeof logoutUrlHtml !== 'undefined') {
+        parts.push('<div id="user-badge" class="user-badge status_inactive" role="status" aria-live="polite" aria-label="' + strings['User status'] + '">');
+        parts.push('<span class="status-indicator" aria-hidden="true"></span>');
+        parts.push('<span class="user-name">' + strings['Not logged in'] + '</span>');
+        if (typeof logoutUrlHtml !== 'undefined') {
+            parts.push('<a href="' + logoutUrlHtml + '" class="badge-logout" aria-label="' + strings['Logout'] + '">' + strings['Logout'] + '</a>');
+        }
         parts.push('</div>');
     }
 
@@ -109,16 +108,6 @@ function buildHeaderHtml() {
         parts.push('<a id="sumlink" href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_blank" rel="noopener noreferrer" class="worktime-link">' + strings['Monthly overview'] + '</a>');
     }
     parts.push('</section>');
-
-    // User navigation (logout)
-    if (typeof logoutUrlHtml !== 'undefined') {
-        parts.push('<nav class="header-user" aria-label="' + strings['User menu'] + '">');
-        parts.push('<a href="' + logoutUrlHtml + '" class="logout-link">');
-        parts.push('<span class="logout-icon" aria-hidden="true"></span>');
-        parts.push('<span class="logout-text">' + strings['Logout'] + '</span>');
-        parts.push('</a>');
-        parts.push('</nav>');
-    }
 
     parts.push('</header>');
 
@@ -378,32 +367,32 @@ function checkLoginStatus() {
         scope: this,
         success: function (response) {
             const data = Ext.decode(response.responseText);
-            const statusEl = Ext.get('login-status');
-            const statusTextEl = document.querySelector('#login-status .status-text');
-            if (statusEl) {
+            const badgeEl = Ext.get('user-badge');
+            const userNameEl = document.querySelector('#user-badge .user-name');
+            if (badgeEl) {
                 if (data.loginStatus) {
-                    statusEl.removeCls('status_inactive');
-                    statusEl.addCls('status_active');
-                    if (statusTextEl) {
-                        statusTextEl.textContent = strings['Logged in'];
+                    badgeEl.removeCls('status_inactive');
+                    badgeEl.addCls('status_active');
+                    if (userNameEl && settingsData.user_name) {
+                        userNameEl.textContent = settingsData.user_name;
                     }
                 } else {
-                    statusEl.removeCls('status_active');
-                    statusEl.addCls('status_inactive');
-                    if (statusTextEl) {
-                        statusTextEl.textContent = strings['Not logged in'];
+                    badgeEl.removeCls('status_active');
+                    badgeEl.addCls('status_inactive');
+                    if (userNameEl) {
+                        userNameEl.textContent = strings['Not logged in'];
                     }
                 }
             }
         },
         failure: function () {
-            const statusEl = Ext.get('login-status');
-            const statusTextEl = document.querySelector('#login-status .status-text');
-            if (statusEl) {
-                statusEl.removeCls('status_active');
-                statusEl.addCls('status_inactive');
-                if (statusTextEl) {
-                    statusTextEl.textContent = strings['Not logged in'];
+            const badgeEl = Ext.get('user-badge');
+            const userNameEl = document.querySelector('#user-badge .user-name');
+            if (badgeEl) {
+                badgeEl.removeCls('status_active');
+                badgeEl.addCls('status_inactive');
+                if (userNameEl) {
+                    userNameEl.textContent = strings['Not logged in'];
                 }
             }
         }

@@ -84,10 +84,10 @@ test.describe('Logout', () => {
     await expect(page).toHaveURL('/', { timeout: 15000 });
 
     // Wait for the app to fully load and show logout link
-    await page.waitForSelector('.logout-link', { timeout: 10000 });
+    await page.waitForSelector('.badge-logout', { timeout: 10000 });
 
     // Get the logout URL and navigate directly
-    const logoutHref = await page.locator('.logout-link').getAttribute('href');
+    const logoutHref = await page.locator('.badge-logout').getAttribute('href');
     expect(logoutHref).toBeTruthy();
 
     // Navigate to logout URL and wait for redirect
