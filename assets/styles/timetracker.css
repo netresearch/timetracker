@@ -50,6 +50,14 @@
     scrolling: no;
 }
 
+#login-status {
+    position: absolute;
+    top: 42px;
+    left: 250px;
+    font-family: Arial, Sans-Serif;
+    font-size: 10pt;
+}
+
 #logout {
 	position: absolute;
 	right: 10px;

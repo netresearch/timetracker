@@ -6,7 +6,7 @@
         <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('build/css/timetracker.css') }}" type="text/css">
         <script type="text/javascript">
-            const statusUrlHtml = {{ url('check_page')|escape|json_encode|raw }};
+            const statusUrlJson = {{ url('check_status')|escape|json_encode|raw }};
             const logoutUrlHtml = {{ url('_logout')|escape|json_encode|raw }};
             const globalConfig = {{ globalConfig|json_encode|raw }};
 

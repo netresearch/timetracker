@@ -64,7 +64,6 @@ security:
         - { path: ^/js, roles: PUBLIC_ACCESS }
         - { path: ^/images, roles: PUBLIC_ACCESS }
         - { path: ^/status/check, roles: PUBLIC_ACCESS }
-        - { path: ^/status/page, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 

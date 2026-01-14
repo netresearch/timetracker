@@ -139,8 +139,8 @@ Ext.onReady(function () {
             id: 'header',
             html: (globalConfig.header_url != '' ? '<iframe id="nrnavi" src="' + globalConfig.header_url + '"></iframe>' : '')
                 + '<div><img id="logo" src="' + globalConfig.logo_url + '" title="logo" alt="logo"></div>'
-                + (typeof statusUrlHtml !== 'undefined'
-                    ? '<iframe id="statusfrm" src="' + statusUrlHtml + '"></iframe>' : '')
+                + (typeof statusUrlJson !== 'undefined'
+                    ? '<div id="login-status" class="status_inactive">Login-Status</div>' : '')
                 + '<div id="worktime">'
                 + '<span id="worktime-day">' + strings['Today'] + ': 0:00</span> / <span id="worktime-week">' + strings['Week'] + ': 0:00</span> / <span id="worktime-month">' + strings['Month'] + ': 0:00</span>'
                 + (typeof globalConfig.monthly_overview_url !== 'undefined' && globalConfig.monthly_overview_url != null && globalConfig.monthly_overview_url != ''
@@ -255,6 +255,7 @@ Ext.onReady(function () {
     ]);
 
     countTime();
+    checkLoginStatus();
     trackingWidget.getFocus();
 });
 
@@ -292,6 +293,44 @@ function countTime() {
             Ext.get('worktime-month').update(strings['Month'] + ': ' + formatDuration(data.month.duration, true));
         }
     });
+}
+
+/*
+ * Checks login status via JSON API and updates the status indicator.
+ * Polls every 90 seconds to keep status current.
+ */
+function checkLoginStatus() {
+    if (typeof statusUrlJson === 'undefined') {
+        return;
+    }
+
+    Ext.Ajax.request({
+        url: statusUrlJson,
+        scope: this,
+        success: function (response) {
+            const data = Ext.decode(response.responseText);
+            const statusEl = Ext.get('login-status');
+            if (statusEl) {
+                if (data.loginStatus) {
+                    statusEl.removeCls('status_inactive');
+                    statusEl.addCls('status_active');
+                } else {
+                    statusEl.removeCls('status_active');
+                    statusEl.addCls('status_inactive');
+                }
+            }
+        },
+        failure: function () {
+            const statusEl = Ext.get('login-status');
+            if (statusEl) {
+                statusEl.removeCls('status_active');
+                statusEl.addCls('status_inactive');
+            }
+        }
+    });
+
+    // Poll every 90 seconds
+    setTimeout(checkLoginStatus, 90000);
 }
 
 /*
