@@ -379,4 +379,31 @@ class AdminControllerTest extends AbstractWebTestCase
         ]));
         $this->assertMessage('You are not allowed to perform this action.');
     }
+
+    // -------------- sync subtickets routes --------------------------------
+
+    /**
+     * Test that path parameter {project} is correctly mapped to DTO.
+     *
+     * Bug: /projects/{project}/syncsubtickets was not mapping path param to DTO
+     * because #[MapQueryString] creates DTO before path params are available.
+     */
+    public function testSyncProjectSubticketsPathParameter(): void
+    {
+        // Project ID 1 exists in test data
+        $this->client->request('GET', '/projects/1/syncsubtickets');
+
+        // Should NOT fail with "project not found" or similar parameter error
+        // Expected: either success or "no ticket system configured" (project found but no config)
+        $response = $this->client->getResponse();
+        $content = (string) $response->getContent();
+
+        // If path param was correctly mapped, we get "no ticket system configured for project"
+        // which means project 1 was found. If NOT mapped, we'd get project=0 errors.
+        self::assertStringContainsString(
+            'no ticket system configured',
+            strtolower($content),
+            'Path parameter {project} should be mapped - project should be found'
+        );
+    }
 }

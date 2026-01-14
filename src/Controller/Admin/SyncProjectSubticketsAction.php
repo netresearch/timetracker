@@ -11,7 +11,7 @@ use App\Model\Response as ModelResponse;
 use App\Response\Error;
 use App\Service\SubticketSyncService;
 use Exception;
-use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -28,8 +28,16 @@ final class SyncProjectSubticketsAction extends BaseController
 
     #[Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(#[MapQueryString] AdminSyncDto $adminSyncDto): JsonResponse|Error|ModelResponse
+    public function __invoke(Request $request): JsonResponse|Error|ModelResponse
     {
+        // Map path parameter to query for DTO compatibility
+        if ($request->attributes->has('project') && !$request->query->has('project')) {
+            /** @var mixed $projectAttr */
+            $projectAttr = $request->attributes->get('project');
+            $request->query->set('project', \is_scalar($projectAttr) ? (string) $projectAttr : '0');
+        }
+
+        $adminSyncDto = AdminSyncDto::fromRequest($request);
         $projectId = $adminSyncDto->project;
 
         try {
