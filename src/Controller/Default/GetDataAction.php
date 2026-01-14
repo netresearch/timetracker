@@ -80,9 +80,10 @@ final class GetDataAction extends BaseController
 
         // Convert Entry entities to arrays for JSON serialization
         // Entry has protected properties that don't serialize with json_encode
+        // Wrap each entry in 'entry' key as expected by ExtJS reader (record: 'entry')
         $data = [];
         foreach ($entries as $entry) {
-            $data[] = $entry->toArray();
+            $data[] = ['entry' => $entry->toArray()];
         }
 
         return new JsonResponse($data);
