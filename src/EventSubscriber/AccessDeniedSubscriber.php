@@ -7,7 +7,6 @@ namespace App\EventSubscriber;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
@@ -71,7 +70,7 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
 
         // Case 3: User is fully authenticated but lacks required permissions
         // This is a real "forbidden" case (e.g., non-admin accessing /admin)
-        $response = new Response('You are not allowed to perform this action.', Response::HTTP_FORBIDDEN);
-        $exceptionEvent->setResponse($response);
+        // Let Symfony's default exception handling render the error403.html.twig template
+        // which provides a styled page with navigation options
     }
 }

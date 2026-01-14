@@ -1,0 +1,101 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Access Denied - TimeTracker</title>
+        <meta name="robots" content="noindex,nofollow" />
+        <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
+        <link rel="stylesheet" href="{{ asset('build/css/timetracker.css') }}" type="text/css">
+        <style>
+            body {
+                background-color: #e0e0e0;
+                font-family: tahoma, arial, verdana, sans-serif;
+                font-size: 12px;
+                margin: 0;
+                padding: 0;
+            }
+            .error-container {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #fff;
+                border: 1px solid #99bce8;
+                border-radius: 5px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                width: 400px;
+                max-width: 90%;
+            }
+            .error-header {
+                background: linear-gradient(to bottom, #c4d8ed 0%, #a8c4e0 100%);
+                border-bottom: 1px solid #99bce8;
+                padding: 8px 10px;
+                font-weight: bold;
+                color: #15428b;
+                border-radius: 4px 4px 0 0;
+            }
+            .error-body {
+                padding: 20px;
+                text-align: center;
+            }
+            .error-icon {
+                font-size: 48px;
+                color: #c00;
+                margin-bottom: 15px;
+            }
+            .error-message {
+                font-size: 14px;
+                color: #333;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+            .error-actions {
+                margin-top: 20px;
+            }
+            .btn {
+                display: inline-block;
+                padding: 6px 20px;
+                margin: 0 5px;
+                background: linear-gradient(to bottom, #f0f0f0 0%, #d4d4d4 100%);
+                border: 1px solid #b5b5b5;
+                border-radius: 3px;
+                color: #333;
+                text-decoration: none;
+                font-size: 12px;
+                cursor: pointer;
+            }
+            .btn:hover {
+                background: linear-gradient(to bottom, #e8e8e8 0%, #c8c8c8 100%);
+            }
+            .btn-primary {
+                background: linear-gradient(to bottom, #6fa0d2 0%, #4a7db3 100%);
+                border-color: #3b6a9e;
+                color: #fff;
+            }
+            .btn-primary:hover {
+                background: linear-gradient(to bottom, #5a90c5 0%, #3d6da3 100%);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <div class="error-header">
+                Access Denied
+            </div>
+            <div class="error-body">
+                <div class="error-icon">&#9888;</div>
+                <div class="error-message">
+                    You don't have permission to access this page.
+                    {% if exception.message is defined and exception.message != 'Access Denied.' %}
+                        <br><br>
+                        <small>{{ exception.message }}</small>
+                    {% endif %}
+                </div>
+                <div class="error-actions">
+                    <a href="{{ path('_start') }}" class="btn btn-primary">Go to Homepage</a>
+                    <a href="{{ path('_logout') }}" class="btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

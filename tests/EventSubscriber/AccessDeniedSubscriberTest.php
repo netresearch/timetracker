@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Routing\RouterInterface;
@@ -137,7 +136,7 @@ final class AccessDeniedSubscriberTest extends TestCase
         self::assertSame('/logout', $response->getTargetUrl());
     }
 
-    public function testFullyAuthenticatedUserWithoutPermissionGets403(): void
+    public function testFullyAuthenticatedUserWithoutPermissionLetsSymfonyHandle(): void
     {
         $user = new User();
         $user->setUsername('testuser');
@@ -157,10 +156,9 @@ final class AccessDeniedSubscriberTest extends TestCase
 
         $this->subscriber->onKernelException($event);
 
-        $response = $event->getResponse();
-        self::assertNotNull($response);
-        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
-        self::assertSame('You are not allowed to perform this action.', $response->getContent());
+        // Subscriber should NOT set a response - let Symfony's error handling
+        // render the error403.html.twig template with proper styling
+        self::assertNull($event->getResponse());
     }
 
     /**
