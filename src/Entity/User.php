@@ -293,7 +293,7 @@ class User implements UserInterface
     /**
      * return all relevant settings in an array.
      *
-     * @return array{show_empty_line: bool, suggest_time: bool, show_future: bool, user_id: int, user_name: string, type: string, locale: string}
+     * @return array{show_empty_line: bool, suggest_time: bool, show_future: bool, user_id: int, user_name: string, type: string, roles: string[], locale: string}
      */
     public function getSettings(): array
     {

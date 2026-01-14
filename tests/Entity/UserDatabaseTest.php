@@ -431,12 +431,14 @@ final class UserDatabaseTest extends AbstractWebTestCase
 
         $this->entityManager->flush();
 
-        // Check roles - The implementation only adds ROLE_USER and ROLE_ADMIN roles
+        // Check roles - DEV gets ROLE_USER only, PL and ADMIN get ROLE_ADMIN
+        // Note: PL has ROLE_ADMIN for v4 compatibility (PL was admin in v4)
         self::assertContains('ROLE_USER', $devUser->getRoles(), 'Missing ROLE_USER for dev');
         self::assertNotContains('ROLE_ADMIN', $devUser->getRoles());
 
         self::assertContains('ROLE_USER', $plUser->getRoles(), 'Missing ROLE_USER for pl');
-        self::assertNotContains('ROLE_ADMIN', $plUser->getRoles());
+        self::assertContains('ROLE_PL', $plUser->getRoles(), 'Missing ROLE_PL for pl');
+        self::assertContains('ROLE_ADMIN', $plUser->getRoles(), 'PL should have ROLE_ADMIN for v4 compatibility');
 
         self::assertContains('ROLE_USER', $adminUser->getRoles(), 'Missing ROLE_USER for admin');
         self::assertContains('ROLE_ADMIN', $adminUser->getRoles(), 'Missing ROLE_ADMIN for admin');
