@@ -25,17 +25,20 @@ enum UserType: string
         return match ($this) {
             self::UNKNOWN => ['ROLE_USER'],
             self::USER, self::DEV => ['ROLE_USER'],
-            self::PL => ['ROLE_USER', 'ROLE_PL'],
+            // PL has ROLE_ADMIN for v4 compatibility (PL was admin in v4)
+            // TODO: Remove ROLE_ADMIN from PL when proper ADMIN users are established
+            self::PL => ['ROLE_USER', 'ROLE_PL', 'ROLE_ADMIN'],
             self::ADMIN => ['ROLE_USER', 'ROLE_ADMIN'],
         };
     }
 
     /**
      * Check if this user type has administrative privileges.
+     * Note: PL has admin rights for v4 compatibility.
      */
     public function isAdmin(): bool
     {
-        return self::ADMIN === $this;
+        return self::ADMIN === $this || self::PL === $this;
     }
 
     /**

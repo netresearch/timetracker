@@ -165,13 +165,19 @@ Ext.onReady(function () {
     addTab(extrasWidget);
     addTab(settingsWidget);
 
-    /* Show admin tab, if user is admin */
-    if ((undefined !== settingsData) && (settingsData['type'] === 'PL')) {
+    /* Helper to check if user has a specific role */
+    function hasRole(role) {
+        return settingsData && settingsData['roles'] && settingsData['roles'].includes(role);
+    }
+
+    /* Show admin tab if user has ROLE_ADMIN */
+    if (hasRole('ROLE_ADMIN')) {
         const adminWidget = Ext.create('Netresearch.widget.Admin', { itemId: 'admin' });
         addTab(adminWidget);
     }
 
-    if ((undefined !== settingsData) && (settingsData['type'] !== 'DEV')) {
+    /* Show controlling tab if user has ROLE_PL or ROLE_ADMIN */
+    if (hasRole('ROLE_PL') || hasRole('ROLE_ADMIN')) {
         const controllingWidget = Ext.create('Netresearch.widget.Controlling', { itemId: 'controlling' });
         addTab(controllingWidget);
     }

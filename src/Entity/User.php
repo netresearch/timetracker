@@ -304,6 +304,7 @@ class User implements UserInterface
             'user_id' => $this->getId() ?? 0,
             'user_name' => $this->getUsername() ?? '',
             'type' => $this->getType()->value,
+            'roles' => $this->getRoles(),
             'locale' => new LocalizationService()->normalizeLocale($this->getLocale()),
         ];
     }
