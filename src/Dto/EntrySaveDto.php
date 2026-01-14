@@ -22,13 +22,10 @@ final readonly class EntrySaveDto
     public function __construct(
         public ?int $id = null,
         #[Assert\NotBlank(message: 'Date is required')]
-        #[Assert\Date(message: 'Invalid date format')]
         public string $date = '',
         #[Assert\NotBlank(message: 'Start time is required')]
-        #[Assert\Time(message: 'Invalid start time format')]
         public string $start = '00:00:00',
         #[Assert\NotBlank(message: 'End time is required')]
-        #[Assert\Time(message: 'Invalid end time format')]
         public string $end = '00:00:00',
         #[Assert\Length(max: 50, maxMessage: 'Ticket cannot be longer than 50 characters')]
         #[Assert\Regex(pattern: '/^[A-Z0-9\-_]*$/i', message: 'Invalid ticket format')]
@@ -81,6 +78,7 @@ final readonly class EntrySaveDto
 
     /**
      * Convert date string to DateTime object.
+     * Supports ISO 8601 format (2026-01-14T00:00:00) and Y-m-d format.
      */
     public function getDateAsDateTime(): ?DateTimeInterface
     {
@@ -88,13 +86,29 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        $date = DateTime::createFromFormat('Y-m-d', $this->date);
+        // Try ISO 8601 format first (from ExtJS: 2026-01-14T00:00:00)
+        $date = DateTime::createFromFormat('Y-m-d\TH:i:s', $this->date);
+        if (false !== $date) {
+            return $date;
+        }
 
-        return false !== $date ? $date : null;
+        // Try Y-m-d format
+        $date = DateTime::createFromFormat('Y-m-d', $this->date);
+        if (false !== $date) {
+            return $date;
+        }
+
+        // Fallback to generic DateTime parsing
+        try {
+            return new DateTime($this->date);
+        } catch (Exception) {
+            return null;
+        }
     }
 
     /**
      * Convert start time string to DateTime object.
+     * Supports ISO 8601 format (2026-01-14T08:00:00), H:i:s and H:i formats.
      */
     public function getStartAsDateTime(): ?DateTimeInterface
     {
@@ -102,17 +116,35 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // Handle both H:i and H:i:s formats
-        $time = DateTime::createFromFormat('H:i:s', $this->start);
-        if (false === $time) {
-            $time = DateTime::createFromFormat('H:i', $this->start);
+        // Try ISO 8601 format first (from ExtJS: 2026-01-14T08:00:00)
+        $time = DateTime::createFromFormat('Y-m-d\TH:i:s', $this->start);
+        if (false !== $time) {
+            return $time;
         }
 
-        return false !== $time ? $time : null;
+        // Handle H:i:s format
+        $time = DateTime::createFromFormat('H:i:s', $this->start);
+        if (false !== $time) {
+            return $time;
+        }
+
+        // Handle H:i format
+        $time = DateTime::createFromFormat('H:i', $this->start);
+        if (false !== $time) {
+            return $time;
+        }
+
+        // Fallback to generic DateTime parsing
+        try {
+            return new DateTime($this->start);
+        } catch (Exception) {
+            return null;
+        }
     }
 
     /**
      * Convert end time string to DateTime object.
+     * Supports ISO 8601 format (2026-01-14T16:00:00), H:i:s and H:i formats.
      */
     public function getEndAsDateTime(): ?DateTimeInterface
     {
@@ -120,13 +152,30 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // Handle both H:i and H:i:s formats
-        $time = DateTime::createFromFormat('H:i:s', $this->end);
-        if (false === $time) {
-            $time = DateTime::createFromFormat('H:i', $this->end);
+        // Try ISO 8601 format first (from ExtJS: 2026-01-14T16:00:00)
+        $time = DateTime::createFromFormat('Y-m-d\TH:i:s', $this->end);
+        if (false !== $time) {
+            return $time;
         }
 
-        return false !== $time ? $time : null;
+        // Handle H:i:s format
+        $time = DateTime::createFromFormat('H:i:s', $this->end);
+        if (false !== $time) {
+            return $time;
+        }
+
+        // Handle H:i format
+        $time = DateTime::createFromFormat('H:i', $this->end);
+        if (false !== $time) {
+            return $time;
+        }
+
+        // Fallback to generic DateTime parsing
+        try {
+            return new DateTime($this->end);
+        } catch (Exception) {
+            return null;
+        }
     }
 
     /**
