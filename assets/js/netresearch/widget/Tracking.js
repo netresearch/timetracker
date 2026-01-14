@@ -787,6 +787,22 @@ Ext.define('Netresearch.widget.Tracking', {
             // reformat ticket
             record.data.ticket = record.data.ticket.replace(/ /g, '').toUpperCase();
 
+            // Normalize start/end times to use entry's date (timefield creates dates with wrong date portion)
+            if (record.data.date && record.data.start instanceof Date) {
+                const entryDate = record.data.date;
+                record.data.start = new Date(
+                    entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate(),
+                    record.data.start.getHours(), record.data.start.getMinutes(), 0, 0
+                );
+            }
+            if (record.data.date && record.data.end instanceof Date) {
+                const entryDate = record.data.date;
+                record.data.end = new Date(
+                    entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate(),
+                    record.data.end.getHours(), record.data.end.getMinutes(), 0, 0
+                );
+            }
+
             const grid = this;
             Ext.Ajax.request({
                 url: url + 'tracking/save',
@@ -796,7 +812,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     var data = Ext.decode(response.responseText);
 
                     if (data.result) {
-                        record.data.duration = new Date(0, 0, 0, 0, data.result.duration, 0, 0);
+                        record.data.duration = new Date(0, 0, 0, 0, data.result.durationMinutes, 0, 0);
                         record.data.id = data.result.id;
                         record.data.extTicket = data.result.extTicket;
                         record.data.extTicketUrl = record.data.extTicket;
@@ -1187,7 +1203,10 @@ Ext.define('Netresearch.widget.Tracking', {
      * Return given time in "H:i" representation
      */
     formatTime: function (value) {
-        return value ? Ext.Date.dateFormat(value, 'H:i') : '';
+        if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+            return '';
+        }
+        return Ext.Date.dateFormat(value, 'H:i');
     },
 
     /*
@@ -1305,6 +1324,7 @@ Ext.define('Netresearch.widget.Tracking', {
             ticket: record.ticket ? record.ticket : null,
             extTicket: record.extTicket ? record.extTicket : null,
             extTicketUrl: record.extTicketUrl ? record.extTicketUrl : null,
+            duration: new Date(0, 0, 0, 0, 0, 0, 0),
         }, 'Netresearch.model.Entry');
 
         newRecord.dirty = true;
