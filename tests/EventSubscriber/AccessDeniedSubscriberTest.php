@@ -109,7 +109,7 @@ final class AccessDeniedSubscriberTest extends TestCase
         self::assertTrue($rememberMeCookie->isCleared(), 'REMEMBERME cookie should be marked as cleared');
     }
 
-    public function testRememberedUserNeedingFullAuthRedirectsToLogin(): void
+    public function testRememberedUserNeedingFullAuthRedirectsToLoginAndClearsCookie(): void
     {
         $user = new User();
         $user->setUsername('testuser');
@@ -132,6 +132,19 @@ final class AccessDeniedSubscriberTest extends TestCase
         $response = $event->getResponse();
         self::assertInstanceOf(RedirectResponse::class, $response);
         self::assertSame('/login', $response->getTargetUrl());
+
+        // Verify the REMEMBERME cookie is cleared to prevent redirect loop
+        $cookies = $response->headers->getCookies();
+        $rememberMeCookie = null;
+        foreach ($cookies as $cookie) {
+            if ('REMEMBERME' === $cookie->getName()) {
+                $rememberMeCookie = $cookie;
+                break;
+            }
+        }
+
+        self::assertNotNull($rememberMeCookie, 'REMEMBERME cookie should be cleared');
+        self::assertTrue($rememberMeCookie->isCleared(), 'REMEMBERME cookie should be marked as cleared');
     }
 
     public function testFullyAuthenticatedUserWithoutPermissionGets403(): void

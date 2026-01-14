@@ -59,10 +59,17 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
 
         // Case 2: User is authenticated via remember_me but not fully authenticated
         // This happens when IS_AUTHENTICATED_FULLY is required but user only has remember_me
-        // UX: Redirect to login so they can re-authenticate (not show 403)
+        // UX: Clear remember_me cookie and redirect to login so they can re-authenticate
+        // (Without clearing the cookie, the login page would redirect them back, causing a loop)
         if (!$this->security->isGranted('IS_AUTHENTICATED_FULLY')) {
             $loginUrl = $this->router->generate('_login');
             $response = new RedirectResponse($loginUrl);
+
+            // Clear the remember_me cookie to allow fresh login
+            if ($hasRememberMeCookie) {
+                $response->headers->clearCookie('REMEMBERME', '/');
+            }
+
             $exceptionEvent->setResponse($response);
 
             return;
