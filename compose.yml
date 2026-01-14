@@ -36,14 +36,14 @@ services:
       - APP_DEBUG=1
       - TRUSTED_PROXY_ALL
       - TRUSTED_PROXY_LIST
-      - LDAP_HOST=ldap-dev
-      - LDAP_PORT=389
-      - LDAP_READUSER=cn=readuser,dc=dev,dc=local
-      - LDAP_READPASS=readuser
-      - LDAP_BASEDN=dc=dev,dc=local
-      - LDAP_USERNAMEFIELD=uid
-      - LDAP_USESSL=false
-      - LDAP_CREATE_USER=true
+      - LDAP_HOST=${LDAP_HOST:-ldap-dev}
+      - LDAP_PORT=${LDAP_PORT:-389}
+      - LDAP_READUSER=${LDAP_READUSER:-cn=readuser,dc=dev,dc=local}
+      - LDAP_READPASS=${LDAP_READPASS:-readuser}
+      - LDAP_BASEDN=${LDAP_BASEDN:-dc=dev,dc=local}
+      - LDAP_USERNAMEFIELD=${LDAP_USERNAMEFIELD:-uid}
+      - LDAP_USESSL=${LDAP_USESSL:-false}
+      - LDAP_CREATE_USER=${LDAP_CREATE_USER:-true}
     volumes:
       # Development volumes (bind mounts for live editing)
       - .:/var/www/html
