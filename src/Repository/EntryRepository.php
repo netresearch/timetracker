@@ -675,6 +675,16 @@ class EntryRepository extends ServiceEntityRepository
             }
         }
 
+        if (isset($arFilter['user']) && '' !== $arFilter['user']) {
+            if (is_object($arFilter['user'])) {
+                $queryBuilder->andWhere('e.user = :user')
+                    ->setParameter('user', $arFilter['user']);
+            } else {
+                $queryBuilder->andWhere('IDENTITY(e.user) = :user')
+                    ->setParameter('user', $arFilter['user']);
+            }
+        }
+
         if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
             $queryBuilder->andWhere('e.day >= :datestart')
                 ->setParameter('datestart', $arFilter['datestart']);
@@ -686,9 +696,14 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Apply pagination with safe casting
+        // Prefer 'start' (ExtJS offset) over calculating from 'page'
         $maxResults = isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
-        $page = isset($arFilter['page']) && is_numeric($arFilter['page']) ? (int) $arFilter['page'] : 0;
-        $offset = $page * $maxResults;
+        if (isset($arFilter['start']) && is_numeric($arFilter['start'])) {
+            $offset = (int) $arFilter['start'];
+        } else {
+            $page = isset($arFilter['page']) && is_numeric($arFilter['page']) ? (int) $arFilter['page'] : 0;
+            $offset = $page * $maxResults;
+        }
 
         $queryBuilder->setMaxResults($maxResults)
             ->setFirstResult($offset)
@@ -1392,8 +1407,13 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         if (isset($arFilter['user']) && '' !== $arFilter['user']) {
-            $queryBuilder->andWhere('e.user = :user')
-                ->setParameter('user', $arFilter['user']);
+            if (is_object($arFilter['user'])) {
+                $queryBuilder->andWhere('e.user = :user')
+                    ->setParameter('user', $arFilter['user']);
+            } else {
+                $queryBuilder->andWhere('IDENTITY(e.user) = :user')
+                    ->setParameter('user', $arFilter['user']);
+            }
         }
 
         if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
@@ -1412,7 +1432,10 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Apply pagination with safe casting
-        if (isset($arFilter['page']) && is_numeric($arFilter['page'])) {
+        // Prefer 'start' (ExtJS offset) over calculating from 'page'
+        if (isset($arFilter['start']) && is_numeric($arFilter['start'])) {
+            $queryBuilder->setFirstResult((int) $arFilter['start']);
+        } elseif (isset($arFilter['page']) && is_numeric($arFilter['page'])) {
             $page = (int) $arFilter['page'];
             $maxResults = isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
             $offset = $page * $maxResults;
