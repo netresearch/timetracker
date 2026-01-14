@@ -48,8 +48,9 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
             $response = new RedirectResponse($loginUrl);
 
             // Clear invalid remember_me cookie if present
+            // Use secure=false to ensure cookie is cleared over HTTP (dev) and HTTPS (prod)
             if ($hasRememberMeCookie) {
-                $response->headers->clearCookie('REMEMBERME', '/');
+                $response->headers->clearCookie('REMEMBERME', '/', null, false);
             }
 
             $exceptionEvent->setResponse($response);
@@ -66,8 +67,9 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
             $response = new RedirectResponse($loginUrl);
 
             // Clear the remember_me cookie to allow fresh login
+            // Use secure=false to ensure cookie is cleared over HTTP (dev) and HTTPS (prod)
             if ($hasRememberMeCookie) {
-                $response->headers->clearCookie('REMEMBERME', '/');
+                $response->headers->clearCookie('REMEMBERME', '/', null, false);
             }
 
             $exceptionEvent->setResponse($response);

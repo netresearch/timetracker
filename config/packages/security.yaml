@@ -49,7 +49,7 @@ security:
                 secret: '%kernel.secret%'
                 lifetime: 2592000 # 30 days in seconds
                 path: /
-                secure: true  # HTTPS required for security
+                secure: auto  # Auto-detect: secure over HTTPS, non-secure over HTTP
 
             # Enable user switching (impersonation)
             switch_user:
