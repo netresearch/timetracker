@@ -1,0 +1,13 @@
+name: "CodeQL config"
+
+# Only analyze our code, not external libraries
+paths-ignore:
+  # ExtJS library (external)
+  - assets/js/ext-js
+  - public/build/js/ext-js
+  # Built/compiled assets
+  - public/build
+  # Node modules
+  - node_modules
+  # Vendor dependencies
+  - vendor
