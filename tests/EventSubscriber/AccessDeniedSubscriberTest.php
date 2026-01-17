@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\EventSubscriber\AccessDeniedSubscriber;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,6 +16,7 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Throwable;
 
 /**
  * @internal
@@ -58,7 +60,7 @@ final class AccessDeniedSubscriberTest extends TestCase
     public function testIgnoresNonAccessDeniedExceptions(): void
     {
         $request = $this->createRequest(false);
-        $event = $this->createExceptionEvent($request, new \RuntimeException('Not access denied'));
+        $event = $this->createExceptionEvent($request, new RuntimeException('Not access denied'));
 
         $this->subscriber->onKernelException($event);
 
@@ -174,7 +176,7 @@ final class AccessDeniedSubscriberTest extends TestCase
     /**
      * Create an exception event with the given request and exception.
      */
-    private function createExceptionEvent(Request $request, \Throwable $exception): ExceptionEvent
+    private function createExceptionEvent(Request $request, Throwable $exception): ExceptionEvent
     {
         $kernel = $this->createMock(HttpKernelInterface::class);
 

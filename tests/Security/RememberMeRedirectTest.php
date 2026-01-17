@@ -185,5 +185,4 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         // Should be at login page with 200 OK
         self::assertResponseIsSuccessful();
     }
-
 }

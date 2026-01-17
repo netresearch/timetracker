@@ -403,7 +403,7 @@ class AdminControllerTest extends AbstractWebTestCase
         self::assertStringContainsString(
             'no ticket system configured',
             strtolower($content),
-            'Path parameter {project} should be mapped - project should be found'
+            'Path parameter {project} should be mapped - project should be found',
         );
     }
 }

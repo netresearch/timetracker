@@ -16,6 +16,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
+use function is_scalar;
+
 final class SyncProjectSubticketsAction extends BaseController
 {
     private SubticketSyncService $subticketSyncService;
@@ -34,7 +36,7 @@ final class SyncProjectSubticketsAction extends BaseController
         if ($request->attributes->has('project') && !$request->query->has('project')) {
             /** @var mixed $projectAttr */
             $projectAttr = $request->attributes->get('project');
-            $request->query->set('project', \is_scalar($projectAttr) ? (string) $projectAttr : '0');
+            $request->query->set('project', is_scalar($projectAttr) ? (string) $projectAttr : '0');
         }
 
         $adminSyncDto = AdminSyncDto::fromRequest($request);

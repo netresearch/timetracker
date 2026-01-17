@@ -9,8 +9,6 @@ use App\Model\Base;
 use App\Repository\TicketSystemRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-use function is_string;
-
 /**
  * App\Entity\TicketSystem.
  */

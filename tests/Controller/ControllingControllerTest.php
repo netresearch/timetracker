@@ -68,7 +68,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         // Legacy URL: /controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_GET,
-            '/controlling/export/0/2025/12/0/0/0'
+            '/controlling/export/0/2025/12/0/0/0',
         );
 
         // Should NOT return 422 for valid year 2025
@@ -79,7 +79,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         self::assertStringNotContainsString(
             'Year must be between 1900 and 2100',
             $content,
-            'Valid year 2025 in path parameters should not trigger validation error'
+            'Valid year 2025 in path parameters should not trigger validation error',
         );
 
         // Should return 200 (successful export)
@@ -96,7 +96,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         foreach ([2020, 2024, 2025, 2026] as $year) {
             $this->client->request(
                 \Symfony\Component\HttpFoundation\Request::METHOD_GET,
-                "/controlling/export/0/{$year}/1/0/0/0"
+                "/controlling/export/0/{$year}/1/0/0/0",
             );
 
             $response = $this->client->getResponse();
@@ -105,7 +105,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
             self::assertStringNotContainsString(
                 'Year must be between 1900 and 2100',
                 $content,
-                "Year {$year} should be valid in legacy URL format"
+                "Year {$year} should be valid in legacy URL format",
             );
         }
     }

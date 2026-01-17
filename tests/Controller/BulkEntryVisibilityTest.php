@@ -15,6 +15,8 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
 
+use function assert;
+
 /**
  * Regression test for bulk entry visibility bug.
  *
@@ -41,7 +43,7 @@ final class BulkEntryVisibilityTest extends AbstractWebTestCase
 
         $container = self::getContainer();
         $em = $container->get('doctrine')->getManager();
-        \assert($em instanceof EntityManagerInterface);
+        assert($em instanceof EntityManagerInterface);
         $this->entityManager = $em;
     }
 
@@ -110,7 +112,7 @@ final class BulkEntryVisibilityTest extends AbstractWebTestCase
 
         // Verify entries exist in database
         $entryRepository = $this->entityManager->getRepository(Entry::class);
-        \assert($entryRepository instanceof EntryRepository);
+        assert($entryRepository instanceof EntryRepository);
 
         foreach ($createdEntryIds as $entryId) {
             $entry = $entryRepository->find($entryId);
@@ -125,14 +127,14 @@ final class BulkEntryVisibilityTest extends AbstractWebTestCase
         // TEST 2: Default Zeiterfassung view (3 days) should NOT show old entries
         // This is the CURRENT (buggy?) behavior - it only shows 3 days
         $recentEntries = $entryRepository->getEntriesByUser($user, 3, false);
-        $recentEntryIds = array_map(fn (Entry $e) => $e->getId(), $recentEntries);
+        $recentEntryIds = array_map(static fn (Entry $e) => $e->getId(), $recentEntries);
 
         // The old entries should NOT appear in 3-day view
         foreach ($createdEntryIds as $oldEntryId) {
             self::assertNotContains(
                 $oldEntryId,
                 $recentEntryIds,
-                'Entries older than 3 days should not appear in default view (current behavior)'
+                'Entries older than 3 days should not appear in default view (current behavior)',
             );
         }
 
@@ -140,13 +142,13 @@ final class BulkEntryVisibilityTest extends AbstractWebTestCase
         $startDate = $startOfMonth->format('Y-m-d');
         $endDate = $today->format('Y-m-d');
         $monthEntries = $entryRepository->getEntriesForMonth($user, $startDate, $endDate);
-        $monthEntryIds = array_map(fn (Entry $e) => $e->getId(), $monthEntries);
+        $monthEntryIds = array_map(static fn (Entry $e) => $e->getId(), $monthEntries);
 
         foreach ($createdEntryIds as $oldEntryId) {
             self::assertContains(
                 $oldEntryId,
                 $monthEntryIds,
-                "Entry {$oldEntryId} should appear in month view"
+                "Entry {$oldEntryId} should appear in month view",
             );
         }
 
@@ -204,7 +206,7 @@ final class BulkEntryVisibilityTest extends AbstractWebTestCase
 
         // Test: findByFilterArray with user and date range should find the entry
         $entryRepository = $this->entityManager->getRepository(Entry::class);
-        \assert($entryRepository instanceof EntryRepository);
+        assert($entryRepository instanceof EntryRepository);
 
         $filters = [
             'user' => $user->getId(),
@@ -213,12 +215,12 @@ final class BulkEntryVisibilityTest extends AbstractWebTestCase
         ];
 
         $filteredEntries = $entryRepository->findByFilterArray($filters);
-        $filteredIds = array_map(fn (Entry $e) => $e->getId(), $filteredEntries);
+        $filteredIds = array_map(static fn (Entry $e) => $e->getId(), $filteredEntries);
 
         self::assertContains(
             $entryId,
             $filteredIds,
-            'Entry should be visible in Auswertung when filtered by user and date range'
+            'Entry should be visible in Auswertung when filtered by user and date range',
         );
 
         // Cleanup

@@ -280,7 +280,7 @@ final class ExportActionPerformanceTest extends TestCase
         foreach ($sizes as $size) {
             $exportAction = $this->createExportActionWithMocks($size, false);
             $request = $this->createExportRequest(1, 2025, 8);
-    
+
             $response = $exportAction($request);
             $content = $response->getContent();
             $fileSize = false !== $content ? strlen($content) : 0;
