@@ -179,6 +179,24 @@ final readonly class EntrySaveDto
     }
 
     /**
+     * Validate that the date format is valid.
+     */
+    #[Assert\Callback]
+    public function validateDateFormat(ExecutionContextInterface $executionContext): void
+    {
+        if ('' === $this->date || '0' === $this->date) {
+            return; // NotBlank constraint handles empty dates
+        }
+
+        $dateTime = $this->getDateAsDateTime();
+        if (!$dateTime instanceof DateTimeInterface) {
+            $executionContext->buildViolation('Invalid date format')
+                ->atPath('date')
+                ->addViolation();
+        }
+    }
+
+    /**
      * Validate that start time is before end time.
      *
      * @throws Exception

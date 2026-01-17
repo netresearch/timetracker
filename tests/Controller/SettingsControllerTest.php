@@ -64,8 +64,8 @@ final class SettingsControllerTest extends AbstractWebTestCase
 
     public function testSaveActionRejectsGet(): void
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class);
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/settings/save');
+        $this->assertStatusCode(405);
     }
 
     public function testSaveActionUnauthenticated(): void

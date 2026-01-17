@@ -1372,11 +1372,9 @@ class EntryRepository extends ServiceEntityRepository
             return $today;
         }
 
-        $date = clone $today;
         $daysToSubtract = $this->getCalendarDaysByWorkDays($workingDays);
-        $date->sub(new DateInterval('P' . $daysToSubtract . 'D'));
 
-        return $date;
+        return $today->sub(new DateInterval('P' . $daysToSubtract . 'D'));
     }
 
     /**

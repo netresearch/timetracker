@@ -17,13 +17,12 @@ if (file_exists(dirname(__DIR__) . '/vendor/symfony/phpunit-bridge/bootstrap.php
     require dirname(__DIR__) . '/vendor/symfony/phpunit-bridge/bootstrap.php';
 }
 
-// Load cached env vars if the .env.local.php file exists
-if (is_array($env = @include dirname(__DIR__) . '/.env.local.php') && (!isset($env['APP_ENV']) || ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? $env['APP_ENV']) === $env['APP_ENV'])) {
-    (new Dotenv())->usePutenv(false)->populate($env);
-} else {
-    // load all the .env files
-    (new Dotenv())->usePutenv(false)->loadEnv(dirname(__DIR__) . '/.env');
-}
+// Set up environment for tests
+// Respect APP_ENV from PHPUnit's phpunit.xml.dist (via $_SERVER)
+$_ENV['APP_ENV'] = $_SERVER['APP_ENV'] ?? 'test';
+
+// Load .env files with proper test environment precedence
+(new Dotenv())->usePutenv(false)->bootEnv(dirname(__DIR__) . '/.env');
 
 if (isset($_SERVER['APP_DEBUG']) && (bool) $_SERVER['APP_DEBUG']) {
     umask(0o000);

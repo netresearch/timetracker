@@ -11,8 +11,8 @@ class AdminControllerTest extends AbstractWebTestCase
     // -------------- customers routes --------------------------------
     public function testNewCustomerActionWithWrongMethod(): void
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class);
         $this->client->request('GET', '/customer/save');
+        $this->assertStatusCode(405);
     }
 
     public function testNewCustomerActionWithPl(): void

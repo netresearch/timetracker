@@ -1,4 +1,4 @@
-FROM php:8.4-fpm AS runtime
+FROM php:8.5-fpm AS runtime
 
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
@@ -16,18 +16,26 @@ RUN set -ex \
    libicu-dev \
    unzip \
    zlib1g-dev \
+   git \
    && docker-php-ext-configure gd --with-jpeg --with-freetype \
    && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ \
    && docker-php-ext-install \
-   opcache \
    pdo_mysql \
    ldap \
    zip \
    xml \
    gd \
-   intl \
-   && pecl install apcu \
-   && docker-php-ext-enable apcu
+   intl
+
+# Install APCu from GitHub source for PHP 8.5 compatibility
+RUN git clone --depth 1 https://github.com/krakjoe/apcu.git /tmp/apcu \
+   && cd /tmp/apcu \
+   && phpize \
+   && ./configure \
+   && make \
+   && make install \
+   && docker-php-ext-enable apcu \
+   && rm -rf /tmp/apcu
 
 # Copy APCu configuration
 COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
@@ -72,11 +80,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get install -y nodejs
 RUN npm install -g npm@latest
 
-RUN pecl install pcov \
+RUN pecl install pcov-1.0.12 \
    && docker-php-ext-enable pcov
 
 # Install Xdebug for development debugging
-RUN pecl install xdebug \
+RUN pecl install xdebug-3.5.0 \
    && docker-php-ext-enable xdebug
 
 # Copy Xdebug configuration

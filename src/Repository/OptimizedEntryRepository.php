@@ -395,11 +395,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             return $today;
         }
 
-        $date = clone $today;
         $daysToSubtract = $this->getCalendarDaysByWorkDays($workingDays);
-        $date->sub(new DateInterval('P' . $daysToSubtract . 'D'));
 
-        return $date;
+        return $today->sub(new DateInterval('P' . $daysToSubtract . 'D'));
     }
 
     /**
@@ -412,11 +410,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         }
 
         $days = 0;
-        $date = clone $this->clock->today();
+        $date = $this->clock->today();
 
         while ($workingDays > 0) {
             ++$days;
-            $date->sub(new DateInterval('P1D'));
+            $date = $date->sub(new DateInterval('P1D'));
             $dayOfWeek = (int) $date->format('N');
 
             if ($dayOfWeek < 6) { // Monday to Friday

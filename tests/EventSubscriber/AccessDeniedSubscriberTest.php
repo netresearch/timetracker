@@ -54,7 +54,8 @@ final class AccessDeniedSubscriberTest extends TestCase
         $events = AccessDeniedSubscriber::getSubscribedEvents();
 
         self::assertArrayHasKey('kernel.exception', $events);
-        self::assertSame(['onKernelException', 5], $events['kernel.exception']);
+        // Priority 15 to run before ExceptionSubscriber (priority 10)
+        self::assertSame(['onKernelException', 15], $events['kernel.exception']);
     }
 
     public function testIgnoresNonAccessDeniedExceptions(): void

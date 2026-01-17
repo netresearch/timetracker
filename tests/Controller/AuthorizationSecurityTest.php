@@ -663,11 +663,11 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest'); // PL user
 
-        // Symfony throws BadRequestHttpException for malformed JSON, which should result in 400
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\BadRequestHttpException::class);
-        $this->expectExceptionMessage('Request payload contains invalid "json" data');
-
+        // Send invalid JSON - Symfony 8 converts this to 400 Bad Request
         $this->client->request('POST', '/activity/delete', [], [], ['CONTENT_TYPE' => 'application/json'], 'invalid-json');
+
+        // Expect 400 Bad Request for malformed JSON
+        $this->assertStatusCode(400);
     }
 
     /**
@@ -747,7 +747,7 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $this->logInSession('unittest'); // PL user
 
         // Attempt to access delete endpoint with GET method
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class);
         $this->client->request('GET', '/activity/delete');
+        $this->assertStatusCode(405);
     }
 }

@@ -50,6 +50,9 @@ final class GroupByActivityAction extends BaseInterpretationController
             }
 
             $aid = $activityObj->getId();
+            if (null === $aid) {
+                continue;
+            }
             if (!isset($activities[$aid])) {
                 $activities[$aid] = ['id' => $aid, 'name' => $activityObj->getName(), 'hours' => 0];
             }

@@ -44,6 +44,8 @@ services:
       - ./var/cache:/var/www/html/var/cache
       - ./var/log:/var/www/html/var/log
       - /usr/local/share/ca-certificates/:/usr/local/share/ca-certificates/host
+      # PHP test config with increased memory limit (2G)
+      - ./docker/php/test.ini:/usr/local/etc/php/conf.d/99-test.ini:ro
     depends_on:
       - db
       - db-test
@@ -67,6 +69,8 @@ services:
       - .:/var/www/html
       - ./var/cache:/var/www/html/var/cache
       - ./var/log:/var/www/html/var/log
+      # PHP test config with increased memory limit (2G)
+      - ./docker/php/test.ini:/usr/local/etc/php/conf.d/99-test.ini:ro
     restart: "no"
     profiles: 
       - tools

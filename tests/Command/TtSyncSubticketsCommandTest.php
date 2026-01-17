@@ -73,7 +73,7 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
 
         $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);
         $application = new Application();
-        $application->add($ttSyncSubticketsCommand);
+        $application->addCommand($ttSyncSubticketsCommand);
 
         $commandTester = new CommandTester($application->find('tt:sync-subtickets'));
         $exitCode = $commandTester->execute([]);
@@ -105,7 +105,7 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
 
         $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);
         $application = new Application();
-        $application->add($ttSyncSubticketsCommand);
+        $application->addCommand($ttSyncSubticketsCommand);
 
         $commandTester = new CommandTester($application->find('tt:sync-subtickets'));
         $exitCode = $commandTester->execute(['project' => 999]);

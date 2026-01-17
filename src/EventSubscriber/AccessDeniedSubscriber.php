@@ -6,7 +6,9 @@ namespace App\EventSubscriber;
 
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
@@ -23,8 +25,9 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents(): array
     {
+        // Priority 15 to run before ExceptionSubscriber (priority 10)
         return [
-            KernelEvents::EXCEPTION => ['onKernelException', 5],
+            KernelEvents::EXCEPTION => ['onKernelException', 15],
         ];
     }
 
@@ -70,7 +73,38 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
 
         // Case 3: User is fully authenticated but lacks required permissions
         // This is a real "forbidden" case (e.g., non-admin accessing /admin)
-        // Let Symfony's default exception handling render the error403.html.twig template
-        // which provides a styled page with navigation options
+
+        // For API/JSON requests, return JSON response with consistent message
+        $acceptHeader = (string) $request->headers->get('Accept', '');
+        $contentType = (string) $request->headers->get('Content-Type', '');
+        $pathInfo = $request->getPathInfo();
+
+        // If explicitly requesting HTML, let Symfony render error403.html.twig
+        $prefersHtml = str_contains($acceptHeader, 'text/html') && !str_contains($acceptHeader, 'application/json');
+        if ($prefersHtml) {
+            return;
+        }
+
+        // Check if request expects JSON response (headers or API-like paths)
+        $isJsonRequest = str_contains($acceptHeader, 'application/json')
+            || str_contains($contentType, 'application/json')
+            || 'XMLHttpRequest' === $request->headers->get('X-Requested-With')
+            || str_starts_with($pathInfo, '/get')
+            || str_starts_with($pathInfo, '/getAll')
+            || str_ends_with($pathInfo, '/save')
+            || str_ends_with($pathInfo, '/delete')
+            || str_contains($pathInfo, '/api/');
+
+        if ($isJsonRequest) {
+            $response = new JsonResponse([
+                'error' => 'Forbidden',
+                'message' => 'You are not allowed to perform this action.',
+            ], Response::HTTP_FORBIDDEN);
+            $exceptionEvent->setResponse($response);
+
+            return;
+        }
+
+        // For HTML requests, let Symfony's default exception handling render error403.html.twig
     }
 }
