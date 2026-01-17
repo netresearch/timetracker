@@ -135,7 +135,7 @@ final class SaveEntryAction extends BaseTrackingController
                 $dayDate = new DateTime($entrySaveDto->date);
                 $entry->setDay($dayDate);
             }
-        } catch (Exception $exception) {
+        } catch (Exception) {
             return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
