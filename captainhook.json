@@ -32,6 +32,42 @@
                         "args": ["php"]
                     }
                 ]
+            },
+            {
+                "action": "php -d memory_limit=512M bin/php-cs-fixer fix --dry-run --diff",
+                "options": {
+                    "label": "PHP-CS-Fixer: Code style"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
+                        "args": ["php"]
+                    }
+                ]
+            },
+            {
+                "action": "php -d memory_limit=512M bin/phpat",
+                "options": {
+                    "label": "PHPat: Architecture rules"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
+                        "args": ["php"]
+                    }
+                ]
+            },
+            {
+                "action": "php bin/console lint:twig templates/",
+                "options": {
+                    "label": "Twig: Template syntax"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
+                        "args": ["twig"]
+                    }
+                ]
             }
         ]
     },
