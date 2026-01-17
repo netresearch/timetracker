@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
 
 /**
@@ -43,9 +44,18 @@ class ExceptionSubscriber implements EventSubscriberInterface
         $this->logException($throwable);
 
         // Determine if we should return JSON response
+        // Accept header explicitly requesting HTML takes priority
+        $acceptHeader = (string) $request->headers->get('Accept', '');
+        $prefersHtml = str_contains($acceptHeader, 'text/html') && !str_contains($acceptHeader, 'application/json');
+
+        // If explicitly requesting HTML, let Symfony handle error pages
+        if ($prefersHtml) {
+            return;
+        }
+
         // Include API-like routes used by ExtJS frontend
         $pathInfo = $request->getPathInfo();
-        $acceptsJson = str_contains((string) $request->headers->get('Accept', ''), 'application/json')
+        $acceptsJson = str_contains($acceptHeader, 'application/json')
                       || 'XMLHttpRequest' === $request->headers->get('X-Requested-With')
                       || str_contains($pathInfo, '/api/')
                       || str_contains($pathInfo, '/tracking/')
@@ -81,6 +91,14 @@ class ExceptionSubscriber implements EventSubscriberInterface
                 'error' => 'Jira API error',
                 'message' => $throwable->getMessage(),
             ], Response::HTTP_BAD_GATEWAY);
+        }
+
+        // Handle access denied exceptions (403)
+        if ($throwable instanceof AccessDeniedException) {
+            return new JsonResponse([
+                'error' => 'Forbidden',
+                'message' => 'You do not have permission to access this resource.',
+            ], Response::HTTP_FORBIDDEN);
         }
 
         // Handle HTTP exceptions
