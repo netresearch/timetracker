@@ -22,7 +22,7 @@
                 ]
             },
             {
-                "action": "COMPOSE_PROFILES=tools docker compose run --rm app-tools php -d memory_limit=1G bin/phpstan analyze --no-progress",
+                "action": "php -d memory_limit=1G bin/phpstan analyze --no-progress",
                 "options": {
                     "label": "PHPStan: Static analysis"
                 },
@@ -34,7 +34,7 @@
                 ]
             },
             {
-                "action": "COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-check",
+                "action": "php -d memory_limit=512M bin/php-cs-fixer fix --dry-run --diff",
                 "options": {
                     "label": "PHP-CS-Fixer: Code style"
                 },
@@ -46,7 +46,7 @@
                 ]
             },
             {
-                "action": "COMPOSE_PROFILES=tools docker compose run --rm app-tools composer analyze:arch",
+                "action": "php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php --no-progress",
                 "options": {
                     "label": "PHPat: Architecture rules"
                 },
@@ -58,7 +58,7 @@
                 ]
             },
             {
-                "action": "COMPOSE_PROFILES=tools docker compose run --rm app-tools composer twig:lint",
+                "action": "php bin/console lint:twig templates/",
                 "options": {
                     "label": "Twig: Template syntax"
                 },
