@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
+.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-up e2e-down e2e-run e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -31,7 +31,10 @@ help:
 	@echo "  make test-parallel    # run unit tests in parallel (full CPU)"
 	@echo "  make test-parallel-safe # run unit tests in parallel (4 cores)"
 	@echo "  make test-parallel-all  # run all tests optimally (parallel + sequential)"
-	@echo "  make e2e              # run Playwright e2e tests (requires app running)"
+	@echo "  make e2e              # run Playwright e2e tests (starts own stack)"
+	@echo "  make e2e-up           # start E2E test stack on port 8766"
+	@echo "  make e2e-down         # stop E2E test stack"
+	@echo "  make e2e-run          # run e2e tests (assumes stack running)"
 	@echo "  make e2e-install      # install Playwright browsers"
 	@echo "  make coverage         # run tests with coverage"
 	@echo "  make reset-test-db    # reset test database (for schema changes)"
@@ -124,11 +127,39 @@ test-parallel-all: prepare-test-sql
 	@echo "Phase 2: Sequential controller tests..."
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
 
-# E2E tests with Playwright (requires app to be running)
-e2e:
-	@echo "Running Playwright e2e tests..."
-	@echo "Note: App must be running (make up) before running e2e tests"
-	npm run e2e
+# E2E test infrastructure
+e2e-up:
+	@echo "Starting E2E test stack (app-e2e, httpd-e2e, db, ldap-dev)..."
+	@if [ ! -f .env.test.local ]; then \
+		echo "Creating .env.test.local from template..."; \
+		cp .env.test.local.example .env.test.local 2>/dev/null || echo "# E2E test config - auto-generated\nDATABASE_URL=\"mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=8&charset=utf8mb4\"\nLDAP_HOST=\"ldap-dev\"\nLDAP_PORT=389\nLDAP_READUSER=\"cn=readuser,dc=dev,dc=local\"\nLDAP_READPASS=\"readuser\"\nLDAP_BASEDN=\"dc=dev,dc=local\"\nLDAP_USERNAMEFIELD=\"uid\"\nLDAP_USESSL=false\nLDAP_CREATE_USER=true" > .env.test.local; \
+	fi
+	COMPOSE_PROFILES=e2e docker compose up -d --build
+	@echo "Waiting for E2E stack to be ready..."
+	@for i in $$(seq 1 30); do \
+		if curl -s -o /dev/null -w '%{http_code}' http://localhost:8766/login | grep -q '200'; then \
+			echo "E2E stack is ready at http://localhost:8766"; \
+			break; \
+		fi; \
+		echo "Waiting for E2E stack... ($$i/30)"; \
+		sleep 2; \
+	done
+
+e2e-down:
+	@echo "Stopping E2E test stack..."
+	COMPOSE_PROFILES=e2e docker compose down
+
+# E2E tests with Playwright (starts its own stack)
+e2e: e2e-up
+	@echo "Running Playwright e2e tests against E2E stack..."
+	E2E_BASE_URL=http://localhost:8766 npm run e2e || (make e2e-down && exit 1)
+	@echo "E2E tests completed. Stopping E2E stack..."
+	$(MAKE) e2e-down
+
+# Run E2E tests without managing stack (for manual testing)
+e2e-run:
+	@echo "Running Playwright e2e tests (assuming stack is already running)..."
+	E2E_BASE_URL=http://localhost:8766 npm run e2e
 
 # Install Playwright browsers
 e2e-install:
