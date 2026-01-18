@@ -10,6 +10,30 @@
         "enabled": true,
         "actions": [
             {
+                "action": "composer validate --no-check-publish",
+                "options": {
+                    "label": "Composer: Validate config"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\Any",
+                        "args": [["composer.json", "composer.lock"]]
+                    }
+                ]
+            },
+            {
+                "action": "composer audit --format=plain",
+                "options": {
+                    "label": "Composer: Security audit"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\Any",
+                        "args": [["composer.json", "composer.lock"]]
+                    }
+                ]
+            },
+            {
                 "action": "\\CaptainHook\\App\\Hook\\PHP\\Action\\Linting",
                 "options": {
                     "label": "PHP: Syntax check"
@@ -58,7 +82,7 @@
                 ]
             },
             {
-                "action": "php bin/console lint:twig templates/",
+                "action": "XDEBUG_MODE=off php bin/console lint:twig templates/",
                 "options": {
                     "label": "Twig: Template syntax"
                 },
@@ -66,6 +90,18 @@
                     {
                         "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
                         "args": ["twig"]
+                    }
+                ]
+            },
+            {
+                "action": "php -d memory_limit=512M bin/phpunit --testsuite=unit --no-coverage",
+                "options": {
+                    "label": "PHPUnit: Unit tests"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
+                        "args": ["php"]
                     }
                 ]
             }

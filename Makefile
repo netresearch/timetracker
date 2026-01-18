@@ -77,7 +77,9 @@ sh:
 install: composer-install npm-install
 
 composer-install:
-	docker compose run --rm app-dev composer install
+	# --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
+	# See: https://github.com/laminas/laminas-ldap/issues/62
+	docker compose run --rm app-dev composer install --ignore-platform-req=php
 
 composer-update:
 	docker compose run --rm app-dev composer update
@@ -94,38 +96,57 @@ npm-dev:
 npm-watch:
 	docker compose run --rm app-dev npm run watch
 
-# Fast test execution without Xdebug (default for developers)
+# All PHPUnit tests (default for developers)
 test: prepare-test-sql
-	@echo "Running tests without Xdebug for fast execution..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
+	@echo "Running all PHPUnit tests..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
+
+# Unit tests only (fast, no database required)
+test-unit:
+	@echo "Running unit tests (no database)..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=unit
+
+# Integration tests only (requires database)
+test-integration: prepare-test-sql
+	@echo "Running integration tests..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=integration
+
+# Controller tests only (requires database)
+test-controller: prepare-test-sql
+	@echo "Running controller tests..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=controller
+
+# All tests: PHPUnit + E2E
+test-all: test e2e
+	@echo "All tests completed (PHPUnit + E2E)"
 
 # Test with Xdebug enabled for debugging failing tests
 test-debug: prepare-test-sql
 	@echo "Running tests with Xdebug enabled for debugging..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=debug,develop app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=debug,develop -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
 
 # Test with verbose configuration (full output for debugging)
 test-verbose: prepare-test-sql
 	@echo "Running tests with verbose output for debugging..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=config/testing/phpunit.xml.verbose
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=config/testing/phpunit.xml.verbose
 
 # Parallel test execution - Full CPU utilization
 test-parallel: prepare-test-sql
 	@echo "Running parallel tests with $$(nproc) processes..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 
 # Safe parallel execution - Limited to 4 processes
 test-parallel-safe: prepare-test-sql
 	@echo "Running parallel tests with 4 processes (safe mode)..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=4 --testsuite=unit-parallel --max-batch-size=25
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=4 --testsuite=unit-parallel --max-batch-size=25
 
 # Optimal test execution - Parallel for units, sequential for controllers
 test-parallel-all: prepare-test-sql
 	@echo "Running optimized test suite (parallel units + sequential controllers)..."
 	@echo "Phase 1: Parallel unit tests..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --max-batch-size=50
 	@echo "Phase 2: Sequential controller tests..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
 
 # E2E test infrastructure
 e2e-up:
@@ -169,13 +190,13 @@ e2e-install:
 # Coverage with parallel execution (using PCOV for speed)
 coverage: prepare-test-sql
 	@echo "Running parallel test coverage with PCOV..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
 	@echo "Coverage HTML: var/coverage-parallel/index.html"
 
 # Traditional coverage (sequential, using PCOV)
 coverage-sequential: prepare-test-sql
 	@echo "Running sequential test coverage with PCOV..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:
@@ -200,7 +221,7 @@ check-all:
 
 twig-lint:
 	@echo "Running Twig template linting (lightweight - no DB)..."
-	COMPOSE_PROFILES=tools docker compose run --rm app-tools composer twig:lint
+	COMPOSE_PROFILES=tools docker compose run --rm -e XDEBUG_MODE=off app-tools composer twig:lint
 
 rector:
 	@echo "Running Rector (dry-run) to check for improvements..."

@@ -78,7 +78,7 @@ final readonly class EntrySaveDto
 
     /**
      * Convert date string to DateTime object.
-     * Supports ISO 8601 format (2026-01-14T00:00:00) and Y-m-d format.
+     * Supports ISO 8601 formats: datetime (Y-m-d\TH:i:s) and date-only (Y-m-d).
      */
     public function getDateAsDateTime(): ?DateTimeInterface
     {
@@ -92,7 +92,7 @@ final readonly class EntrySaveDto
             return $date;
         }
 
-        // Try Y-m-d format
+        // Try Y-m-d format (standard ISO date)
         $date = DateTime::createFromFormat('Y-m-d', $this->date);
         if (false !== $date) {
             return $date;
@@ -108,7 +108,7 @@ final readonly class EntrySaveDto
 
     /**
      * Convert start time string to DateTime object.
-     * Supports ISO 8601 format (2026-01-14T08:00:00), H:i:s and H:i formats.
+     * Supports ISO 8601 datetime (Y-m-d\TH:i:s), and time-only formats (H:i:s, H:i).
      */
     public function getStartAsDateTime(): ?DateTimeInterface
     {
@@ -144,7 +144,7 @@ final readonly class EntrySaveDto
 
     /**
      * Convert end time string to DateTime object.
-     * Supports ISO 8601 format (2026-01-14T16:00:00), H:i:s and H:i formats.
+     * Supports ISO 8601 datetime (Y-m-d\TH:i:s), and time-only formats (H:i:s, H:i).
      */
     public function getEndAsDateTime(): ?DateTimeInterface
     {
@@ -175,6 +175,24 @@ final readonly class EntrySaveDto
             return new DateTime($this->end);
         } catch (Exception) {
             return null;
+        }
+    }
+
+    /**
+     * Validate that the date format is valid.
+     */
+    #[Assert\Callback]
+    public function validateDateFormat(ExecutionContextInterface $executionContext): void
+    {
+        if ('' === $this->date || '0' === $this->date) {
+            return; // NotBlank constraint handles empty dates
+        }
+
+        $dateTime = $this->getDateAsDateTime();
+        if (!$dateTime instanceof DateTimeInterface) {
+            $executionContext->buildViolation('Invalid date format')
+                ->atPath('date')
+                ->addViolation();
         }
     }
 

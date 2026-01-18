@@ -1,13 +1,19 @@
 import { test, expect } from '@playwright/test';
+import { installFrozenClock, E2E_FROZEN_DATE } from './helpers/clock';
 
 /**
  * E2E tests for user settings.
  *
  * Tests verify that settings are saved correctly and take effect in the UI.
+ *
+ * Note: Uses frozen clock for consistency with other E2E tests.
  */
 
-// Helper to login
-async function login(page: import('@playwright/test').Page, username: string, password: string) {
+// Helper to login with frozen clock
+async function loginWithFrozenClock(page: import('@playwright/test').Page, username: string, password: string) {
+  // Install frozen clock BEFORE any navigation
+  await installFrozenClock(page, E2E_FROZEN_DATE);
+
   await page.goto('/login');
   await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
   await page.locator('input[name="_username"]').fill(username);
@@ -69,7 +75,7 @@ async function setComboValue(page: import('@playwright/test').Page, name: string
 
   // Click on the desired option (Yes = 1, No = 0)
   const optionText = value === '1' ? /Yes|Ja/i : /No|Nein/i;
-  await page.locator('.x-boundlist-item').filter({ hasText: optionText }).click();
+  await page.locator('.x-boundlist-item').filter({ hasText: optionText }).first().click();
   await page.waitForTimeout(200);
 }
 
@@ -82,7 +88,7 @@ async function saveSettings(page: import('@playwright/test').Page) {
   });
 
   // Click save button
-  const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i });
+  const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i }).first();
   await saveButton.click();
 
   // Wait for success notification
@@ -91,8 +97,12 @@ async function saveSettings(page: import('@playwright/test').Page) {
 }
 
 test.describe('Settings Tab', () => {
+  // Settings persistence tests must run serially because they modify shared user state
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
   });
 
   test('should display settings form', async ({ page }) => {
@@ -120,12 +130,14 @@ test.describe('Settings Tab', () => {
     await saveSettings(page);
 
     // Reload page to verify persistence
+    // Note: Frozen clock persists across navigation within same page context
     await page.reload();
     await page.waitForSelector('.x-grid', { timeout: 15000 });
 
     // Go back to settings and verify value persisted
     await goToSettingsTab(page);
     const savedValue = await getComboValue(page, 'show_empty_line');
+    console.log(`Saved show_empty_line value: ${savedValue}, expected: ${newValue}`);
     expect(savedValue).toBe(newValue);
 
     // Restore original value
@@ -149,6 +161,7 @@ test.describe('Settings Tab', () => {
     await goToSettingsTab(page);
 
     const savedValue = await getComboValue(page, 'suggest_time');
+    console.log(`Saved suggest_time value: ${savedValue}, expected: ${newValue}`);
     expect(savedValue).toBe(newValue);
 
     // Restore
@@ -159,7 +172,8 @@ test.describe('Settings Tab', () => {
 
 test.describe('Settings Effectiveness', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
   });
 
   test('suggest_time should pre-fill start time when enabled', async ({ page }) => {
@@ -169,12 +183,12 @@ test.describe('Settings Effectiveness', () => {
     await saveSettings(page);
 
     // Go to tracking tab
-    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i });
+    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i }).first();
     await trackingTab.click();
     await page.waitForSelector('.x-grid', { timeout: 10000 });
 
     // Add a new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
 
     // Wait for new row to be added
@@ -198,12 +212,12 @@ test.describe('Settings Effectiveness', () => {
     await saveSettings(page);
 
     // Go to tracking tab
-    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i });
+    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i }).first();
     await trackingTab.click();
     await page.waitForSelector('.x-grid', { timeout: 10000 });
 
     // Add a new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
 
     await page.waitForTimeout(500);
@@ -225,7 +239,7 @@ test.describe('Settings Effectiveness', () => {
     await saveSettings(page);
 
     // Go to tracking tab
-    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i });
+    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i }).first();
     await trackingTab.click();
     await page.waitForSelector('.x-grid', { timeout: 10000 });
 
@@ -255,7 +269,8 @@ test.describe('Settings Effectiveness', () => {
 
 test.describe('Settings API', () => {
   test('settings API should return correct format', async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
 
     // Use API endpoint to get settings
     const response = await page.request.get('/settings/get');
@@ -286,7 +301,8 @@ test.describe('Settings API', () => {
   });
 
   test('save settings API should update settings', async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
 
     // Navigate to settings and get initial values from form
     await goToSettingsTab(page);

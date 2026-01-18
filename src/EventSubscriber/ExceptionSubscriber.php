@@ -14,7 +14,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
 
 /**
@@ -93,13 +92,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
             ], Response::HTTP_BAD_GATEWAY);
         }
 
-        // Handle access denied exceptions (403)
-        if ($throwable instanceof AccessDeniedException) {
-            return new JsonResponse([
-                'error' => 'Forbidden',
-                'message' => 'You do not have permission to access this resource.',
-            ], Response::HTTP_FORBIDDEN);
-        }
+        // Note: AccessDeniedException is handled by AccessDeniedSubscriber
 
         // Handle HTTP exceptions
         if ($throwable instanceof HttpExceptionInterface) {

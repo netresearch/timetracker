@@ -29,7 +29,15 @@ jobs:
         env:
           COMPOSE_PROFILES: tools
         run: |
-          docker compose run --rm app-tools composer install --no-interaction --prefer-dist
+          # --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
+          # See: https://github.com/laminas/laminas-ldap/issues/62
+          docker compose run --rm app-tools composer install --no-interaction --prefer-dist --ignore-platform-req=php
+
+      - name: Validate composer.json
+        env:
+          COMPOSE_PROFILES: tools
+        run: |
+          docker compose run --rm app-tools composer validate --no-check-publish
 
       - name: Composer audit (security)
         env:

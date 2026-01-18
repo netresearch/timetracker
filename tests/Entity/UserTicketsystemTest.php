@@ -7,6 +7,7 @@ namespace Tests\Entity;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\UserTicketsystem;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,6 +15,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class UserTicketsystemTest extends TestCase
 {
     public function testGettersAndSetters(): void

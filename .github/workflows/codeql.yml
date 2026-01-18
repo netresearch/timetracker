@@ -19,8 +19,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Only analyze languages we actually write (not external libs)
-        language: [javascript-typescript, php]
+        # CodeQL supported languages: javascript-typescript, python, ruby, go, java, c-cpp, csharp, swift
+        # PHP is NOT supported by CodeQL
+        language: [javascript-typescript]
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

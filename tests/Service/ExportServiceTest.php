@@ -13,6 +13,7 @@ use App\Service\ExportService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use Doctrine\Persistence\ManagerRegistry;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -23,6 +24,7 @@ use function array_key_exists;
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class ExportServiceTest extends TestCase
 {
     /**

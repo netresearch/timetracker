@@ -193,8 +193,11 @@ final class UserDatabaseTest extends AbstractWebTestCase
         // Test team relationship
         self::assertCount(2, $fetchedUser->getTeams());
 
-        // Clean up
+        // Clean up - clear team associations before removing user to avoid FK constraint
         $teams = $fetchedUser->getTeams()->toArray();
+        $fetchedUser->getTeams()->clear();
+        $this->entityManager->flush();
+
         $this->entityManager->remove($fetchedUser);
         $this->entityManager->flush();
 
@@ -410,6 +413,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $devUser->setUsername('dev_user');
         $devUser->setType(UserType::DEV);
         $devUser->setLocale('de');
+        $devUser->setAbbr('DU');
 
         $this->entityManager->persist($devUser);
 
@@ -418,6 +422,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $plUser->setUsername('pl_user');
         $plUser->setType(UserType::PL);
         $plUser->setLocale('de');
+        $plUser->setAbbr('PLU');
 
         $this->entityManager->persist($plUser);
 
@@ -426,6 +431,7 @@ final class UserDatabaseTest extends AbstractWebTestCase
         $adminUser->setUsername('admin_user');
         $adminUser->setType(UserType::ADMIN);
         $adminUser->setLocale('de');
+        $adminUser->setAbbr('AU');
 
         $this->entityManager->persist($adminUser);
 

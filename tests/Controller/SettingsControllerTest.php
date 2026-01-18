@@ -28,9 +28,9 @@ final class SettingsControllerTest extends AbstractWebTestCase
         $expectedJson = [
             'success' => true,
             'settings' => [
-                'show_empty_line' => true,
-                'suggest_time' => true,
-                'show_future' => true,
+                'show_empty_line' => 1,
+                'suggest_time' => 1,
+                'show_future' => 1,
                 'user_name' => 'i.myself',
                 'type' => 'ADMIN',
                 'locale' => 'de',
@@ -64,8 +64,8 @@ final class SettingsControllerTest extends AbstractWebTestCase
 
     public function testSaveActionRejectsGet(): void
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException::class);
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/settings/save');
+        $this->assertStatusCode(405);
     }
 
     public function testSaveActionUnauthenticated(): void

@@ -6,7 +6,7 @@
   "config": {
     "bin-dir": "bin",
     "platform": {
-      "php": "8.4"
+      "php": "8.5"
     },
     "sort-packages": true,
     "allow-plugins": {
@@ -30,7 +30,7 @@
     }
   },
   "require": {
-    "php": "^8.4",
+    "php": "^8.5",
     "ext-date": "*",
     "ext-json": "*",
     "ext-ldap": "*",
@@ -38,37 +38,36 @@
     "ext-pcre": "*",
     "ext-pdo": "*",
     "ext-reflection": "*",
-    "doctrine/doctrine-bundle": "^2.15",
-    "doctrine/doctrine-migrations-bundle": "^3.4",
+    "doctrine/doctrine-bundle": "^3.2",
+    "doctrine/doctrine-migrations-bundle": "^3.4|^4.0",
     "doctrine/orm": "^3.5",
     "doctrine/persistence": "^4.0",
     "guzzlehttp/guzzle": "^7.9",
     "guzzlehttp/oauth-subscriber": "^0.8.1",
     "laminas/laminas-ldap": "^2.19",
-    "phpdocumentor/reflection-docblock": "^5.6",
-    "phpoffice/phpspreadsheet": "^1.4",
+    "phpoffice/phpspreadsheet": "^5.0",
     "phpstan/phpdoc-parser": "^2.2",
     "sentry/sentry-symfony": "^5.3",
-    "symfony/asset": "^7.3",
-    "symfony/console": "^7.3",
-    "symfony/dotenv": "^7.3",
-    "symfony/expression-language": "7.3.*",
+    "symfony/asset": "^8.0",
+    "symfony/console": "^8.0",
+    "symfony/dotenv": "^8.0",
+    "symfony/expression-language": "^8.0",
     "symfony/flex": "^2.8",
-    "symfony/form": "^7.3",
-    "symfony/framework-bundle": "^7.3",
-    "symfony/mailer": "^7.3",
-    "symfony/monolog-bundle": "^3.10",
-    "symfony/object-mapper": "^7.3",
+    "symfony/form": "^8.0",
+    "symfony/framework-bundle": "^8.0",
+    "symfony/mailer": "^8.0",
+    "symfony/monolog-bundle": "^3.10|^4.0",
+    "symfony/object-mapper": "^8.0",
     "symfony/polyfill-mbstring": "^1.33",
-    "symfony/property-access": "7.3.*",
-    "symfony/property-info": "7.3.*",
-    "symfony/security-bundle": "^7.3",
-    "symfony/serializer": "7.3.*",
-    "symfony/stopwatch": "^7.3",
-    "symfony/translation": "^7.3",
-    "symfony/twig-bundle": "^7.3",
-    "symfony/validator": "^7.3",
-    "symfony/yaml": "^7.3",
+    "symfony/property-access": "^8.0",
+    "symfony/property-info": "^8.0",
+    "symfony/security-bundle": "^8.0",
+    "symfony/serializer": "^8.0",
+    "symfony/stopwatch": "^8.0",
+    "symfony/translation": "^8.0",
+    "symfony/twig-bundle": "^8.0",
+    "symfony/validator": "^8.0",
+    "symfony/yaml": "^8.0",
     "twig/twig": "^3.21"
   },
   "require-dev": {
@@ -77,7 +76,8 @@
     "captainhook/plugin-composer": "^5.3",
     "dg/bypass-finals": "*",
     "friendsofphp/php-cs-fixer": "^3.65",
-    "phpat/phpat": "^0.11",
+    "phpat/phpat": "^0.12",
+    "phpdocumentor/reflection-docblock": "^6.0",
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan": "^2.1",
     "phpstan/phpstan-deprecation-rules": "*",
@@ -88,12 +88,12 @@
     "phpunit/phpunit": "^12.3",
     "rector/rector": "^2.1",
     "struggle-for-php/sfp-phpstan-psr-log": "*",
-    "symfony/browser-kit": "^7.3",
-    "symfony/css-selector": "^7.3",
-    "symfony/debug-bundle": "^7.3",
+    "symfony/browser-kit": "^8.0",
+    "symfony/css-selector": "^8.0",
+    "symfony/debug-bundle": "^8.0",
     "symfony/maker-bundle": "^1.64",
-    "symfony/phpunit-bridge": "^7.3",
-    "symfony/web-profiler-bundle": "^7.3",
+    "symfony/phpunit-bridge": "^8.0",
+    "symfony/web-profiler-bundle": "^8.0",
     "symfony/webpack-encore-bundle": "^2.3"
   },
   "scripts": {
@@ -132,7 +132,7 @@
     "perf:dashboard": "php tests/Performance/PerformanceDashboard.php var/performance-history.json var/performance-dashboard.html && echo 'Dashboard available at var/performance-dashboard.html'",
     "perf:full": "@perf:benchmark && @perf:dashboard",
     "security-check": "echo 'Running security check with Local PHP Security Checker'; curl -o security-checker.phar -s https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 && chmod +x security-checker.phar && ./security-checker.phar && rm security-checker.phar",
-    "twig:lint": "php bin/console lint:twig templates --show-deprecations",
+    "twig:lint": "XDEBUG_MODE=off php bin/console lint:twig templates --show-deprecations",
     "check:all": [
       "@analyze",
       "@analyze:arch",
@@ -148,7 +148,7 @@
   "extra": {
     "symfony": {
       "allow-contrib": false,
-      "require": "7.3.*"
+      "require": "^8.0"
     },
     "branch-alias": null
   }

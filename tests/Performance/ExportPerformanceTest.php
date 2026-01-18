@@ -14,9 +14,12 @@ use App\Enum\TicketSystemType;
 use App\Service\ExportService;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Stopwatch\Stopwatch;
 
+use function in_array;
+use function is_array;
 use function sprintf;
 
 use const STDERR;
@@ -33,6 +36,7 @@ use const STDERR;
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class ExportPerformanceTest extends TestCase
 {
     private Stopwatch $stopwatch;
@@ -531,10 +535,20 @@ final class ExportPerformanceTest extends TestCase
     }
 
     /**
-     * Log performance metrics for analysis.
+     * Log performance metrics for analysis (only in verbose mode).
      */
     private function logPerformanceMetric(string $testName, float|int $durationMs, int $memoryBytes, int $recordCount): void
     {
+        // Only output metrics in verbose mode to reduce PHPUnit noise
+        $args = $_SERVER['argv'] ?? [];
+        if (!is_array($args)) {
+            return;
+        }
+        $isVerbose = in_array('--verbose', $args, true) || in_array('-v', $args, true);
+        if (!$isVerbose) {
+            return;
+        }
+
         $memoryMB = number_format($memoryBytes / 1024 / 1024, 2);
         $throughput = $recordCount > 0 ? round($recordCount / max((float) $durationMs / 1000, 0.001), 2) : 0;
 

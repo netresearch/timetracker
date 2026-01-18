@@ -10,6 +10,8 @@ use Tests\AbstractWebTestCase;
 
 use function assert;
 use function count;
+use function in_array;
+use function is_array;
 use function sprintf;
 use function strlen;
 
@@ -481,10 +483,20 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
     }
 
     /**
-     * Log performance metrics for analysis.
+     * Log performance metrics for analysis (only in verbose mode).
      */
     private function logPerformanceMetric(string $testName, float|int $durationMs, int $memoryBytes, int $recordCount): void
     {
+        // Only output metrics in verbose mode to reduce PHPUnit noise
+        $args = $_SERVER['argv'] ?? [];
+        if (!is_array($args)) {
+            return;
+        }
+        $isVerbose = in_array('--verbose', $args, true) || in_array('-v', $args, true);
+        if (!$isVerbose) {
+            return;
+        }
+
         $memoryMB = number_format($memoryBytes / 1024 / 1024, 2);
         $throughput = $recordCount > 0 && $durationMs > 0 ? round($recordCount / ((float) $durationMs / 1000), 2) : 0;
 

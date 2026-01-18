@@ -294,49 +294,4 @@ final class ControllingControllerTest extends AbstractWebTestCase
         // This test primarily ensures the correct methods are called on the service
         // with the correct parameters (showBillable = false).
     }
-
-    public function testLandingPage(): void
-    {
-        self::markTestSkipped('Route /controlling never existed - fictional test');
-    }
-
-    public function testLandingPageNotAuthorized(): void
-    {
-        self::markTestSkipped('Route /controlling never existed - fictional test');
-    }
-
-    public function testLandingPageAsUserWithData(): void
-    {
-        self::markTestSkipped('Route /controlling never existed - fictional test');
-    }
-
-    public function testGetDataForBrowsingByCustomer(): void
-    {
-        self::markTestSkipped('Route /getDataForBrowsingByCustomer never existed - fictional test');
-    }
-
-    public function testGetDataForBrowsingByProject(): void
-    {
-        self::markTestSkipped('Route /getDataForBrowsingByProject never existed - fictional test');
-    }
-
-    public function testGetDataForBrowsingByUser(): void
-    {
-        self::markTestSkipped('Route /getDataForBrowsingByUser never existed - fictional test');
-    }
-
-    public function testGetDataForBrowsingByTeam(): void
-    {
-        self::markTestSkipped('Route /getDataForBrowsingByTeam never existed - fictional test');
-    }
-
-    public function testGetDataForBrowsingByPeriod(): void
-    {
-        self::markTestSkipped('Route /getDataForBrowsingByPeriod never existed - fictional test');
-    }
-
-    public function testGetDataForBrowsingByPeriodInvalidPeriod(): void
-    {
-        self::markTestSkipped('Route /getDataForBrowsingByPeriod never existed - fictional test');
-    }
 }

@@ -8,6 +8,7 @@ use App\Command\TtSyncSubticketsCommand;
 use App\Entity\Project;
 use App\Service\SubticketSyncService;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Application;
@@ -18,6 +19,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class TtSyncSubticketsCommandTest extends KernelTestCase
 {
     protected static function ensureKernelShutdown(): void
@@ -73,7 +75,7 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
 
         $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);
         $application = new Application();
-        $application->add($ttSyncSubticketsCommand);
+        $application->addCommand($ttSyncSubticketsCommand);
 
         $commandTester = new CommandTester($application->find('tt:sync-subtickets'));
         $exitCode = $commandTester->execute([]);
@@ -105,7 +107,7 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
 
         $ttSyncSubticketsCommand = new TtSyncSubticketsCommand($mock, $em);
         $application = new Application();
-        $application->add($ttSyncSubticketsCommand);
+        $application->addCommand($ttSyncSubticketsCommand);
 
         $commandTester = new CommandTester($application->find('tt:sync-subtickets'));
         $exitCode = $commandTester->execute(['project' => 999]);

@@ -7,7 +7,6 @@ namespace Tests\Repository;
 use App\Repository\EntryRepository;
 use App\Service\ClockInterface;
 use DateTimeImmutable;
-use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -58,7 +57,6 @@ final class EntryRepositoryTest extends TestCase
                 return new DateTimeImmutable('2023-10-24');
             } // Tuesday
         };
-        $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
         // Avoid touching Doctrine by creating a partial mock that bypasses parent constructor
         $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
         // Inject clock via reflection
@@ -83,7 +81,7 @@ final class EntryRepositoryTest extends TestCase
                 return new DateTimeImmutable('2023-10-23');
             } // Monday
         };
-        $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
+        // Avoid touching Doctrine by creating a partial mock that bypasses parent constructor
         $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
         $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
         $reflectionProperty->setValue($entryRepository, $clock);

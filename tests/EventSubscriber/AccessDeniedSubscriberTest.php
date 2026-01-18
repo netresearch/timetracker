@@ -6,6 +6,7 @@ namespace Tests\EventSubscriber;
 
 use App\Entity\User;
 use App\EventSubscriber\AccessDeniedSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -23,6 +24,7 @@ use Throwable;
  *
  * @covers \App\EventSubscriber\AccessDeniedSubscriber
  */
+#[AllowMockObjectsWithoutExpectations]
 final class AccessDeniedSubscriberTest extends TestCase
 {
     private MockObject&Security $security;
@@ -54,7 +56,8 @@ final class AccessDeniedSubscriberTest extends TestCase
         $events = AccessDeniedSubscriber::getSubscribedEvents();
 
         self::assertArrayHasKey('kernel.exception', $events);
-        self::assertSame(['onKernelException', 5], $events['kernel.exception']);
+        // Priority 15 to run before ExceptionSubscriber (priority 10)
+        self::assertSame(['onKernelException', 15], $events['kernel.exception']);
     }
 
     public function testIgnoresNonAccessDeniedExceptions(): void

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { waitForGrid } from './helpers/grid';
+import { displayDateToIso } from './helpers/date';
 
 /**
  * E2E tests for error handling and notifications.
@@ -50,12 +51,13 @@ test.describe('API Error Handling', () => {
     if (entries.length === 0) return;
 
     const template = entries[0].entry;
+    const isoDate = displayDateToIso(template.date);
 
     // Try to save with end before start (invalid)
     const response = await page.request.post('/tracking/save', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        date: template.date,
+        date: isoDate,
         start: '18:00',
         end: '08:00', // End before start
         customer: template.customer,
@@ -81,12 +83,13 @@ test.describe('API Error Handling', () => {
     if (entries.length === 0) return;
 
     const template = entries[0].entry;
+    const isoDate = displayDateToIso(template.date);
 
     // Try to create an entry that overlaps with existing
     const response = await page.request.post('/tracking/save', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        date: template.date,
+        date: isoDate,
         start: template.start, // Same start time as existing
         end: template.end,
         customer: template.customer,
@@ -133,7 +136,7 @@ test.describe('UI Error Display', () => {
 
   test('should display form validation errors', async ({ page }) => {
     // Click add to create new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
     await page.waitForTimeout(500);
 
@@ -166,7 +169,7 @@ test.describe('Success Notifications', () => {
 
   test('should show success notification after settings save', async ({ page }) => {
     // Go to Settings tab
-    const settingsTab = page.locator('.x-tab, button').filter({ hasText: /Settings|Einstellungen/i });
+    const settingsTab = page.locator('.x-tab, button').filter({ hasText: /Settings|Einstellungen/i }).first();
     await settingsTab.click();
     await page.waitForTimeout(500);
 
@@ -177,8 +180,8 @@ test.describe('Success Notifications', () => {
     });
 
     // Click save button
-    const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i });
-    if ((await saveButton.count()) > 0) {
+    const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i }).first();
+    if (await saveButton.isVisible()) {
       await saveButton.click();
       await page.waitForTimeout(1000);
 
@@ -196,12 +199,13 @@ test.describe('Success Notifications', () => {
     if (entries.length === 0) return;
 
     const template = entries[0].entry;
+    const isoDate = displayDateToIso(template.date);
 
     // Create a test entry to delete
     const createResponse = await page.request.post('/tracking/save', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        date: template.date,
+        date: isoDate,
         start: '07:00',
         end: '07:30',
         customer: template.customer,
@@ -226,15 +230,15 @@ test.describe('Success Notifications', () => {
     await page.waitForTimeout(300);
 
     // Look for delete option
-    const deleteOption = page.locator('.x-menu-item').filter({ hasText: /Delete|Löschen/i });
+    const deleteOption = page.locator('.x-menu-item').filter({ hasText: /Delete|Löschen/i }).first();
 
-    if ((await deleteOption.count()) > 0) {
+    if (await deleteOption.isVisible()) {
       await deleteOption.click();
       await page.waitForTimeout(500);
 
       // Confirm delete if dialog appears
-      const confirmButton = page.locator('.x-btn').filter({ hasText: /Yes|Ja|OK/i });
-      if ((await confirmButton.count()) > 0) {
+      const confirmButton = page.locator('.x-btn').filter({ hasText: /Yes|Ja|OK/i }).first();
+      if (await confirmButton.isVisible()) {
         await confirmButton.click();
         await page.waitForTimeout(500);
       }
@@ -276,7 +280,7 @@ test.describe('Network Error Handling', () => {
     await page.context().setOffline(true);
 
     // Try an action
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
     await page.waitForTimeout(500);
 
@@ -322,7 +326,7 @@ test.describe('Session Handling', () => {
         'X-Requested-With': 'XMLHttpRequest',
       },
       data: {
-        date: '14/01/2026',
+        date: '2026-01-14', // ISO format
         start: '09:00',
         end: '10:00',
         customer: 1,

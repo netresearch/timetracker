@@ -72,7 +72,8 @@ test.describe('Interpretation API Endpoints', () => {
   });
 
   test('/interpretation/entries should return entries', async ({ page }) => {
-    const response = await page.request.get('/interpretation/entries');
+    // Endpoint requires at least one filter: customer, project, user, ticket, or year+month
+    const response = await page.request.get('/interpretation/entries?user=1');
 
     // Should return OK status
     expect(response.ok()).toBe(true);

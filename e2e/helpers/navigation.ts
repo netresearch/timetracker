@@ -69,7 +69,7 @@ export async function goToSettingsTab(page: Page): Promise<void> {
  * Get the currently active tab
  */
 export async function getActiveTab(page: Page): Promise<string | null> {
-  const activeTab = page.locator('.x-tab.x-tab-active, .x-tab-active');
+  const activeTab = page.locator('.x-tab.x-tab-active, .x-tab-active').first();
   return await activeTab.textContent();
 }
 
@@ -77,7 +77,7 @@ export async function getActiveTab(page: Page): Promise<string | null> {
  * Check if a specific tab is visible (user has access)
  */
 export async function isTabVisible(page: Page, tabName: RegExp | string): Promise<boolean> {
-  const tab = page.locator('.x-tab, button').filter({ hasText: tabName });
+  const tab = page.locator('.x-tab, button').filter({ hasText: tabName }).first();
   return await tab.isVisible();
 }
 

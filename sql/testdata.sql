@@ -94,13 +94,15 @@ INSERT INTO `presets` (`id`, `name`, `customer_id`, `project_id`, `activity_id`,
 
 
 --
--- activity entries for first user for today
+-- activity entries for first user
+-- Using fixed date 2024-01-15 (Monday) for deterministic E2E tests
+-- Server and browser time should be frozen to this date via APP_FROZEN_TIME
 --
 INSERT INTO `entries` (`id`, `day`, `start`, `end`, `customer_id`, `project_id`, `account_id`, `activity_id`, `ticket`, `worklog_id`, `description`, `duration`, `user_id`, `class`, `synced_to_ticketsystem`, `internal_jira_ticket_original_key`) VALUES
-(1,    CURDATE(),  '08:00:00',   '08:50:00',     3,             1,            NULL,         3,             'SA-1',   NULL,         'Angriff auf Google',      50,        1,       1,                        0,                                   ''),
-(2,    CURDATE(),  '09:00:00',   '10:00:00',     3,             1,            NULL,         3,             'SA-2',   NULL,         'Angriff auf die NSA',     60,        1,       1,                        0,                                   ''),
-(3,    CURDATE(),  '07:30:00',   '08:00:00',     1,             2,            NULL,         2,             'LK-12',  NULL,         'Lebkuchen kneten und in den Ofen schieben',   30,                       1,                                   2,  0,      ''),
-(4,    CURDATE(),  '08:50:00',   '09:00:00',     1,             2,            NULL,         2,             'LK-12',  NULL,         'Lebkuchen aus dem Ofen holen',   10,          1,                        1,                                   0,  ''),
-(5,    CURDATE(),  '10:00:00',   '10:30:00',     2,             4,            NULL,         4,             '',       NULL,         'Powernap',    30, 1,   1,        0,           ''),
-(6,    CURDATE(),  '10:30:00',   '12:00:00',     1,             5,            NULL,         2,             'BS-40',  NULL,         'Kuchenboden kneten',   90,       1,           1, 0,      ''),
-(7,    CURDATE(),  '12:30:00',   '15:10:00',     3,             7,            NULL,         3,             'PHR-23', NULL,         'Captain Crunch tracken',         160,         1, 4,      0,      '');
+(1,    '2024-01-15',  '08:00:00',   '08:50:00',     3,             1,            NULL,         3,             'SA-1',   NULL,         'Angriff auf Google',      50,        1,       1,                        0,                                   ''),
+(2,    '2024-01-15',  '09:00:00',   '10:00:00',     3,             1,            NULL,         3,             'SA-2',   NULL,         'Angriff auf die NSA',     60,        1,       1,                        0,                                   ''),
+(3,    '2024-01-15',  '07:30:00',   '08:00:00',     1,             2,            NULL,         2,             'LK-12',  NULL,         'Lebkuchen kneten und in den Ofen schieben',   30,                       1,                                   2,  0,      ''),
+(4,    '2024-01-15',  '08:50:00',   '09:00:00',     1,             2,            NULL,         2,             'LK-12',  NULL,         'Lebkuchen aus dem Ofen holen',   10,          1,                        1,                                   0,  ''),
+(5,    '2024-01-15',  '10:00:00',   '10:30:00',     2,             4,            NULL,         4,             '',       NULL,         'Powernap',    30, 1,   1,        0,           ''),
+(6,    '2024-01-15',  '10:30:00',   '12:00:00',     1,             5,            NULL,         2,             'BS-40',  NULL,         'Kuchenboden kneten',   90,       1,           1, 0,      ''),
+(7,    '2024-01-15',  '12:30:00',   '15:10:00',     3,             7,            NULL,         3,             'PHR-23', NULL,         'Captain Crunch tracken',         160,         1, 4,      0,      '');

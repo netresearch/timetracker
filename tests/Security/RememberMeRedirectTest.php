@@ -72,7 +72,8 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         }
 
         // Create a RememberMeToken (not fully authenticated)
-        $token = new RememberMeToken($user, 'main', 'test-secret');
+        // Symfony 8: RememberMeToken only takes 2 parameters - $user and $firewallName
+        $token = new RememberMeToken($user, 'main');
 
         // Set the token in the security context via session
         if (null === $this->serviceContainer) {

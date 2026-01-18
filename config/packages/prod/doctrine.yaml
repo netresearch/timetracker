@@ -1,6 +1,7 @@
 doctrine:
     orm:
-        auto_generate_proxy_classes: false
+        # In Doctrine ORM 3.x, proxy classes are lazy ghosts generated automatically
+        # auto_generate_proxy_classes is no longer a valid option
         metadata_cache_driver:
             type: pool
             pool: doctrine.system_cache_pool

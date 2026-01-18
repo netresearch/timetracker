@@ -47,8 +47,7 @@ We will use **Doctrine ORM 3.x** as the primary data access layer with **strateg
 # config/packages/doctrine.yaml
 doctrine:
     orm:
-        enable_lazy_ghost_objects: true  # PHP 8.4 optimization
-        auto_generate_proxy_classes: false  # Production performance
+        # Doctrine ORM 3.x uses lazy ghost objects automatically
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         query_cache_driver:
             type: pool

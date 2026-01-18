@@ -20,7 +20,7 @@ use App\Repository\ProjectRepository;
 use App\Response\Error;
 use BadMethodCallException;
 use DateTime;
-use Exception;
+use DateTimeInterface;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -130,31 +130,29 @@ final class SaveEntryAction extends BaseTrackingController
         $entry->setActivity($activity);
         $entry->setClass(EntryClass::DAYBREAK);
 
-        try {
-            if ('' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
-                $dayDate = new DateTime($entrySaveDto->date);
-                $entry->setDay($dayDate);
-            }
-        } catch (Exception) {
+        // Use DTO methods for date/time parsing (supports multiple formats)
+        $dayDate = $entrySaveDto->getDateAsDateTime();
+        if (!$dayDate instanceof DateTimeInterface && '' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
             return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
-
-        try {
-            if ('' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
-                $startTime = new DateTime($entrySaveDto->start);
-                $entry->setStart($startTime);
-            }
-        } catch (Exception) {
-            return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
+        if ($dayDate instanceof DateTimeInterface) {
+            $entry->setDay(DateTime::createFromInterface($dayDate));
         }
 
-        try {
-            if ('' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
-                $endTime = new DateTime($entrySaveDto->end);
-                $entry->setEnd($endTime);
-            }
-        } catch (Exception) {
+        $startTime = $entrySaveDto->getStartAsDateTime();
+        if (!$startTime instanceof DateTimeInterface && '' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
+            return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
+        }
+        if ($startTime instanceof DateTimeInterface) {
+            $entry->setStart(DateTime::createFromInterface($startTime));
+        }
+
+        $endTime = $entrySaveDto->getEndAsDateTime();
+        if (!$endTime instanceof DateTimeInterface && '' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
             return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
+        }
+        if ($endTime instanceof DateTimeInterface) {
+            $entry->setEnd(DateTime::createFromInterface($endTime));
         }
 
         if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
