@@ -78,7 +78,7 @@ services:
 
   # Production web server
   httpd:
-    image: nginx:alpine
+    image: nginx:1.28-alpine
     volumes:
       - app-pub:/var/www/html/public
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -93,7 +93,7 @@ services:
 
   # Development web server
   httpd-dev:
-    image: nginx:alpine
+    image: nginx:1.28-alpine
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf
@@ -108,7 +108,7 @@ services:
 
   # Production database
   db:
-    image: mariadb
+    image: mariadb:12.1
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${DB_USER:-timetracker}
@@ -128,7 +128,7 @@ services:
 
   # Test database (for unit/integration tests)
   db-test:
-    image: mariadb
+    image: mariadb:12.1
     environment:
       - MYSQL_ROOT_PASSWORD=${TEST_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${TEST_DB_USER:-unittest}
@@ -152,7 +152,7 @@ services:
 
   # Unit test database (for PHPUnit tests)
   db_unittest:
-    image: mariadb
+    image: mariadb:12.1
     environment:
       - MYSQL_ROOT_PASSWORD=${UNITTEST_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${UNITTEST_DB_USER:-unittest}
@@ -194,7 +194,7 @@ services:
 
   # E2E test web server (port 8766 to avoid conflict with dev)
   httpd-e2e:
-    image: nginx:alpine
+    image: nginx:1.28-alpine
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/e2e.conf:/etc/nginx/conf.d/default.conf
@@ -208,7 +208,7 @@ services:
 
   # Development LDAP server
   ldap-dev:
-    image: osixia/openldap:latest
+    image: osixia/openldap:1.5.0
     environment:
       - LDAP_ORGANISATION=Development Company
       - LDAP_DOMAIN=dev.local
