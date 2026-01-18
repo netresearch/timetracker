@@ -770,8 +770,8 @@ class EntryRepository extends ServiceEntityRepository
             ->orderBy('e.day', 'ASC')
             ->addOrderBy('e.start', 'ASC');
 
-        // Calculate date range
-        $today = new DateTime();
+        // Calculate date range using ClockInterface for testability
+        $today = DateTime::createFromImmutable($this->clock->today());
         $startDate = clone $today;
         $startDate->sub(new DateInterval('P' . $days . 'D'));
 
