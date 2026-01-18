@@ -13,6 +13,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
 use Exception;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
 use function assert;
@@ -22,6 +23,7 @@ use function assert;
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class SubticketSyncServiceTest extends TestCase
 {
     private function createService(

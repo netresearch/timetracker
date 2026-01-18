@@ -10,6 +10,7 @@ use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -31,6 +32,7 @@ interface JiraOAuthApiTestProxy
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class JiraOAuthApiTest extends TestCase
 {
     /**

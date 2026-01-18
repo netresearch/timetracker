@@ -14,6 +14,7 @@ use App\Enum\TicketSystemType;
 use App\Service\ExportService;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -35,6 +36,7 @@ use const STDERR;
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class ExportPerformanceTest extends TestCase
 {
     private Stopwatch $stopwatch;

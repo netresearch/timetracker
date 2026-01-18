@@ -6,6 +6,7 @@ namespace Tests\EventSubscriber;
 
 use App\Entity\User;
 use App\EventSubscriber\AccessDeniedSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -23,6 +24,7 @@ use Throwable;
  *
  * @covers \App\EventSubscriber\AccessDeniedSubscriber
  */
+#[AllowMockObjectsWithoutExpectations]
 final class AccessDeniedSubscriberTest extends TestCase
 {
     private MockObject&Security $security;

@@ -7,6 +7,7 @@ namespace Tests\Security;
 use App\Security\LdapAuthenticator;
 use App\Service\Ldap\LdapClientService;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -19,6 +20,7 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class LdapAuthenticatorTest extends TestCase
 {
     private function makeSubject(?ParameterBagInterface $parameterBag = null): LdapAuthenticator

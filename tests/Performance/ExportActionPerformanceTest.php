@@ -12,6 +12,7 @@ use App\Entity\Project;
 use App\Entity\User;
 use App\Service\ExportService;
 use DateTime;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
@@ -38,6 +39,7 @@ use const STDERR;
  *
  * @coversNothing
  */
+#[AllowMockObjectsWithoutExpectations]
 final class ExportActionPerformanceTest extends TestCase
 {
     private Stopwatch $stopwatch;
