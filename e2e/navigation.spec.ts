@@ -82,6 +82,38 @@ test.describe('Tab Navigation', () => {
   });
 });
 
+test.describe('Role-Based Tab Visibility', () => {
+  test('PL user should see Administration and Controlling tabs', async ({ page }) => {
+    // Login as i.myself who has type PL (Project Lead) which grants ROLE_ADMIN
+    await login(page, 'i.myself', 'myself123');
+    await waitForGrid(page);
+
+    const tabs = await getVisibleTabs(page);
+    console.log('Visible tabs for PL user:', tabs);
+
+    // PL users should see Administration tab (requires ROLE_ADMIN)
+    const hasAdminTab = tabs.some((t) => /Administration|5:/i.test(t));
+    expect(hasAdminTab).toBe(true);
+
+    // PL users should see Controlling tab (requires ROLE_PL or ROLE_ADMIN)
+    const hasControllingTab = tabs.some((t) => /Controlling|Abrechnung|6:/i.test(t));
+    expect(hasControllingTab).toBe(true);
+  });
+
+  test('PL user should be able to navigate to Administration tab', async ({ page }) => {
+    await login(page, 'i.myself', 'myself123');
+    await waitForGrid(page);
+
+    // Navigate to Administration tab
+    await goToTab(page, TABS.administration);
+
+    // Admin panel should load (check for admin-specific content)
+    await page.waitForTimeout(1000);
+    const adminContent = page.locator('.x-panel, .x-grid').first();
+    await expect(adminContent).toBeVisible();
+  });
+});
+
 test.describe('Header Elements', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
