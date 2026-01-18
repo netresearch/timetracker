@@ -25,6 +25,12 @@ test.describe('Controlling Export', () => {
     // Verify we're on the controlling tab - look for the export form header
     await expect(page.locator('.x-panel-header-text').filter({ hasText: 'Monats-Abrechnung' })).toBeVisible({ timeout: 5000 });
 
+    // Hide Symfony debug toolbar if present (can block clicks)
+    await page.evaluate(() => {
+      const toolbar = document.querySelector('.sf-toolbar');
+      if (toolbar) (toolbar as HTMLElement).style.display = 'none';
+    });
+
     // User, Project, Customer dropdowns are empty by default = "all"
     // Month defaults to current month, Year to current year (2026)
     // Test data now includes entries for January 2026
