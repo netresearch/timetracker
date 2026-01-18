@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { waitForGrid } from './helpers/grid';
+import { displayDateToIso } from './helpers/date';
 
 /**
  * E2E tests for error handling and notifications.
@@ -50,12 +51,13 @@ test.describe('API Error Handling', () => {
     if (entries.length === 0) return;
 
     const template = entries[0].entry;
+    const isoDate = displayDateToIso(template.date);
 
     // Try to save with end before start (invalid)
     const response = await page.request.post('/tracking/save', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        date: template.date,
+        date: isoDate,
         start: '18:00',
         end: '08:00', // End before start
         customer: template.customer,
@@ -81,12 +83,13 @@ test.describe('API Error Handling', () => {
     if (entries.length === 0) return;
 
     const template = entries[0].entry;
+    const isoDate = displayDateToIso(template.date);
 
     // Try to create an entry that overlaps with existing
     const response = await page.request.post('/tracking/save', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        date: template.date,
+        date: isoDate,
         start: template.start, // Same start time as existing
         end: template.end,
         customer: template.customer,
@@ -196,12 +199,13 @@ test.describe('Success Notifications', () => {
     if (entries.length === 0) return;
 
     const template = entries[0].entry;
+    const isoDate = displayDateToIso(template.date);
 
     // Create a test entry to delete
     const createResponse = await page.request.post('/tracking/save', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        date: template.date,
+        date: isoDate,
         start: '07:00',
         end: '07:30',
         customer: template.customer,
@@ -322,7 +326,7 @@ test.describe('Session Handling', () => {
         'X-Requested-With': 'XMLHttpRequest',
       },
       data: {
-        date: '14/01/2026',
+        date: '2026-01-14', // ISO format
         start: '09:00',
         end: '10:00',
         customer: 1,

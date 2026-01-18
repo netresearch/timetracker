@@ -1,14 +1,22 @@
 import { test, expect } from '@playwright/test';
+import { installFrozenClock, E2E_FROZEN_DATE } from './helpers/clock';
 
 /**
  * E2E tests for entry visibility and data display.
  *
  * These tests verify that time entries are properly loaded and displayed
  * in the ExtJS grid after login.
+ *
+ * Note: Uses frozen clock to ensure browser time matches server time (2024-01-15)
+ * so that test entries created for that date are visible in the "last 3 days" grid.
  */
 
-// Helper to login
-async function login(page: import('@playwright/test').Page, username: string, password: string) {
+// Helper to login with frozen clock
+async function loginWithFrozenClock(page: import('@playwright/test').Page, username: string, password: string) {
+  // Install frozen clock BEFORE any navigation
+  // This ensures new Date() calls return the frozen time
+  await installFrozenClock(page, E2E_FROZEN_DATE);
+
   await page.goto('/login');
   await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
   await page.locator('input[name="_username"]').fill(username);
@@ -21,7 +29,7 @@ test.describe('Entry Visibility', () => {
   test.beforeEach(async ({ page }) => {
     // Login as developer user
     // Use 'i.myself' who has test entries in the database
-    await login(page, 'i.myself', 'myself123');
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
   });
 
   test('should load and display entries in the grid', async ({ page }) => {
@@ -143,7 +151,7 @@ test.describe('Entry Visibility', () => {
 test.describe('Entry Grid Data Verification', () => {
   test('entries should be visible in Zeiterfassung tab', async ({ page }) => {
     // Use 'i.myself' who has test entries in the database
-    await login(page, 'i.myself', 'myself123');
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
 
     // Wait for main app to load
     await page.waitForSelector('.x-grid', { timeout: 15000 });
@@ -184,7 +192,7 @@ test.describe('Entry Grid Data Verification', () => {
 test.describe('Duration Format Regression', () => {
   test.beforeEach(async ({ page }) => {
     // Use 'i.myself' who has test entries in the database
-    await login(page, 'i.myself', 'myself123');
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
   });
 
   test('API /getData should return duration as formatted string H:i', async ({ page }) => {
