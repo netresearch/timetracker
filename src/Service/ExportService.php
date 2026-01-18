@@ -249,16 +249,18 @@ class ExportService
             }
 
             $ticketSystemId = $ticketSystem->getId();
-            if (!isset($entriesByTicketSystem[$ticketSystemId])) {
-                $entriesByTicketSystem[$ticketSystemId] = [
+            // PHP 8.5 deprecates null as array offset, convert to empty string
+            $key = $ticketSystemId ?? '';
+            if (!isset($entriesByTicketSystem[$key])) {
+                $entriesByTicketSystem[$key] = [
                     'ticketSystem' => $ticketSystem,
                     'entries' => [],
                     'tickets' => [],
                 ];
             }
 
-            $entriesByTicketSystem[$ticketSystemId]['entries'][] = $entry;
-            $entriesByTicketSystem[$ticketSystemId]['tickets'][] = $entry->getTicket();
+            $entriesByTicketSystem[$key]['entries'][] = $entry;
+            $entriesByTicketSystem[$key]['tickets'][] = $entry->getTicket();
         }
 
         // Get user for API calls
