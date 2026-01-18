@@ -99,8 +99,10 @@ COPY . /var/www/html
 RUN npm install --legacy-peer-deps
 
 # install the composer packages
+# --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
+# See: https://github.com/laminas/laminas-ldap/issues/62
 WORKDIR /var/www/html
-RUN composer install --no-dev --no-ansi
+RUN composer install --no-dev --no-ansi --ignore-platform-req=php
 # should happen in entrypoint
 #RUN composer dump-env prod
 
@@ -113,7 +115,7 @@ FROM app_builder AS assets_builder
 
 # Skip CaptainHook in Docker build (no .git directory)
 ENV CAPTAINHOOK_DISABLE=true
-RUN composer install --no-ansi
+RUN composer install --no-ansi --ignore-platform-req=php
 
 # Build webpack assets
 RUN npm run build
