@@ -26,7 +26,7 @@ jobs:
           if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
 
       - name: Build tools image
-        run: docker bake app-tools
+        run: docker buildx bake app-tools --load
 
       - name: Install dependencies
         env:
@@ -96,7 +96,7 @@ jobs:
           sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
 
       - name: Build development image
-        run: docker bake app-dev
+        run: docker buildx bake app-dev --load
 
       - name: Set up development environment
         env:
