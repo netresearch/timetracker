@@ -162,7 +162,7 @@ services:
   # E2E test app service (build with: docker bake app-e2e)
   # Uses main db with test environment
   app-e2e:
-    image: ghcr.io/netresearch/timetracker:dev
+    image: ghcr.io/netresearch/timetracker:e2e
     environment:
       - APP_ENV=test
       - APP_DEBUG=1

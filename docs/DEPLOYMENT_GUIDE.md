@@ -331,7 +331,7 @@ docker --version
 
 # Build and test image
 echo "🏗️ Building production image..."
-TAG=${IMAGE_TAG} docker bake app
+TAG=${IMAGE_TAG:?IMAGE_TAG must be set} docker bake app
 
 # Run security scan
 echo "🔒 Running security scan..."

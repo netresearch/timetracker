@@ -194,10 +194,8 @@ COPY --from=deps --chown=app:app /var/www/html/var /var/www/html/var
 # Copy healthcheck script
 COPY --chmod=755 docker/php/healthcheck.sh /usr/local/bin/healthcheck
 
-# Custom entrypoint with CA certificates update
-RUN echo '#!/bin/sh\nset -e\n/usr/sbin/update-ca-certificates 2>/dev/null || true\nexec "$@"' \
-    > /usr/local/bin/docker-php-entrypoint \
-    && chmod +x /usr/local/bin/docker-php-entrypoint
+# Update CA certificates during build (requires root, done before USER switch)
+RUN update-ca-certificates 2>/dev/null || true
 
 ENV APP_ENV=prod
 ENV APP_DEBUG=0

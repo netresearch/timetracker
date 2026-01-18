@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build bake bake-dev bake-tools bake-all logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-up e2e-down e2e-run e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
+.PHONY: help up down restart build bake bake-dev bake-tools bake-e2e bake-all logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-up e2e-down e2e-run e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -70,7 +70,7 @@ tools-down:
 restart: down up
 
 # Docker Bake targets (recommended for image builds)
-# Bake merges compose.yml + docker-bake.hcl for unified configuration
+# docker-bake.hcl is the single source of truth for builds; compose.yml handles runtime only
 bake:
 	@echo "Building production image with docker bake..."
 	docker bake app
@@ -82,6 +82,10 @@ bake-dev:
 bake-tools:
 	@echo "Building tools image with docker bake..."
 	docker bake app-tools
+
+bake-e2e:
+	@echo "Building E2E test image with docker bake..."
+	docker bake app-e2e
 
 bake-all:
 	@echo "Building all images with docker bake..."
@@ -171,7 +175,7 @@ test-parallel-all: prepare-test-sql
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
 
 # E2E test infrastructure
-e2e-up: bake-dev
+e2e-up: bake-e2e
 	@echo "Starting E2E test stack (app-e2e, httpd-e2e, db, ldap-dev)..."
 	@if [ ! -f .env.test.local ]; then \
 		echo "Creating .env.test.local from template..."; \
