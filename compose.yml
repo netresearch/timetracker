@@ -115,7 +115,6 @@ services:
       - dev
       - development
       - test
-      - e2e
 
   # Test database (for unit/integration tests)
   db-test:
@@ -159,8 +158,30 @@ services:
       - development
       - test
 
+  # E2E test database (separate from dev to avoid data conflicts)
+  db-e2e:
+    image: mariadb:12.1
+    environment:
+      - MYSQL_ROOT_PASSWORD=${E2E_DB_ROOT_PASSWORD:-global123}
+      - MYSQL_USER=${E2E_DB_USER:-timetracker}
+      - MYSQL_PASSWORD=${E2E_DB_PASSWORD:-timetracker}
+      - MYSQL_DATABASE=${E2E_DB_NAME:-timetracker}
+    volumes:
+      - db-e2e-data:/var/lib/mysql
+      - ./sql/full.sql:/docker-entrypoint-initdb.d/001_full.sql
+      - ./sql/testdata.sql:/docker-entrypoint-initdb.d/002_testdata.sql
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    profiles:
+      - e2e
+
   # E2E test app service (build with: docker bake app-e2e)
-  # Uses main db with test environment
+  # Uses separate db-e2e to avoid conflicts with dev database
   app-e2e:
     image: ghcr.io/netresearch/timetracker:e2e
     environment:
@@ -170,13 +191,15 @@ services:
       - TRUSTED_PROXY_LIST
       # Frozen time for deterministic E2E tests - matches test data in sql/testdata.sql
       - APP_FROZEN_TIME=2024-01-15 12:00:00
+      # Use separate E2E database to avoid conflicts with dev
+      - DATABASE_URL=mysql://timetracker:timetracker@db-e2e:3306/timetracker?serverVersion=mariadb-12.1.0&charset=utf8mb4
     volumes:
       - .:/var/www/html
       - ./public:/var/www/html/public
       - ./var/cache:/var/www/html/var/cache
       - ./var/log:/var/www/html/var/log
     depends_on:
-      - db
+      - db-e2e
       - ldap-dev
     restart: "no"
     profiles:
@@ -246,7 +269,11 @@ volumes:
   # Unit test volume
   db-unittest-data:
     driver: local
-  
+
+  # E2E test volume (separate from dev)
+  db-e2e-data:
+    driver: local
+
   # Development LDAP volumes
   ldap-dev-data:
     driver: local
