@@ -132,7 +132,7 @@ final class SaveEntryAction extends BaseTrackingController
 
         // Use DTO methods for date/time parsing (supports multiple formats)
         $dayDate = $entrySaveDto->getDateAsDateTime();
-        if (null === $dayDate && '' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
+        if (!$dayDate instanceof DateTimeInterface && '' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
             return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
         if ($dayDate instanceof DateTimeInterface) {
@@ -140,7 +140,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $startTime = $entrySaveDto->getStartAsDateTime();
-        if (null === $startTime && '' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
+        if (!$startTime instanceof DateTimeInterface && '' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
             return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
         if ($startTime instanceof DateTimeInterface) {
@@ -148,7 +148,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $endTime = $entrySaveDto->getEndAsDateTime();
-        if (null === $endTime && '' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
+        if (!$endTime instanceof DateTimeInterface && '' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
             return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
         if ($endTime instanceof DateTimeInterface) {

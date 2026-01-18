@@ -15,7 +15,7 @@ use function sprintf;
  * Used for testing to make time-dependent code deterministic.
  * Configure via APP_FROZEN_TIME environment variable (format: Y-m-d H:i:s or Y-m-d).
  */
-final class FrozenClock implements ClockInterface
+final readonly class FrozenClock implements ClockInterface
 {
     private DateTimeImmutable $frozenTime;
 

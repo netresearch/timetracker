@@ -33,6 +33,6 @@ final class StatusPageAction extends BaseController
             </html>
             HTML;
 
-        return new Response($html, 200, ['Content-Type' => 'text/html']);
+        return new Response($html, Response::HTTP_OK, ['Content-Type' => 'text/html']);
     }
 }
