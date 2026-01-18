@@ -20,7 +20,8 @@ async function login(page: import('@playwright/test').Page, username: string, pa
 test.describe('Entry Visibility', () => {
   test.beforeEach(async ({ page }) => {
     // Login as developer user
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
   });
 
   test('should load and display entries in the grid', async ({ page }) => {
@@ -141,7 +142,8 @@ test.describe('Entry Visibility', () => {
 
 test.describe('Entry Grid Data Verification', () => {
   test('entries should be visible in Zeiterfassung tab', async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
 
     // Wait for main app to load
     await page.waitForSelector('.x-grid', { timeout: 15000 });
@@ -181,7 +183,8 @@ test.describe('Entry Grid Data Verification', () => {
  */
 test.describe('Duration Format Regression', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
   });
 
   test('API /getData should return duration as formatted string H:i', async ({ page }) => {

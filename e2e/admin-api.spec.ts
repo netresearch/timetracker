@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from './helpers/auth';
+import { login, TEST_USERS } from './helpers/auth';
 
 /**
  * E2E tests for Admin API endpoints.
@@ -13,7 +13,8 @@ import { login } from './helpers/auth';
  * - Presets
  * - Ticket Systems
  *
- * Note: These tests require appropriate permissions (PL role for most admin operations).
+ * Note: These tests require ROLE_ADMIN (PL or ADMIN user type).
+ * We use 'i.myself' who exists in both LDAP and database with type 'PL'.
  * The API returns data wrapped in entity keys: { customer: {...} }, { project: {...} }, etc.
  */
 
@@ -27,7 +28,8 @@ function unwrapEntity<T>(item: T | { [key: string]: T }, key: string): T {
 
 test.describe('Customer API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getAllCustomers should return customer list', async ({ page }) => {
@@ -113,7 +115,8 @@ test.describe('Customer API', () => {
 
 test.describe('Project API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getAllProjects should return all projects', async ({ page }) => {
@@ -161,7 +164,8 @@ test.describe('Project API', () => {
 
 test.describe('Activity API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getActivities should return activity list', async ({ page }) => {
@@ -212,7 +216,8 @@ test.describe('Activity API', () => {
 
 test.describe('User API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getAllUsers should return user list', async ({ page }) => {
@@ -243,7 +248,8 @@ test.describe('User API', () => {
 
 test.describe('Team API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getTeams should return team list', async ({ page }) => {
@@ -278,7 +284,8 @@ test.describe('Team API', () => {
 
 test.describe('Preset API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getPresets should return preset list', async ({ page }) => {
@@ -300,7 +307,8 @@ test.describe('Preset API', () => {
 
 test.describe('Ticket System API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getTicketSystems should return ticket system list', async ({ page }) => {
@@ -322,7 +330,8 @@ test.describe('Ticket System API', () => {
 
 test.describe('Contract API', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('GET /getContracts should return contract list', async ({ page }) => {
@@ -342,7 +351,8 @@ test.describe('Contract API', () => {
 
 test.describe('Data Integrity', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    // Use 'i.myself' who has ROLE_ADMIN (type PL in database)
+    await login(page, TEST_USERS.myself.username, TEST_USERS.myself.password);
   });
 
   test('Customer-Project relationship should be consistent', async ({ page }) => {

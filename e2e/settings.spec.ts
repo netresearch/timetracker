@@ -92,7 +92,8 @@ async function saveSettings(page: import('@playwright/test').Page) {
 
 test.describe('Settings Tab', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await login(page, 'i.myself', 'myself123');
   });
 
   test('should display settings form', async ({ page }) => {
@@ -159,7 +160,8 @@ test.describe('Settings Tab', () => {
 
 test.describe('Settings Effectiveness', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await login(page, 'i.myself', 'myself123');
   });
 
   test('suggest_time should pre-fill start time when enabled', async ({ page }) => {
@@ -255,7 +257,8 @@ test.describe('Settings Effectiveness', () => {
 
 test.describe('Settings API', () => {
   test('settings API should return correct format', async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await login(page, 'i.myself', 'myself123');
 
     // Use API endpoint to get settings
     const response = await page.request.get('/settings/get');
@@ -286,7 +289,8 @@ test.describe('Settings API', () => {
   });
 
   test('save settings API should update settings', async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has a stable database record
+    await login(page, 'i.myself', 'myself123');
 
     // Navigate to settings and get initial values from form
     await goToSettingsTab(page);

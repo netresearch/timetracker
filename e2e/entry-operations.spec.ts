@@ -63,7 +63,8 @@ async function selectFromCombo(page: import('@playwright/test').Page, searchText
 
 test.describe('Entry Creation', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
     await waitForGrid(page);
   });
 
@@ -186,7 +187,8 @@ test.describe('Entry Creation', () => {
 
 test.describe('Entry Editing', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
     await waitForGrid(page);
   });
 
@@ -275,7 +277,8 @@ test.describe('Entry Editing', () => {
 
 test.describe('Entry Display', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
     await waitForGrid(page);
   });
 
@@ -320,7 +323,8 @@ test.describe('Entry Display', () => {
 
 test.describe('Entry API Format', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
   });
 
   test('/getData should return entries with correct format', async ({ page }) => {
@@ -455,7 +459,8 @@ test.describe('Entry API Format', () => {
 
 test.describe('Entry Deletion', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page, 'developer', 'dev123');
+    // Use 'i.myself' who has test entries in the database
+    await login(page, 'i.myself', 'myself123');
     await waitForGrid(page);
   });
 
