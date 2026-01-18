@@ -45,7 +45,7 @@
     "guzzlehttp/guzzle": "^7.9",
     "guzzlehttp/oauth-subscriber": "^0.8.1",
     "laminas/laminas-ldap": "^2.19",
-    "phpoffice/phpspreadsheet": "^1.4",
+    "phpoffice/phpspreadsheet": "^5.0",
     "phpstan/phpdoc-parser": "^2.2",
     "sentry/sentry-symfony": "^5.3",
     "symfony/asset": "^8.0",
