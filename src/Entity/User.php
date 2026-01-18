@@ -296,7 +296,7 @@ class User implements UserInterface
      * Returns user settings for API responses.
      * Note: Boolean settings are returned as integers (0/1) for frontend compatibility.
      *
-     * @return array{show_empty_line: int, suggest_time: int, show_future: int, user_name: string, type: string, locale: string}
+     * @return array{show_empty_line: int, suggest_time: int, show_future: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>}
      */
     public function getSettings(): array
     {
@@ -305,8 +305,10 @@ class User implements UserInterface
             'suggest_time' => (int) $this->getSuggestTime(),
             'show_future' => (int) $this->getShowFuture(),
             'user_name' => $this->getUsername() ?? '',
+            'user_id' => $this->getId() ?? 0,
             'type' => $this->getType()->value,
             'locale' => new LocalizationService()->normalizeLocale($this->getLocale()),
+            'roles' => $this->getRoles(),
         ];
     }
 
