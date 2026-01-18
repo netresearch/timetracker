@@ -1,23 +1,64 @@
+# IDE/Editor
 .idea
 .buildpath
 .project
 .settings
-/.vscode
-/.github
-/.git
-/vendor
-/node_modules
-/.env.local
-/.env.local.php
-/.env.*.local
-/npm-debug.log*
-/coverage
-/public/bundles
-/public/uploads
-/sql/unittest/*
-/tests
-/config/ldap_ou_team_mapping.yml
+.vscode
+
+# Git
+.git
+.gitattributes
+.gitignore
+
+# GitHub
+.github
+
+# Dependencies (reinstalled in build)
+vendor
+node_modules
+
+# Environment files
+.env.local
+.env.local.php
+.env.*.local
+.env.test.local
+
+# Logs and caches
+npm-debug.log*
+var/cache
+var/log
+var/coverage*
+
+# Build artifacts
+coverage
+public/bundles
+public/uploads
+public/build
+
+# Test files
+tests
+e2e
+playwright-report
+test-results
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Config (sensitive)
+config/ldap_ou_team_mapping.yml
+
+# SQL test data
+sql/unittest
+
+# Misc
 core
-/bin/*
-!/bin/console
 .chunkhound*
+Makefile
+docker-compose*.yml
+compose*.yml
+
+# Keep only console binary
+bin/*
+!bin/console
