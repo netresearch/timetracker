@@ -104,9 +104,9 @@ services:
         tags:
             - { name: kernel.event_subscriber }
 
-    # Add this: Configure ClockInterface and SystemClock
+    # Clock service - uses FrozenClock if APP_FROZEN_TIME is set (for E2E tests)
     App\Service\ClockInterface:
-        alias: App\Service\SystemClock
+        factory: ['App\Service\ClockFactory', 'create']
 
     # Query Cache Service configuration
     App\Service\Cache\QueryCacheService:
