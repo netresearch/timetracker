@@ -35,9 +35,10 @@ jobs:
           # Create directories with proper permissions for non-root container user
           mkdir -p vendor var/cache var/log bin
           chmod -R 777 vendor var bin
-          # --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
-          # See: https://github.com/laminas/laminas-ldap/issues/62
-          docker compose run --rm app-tools composer install --no-interaction --prefer-dist --ignore-platform-req=php
+          # --ignore-platform-req needed for:
+          # - php: laminas-ldap PHP 8.5 support (https://github.com/laminas/laminas-ldap/issues/62)
+          # - ext-gd: PHPSpreadsheet requires GD but we only use data export
+          docker compose run --rm app-tools composer install --no-interaction --prefer-dist --ignore-platform-req=php --ignore-platform-req=ext-gd
 
       - name: Validate composer.json
         env:
@@ -106,7 +107,7 @@ jobs:
           COMPOSE_PROFILES: dev
         run: |
           # Image already built by bake - just install deps and start services
-          docker compose run --rm app-dev composer install --ignore-platform-req=php
+          docker compose run --rm app-dev composer install --ignore-platform-req=php --ignore-platform-req=ext-gd
           docker compose run --rm app-dev npm install --legacy-peer-deps
           docker compose up -d
           docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60

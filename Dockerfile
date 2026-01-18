@@ -28,27 +28,25 @@ FROM ${COMPOSER_IMAGE} AS composer
 FROM ${PHP_BASE_IMAGE} AS base
 
 # Install system dependencies and PHP extensions in single layer
+# Note: GD intentionally omitted - PHPSpreadsheet requires it but we only use data export (no charts/images)
+# PHPSpreadsheet decided to keep GD required: https://github.com/PHPOffice/PhpSpreadsheet/pull/3766
+# We use --ignore-platform-req=ext-gd in composer install commands
 RUN set -ex \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         libzip-dev \
-        libpng-dev \
         libxml2-dev \
         libldap2-dev \
-        libjpeg62-turbo-dev \
-        libfreetype6-dev \
         libicu-dev \
         unzip \
         zlib1g-dev \
-    && docker-php-ext-configure gd --with-jpeg --with-freetype \
     && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ \
     && docker-php-ext-install \
         pdo_mysql \
         ldap \
         zip \
         xml \
-        gd \
         intl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -102,9 +100,10 @@ RUN npm ci --legacy-peer-deps
 
 COPY --chown=app:app composer.json composer.lock symfony.lock ./
 
-# --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
-# See: https://github.com/laminas/laminas-ldap/issues/62
-RUN composer install --no-dev --no-scripts --no-autoloader --ignore-platform-req=php
+# --ignore-platform-req needed for:
+# - php: laminas-ldap PHP 8.5 support (https://github.com/laminas/laminas-ldap/issues/62)
+# - ext-gd: PHPSpreadsheet requires GD but we only use data export, not charts/images
+RUN composer install --no-dev --no-scripts --no-autoloader --ignore-platform-req=php --ignore-platform-req=ext-gd
 
 # Copy application code
 COPY --chown=app:app . .
@@ -129,7 +128,7 @@ FROM deps AS tools
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 # Install dev dependencies for static analysis
-RUN composer install --ignore-platform-req=php
+RUN composer install --ignore-platform-req=php --ignore-platform-req=ext-gd
 
 USER app
 
@@ -167,7 +166,7 @@ RUN curl -sS https://get.symfony.com/cli/installer | bash \
     && echo 'source /etc/bash_completion.d/symfony' >> /etc/bash.bashrc
 
 # Install dev dependencies
-RUN composer install --ignore-platform-req=php
+RUN composer install --ignore-platform-req=php --ignore-platform-req=ext-gd
 
 RUN git config --global --add safe.directory '*'
 

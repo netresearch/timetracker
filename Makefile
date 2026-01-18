@@ -103,9 +103,10 @@ sh:
 install: composer-install npm-install
 
 composer-install:
-	# --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
-	# See: https://github.com/laminas/laminas-ldap/issues/62
-	docker compose run --rm app-dev composer install --ignore-platform-req=php
+	# --ignore-platform-req needed for:
+	# - php: laminas-ldap PHP 8.5 support (https://github.com/laminas/laminas-ldap/issues/62)
+	# - ext-gd: PHPSpreadsheet requires GD but we only use data export
+	docker compose run --rm app-dev composer install --ignore-platform-req=php --ignore-platform-req=ext-gd
 
 composer-update:
 	docker compose run --rm app-dev composer update
