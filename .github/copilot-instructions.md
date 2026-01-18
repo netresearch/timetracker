@@ -21,11 +21,10 @@ All commands should be run through Docker Compose:
 ### Setup
 ```bash
 cp .env .env.local
-docker compose up -d --build
-docker compose run --rm app composer install
-docker compose run --rm app npm install
-docker compose run --rm app bin/console doctrine:database:create --if-not-exists
-docker compose run --rm app bin/console doctrine:migrations:migrate -n
+docker bake app-dev           # Build development image
+docker compose up -d          # Start services
+docker compose run --rm app-dev bin/console doctrine:database:create --if-not-exists
+docker compose run --rm app-dev bin/console doctrine:migrations:migrate -n
 ```
 
 ### Testing

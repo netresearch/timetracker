@@ -169,12 +169,12 @@ php bin/console assets:install
 **Solution**:
 ```bash
 # Check container logs
-docker-compose logs -f app
-docker-compose logs -f database
+docker compose logs -f app
+docker compose logs -f database
 
 # Reset containers
-docker-compose down -v
-docker-compose up --build
+docker compose down -v
+docker bake app-dev && docker compose up -d
 
 # Check disk space
 df -h

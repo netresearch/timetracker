@@ -18,10 +18,10 @@ The Xdebug configuration is automatically applied when using the development con
 
 ```bash
 # Build development container with Xdebug
-docker-compose build app-dev
+docker bake app-dev
 
 # Start development environment
-COMPOSE_PROFILES=dev docker-compose up -d
+COMPOSE_PROFILES=dev docker compose up -d
 ```
 
 ### IDE Setup

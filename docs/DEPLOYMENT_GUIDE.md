@@ -328,11 +328,10 @@ echo "🚀 Starting deployment to ${DEPLOY_ENV} environment"
 # Pre-deployment checks
 echo "📋 Running pre-deployment checks..."
 docker --version
-docker-compose --version
 
 # Build and test image
 echo "🏗️ Building production image..."
-docker build -t timetracker:${IMAGE_TAG} --target production .
+TAG=${IMAGE_TAG} docker bake app
 
 # Run security scan
 echo "🔒 Running security scan..."
