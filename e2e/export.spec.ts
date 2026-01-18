@@ -26,8 +26,8 @@ test.describe('Controlling Export', () => {
     await expect(page.locator('.x-panel-header-text').filter({ hasText: 'Monats-Abrechnung' })).toBeVisible({ timeout: 5000 });
 
     // User, Project, Customer dropdowns are empty by default = "all"
-    // Month defaults to current month, Year to current year
-    // This is the key scenario - export with no specific filters
+    // Month defaults to current month, Year to current year (2026)
+    // Test data now includes entries for January 2026
 
     // Set up download listener before clicking export
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -50,11 +50,8 @@ test.describe('Controlling Export', () => {
     const stats = fs.statSync(downloadPath);
     console.log(`Export file size: ${stats.size} bytes`);
 
-    // The template is ~11KB. With data rows, it should be larger.
-    // Even with no entries, the file should be at least the template size
-    expect(stats.size).toBeGreaterThan(10000);
-
-    // Clean up
-    fs.unlinkSync(downloadPath);
+    // The template is ~11KB. With 5 data rows for January 2026, expect ~30KB
+    expect(stats.size).toBeGreaterThan(25000);
+    console.log('Export file size validates data is present (>25KB)');
   });
 });

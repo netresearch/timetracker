@@ -105,4 +105,10 @@ INSERT INTO `entries` (`id`, `day`, `start`, `end`, `customer_id`, `project_id`,
 (4,    '2024-01-15',  '08:50:00',   '09:00:00',     1,             2,            NULL,         2,             'LK-12',  NULL,         'Lebkuchen aus dem Ofen holen',   10,          1,                        1,                                   0,  ''),
 (5,    '2024-01-15',  '10:00:00',   '10:30:00',     2,             4,            NULL,         4,             '',       NULL,         'Powernap',    30, 1,   1,        0,           ''),
 (6,    '2024-01-15',  '10:30:00',   '12:00:00',     1,             5,            NULL,         2,             'BS-40',  NULL,         'Kuchenboden kneten',   90,       1,           1, 0,      ''),
-(7,    '2024-01-15',  '12:30:00',   '15:10:00',     3,             7,            NULL,         3,             'PHR-23', NULL,         'Captain Crunch tracken',         160,         1, 4,      0,      '');
+(7,    '2024-01-15',  '12:30:00',   '15:10:00',     3,             7,            NULL,         3,             'PHR-23', NULL,         'Captain Crunch tracken',         160,         1, 4,      0,      ''),
+-- Additional entries for January 2026 to test export with current year
+(8,    '2026-01-05',  '09:00:00',   '12:00:00',     1,             2,            NULL,         1,             'LK-50',  NULL,         'Lebkuchen für 2026',             180,         1, 1,      0,      ''),
+(9,    '2026-01-05',  '13:00:00',   '17:00:00',     3,             1,            NULL,         3,             'SA-100', NULL,         'Server hardening 2026',          240,         1, 1,      0,      ''),
+(10,   '2026-01-10',  '08:00:00',   '10:00:00',     1,             5,            NULL,         2,             'BS-99',  NULL,         'Neuer Bienenstich',              120,         1, 1,      0,      ''),
+(11,   '2026-01-10',  '10:30:00',   '12:30:00',     2,             4,            NULL,         4,             '',       NULL,         'Ausruhen',                       120,         1, 1,      0,      ''),
+(12,   '2026-01-15',  '09:00:00',   '11:00:00',     3,             7,            NULL,         3,             'PHR-50', NULL,         'Phreaking session',              120,         1, 1,      0,      '');
