@@ -132,7 +132,7 @@
     "perf:dashboard": "php tests/Performance/PerformanceDashboard.php var/performance-history.json var/performance-dashboard.html && echo 'Dashboard available at var/performance-dashboard.html'",
     "perf:full": "@perf:benchmark && @perf:dashboard",
     "security-check": "echo 'Running security check with Local PHP Security Checker'; curl -o security-checker.phar -s https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 && chmod +x security-checker.phar && ./security-checker.phar && rm security-checker.phar",
-    "twig:lint": "php bin/console lint:twig templates --show-deprecations",
+    "twig:lint": "XDEBUG_MODE=off php bin/console lint:twig templates --show-deprecations",
     "check:all": [
       "@analyze",
       "@analyze:arch",
