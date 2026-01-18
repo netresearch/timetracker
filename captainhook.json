@@ -10,6 +10,30 @@
         "enabled": true,
         "actions": [
             {
+                "action": "composer validate --no-check-publish",
+                "options": {
+                    "label": "Composer: Validate config"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\Any",
+                        "args": [["composer.json", "composer.lock"]]
+                    }
+                ]
+            },
+            {
+                "action": "composer audit --format=plain",
+                "options": {
+                    "label": "Composer: Security audit"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\Any",
+                        "args": [["composer.json", "composer.lock"]]
+                    }
+                ]
+            },
+            {
                 "action": "\\CaptainHook\\App\\Hook\\PHP\\Action\\Linting",
                 "options": {
                     "label": "PHP: Syntax check"

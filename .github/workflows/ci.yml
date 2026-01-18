@@ -33,12 +33,11 @@ jobs:
           # See: https://github.com/laminas/laminas-ldap/issues/62
           docker compose run --rm app-tools composer install --no-interaction --prefer-dist --ignore-platform-req=php
 
-      - name: Check platform requirements
+      - name: Validate composer.json
         env:
           COMPOSE_PROFILES: tools
         run: |
-          # Report platform requirement issues (non-blocking, for visibility)
-          docker compose run --rm app-tools composer check-platform-reqs || true
+          docker compose run --rm app-tools composer validate --no-check-publish
 
       - name: Composer audit (security)
         env:
