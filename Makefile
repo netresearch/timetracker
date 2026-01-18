@@ -77,7 +77,9 @@ sh:
 install: composer-install npm-install
 
 composer-install:
-	docker compose run --rm app-dev composer install
+	# --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
+	# See: https://github.com/laminas/laminas-ldap/issues/62
+	docker compose run --rm app-dev composer install --ignore-platform-req=php
 
 composer-update:
 	docker compose run --rm app-dev composer update
