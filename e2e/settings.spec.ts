@@ -69,7 +69,7 @@ async function setComboValue(page: import('@playwright/test').Page, name: string
 
   // Click on the desired option (Yes = 1, No = 0)
   const optionText = value === '1' ? /Yes|Ja/i : /No|Nein/i;
-  await page.locator('.x-boundlist-item').filter({ hasText: optionText }).click();
+  await page.locator('.x-boundlist-item').filter({ hasText: optionText }).first().click();
   await page.waitForTimeout(200);
 }
 
@@ -82,7 +82,7 @@ async function saveSettings(page: import('@playwright/test').Page) {
   });
 
   // Click save button
-  const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i });
+  const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i }).first();
   await saveButton.click();
 
   // Wait for success notification
@@ -169,12 +169,12 @@ test.describe('Settings Effectiveness', () => {
     await saveSettings(page);
 
     // Go to tracking tab
-    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i });
+    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i }).first();
     await trackingTab.click();
     await page.waitForSelector('.x-grid', { timeout: 10000 });
 
     // Add a new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
 
     // Wait for new row to be added
@@ -198,12 +198,12 @@ test.describe('Settings Effectiveness', () => {
     await saveSettings(page);
 
     // Go to tracking tab
-    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i });
+    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i }).first();
     await trackingTab.click();
     await page.waitForSelector('.x-grid', { timeout: 10000 });
 
     // Add a new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
 
     await page.waitForTimeout(500);
@@ -225,7 +225,7 @@ test.describe('Settings Effectiveness', () => {
     await saveSettings(page);
 
     // Go to tracking tab
-    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i });
+    const trackingTab = page.locator('.x-tab').filter({ hasText: /Time Tracking|Zeiterfassung/i }).first();
     await trackingTab.click();
     await page.waitForSelector('.x-grid', { timeout: 10000 });
 

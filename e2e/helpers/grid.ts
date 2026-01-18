@@ -35,7 +35,7 @@ export function getFirstRow(page: Page): Locator {
  * Click the Add button to create a new entry
  */
 export async function clickAddButton(page: Page): Promise<void> {
-  const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+  const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
   await addButton.click();
   await page.waitForTimeout(500);
 }
@@ -80,7 +80,7 @@ export async function openContextMenu(page: Page, rowIndex: number = 0): Promise
  * Click a context menu item
  */
 export async function clickContextMenuItem(page: Page, menuItemText: RegExp | string): Promise<void> {
-  const menuItem = page.locator('.x-menu-item').filter({ hasText: menuItemText });
+  const menuItem = page.locator('.x-menu-item').filter({ hasText: menuItemText }).first();
   await menuItem.click();
   await page.waitForTimeout(300);
 }

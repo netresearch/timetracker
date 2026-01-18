@@ -133,7 +133,7 @@ test.describe('UI Error Display', () => {
 
   test('should display form validation errors', async ({ page }) => {
     // Click add to create new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
     await page.waitForTimeout(500);
 
@@ -166,7 +166,7 @@ test.describe('Success Notifications', () => {
 
   test('should show success notification after settings save', async ({ page }) => {
     // Go to Settings tab
-    const settingsTab = page.locator('.x-tab, button').filter({ hasText: /Settings|Einstellungen/i });
+    const settingsTab = page.locator('.x-tab, button').filter({ hasText: /Settings|Einstellungen/i }).first();
     await settingsTab.click();
     await page.waitForTimeout(500);
 
@@ -177,8 +177,8 @@ test.describe('Success Notifications', () => {
     });
 
     // Click save button
-    const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i });
-    if ((await saveButton.count()) > 0) {
+    const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i }).first();
+    if (await saveButton.isVisible()) {
       await saveButton.click();
       await page.waitForTimeout(1000);
 
@@ -226,15 +226,15 @@ test.describe('Success Notifications', () => {
     await page.waitForTimeout(300);
 
     // Look for delete option
-    const deleteOption = page.locator('.x-menu-item').filter({ hasText: /Delete|Löschen/i });
+    const deleteOption = page.locator('.x-menu-item').filter({ hasText: /Delete|Löschen/i }).first();
 
-    if ((await deleteOption.count()) > 0) {
+    if (await deleteOption.isVisible()) {
       await deleteOption.click();
       await page.waitForTimeout(500);
 
       // Confirm delete if dialog appears
-      const confirmButton = page.locator('.x-btn').filter({ hasText: /Yes|Ja|OK/i });
-      if ((await confirmButton.count()) > 0) {
+      const confirmButton = page.locator('.x-btn').filter({ hasText: /Yes|Ja|OK/i }).first();
+      if (await confirmButton.isVisible()) {
         await confirmButton.click();
         await page.waitForTimeout(500);
       }
@@ -276,7 +276,7 @@ test.describe('Network Error Handling', () => {
     await page.context().setOffline(true);
 
     // Try an action
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i });
+    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
     await addButton.click();
     await page.waitForTimeout(500);
 
