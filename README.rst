@@ -156,13 +156,13 @@ Setup - with Docker Compose
 #. Put the provided nginx configuration file from this repo into the above created folder
 #. Put the ``.env.local`` into the above created folder, and ``sentry.yml.dist`` as ``sentry.yml``.
 #. Check and adapt the copied configuration files to your needs
-#. Run ``docker compose up -d --build``
-   and then inside the container:
+#. Build and start the stack::
 
-   ::
+      docker bake app          # Build production image
+      docker compose up -d     # Start services
 
-      docker compose run --rm app composer install
-      docker compose run --rm app npm install
+   Then inside the container::
+
       docker compose run --rm app bin/console doctrine:database:create --if-not-exists
       docker compose run --rm app bin/console doctrine:migrations:migrate -n
 

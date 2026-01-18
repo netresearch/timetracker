@@ -1,12 +1,8 @@
 ---
 services:
-  # Main application service
+  # Main application service (build with: docker bake app)
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: ${BUILD_TARGET:-production}
-    image: ghcr.io/netresearch/timetracker:${BUILD_TARGET:-production}
+    image: ghcr.io/netresearch/timetracker:production
     environment:
       - TRUSTED_PROXY_ALL
       - TRUSTED_PROXY_LIST
@@ -24,14 +20,10 @@ services:
       - prod
       - production
 
-  # Development app service with dev tools (includes databases)
+  # Development app service (build with: docker bake app-dev)
   # LDAP and other config read from .env files (Symfony dotenv)
   app-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: devbox
-    image: ghcr.io/netresearch/timetracker:devbox
+    image: ghcr.io/netresearch/timetracker:dev
     environment:
       - APP_ENV=dev
       - APP_DEBUG=1
@@ -54,13 +46,10 @@ services:
       - dev
       - development
 
-  # Development tools service (static analysis, linting - no DB dependencies)
+  # Development tools service (build with: docker bake app-tools)
+  # Static analysis, linting - no DB dependencies
   app-tools:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: devbox
-    image: ghcr.io/netresearch/timetracker:devbox
+    image: ghcr.io/netresearch/timetracker:tools
     environment:
       - APP_ENV=${APP_ENV:-dev}
       - APP_DEBUG=${APP_DEBUG:-1}
@@ -170,13 +159,10 @@ services:
       - development
       - test
 
-  # E2E test app service (uses main db with test environment)
+  # E2E test app service (build with: docker bake app-e2e)
+  # Uses main db with test environment
   app-e2e:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: devbox
-    image: ghcr.io/netresearch/timetracker:devbox
+    image: ghcr.io/netresearch/timetracker:e2e
     environment:
       - APP_ENV=test
       - APP_DEBUG=1

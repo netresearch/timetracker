@@ -25,10 +25,16 @@ jobs:
         run: |
           if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
 
+      - name: Build tools image
+        run: docker buildx bake app-tools --load
+
       - name: Install dependencies
         env:
           COMPOSE_PROFILES: tools
         run: |
+          # Create directories with proper permissions for non-root container user
+          mkdir -p vendor var/cache var/log bin
+          chmod -R 777 vendor var bin
           # --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
           # See: https://github.com/laminas/laminas-ldap/issues/62
           docker compose run --rm app-tools composer install --no-interaction --prefer-dist --ignore-platform-req=php
@@ -92,11 +98,16 @@ jobs:
           if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
           sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
 
+      - name: Build development image
+        run: docker buildx bake app-dev --load
+
       - name: Set up development environment
         env:
           COMPOSE_PROFILES: dev
         run: |
-          make install
+          # Image already built by bake - just install deps and start services
+          docker compose run --rm app-dev composer install --ignore-platform-req=php
+          docker compose run --rm app-dev npm install --legacy-peer-deps
           docker compose up -d
           docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
 

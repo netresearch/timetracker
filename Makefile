@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-up e2e-down e2e-run e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
+.PHONY: help up down restart build bake bake-dev bake-tools bake-e2e bake-all logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-up e2e-down e2e-run e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -21,7 +21,11 @@ help:
 	@echo "  make tools-up         # start lightweight tools only (no DB)"
 	@echo "  make tools-down       # stop tools containers"
 	@echo "  make restart          # restart stack"
-	@echo "  make build            # build images"
+	@echo "  make bake             # build production image"
+	@echo "  make bake-dev         # build development image"
+	@echo "  make bake-tools       # build tools image"
+	@echo "  make bake-all         # build all images"
+	@echo "  make build            # alias for bake-dev"
 	@echo "  make logs             # follow logs"
 	@echo "  make sh               # shell into app container"
 	@echo "  make install          # composer install + npm install"
@@ -49,15 +53,15 @@ help:
 	@echo "  make validate-stack   # validate entire modern toolchain"
 	@echo "  make analyze-coverage # analyze test coverage report"
 
-up:
-	docker compose up -d --build
+up: bake-dev
+	docker compose up -d
 
 down:
 	docker compose down
 
-tools-up:
+tools-up: bake-tools
 	@echo "Starting lightweight development tools (no databases)..."
-	COMPOSE_PROFILES=tools docker compose up -d --build
+	COMPOSE_PROFILES=tools docker compose up -d
 
 tools-down:
 	@echo "Stopping tools containers..."
@@ -65,8 +69,30 @@ tools-down:
 
 restart: down up
 
-build:
-	docker compose build
+# Docker Bake targets (recommended for image builds)
+# docker-bake.hcl is the single source of truth for builds; compose.yml handles runtime only
+bake:
+	@echo "Building production image with docker bake..."
+	docker bake app
+
+bake-dev:
+	@echo "Building development image with docker bake..."
+	docker bake app-dev
+
+bake-tools:
+	@echo "Building tools image with docker bake..."
+	docker bake app-tools
+
+bake-e2e:
+	@echo "Building E2E test image with docker bake..."
+	docker bake app-e2e
+
+bake-all:
+	@echo "Building all images with docker bake..."
+	docker bake all
+
+# Alias for backward compatibility
+build: bake-dev
 
 logs:
 	docker compose logs -f | cat
@@ -149,13 +175,13 @@ test-parallel-all: prepare-test-sql
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --testsuite=controller-sequential
 
 # E2E test infrastructure
-e2e-up:
+e2e-up: bake-e2e
 	@echo "Starting E2E test stack (app-e2e, httpd-e2e, db, ldap-dev)..."
 	@if [ ! -f .env.test.local ]; then \
 		echo "Creating .env.test.local from template..."; \
 		cp .env.test.local.example .env.test.local 2>/dev/null || echo "# E2E test config - auto-generated\nDATABASE_URL=\"mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=8&charset=utf8mb4\"\nLDAP_HOST=\"ldap-dev\"\nLDAP_PORT=389\nLDAP_READUSER=\"cn=readuser,dc=dev,dc=local\"\nLDAP_READPASS=\"readuser\"\nLDAP_BASEDN=\"dc=dev,dc=local\"\nLDAP_USERNAMEFIELD=\"uid\"\nLDAP_USESSL=false\nLDAP_CREATE_USER=true" > .env.test.local; \
 	fi
-	COMPOSE_PROFILES=e2e docker compose up -d --build
+	COMPOSE_PROFILES=e2e docker compose up -d
 	@echo "Waiting for E2E stack to be ready..."
 	@for i in $$(seq 1 30); do \
 		if curl -s -o /dev/null -w '%{http_code}' http://localhost:8766/login | grep -q '200'; then \
