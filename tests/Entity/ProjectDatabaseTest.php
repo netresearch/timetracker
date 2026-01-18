@@ -298,6 +298,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $projectLead->setUsername('project_lead');
         $projectLead->setType(UserType::PL);
         $projectLead->setLocale('de');
+        $projectLead->setAbbr('PL');
 
         $this->entityManager->persist($projectLead);
 
@@ -305,6 +306,7 @@ final class ProjectDatabaseTest extends AbstractWebTestCase
         $technicalLead->setUsername('technical_lead');
         $technicalLead->setType(UserType::DEV);
         $technicalLead->setLocale('de');
+        $technicalLead->setAbbr('TL');
 
         $this->entityManager->persist($technicalLead);
 
