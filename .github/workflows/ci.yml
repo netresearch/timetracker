@@ -33,8 +33,8 @@ jobs:
           COMPOSE_PROFILES: tools
         run: |
           # Create directories with proper permissions for non-root container user
-          mkdir -p vendor var/cache var/log
-          chmod -R 777 vendor var
+          mkdir -p vendor var/cache var/log bin
+          chmod -R 777 vendor var bin
           # --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
           # See: https://github.com/laminas/laminas-ldap/issues/62
           docker compose run --rm app-tools composer install --no-interaction --prefer-dist --ignore-platform-req=php
