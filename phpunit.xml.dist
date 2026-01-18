@@ -27,12 +27,51 @@
         </exclude>
     </source>
     <testsuites>
+        <!-- Pure unit tests - no database, no kernel, fast -->
         <testsuite name="unit">
-            <directory>tests</directory>
-            <exclude>tests/Controller</exclude>
+            <directory>tests/Dto</directory>
+            <directory>tests/EventSubscriber</directory>
+            <directory>tests/Extension</directory>
+            <directory>tests/Helper</directory>
+            <directory>tests/Model</directory>
+            <directory>tests/Response</directory>
+            <directory>tests/Service</directory>
+            <directory>tests/Util</directory>
+            <!-- Entity unit tests (not *DatabaseTest) -->
+            <file>tests/Entity/ActivityTest.php</file>
+            <file>tests/Entity/EntryTest.php</file>
+            <file>tests/Entity/ProjectTest.php</file>
+            <file>tests/Entity/TicketTest.php</file>
+            <file>tests/Entity/UserTicketsystemTest.php</file>
+            <!-- Repository unit tests -->
+            <file>tests/Repository/EntryRepositoryTest.php</file>
+            <file>tests/Repository/InterpretationUserFilterTest.php</file>
+            <!-- Security unit tests (not RememberMeRedirectTest) -->
+            <file>tests/Security/LdapAuthenticatorTest.php</file>
         </testsuite>
+        <!-- Integration tests requiring database -->
+        <testsuite name="integration">
+            <file>tests/Entity/AccountDatabaseTest.php</file>
+            <file>tests/Entity/ActivityDatabaseTest.php</file>
+            <file>tests/Entity/CustomerDatabaseTest.php</file>
+            <file>tests/Entity/HolidayDatabaseTest.php</file>
+            <file>tests/Entity/PresetDatabaseTest.php</file>
+            <file>tests/Entity/ProjectDatabaseTest.php</file>
+            <file>tests/Entity/TeamDatabaseTest.php</file>
+            <file>tests/Entity/UserDatabaseTest.php</file>
+            <file>tests/Security/RememberMeRedirectTest.php</file>
+            <directory>tests/Repository</directory>
+            <directory>tests/Command</directory>
+            <exclude>tests/Repository/EntryRepositoryTest.php</exclude>
+            <exclude>tests/Repository/InterpretationUserFilterTest.php</exclude>
+        </testsuite>
+        <!-- Controller tests (HTTP integration) -->
         <testsuite name="controller">
             <directory>tests/Controller</directory>
+        </testsuite>
+        <!-- Performance tests -->
+        <testsuite name="performance">
+            <directory>tests/Performance</directory>
         </testsuite>
     </testsuites>
     <php>
