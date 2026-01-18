@@ -5,6 +5,8 @@
  */
 
 export * from './auth';
+export * from './clock';
+export * from './date';
 export * from './grid';
 export * from './navigation';
 export * from './api';
