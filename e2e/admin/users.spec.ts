@@ -11,16 +11,19 @@ import {
   waitForAdminWindow,
   fillAdminField,
   clickAdminSaveButton,
-  waitForAdminWindowClose,
   editAdminRow,
   deleteAdminRow,
   findAdminRowByText,
   waitForAdminGridRefresh,
+  generateTestAbbr,
+  saveUserForm,
 } from '../helpers/admin';
 
 /**
  * E2E tests for Admin User CRUD operations.
  * Tests verify full Create, Read, Update, Delete functionality for users.
+ *
+ * Note: User forms require native event dispatch for save buttons due to ExtJS quirks.
  */
 test.describe('Admin User CRUD', () => {
   test.beforeEach(async ({ page }) => {
@@ -53,12 +56,10 @@ test.describe('Admin User CRUD', () => {
     expect(headerText.some((h) => /User|Benutzer|Name/i.test(h))).toBe(true);
   });
 
-  // TODO: User form Save button click not working reliably - needs ExtJS-specific investigation
-  // The Speichern button click is triggered but doesn't close the window or save the user
-  // Other admin forms (Customer, Activity, Project) work fine with the same approach
-  test.skip('should create a new user', async ({ page }) => {
-    const testUsername = 'e2e_' + Date.now();
-    const testAbbr = 'E2E';
+  test('should create a new user', async ({ page }) => {
+    const timestamp = Date.now();
+    const testUsername = 'e2e_' + timestamp;
+    const testAbbr = generateTestAbbr();
 
     // Get initial row count
     const initialCount = await getAdminGridRowCount(page);
@@ -85,15 +86,15 @@ test.describe('Admin User CRUD', () => {
 
       // Select first available type
       await page.locator('.x-boundlist-item').first().click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200);
+
+      // Close dropdown by clicking window body
+      await page.locator('.x-window .x-window-body').first().click();
+      await page.waitForTimeout(200);
     }
 
-    // Click Save button - target the emphasis wrapper which has the click handler in ExtJS
-    await page.click('text="Speichern"');
-    await page.waitForTimeout(500);
-
-    // Wait for window to close
-    await waitForAdminWindowClose(page);
+    // Save using native event dispatch (required for User forms)
+    await saveUserForm(page);
 
     // Wait for grid to refresh
     await waitForAdminGridRefresh(page);
@@ -108,10 +109,10 @@ test.describe('Admin User CRUD', () => {
     console.log(`Created user "${testUsername}" at row ${rowIndex}`);
   });
 
-  // TODO: User form Save button issue - see note above
-  test.skip('should edit an existing user', async ({ page }) => {
-    const testUsername = 'edit_' + Date.now();
-    const testAbbr = 'EDT';
+  test('should edit an existing user', async ({ page }) => {
+    const timestamp = Date.now();
+    const testUsername = 'edit_' + timestamp;
+    const testAbbr = generateTestAbbr();
 
     // First create a user to edit
     await clickAdminAddButton(page, /Add user|Neuer Nutzer/i);
@@ -134,8 +135,7 @@ test.describe('Admin User CRUD', () => {
       await page.waitForTimeout(200);
     }
 
-    await clickAdminSaveButton(page);
-    await waitForAdminWindowClose(page);
+    await saveUserForm(page);
     await waitForAdminGridRefresh(page);
 
     // Find the created user
@@ -146,12 +146,15 @@ test.describe('Admin User CRUD', () => {
     await editAdminRow(page, rowIndex);
 
     // Update the abbreviation
-    const updatedAbbr = 'UPD';
+    const updatedAbbr = generateTestAbbr();
     await fillAdminField(page, 'abbr', updatedAbbr);
 
+    // Close dropdown if open
+    await page.locator('.x-window .x-window-body').first().click();
+    await page.waitForTimeout(200);
+
     // Save
-    await clickAdminSaveButton(page);
-    await waitForAdminWindowClose(page);
+    await saveUserForm(page);
     await waitForAdminGridRefresh(page);
 
     // Verify user still exists
@@ -160,10 +163,10 @@ test.describe('Admin User CRUD', () => {
     console.log(`Updated user "${testUsername}" abbreviation to "${updatedAbbr}"`);
   });
 
-  // TODO: User form Save button issue - see note above
-  test.skip('should delete a user', async ({ page }) => {
-    const testUsername = 'del_' + Date.now();
-    const testAbbr = 'DEL';
+  test('should delete a user', async ({ page }) => {
+    const timestamp = Date.now();
+    const testUsername = 'del_' + timestamp;
+    const testAbbr = generateTestAbbr();
 
     // First create a user to delete
     await clickAdminAddButton(page, /Add user|Neuer Nutzer/i);
@@ -186,8 +189,7 @@ test.describe('Admin User CRUD', () => {
       await page.waitForTimeout(200);
     }
 
-    await clickAdminSaveButton(page);
-    await waitForAdminWindowClose(page);
+    await saveUserForm(page);
     await waitForAdminGridRefresh(page);
 
     // Find the created user
@@ -269,10 +271,10 @@ test.describe('Admin User CRUD', () => {
     await page.keyboard.press('Escape');
   });
 
-  // TODO: User form Save button issue - see note above
-  test.skip('should handle user language setting', async ({ page }) => {
-    const testUsername = 'lang_' + Date.now();
-    const testAbbr = 'LNG';
+  test('should handle user language setting', async ({ page }) => {
+    const timestamp = Date.now();
+    const testUsername = 'lang_' + timestamp;
+    const testAbbr = generateTestAbbr();
 
     // Click Add button
     await clickAdminAddButton(page, /Add user|Neuer Nutzer/i);
@@ -298,8 +300,7 @@ test.describe('Admin User CRUD', () => {
     }
 
     // Save
-    await clickAdminSaveButton(page);
-    await waitForAdminWindowClose(page);
+    await saveUserForm(page);
     await waitForAdminGridRefresh(page);
 
     // Verify user was created
