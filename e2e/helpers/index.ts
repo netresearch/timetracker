@@ -10,3 +10,4 @@ export * from './date';
 export * from './grid';
 export * from './navigation';
 export * from './api';
+export * from './admin';
