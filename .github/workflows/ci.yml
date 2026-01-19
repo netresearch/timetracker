@@ -121,11 +121,12 @@ jobs:
         env:
           COMPOSE_PROFILES: dev
         run: |
-          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-dev php -d memory_limit=2G ./bin/phpunit --coverage-clover var/coverage/clover.xml || true
+          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-dev php -d memory_limit=2G ./bin/phpunit --coverage-clover var/coverage/clover.xml || true
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: var/coverage/clover.xml
           fail_ci_if_error: false
           verbose: true
