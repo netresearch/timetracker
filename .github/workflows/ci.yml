@@ -181,8 +181,10 @@ jobs:
           COMPOSE_PROFILES: e2e
         run: |
           # Run Playwright from inside the container (browsers pre-installed)
+          # Use host.docker.internal to access httpd-e2e exposed on port 8766
           docker compose run --rm \
-            -e E2E_BASE_URL=http://httpd-e2e:80 \
+            --network host \
+            -e E2E_BASE_URL=http://localhost:8766 \
             -e CI=true \
             app-e2e npx playwright test --shard=${{ matrix.shard }}/3 -x
 
