@@ -17,6 +17,7 @@ import {
   findAdminRowByText,
   generateTestName,
   waitForAdminGridRefresh,
+  saveUserForm,
 } from '../helpers/admin';
 
 /**
@@ -112,10 +113,10 @@ test.describe('Admin Team CRUD', () => {
     console.log(`Created team "${testName}" at row ${rowIndex}`);
   });
 
-  // TODO: Edit save has same issue as User form - Speichern click not working reliably
-  // The first save (create) works, but the second save (edit) doesn't
-  test.skip('should edit an existing team', async ({ page }) => {
-    const testName = generateTestName('EditTeam');
+  test('should edit an existing team', async ({ page }) => {
+    // Use shorter name to avoid DB column length limits
+    const timestamp = String(Date.now()).slice(-8);
+    const testName = 'Edit_' + timestamp;
 
     // First create a team to edit
     await clickAdminAddButton(page, /Neues Team|Add team/i);
@@ -137,8 +138,7 @@ test.describe('Admin Team CRUD', () => {
 
     await page.locator('.x-window .x-window-body').first().click();
     await page.waitForTimeout(200);
-    await clickAdminSaveButton(page);
-    await waitForAdminWindowClose(page);
+    await saveUserForm(page);
     await waitForAdminGridRefresh(page);
 
     // Find the created team
@@ -148,17 +148,16 @@ test.describe('Admin Team CRUD', () => {
     // Edit the team via context menu
     await editAdminRow(page, rowIndex);
 
-    // Update the name
-    const updatedName = testName + '_Updated';
+    // Update the name (short enough for DB column)
+    const updatedName = 'Upd_' + timestamp;
     await fillAdminField(page, 'name', updatedName);
 
     // Ensure focus is on a safe element before saving
     await page.locator('.x-window .x-window-body').first().click();
     await page.waitForTimeout(200);
 
-    // Save
-    await clickAdminSaveButton(page);
-    await waitForAdminWindowClose(page);
+    // Save using native event dispatch
+    await saveUserForm(page);
     await waitForAdminGridRefresh(page);
 
     // Verify team was updated
