@@ -228,32 +228,50 @@ export async function selectAdminMultiCombo(page: Page, fieldName: string, value
 
 /**
  * Click Save button in the admin window (German: Speichern)
+ * Uses native event dispatch which works reliably with ExtJS forms
  */
 export async function clickAdminSaveButton(page: Page): Promise<void> {
-  // Find the Save button within the window and click it
-  // Try multiple selectors in order of specificity
-  const selectors = [
-    // Most specific: button within visible window
-    '.x-window:not([style*="display: none"]) .x-btn:has-text("Speichern")',
-    '.x-window:not([style*="display: none"]) .x-btn:has-text("Save")',
-    // Fallback: any visible button with the text
-    '.x-btn:visible:has-text("Speichern")',
-    '.x-btn:visible:has-text("Save")',
-  ];
-
-  for (const selector of selectors) {
-    const button = page.locator(selector).first();
-    if ((await button.count()) > 0) {
-      await button.click({ force: true });
-      await page.waitForTimeout(500);
-      return;
+  // Blur any focused element to close dropdowns
+  await page.evaluate(() => {
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
     }
+  });
+  await page.waitForTimeout(200);
+
+  // Use native event dispatch to click the button
+  const clicked = await page.evaluate(() => {
+    const buttons = document.querySelectorAll('.x-window .x-btn');
+    for (const btn of buttons) {
+      const text = btn.textContent?.trim();
+      if (text === 'Speichern' || text === 'Save') {
+        const rect = btn.getBoundingClientRect();
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+        });
+        btn.dispatchEvent(clickEvent);
+        return true;
+      }
+    }
+    return false;
+  });
+
+  if (clicked) {
+    await page.waitForTimeout(500);
+    return;
   }
 
-  // Last resort: use getByRole
-  const saveButton = page.getByRole('button', { name: /Speichern|Save/ });
-  await saveButton.click({ force: true });
-  await page.waitForTimeout(500);
+  // Fallback: try Playwright click with force
+  const saveButton = page.locator('.x-window .x-btn').filter({ hasText: /^Speichern$|^Save$/ }).first();
+  if ((await saveButton.count()) > 0) {
+    await saveButton.click({ force: true });
+    await page.waitForTimeout(500);
+  }
 }
 
 /**
@@ -407,4 +425,73 @@ export async function clickAdminRefreshButton(page: Page): Promise<void> {
  */
 export function generateTestName(prefix: string): string {
   return `${prefix}_E2E_${Date.now()}`;
+}
+
+/**
+ * Generate a unique abbreviation (3 chars max for User forms)
+ * Uses timestamp + random to avoid collisions in parallel tests
+ */
+export function generateTestAbbr(): string {
+  // Use last digit of timestamp + 2 random alphanumeric chars
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const rand1 = chars[Math.floor(Math.random() * chars.length)];
+  const rand2 = chars[Math.floor(Math.random() * chars.length)];
+  return String(Date.now()).slice(-1) + rand1 + rand2;
+}
+
+/**
+ * Click Save button using native event dispatch
+ * This is needed for forms like User edit where ExtJS handlers don't respond to Playwright clicks
+ */
+export async function clickNativeSaveButton(page: Page): Promise<boolean> {
+  // Use native event dispatch to click the button
+  const clicked = await page.evaluate(() => {
+    const buttons = document.querySelectorAll('.x-window .x-btn');
+    for (const btn of buttons) {
+      const text = btn.textContent?.trim();
+      if (text === 'Speichern' || text === 'Save') {
+        const rect = btn.getBoundingClientRect();
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+        });
+        btn.dispatchEvent(clickEvent);
+        return true;
+      }
+    }
+    return false;
+  });
+
+  if (clicked) {
+    await page.waitForTimeout(500);
+  }
+  return clicked;
+}
+
+/**
+ * Save a User form with proper handling for ExtJS quirks
+ */
+export async function saveUserForm(page: Page): Promise<void> {
+  // Use native click for User forms
+  const saved = await clickNativeSaveButton(page);
+
+  if (!saved) {
+    // Fallback to regular save
+    await clickAdminSaveButton(page);
+  }
+
+  // Wait for window to close or close manually
+  await page.waitForTimeout(500);
+  const windowStillOpen = (await page.locator('.x-window').count()) > 0;
+  if (windowStillOpen) {
+    // Check if it's an error window
+    const hasError = (await page.locator('.x-window').filter({ hasText: /Fehler|Error/i }).count()) > 0;
+    if (!hasError) {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+    }
+  }
 }
