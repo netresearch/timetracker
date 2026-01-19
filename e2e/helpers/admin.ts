@@ -1,5 +1,5 @@
-import { Page, Locator, expect } from '@playwright/test';
-import { goToTab, TABS, hideDebugToolbar } from './navigation';
+import { Page, Locator } from '@playwright/test';
+import { goToTab, TABS } from './navigation';
 
 /**
  * Admin panel tab names (sub-tabs within Administration)
@@ -37,7 +37,10 @@ export async function goToAdminSubTab(page: Page, subTab: RegExp): Promise<void>
   await page.waitForTimeout(500);
 
   // Wait for loading mask to disappear (if present)
-  await page.waitForSelector('.x-mask', { state: 'hidden', timeout: 5000 }).catch(() => {});
+  // Intentionally catch: mask may not appear for cached/quick loads
+  await page.waitForSelector('.x-mask', { state: 'hidden', timeout: 5000 }).catch(() => {
+    // Mask may not appear for cached data or quick loads - this is expected
+  });
 
   // Wait for grid rows to be present (more specific than just .x-grid)
   await page.waitForTimeout(500);
@@ -170,7 +173,7 @@ export async function setAdminCheckbox(page: Page, fieldName: string, checked: b
       await page.waitForTimeout(100);
     }
   } catch {
-    // Just click the checkbox
+    // ExtJS checkboxes may not support isChecked() - fall back to clicking
     await checkbox.click();
     await page.waitForTimeout(100);
   }
@@ -364,11 +367,12 @@ export async function acceptConfirmDialog(page: Page): Promise<void> {
  * Wait for success notification
  */
 export async function waitForSuccessNotification(page: Page): Promise<void> {
-  // ExtJS notifications may appear in different forms
+  // ExtJS notifications may appear in different forms or not at all
   try {
     await page.waitForSelector('.x-toast, .x-window', { timeout: 3000 });
   } catch {
-    // Notification might not appear or appear quickly
+    // Notification may not appear, appear too quickly, or use different markup
+    // This is expected behavior for some ExtJS configurations
   }
 }
 
@@ -406,7 +410,8 @@ export async function waitForAdminGridRefresh(page: Page): Promise<void> {
     await page.waitForSelector('.x-mask', { state: 'visible', timeout: 2000 });
     await page.waitForSelector('.x-mask', { state: 'hidden', timeout: 10000 });
   } catch {
-    // Mask might not appear for quick operations
+    // Loading mask may not appear for quick operations or cached data
+    // This is expected behavior - the grid may refresh without visible mask
   }
   await page.waitForTimeout(300);
 }

@@ -6,13 +6,11 @@ import {
   goToAdminTab,
   goToAdminSubTab,
   ADMIN_TABS,
-  getAdminGridRows,
   getAdminGridRowCount,
   clickAdminAddButton,
   waitForAdminWindow,
   fillAdminField,
   setAdminCheckbox,
-  selectAdminCombo,
   clickAdminSaveButton,
   waitForAdminWindowClose,
   editAdminRow,
@@ -24,7 +22,7 @@ import {
 
 /**
  * E2E tests for Admin Project CRUD operations.
- * Tests verify full Create, Read, Update, Delete functionality for projects.
+ * Tests cover display, create, update, and delete functionality for projects.
  */
 test.describe('Admin Project CRUD', () => {
   test.beforeEach(async ({ page }) => {

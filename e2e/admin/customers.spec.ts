@@ -6,13 +6,11 @@ import {
   goToAdminTab,
   goToAdminSubTab,
   ADMIN_TABS,
-  getAdminGridRows,
   getAdminGridRowCount,
   clickAdminAddButton,
   waitForAdminWindow,
   fillAdminField,
   setAdminCheckbox,
-  selectAdminMultiCombo,
   clickAdminSaveButton,
   waitForAdminWindowClose,
   editAdminRow,
@@ -20,12 +18,11 @@ import {
   findAdminRowByText,
   generateTestName,
   waitForAdminGridRefresh,
-  getAdminCellText,
 } from '../helpers/admin';
 
 /**
  * E2E tests for Admin Customer CRUD operations.
- * Tests verify full Create, Read, Update, Delete functionality in the Administration panel.
+ * Tests cover display, create, update, and delete functionality in the Administration panel.
  */
 test.describe('Admin Customer CRUD', () => {
   test.beforeEach(async ({ page }) => {

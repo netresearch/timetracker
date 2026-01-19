@@ -22,7 +22,7 @@ import {
 
 /**
  * E2E tests for Admin Team CRUD operations.
- * Tests verify full Create, Read, Update, Delete functionality for teams.
+ * Tests cover display, create, update, and delete functionality for teams.
  */
 test.describe('Admin Team CRUD', () => {
   test.beforeEach(async ({ page }) => {

@@ -6,7 +6,6 @@ import {
   goToAdminTab,
   goToAdminSubTab,
   ADMIN_TABS,
-  getAdminGridRows,
   getAdminGridRowCount,
   clickAdminAddButton,
   waitForAdminWindow,
@@ -23,7 +22,7 @@ import {
 
 /**
  * E2E tests for Admin Activity CRUD operations.
- * Tests verify full Create, Read, Update, Delete functionality for activities.
+ * Tests cover display, create, update, and delete functionality for activities.
  */
 test.describe('Admin Activity CRUD', () => {
   test.beforeEach(async ({ page }) => {

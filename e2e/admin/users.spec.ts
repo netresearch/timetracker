@@ -21,7 +21,7 @@ import {
 
 /**
  * E2E tests for Admin User CRUD operations.
- * Tests verify full Create, Read, Update, Delete functionality for users.
+ * Tests cover display, create, update, and delete functionality for users.
  *
  * Note: User forms require native event dispatch for save buttons due to ExtJS quirks.
  */
