@@ -69,6 +69,14 @@
         <testsuite name="controller">
             <directory>tests/Controller</directory>
         </testsuite>
+        <!-- API Contract tests - fast validation of response formats, for pre-commit -->
+        <testsuite name="api-contract">
+            <directory>tests/Api/Contract</directory>
+        </testsuite>
+        <!-- API Functional tests - CRUD operations with real database, for CI -->
+        <testsuite name="api-functional">
+            <directory>tests/Api/Functional</directory>
+        </testsuite>
         <!-- Performance tests -->
         <testsuite name="performance">
             <directory>tests/Performance</directory>

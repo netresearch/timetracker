@@ -4,7 +4,7 @@
 COMPOSE_PROFILES ?= dev
 export COMPOSE_PROFILES
 
-.PHONY: help up down restart build bake bake-dev bake-tools bake-e2e bake-all logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-parallel test-parallel-safe test-parallel-all e2e e2e-up e2e-down e2e-run e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
+.PHONY: help up down restart build bake bake-dev bake-tools bake-e2e bake-all logs sh install composer-install composer-update npm-install npm-build npm-dev npm-watch test test-unit test-integration test-controller test-api-contract test-api-functional test-api test-quick test-parallel test-parallel-safe test-parallel-all e2e e2e-up e2e-down e2e-run e2e-install coverage stan phpat cs-check cs-fix check-all fix-all db-migrate cache-clear swagger twig-lint prepare-test-sql reset-test-db tools-up tools-down validate-stack analyze-coverage rector rector-fix audit
 
 help:
 	@echo "Netresearch TimeTracker — common commands"
@@ -141,6 +141,24 @@ test-integration: prepare-test-sql
 test-controller: prepare-test-sql
 	@echo "Running controller tests..."
 	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=controller
+
+# API Contract tests (fast, validates response formats, for pre-commit)
+test-api-contract: prepare-test-sql
+	@echo "Running API contract tests..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=api-contract
+
+# API Functional tests (CRUD operations with real database, for CI)
+test-api-functional: prepare-test-sql
+	@echo "Running API functional tests..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=api-functional
+
+# All API tests (contract + functional)
+test-api: test-api-contract test-api-functional
+	@echo "All API tests completed"
+
+# Quick tests for pre-commit (unit + api-contract, fast)
+test-quick: test-unit test-api-contract
+	@echo "Quick pre-commit tests completed"
 
 # All tests: PHPUnit + E2E
 test-all: test e2e
