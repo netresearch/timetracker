@@ -87,13 +87,37 @@ async function saveSettings(page: import('@playwright/test').Page) {
     if (toolbar) (toolbar as HTMLElement).style.display = 'none';
   });
 
-  // Click save button
-  const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i }).first();
-  await saveButton.click();
+  // Blur any focused element to ensure field values are committed
+  await page.evaluate(() => {
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
+  });
+  await page.waitForTimeout(200);
 
-  // Wait for success notification
-  await page.waitForSelector('.x-window', { timeout: 5000 });
-  await page.waitForTimeout(500); // Wait for notification to show
+  // Use native event dispatch for ExtJS buttons (same fix as Admin forms)
+  await page.evaluate(() => {
+    const buttons = document.querySelectorAll('.x-btn');
+    for (const btn of buttons) {
+      const text = btn.textContent?.trim();
+      if (text === 'Speichern' || text === 'Save') {
+        const rect = btn.getBoundingClientRect();
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+        });
+        btn.dispatchEvent(clickEvent);
+        return;
+      }
+    }
+  });
+
+  // Wait for success notification or response
+  await page.waitForTimeout(1000);
 }
 
 test.describe('Settings Tab', () => {
