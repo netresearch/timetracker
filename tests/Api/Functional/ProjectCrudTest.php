@@ -195,9 +195,10 @@ final class ProjectCrudTest extends AbstractWebTestCase
             ], JSON_THROW_ON_ERROR),
         );
 
-        // Should return error (can't create project without customer)
+        // Should return client error (can't create project without customer)
         $statusCode = $this->client->getResponse()->getStatusCode();
-        // The exact error handling depends on implementation
-        self::assertContains($statusCode, [200, 400, 406, 422, 500]);
+        // Accept any 4xx client error status, but not success (2xx) or server errors (5xx)
+        self::assertGreaterThanOrEqual(400, $statusCode);
+        self::assertLessThan(500, $statusCode);
     }
 }

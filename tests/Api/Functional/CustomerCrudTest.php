@@ -241,9 +241,9 @@ final class CustomerCrudTest extends AbstractWebTestCase
             ], JSON_THROW_ON_ERROR),
         );
 
-        // Should return error or validation failure
+        // Should return validation error
         $statusCode = $this->client->getResponse()->getStatusCode();
-        self::assertContains($statusCode, [200, 400, 422]);
+        self::assertContains($statusCode, [400, 422]);
     }
 
     public function testCustomerProjectRelationship(): void

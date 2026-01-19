@@ -187,8 +187,8 @@ final class ActivityCrudTest extends AbstractWebTestCase
             ], JSON_THROW_ON_ERROR),
         );
 
-        // Should return error
+        // Should return validation error (bad request / unprocessable entity)
         $statusCode = $this->client->getResponse()->getStatusCode();
-        self::assertContains($statusCode, [200, 400, 422, 500]);
+        self::assertContains($statusCode, [400, 422]);
     }
 }

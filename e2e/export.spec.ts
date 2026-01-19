@@ -56,7 +56,7 @@ test.describe('Controlling Export', () => {
     const stats = fs.statSync(downloadPath);
     console.log(`Export file size: ${stats.size} bytes`);
 
-    // The template is ~11KB. With 5 data rows for January 2026, expect ~30KB
+    // The template is ~11KB. With the January 2026 test data, expect ~30KB
     expect(stats.size).toBeGreaterThan(25000);
     console.log('Export file size validates data is present (>25KB)');
   });

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Repository;
+namespace Tests\Repository;
 
 use App\Dto\ExportQueryDto;
 use App\Entity\Entry;
@@ -16,7 +16,7 @@ use function count;
 /**
  * Tests for EntryRepository export functionality.
  */
-class EntryRepositoryExportTest extends KernelTestCase
+final class EntryRepositoryExportTest extends KernelTestCase
 {
     private EntityManagerInterface $entityManager;
     private EntryRepository $repository;
@@ -24,7 +24,7 @@ class EntryRepositoryExportTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $container = static::getContainer();
+        $container = self::getContainer();
         $this->entityManager = $container->get(EntityManagerInterface::class);
         $this->repository = $this->entityManager->getRepository(Entry::class);
     }
