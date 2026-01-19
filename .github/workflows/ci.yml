@@ -162,6 +162,7 @@ jobs:
           chmod -R 777 vendor var bin playwright-report test-results
           docker compose run --rm app-e2e composer install --no-interaction --prefer-dist --ignore-platform-req=php
           docker compose run --rm app-e2e npm install --legacy-peer-deps
+          docker compose run --rm app-e2e npm run build
 
       - name: Start E2E stack with coverage
         env:
