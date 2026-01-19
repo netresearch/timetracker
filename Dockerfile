@@ -110,7 +110,10 @@ RUN composer install --no-dev --no-scripts --no-autoloader --ignore-platform-req
 COPY --chown=app:app . .
 
 # Finish composer install (autoloader, scripts)
+# Set APP_ENV=prod to prevent loading dev-only bundles during cache warmup
+# (MakerBundle etc. are not installed with --no-dev but bundles.php tries to load them in dev mode)
 ENV CAPTAINHOOK_DISABLE=true
+ENV APP_ENV=prod
 RUN composer dump-autoload --optimize --classmap-authoritative \
     && composer run-script post-install-cmd --no-interaction || true
 
