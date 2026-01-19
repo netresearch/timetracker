@@ -191,8 +191,13 @@ test.describe('Admin Project CRUD', () => {
     // Delete the project via context menu
     await deleteAdminRow(page, rowIndex);
 
-    // Wait for deletion
-    await page.waitForTimeout(1000);
+    // Confirm deletion dialog (German: "Ja" = Yes)
+    await page.waitForTimeout(500);
+    const confirmButton = page.locator('.x-message-box .x-btn, .x-window .x-btn').filter({ hasText: /^Ja$|^Yes$/i }).first();
+    if ((await confirmButton.count()) > 0) {
+      await confirmButton.click();
+      await page.waitForTimeout(500);
+    }
 
     // Verify project was deleted
     await waitForAdminGridRefresh(page);
@@ -213,15 +218,22 @@ test.describe('Admin Project CRUD', () => {
     // Try to save without selecting customer
     await clickAdminSaveButton(page);
 
-    // Window should still be open or show error
+    // Wait for potential error dialog
     await page.waitForTimeout(500);
-    const window = page.locator('.x-window');
 
-    // Either window is still open (validation) or an error message appears
-    const windowVisible = await window.isVisible();
-    console.log(`Window still visible after save attempt: ${windowVisible}`);
+    // Should show validation error - either in the form or as a dialog
+    const errorDialog = page.locator('.x-window').filter({ hasText: /Fehler|Error|Kunde/i });
+    const hasErrorDialog = (await errorDialog.count()) > 0;
 
-    // Close the window
+    // Or check if edit window is still open
+    const editWindowOpen = (await page.locator('.x-window').count()) > 0;
+
+    console.log(`Validation error dialog: ${hasErrorDialog}, Window still open: ${editWindowOpen}`);
+    expect(hasErrorDialog || editWindowOpen).toBe(true);
+
+    // Close all windows
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
   });
 

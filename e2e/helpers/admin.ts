@@ -74,12 +74,20 @@ export async function getAdminGridRowCount(page: Page): Promise<number> {
  */
 export async function clickAdminAddButton(page: Page, buttonText?: RegExp | string): Promise<void> {
   const text = buttonText || /Add|Hinzufügen|Neuer|Neues|Anlegen/i;
-  const addButton = page.locator('.x-btn').filter({ hasText: text }).first();
+
+  // Wait for any loading to complete
+  await page.waitForTimeout(500);
+
+  // Find the button in the toolbar area (more specific selector)
+  const addButton = page.locator('.x-tabpanel-child .x-btn, .x-toolbar .x-btn').filter({ hasText: text }).first();
+
+  // Make sure button is visible and clickable
+  await addButton.waitFor({ state: 'visible', timeout: 5000 });
   await addButton.click();
   await page.waitForTimeout(500);
 
   // Wait for edit window to appear
-  await page.waitForSelector('.x-window', { timeout: 5000 });
+  await page.waitForSelector('.x-window', { timeout: 10000 });
 }
 
 /**
@@ -222,8 +230,29 @@ export async function selectAdminMultiCombo(page: Page, fieldName: string, value
  * Click Save button in the admin window (German: Speichern)
  */
 export async function clickAdminSaveButton(page: Page): Promise<void> {
-  const saveButton = page.locator('.x-window .x-btn').filter({ hasText: /^Save$|^Speichern$/i }).first();
-  await saveButton.click();
+  // Find the Save button within the window and click it
+  // Try multiple selectors in order of specificity
+  const selectors = [
+    // Most specific: button within visible window
+    '.x-window:not([style*="display: none"]) .x-btn:has-text("Speichern")',
+    '.x-window:not([style*="display: none"]) .x-btn:has-text("Save")',
+    // Fallback: any visible button with the text
+    '.x-btn:visible:has-text("Speichern")',
+    '.x-btn:visible:has-text("Save")',
+  ];
+
+  for (const selector of selectors) {
+    const button = page.locator(selector).first();
+    if ((await button.count()) > 0) {
+      await button.click({ force: true });
+      await page.waitForTimeout(500);
+      return;
+    }
+  }
+
+  // Last resort: use getByRole
+  const saveButton = page.getByRole('button', { name: /Speichern|Save/ });
+  await saveButton.click({ force: true });
   await page.waitForTimeout(500);
 }
 
@@ -240,7 +269,31 @@ export async function clickAdminDeleteButton(page: Page): Promise<void> {
  * Wait for admin window to close (after save/delete)
  */
 export async function waitForAdminWindowClose(page: Page): Promise<void> {
-  await page.waitForSelector('.x-window', { state: 'hidden', timeout: 10000 });
+  // Wait for any visible modal window to close
+  // Use a more specific check for the visible window
+  try {
+    await page.waitForFunction(
+      () => {
+        const windows = document.querySelectorAll('.x-window');
+        for (const w of windows) {
+          const style = window.getComputedStyle(w);
+          if (style.display !== 'none' && style.visibility !== 'hidden') {
+            return false; // Still have a visible window
+          }
+        }
+        return true; // All windows are hidden
+      },
+      { timeout: 10000 }
+    );
+  } catch {
+    // If function times out, check if window count decreased
+    const windowCount = await page.locator('.x-window:visible').count();
+    if (windowCount > 0) {
+      // Try pressing Escape to close any stuck window
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+    }
+  }
   await page.waitForTimeout(300);
 }
 

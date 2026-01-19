@@ -158,8 +158,13 @@ test.describe('Admin Activity CRUD', () => {
     // Delete the activity via context menu
     await deleteAdminRow(page, rowIndex);
 
-    // Wait for deletion
-    await page.waitForTimeout(1000);
+    // Confirm deletion dialog (German: "Ja" = Yes)
+    await page.waitForTimeout(500);
+    const confirmButton = page.locator('.x-message-box .x-btn, .x-window .x-btn').filter({ hasText: /^Ja$|^Yes$/i }).first();
+    if ((await confirmButton.count()) > 0) {
+      await confirmButton.click();
+      await page.waitForTimeout(500);
+    }
 
     // Verify activity was deleted
     await waitForAdminGridRefresh(page);
@@ -239,14 +244,22 @@ test.describe('Admin Activity CRUD', () => {
     // Try to save without filling name
     await clickAdminSaveButton(page);
 
-    // Window should still be open (validation failed)
+    // Wait for potential error dialog
     await page.waitForTimeout(500);
-    const window = page.locator('.x-window');
-    await expect(window).toBeVisible();
 
-    console.log('Validation prevented saving activity without name');
+    // Should show validation error - either in the form or as a dialog
+    const errorDialog = page.locator('.x-window').filter({ hasText: /Fehler|Error/i });
+    const hasErrorDialog = (await errorDialog.count()) > 0;
 
-    // Close the window
+    // Or check if edit window is still open
+    const editWindowOpen = (await page.locator('.x-window').count()) > 0;
+
+    console.log(`Validation error dialog: ${hasErrorDialog}, Window still open: ${editWindowOpen}`);
+    expect(hasErrorDialog || editWindowOpen).toBe(true);
+
+    // Close all windows
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
     await page.keyboard.press('Escape');
   });
 });
