@@ -157,8 +157,9 @@ jobs:
         env:
           COMPOSE_PROFILES: e2e
         run: |
+          # Create directories with proper permissions for non-root container user
           mkdir -p vendor var/cache var/log bin var/coverage/e2e playwright-report test-results
-          chmod -R 755 vendor var bin playwright-report test-results
+          chmod -R 777 vendor var bin playwright-report test-results
           docker compose run --rm app-e2e composer install --no-interaction --prefer-dist --ignore-platform-req=php
           docker compose run --rm app-e2e npm install --legacy-peer-deps
 
