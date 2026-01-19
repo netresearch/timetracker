@@ -230,6 +230,54 @@ export async function selectAdminMultiCombo(page: Page, fieldName: string, value
 }
 
 /**
+ * Select the first available option from a combo box identified by input name pattern.
+ * Useful for required combo fields where any valid option is acceptable.
+ */
+export async function selectFirstComboOption(page: Page, namePattern: string): Promise<void> {
+  const comboField = page
+    .locator('.x-window .x-field')
+    .filter({ has: page.locator(`input[name*="${namePattern}"]`) })
+    .first();
+
+  if ((await comboField.count()) === 0) return;
+
+  const trigger = comboField.locator('.x-form-trigger').first();
+  await trigger.click();
+  await page.waitForTimeout(300);
+
+  const firstItem = page.locator('.x-boundlist-item').first();
+  if ((await firstItem.count()) > 0) {
+    await firstItem.click();
+    await page.waitForTimeout(200);
+  }
+
+  // Close dropdown by clicking window body
+  await page.locator('.x-window .x-window-body').first().click();
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Select user type (DEV, PL, CTL, etc.) in User forms
+ */
+export async function selectUserType(page: Page): Promise<void> {
+  await selectFirstComboOption(page, 'type');
+}
+
+/**
+ * Select team leader in Team forms
+ */
+export async function selectTeamLead(page: Page): Promise<void> {
+  await selectFirstComboOption(page, 'lead');
+}
+
+/**
+ * Select customer in Project forms
+ */
+export async function selectCustomer(page: Page): Promise<void> {
+  await selectFirstComboOption(page, 'customer');
+}
+
+/**
  * Click Save button in the admin window (German: Speichern)
  * Uses native event dispatch which works reliably with ExtJS forms
  */
@@ -477,10 +525,11 @@ export async function clickNativeSaveButton(page: Page): Promise<boolean> {
 }
 
 /**
- * Save a User form with proper handling for ExtJS quirks
+ * Save an entity form (User, Team, etc.) with proper handling for ExtJS quirks.
+ * Uses native event dispatch which works reliably with ExtJS forms.
  */
-export async function saveUserForm(page: Page): Promise<void> {
-  // Use native click for User forms
+export async function saveEntityForm(page: Page): Promise<void> {
+  // Use native click for forms that don't respond to Playwright clicks
   const saved = await clickNativeSaveButton(page);
 
   if (!saved) {

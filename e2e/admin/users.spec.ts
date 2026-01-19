@@ -16,7 +16,8 @@ import {
   findAdminRowByText,
   waitForAdminGridRefresh,
   generateTestAbbr,
-  saveUserForm,
+  saveEntityForm,
+  selectUserType,
 } from '../helpers/admin';
 
 /**
@@ -75,26 +76,10 @@ test.describe('Admin User CRUD', () => {
     await fillAdminField(page, 'abbr', testAbbr);
 
     // Set user type (DEV, PL, CTL) - required field
-    const typeCombo = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name="type"]') })
-      .first();
-    if ((await typeCombo.count()) > 0) {
-      const trigger = typeCombo.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-
-      // Select first available type
-      await page.locator('.x-boundlist-item').first().click();
-      await page.waitForTimeout(200);
-
-      // Close dropdown by clicking window body
-      await page.locator('.x-window .x-window-body').first().click();
-      await page.waitForTimeout(200);
-    }
+    await selectUserType(page);
 
     // Save using native event dispatch (required for User forms)
-    await saveUserForm(page);
+    await saveEntityForm(page);
 
     // Wait for grid to refresh
     await waitForAdminGridRefresh(page);
@@ -121,21 +106,9 @@ test.describe('Admin User CRUD', () => {
     await fillAdminField(page, 'abbr', testAbbr);
 
     // Select type
-    const typeCombo = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name="type"]') })
-      .first();
-    if ((await typeCombo.count()) > 0) {
-      const trigger = typeCombo.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-      await page.locator('.x-boundlist-item').first().click();
-      await page.waitForTimeout(200);
-      await page.locator('.x-window .x-window-body').first().click();
-      await page.waitForTimeout(200);
-    }
+    await selectUserType(page);
 
-    await saveUserForm(page);
+    await saveEntityForm(page);
     await waitForAdminGridRefresh(page);
 
     // Find the created user
@@ -154,7 +127,7 @@ test.describe('Admin User CRUD', () => {
     await page.waitForTimeout(200);
 
     // Save
-    await saveUserForm(page);
+    await saveEntityForm(page);
     await waitForAdminGridRefresh(page);
 
     // Verify user still exists
@@ -175,21 +148,9 @@ test.describe('Admin User CRUD', () => {
     await fillAdminField(page, 'abbr', testAbbr);
 
     // Select type
-    const typeCombo = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name="type"]') })
-      .first();
-    if ((await typeCombo.count()) > 0) {
-      const trigger = typeCombo.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-      await page.locator('.x-boundlist-item').first().click();
-      await page.waitForTimeout(200);
-      await page.locator('.x-window .x-window-body').first().click();
-      await page.waitForTimeout(200);
-    }
+    await selectUserType(page);
 
-    await saveUserForm(page);
+    await saveEntityForm(page);
     await waitForAdminGridRefresh(page);
 
     // Find the created user
@@ -285,22 +246,10 @@ test.describe('Admin User CRUD', () => {
     await fillAdminField(page, 'abbr', testAbbr);
 
     // Select type (required)
-    const typeCombo = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name="type"]') })
-      .first();
-    if ((await typeCombo.count()) > 0) {
-      const trigger = typeCombo.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-      await page.locator('.x-boundlist-item').first().click();
-      await page.waitForTimeout(200);
-      await page.locator('.x-window .x-window-body').first().click();
-      await page.waitForTimeout(200);
-    }
+    await selectUserType(page);
 
     // Save
-    await saveUserForm(page);
+    await saveEntityForm(page);
     await waitForAdminGridRefresh(page);
 
     // Verify user was created

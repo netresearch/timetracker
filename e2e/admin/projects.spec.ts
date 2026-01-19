@@ -18,6 +18,7 @@ import {
   findAdminRowByText,
   generateTestName,
   waitForAdminGridRefresh,
+  selectCustomer,
 } from '../helpers/admin';
 
 /**
@@ -72,24 +73,7 @@ test.describe('Admin Project CRUD', () => {
     await setAdminCheckbox(page, 'active', true);
 
     // Select a customer (required for projects)
-    try {
-      const comboField = page
-        .locator('.x-window .x-field')
-        .filter({ has: page.locator('input[name="customer"]') })
-        .first();
-      const trigger = comboField.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-
-      // Select first available customer
-      const firstCustomer = page.locator('.x-boundlist-item').first();
-      if ((await firstCustomer.count()) > 0) {
-        await firstCustomer.click();
-        await page.waitForTimeout(200);
-      }
-    } catch (error) {
-      console.log('Could not select customer:', error);
-    }
+    await selectCustomer(page);
 
     // Save
     await clickAdminSaveButton(page);
@@ -120,16 +104,7 @@ test.describe('Admin Project CRUD', () => {
     await setAdminCheckbox(page, 'active', true);
 
     // Select a customer
-    const comboField = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name="customer"]') })
-      .first();
-    const trigger = comboField.locator('.x-form-trigger').first();
-    await trigger.click();
-    await page.waitForTimeout(300);
-    const firstCustomer = page.locator('.x-boundlist-item').first();
-    await firstCustomer.click();
-    await page.waitForTimeout(200);
+    await selectCustomer(page);
 
     await clickAdminSaveButton(page);
     await waitForAdminWindowClose(page);
@@ -167,16 +142,7 @@ test.describe('Admin Project CRUD', () => {
     await setAdminCheckbox(page, 'active', true);
 
     // Select a customer
-    const comboField = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name="customer"]') })
-      .first();
-    const trigger = comboField.locator('.x-form-trigger').first();
-    await trigger.click();
-    await page.waitForTimeout(300);
-    const firstCustomer = page.locator('.x-boundlist-item').first();
-    await firstCustomer.click();
-    await page.waitForTimeout(200);
+    await selectCustomer(page);
 
     await clickAdminSaveButton(page);
     await waitForAdminWindowClose(page);
@@ -289,16 +255,7 @@ test.describe('Admin Project CRUD', () => {
     await setAdminCheckbox(page, 'active', true);
 
     // Select a customer
-    const comboField = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name="customer"]') })
-      .first();
-    const trigger = comboField.locator('.x-form-trigger').first();
-    await trigger.click();
-    await page.waitForTimeout(300);
-    const firstCustomer = page.locator('.x-boundlist-item').first();
-    await firstCustomer.click();
-    await page.waitForTimeout(200);
+    await selectCustomer(page);
 
     // Set global flag if it exists
     try {

@@ -17,7 +17,8 @@ import {
   findAdminRowByText,
   generateTestName,
   waitForAdminGridRefresh,
-  saveUserForm,
+  saveEntityForm,
+  selectTeamLead,
 } from '../helpers/admin';
 
 /**
@@ -74,25 +75,7 @@ test.describe('Admin Team CRUD', () => {
     await fillAdminField(page, 'name', testName);
 
     // Select a team leader (Teamleiter) - might be required
-    const leadCombo = page
-      .locator('.x-window .x-field')
-      .filter({ has: page.locator('input[name*="lead"]') })
-      .first();
-    if ((await leadCombo.count()) > 0) {
-      const trigger = leadCombo.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-
-      const firstUser = page.locator('.x-boundlist-item').first();
-      if ((await firstUser.count()) > 0) {
-        await firstUser.click();
-        await page.waitForTimeout(200);
-      }
-    }
-
-    // Click on window body to close any open dropdowns
-    await page.locator('.x-window .x-window-body').first().click();
-    await page.waitForTimeout(200);
+    await selectTeamLead(page);
 
     // Save
     await clickAdminSaveButton(page);
@@ -124,21 +107,9 @@ test.describe('Admin Team CRUD', () => {
     await fillAdminField(page, 'name', testName);
 
     // Select a team leader (required)
-    const leadCombo = page.locator('.x-window .x-field').filter({ has: page.locator('input[name*="lead"]') }).first();
-    if ((await leadCombo.count()) > 0) {
-      const trigger = leadCombo.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-      const firstUser = page.locator('.x-boundlist-item').first();
-      if ((await firstUser.count()) > 0) {
-        await firstUser.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await selectTeamLead(page);
 
-    await page.locator('.x-window .x-window-body').first().click();
-    await page.waitForTimeout(200);
-    await saveUserForm(page);
+    await saveEntityForm(page);
     await waitForAdminGridRefresh(page);
 
     // Find the created team
@@ -157,7 +128,7 @@ test.describe('Admin Team CRUD', () => {
     await page.waitForTimeout(200);
 
     // Save using native event dispatch
-    await saveUserForm(page);
+    await saveEntityForm(page);
     await waitForAdminGridRefresh(page);
 
     // Verify team was updated
@@ -175,20 +146,8 @@ test.describe('Admin Team CRUD', () => {
     await fillAdminField(page, 'name', testName);
 
     // Select a team leader (required)
-    const leadCombo = page.locator('.x-window .x-field').filter({ has: page.locator('input[name*="lead"]') }).first();
-    if ((await leadCombo.count()) > 0) {
-      const trigger = leadCombo.locator('.x-form-trigger').first();
-      await trigger.click();
-      await page.waitForTimeout(300);
-      const firstUser = page.locator('.x-boundlist-item').first();
-      if ((await firstUser.count()) > 0) {
-        await firstUser.click();
-        await page.waitForTimeout(200);
-      }
-    }
+    await selectTeamLead(page);
 
-    await page.locator('.x-window .x-window-body').first().click();
-    await page.waitForTimeout(200);
     await clickAdminSaveButton(page);
     await waitForAdminWindowClose(page);
     await waitForAdminGridRefresh(page);
@@ -225,29 +184,8 @@ test.describe('Admin Team CRUD', () => {
     // Fill in team details
     await fillAdminField(page, 'name', testName);
 
-    // Try to select a team lead
-    try {
-      const leadCombo = page
-        .locator('.x-window .x-field')
-        .filter({ has: page.locator('input[name*="lead"]') })
-        .first();
-      if ((await leadCombo.count()) > 0) {
-        const trigger = leadCombo.locator('.x-form-trigger').first();
-        await trigger.click();
-        await page.waitForTimeout(300);
-
-        const firstUser = page.locator('.x-boundlist-item').first();
-        if ((await firstUser.count()) > 0) {
-          await firstUser.click();
-          await page.waitForTimeout(200);
-        }
-        // Close dropdown by clicking on window body
-        await page.locator('.x-window .x-window-body').first().click();
-        await page.waitForTimeout(200);
-      }
-    } catch {
-      console.log('Could not set team lead');
-    }
+    // Try to select a team lead (optional for this test)
+    await selectTeamLead(page);
 
     // Save
     await clickAdminSaveButton(page);
