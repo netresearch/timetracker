@@ -148,21 +148,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
 
-      - name: Set up Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Build E2E image
-        run: docker buildx bake app-e2e --load
+      - name: Pull or build E2E image
+        run: |
+          # Try to pull pre-built image, fall back to building
+          docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
       - name: Install dependencies
         env:
           COMPOSE_PROFILES: e2e
         run: |
-          mkdir -p vendor var/cache var/log bin var/coverage/e2e
-          chmod -R 755 vendor var bin
+          mkdir -p vendor var/cache var/log bin var/coverage/e2e playwright-report test-results
+          chmod -R 755 vendor var bin playwright-report test-results
           docker compose run --rm app-e2e composer install --no-interaction --prefer-dist --ignore-platform-req=php
           docker compose run --rm app-e2e npm install --legacy-peer-deps
 
@@ -173,21 +169,22 @@ jobs:
           XDEBUG_MODE: coverage
         run: |
           docker compose up -d
-          # Wait for database using compose healthcheck
-          docker compose exec -T db-e2e mariadb-admin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --wait --connect-timeout=60 || \
-            docker compose exec -T db-e2e mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
+          # Wait for database
+          docker compose exec -T db-e2e mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
           # Wait for app to be ready
           timeout 60 bash -c 'until curl -sf http://localhost:8766/ > /dev/null 2>&1; do sleep 2; done' || echo "App may not be ready"
           # Verify coverage is enabled
           curl -s http://localhost:8766/coverage.php?action=status || true
 
-      - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
-
       - name: Run E2E tests (shard ${{ matrix.shard }}/3)
         env:
-          E2E_BASE_URL: http://localhost:8766
-        run: npx playwright test --shard=${{ matrix.shard }}/3 --max-failures=10
+          COMPOSE_PROFILES: e2e
+        run: |
+          # Run Playwright from inside the container (browsers pre-installed)
+          docker compose run --rm \
+            -e E2E_BASE_URL=http://httpd-e2e:80 \
+            -e CI=true \
+            app-e2e npx playwright test --shard=${{ matrix.shard }}/3 -x
 
       - name: Collect E2E coverage
         if: always()
