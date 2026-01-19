@@ -9,7 +9,7 @@ export const TABS = {
   extras: /3:.*Extras/i,
   settings: /4:.*Settings|Einstellungen/i,
   administration: /5:.*Administration/i,
-  controlling: /6:.*Controlling/i,
+  controlling: /6:.*Controlling|Abrechnung/i,
   help: /7:.*Help|Hilfe/i,
   charts: /Charts|Diagramme/i, // Legacy, may not exist in numbered tabs
 } as const;

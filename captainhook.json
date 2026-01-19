@@ -104,6 +104,18 @@
                         "args": ["php"]
                     }
                 ]
+            },
+            {
+                "action": "php -d memory_limit=512M bin/phpunit --testsuite=api-contract --no-coverage",
+                "options": {
+                    "label": "PHPUnit: API contract tests"
+                },
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
+                        "args": ["php"]
+                    }
+                ]
             }
         ]
     },

@@ -19,8 +19,8 @@ final readonly class ExportQueryDto
         public int $userid = 0,
         public int $year = 0,
         public int $month = 0,
-        public int $project = 0,
-        public int $customer = 0,
+        public ?int $project = null,
+        public ?int $customer = null,
         public bool $billable = false,
         public bool $tickettitles = false,
     ) {
@@ -37,11 +37,29 @@ final readonly class ExportQueryDto
             userid: self::toInt($request->query->get('userid')),
             year: self::toInt($request->query->get('year')),
             month: self::toInt($request->query->get('month')),
-            project: self::toInt($request->query->get('project')),
-            customer: self::toInt($request->query->get('customer')),
+            project: self::toNullableId($request->query->get('project')),
+            customer: self::toNullableId($request->query->get('customer')),
             billable: self::toBool($request->query->get('billable')),
             tickettitles: self::toBool($request->query->get('tickettitles')),
         );
+    }
+
+    /**
+     * Convert to nullable ID - returns null for empty/0 values (meaning "no filter").
+     */
+    private static function toNullableId(mixed $value): ?int
+    {
+        if (null === $value || '' === $value) {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            $intValue = (int) $value;
+
+            return 0 === $intValue ? null : $intValue;
+        }
+
+        return null;
     }
 
     private static function toInt(mixed $value): int
