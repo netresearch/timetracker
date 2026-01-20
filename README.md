@@ -1,7 +1,7 @@
 # Netresearch TimeTracker
 
-[![PHP Version](https://img.shields.io/badge/php-8.4-blue.svg)](https://www.php.net)
-[![Symfony](https://img.shields.io/badge/symfony-7.3-green.svg)](https://symfony.com)
+[![PHP Version](https://img.shields.io/badge/php-8.5-blue.svg)](https://www.php.net)
+[![Symfony](https://img.shields.io/badge/symfony-8.0-green.svg)](https://symfony.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-red.svg)](LICENSE)
 [![CI Status](https://github.com/netresearch/timetracker/workflows/CI/badge.svg)](https://github.com/netresearch/timetracker/actions)
 [![codecov](https://codecov.io/gh/netresearch/timetracker/graph/badge.svg)](https://codecov.io/gh/netresearch/timetracker)
@@ -46,7 +46,7 @@ open http://localhost:8765
 ### Manual Installation
 
 ```bash
-# Prerequisites: PHP 8.4+, MySQL/MariaDB, Composer, Node.js 18+
+# Prerequisites: PHP 8.5+, MariaDB/MySQL, Composer, Node.js 22+
 composer install
 npm install && npm run build
 
@@ -63,17 +63,17 @@ symfony server:start
 
 ## Requirements
 
-- **PHP**: 8.4 with extensions: `ldap`, `pdo_mysql`, `intl`, `mbstring`
-- **Database**: MySQL 8.0+ or MariaDB 10.5+
-- **Node.js**: 18+ (for asset compilation)
+- **PHP**: 8.5 with extensions: `ldap`, `pdo_mysql`, `intl`, `mbstring`
+- **Database**: MariaDB 12+ or MySQL 8.0+
+- **Node.js**: 22+ (for asset compilation)
 
 ---
 
 ## Technology Stack
 
-- **Backend**: PHP 8.4, Symfony 7.3, Doctrine ORM 3
-- **Frontend**: Stimulus, SCSS, Webpack Encore
-- **Testing**: PHPUnit 12, PHPStan Level 10, PHP-CS-Fixer, Rector
+- **Backend**: PHP 8.5, Symfony 8.0, Doctrine ORM 3
+- **Frontend**: ExtJS (legacy UI), Stimulus, SCSS, Webpack Encore
+- **Testing**: PHPUnit 12, Playwright (E2E), PHPStan Level 10, PHP-CS-Fixer, Rector
 - **Infrastructure**: Docker, GitHub Actions CI/CD
 
 See [docs/techstack.md](docs/techstack.md) for details.
