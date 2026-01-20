@@ -56,6 +56,7 @@ jobs:
           name: dependencies
           path: |
             vendor/
+            bin/
             node_modules/
             public/build/
           retention-days: 1
@@ -82,8 +83,8 @@ jobs:
 
       - name: Prepare directories
         run: |
-          mkdir -p var/cache var/log bin
-          chmod -R 777 var bin
+          mkdir -p var/cache var/log
+          chmod -R 777 var bin vendor
           if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
 
       - name: Validate composer.json
@@ -150,8 +151,8 @@ jobs:
 
       - name: Prepare config files and SQL
         run: |
-          mkdir -p var/cache var/log bin
-          chmod -R 777 var bin
+          mkdir -p var/cache var/log
+          chmod -R 777 var bin vendor
           if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
           sed '1s/^/USE unittest;\\n/' sql/full.sql > sql/unittest/001_testtables.sql
 
@@ -172,7 +173,7 @@ jobs:
         env:
           COMPOSE_PROFILES: e2e
         run: |
-          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e php -d memory_limit=2G ./bin/phpunit --coverage-clover var/coverage/clover.xml || true
+          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e php -d memory_limit=2G bin/phpunit --coverage-clover var/coverage/clover.xml || true
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
@@ -213,8 +214,8 @@ jobs:
 
       - name: Prepare directories
         run: |
-          mkdir -p var/cache var/log bin var/coverage/e2e playwright-report test-results
-          chmod -R 777 var bin playwright-report test-results
+          mkdir -p var/cache var/log var/coverage/e2e playwright-report test-results
+          chmod -R 777 var bin vendor node_modules public playwright-report test-results
 
       - name: Start E2E stack with coverage
         env:
