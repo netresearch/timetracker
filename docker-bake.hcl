@@ -88,7 +88,7 @@ target "app" {
   }
 }
 
-# Development image (with Xdebug, PCOV, dev tools)
+# Development image (local development with Xdebug, PCOV, dev tools)
 target "app-dev" {
   inherits = ["_common"]
   target   = "dev"
@@ -97,7 +97,7 @@ target "app-dev" {
   ]
 }
 
-# Tools image (lightweight, for CI/static analysis)
+# Tools image (local development, lightweight static analysis)
 target "app-tools" {
   inherits = ["_common"]
   target   = "tools"
@@ -106,7 +106,8 @@ target "app-tools" {
   ]
 }
 
-# E2E test image (with Playwright and browsers pre-installed)
+# E2E/CI image (used for all CI jobs: lint, test, e2e)
+# Includes Xdebug, PCOV, Playwright with pre-installed browsers
 target "app-e2e" {
   inherits = ["_common"]
   target   = "e2e"
@@ -124,12 +125,12 @@ group "default" {
   targets = ["app"]
 }
 
-# All application images
+# All application images (for local development)
 group "all" {
-  targets = ["app", "app-dev", "app-tools"]
+  targets = ["app", "app-dev", "app-tools", "app-e2e"]
 }
 
-# CI images (production + tools for testing)
+# CI images (production + e2e for all CI jobs)
 group "ci" {
-  targets = ["app", "app-tools"]
+  targets = ["app", "app-e2e"]
 }

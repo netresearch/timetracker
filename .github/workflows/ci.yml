@@ -10,137 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint & Static Analysis
+  setup:
+    name: Setup Dependencies
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
-
-      - name: Prepare config files
-        run: |
-          if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
-
-      - name: Build tools image
-        run: docker buildx bake app-tools --load
-
-      - name: Install dependencies
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          # Create directories with proper permissions for non-root container user
-          mkdir -p vendor var/cache var/log bin
-          chmod -R 777 vendor var bin
-          # --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
-          # See: https://github.com/laminas/laminas-ldap/issues/62
-          docker compose run --rm app-tools composer install --no-interaction --prefer-dist --ignore-platform-req=php
-
-      - name: Validate composer.json
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          docker compose run --rm app-tools composer validate --no-check-publish
-
-      - name: Composer audit (security)
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          docker compose run --rm app-tools composer audit --format=plain
-
-      - name: Static analysis (PHPStan)
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          make stan
-
-      - name: Architecture analysis (PHPat)
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          make phpat
-
-      - name: Code style (PHP-CS-Fixer)
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          make cs-check
-
-      - name: Rector (dry-run)
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          docker compose run --rm app-tools php -d memory_limit=1G bin/rector process src --config=config/quality/rector.php --dry-run
-
-      - name: Lint Twig templates
-        env:
-          COMPOSE_PROFILES: tools
-        run: |
-          make twig-lint
-
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: lint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
-
-      - name: Prepare config files and SQL
-        run: |
-          if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
-          sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
-
-      - name: Build development image
-        run: docker buildx bake app-dev --load
-
-      - name: Set up development environment
-        env:
-          COMPOSE_PROFILES: dev
-        run: |
-          # Image already built by bake - just install deps and start services
-          docker compose run --rm app-dev composer install --ignore-platform-req=php
-          docker compose run --rm app-dev npm install --legacy-peer-deps
-          docker compose up -d
-          docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
-
-      - name: Run tests (PHPUnit)
-        env:
-          COMPOSE_PROFILES: dev
-        run: |
-          make test
-
-      - name: Run tests with coverage
-        env:
-          COMPOSE_PROFILES: dev
-        run: |
-          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-dev php -d memory_limit=2G ./bin/phpunit --coverage-clover var/coverage/clover.xml || true
-
-      - name: Upload to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: var/coverage/clover.xml
-          flags: unit
-          fail_ci_if_error: false
-          verbose: true
-
-  e2e:
-    name: E2E Tests (${{ matrix.shard }}/${{ strategy.job-total }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3]
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -153,16 +26,195 @@ jobs:
           # Try to pull pre-built image, fall back to building
           docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
-      - name: Install dependencies
+      - name: Prepare directories
+        run: |
+          mkdir -p vendor var/cache var/log bin node_modules public/build
+          chmod -R 777 vendor var bin node_modules public
+
+      - name: Install PHP dependencies
         env:
           COMPOSE_PROFILES: e2e
         run: |
-          # Create directories with proper permissions for non-root container user
-          mkdir -p vendor var/cache var/log bin var/coverage/e2e playwright-report test-results
-          chmod -R 777 vendor var bin playwright-report test-results
+          # --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
           docker compose run --rm app-e2e composer install --no-interaction --prefer-dist --ignore-platform-req=php
+
+      - name: Install Node dependencies
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
           docker compose run --rm app-e2e npm install --legacy-peer-deps
+
+      - name: Build frontend assets
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
           docker compose run --rm app-e2e npm run build
+
+      - name: Upload dependencies artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: dependencies
+          path: |
+            vendor/
+            node_modules/
+            public/build/
+          retention-days: 1
+
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: setup
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Pull E2E image
+        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+
+      - name: Download dependencies
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dependencies
+
+      - name: Prepare directories
+        run: |
+          mkdir -p var/cache var/log bin
+          chmod -R 777 var bin
+          if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
+
+      - name: Validate composer.json
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm app-e2e composer validate --no-check-publish
+
+      - name: Composer audit (security)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm app-e2e composer audit --format=plain
+
+      - name: Static analysis (PHPStan)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm app-e2e php -d memory_limit=1G bin/phpstan analyze --no-progress
+
+      - name: Architecture analysis (PHPat)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm app-e2e php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php --no-progress
+
+      - name: Code style (PHP-CS-Fixer)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm app-e2e php -d memory_limit=512M bin/php-cs-fixer fix --dry-run --diff
+
+      - name: Rector (dry-run)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm app-e2e php -d memory_limit=1G bin/rector process src --config=config/quality/rector.php --dry-run
+
+      - name: Lint Twig templates
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm -e XDEBUG_MODE=off app-e2e php bin/console lint:twig templates/
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Pull E2E image
+        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+
+      - name: Download dependencies
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dependencies
+
+      - name: Prepare config files and SQL
+        run: |
+          mkdir -p var/cache var/log bin
+          chmod -R 777 var bin
+          if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
+          sed '1s/^/USE unittest;\\n/' sql/full.sql > sql/unittest/001_testtables.sql
+
+      - name: Start test database
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose up -d db_unittest
+          docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
+
+      - name: Run tests (PHPUnit)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm -e APP_ENV=test app-e2e php -d memory_limit=512M bin/phpunit
+
+      - name: Run tests with coverage
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e php -d memory_limit=2G ./bin/phpunit --coverage-clover var/coverage/clover.xml || true
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: var/coverage/clover.xml
+          flags: unit
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Stop database
+        if: always()
+        run: docker compose down
+
+  e2e:
+    name: E2E Tests (${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Pull E2E image
+        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+
+      - name: Download dependencies
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dependencies
+
+      - name: Prepare directories
+        run: |
+          mkdir -p var/cache var/log bin var/coverage/e2e playwright-report test-results
+          chmod -R 777 var bin playwright-report test-results
 
       - name: Start E2E stack with coverage
         env:
@@ -170,7 +222,6 @@ jobs:
           COVERAGE_ENABLED: '1'
           XDEBUG_MODE: coverage
         run: |
-          # Start the E2E stack
           docker compose up -d
 
           # Wait for database
@@ -180,10 +231,7 @@ jobs:
           docker compose exec -T app-e2e php bin/console cache:clear --env=test || true
           docker compose exec -T app-e2e php bin/console cache:warmup --env=test || true
 
-          # Show running containers for debugging
-          docker compose ps
-
-          # Wait for app to be ready (increased timeout, will fail if not ready)
+          # Wait for app to be ready
           echo "Waiting for app to be ready..."
           for i in {1..30}; do
             HTTP_CODE=$(curl -s -o /tmp/response.html -w "%{http_code}" http://localhost:8766/login 2>&1)
@@ -199,8 +247,6 @@ jobs:
               docker compose logs app-e2e | tail -50
               echo "=== Nginx logs ==="
               docker compose logs httpd-e2e | tail -20
-              echo "=== Symfony error log ==="
-              docker compose exec -T app-e2e cat var/log/test.log 2>/dev/null | tail -100 || echo "No test.log found"
               exit 1
             fi
             echo "Attempt $i: HTTP $HTTP_CODE, waiting..."
@@ -214,8 +260,6 @@ jobs:
         env:
           COMPOSE_PROFILES: e2e
         run: |
-          # Run Playwright from inside the container (browsers pre-installed)
-          # Use internal Docker network: httpd-e2e is the service name, port 80 is internal
           docker compose run --rm \
             -e E2E_BASE_URL=http://httpd-e2e:80 \
             -e CI=true \
@@ -224,9 +268,7 @@ jobs:
       - name: Collect E2E coverage
         if: always()
         run: |
-          # Fetch coverage report from the app
           curl -s "http://localhost:8766/coverage.php?action=report&format=clover" > var/coverage/e2e-clover-${{ matrix.shard }}.xml || true
-          # Check if coverage file has content
           if [ -s var/coverage/e2e-clover-${{ matrix.shard }}.xml ]; then
             echo "E2E coverage collected successfully for shard ${{ matrix.shard }}"
           else
