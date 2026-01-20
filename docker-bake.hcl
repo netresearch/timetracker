@@ -82,9 +82,9 @@ target "app" {
   labels = {
     "org.opencontainers.image.title"       = "Netresearch TimeTracker"
     "org.opencontainers.image.description" = "Time tracking application"
-    "org.opencontainers.image.vendor"      = "Netresearch GmbH & Co. KG"
+    "org.opencontainers.image.vendor"      = "Netresearch DTT GmbH"
     "org.opencontainers.image.source"      = "https://github.com/netresearch/timetracker"
-    "org.opencontainers.image.licenses"    = "GPL-3.0"
+    "org.opencontainers.image.licenses"    = "AGPL-3.0"
   }
 }
 
