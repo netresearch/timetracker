@@ -106,10 +106,10 @@ target "app-tools" {
   ]
 }
 
-# E2E test image
+# E2E test image (with Playwright and browsers pre-installed)
 target "app-e2e" {
   inherits = ["_common"]
-  target   = "dev"
+  target   = "e2e"
   tags = [
     "${REGISTRY}/${IMAGE_NAME}:e2e",
   ]

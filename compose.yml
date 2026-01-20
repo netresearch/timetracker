@@ -193,6 +193,9 @@ services:
       - APP_FROZEN_TIME=2024-01-15 12:00:00
       # Use separate E2E database to avoid conflicts with dev
       - DATABASE_URL=mysql://timetracker:timetracker@db-e2e:3306/timetracker?serverVersion=mariadb-12.1.0&charset=utf8mb4
+      # Coverage collection (set COVERAGE_ENABLED=1 XDEBUG_MODE=coverage to enable)
+      - COVERAGE_ENABLED=${COVERAGE_ENABLED:-0}
+      - XDEBUG_MODE=${XDEBUG_MODE:-off}
     volumes:
       - .:/var/www/html
       - ./public:/var/www/html/public

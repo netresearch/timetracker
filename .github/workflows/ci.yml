@@ -128,5 +128,134 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: var/coverage/clover.xml
+          flags: unit
           fail_ci_if_error: false
           verbose: true
+
+  e2e:
+    name: E2E Tests (${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Pull or build E2E image
+        run: |
+          # Try to pull pre-built image, fall back to building
+          docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+
+      - name: Install dependencies
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          # Create directories with proper permissions for non-root container user
+          mkdir -p vendor var/cache var/log bin var/coverage/e2e playwright-report test-results
+          chmod -R 777 vendor var bin playwright-report test-results
+          docker compose run --rm app-e2e composer install --no-interaction --prefer-dist --ignore-platform-req=php
+          docker compose run --rm app-e2e npm install --legacy-peer-deps
+          docker compose run --rm app-e2e npm run build
+
+      - name: Start E2E stack with coverage
+        env:
+          COMPOSE_PROFILES: e2e
+          COVERAGE_ENABLED: '1'
+          XDEBUG_MODE: coverage
+        run: |
+          # Start the E2E stack
+          docker compose up -d
+
+          # Wait for database
+          docker compose exec -T db-e2e mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
+
+          # Clear and warmup Symfony cache for test environment
+          docker compose exec -T app-e2e php bin/console cache:clear --env=test || true
+          docker compose exec -T app-e2e php bin/console cache:warmup --env=test || true
+
+          # Show running containers for debugging
+          docker compose ps
+
+          # Wait for app to be ready (increased timeout, will fail if not ready)
+          echo "Waiting for app to be ready..."
+          for i in {1..30}; do
+            HTTP_CODE=$(curl -s -o /tmp/response.html -w "%{http_code}" http://localhost:8766/login 2>&1)
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "App is ready after $i attempts (HTTP $HTTP_CODE)"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "App failed to start within timeout (last HTTP code: $HTTP_CODE)"
+              echo "=== Last response body ==="
+              cat /tmp/response.html 2>/dev/null | head -100 || true
+              echo "=== PHP-FPM logs ==="
+              docker compose logs app-e2e | tail -50
+              echo "=== Nginx logs ==="
+              docker compose logs httpd-e2e | tail -20
+              echo "=== Symfony error log ==="
+              docker compose exec -T app-e2e cat var/log/test.log 2>/dev/null | tail -100 || echo "No test.log found"
+              exit 1
+            fi
+            echo "Attempt $i: HTTP $HTTP_CODE, waiting..."
+            sleep 3
+          done
+
+          # Verify coverage is enabled
+          curl -s http://localhost:8766/coverage.php?action=status || echo "Coverage endpoint not responding"
+
+      - name: Run E2E tests (shard ${{ matrix.shard }}/3)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          # Run Playwright from inside the container (browsers pre-installed)
+          # Use internal Docker network: httpd-e2e is the service name, port 80 is internal
+          docker compose run --rm \
+            -e E2E_BASE_URL=http://httpd-e2e:80 \
+            -e CI=true \
+            app-e2e npx playwright test --shard=${{ matrix.shard }}/3 -x
+
+      - name: Collect E2E coverage
+        if: always()
+        run: |
+          # Fetch coverage report from the app
+          curl -s "http://localhost:8766/coverage.php?action=report&format=clover" > var/coverage/e2e-clover-${{ matrix.shard }}.xml || true
+          # Check if coverage file has content
+          if [ -s var/coverage/e2e-clover-${{ matrix.shard }}.xml ]; then
+            echo "E2E coverage collected successfully for shard ${{ matrix.shard }}"
+          else
+            echo "No E2E coverage data collected for shard ${{ matrix.shard }}"
+          fi
+
+      - name: Upload E2E coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: var/coverage/e2e-clover-${{ matrix.shard }}.xml
+          flags: e2e
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: e2e-artifacts-shard-${{ matrix.shard }}
+          path: |
+            playwright-report/
+            test-results/
+            var/coverage/
+          retention-days: 7
+
+      - name: Stop E2E stack
+        if: always()
+        env:
+          COMPOSE_PROFILES: e2e
+        run: docker compose down
