@@ -229,6 +229,13 @@ jobs:
           mkdir -p var/cache var/log var/coverage/e2e playwright-report test-results
           chmod -R 777 var bin vendor node_modules public playwright-report test-results
 
+      - name: Reinstall npm binaries
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          # Artifact download doesn't preserve npm binary symlinks, reinstall to fix
+          docker compose run --rm app-e2e npm install --legacy-peer-deps
+
       - name: Start E2E stack with coverage
         env:
           COMPOSE_PROFILES: e2e
