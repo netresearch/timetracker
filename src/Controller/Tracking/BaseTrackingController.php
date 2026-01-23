@@ -6,22 +6,13 @@ namespace App\Controller\Tracking;
 
 use App\Controller\BaseController;
 use App\Entity\Entry;
-use App\Entity\Project;
-use App\Entity\TicketSystem;
-use App\Entity\User;
 use App\Enum\EntryClass;
-use App\Enum\TicketSystemType;
-use App\Exception\Integration\Jira\JiraApiException;
 use App\Repository\EntryRepository;
-use App\Repository\TicketSystemRepository;
-use App\Service\Integration\Jira\JiraOAuthApiFactory;
-use App\Service\Util\TicketService;
 use DateInterval;
 use DateTime;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
@@ -30,11 +21,7 @@ use function sprintf;
 
 abstract class BaseTrackingController extends BaseController
 {
-    protected ?TicketService $ticketService = null;
-
     protected LoggerInterface $logger;
-
-    protected ?JiraOAuthApiFactory $jiraOAuthApiFactory = null;
 
     public function __construct()
     {
@@ -45,56 +32,6 @@ abstract class BaseTrackingController extends BaseController
     public function setLogger(LoggerInterface $trackingLogger): void
     {
         $this->logger = $trackingLogger;
-    }
-
-    #[Required]
-    public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
-    {
-        $this->jiraOAuthApiFactory = $jiraOAuthApiFactory;
-    }
-
-    #[Required]
-    public function setTicketService(TicketService $ticketService): void
-    {
-        $this->ticketService = $ticketService;
-    }
-
-    /**
-     * Deletes a work log entry in a remote JIRA installation.
-     * JIRA instance is defined by ticket system in project.
-     *
-     * @throws JiraApiException
-     */
-    protected function deleteJiraWorklog(
-        Entry $entry,
-        ?TicketSystem $ticketSystem = null,
-    ): void {
-        $project = $entry->getProject();
-
-        if (!$ticketSystem instanceof TicketSystem) {
-            $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
-        }
-
-        if ($project instanceof Project && $project->hasInternalJiraProjectKey()) {
-            $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-            assert($ticketSystemRepo instanceof TicketSystemRepository);
-            $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
-        }
-
-        if (!$ticketSystem instanceof TicketSystem) {
-            return;
-        }
-
-        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
-            return;
-        }
-
-        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
-            return;
-        }
-
-        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
-        $jiraOAuthApiService->deleteEntryJiraWorkLog($entry);
     }
 
     /**
@@ -180,104 +117,6 @@ abstract class BaseTrackingController extends BaseController
     }
 
     /**
-     * Creates a work log entry in a remote JIRA installation.
-     * JIRA instance is defined by ticket system in project.
-     *
-     * @throws JiraApiException
-     */
-    protected function createJiraEntry(Entry $entry, User $user): void
-    {
-        $project = $entry->getProject();
-
-        if (!$project instanceof Project) {
-            return;
-        }
-
-        if ('' === $entry->getTicket()) {
-            return;
-        }
-
-        $ticketSystem = $project->getTicketSystem();
-
-        // Support for internal jira project and ticket system
-        if ($project->hasInternalJiraProjectKey()) {
-            $this->validateTicketProjectMatch($entry, $project);
-
-            $ticketSystemRepo = $this->managerRegistry->getRepository(TicketSystem::class);
-            assert($ticketSystemRepo instanceof TicketSystemRepository);
-            $ticketSystem = $ticketSystemRepo->find($project->getInternalJiraTicketSystem());
-        }
-
-        if (!$ticketSystem instanceof TicketSystem) {
-            return;
-        }
-
-        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
-            return;
-        }
-
-        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory) {
-            return;
-        }
-
-        try {
-            $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-            $jiraOAuthApiService->createEntryJiraWorkLog($entry);
-        } catch (Exception $exception) {
-            $this->logger->error('Failed to create Jira work log', [
-                'entry_id' => $entry->getId(),
-                'error' => $exception->getMessage(),
-            ]);
-
-            throw new JiraApiException('Failed to create Jira work log: ' . $exception->getMessage(), 0);
-        }
-    }
-
-    /**
-     * Validates that the ticket project matches the project JIRA ID.
-     * Extracts the project key from the ticket and validates against project JIRA IDs.
-     *
-     * @throws Exception        when ticket project doesn't match
-     * @throws RuntimeException when ticket service is not available
-     */
-    protected function validateTicketProjectMatch(Entry $entry, Project $project): void
-    {
-        $ticket = $entry->getTicket();
-        if ('' === $ticket) {
-            return;
-        }
-
-        if (!$this->ticketService instanceof TicketService) {
-            throw new RuntimeException('Ticket service not available');
-        }
-
-        $jiraId = $this->ticketService->extractJiraId($ticket);
-        if ('' === $jiraId) {
-            return;
-        }
-
-        $projectJiraId = $project->getJiraId();
-        if ('' === $projectJiraId || null === $projectJiraId) {
-            return;
-        }
-
-        $projectIds = explode(',', $projectJiraId);
-
-        foreach ($projectIds as $projectId) {
-            if (trim($projectId) === $jiraId || $project->matchesInternalJiraProject($jiraId)) {
-                return;
-            }
-        }
-
-        $message = $this->translator->trans(
-            "The ticket's Jira ID '%ticket_jira_id%' does not match the project's Jira ID '%project_jira_id%'.",
-            ['%ticket_jira_id%' => $jiraId, '%project_jira_id%' => $project->getJiraId()],
-        );
-
-        throw new Exception($message);
-    }
-
-    /**
      * Write log entry using Symfony's logging.
      *
      * @param array<string, mixed>|list<mixed> $data
@@ -290,110 +129,6 @@ abstract class BaseTrackingController extends BaseController
         ];
 
         $this->logger->info('Tracking data', $context);
-    }
-
-    /**
-     * Updates a JIRA work log entry.
-     *
-     * @throws JiraApiException
-     */
-    protected function updateJiraWorklog(
-        Entry $entry,
-        Entry $oldEntry,
-        ?TicketSystem $ticketSystem = null,
-    ): void {
-        $project = $entry->getProject();
-
-        if (!$ticketSystem instanceof TicketSystem) {
-            $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
-        }
-
-        if (!$ticketSystem instanceof TicketSystem) {
-            return;
-        }
-
-        if (!$ticketSystem->getBookTime() || TicketSystemType::JIRA !== $ticketSystem->getType()) {
-            return;
-        }
-
-        if ($this->shouldTicketBeDeleted($entry, $oldEntry)) {
-            $this->deleteJiraWorklog($oldEntry, $ticketSystem);
-            $entry->setWorklogId(null);
-        }
-
-        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
-            return;
-        }
-
-        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
-        $jiraOAuthApiService->updateEntryJiraWorkLog($entry);
-    }
-
-    /**
-     * Creates a Ticket in the given ticketSystem.
-     *
-     * @throws JiraApiException when ticket system configuration is invalid or API call fails
-     */
-    protected function createTicket(
-        Entry $entry,
-        ?TicketSystem $ticketSystem = null,
-    ): mixed {
-        if (!$ticketSystem instanceof TicketSystem) {
-            $project = $entry->getProject();
-            $ticketSystem = $project instanceof Project ? $project->getTicketSystem() : null;
-        }
-
-        if (!$ticketSystem instanceof TicketSystem) {
-            throw new JiraApiException('No ticket system configured for project');
-        }
-
-        if (!$this->jiraOAuthApiFactory instanceof JiraOAuthApiFactory || !$entry->getUser() instanceof User) {
-            throw new JiraApiException('Jira API factory or user not available');
-        }
-
-        $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($entry->getUser(), $ticketSystem);
-
-        return $jiraOAuthApiService->createTicket($entry);
-    }
-
-    /**
-     * Handles the entry for the configured internal ticketsystem.
-     *
-     * @throws JiraApiException when JIRA API operations fail
-     */
-    protected function handleInternalJiraTicketSystem(Entry $entry, Entry $oldEntry): void
-    {
-        $project = $entry->getProject();
-
-        if (!$project instanceof Project || !$project->hasInternalJiraProjectKey()) {
-            return;
-        }
-
-        $objectRepository = $this->managerRegistry->getRepository(TicketSystem::class);
-        assert($objectRepository instanceof TicketSystemRepository);
-        $ticketSystem = $objectRepository->find($project->getInternalJiraTicketSystem());
-
-        if (!$ticketSystem instanceof TicketSystem) {
-            return;
-        }
-
-        if ('' === $oldEntry->getTicket()) {
-            $user = $entry->getUser();
-            if ($user instanceof User) {
-                $this->createJiraEntry($entry, $user);
-            }
-        } else {
-            $this->updateJiraWorklog($entry, $oldEntry, $ticketSystem);
-        }
-    }
-
-    /**
-     * Determines whether the old entry ticket should be deleted.
-     */
-    protected function shouldTicketBeDeleted(Entry $entry, Entry $oldEntry): bool
-    {
-        // Delete if ticket is removed or changed
-        return '' !== $oldEntry->getTicket() && $entry->getTicket() !== $oldEntry->getTicket();
     }
 
     /**
