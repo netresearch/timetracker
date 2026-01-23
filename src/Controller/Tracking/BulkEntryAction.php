@@ -13,6 +13,7 @@ use App\Entity\Preset;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\EntryClass;
+use App\Event\EntryEvent;
 use App\Model\Response;
 use DateInterval;
 use DateTime;
@@ -23,6 +24,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 use function count;
 use function in_array;
@@ -30,10 +33,18 @@ use function sprintf;
 
 final class BulkEntryAction extends BaseTrackingController
 {
+    private ?EventDispatcherInterface $eventDispatcher = null;
+
     public function __construct(
         private readonly ValidatorInterface $validator,
     ) {
         parent::__construct();
+    }
+
+    #[Required]
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
+    {
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -205,6 +216,12 @@ final class BulkEntryAction extends BaseTrackingController
                 $this->logData($entry->toArray());
                 $em->persist($entry);
                 $em->flush();
+
+                // Dispatch entry created event for Jira sync and cache invalidation
+                if ($this->eventDispatcher instanceof EventDispatcherInterface) {
+                    $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::CREATED);
+                }
+
                 ++$numAdded;
 
                 $this->calculateClasses($user->getId() ?? 0, $entry->getDay()->format('Y-m-d'));

@@ -11,6 +11,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\EntryClass;
+use App\Event\EntryEvent;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\ActivityRepository;
@@ -27,6 +28,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 use function assert;
@@ -34,6 +36,14 @@ use function sprintf;
 
 final class SaveEntryAction extends BaseTrackingController
 {
+    private ?EventDispatcherInterface $eventDispatcher = null;
+
+    #[\Symfony\Contracts\Service\Attribute\Required]
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
+    {
+        $this->eventDispatcher = $eventDispatcher;
+    }
+
     /**
      * @throws BadRequestException
      * @throws BadMethodCallException
@@ -120,7 +130,8 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error('Entry is already owned by a different user.', Response::HTTP_BAD_REQUEST);
         }
 
-        if (!$entry instanceof Entry) {
+        $isNewEntry = !$entry instanceof Entry;
+        if ($isNewEntry) {
             $entry = new Entry();
         }
 
@@ -189,6 +200,12 @@ final class SaveEntryAction extends BaseTrackingController
             $entityManager = $this->managerRegistry->getManager();
             $entityManager->persist($entry);
             $entityManager->flush();
+
+            // Dispatch entry event for Jira sync and cache invalidation
+            if ($this->eventDispatcher instanceof EventDispatcherInterface) {
+                $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
+                $this->eventDispatcher->dispatch(new EntryEvent($entry), $eventName);
+            }
 
             // Return JSON response matching test expectations
             $day = $entry->getDay();
