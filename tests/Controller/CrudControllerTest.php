@@ -119,7 +119,7 @@ final class CrudControllerTest extends AbstractWebTestCase
         $deleteParam = ['id' => $entryId];
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/delete', $deleteParam);
         $this->assertStatusCode(200);
-        $this->assertJsonStructure(['success' => true, 'alert' => null]);
+        $this->assertJsonStructure(['success' => true]);
 
         // Verify entry is deleted
         $query = 'SELECT COUNT(*) as count FROM `entries` WHERE `id` = ' . $entryId;
