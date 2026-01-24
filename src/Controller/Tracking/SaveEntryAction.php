@@ -29,6 +29,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
 use function assert;
@@ -38,7 +39,7 @@ final class SaveEntryAction extends BaseTrackingController
 {
     private ?EventDispatcherInterface $eventDispatcher = null;
 
-    #[\Symfony\Contracts\Service\Attribute\Required]
+    #[Required]
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
         $this->eventDispatcher = $eventDispatcher;
