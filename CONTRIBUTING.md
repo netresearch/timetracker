@@ -20,28 +20,17 @@
 
 ## Code of Conduct
 
-### Our Pledge
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md) version 3.0. By participating, you agree to uphold this code.
 
-We pledge to make participation in our project a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+**Key principles:**
+- Be respectful and inclusive in all interactions
+- Use welcoming language and be considerate of different perspectives
+- Focus on constructive feedback and collaborative problem-solving
+- Accept responsibility for mistakes and learn from them
 
-### Expected Behavior
+**Reporting Issues:** Contact the project team at [typo3@netresearch.de](mailto:typo3@netresearch.de). All reports are reviewed confidentially.
 
-- **Be respectful** and inclusive in all interactions
-- **Use welcoming language** and be considerate of different perspectives  
-- **Focus on constructive feedback** and collaborative problem-solving
-- **Accept responsibility** for mistakes and learn from them
-- **Show empathy** towards other community members
-
-### Unacceptable Behavior
-
-- Harassment, discriminatory language, or personal attacks
-- Trolling, insulting comments, or deliberate intimidation
-- Publishing private information without consent
-- Any conduct that could reasonably be considered inappropriate
-
-### Enforcement
-
-Instances of abusive behavior may be reported to the project team at [conduct@company.com](mailto:conduct@company.com). All reports will be reviewed confidentially and result in appropriate action.
+For the full Code of Conduct, see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ---
 
@@ -53,7 +42,7 @@ Before contributing, ensure you have:
 
 - **Development Environment**: Follow the [Developer Setup Guide](docs/DEVELOPER_SETUP.md)
 - **Understanding of the Codebase**: Read the [Project Architecture](docs/PROJECT_INDEX.md)
-- **Familiarity with our Stack**: PHP 8.4, Symfony 7.3, MySQL, Redis
+- **Familiarity with our Stack**: PHP 8.5, Symfony 8.0, MySQL, Redis
 - **Git Knowledge**: Basic understanding of Git workflows
 
 ### First Contribution
@@ -1021,10 +1010,10 @@ Your contributions help make time tracking better for everyone. Whether you're f
 **Questions?** Don't hesitate to reach out:
 - 💬 [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)
 - 🐛 [GitHub Issues](https://github.com/netresearch/timetracker/issues)
-- 📧 [Email the Team](mailto:timetracker-dev@company.com)
+- 📧 [Email the Team](mailto:typo3@netresearch.de)
 
 ---
 
-**Last Updated**: 2025-01-20  
+**Last Updated**: 2025-01-25  
 **Contributing Guidelines Version**: 1.0  
 **Next Review**: 2025-04-20
