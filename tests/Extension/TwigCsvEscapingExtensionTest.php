@@ -5,20 +5,61 @@ declare(strict_types=1);
 namespace Tests\Extension;
 
 use App\Extension\TwigCsvEscapingExtension;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @internal
+ * Unit tests for TwigCsvEscapingExtension.
  *
- * @coversNothing
+ * @internal
  */
+#[CoversClass(TwigCsvEscapingExtension::class)]
 final class TwigCsvEscapingExtensionTest extends TestCase
 {
-    public function testCsvEscape(): void
+    private TwigCsvEscapingExtension $extension;
+
+    protected function setUp(): void
     {
-        $twigCsvEscapingExtension = new TwigCsvEscapingExtension();
-        self::assertSame('Hello', $twigCsvEscapingExtension->csvEscape('Hello'));
-        self::assertSame('He said ""Hi""', $twigCsvEscapingExtension->csvEscape('He said "Hi"'));
-        self::assertSame('""Quoted""', $twigCsvEscapingExtension->csvEscape('"Quoted"'));
+        $this->extension = new TwigCsvEscapingExtension();
+    }
+
+    // ==================== getName tests ====================
+
+    public function testGetNameReturnsCsvEscaper(): void
+    {
+        self::assertSame('csv_escaper', $this->extension->getName());
+    }
+
+    // ==================== csvEscape tests ====================
+
+    public function testCsvEscapeReturnsUnchangedStringWithoutQuotes(): void
+    {
+        self::assertSame('Hello', $this->extension->csvEscape('Hello'));
+    }
+
+    public function testCsvEscapeDoublesQuotesInMiddle(): void
+    {
+        self::assertSame('He said ""Hi""', $this->extension->csvEscape('He said "Hi"'));
+    }
+
+    public function testCsvEscapeDoublesQuotesAtBoundaries(): void
+    {
+        self::assertSame('""Quoted""', $this->extension->csvEscape('"Quoted"'));
+    }
+
+    public function testCsvEscapeHandlesEmptyString(): void
+    {
+        self::assertSame('', $this->extension->csvEscape(''));
+    }
+
+    public function testCsvEscapeHandlesOnlyQuotes(): void
+    {
+        self::assertSame('""', $this->extension->csvEscape('"'));
+        self::assertSame('""""', $this->extension->csvEscape('""'));
+    }
+
+    public function testCsvEscapeHandlesMultipleQuotesInSequence(): void
+    {
+        self::assertSame('a""""b', $this->extension->csvEscape('a""b'));
     }
 }
