@@ -319,10 +319,9 @@ final class QueryCacheServiceTest extends TestCase
 
                 return 'value1';
             },
-            'key2' => 'not_a_callable', // @phpstan-ignore argument.type
+            'key2' => 'not_a_callable',
         ];
 
-        // @phpstan-ignore argument.type
         $this->service->warmUp($callbacks);
 
         $this->assertContains('key1', $executed);
