@@ -50,6 +50,8 @@
             <file>tests/Entity/UserTicketsystemTest.php</file>
             <!-- Enum unit tests -->
             <directory>tests/Enum</directory>
+            <!-- Exception unit tests -->
+            <directory>tests/Exception</directory>
             <!-- Repository unit tests -->
             <file>tests/Repository/EntryRepositoryTest.php</file>
             <file>tests/Repository/InterpretationUserFilterTest.php</file>
