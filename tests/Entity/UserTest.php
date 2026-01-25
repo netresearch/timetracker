@@ -7,9 +7,11 @@ namespace Tests\Entity;
 use App\Entity\Team;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\UserTicketsystem;
 use App\Enum\UserType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 use function strlen;
 
@@ -442,6 +444,59 @@ final class UserTest extends TestCase
         self::assertNull($user->getTicketSystemAccessToken($ticketSystem));
     }
 
+    public function testGetTicketSystemAccessTokenReturnsTokenWhenMatching(): void
+    {
+        $user = new User();
+
+        // Create a real TicketSystem with ID
+        $ticketSystem = new TicketSystem();
+        $ticketSystemReflection = new ReflectionProperty(TicketSystem::class, 'id');
+        $ticketSystemReflection->setValue($ticketSystem, 42);
+
+        // Create UserTicketsystem with access token
+        $userTicketsystem = new UserTicketsystem();
+        $userTicketsystem->setTicketSystem($ticketSystem);
+        $userTicketsystem->setAccessToken('test_access_token');
+        $userTicketsystem->setTokenSecret('test_token_secret');
+
+        // Add to user's collection using reflection
+        $userTicketsystemsReflection = new ReflectionProperty(User::class, 'userTicketsystems');
+        $collection = $userTicketsystemsReflection->getValue($user);
+        self::assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $collection);
+        $collection->add($userTicketsystem);
+
+        self::assertSame('test_access_token', $user->getTicketSystemAccessToken($ticketSystem));
+    }
+
+    public function testGetTicketSystemAccessTokenReturnsNullWhenNoMatch(): void
+    {
+        $user = new User();
+
+        // Create a TicketSystem with ID 1
+        $ticketSystem1 = new TicketSystem();
+        $ts1Reflection = new ReflectionProperty(TicketSystem::class, 'id');
+        $ts1Reflection->setValue($ticketSystem1, 1);
+
+        // Create UserTicketsystem linked to ticketSystem1
+        $userTicketsystem = new UserTicketsystem();
+        $userTicketsystem->setTicketSystem($ticketSystem1);
+        $userTicketsystem->setAccessToken('token1');
+        $userTicketsystem->setTokenSecret('secret1');
+
+        // Add to user
+        $userTicketsystemsReflection = new ReflectionProperty(User::class, 'userTicketsystems');
+        $collection = $userTicketsystemsReflection->getValue($user);
+        self::assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $collection);
+        $collection->add($userTicketsystem);
+
+        // Create a different TicketSystem with ID 2 to search for
+        $ticketSystem2 = new TicketSystem();
+        $ts2Reflection = new ReflectionProperty(TicketSystem::class, 'id');
+        $ts2Reflection->setValue($ticketSystem2, 2);
+
+        self::assertNull($user->getTicketSystemAccessToken($ticketSystem2));
+    }
+
     public function testGetTicketSystemAccessTokenSecretReturnsNullWhenNoUserTicketsystem(): void
     {
         $user = new User();
@@ -449,6 +504,59 @@ final class UserTest extends TestCase
         $ticketSystem->method('getId')->willReturn(1);
 
         self::assertNull($user->getTicketSystemAccessTokenSecret($ticketSystem));
+    }
+
+    public function testGetTicketSystemAccessTokenSecretReturnsSecretWhenMatching(): void
+    {
+        $user = new User();
+
+        // Create a real TicketSystem with ID
+        $ticketSystem = new TicketSystem();
+        $ticketSystemReflection = new ReflectionProperty(TicketSystem::class, 'id');
+        $ticketSystemReflection->setValue($ticketSystem, 42);
+
+        // Create UserTicketsystem with token secret
+        $userTicketsystem = new UserTicketsystem();
+        $userTicketsystem->setTicketSystem($ticketSystem);
+        $userTicketsystem->setAccessToken('test_access_token');
+        $userTicketsystem->setTokenSecret('test_token_secret');
+
+        // Add to user's collection using reflection
+        $userTicketsystemsReflection = new ReflectionProperty(User::class, 'userTicketsystems');
+        $collection = $userTicketsystemsReflection->getValue($user);
+        self::assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $collection);
+        $collection->add($userTicketsystem);
+
+        self::assertSame('test_token_secret', $user->getTicketSystemAccessTokenSecret($ticketSystem));
+    }
+
+    public function testGetTicketSystemAccessTokenSecretReturnsNullWhenNoMatch(): void
+    {
+        $user = new User();
+
+        // Create a TicketSystem with ID 1
+        $ticketSystem1 = new TicketSystem();
+        $ts1Reflection = new ReflectionProperty(TicketSystem::class, 'id');
+        $ts1Reflection->setValue($ticketSystem1, 1);
+
+        // Create UserTicketsystem linked to ticketSystem1
+        $userTicketsystem = new UserTicketsystem();
+        $userTicketsystem->setTicketSystem($ticketSystem1);
+        $userTicketsystem->setAccessToken('token1');
+        $userTicketsystem->setTokenSecret('secret1');
+
+        // Add to user
+        $userTicketsystemsReflection = new ReflectionProperty(User::class, 'userTicketsystems');
+        $collection = $userTicketsystemsReflection->getValue($user);
+        self::assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $collection);
+        $collection->add($userTicketsystem);
+
+        // Create a different TicketSystem with ID 2 to search for
+        $ticketSystem2 = new TicketSystem();
+        $ts2Reflection = new ReflectionProperty(TicketSystem::class, 'id');
+        $ts2Reflection->setValue($ticketSystem2, 2);
+
+        self::assertNull($user->getTicketSystemAccessTokenSecret($ticketSystem2));
     }
 
     // ==================== Collections access tests ====================
