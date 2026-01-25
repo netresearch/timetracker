@@ -135,8 +135,56 @@ jobs:
         run: |
           docker compose run --rm -e XDEBUG_MODE=off app-e2e php bin/console lint:twig templates/
 
-  test:
-    name: Tests
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: setup
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Pull E2E image
+        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+
+      - name: Download dependencies
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dependencies
+
+      - name: Prepare directories
+        run: |
+          mkdir -p var/cache var/log var/coverage
+          chmod -R 777 var bin vendor
+          if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
+
+      - name: Warmup Symfony cache
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm -e APP_ENV=test app-e2e php bin/console cache:warmup --env=test
+
+      - name: Run unit tests with coverage
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e \
+            php -d memory_limit=1G bin/phpunit --testsuite unit --coverage-clover var/coverage/unit.xml
+
+      - name: Upload unit coverage to Codecov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: var/coverage/unit.xml
+          flags: unit
+          fail_ci_if_error: false
+          verbose: true
+
+  test-integration:
+    name: Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: setup
@@ -157,7 +205,7 @@ jobs:
 
       - name: Prepare config files and SQL
         run: |
-          mkdir -p var/cache var/log
+          mkdir -p var/cache var/log var/coverage
           chmod -R 777 var bin vendor
           if [ ! -f phpunit.xml ] && [ -f phpunit.xml.dist ]; then cp phpunit.xml.dist phpunit.xml; fi
           sed '1s/^/USE unittest;\\n/' sql/full.sql > sql/unittest/001_testtables.sql
@@ -175,24 +223,19 @@ jobs:
           docker compose up -d db_unittest
           docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
 
-      - name: Run tests (PHPUnit)
+      - name: Run integration tests with coverage
         env:
           COMPOSE_PROFILES: e2e
         run: |
-          docker compose run --rm -e APP_ENV=test app-e2e php -d memory_limit=512M bin/phpunit
+          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e \
+            php -d memory_limit=2G bin/phpunit --testsuite integration,controller,api-contract,api-functional --coverage-clover var/coverage/integration.xml
 
-      - name: Run tests with coverage
-        env:
-          COMPOSE_PROFILES: e2e
-        run: |
-          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e php -d memory_limit=2G bin/phpunit --coverage-clover var/coverage/clover.xml || true
-
-      - name: Upload to Codecov
+      - name: Upload integration coverage to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: var/coverage/clover.xml
-          flags: unit
+          files: var/coverage/integration.xml
+          flags: integration
           fail_ci_if_error: false
           verbose: true
 
