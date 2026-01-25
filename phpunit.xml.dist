@@ -38,11 +38,18 @@
             <directory>tests/Service</directory>
             <directory>tests/Util</directory>
             <!-- Entity unit tests (not *DatabaseTest) -->
+            <file>tests/Entity/AccountTest.php</file>
             <file>tests/Entity/ActivityTest.php</file>
+            <file>tests/Entity/CustomerTest.php</file>
             <file>tests/Entity/EntryTest.php</file>
+            <file>tests/Entity/HolidayTest.php</file>
+            <file>tests/Entity/PresetTest.php</file>
             <file>tests/Entity/ProjectTest.php</file>
             <file>tests/Entity/TicketTest.php</file>
+            <file>tests/Entity/UserTest.php</file>
             <file>tests/Entity/UserTicketsystemTest.php</file>
+            <!-- Enum unit tests -->
+            <directory>tests/Enum</directory>
             <!-- Repository unit tests -->
             <file>tests/Repository/EntryRepositoryTest.php</file>
             <file>tests/Repository/InterpretationUserFilterTest.php</file>
