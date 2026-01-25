@@ -9,16 +9,21 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
+use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\EntryClass;
+use DateTime;
+use DateTimeImmutable;
 use Exception;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @internal
+ * Unit tests for Entry entity.
  *
- * @coversNothing
+ * @internal
  */
+#[CoversClass(Entry::class)]
 final class EntryTest extends TestCase
 {
     public function testGetterSetter(): void
@@ -264,5 +269,433 @@ final class EntryTest extends TestCase
         $result = $entry->toArray();
         self::assertSame('10:25', $result['duration'], 'duration must be formatted string H:i');
         self::assertSame(625, $result['durationMinutes'], 'durationMinutes must be integer');
+    }
+
+    // ==================== Billable tests ====================
+
+    public function testBillableIsNullByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertNull($entry->getBillable());
+    }
+
+    public function testSetBillableReturnsFluentInterface(): void
+    {
+        $entry = new Entry();
+
+        $result = $entry->setBillable(true);
+
+        self::assertSame($entry, $result);
+        self::assertTrue($entry->getBillable());
+    }
+
+    public function testSetBillableToFalse(): void
+    {
+        $entry = new Entry();
+
+        $entry->setBillable(false);
+
+        self::assertFalse($entry->getBillable());
+    }
+
+    // ==================== TicketTitle tests ====================
+
+    public function testTicketTitleIsNullByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertNull($entry->getTicketTitle());
+    }
+
+    public function testSetTicketTitleReturnsFluentInterface(): void
+    {
+        $entry = new Entry();
+
+        $result = $entry->setTicketTitle('Fix the bug');
+
+        self::assertSame($entry, $result);
+        self::assertSame('Fix the bug', $entry->getTicketTitle());
+    }
+
+    public function testSetTicketTitleToNull(): void
+    {
+        $entry = new Entry();
+        $entry->setTicketTitle('Some title');
+
+        $entry->setTicketTitle(null);
+
+        self::assertNull($entry->getTicketTitle());
+    }
+
+    // ==================== Ticket with spaces tests ====================
+
+    public function testSetTicketStripsSpaces(): void
+    {
+        $entry = new Entry();
+
+        $entry->setTicket('PROJ 123 ABC');
+
+        self::assertSame('PROJ123ABC', $entry->getTicket());
+    }
+
+    // ==================== Description tests ====================
+
+    public function testDescriptionIsEmptyByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertSame('', $entry->getDescription());
+    }
+
+    public function testSetDescriptionReturnsFluentInterface(): void
+    {
+        $entry = new Entry();
+
+        $result = $entry->setDescription('Working on feature');
+
+        self::assertSame($entry, $result);
+        self::assertSame('Working on feature', $entry->getDescription());
+    }
+
+    // ==================== Day with different types tests ====================
+
+    public function testSetDayWithDateTimeImmutable(): void
+    {
+        $entry = new Entry();
+        $date = new DateTimeImmutable('2025-03-10');
+
+        $entry->setDay($date);
+
+        self::assertSame('2025-03-10', $entry->getDay()->format('Y-m-d'));
+    }
+
+    public function testSetDayWithDateTime(): void
+    {
+        $entry = new Entry();
+        $date = new DateTime('2025-01-15');
+
+        $result = $entry->setDay($date);
+
+        self::assertSame($entry, $result);
+        self::assertSame('2025-01-15', $entry->getDay()->format('Y-m-d'));
+    }
+
+    public function testSetStartWithDateTime(): void
+    {
+        $entry = new Entry();
+        $entry->setDay('2025-01-15');
+        $start = new DateTime('2025-01-15 09:00:00');
+
+        $result = $entry->setStart($start);
+
+        self::assertSame($entry, $result);
+        self::assertSame('09:00', $entry->getStart()->format('H:i'));
+    }
+
+    public function testSetEndWithDateTime(): void
+    {
+        $entry = new Entry();
+        $entry->setDay('2025-01-15');
+        $end = new DateTime('2025-01-15 17:00:00');
+
+        $result = $entry->setEnd($end);
+
+        self::assertSame($entry, $result);
+        self::assertSame('17:00', $entry->getEnd()->format('H:i'));
+    }
+
+    // ==================== getDurationString tests ====================
+
+    public function testGetDurationStringZero(): void
+    {
+        $entry = new Entry();
+        $entry->setDuration(0);
+
+        self::assertSame('00:00', $entry->getDurationString());
+    }
+
+    public function testGetDurationStringLargeValue(): void
+    {
+        $entry = new Entry();
+        $entry->setDuration(600); // 600 minutes = 10:00
+
+        self::assertSame('10:00', $entry->getDurationString());
+    }
+
+    // ==================== Class/EntryClass tests ====================
+
+    public function testClassIsPlainByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertSame(EntryClass::PLAIN, $entry->getClass());
+    }
+
+    public function testAddClassReturnsFluentInterface(): void
+    {
+        $entry = new Entry();
+
+        $result = $entry->addClass(EntryClass::DAYBREAK);
+
+        self::assertSame($entry, $result);
+        self::assertSame(EntryClass::DAYBREAK, $entry->getClass());
+    }
+
+    // ==================== External data tests ====================
+
+    public function testExternalSummaryIsEmptyByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertSame('', $entry->getExternalSummary());
+    }
+
+    public function testSetExternalSummary(): void
+    {
+        $entry = new Entry();
+
+        $entry->setExternalSummary('Bug fix summary');
+
+        self::assertSame('Bug fix summary', $entry->getExternalSummary());
+    }
+
+    public function testExternalReporterIsEmptyByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertSame('', $entry->getExternalReporter());
+    }
+
+    public function testSetExternalReporter(): void
+    {
+        $entry = new Entry();
+
+        $entry->setExternalReporter('john.doe@example.com');
+
+        self::assertSame('john.doe@example.com', $entry->getExternalReporter());
+    }
+
+    public function testExternalLabelsIsEmptyByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertSame([], $entry->getExternalLabels());
+    }
+
+    public function testSetExternalLabels(): void
+    {
+        $entry = new Entry();
+
+        $labels = ['bug', 'urgent', 'backend'];
+        $entry->setExternalLabels($labels);
+
+        self::assertSame($labels, $entry->getExternalLabels());
+    }
+
+    // ==================== Internal Jira ticket tests ====================
+
+    public function testInternalJiraTicketOriginalKeyIsNullByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertNull($entry->getInternalJiraTicketOriginalKey());
+    }
+
+    public function testSetInternalJiraTicketOriginalKeyReturnsFluentInterface(): void
+    {
+        $entry = new Entry();
+
+        $result = $entry->setInternalJiraTicketOriginalKey('TYPO-1234');
+
+        self::assertSame($entry, $result);
+        self::assertSame('TYPO-1234', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    public function testHasInternalJiraTicketOriginalKeyReturnsFalseWhenNull(): void
+    {
+        $entry = new Entry();
+
+        self::assertFalse($entry->hasInternalJiraTicketOriginalKey());
+    }
+
+    public function testHasInternalJiraTicketOriginalKeyReturnsFalseWhenEmpty(): void
+    {
+        $entry = new Entry();
+        $entry->setInternalJiraTicketOriginalKey('');
+
+        self::assertFalse($entry->hasInternalJiraTicketOriginalKey());
+    }
+
+    public function testHasInternalJiraTicketOriginalKeyReturnsTrueWhenSet(): void
+    {
+        $entry = new Entry();
+        $entry->setInternalJiraTicketOriginalKey('PROJ-123');
+
+        self::assertTrue($entry->hasInternalJiraTicketOriginalKey());
+    }
+
+    // ==================== SyncedToTicketsystem tests ====================
+
+    public function testSyncedToTicketsystemIsFalseByDefault(): void
+    {
+        $entry = new Entry();
+
+        self::assertFalse($entry->getSyncedToTicketsystem());
+    }
+
+    public function testSetSyncedToTicketsystemReturnsFluentInterface(): void
+    {
+        $entry = new Entry();
+
+        $result = $entry->setSyncedToTicketsystem(true);
+
+        self::assertSame($entry, $result);
+        self::assertTrue($entry->getSyncedToTicketsystem());
+    }
+
+    // ==================== getTicketSystemIssueLink tests ====================
+
+    public function testGetTicketSystemIssueLinkReturnsTicketWhenNoProject(): void
+    {
+        $entry = new Entry();
+        $entry->setTicket('PROJ-123');
+
+        self::assertSame('PROJ-123', $entry->getTicketSystemIssueLink());
+    }
+
+    public function testGetTicketSystemIssueLinkReturnsTicketWhenNoTicketSystem(): void
+    {
+        $entry = new Entry();
+        $entry->setTicket('PROJ-123');
+        $project = $this->createMock(Project::class);
+        $project->method('getTicketSystem')->willReturn(null);
+        $entry->setProject($project);
+
+        self::assertSame('PROJ-123', $entry->getTicketSystemIssueLink());
+    }
+
+    public function testGetTicketSystemIssueLinkReturnsTicketWhenEmptyTicketUrl(): void
+    {
+        $entry = new Entry();
+        $entry->setTicket('PROJ-123');
+        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem->method('getTicketUrl')->willReturn('');
+        $project = $this->createMock(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+        $entry->setProject($project);
+
+        self::assertSame('PROJ-123', $entry->getTicketSystemIssueLink());
+    }
+
+    public function testGetTicketSystemIssueLinkReturnsTicketWhenNullTicketUrl(): void
+    {
+        $entry = new Entry();
+        $entry->setTicket('PROJ-123');
+        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem->method('getTicketUrl')->willReturn(null);
+        $project = $this->createMock(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+        $entry->setProject($project);
+
+        self::assertSame('PROJ-123', $entry->getTicketSystemIssueLink());
+    }
+
+    public function testGetTicketSystemIssueLinkReturnsFormattedUrl(): void
+    {
+        $entry = new Entry();
+        $entry->setTicket('PROJ-123');
+        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem->method('getTicketUrl')->willReturn('https://jira.example.com/browse/%s');
+        $project = $this->createMock(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+        $entry->setProject($project);
+
+        self::assertSame('https://jira.example.com/browse/PROJ-123', $entry->getTicketSystemIssueLink());
+    }
+
+    // ==================== getPostDataForInternalJiraTicketCreation tests ====================
+
+    public function testGetPostDataForInternalJiraTicketCreationWithoutProject(): void
+    {
+        $entry = new Entry();
+        $entry->setTicket('EXT-456');
+
+        $result = $entry->getPostDataForInternalJiraTicketCreation();
+
+        self::assertSame('', $result['fields']['project']['key']);
+        self::assertSame('EXT-456', $result['fields']['summary']);
+        self::assertSame('Task', $result['fields']['issuetype']['name']);
+    }
+
+    public function testGetPostDataForInternalJiraTicketCreationWithProject(): void
+    {
+        $entry = new Entry();
+        $entry->setTicket('EXT-789');
+        $project = $this->createMock(Project::class);
+        $project->method('getInternalJiraProjectKey')->willReturn('INT');
+        $project->method('getTicketSystem')->willReturn(null);
+        $entry->setProject($project);
+
+        $result = $entry->getPostDataForInternalJiraTicketCreation();
+
+        self::assertSame('INT', $result['fields']['project']['key']);
+        self::assertSame('EXT-789', $result['fields']['summary']);
+        self::assertSame('Task', $result['fields']['issuetype']['name']);
+    }
+
+    // ==================== toArray with worklog and extTicket tests ====================
+
+    public function testToArrayWithWorklogAndExtTicket(): void
+    {
+        $entry = new Entry();
+        $entry->setId(42);
+        $entry->setDay('2025-01-15');
+        $entry->setStart('09:00');
+        $entry->setEnd('17:00');
+        $entry->setTicket('PROJ-123');
+        $entry->setDescription('Full day work');
+        $entry->setDuration(480);
+        $entry->setWorklogId(99999);
+        $entry->setInternalJiraTicketOriginalKey('EXT-456');
+        $entry->setClass(EntryClass::PLAIN);
+
+        $user = new User();
+        $user->setId(10);
+        $entry->setUser($user);
+
+        $activity = new Activity();
+        $activity->setId(40);
+        $entry->setActivity($activity);
+
+        $result = $entry->toArray();
+
+        self::assertSame(42, $result['id']);
+        self::assertSame('15/01/2025', $result['date']);
+        self::assertSame('09:00', $result['start']);
+        self::assertSame('17:00', $result['end']);
+        self::assertSame(10, $result['user']);
+        self::assertSame(40, $result['activity']);
+        self::assertSame('Full day work', $result['description']);
+        self::assertSame('PROJ-123', $result['ticket']);
+        self::assertSame('08:00', $result['duration']);
+        self::assertSame(480, $result['durationMinutes']);
+        self::assertSame(1, $result['class']);
+        self::assertSame(99999, $result['worklog']);
+        self::assertSame('EXT-456', $result['extTicket']);
+    }
+
+    // ==================== validateDuration tests ====================
+
+    public function testValidateDurationPassesWhenEndAfterStart(): void
+    {
+        $entry = new Entry();
+        $entry->setDay('2025-01-15');
+        $entry->setStart('09:00');
+        $entry->setEnd('10:00');
+
+        $result = $entry->validateDuration();
+
+        self::assertSame($entry, $result);
     }
 }
