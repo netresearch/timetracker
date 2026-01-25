@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/netresearch/timetracker/tree/main/docs
+    about: Check the documentation before opening an issue
+  - name: Discussions
+    url: https://github.com/netresearch/timetracker/discussions
+    about: Ask questions and share ideas in GitHub Discussions
+  - name: Security Issues
+    url: https://github.com/netresearch/timetracker/blob/main/SECURITY.md
+    about: For security vulnerabilities, please follow our security policy
