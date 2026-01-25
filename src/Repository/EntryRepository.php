@@ -1180,7 +1180,7 @@ class EntryRepository extends ServiceEntityRepository
             ->andWhere('p.ticketSystem = :ticketSystemId')
             ->andWhere('e.ticket IS NOT NULL')
             ->andWhere('e.ticket != :emptyString')
-            ->andWhere('e.internalJiraTicketId IS NULL OR e.internalJiraTicketId = :emptyString')
+            ->andWhere('e.internalJiraTicketOriginalKey IS NULL OR e.internalJiraTicketOriginalKey = :emptyString')
             ->setParameter('userId', $userId)
             ->setParameter('ticketSystemId', $ticketSystemId)
             ->setParameter('emptyString', '')
