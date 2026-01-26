@@ -30,6 +30,7 @@
         <!-- Pure unit tests - no database, no kernel, fast -->
         <testsuite name="unit">
             <directory>tests/Dto</directory>
+            <directory>tests/DTO/Jira</directory>
             <directory>tests/Event</directory>
             <directory>tests/EventSubscriber</directory>
             <directory>tests/Extension</directory>
