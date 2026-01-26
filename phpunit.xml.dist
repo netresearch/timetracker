@@ -37,6 +37,8 @@
             <directory>tests/Response</directory>
             <directory>tests/Service</directory>
             <directory>tests/Util</directory>
+            <!-- Exclude integration tests that require external services -->
+            <exclude>tests/Service/Ldap/LdapClientServiceIntegrationTest.php</exclude>
             <!-- Entity unit tests (not *DatabaseTest) -->
             <file>tests/Entity/AccountTest.php</file>
             <file>tests/Entity/ActivityTest.php</file>
@@ -69,6 +71,7 @@
             <file>tests/Entity/TeamDatabaseTest.php</file>
             <file>tests/Entity/UserDatabaseTest.php</file>
             <file>tests/Security/RememberMeRedirectTest.php</file>
+            <file>tests/Service/Ldap/LdapClientServiceIntegrationTest.php</file>
             <directory>tests/Repository</directory>
             <directory>tests/Command</directory>
             <exclude>tests/Repository/EntryRepositoryTest.php</exclude>
