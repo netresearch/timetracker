@@ -7,12 +7,15 @@ namespace Tests\EventSubscriber;
 use App\Entity\User;
 use App\EventSubscriber\AccessDeniedSubscriber;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Routing\RouterInterface;
@@ -20,10 +23,11 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
 
 /**
- * @internal
+ * Unit tests for AccessDeniedSubscriber.
  *
- * @covers \App\EventSubscriber\AccessDeniedSubscriber
+ * @internal
  */
+#[CoversClass(AccessDeniedSubscriber::class)]
 #[AllowMockObjectsWithoutExpectations]
 final class AccessDeniedSubscriberTest extends TestCase
 {
@@ -166,6 +170,232 @@ final class AccessDeniedSubscriberTest extends TestCase
         self::assertNull($event->getResponse());
     }
 
+    public function testFullyAuthenticatedUserPrefersHtmlLetsSymfonyHandle(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Create request preferring HTML
+        $request = $this->createRequestWithHeaders(false, [
+            'Accept' => 'text/html,application/xhtml+xml',
+        ]);
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        // Should let Symfony handle it (render error403.html.twig)
+        self::assertNull($event->getResponse());
+    }
+
+    public function testFullyAuthenticatedUserJsonAcceptHeaderReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        $request = $this->createRequestWithHeaders(false, [
+            'Accept' => 'application/json',
+        ]);
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        $response = $event->getResponse();
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+
+        /** @var array{error: string, message: string} $data */
+        $data = json_decode((string) $response->getContent(), true);
+        self::assertSame('Forbidden', $data['error']);
+        self::assertSame('You are not allowed to perform this action.', $data['message']);
+    }
+
+    public function testFullyAuthenticatedUserJsonContentTypeReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Need to override Accept header to avoid HTML preference from Request::create()
+        $request = $this->createRequestWithHeaders(false, [
+            'Accept' => '*/*',
+            'Content-Type' => 'application/json',
+        ]);
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        $response = $event->getResponse();
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+    }
+
+    public function testFullyAuthenticatedUserXmlHttpRequestReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Need to override Accept header to avoid HTML preference from Request::create()
+        $request = $this->createRequestWithHeaders(false, [
+            'Accept' => '*/*',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertInstanceOf(JsonResponse::class, $event->getResponse());
+    }
+
+    public function testFullyAuthenticatedUserApiPathReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Need to override Accept header to avoid HTML preference from Request::create()
+        $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/api/v1/users');
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertInstanceOf(JsonResponse::class, $event->getResponse());
+    }
+
+    public function testFullyAuthenticatedUserGetPathReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Path starts with /get, so should return JSON (no Accept header to avoid HTML preference)
+        $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/getEntries');
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertInstanceOf(JsonResponse::class, $event->getResponse());
+    }
+
+    public function testFullyAuthenticatedUserSavePathReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Path ends with /save, so should return JSON
+        $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/entry/save');
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertInstanceOf(JsonResponse::class, $event->getResponse());
+    }
+
+    public function testFullyAuthenticatedUserDeletePathReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Path ends with /delete, so should return JSON
+        $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/entry/delete');
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertInstanceOf(JsonResponse::class, $event->getResponse());
+    }
+
+    public function testFullyAuthenticatedUserGetAllPathReturnsJson(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+
+        $this->security
+            ->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(true);
+
+        // Path starts with /getAll, so should return JSON
+        $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/getAllProjects');
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertInstanceOf(JsonResponse::class, $event->getResponse());
+    }
+
     /**
      * Create a real request with optional REMEMBERME cookie.
      */
@@ -174,6 +404,28 @@ final class AccessDeniedSubscriberTest extends TestCase
         $cookies = $hasRememberMeCookie ? ['REMEMBERME' => 'some-stale-token-value'] : [];
 
         return new Request([], [], [], $cookies);
+    }
+
+    /**
+     * Create a request with custom headers and path.
+     *
+     * @param array<string, string> $headers
+     */
+    private function createRequestWithHeaders(bool $hasRememberMeCookie, array $headers = [], string $path = '/'): Request
+    {
+        $cookies = $hasRememberMeCookie ? ['REMEMBERME' => 'some-stale-token-value'] : [];
+        $server = [];
+
+        foreach ($headers as $key => $value) {
+            // Symfony expects headers in HTTP_* format
+            $headerKey = 'HTTP_' . str_replace('-', '_', strtoupper($key));
+            $server[$headerKey] = $value;
+        }
+
+        // Set the request URI for path-based detection
+        $server['REQUEST_URI'] = $path;
+
+        return Request::create($path, 'GET', [], $cookies, [], $server);
     }
 
     /**

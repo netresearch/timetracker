@@ -1,40 +1,20 @@
 <?php
 
 declare(strict_types=1);
-/**
- * UnitTest for the json array translator for twig-templates.
- *
- * PHP version 5
- *
- * @category  Twig_Extension
- *
- * @author    Norman Kante <norman.kante@netresearch.de>
- * @copyright 2013 Netresearch App Factory AG
- * @license   No license
- *
- * @see      http://www.netresearch.de
- */
 
 namespace Tests\Extension;
 
 use App\Extension\NrArrayTranslator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 
 /**
- * Class NrArrayTranslatorTest.
- *
- * @category Twig_Extenstion
- *
- * @author   Norman Kante <norman.kante@netresearch.de>
- * @license  No license
- *
- * @see     http://www.netresearch.de
+ * Unit tests for NrArrayTranslator.
  *
  * @internal
- *
- * @coversNothing
  */
+#[CoversClass(NrArrayTranslator::class)]
 final class NrArrayTranslatorTest extends TestCase
 {
     /**
@@ -112,5 +92,102 @@ final class NrArrayTranslatorTest extends TestCase
                 'activity',
             ),
         );
+    }
+
+    // ==================== Edge case tests ====================
+
+    public function testFilterArrayReturnsEmptyArrayForInvalidJson(): void
+    {
+        $result = $this->nrArrayTranslator->filterArray(
+            'not valid json',
+            'activity',
+        );
+
+        self::assertSame('[]', $result);
+    }
+
+    public function testFilterArraySkipsNonArrayRows(): void
+    {
+        // Data with non-array elements
+        $data = [
+            ['activity' => ['name' => 'Test']],
+            'string_not_array',
+            123,
+            null,
+        ];
+
+        $json = json_encode($data);
+        self::assertNotFalse($json);
+
+        // Should not fail, just skip non-array rows
+        $result = $this->nrArrayTranslator->filterArray($json, 'activity');
+
+        // Result should be valid JSON
+        $decoded = json_decode($result, true);
+        self::assertIsArray($decoded);
+    }
+
+    public function testFilterArraySkipsRowsWithoutTargetKey(): void
+    {
+        $data = [
+            ['activity' => ['name' => 'Test']],
+            ['other_key' => ['name' => 'Skipped']],
+        ];
+
+        $json = json_encode($data);
+        self::assertNotFalse($json);
+
+        $result = $this->nrArrayTranslator->filterArray($json, 'activity');
+
+        $decoded = json_decode($result, true);
+        self::assertIsArray($decoded);
+        self::assertCount(2, $decoded);
+    }
+
+    public function testFilterArraySkipsNonIterableNestedElements(): void
+    {
+        $data = [
+            ['activity' => 'not_iterable_string'],
+            ['activity' => 123],
+        ];
+
+        $json = json_encode($data);
+        self::assertNotFalse($json);
+
+        $result = $this->nrArrayTranslator->filterArray($json, 'activity');
+
+        $decoded = json_decode($result, true);
+        self::assertIsArray($decoded);
+    }
+
+    public function testFilterArraySkipsNonStringValues(): void
+    {
+        $data = [
+            ['activity' => ['name' => 123, 'id' => 1]],
+            ['activity' => ['name' => ['nested'], 'id' => 2]],
+        ];
+
+        $json = json_encode($data);
+        self::assertNotFalse($json);
+
+        $result = $this->nrArrayTranslator->filterArray($json, 'activity', 'messages', ['name']);
+
+        $decoded = json_decode($result, true);
+        self::assertIsArray($decoded);
+    }
+
+    public function testFilterArrayHandlesEmptyInput(): void
+    {
+        $result = $this->nrArrayTranslator->filterArray('[]', 'activity');
+
+        self::assertSame('[]', $result);
+    }
+
+    public function testFilterArrayHandlesEmptyString(): void
+    {
+        // Empty string is not valid JSON, should return empty array
+        $result = $this->nrArrayTranslator->filterArray('', 'activity');
+
+        self::assertSame('[]', $result);
     }
 }

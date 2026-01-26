@@ -30,6 +30,7 @@
         <!-- Pure unit tests - no database, no kernel, fast -->
         <testsuite name="unit">
             <directory>tests/Dto</directory>
+            <directory>tests/Event</directory>
             <directory>tests/EventSubscriber</directory>
             <directory>tests/Extension</directory>
             <directory>tests/Helper</directory>
@@ -37,6 +38,8 @@
             <directory>tests/Response</directory>
             <directory>tests/Service</directory>
             <directory>tests/Util</directory>
+            <directory>tests/Validator</directory>
+            <directory>tests/ValueObject</directory>
             <!-- Exclude integration tests that require external services -->
             <exclude>tests/Service/Ldap/LdapClientServiceIntegrationTest.php</exclude>
             <!-- Entity unit tests (not *DatabaseTest) -->

@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Tests\Service\Util;
 
 use App\Service\Util\TimeCalculationService;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @internal
+ * Unit tests for TimeCalculationService.
  *
- * @coversNothing
+ * @internal
  */
+#[CoversClass(TimeCalculationService::class)]
 final class TimeCalculationServiceTest extends TestCase
 {
     private TimeCalculationService $timeCalculationService;
@@ -42,6 +44,23 @@ final class TimeCalculationServiceTest extends TestCase
         self::assertSame(12 * 60.0 + 15.0, $this->timeCalculationService->readableToMinutes('12h 15m'));
     }
 
+    public function testReadableToFullMinutes(): void
+    {
+        // Exact values
+        self::assertSame(60, $this->timeCalculationService->readableToFullMinutes('1h'));
+        self::assertSame(90, $this->timeCalculationService->readableToFullMinutes('1h 30m'));
+
+        // Decimal values should be floored
+        self::assertSame(135, $this->timeCalculationService->readableToFullMinutes('2.25h'));
+        self::assertSame(45, $this->timeCalculationService->readableToFullMinutes('0.75h'));
+
+        // Invalid should return 0
+        self::assertSame(0, $this->timeCalculationService->readableToFullMinutes('invalid'));
+
+        // Empty should return 0
+        self::assertSame(0, $this->timeCalculationService->readableToFullMinutes(''));
+    }
+
     public function testMinutesToReadable(): void
     {
         self::assertSame('0m', $this->timeCalculationService->minutesToReadable(0));
@@ -61,8 +80,24 @@ final class TimeCalculationServiceTest extends TestCase
         self::assertSame('00:30', $this->timeCalculationService->formatDuration(30));
         self::assertSame('01:30', $this->timeCalculationService->formatDuration(90));
 
+        // Double-digit hours and minutes
+        self::assertSame('10:30', $this->timeCalculationService->formatDuration(10 * 60 + 30));
+        self::assertSame('12:45', $this->timeCalculationService->formatDuration(12 * 60 + 45));
+
         // In days appendix when requested and > 1 day
         self::assertSame('16:00 (2.00 PT)', $this->timeCalculationService->formatDuration(16 * 60, true));
+
+        // In days but not > 1 day (8 hours = 1 day exactly)
+        self::assertSame('08:00', $this->timeCalculationService->formatDuration(8 * 60, true));
+
+        // In days but just at 1 day threshold (should not append days)
+        self::assertSame('08:00', $this->timeCalculationService->formatDuration(8 * 60, true));
+
+        // Just over 1 day
+        self::assertSame('08:30 (1.06 PT)', $this->timeCalculationService->formatDuration(8 * 60 + 30, true));
+
+        // Float input
+        self::assertSame('01:30', $this->timeCalculationService->formatDuration(90.5));
     }
 
     public function testFormatQuota(): void
