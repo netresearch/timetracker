@@ -54,6 +54,7 @@
             <file>tests/Entity/TicketTest.php</file>
             <file>tests/Entity/UserTest.php</file>
             <file>tests/Entity/UserTicketsystemTest.php</file>
+            <file>tests/Entity/TicketSystemTest.php</file>
             <!-- Enum unit tests -->
             <directory>tests/Enum</directory>
             <!-- Exception unit tests -->

@@ -493,6 +493,7 @@ final class LdapAuthenticatorTest extends TestCase
         yield 'null value' => [null, 0];
         yield 'array value' => [[], 0];
         yield 'float value' => [389.5, 0];
+        yield 'backed enum value' => [\App\Enum\TicketSystemType::JIRA, 0]; // JIRA has string value 'JIRA'
     }
 
     #[DataProvider('parsePortProvider')]

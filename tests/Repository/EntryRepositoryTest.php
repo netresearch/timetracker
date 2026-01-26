@@ -7,14 +7,16 @@ namespace Tests\Repository;
 use App\Repository\EntryRepository;
 use App\Service\ClockInterface;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 /**
- * @internal
+ * Unit tests for EntryRepository pure logic methods.
  *
- * @coversNothing
+ * @internal
  */
+#[CoversClass(EntryRepository::class)]
 final class EntryRepositoryTest extends TestCase
 {
     public function testGetCalendarDaysByWorkDaysAcrossWeekend(): void
@@ -87,5 +89,78 @@ final class EntryRepositoryTest extends TestCase
         $reflectionProperty->setValue($entryRepository, $clock);
 
         self::assertSame(3, $entryRepository->getCalendarDaysByWorkDays(1)); // Monday spans back to Friday
+    }
+
+    public function testGetCalendarDaysByWorkDaysNegativeReturnsZero(): void
+    {
+        $clock = new class implements ClockInterface {
+            public function now(): DateTimeImmutable
+            {
+                return new DateTimeImmutable('2023-10-24 12:00:00');
+            }
+
+            public function today(): DateTimeImmutable
+            {
+                return new DateTimeImmutable('2023-10-24');
+            }
+        };
+
+        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $reflectionProperty->setValue($entryRepository, $clock);
+
+        self::assertSame(0, $entryRepository->getCalendarDaysByWorkDays(-5));
+    }
+
+    public function testGetCalendarDaysByWorkDaysFridaySpansWeekend(): void
+    {
+        // Clock that says today is Friday
+        $clock = new class implements ClockInterface {
+            public function now(): DateTimeImmutable
+            {
+                return new DateTimeImmutable('2023-10-27 12:00:00');
+            }
+
+            public function today(): DateTimeImmutable
+            {
+                return new DateTimeImmutable('2023-10-27');
+            } // Friday
+        };
+
+        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $reflectionProperty->setValue($entryRepository, $clock);
+
+        // 1 working day on Friday should be just 1 calendar day
+        self::assertSame(1, $entryRepository->getCalendarDaysByWorkDays(1));
+
+        // 6 working days from Friday => spans to next week = 8 calendar days (Fri + Sat + Sun + Mon-Fri)
+        self::assertSame(8, $entryRepository->getCalendarDaysByWorkDays(6));
+    }
+
+    public function testGetCalendarDaysByWorkDaysWednesday(): void
+    {
+        // Clock that says today is Wednesday
+        $clock = new class implements ClockInterface {
+            public function now(): DateTimeImmutable
+            {
+                return new DateTimeImmutable('2023-10-25 12:00:00');
+            }
+
+            public function today(): DateTimeImmutable
+            {
+                return new DateTimeImmutable('2023-10-25');
+            } // Wednesday
+        };
+
+        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $reflectionProperty->setValue($entryRepository, $clock);
+
+        // 1 working day on Wednesday is just 1 calendar day
+        self::assertSame(1, $entryRepository->getCalendarDaysByWorkDays(1));
+
+        // 2 working days (Wed, Tue) should be 2 calendar days
+        self::assertSame(2, $entryRepository->getCalendarDaysByWorkDays(2));
     }
 }
