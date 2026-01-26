@@ -265,9 +265,8 @@ Yes, use the REST API to build custom integrations. See the [API Usage Guide](./
 ### How do I get help?
 1. Check this FAQ first
 2. Consult the [Troubleshooting Guide](./TROUBLESHOOTING.md)
-3. Ask in #timetracker-support Slack channel
-4. Email: timetracker-support@company.com
-5. Create a support ticket
+3. Search [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)
+4. Open a [GitHub Issue](https://github.com/netresearch/timetracker/issues) if needed
 
 ### How do I report a bug?
 1. Document the issue with screenshots
@@ -304,6 +303,6 @@ The application may be unavailable briefly. Your data is safe and any unsaved wo
 
 ---
 
-*Can't find your answer? Contact support at timetracker-support@company.com*
+*Can't find your answer? Ask in [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)*
 
 *Last Updated: 2025-01-15 | Version: 1.0*

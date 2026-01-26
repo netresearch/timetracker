@@ -448,10 +448,9 @@ php bin/console app:diagnostic:report > diagnostic_$(date +%Y%m%d).txt
 ```
 
 ### Support Channels
-- **GitHub Issues**: Report bugs and feature requests
-- **Slack Channel**: #timetracker-support
-- **Email**: timetracker-support@netresearch.de
-- **Documentation**: /docs/README.md
+- **GitHub Issues**: [Report bugs and feature requests](https://github.com/netresearch/timetracker/issues)
+- **GitHub Discussions**: [Ask questions and get help](https://github.com/netresearch/timetracker/discussions)
+- **Documentation**: [docs/](../docs/)
 
 ## 🔄 Recovery Procedures
 

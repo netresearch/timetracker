@@ -125,8 +125,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 This project is licensed under the **AGPL-3.0 License** - see [LICENSE](LICENSE) for details.
 
-For commercial licensing, contact [licensing@netresearch.de](mailto:licensing@netresearch.de).
-
 ---
 
 ## Support
@@ -134,7 +132,6 @@ For commercial licensing, contact [licensing@netresearch.de](mailto:licensing@ne
 - **Documentation**: [docs/](docs/)
 - **Issues**: [GitHub Issues](https://github.com/netresearch/timetracker/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)
-- **Enterprise Support**: [support@netresearch.de](mailto:support@netresearch.de)
 
 ---
 

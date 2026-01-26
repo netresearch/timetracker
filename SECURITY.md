@@ -16,7 +16,7 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 
 **Do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please email us at: **[typo3@netresearch.de](mailto:typo3@netresearch.de)**
+Instead, please use [GitHub's private vulnerability reporting](https://github.com/netresearch/timetracker/security/advisories/new).
 
 Include the following information:
 - Description of the vulnerability

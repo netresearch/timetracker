@@ -28,7 +28,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 - Focus on constructive feedback and collaborative problem-solving
 - Accept responsibility for mistakes and learn from them
 
-**Reporting Issues:** Contact the project team at [typo3@netresearch.de](mailto:typo3@netresearch.de). All reports are reviewed confidentially.
+**Reporting Issues:** Use [GitHub Issues](https://github.com/netresearch/timetracker/issues) for bugs and feature requests, or [GitHub Discussions](https://github.com/netresearch/timetracker/discussions) for questions. For sensitive matters, use [private reporting](https://github.com/netresearch/timetracker/security/advisories/new).
 
 For the full Code of Conduct, see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
@@ -1010,7 +1010,6 @@ Your contributions help make time tracking better for everyone. Whether you're f
 **Questions?** Don't hesitate to reach out:
 - 💬 [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)
 - 🐛 [GitHub Issues](https://github.com/netresearch/timetracker/issues)
-- 📧 [Email the Team](mailto:typo3@netresearch.de)
 
 ---
 
