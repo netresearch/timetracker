@@ -17,6 +17,9 @@
     "webpack-dev-server": "^5.2.0",
     "webpack-notifier": "^1.15.0"
   },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
+  },
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
