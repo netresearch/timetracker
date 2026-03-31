@@ -1,0 +1,18 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  node-audit:
+    uses: netresearch/.github/.github/workflows/node-audit.yml@main
+    with:
+      package-manager: npm
+      audit-level: high
+
+  gitleaks:
+    uses: netresearch/.github/.github/workflows/gitleaks.yml@main
+    secrets: inherit
