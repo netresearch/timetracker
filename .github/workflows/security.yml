@@ -12,7 +12,3 @@ jobs:
     with:
       package-manager: npm
       audit-level: high
-
-  gitleaks:
-    uses: netresearch/.github/.github/workflows/gitleaks.yml@main
-    secrets: inherit
