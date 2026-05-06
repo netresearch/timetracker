@@ -113,7 +113,7 @@ final class LOReadFilterTest extends TestCase
         );
 
         self::assertFalse(
-            $this->filter->readCell('ZZZ', 1, 'AnySheet'),
+            $this->filter->readCell('XFD', 1, 'AnySheet'),
             'Column beyond limit should still be rejected regardless of worksheet name',
         );
     }
@@ -177,8 +177,7 @@ final class LOReadFilterTest extends TestCase
             'Column AMK' => ['AMK', 1025],   // Column 1025 - first beyond limit
             'Column AML' => ['AML', 1026],   // Column 1026
             'Column ANZ' => ['ANZ', 1078],   // Random column beyond limit
-            'Column ZZZ' => ['ZZZ', 18278],  // Very high column (max for 3 chars)
-            'Column XFD' => ['XFD', 16384],  // Excel's maximum column
+            'Column XFD' => ['XFD', 16384],  // Excel's maximum column (PhpSpreadsheet rejects anything beyond)
         ];
     }
 
