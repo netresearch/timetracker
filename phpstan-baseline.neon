@@ -1,30 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			rawMessage: 'Parameter #1 $array of function array_sum expects an array of values castable to number, list<mixed> given.'
-			identifier: argument.type
-			count: 2
-			path: tests/Performance/PerformanceBenchmarkRunner.php
-
-		-
-			rawMessage: 'Parameter #1 $callbacks of method App\Service\Cache\QueryCacheService::warmUp() expects array<string, callable(): mixed>, array{key1: Closure(): ''value1'', key2: ''not_a_callable''} given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Parameter #2 $haystack of method PHPUnit\Framework\Assert::assertContains() expects iterable, mixed given.'
-			identifier: argument.type
-			count: 4
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Parameter #2 $haystack of method PHPUnit\Framework\Assert::assertNotContains() expects iterable, mixed given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
 			rawMessage: Binary operation "." between 'encrypted_' and mixed results in an error.
 			identifier: binaryOp.invalid
 			count: 3

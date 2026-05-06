@@ -216,7 +216,7 @@ class QueryCacheService
     /**
      * Gets cache statistics.
      *
-     * @return array<string, mixed>
+     * @return array{adapter: class-string, tags: list<string>, tag_count: int<0, max>}
      */
     public function getStats(): array
     {
