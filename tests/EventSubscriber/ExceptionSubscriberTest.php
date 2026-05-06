@@ -59,6 +59,26 @@ final class ExceptionSubscriberTest extends TestCase
         );
     }
 
+    /**
+     * Decodes a JsonResponse body to an associative array, asserting structure.
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeJsonResponse(ExceptionEvent $event): array
+    {
+        $response = $event->getResponse();
+        self::assertInstanceOf(JsonResponse::class, $response);
+
+        $content = $response->getContent();
+        self::assertIsString($content);
+
+        $decoded = json_decode($content, true);
+        self::assertIsArray($decoded);
+
+        /** @var array<string, mixed> $decoded */
+        return $decoded;
+    }
+
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvents(): void
     {
@@ -231,7 +251,7 @@ final class ExceptionSubscriberTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame(401, $response->getStatusCode());
 
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
         $this->assertSame('Jira authentication required', $content['error']);
         $this->assertSame('/oauth/redirect', $content['redirect_url']);
     }
@@ -252,9 +272,11 @@ final class ExceptionSubscriberTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame(502, $response->getStatusCode());
 
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
         $this->assertSame('Jira API error', $content['error']);
-        $this->assertStringContainsString('Connection failed', $content['message']);
+        $message = $content['message'];
+        self::assertIsString($message);
+        $this->assertStringContainsString('Connection failed', $message);
     }
 
     #[Test]
@@ -275,7 +297,7 @@ final class ExceptionSubscriberTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame($expectedStatusCode, $response->getStatusCode());
 
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
         $this->assertSame($expectedErrorType, $content['error']);
     }
 
@@ -313,8 +335,7 @@ final class ExceptionSubscriberTest extends TestCase
 
         $subscriber->onKernelException($event);
 
-        $response = $event->getResponse();
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
 
         // Should use default message
         $this->assertSame('The requested resource was not found.', $content['message']);
@@ -336,7 +357,7 @@ final class ExceptionSubscriberTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame(500, $response->getStatusCode());
 
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
         $this->assertSame('Internal server error', $content['error']);
         $this->assertSame('Something went wrong', $content['message']);
         $this->assertSame(Exception::class, $content['exception']);
@@ -361,7 +382,7 @@ final class ExceptionSubscriberTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertSame(500, $response->getStatusCode());
 
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
         $this->assertSame('Internal server error', $content['error']);
         // Should hide sensitive details in production
         $this->assertSame('An unexpected error occurred. Please try again later.', $content['message']);
@@ -376,8 +397,8 @@ final class ExceptionSubscriberTest extends TestCase
     {
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Server error occurred', $this->callback(
-                static fn (array $context) => isset($context['exception']) && $context['exception'] instanceof HttpException,
+            ->with('Server error occurred', self::callback(
+                static fn (array $context): bool => isset($context['exception']) && $context['exception'] instanceof HttpException,
             ));
 
         $subscriber = $this->createSubscriber();
@@ -394,8 +415,8 @@ final class ExceptionSubscriberTest extends TestCase
     {
         $this->logger->expects($this->once())
             ->method('warning')
-            ->with('Client error occurred', $this->callback(
-                static fn (array $context) => isset($context['exception']) && $context['exception'] instanceof NotFoundHttpException,
+            ->with('Client error occurred', self::callback(
+                static fn (array $context): bool => isset($context['exception']) && $context['exception'] instanceof NotFoundHttpException,
             ));
 
         $subscriber = $this->createSubscriber();
@@ -412,8 +433,8 @@ final class ExceptionSubscriberTest extends TestCase
     {
         $this->logger->expects($this->once())
             ->method('error')
-            ->with('Unexpected exception occurred', $this->callback(
-                static fn (array $context) => isset($context['exception']) && $context['exception'] instanceof Exception,
+            ->with('Unexpected exception occurred', self::callback(
+                static fn (array $context): bool => isset($context['exception']) && $context['exception'] instanceof Exception,
             ));
 
         $subscriber = $this->createSubscriber();
@@ -468,8 +489,7 @@ final class ExceptionSubscriberTest extends TestCase
 
         $subscriber->onKernelException($event);
 
-        $response = $event->getResponse();
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
 
         $this->assertSame($expectedMessage, $content['message']);
     }
@@ -480,19 +500,19 @@ final class ExceptionSubscriberTest extends TestCase
     public static function provideDefaultMessages(): array
     {
         return [
-            '400' => [400, 'The request was invalid or cannot be processed.'],
-            '401' => [401, 'Authentication is required to access this resource.'],
-            '403' => [403, 'You do not have permission to access this resource.'],
-            '404' => [404, 'The requested resource was not found.'],
-            '405' => [405, 'The request method is not allowed for this resource.'],
-            '406' => [406, 'The requested format is not acceptable.'],
-            '409' => [409, 'The request conflicts with the current state of the resource.'],
-            '422' => [422, 'The request was well-formed but contains semantic errors.'],
-            '429' => [429, 'Too many requests have been sent in a given amount of time.'],
-            '500' => [500, 'An internal server error occurred.'],
-            '502' => [502, 'The server received an invalid response from an upstream server.'],
-            '503' => [503, 'The service is temporarily unavailable.'],
-            '418' => [418, 'An error occurred while processing your request.'], // Unknown code
+            'status 400' => [400, 'The request was invalid or cannot be processed.'],
+            'status 401' => [401, 'Authentication is required to access this resource.'],
+            'status 403' => [403, 'You do not have permission to access this resource.'],
+            'status 404' => [404, 'The requested resource was not found.'],
+            'status 405' => [405, 'The request method is not allowed for this resource.'],
+            'status 406' => [406, 'The requested format is not acceptable.'],
+            'status 409' => [409, 'The request conflicts with the current state of the resource.'],
+            'status 422' => [422, 'The request was well-formed but contains semantic errors.'],
+            'status 429' => [429, 'Too many requests have been sent in a given amount of time.'],
+            'status 500' => [500, 'An internal server error occurred.'],
+            'status 502' => [502, 'The server received an invalid response from an upstream server.'],
+            'status 503' => [503, 'The service is temporarily unavailable.'],
+            'status 418' => [418, 'An error occurred while processing your request.'], // Unknown code
         ];
     }
 
@@ -508,8 +528,7 @@ final class ExceptionSubscriberTest extends TestCase
 
         $subscriber->onKernelException($event);
 
-        $response = $event->getResponse();
-        $content = json_decode((string) $response->getContent(), true);
+        $content = $this->decodeJsonResponse($event);
 
         $this->assertNull($content['redirect_url']);
     }
