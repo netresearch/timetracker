@@ -23,6 +23,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use stdClass;
+use Throwable;
 use UnexpectedValueException;
 
 #[CoversClass(JiraHttpClientService::class)]
@@ -585,7 +586,7 @@ final class JiraHttpClientServiceTest extends TestCase
     }
 
     /**
-     * @param class-string<\Throwable> $expectedExceptionClass
+     * @param class-string<Throwable> $expectedExceptionClass
      */
     #[Test]
     #[DataProvider('provideStatusCodes')]
