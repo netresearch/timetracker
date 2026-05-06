@@ -39,7 +39,6 @@ final class SyncProjectSubticketsAction extends BaseController
     {
         // Map path parameter to query for DTO compatibility
         if ($request->attributes->has('project') && !$request->query->has('project')) {
-            /** @var mixed $projectAttr */
             $projectAttr = $request->attributes->get('project');
             $request->query->set('project', is_scalar($projectAttr) ? (string) $projectAttr : '0');
         }

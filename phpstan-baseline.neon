@@ -1,6 +1,48 @@
 parameters:
 	ignoreErrors:
 		-
+			rawMessage: 'Parameter #2 $array of function implode expects array<string>, list<mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: src/Command/TtSyncSubticketsCommand.php
+
+		-
+			rawMessage: 'Parameter #2 $array of function implode expects array<string>, array<mixed> given.'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Integration/Jira/JiraAuthenticationService.php
+
+		-
+			rawMessage: 'Parameter #2 $array of function implode expects array<string>, array<mixed, mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraHttpClientService.php
+
+		-
+			rawMessage: 'Parameter #2 $array of function implode expects array<string>, list<mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Integration/Jira/JiraHttpClientService.php
+
+		-
+			rawMessage: 'Parameter #1 $array of function natcasesort expects an array of values castable to string, list<mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: src/Service/SubticketSyncService.php
+
+		-
+			rawMessage: 'Parameter #2 $array of function implode expects array<string>, array<int, mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: src/Service/SubticketSyncService.php
+
+		-
+			rawMessage: 'Property Tests\AbstractWebTestCase::$filepath (string) on left side of ?? is not nullable.'
+			identifier: nullCoalesce.property
+			count: 1
+			path: tests/AbstractWebTestCase.php
+
+		-
 			rawMessage: Cannot access offset 'error' on mixed.
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 5
@@ -28,42 +70,6 @@ parameters:
 			rawMessage: 'Cannot call method getContent() on Symfony\Component\HttpFoundation\Response|null.'
 			identifier: method.nonObject
 			count: 3
-			path: tests/EventSubscriber/ExceptionSubscriberTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertArrayHasKey().'
-			identifier: staticMethod.dynamicCall
-			count: 4
-			path: tests/EventSubscriber/ExceptionSubscriberTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertArrayNotHasKey().'
-			identifier: staticMethod.dynamicCall
-			count: 4
-			path: tests/EventSubscriber/ExceptionSubscriberTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertInstanceOf().'
-			identifier: staticMethod.dynamicCall
-			count: 16
-			path: tests/EventSubscriber/ExceptionSubscriberTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertNull().'
-			identifier: staticMethod.dynamicCall
-			count: 4
-			path: tests/EventSubscriber/ExceptionSubscriberTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertSame().'
-			identifier: staticMethod.dynamicCall
-			count: 17
-			path: tests/EventSubscriber/ExceptionSubscriberTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertStringContainsString().'
-			identifier: staticMethod.dynamicCall
-			count: 1
 			path: tests/EventSubscriber/ExceptionSubscriberTest.php
 
 		-
@@ -97,46 +103,10 @@ parameters:
 			path: tests/EventSubscriber/ExceptionSubscriberTest.php
 
 		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertArrayHasKey().'
-			identifier: staticMethod.dynamicCall
-			count: 3
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertContains().'
-			identifier: staticMethod.dynamicCall
-			count: 11
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertFalse().'
-			identifier: staticMethod.dynamicCall
+			rawMessage: 'Parameter #1 $array of function array_sum expects an array of values castable to number, list<mixed> given.'
+			identifier: argument.type
 			count: 2
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertNotContains().'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertNull().'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertSame().'
-			identifier: staticMethod.dynamicCall
-			count: 8
-			path: tests/Service/Cache/QueryCacheServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertTrue().'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Service/Cache/QueryCacheServiceTest.php
+			path: tests/Performance/PerformanceBenchmarkRunner.php
 
 		-
 			rawMessage: 'Parameter #1 $callbacks of method App\Service\Cache\QueryCacheService::warmUp() expects array<string, callable(): mixed>, array{key1: Closure(): ''value1'', key2: ''not_a_callable''} given.'
@@ -169,24 +139,6 @@ parameters:
 			path: tests/Service/Integration/Jira/JiraAuthenticationServiceTest.php
 
 		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertFalse().'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Service/Integration/Jira/JiraAuthenticationServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertSame().'
-			identifier: staticMethod.dynamicCall
-			count: 9
-			path: tests/Service/Integration/Jira/JiraAuthenticationServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertTrue().'
-			identifier: staticMethod.dynamicCall
-			count: 3
-			path: tests/Service/Integration/Jira/JiraAuthenticationServiceTest.php
-
-		-
 			rawMessage: Unreachable statement - code above always terminates.
 			identifier: deadCode.unreachable
 			count: 1
@@ -214,36 +166,6 @@ parameters:
 			rawMessage: Cannot access property $id on mixed.
 			identifier: property.nonObject
 			count: 2
-			path: tests/Service/Integration/Jira/JiraHttpClientServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertFalse().'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Service/Integration/Jira/JiraHttpClientServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertInstanceOf().'
-			identifier: staticMethod.dynamicCall
-			count: 5
-			path: tests/Service/Integration/Jira/JiraHttpClientServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertIsObject().'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Service/Integration/Jira/JiraHttpClientServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertSame().'
-			identifier: staticMethod.dynamicCall
-			count: 7
-			path: tests/Service/Integration/Jira/JiraHttpClientServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertTrue().'
-			identifier: staticMethod.dynamicCall
-			count: 1
 			path: tests/Service/Integration/Jira/JiraHttpClientServiceTest.php
 
 		-
@@ -303,36 +225,6 @@ parameters:
 		-
 			rawMessage: Cannot access property $total on mixed.
 			identifier: property.nonObject
-			count: 1
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertCount().'
-			identifier: staticMethod.dynamicCall
-			count: 3
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertFalse().'
-			identifier: staticMethod.dynamicCall
-			count: 2
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertNull().'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertSame().'
-			identifier: staticMethod.dynamicCall
-			count: 19
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::assertTrue().'
-			identifier: staticMethod.dynamicCall
 			count: 1
 			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
 

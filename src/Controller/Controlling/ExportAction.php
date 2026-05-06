@@ -56,7 +56,6 @@ final class ExportAction extends BaseController
         $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
         foreach ($attributeKeysToMap as $attributeKeyToMap) {
             if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
-                /** @var mixed $attributeValue */
                 $attributeValue = $request->attributes->get($attributeKeyToMap);
                 $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
                 $request->query->set($attributeKeyToMap, $stringValue);
