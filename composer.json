@@ -71,7 +71,7 @@
     "twig/twig": "^3.21"
   },
   "require-dev": {
-    "brianium/paratest": "^7.11",
+    "brianium/paratest": "^7.22",
     "captainhook/captainhook": "^5.27",
     "captainhook/plugin-composer": "^5.3",
     "dg/bypass-finals": "*",
@@ -85,7 +85,7 @@
     "phpstan/phpstan-phpunit": "*",
     "phpstan/phpstan-strict-rules": "*",
     "phpstan/phpstan-symfony": "^2.0",
-    "phpunit/phpunit": "^12.3",
+    "phpunit/phpunit": "^13.0",
     "rector/rector": "^2.1",
     "struggle-for-php/sfp-phpstan-psr-log": "*",
     "symfony/browser-kit": "^8.0",
