@@ -76,7 +76,7 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
         usort($times, $this->sortByName(...));
         $prepared = array_map(static fn (array $t): array => [
-            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'quota' => (string) $t['quota'],
+            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'quota' => $t['quota'],
         ], $times);
 
         $prepared = array_reverse($prepared);

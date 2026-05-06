@@ -33,7 +33,6 @@ final class ArrayTypeHelper
             return $default;
         }
 
-        /** @var mixed $value */
         $value = $array[$key];
 
         if (null === $value) {
@@ -62,7 +61,6 @@ final class ArrayTypeHelper
             return $default;
         }
 
-        /** @var mixed $value */
         $value = $array[$key];
 
         if (null === $value) {

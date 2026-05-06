@@ -144,7 +144,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                 ]);
 
                 // Don't expose LDAP-specific errors to the user
-                throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.');
+                throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $ldapException->getCode(), $ldapException);
             } catch (UserNotFoundException $userException) {
                 // User not found and creation disabled
                 $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
@@ -156,7 +156,7 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
                     'error' => $throwable->getMessage(),
                     'trace' => $throwable->getTraceAsString(),
                 ]);
-                throw new CustomUserMessageAuthenticationException('An unexpected error occurred during authentication.');
+                throw new CustomUserMessageAuthenticationException('An unexpected error occurred during authentication.', [], $throwable->getCode(), $throwable);
             }
         };
 
