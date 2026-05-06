@@ -7,12 +7,6 @@ parameters:
 			path: src/Command/TtSyncSubticketsCommand.php
 
 		-
-			rawMessage: Casting to string something that's already string.
-			identifier: cast.useless
-			count: 1
-			path: src/Controller/Interpretation/GroupByWorktimeAction.php
-
-		-
 			rawMessage: 'Parameter #2 $array of function implode expects array<string>, array<mixed> given.'
 			identifier: argument.type
 			count: 2
