@@ -1,12 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			rawMessage: 'Property Tests\AbstractWebTestCase::$filepath (string) on left side of ?? is not nullable.'
-			identifier: nullCoalesce.property
-			count: 1
-			path: tests/AbstractWebTestCase.php
-
-		-
 			rawMessage: Cannot access offset 'error' on mixed.
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 5
@@ -138,68 +132,3 @@ parameters:
 			count: 1
 			path: tests/Service/Integration/Jira/JiraHttpClientServiceTest.php
 
-		-
-			rawMessage: Cannot access offset 'description' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access offset 'issuetype' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access offset 'key' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access offset 'name' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access offset 'project' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access offset 'summary' on mixed.
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 3
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access property $id on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access property $key on mixed.
-			identifier: property.nonObject
-			count: 2
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: Cannot access property $total on mixed.
-			identifier: property.nonObject
-			count: 1
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: 'Dynamic call to static method PHPUnit\Framework\Assert::callback().'
-			identifier: staticMethod.dynamicCall
-			count: 5
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php
-
-		-
-			rawMessage: 'Parameter #1 $haystack of function str_contains expects string, mixed given.'
-			identifier: argument.type
-			count: 4
-			path: tests/Service/Integration/Jira/JiraTicketServiceTest.php

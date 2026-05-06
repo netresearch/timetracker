@@ -109,9 +109,9 @@ trait TestDataTrait
         $baseDir = __DIR__;
 
         // Use provided filepath or default from instance
-        $targetPath = $filepath ?? ($this->filepath ?? null);
+        $targetPath = $filepath ?? $this->filepath;
 
-        if (null === $targetPath || '' === $targetPath) {
+        if ('' === $targetPath) {
             return null;
         }
 
