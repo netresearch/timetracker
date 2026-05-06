@@ -1,24 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			rawMessage: Binary operation "." between 'encrypted_' and mixed results in an error.
-			identifier: binaryOp.invalid
-			count: 3
-			path: tests/Service/Integration/Jira/JiraAuthenticationServiceTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertTrue() with true will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 2
-			path: tests/Service/Integration/Jira/JiraAuthenticationServiceTest.php
-
-		-
-			rawMessage: Unreachable statement - code above always terminates.
-			identifier: deadCode.unreachable
-			count: 1
-			path: tests/Service/Integration/Jira/JiraAuthenticationServiceTest.php
-
-		-
 			rawMessage: Access to an undefined property object::$id.
 			identifier: property.notFound
 			count: 1

@@ -124,9 +124,10 @@ final class JiraAuthenticationServiceTest extends TestCase
 
         try {
             $this->service->throwUnauthorizedRedirect($ticketSystem, $originalException);
-            $this->fail('Expected JiraApiUnauthorizedException');
         } catch (JiraApiUnauthorizedException $e) {
             $this->assertSame($originalException, $e->getPrevious());
+
+            return;
         }
     }
 
@@ -336,9 +337,10 @@ final class JiraAuthenticationServiceTest extends TestCase
                 ['encrypted_secret', 'valid_secret'],
             ]);
 
-        // Should not throw
+        // Should not throw - assert side effects (decrypted tokens were read)
         $this->service->authenticate($user, $ticketSystem);
-        $this->assertTrue(true); // Reached without exception
+        self::assertSame('encrypted_token', $userTicketSystem->getAccessToken());
+        self::assertSame('encrypted_secret', $userTicketSystem->getTokenSecret());
     }
 
     #[Test]
@@ -416,7 +418,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $this->repository->method('findOneBy')->willReturn(null);
 
         $this->tokenEncryptionService->method('encryptToken')
-            ->willReturnCallback(static fn ($token) => 'encrypted_' . $token);
+            ->willReturnCallback(static fn (string $token): string => 'encrypted_' . $token);
 
         $this->entityManager->expects($this->once())->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
@@ -519,14 +521,13 @@ final class JiraAuthenticationServiceTest extends TestCase
         $this->repository->method('findOneBy')->willReturn(null);
 
         $this->tokenEncryptionService->method('encryptToken')
-            ->willReturnCallback(static fn ($token) => 'encrypted_' . $token);
+            ->willReturnCallback(static fn (string $token): string => 'encrypted_' . $token);
 
         $this->entityManager->expects($this->once())->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 
-        // Should not throw
+        // Should not throw - persist/flush expectations above act as the assertions
         $this->service->fetchOAuthAccessToken($httpClientService, 'request_token', 'verifier_code');
-        $this->assertTrue(true);
     }
 
     #[Test]
@@ -577,7 +578,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $this->repository->method('findOneBy')->willReturn($existingUserTicketSystem);
 
         $this->tokenEncryptionService->method('encryptToken')
-            ->willReturnCallback(static fn ($token) => 'encrypted_' . $token);
+            ->willReturnCallback(static fn (string $token): string => 'encrypted_' . $token);
 
         // Should persist the same object, not create a new one
         $this->entityManager->expects($this->once())
