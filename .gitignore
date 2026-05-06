@@ -1,4 +1,7 @@
-/.cursor/mcp.json
+/.cursor/
+/.claude/
+/.repowise/
+/.mcp.json
 /.idea
 /.buildpath
 /.project
