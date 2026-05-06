@@ -91,9 +91,9 @@ final class JiraHttpClientServiceTest extends TestCase
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
         $service = $this->createService();
-        $client = $service->getClient('user');
-
-        $this->assertInstanceOf(Client::class, $client);
+        // The expects(once()) on getTokens above is the actual assertion;
+        // building the client here verifies it doesn't throw with valid tokens.
+        $service->getClient('user');
     }
 
     #[Test]
@@ -121,9 +121,8 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->expects($this->never())->method('getTokens');
 
         $service = $this->createService();
-        $client = $service->getClient('new');
-
-        $this->assertInstanceOf(Client::class, $client);
+        // expects(never()) on getTokens above is the actual assertion.
+        $service->getClient('new');
     }
 
     #[Test]
@@ -133,9 +132,8 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->expects($this->never())->method('getTokens');
 
         $service = $this->createService();
-        $client = $service->getClient('request', 'provided_request_token');
-
-        $this->assertInstanceOf(Client::class, $client);
+        // expects(never()) on getTokens above is the actual assertion.
+        $service->getClient('request', 'provided_request_token');
     }
 
     #[Test]
@@ -249,7 +247,7 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $result = $service->get('issue/TEST-123');
 
-        $this->assertIsObject($result);
+        self::assertInstanceOf(stdClass::class, $result);
         $this->assertSame(123, $result->id);
         $this->assertSame('TEST-123', $result->key);
     }
@@ -302,6 +300,7 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $result = $service->post('issue', ['fields' => ['summary' => 'Test issue']]);
 
+        self::assertInstanceOf(stdClass::class, $result);
         $this->assertSame(456, $result->id);
     }
 
@@ -331,6 +330,7 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $result = $service->put('issue/TEST-123', ['fields' => ['summary' => 'Updated']]);
 
+        self::assertInstanceOf(stdClass::class, $result);
         $this->assertSame(789, $result->id);
     }
 
@@ -584,6 +584,9 @@ final class JiraHttpClientServiceTest extends TestCase
         $service->get('/issue/TEST-123');
     }
 
+    /**
+     * @param class-string<\Throwable> $expectedExceptionClass
+     */
     #[Test]
     #[DataProvider('provideStatusCodes')]
     public function handlesDifferentStatusCodes(int $statusCode, string $expectedExceptionClass): void
