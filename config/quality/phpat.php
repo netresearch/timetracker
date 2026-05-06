@@ -17,7 +17,7 @@ final class ArchitectureTest
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace('App\Controller'))
-            ->canOnlyDependOn()
+            ->canOnly()->dependOn()
             ->classes(
                 Selector::inNamespace('App\Entity'),
                 Selector::inNamespace('App\Service'),
@@ -37,7 +37,7 @@ final class ArchitectureTest
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace('App\Entity'))
-            ->canOnlyDependOn()
+            ->canOnly()->dependOn()
             ->classes(
                 Selector::inNamespace('App\Enum'),
                 Selector::inNamespace('Doctrine'),
@@ -52,7 +52,7 @@ final class ArchitectureTest
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace('App\Service'))
-            ->canOnlyDependOn()
+            ->canOnly()->dependOn()
             ->classes(
                 Selector::inNamespace('App\Entity'),
                 Selector::inNamespace('App\Repository'),
@@ -74,7 +74,7 @@ final class ArchitectureTest
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace('App\Repository'))
-            ->canOnlyDependOn()
+            ->canOnly()->dependOn()
             ->classes(
                 Selector::inNamespace('App\Entity'),
                 Selector::inNamespace('App\Enum'),
@@ -90,7 +90,7 @@ final class ArchitectureTest
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace('App\Controller'))
-            ->shouldNotDependOn()
+            ->shouldNot()->dependOn()
             ->classes(Selector::inNamespace('App\Repository'))
             ->because('Controllers should use Services, not Repositories directly');
     }
