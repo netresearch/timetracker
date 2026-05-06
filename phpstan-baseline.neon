@@ -1,42 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			rawMessage: 'Parameter #2 $array of function implode expects array<string>, list<mixed> given.'
-			identifier: argument.type
-			count: 1
-			path: src/Command/TtSyncSubticketsCommand.php
-
-		-
-			rawMessage: 'Parameter #2 $array of function implode expects array<string>, array<mixed> given.'
-			identifier: argument.type
-			count: 2
-			path: src/Service/Integration/Jira/JiraAuthenticationService.php
-
-		-
-			rawMessage: 'Parameter #2 $array of function implode expects array<string>, array<mixed, mixed> given.'
-			identifier: argument.type
-			count: 1
-			path: src/Service/Integration/Jira/JiraHttpClientService.php
-
-		-
-			rawMessage: 'Parameter #2 $array of function implode expects array<string>, list<mixed> given.'
-			identifier: argument.type
-			count: 1
-			path: src/Service/Integration/Jira/JiraHttpClientService.php
-
-		-
-			rawMessage: 'Parameter #1 $array of function natcasesort expects an array of values castable to string, list<mixed> given.'
-			identifier: argument.type
-			count: 1
-			path: src/Service/SubticketSyncService.php
-
-		-
-			rawMessage: 'Parameter #2 $array of function implode expects array<string>, array<int, mixed> given.'
-			identifier: argument.type
-			count: 1
-			path: src/Service/SubticketSyncService.php
-
-		-
 			rawMessage: 'Property Tests\AbstractWebTestCase::$filepath (string) on left side of ?? is not nullable.'
 			identifier: nullCoalesce.property
 			count: 1
