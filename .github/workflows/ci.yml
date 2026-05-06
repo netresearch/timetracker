@@ -279,6 +279,13 @@ jobs:
           # Artifact download doesn't preserve npm binary symlinks, reinstall to fix
           docker compose run --rm app-e2e npm install --legacy-peer-deps
 
+      - name: Install Playwright browsers
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          # Prebuilt e2e image bakes browsers at build time; reinstall matches the locked playwright version
+          docker compose run --rm app-e2e npx playwright install chromium --with-deps
+
       - name: Start E2E stack with coverage
         env:
           COMPOSE_PROFILES: e2e
