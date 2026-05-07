@@ -80,7 +80,7 @@ final class PerformanceBenchmarkRunner
     public function runAllBenchmarks(): array
     {
         $this->benchmarkResults = [
-            'timestamp' => (new DateTime())->format('c'),
+            'timestamp' => new DateTime()->format('c'),
             'php_version' => PHP_VERSION,
             'memory_limit' => ini_get('memory_limit'),
             'max_execution_time' => ini_get('max_execution_time'),
@@ -213,7 +213,7 @@ final class PerformanceBenchmarkRunner
             'execution_time_ms' => round(($endTime - $startTime) * 1000, 2),
             'memory_usage_bytes' => $endMemory - $startMemory,
             'peak_memory_usage_bytes' => $endPeakMemory - $startPeakMemory,
-            'timestamp' => (new DateTime())->format('c'),
+            'timestamp' => new DateTime()->format('c'),
         ];
     }
 

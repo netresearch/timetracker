@@ -49,8 +49,8 @@ final class TtSyncSubticketsCommandTest extends KernelTestCase
             ->willReturnOnConsecutiveCalls(['X-1', 'X-2'], []);
 
         // Repository mock that returns a minimal query builder-like object
-        $project = (new Project())->setId(1)->setName('Alpha');
-        $p2 = (new Project())->setId(2)->setName('Beta');
+        $project = new Project()->setId(1)->setName('Alpha');
+        $p2 = new Project()->setId(2)->setName('Beta');
         $projectRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['createQueryBuilder'])

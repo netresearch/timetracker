@@ -36,7 +36,7 @@ final class SystemClockTest extends TestCase
     {
         $systemClock = new SystemClock();
         $today = $systemClock->today();
-        $expectedDate = (new DateTimeImmutable('today midnight'))->format('Y-m-d');
+        $expectedDate = new DateTimeImmutable('today midnight')->format('Y-m-d');
 
         // Verify we get today's date at midnight
         self::assertSame($expectedDate, $today->format('Y-m-d'));

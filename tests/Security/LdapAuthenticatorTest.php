@@ -198,7 +198,7 @@ final class LdapAuthenticatorTest extends TestCase
     {
         $this->configureDefaultLdapParams();
 
-        $existingUser = (new User())->setUsername('testuser');
+        $existingUser = new User()->setUsername('testuser');
 
         $userRepo = $this->createMock(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn($existingUser);
@@ -278,7 +278,7 @@ final class LdapAuthenticatorTest extends TestCase
     {
         $this->configureDefaultLdapParams();
 
-        $team = (new Team())->setName('Dev Team');
+        $team = new Team()->setName('Dev Team');
 
         $userRepo = $this->createMock(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn(null);
@@ -584,7 +584,7 @@ final class LdapAuthenticatorTest extends TestCase
     {
         $this->configureDefaultLdapParams();
 
-        $existingUser = (new User())->setUsername('user@example.com');
+        $existingUser = new User()->setUsername('user@example.com');
 
         $userRepo = $this->createMock(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn($existingUser);

@@ -27,7 +27,7 @@ if (file_exists(dirname(__DIR__) . '/vendor/symfony/phpunit-bridge/bootstrap.php
 $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] ?? 'test';
 
 // Load .env files with proper test environment precedence
-(new Dotenv())->usePutenv(false)->bootEnv(dirname(__DIR__) . '/.env');
+new Dotenv()->usePutenv(false)->bootEnv(dirname(__DIR__) . '/.env');
 
 if (isset($_SERVER['APP_DEBUG']) && (bool) $_SERVER['APP_DEBUG']) {
     umask(0o000);

@@ -274,10 +274,10 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesReturnsFormattedData(): void
     {
-        $user = (new User())->setUsername('johndoe');
-        $customer = (new Customer())->setName('Acme Corp');
-        $project = (new Project())->setName('Project X');
-        $activity = (new Activity())->setName('Development');
+        $user = new User()->setUsername('johndoe');
+        $customer = new Customer()->setName('Acme Corp');
+        $project = new Project()->setName('Project X');
+        $activity = new Activity()->setName('Development');
 
         $entry = $this->createEntry($user, $customer, $project, $activity, '', null, 'Test description');
 
@@ -351,12 +351,12 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesWithTicketUrl(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA)
             ->setTicketUrl('https://jira.example.com/browse/%s');
 
-        $project = (new Project())
+        $project = new Project()
             ->setName('JIRA Project')
             ->setTicketSystem($ticketSystem);
 
@@ -379,12 +379,12 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesWithWorklogUrl(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA)
             ->setTicketUrl('https://jira.example.com/browse/%s');
 
-        $project = (new Project())
+        $project = new Project()
             ->setName('JIRA Project')
             ->setTicketSystem($ticketSystem);
 
@@ -447,7 +447,7 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesTicketUrlWithoutTicketSystem(): void
     {
-        $project = (new Project())->setName('No Ticket System');
+        $project = new Project()->setName('No Ticket System');
         $entry = $this->createEntry(null, null, $project, null, 'TEST-1');
 
         $reflection = new ReflectionClass($entry);
@@ -466,12 +466,12 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesWorklogUrlEmptyWithoutWorklogId(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA)
             ->setTicketUrl('https://jira.example.com/browse/%s');
 
-        $project = (new Project())
+        $project = new Project()
             ->setName('JIRA Project')
             ->setTicketSystem($ticketSystem);
 
@@ -494,12 +494,12 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesWorklogUrlEmptyForNonJiraTicketSystem(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::OTRS)
             ->setTicketUrl('https://otrs.example.com/ticket/%s');
 
-        $project = (new Project())
+        $project = new Project()
             ->setName('OTRS Project')
             ->setTicketSystem($ticketSystem);
 
@@ -521,12 +521,12 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesTicketUrlNonJiraNoBookTime(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(false)
             ->setType(TicketSystemType::OTRS)
             ->setTicketUrl('https://otrs.example.com/ticket/%s');
 
-        $project = (new Project())
+        $project = new Project()
             ->setName('OTRS Project')
             ->setTicketSystem($ticketSystem);
 
@@ -604,7 +604,7 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesSkipsEntriesWithoutProject(): void
     {
-        $entry = (new Entry())->setTicket('PROJ-1');
+        $entry = new Entry()->setTicket('PROJ-1');
         // No project set
 
         $doctrine = $this->createManagerRegistry(user: new User());
@@ -618,8 +618,8 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesSkipsEntriesWithoutTicketSystem(): void
     {
-        $project = (new Project())->setName('No TS');
-        $entry = (new Entry())->setTicket('PROJ-1')->setProject($project);
+        $project = new Project()->setName('No TS');
+        $entry = new Entry()->setTicket('PROJ-1')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory();
@@ -632,11 +632,11 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesSkipsNonBookTimeTicketSystems(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(false)
             ->setType(TicketSystemType::JIRA);
-        $project = (new Project())->setTicketSystem($ticketSystem);
-        $entry = (new Entry())->setTicket('PROJ-1')->setProject($project);
+        $project = new Project()->setTicketSystem($ticketSystem);
+        $entry = new Entry()->setTicket('PROJ-1')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory();
@@ -649,11 +649,11 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesSkipsNonJiraTicketSystems(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::OTRS);
-        $project = (new Project())->setTicketSystem($ticketSystem);
-        $entry = (new Entry())->setTicket('123456')->setProject($project);
+        $project = new Project()->setTicketSystem($ticketSystem);
+        $entry = new Entry()->setTicket('123456')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory();
@@ -666,13 +666,13 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesSetsBillableAndSummary(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA);
-        $project = (new Project())->setTicketSystem($ticketSystem);
+        $project = new Project()->setTicketSystem($ticketSystem);
 
-        $entry1 = (new Entry())->setTicket('TT-123')->setProject($project);
-        $entry2 = (new Entry())->setTicket('TT-999')->setProject($project);
+        $entry1 = new Entry()->setTicket('TT-123')->setProject($project);
+        $entry2 = new Entry()->setTicket('TT-999')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory(
@@ -692,12 +692,12 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesOnlyBillable(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA);
-        $project = (new Project())->setTicketSystem($ticketSystem);
+        $project = new Project()->setTicketSystem($ticketSystem);
 
-        $entry = (new Entry())->setTicket('TT-100')->setProject($project);
+        $entry = new Entry()->setTicket('TT-100')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory(
@@ -715,12 +715,12 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesOnlySummary(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA);
-        $project = (new Project())->setTicketSystem($ticketSystem);
+        $project = new Project()->setTicketSystem($ticketSystem);
 
-        $entry = (new Entry())->setTicket('TT-200')->setProject($project);
+        $entry = new Entry()->setTicket('TT-200')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory(
@@ -738,12 +738,12 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesSkipsWhenNoFieldsRequested(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA);
-        $project = (new Project())->setTicketSystem($ticketSystem);
+        $project = new Project()->setTicketSystem($ticketSystem);
 
-        $entry = (new Entry())->setTicket('TT-300')->setProject($project);
+        $entry = new Entry()->setTicket('TT-300')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory();
@@ -757,12 +757,12 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesContinuesOnApiException(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA);
-        $project = (new Project())->setTicketSystem($ticketSystem);
+        $project = new Project()->setTicketSystem($ticketSystem);
 
-        $entry = (new Entry())->setTicket('TT-ERROR')->setProject($project);
+        $entry = new Entry()->setTicket('TT-ERROR')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory(throwException: true);
@@ -789,12 +789,12 @@ final class ExportServiceTest extends TestCase
 
     public function testEnrichEntriesHandlesNonBillableLabels(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(true)
             ->setType(TicketSystemType::JIRA);
-        $project = (new Project())->setTicketSystem($ticketSystem);
+        $project = new Project()->setTicketSystem($ticketSystem);
 
-        $entry = (new Entry())->setTicket('TT-400')->setProject($project);
+        $entry = new Entry()->setTicket('TT-400')->setProject($project);
 
         $doctrine = $this->createManagerRegistry(user: new User());
         $jiraFactory = $this->createJiraFactory(
@@ -812,7 +812,7 @@ final class ExportServiceTest extends TestCase
 
     public function testGetUsernameReturnsUsername(): void
     {
-        $user = (new User())->setUsername('testuser');
+        $user = new User()->setUsername('testuser');
         $doctrine = $this->createManagerRegistry(user: $user);
         $jiraFactory = $this->createJiraFactory();
 
@@ -837,12 +837,12 @@ final class ExportServiceTest extends TestCase
 
     public function testGetEntriesHandlesWorklogUrlWithoutBookTime(): void
     {
-        $ticketSystem = (new TicketSystem())
+        $ticketSystem = new TicketSystem()
             ->setBookTime(false)
             ->setType(TicketSystemType::JIRA)
             ->setTicketUrl('https://jira.example.com/browse/%s');
 
-        $project = (new Project())->setTicketSystem($ticketSystem);
+        $project = new Project()->setTicketSystem($ticketSystem);
         $entry = $this->createEntry(null, null, $project, null, 'TEST-1', 12345);
 
         $reflection = new ReflectionClass($entry);

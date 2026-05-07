@@ -455,7 +455,7 @@ final class PerformanceDashboard
             if (!is_string($runTimestamp)) {
                 $runTimestamp = is_scalar($runTimestamp) ? (string) $runTimestamp : date('c');
             }
-            $timestamps[] = (new DateTime($runTimestamp))->format('M d');
+            $timestamps[] = new DateTime($runTimestamp)->format('M d');
 
             // Calculate average execution time per run
             $totalTime = 0;

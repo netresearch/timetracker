@@ -24,7 +24,7 @@ final class EntryRepositoryUnitTest extends TestCase
      */
     private function createRepositoryWithClock(ClockInterface $clock): EntryRepository
     {
-        $repository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $repository = new ReflectionClass(EntryRepository::class)->newInstanceWithoutConstructor();
 
         // Use reflection to set the readonly property before it's initialized
         $reflectionClass = new ReflectionClass(EntryRepository::class);

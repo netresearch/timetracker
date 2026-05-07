@@ -40,8 +40,8 @@ final class EntryRepositoryTest extends TestCase
         };
 
         // Avoid touching Doctrine by creating a partial instance without constructor
-        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
-        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $entryRepository = new ReflectionClass(EntryRepository::class)->newInstanceWithoutConstructor();
+        $reflectionProperty = new ReflectionClass(EntryRepository::class)->getProperty('clock');
         $reflectionProperty->setValue($entryRepository, $clock);
 
         // 1 working day on Monday should include previous Fri,Sat,Sun => 3 calendar days
@@ -65,9 +65,9 @@ final class EntryRepositoryTest extends TestCase
             } // Tuesday
         };
         // Avoid touching Doctrine by creating a partial mock that bypasses parent constructor
-        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
+        $entryRepository = new ReflectionClass(EntryRepository::class)->newInstanceWithoutConstructor();
         // Inject clock via reflection
-        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $reflectionProperty = new ReflectionClass(EntryRepository::class)->getProperty('clock');
         $reflectionProperty->setValue($entryRepository, $clock);
 
         self::assertSame(0, $entryRepository->getCalendarDaysByWorkDays(0));
@@ -89,8 +89,8 @@ final class EntryRepositoryTest extends TestCase
             } // Monday
         };
         // Avoid touching Doctrine by creating a partial mock that bypasses parent constructor
-        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
-        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $entryRepository = new ReflectionClass(EntryRepository::class)->newInstanceWithoutConstructor();
+        $reflectionProperty = new ReflectionClass(EntryRepository::class)->getProperty('clock');
         $reflectionProperty->setValue($entryRepository, $clock);
 
         self::assertSame(3, $entryRepository->getCalendarDaysByWorkDays(1)); // Monday spans back to Friday
@@ -110,8 +110,8 @@ final class EntryRepositoryTest extends TestCase
             }
         };
 
-        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
-        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $entryRepository = new ReflectionClass(EntryRepository::class)->newInstanceWithoutConstructor();
+        $reflectionProperty = new ReflectionClass(EntryRepository::class)->getProperty('clock');
         $reflectionProperty->setValue($entryRepository, $clock);
 
         self::assertSame(0, $entryRepository->getCalendarDaysByWorkDays(-5));
@@ -132,8 +132,8 @@ final class EntryRepositoryTest extends TestCase
             } // Friday
         };
 
-        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
-        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $entryRepository = new ReflectionClass(EntryRepository::class)->newInstanceWithoutConstructor();
+        $reflectionProperty = new ReflectionClass(EntryRepository::class)->getProperty('clock');
         $reflectionProperty->setValue($entryRepository, $clock);
 
         // 1 working day on Friday should be just 1 calendar day
@@ -158,8 +158,8 @@ final class EntryRepositoryTest extends TestCase
             } // Wednesday
         };
 
-        $entryRepository = (new ReflectionClass(EntryRepository::class))->newInstanceWithoutConstructor();
-        $reflectionProperty = (new ReflectionClass(EntryRepository::class))->getProperty('clock');
+        $entryRepository = new ReflectionClass(EntryRepository::class)->newInstanceWithoutConstructor();
+        $reflectionProperty = new ReflectionClass(EntryRepository::class)->getProperty('clock');
         $reflectionProperty->setValue($entryRepository, $clock);
 
         // 1 working day on Wednesday is just 1 calendar day

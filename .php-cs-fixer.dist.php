@@ -25,10 +25,13 @@ return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)
     ->setRules([
         // Presets
-        '@PSR12' => true,
-        '@PSR12:risky' => true,
-        '@PHP83Migration' => true,
-        '@PHP80Migration:risky' => true,
+        '@PER-CS' => true,
+        '@PER-CS:risky' => true,
+        '@PHP84Migration' => true,
+        // PHP-CS-Fixer 3.95 has no @PHP83Migration:risky or @PHP84Migration:risky;
+        // @PHP82Migration:risky is the latest extant risky migration set and a strict
+        // superset of @PHP80Migration:risky (the previous setting).
+        '@PHP82Migration:risky' => true,
         '@Symfony' => true,
         '@Symfony:risky' => true,
 
