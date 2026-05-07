@@ -25,10 +25,10 @@ return (new PhpCsFixer\Config())
     ->setRiskyAllowed(true)
     ->setRules([
         // Presets
-        '@PSR12' => true,
-        '@PSR12:risky' => true,
-        '@PHP83Migration' => true,
-        '@PHP80Migration:risky' => true,
+        '@PER-CS' => true,
+        '@PER-CS:risky' => true,
+        '@PHP84Migration' => true,
+        '@PHP84Migration:risky' => true,
         '@Symfony' => true,
         '@Symfony:risky' => true,
 
