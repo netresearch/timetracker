@@ -123,11 +123,11 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $exportServiceMock = $this->createMock(Export::class);
 
         // --- Real entities for export ---
-        $user = (new \App\Entity\User())->setId(1)->setUsername('unittest');
-        $customer = (new \App\Entity\Customer())->setId(1)->setName('Test Customer');
-        $project = (new \App\Entity\Project())->setId(1)->setName('Test Project');
+        $user = new \App\Entity\User()->setId(1)->setUsername('unittest');
+        $customer = new \App\Entity\Customer()->setId(1)->setName('Test Customer');
+        $project = new \App\Entity\Project()->setId(1)->setName('Test Project');
 
-        $entry1 = (new \App\Entity\Entry())
+        $entry1 = new \App\Entity\Entry()
             ->setId(4)
             ->setDay(new DateTime('2023-10-15'))
             ->setStart(new DateTime('2023-10-15 09:00:00'))
@@ -139,7 +139,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
             ->setDescription('Real Desc 1');
         // ->setActivity(null) // Assuming default is fine or set if needed
 
-        $entry2 = (new \App\Entity\Entry())
+        $entry2 = new \App\Entity\Entry()
             ->setId(5)
             ->setDay(new DateTime('2023-10-20'))
             ->setStart(new DateTime('2023-10-20 11:00:00'))
@@ -233,11 +233,11 @@ final class ControllingControllerTest extends AbstractWebTestCase
         $exportServiceMock = $this->createMock(Export::class);
 
         // --- Mock data for export ---
-        $user = (new \App\Entity\User())->setId(1)->setUsername('testuser');
-        $customer = (new \App\Entity\Customer())->setId(1)->setName('Test Customer');
-        $project = (new \App\Entity\Project())->setId(1)->setName('Test Project');
+        $user = new \App\Entity\User()->setId(1)->setUsername('testuser');
+        $customer = new \App\Entity\Customer()->setId(1)->setName('Test Customer');
+        $project = new \App\Entity\Project()->setId(1)->setName('Test Project');
 
-        $entry1 = (new \App\Entity\Entry())
+        $entry1 = new \App\Entity\Entry()
             ->setId(6)
             ->setDay(new DateTime('2023-11-05'))
             ->setStart(new DateTime('2023-11-05 08:00:00'))
