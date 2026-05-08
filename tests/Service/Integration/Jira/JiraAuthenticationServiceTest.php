@@ -129,6 +129,9 @@ final class JiraAuthenticationServiceTest extends TestCase
 
             return;
         }
+
+        // @phpstan-ignore-next-line deadCode.unreachable — method is declared `never` so PHPStan considers this unreachable; we still want to fail loudly if the runtime contract regresses.
+        $this->fail('Expected JiraApiUnauthorizedException to be thrown');
     }
 
     #[Test]
