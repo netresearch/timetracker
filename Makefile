@@ -210,9 +210,15 @@ e2e-up: bake-e2e
 		sleep 2; \
 	done
 
+# Services owned by the e2e profile. Scoping `compose down` to these
+# leaves ldap-dev (a shared dev/development/test fixture pulled in via
+# `depends_on`) running, so a subsequent `make test` finds it.
+E2E_SERVICES := httpd-e2e app-e2e db-e2e
+
 e2e-down:
-	@echo "Stopping E2E test stack..."
-	COMPOSE_PROFILES=e2e docker compose down
+	@echo "Stopping E2E test stack ($(E2E_SERVICES))..."
+	docker compose stop $(E2E_SERVICES)
+	docker compose rm -fs $(E2E_SERVICES)
 
 # E2E tests with Playwright (starts its own stack)
 e2e: e2e-up
