@@ -15,6 +15,7 @@ use InvalidArgumentException;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
+use SensitiveParameter;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 use function assert;
@@ -47,7 +48,7 @@ class ModernLdapService
      *
      * @throws LdapException
      */
-    public function authenticate(string $username, string $password): bool
+    public function authenticate(string $username, #[SensitiveParameter] string $password): bool
     {
         $this->validateInput($username, $password);
 
@@ -394,7 +395,7 @@ class ModernLdapService
     /**
      * Validates input parameters.
      */
-    private function validateInput(string $username, string $password): void
+    private function validateInput(string $username, #[SensitiveParameter] string $password): void
     {
         if ('' === $username || '0' === $username) {
             throw new InvalidArgumentException('Username cannot be empty');

@@ -23,13 +23,10 @@ use function is_string;
 #[ORM\Table(name: 'users')]
 class User implements UserInterface
 {
-    /**
-     * @var int|null
-     */
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
-    protected $id;
+    protected ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 50)]
     protected string $username = '';

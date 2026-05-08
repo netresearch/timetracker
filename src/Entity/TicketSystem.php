@@ -13,6 +13,7 @@ use App\Enum\TicketSystemType;
 use App\Model\Base;
 use App\Repository\TicketSystemRepository;
 use Doctrine\ORM\Mapping as ORM;
+use SensitiveParameter;
 
 /**
  * App\Entity\TicketSystem.
@@ -96,11 +97,9 @@ class TicketSystem extends Base
     /**
      * Set name.
      *
-     * @param string $name
-     *
      * @return $this
      */
-    public function setName($name): static
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -109,10 +108,8 @@ class TicketSystem extends Base
 
     /**
      * Get name.
-     *
-     * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -120,11 +117,9 @@ class TicketSystem extends Base
     /**
      * Set bookTime.
      *
-     * @param bool $bookTime
-     *
      * @return $this
      */
-    public function setBookTime($bookTime): static
+    public function setBookTime(bool $bookTime): static
     {
         $this->bookTime = $bookTime;
 
@@ -133,10 +128,8 @@ class TicketSystem extends Base
 
     /**
      * Get bookTime.
-     *
-     * @return bool $bookTime
      */
-    public function getBookTime()
+    public function getBookTime(): bool
     {
         return $this->bookTime;
     }
@@ -172,11 +165,9 @@ class TicketSystem extends Base
     /**
      * Set url.
      *
-     * @param string $url
-     *
      * @return $this
      */
-    public function setUrl($url): static
+    public function setUrl(string $url): static
     {
         $this->url = $url;
 
@@ -185,10 +176,8 @@ class TicketSystem extends Base
 
     /**
      * Get url.
-     *
-     * @return string $url
      */
-    public function getUrl()
+    public function getUrl(): string
     {
         return $this->url;
     }
@@ -196,11 +185,9 @@ class TicketSystem extends Base
     /**
      * Set the ticket url.
      *
-     * @param string $ticketUrl
-     *
      * @return $this
      */
-    public function setTicketUrl($ticketUrl): static
+    public function setTicketUrl(string $ticketUrl): static
     {
         $this->ticketUrl = $ticketUrl;
 
@@ -209,10 +196,8 @@ class TicketSystem extends Base
 
     /**
      * Get url pointing to a ticket.
-     *
-     * @return string $ticketUrl
      */
-    public function getTicketUrl()
+    public function getTicketUrl(): string
     {
         return $this->ticketUrl;
     }
@@ -220,11 +205,9 @@ class TicketSystem extends Base
     /**
      * Set login.
      *
-     * @param string $login
-     *
      * @return $this
      */
-    public function setLogin($login): static
+    public function setLogin(string $login): static
     {
         $this->login = $login;
 
@@ -233,10 +216,8 @@ class TicketSystem extends Base
 
     /**
      * Get login.
-     *
-     * @return string $login
      */
-    public function getLogin()
+    public function getLogin(): string
     {
         return $this->login;
     }
@@ -244,11 +225,9 @@ class TicketSystem extends Base
     /**
      * Set password.
      *
-     * @param string $password
-     *
      * @return $this
      */
-    public function setPassword($password): static
+    public function setPassword(#[SensitiveParameter] string $password): static
     {
         $this->password = $password;
 
@@ -257,10 +236,8 @@ class TicketSystem extends Base
 
     /**
      * Get password.
-     *
-     * @return string $password
      */
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->password;
     }
