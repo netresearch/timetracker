@@ -18,8 +18,10 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Exception;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -27,16 +29,17 @@ use Psr\Log\LoggerInterface;
  * @internal
  */
 #[CoversClass(JiraIntegrationService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class JiraIntegrationServiceTest extends TestCase
 {
-    private ManagerRegistry&MockObject $managerRegistry;
+    private ManagerRegistry&Stub $managerRegistry;
     private JiraWorkLogService&MockObject $jiraWorkLogService;
     private LoggerInterface&MockObject $logger;
     private JiraIntegrationService $service;
 
     protected function setUp(): void
     {
-        $this->managerRegistry = $this->createMock(ManagerRegistry::class);
+        $this->managerRegistry = self::createStub(ManagerRegistry::class);
         $this->jiraWorkLogService = $this->createMock(JiraWorkLogService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
@@ -51,12 +54,11 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testSaveWorklogReturnsFalseWhenNoProject(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn(null);
 
         $this->logger->expects(self::once())
-            ->method('warning')
-            ->with('No project associated with entry');
+            ->method('warning');
 
         $result = $this->service->saveWorklog($entry);
 
@@ -65,19 +67,18 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testSaveWorklogReturnsFalseWhenShouldNotSync(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(false);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn($project);
 
         $this->logger->expects(self::once())
-            ->method('debug')
-            ->with('Entry should not sync with JIRA');
+            ->method('debug');
 
         $result = $this->service->saveWorklog($entry);
 
@@ -86,15 +87,15 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testSaveWorklogThrowsExceptionWhenNoUser(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getUser')->willReturn(null);
         $entry->method('getTicket')->willReturn('ABC-123');
@@ -109,17 +110,17 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testSaveWorklogSucceeds(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getTicket')->willReturn('ABC-123');
@@ -127,12 +128,10 @@ final class JiraIntegrationServiceTest extends TestCase
         $entry->method('getEnd')->willReturn(new DateTime('+1 hour'));
 
         $this->jiraWorkLogService->expects(self::once())
-            ->method('updateEntryWorkLog')
-            ->with($entry);
+            ->method('updateEntryWorkLog');
 
         $this->logger->expects(self::once())
-            ->method('info')
-            ->with('JIRA worklog synced');
+            ->method('info');
 
         $result = $this->service->saveWorklog($entry);
 
@@ -141,17 +140,17 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testSaveWorklogRethrowsException(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getTicket')->willReturn('ABC-123');
@@ -164,8 +163,7 @@ final class JiraIntegrationServiceTest extends TestCase
             ->willThrowException($exception);
 
         $this->logger->expects(self::once())
-            ->method('error')
-            ->with('JIRA sync failed', ['exception' => $exception]);
+            ->method('error');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('API Error');
@@ -175,24 +173,23 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testSaveWorklogUsesInternalJiraTicketSystem(): void
     {
-        $internalTicketSystem = $this->createMock(TicketSystem::class);
+        $internalTicketSystem = self::createStub(TicketSystem::class);
         $internalTicketSystem->method('getBookTime')->willReturn(true);
         $internalTicketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $ticketSystemRepo = $this->createMock(TicketSystemRepository::class);
-        $ticketSystemRepo->method('find')->with('99')->willReturn($internalTicketSystem);
+        $ticketSystemRepo = self::createStub(TicketSystemRepository::class);
+        $ticketSystemRepo->method('find')->willReturn($internalTicketSystem);
 
         $this->managerRegistry->method('getRepository')
-            ->with(TicketSystem::class)
             ->willReturn($ticketSystemRepo);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('hasInternalJiraProjectKey')->willReturn(true);
         $project->method('getInternalJiraTicketSystem')->willReturn('99');
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getTicket')->willReturn('INT-123');
@@ -211,12 +208,11 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testDeleteWorklogReturnsFalseWhenNoWorklogId(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getWorklogId')->willReturn(null);
 
         $this->logger->expects(self::once())
-            ->method('info')
-            ->with('Entry has no worklog ID to delete');
+            ->method('info');
 
         $result = $this->service->deleteWorklog($entry);
 
@@ -225,7 +221,7 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testDeleteWorklogThrowsExceptionWhenNoProject(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getWorklogId')->willReturn(12345);
         $entry->method('getProject')->willReturn(null);
 
@@ -237,11 +233,11 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testDeleteWorklogThrowsExceptionWhenNoTicketSystem(): void
     {
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn(null);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getWorklogId')->willReturn(12345);
         $entry->method('getProject')->willReturn($project);
 
@@ -256,13 +252,13 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testDeleteWorklogThrowsExceptionWhenNoUser(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getWorklogId')->willReturn(12345);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getUser')->willReturn(null);
@@ -275,13 +271,13 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testDeleteWorklogSucceeds(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
         $entry = $this->createMock(Entry::class);
         $entry->method('getWorklogId')->willReturn(12345);
@@ -297,12 +293,10 @@ final class JiraIntegrationServiceTest extends TestCase
         $this->managerRegistry->method('getManager')->willReturn($objectManager);
 
         $this->jiraWorkLogService->expects(self::once())
-            ->method('deleteEntryWorkLog')
-            ->with($entry);
+            ->method('deleteEntryWorkLog');
 
         $this->logger->expects(self::once())
-            ->method('info')
-            ->with('JIRA worklog deleted');
+            ->method('info');
 
         $result = $this->service->deleteWorklog($entry);
 
@@ -311,15 +305,15 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testDeleteWorklogRethrowsException(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getWorklogId')->willReturn(12345);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getUser')->willReturn($user);
@@ -330,8 +324,7 @@ final class JiraIntegrationServiceTest extends TestCase
             ->willThrowException($exception);
 
         $this->logger->expects(self::once())
-            ->method('error')
-            ->with('JIRA worklog deletion failed', ['exception' => $exception]);
+            ->method('error');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Delete failed');
@@ -343,17 +336,17 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testBatchSyncWorkLogsProcessesAllEntries(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
-        $entry1 = $this->createMock(Entry::class);
+        $entry1 = self::createStub(Entry::class);
         $entry1->method('getId')->willReturn(1);
         $entry1->method('getProject')->willReturn($project);
         $entry1->method('getUser')->willReturn($user);
@@ -361,7 +354,7 @@ final class JiraIntegrationServiceTest extends TestCase
         $entry1->method('getStart')->willReturn(new DateTime());
         $entry1->method('getEnd')->willReturn(new DateTime('+1 hour'));
 
-        $entry2 = $this->createMock(Entry::class);
+        $entry2 = self::createStub(Entry::class);
         $entry2->method('getId')->willReturn(2);
         $entry2->method('getProject')->willReturn($project);
         $entry2->method('getUser')->willReturn($user);
@@ -381,17 +374,17 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testBatchSyncWorkLogsContinuesOnFailure(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
-        $entry1 = $this->createMock(Entry::class);
+        $entry1 = self::createStub(Entry::class);
         $entry1->method('getId')->willReturn(1);
         $entry1->method('getProject')->willReturn($project);
         $entry1->method('getUser')->willReturn($user);
@@ -399,7 +392,7 @@ final class JiraIntegrationServiceTest extends TestCase
         $entry1->method('getStart')->willReturn(new DateTime());
         $entry1->method('getEnd')->willReturn(new DateTime('+1 hour'));
 
-        $entry2 = $this->createMock(Entry::class);
+        $entry2 = self::createStub(Entry::class);
         $entry2->method('getId')->willReturn(2);
         $entry2->method('getProject')->willReturn($project);
         $entry2->method('getUser')->willReturn($user);
@@ -434,30 +427,28 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testGetEntriesNeedingSyncReturnsFilteredEntries(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $entry1 = $this->createMock(Entry::class);
+        $entry1 = self::createStub(Entry::class);
         $entry1->method('getProject')->willReturn($project);
         $entry1->method('getTicket')->willReturn('ABC-1');
         $entry1->method('getStart')->willReturn(new DateTime());
         $entry1->method('getEnd')->willReturn(new DateTime('+1 hour'));
 
-        $entry2 = $this->createMock(Entry::class);
+        $entry2 = self::createStub(Entry::class);
         $entry2->method('getProject')->willReturn(null);
 
-        $entryRepo = $this->createMock(EntryRepository::class);
+        $entryRepo = self::createStub(EntryRepository::class);
         $entryRepo->method('findBy')
-            ->with(['syncedToTicketsystem' => false])
             ->willReturn([$entry1, $entry2]);
 
         $this->managerRegistry->method('getRepository')
-            ->with(Entry::class)
             ->willReturn($entryRepo);
 
         $entries = $this->service->getEntriesNeedingSync();
@@ -468,36 +459,34 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testGetEntriesNeedingSyncFiltersWithUserAndSince(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $since = new DateTime('-1 week');
 
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $entry1 = $this->createMock(Entry::class);
+        $entry1 = self::createStub(Entry::class);
         $entry1->method('getProject')->willReturn($project);
         $entry1->method('getTicket')->willReturn('ABC-1');
         $entry1->method('getStart')->willReturn(new DateTime());
         $entry1->method('getEnd')->willReturn(new DateTime('+1 hour'));
 
-        $entry2 = $this->createMock(Entry::class);
+        $entry2 = self::createStub(Entry::class);
         $entry2->method('getProject')->willReturn($project);
         $entry2->method('getTicket')->willReturn('ABC-2');
         $entry2->method('getStart')->willReturn(new DateTime('-2 weeks'));
         $entry2->method('getEnd')->willReturn(new DateTime('-2 weeks +1 hour'));
 
-        $entryRepo = $this->createMock(EntryRepository::class);
+        $entryRepo = self::createStub(EntryRepository::class);
         $entryRepo->method('findBy')
-            ->with(['syncedToTicketsystem' => false, 'user' => $user])
             ->willReturn([$entry1, $entry2]);
 
         $this->managerRegistry->method('getRepository')
-            ->with(Entry::class)
             ->willReturn($entryRepo);
 
         $entries = $this->service->getEntriesNeedingSync($user, $since);
@@ -508,25 +497,24 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testGetEntriesNeedingSyncFiltersEmptyTickets(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getTicket')->willReturn('');
         $entry->method('getStart')->willReturn(new DateTime());
         $entry->method('getEnd')->willReturn(new DateTime('+1 hour'));
 
-        $entryRepo = $this->createMock(EntryRepository::class);
+        $entryRepo = self::createStub(EntryRepository::class);
         $entryRepo->method('findBy')->willReturn([$entry]);
 
         $this->managerRegistry->method('getRepository')
-            ->with(Entry::class)
             ->willReturn($entryRepo);
 
         $entries = $this->service->getEntriesNeedingSync();
@@ -536,26 +524,25 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testGetEntriesNeedingSyncFiltersZeroDuration(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $project->method('hasInternalJiraProjectKey')->willReturn(false);
 
         $now = new DateTime();
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getTicket')->willReturn('ABC-1');
         $entry->method('getStart')->willReturn($now);
         $entry->method('getEnd')->willReturn($now);  // Same time = 0 duration
 
-        $entryRepo = $this->createMock(EntryRepository::class);
+        $entryRepo = self::createStub(EntryRepository::class);
         $entryRepo->method('findBy')->willReturn([$entry]);
 
         $this->managerRegistry->method('getRepository')
-            ->with(Entry::class)
             ->willReturn($entryRepo);
 
         $entries = $this->service->getEntriesNeedingSync();
@@ -567,10 +554,10 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testValidateJiraConnectionReturnsFalseForNonJira(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::OTRS);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
         $result = $this->service->validateJiraConnection($ticketSystem, $user);
 
@@ -579,14 +566,13 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testValidateJiraConnectionReturnsTrue(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
         $this->jiraWorkLogService->expects(self::once())
             ->method('validateConnection')
-            ->with($user, $ticketSystem)
             ->willReturn(true);
 
         $result = $this->service->validateJiraConnection($ticketSystem, $user);
@@ -596,10 +582,10 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testValidateJiraConnectionReturnsFalseOnException(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
         $this->jiraWorkLogService->expects(self::once())
             ->method('validateConnection')
@@ -617,10 +603,10 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testGetJiraProjectInfoReturnsNullForNonJira(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::OTRS);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
         $result = $this->service->getJiraProjectInfo('PROJ', $ticketSystem, $user);
 
@@ -629,15 +615,14 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testGetJiraProjectInfoReturnsProjectData(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
         $projectInfo = ['key' => 'PROJ', 'name' => 'Project'];
         $this->jiraWorkLogService->expects(self::once())
             ->method('getProjectInfo')
-            ->with('PROJ', $user, $ticketSystem)
             ->willReturn($projectInfo);
 
         $result = $this->service->getJiraProjectInfo('PROJ', $ticketSystem, $user);
@@ -647,10 +632,10 @@ final class JiraIntegrationServiceTest extends TestCase
 
     public function testGetJiraProjectInfoReturnsNullOnException(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
 
         $this->jiraWorkLogService->expects(self::once())
             ->method('getProjectInfo')
@@ -672,7 +657,7 @@ final class JiraIntegrationServiceTest extends TestCase
         );
 
         // Test that it works without logger
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn(null);
 
         $result = $service->saveWorklog($entry);

@@ -11,6 +11,7 @@ use App\Entity\Project;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraHttpClientService;
 use App\Service\Integration\Jira\JiraTicketService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 
 #[CoversClass(JiraTicketService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class JiraTicketServiceTest extends TestCase
 {
     private JiraHttpClientService&MockObject $httpClient;

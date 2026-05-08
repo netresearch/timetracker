@@ -9,6 +9,7 @@ use App\Entity\Team;
 use App\Repository\TeamRepository;
 use App\Validator\Constraints\UniqueTeamName;
 use App\Validator\Constraints\UniqueTeamNameValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
  * @internal
  */
 #[CoversClass(UniqueTeamNameValidator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class UniqueTeamNameValidatorTest extends TestCase
 {
     private TeamRepository&MockObject $repository;
@@ -40,7 +42,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidateThrowsOnInvalidConstraintType(): void
     {
-        $constraint = $this->createMock(Constraint::class);
+        $constraint = self::createStub(Constraint::class);
 
         $this->expectException(UnexpectedTypeException::class);
 
@@ -81,7 +83,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenUpdatingSameTeam(): void
     {
-        $existingTeam = $this->createMock(Team::class);
+        $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
         $this->repository->method('findOneBy')
@@ -98,7 +100,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingTeam = $this->createMock(Team::class);
+        $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
         $this->repository->method('findOneBy')
@@ -122,7 +124,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDifferentTeamHasSameName(): void
     {
-        $existingTeam = $this->createMock(Team::class);
+        $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
         $this->repository->method('findOneBy')
@@ -146,7 +148,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenContextObjectIsNotDto(): void
     {
-        $existingTeam = $this->createMock(Team::class);
+        $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
         $this->repository->method('findOneBy')

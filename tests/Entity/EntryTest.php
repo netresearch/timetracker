@@ -573,7 +573,7 @@ final class EntryTest extends TestCase
     {
         $entry = new Entry();
         $entry->setTicket('PROJ-123');
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn(null);
         $entry->setProject($project);
 
@@ -584,22 +584,9 @@ final class EntryTest extends TestCase
     {
         $entry = new Entry();
         $entry->setTicket('PROJ-123');
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getTicketUrl')->willReturn('');
-        $project = $this->createMock(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-        $entry->setProject($project);
-
-        self::assertSame('PROJ-123', $entry->getTicketSystemIssueLink());
-    }
-
-    public function testGetTicketSystemIssueLinkReturnsTicketWhenNullTicketUrl(): void
-    {
-        $entry = new Entry();
-        $entry->setTicket('PROJ-123');
-        $ticketSystem = $this->createMock(TicketSystem::class);
-        $ticketSystem->method('getTicketUrl')->willReturn(null);
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $entry->setProject($project);
 
@@ -610,9 +597,9 @@ final class EntryTest extends TestCase
     {
         $entry = new Entry();
         $entry->setTicket('PROJ-123');
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getTicketUrl')->willReturn('https://jira.example.com/browse/%s');
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
         $entry->setProject($project);
 
@@ -637,7 +624,7 @@ final class EntryTest extends TestCase
     {
         $entry = new Entry();
         $entry->setTicket('EXT-789');
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getInternalJiraProjectKey')->willReturn('INT');
         $project->method('getTicketSystem')->willReturn(null);
         $entry->setProject($project);

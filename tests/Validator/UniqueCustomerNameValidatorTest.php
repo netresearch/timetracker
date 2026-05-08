@@ -12,6 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
  * @internal
  */
 #[CoversClass(UniqueCustomerNameValidator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class UniqueCustomerNameValidatorTest extends TestCase
 {
     private EntityManagerInterface&MockObject $entityManager;
@@ -43,7 +45,7 @@ final class UniqueCustomerNameValidatorTest extends TestCase
 
     public function testValidateThrowsOnInvalidConstraintType(): void
     {
-        $constraint = $this->createMock(Constraint::class);
+        $constraint = self::createStub(Constraint::class);
 
         $this->expectException(UnexpectedTypeException::class);
 
@@ -66,16 +68,16 @@ final class UniqueCustomerNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingCustomerFound(): void
     {
-        $query = $this->createMock(Query::class);
+        $query = self::createStub(Query::class);
         $query->method('getOneOrNullResult')->willReturn(null);
 
-        $queryBuilder = $this->createMock(QueryBuilder::class);
+        $queryBuilder = self::createStub(QueryBuilder::class);
         $queryBuilder->method('where')->willReturnSelf();
         $queryBuilder->method('setParameter')->willReturnSelf();
         $queryBuilder->method('andWhere')->willReturnSelf();
         $queryBuilder->method('getQuery')->willReturn($query);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
         $this->entityManager->method('getRepository')
@@ -93,16 +95,16 @@ final class UniqueCustomerNameValidatorTest extends TestCase
     {
         // When updating the same customer, the andWhere clause excludes it,
         // so the query returns null (no other customer with that name)
-        $query = $this->createMock(Query::class);
+        $query = self::createStub(Query::class);
         $query->method('getOneOrNullResult')->willReturn(null);
 
-        $queryBuilder = $this->createMock(QueryBuilder::class);
+        $queryBuilder = self::createStub(QueryBuilder::class);
         $queryBuilder->method('where')->willReturnSelf();
         $queryBuilder->method('setParameter')->willReturnSelf();
         $queryBuilder->method('andWhere')->willReturnSelf();
         $queryBuilder->method('getQuery')->willReturn($query);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
         $this->entityManager->method('getRepository')
@@ -118,19 +120,19 @@ final class UniqueCustomerNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDuplicateNameFoundForNewCustomer(): void
     {
-        $existingCustomer = $this->createMock(Customer::class);
+        $existingCustomer = self::createStub(Customer::class);
         $existingCustomer->method('getId')->willReturn(5);
 
-        $query = $this->createMock(Query::class);
+        $query = self::createStub(Query::class);
         $query->method('getOneOrNullResult')->willReturn($existingCustomer);
 
-        $queryBuilder = $this->createMock(QueryBuilder::class);
+        $queryBuilder = self::createStub(QueryBuilder::class);
         $queryBuilder->method('where')->willReturnSelf();
         $queryBuilder->method('setParameter')->willReturnSelf();
         $queryBuilder->method('andWhere')->willReturnSelf();
         $queryBuilder->method('getQuery')->willReturn($query);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
         $this->entityManager->method('getRepository')
@@ -151,19 +153,19 @@ final class UniqueCustomerNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDifferentCustomerHasSameName(): void
     {
-        $existingCustomer = $this->createMock(Customer::class);
+        $existingCustomer = self::createStub(Customer::class);
         $existingCustomer->method('getId')->willReturn(5);
 
-        $query = $this->createMock(Query::class);
+        $query = self::createStub(Query::class);
         $query->method('getOneOrNullResult')->willReturn($existingCustomer);
 
-        $queryBuilder = $this->createMock(QueryBuilder::class);
+        $queryBuilder = self::createStub(QueryBuilder::class);
         $queryBuilder->method('where')->willReturnSelf();
         $queryBuilder->method('setParameter')->willReturnSelf();
         $queryBuilder->method('andWhere')->willReturnSelf();
         $queryBuilder->method('getQuery')->willReturn($query);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
         $this->entityManager->method('getRepository')
@@ -184,18 +186,18 @@ final class UniqueCustomerNameValidatorTest extends TestCase
 
     public function testValidateHandlesNonDtoContextObject(): void
     {
-        $existingCustomer = $this->createMock(Customer::class);
+        $existingCustomer = self::createStub(Customer::class);
         $existingCustomer->method('getId')->willReturn(5);
 
-        $query = $this->createMock(Query::class);
+        $query = self::createStub(Query::class);
         $query->method('getOneOrNullResult')->willReturn($existingCustomer);
 
-        $queryBuilder = $this->createMock(QueryBuilder::class);
+        $queryBuilder = self::createStub(QueryBuilder::class);
         $queryBuilder->method('where')->willReturnSelf();
         $queryBuilder->method('setParameter')->willReturnSelf();
         $queryBuilder->method('getQuery')->willReturn($query);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
         $this->entityManager->method('getRepository')

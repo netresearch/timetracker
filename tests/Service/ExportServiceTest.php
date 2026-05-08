@@ -55,7 +55,7 @@ final class ExportServiceTest extends TestCase
         array $paginatedBatches = [],
         ?User $user = null,
     ): ManagerRegistry {
-        $entryRepo = $this->createMock(EntryRepository::class);
+        $entryRepo = self::createStub(EntryRepository::class);
         $entryRepo->method('findByDate')->willReturn($entries);
         $entryRepo->method('getFilteredEntries')->willReturn($filteredEntries);
 
@@ -74,10 +74,10 @@ final class ExportServiceTest extends TestCase
             $entryRepo->method('findByDatePaginated')->willReturn([]);
         }
 
-        $userRepo = $this->createMock(UserRepository::class);
+        $userRepo = self::createStub(UserRepository::class);
         $userRepo->method('find')->willReturn($user);
 
-        $doctrine = $this->createMock(ManagerRegistry::class);
+        $doctrine = self::createStub(ManagerRegistry::class);
         $doctrine->method('getRepository')->willReturnCallback(
             static fn (string $class) => match ($class) {
                 Entry::class => $entryRepo,
@@ -103,7 +103,7 @@ final class ExportServiceTest extends TestCase
         array $jiraSummariesByIssue = [],
         bool $throwException = false,
     ): JiraOAuthApiFactory {
-        $router = $this->createMock(RouterInterface::class);
+        $router = self::createStub(RouterInterface::class);
         $router->method('generate')->willReturn('/oauth-callback');
 
         $doctrine = $this->createManagerRegistry();
@@ -151,7 +151,7 @@ final class ExportServiceTest extends TestCase
             }
         };
 
-        $factory = $this->createMock(JiraOAuthApiFactory::class);
+        $factory = self::createStub(JiraOAuthApiFactory::class);
         $factory->method('create')->willReturn($jiraApi);
 
         return $factory;

@@ -8,10 +8,12 @@ use App\EventSubscriber\ExceptionSubscriber;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use Exception;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,15 +35,16 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Throwable;
 
 #[CoversClass(ExceptionSubscriber::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class ExceptionSubscriberTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
-    private HttpKernelInterface&MockObject $kernel;
+    private HttpKernelInterface&Stub $kernel;
 
     protected function setUp(): void
     {
         $this->logger = $this->createMock(LoggerInterface::class);
-        $this->kernel = $this->createMock(HttpKernelInterface::class);
+        $this->kernel = self::createStub(HttpKernelInterface::class);
     }
 
     private function createSubscriber(string $environment = 'prod'): ExceptionSubscriber

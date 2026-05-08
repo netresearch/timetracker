@@ -585,10 +585,10 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
             $entryId,
         );
 
-        // Should not include the excluded entry
-        foreach ($result as $overlapping) {
-            self::assertNotSame($entryId, $overlapping->getId());
-        }
+        // Collect the IDs returned and assert the excluded ID is not among them.
+        // This guarantees an assertion runs even if $result is empty.
+        $resultIds = array_map(static fn (Entry $overlapping): ?int => $overlapping->getId(), $result);
+        self::assertNotContains($entryId, $resultIds);
     }
 
     // ==================== getEntriesByUser tests ====================

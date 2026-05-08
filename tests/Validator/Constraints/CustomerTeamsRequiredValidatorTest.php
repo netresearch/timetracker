@@ -7,6 +7,7 @@ namespace Tests\Validator\Constraints;
 use App\Dto\CustomerSaveDto;
 use App\Validator\Constraints\CustomerTeamsRequired;
 use App\Validator\Constraints\CustomerTeamsRequiredValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -21,6 +22,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
  * @internal
  */
 #[CoversClass(CustomerTeamsRequiredValidator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class CustomerTeamsRequiredValidatorTest extends TestCase
 {
     private ExecutionContextInterface&MockObject $context;
@@ -37,7 +39,7 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
 
     public function testValidateThrowsOnWrongConstraintType(): void
     {
-        $constraint = $this->createMock(Constraint::class);
+        $constraint = self::createStub(Constraint::class);
 
         $this->expectException(UnexpectedTypeException::class);
 

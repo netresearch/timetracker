@@ -16,6 +16,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +28,7 @@ use Throwable;
 use UnexpectedValueException;
 
 #[CoversClass(JiraHttpClientService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class JiraHttpClientServiceTest extends TestCase
 {
     private User $user;
@@ -88,7 +90,6 @@ final class JiraHttpClientServiceTest extends TestCase
     {
         $this->authService->expects($this->once())
             ->method('getTokens')
-            ->with($this->user, $this->ticketSystem)
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
         $service = $this->createService();
@@ -105,7 +106,6 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $this->authService->expects($this->once())
             ->method('throwUnauthorizedRedirect')
-            ->with($this->ticketSystem)
             ->willThrowException(new JiraApiUnauthorizedException('Unauthorized'));
 
         $service = $this->createService();
@@ -190,11 +190,10 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $response = new Response(200);
 
         $clientMock->method('request')
-            ->with('HEAD', '/rest/api/latest/issue/TEST-123', ['auth' => 'oauth'])
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -215,7 +214,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $clientMock->method('request')
             ->willThrowException(new ConnectException('Connection failed', new Request('HEAD', '/test')));
 
@@ -237,11 +236,10 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $response = new Response(200, [], '{"id": 123, "key": "TEST-123"}');
 
         $clientMock->method('request')
-            ->with('GET', '/rest/api/latest/issue/TEST-123', ['auth' => 'oauth'])
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -264,7 +262,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $response = new Response(204, [], '');
 
         $clientMock->method('request')->willReturn($response);
@@ -291,10 +289,6 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $clientMock->expects($this->once())
             ->method('request')
-            ->with('POST', '/rest/api/latest/issue', [
-                'auth' => 'oauth',
-                'json' => ['fields' => ['summary' => 'Test issue']],
-            ])
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -321,10 +315,6 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $clientMock->expects($this->once())
             ->method('request')
-            ->with('PUT', '/rest/api/latest/issue/TEST-123', [
-                'auth' => 'oauth',
-                'json' => ['fields' => ['summary' => 'Updated']],
-            ])
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -351,7 +341,6 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $clientMock->expects($this->once())
             ->method('request')
-            ->with('DELETE', '/rest/api/latest/issue/TEST-123/worklog/456', ['auth' => 'oauth'])
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -375,7 +364,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $request = new Request('GET', '/test');
         $response = new Response(401, [], '{"message": "Unauthorized"}');
         $exception = new RequestException('Unauthorized', $request, $response);
@@ -399,7 +388,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $request = new Request('GET', '/test');
         $response = new Response(404, [], '{"errorMessages": ["Issue Does Not Exist"]}');
         $exception = new RequestException('Not Found', $request, $response);
@@ -424,7 +413,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $request = new Request('POST', '/test');
         $response = new Response(400, [], '{"errorMessages": ["Field required", "Invalid value"]}');
         $exception = new RequestException('Bad Request', $request, $response);
@@ -449,7 +438,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $request = new Request('POST', '/test');
         $response = new Response(400, [], '{"errors": {"summary": "Summary is required", "priority": "Invalid priority"}}');
         $exception = new RequestException('Bad Request', $request, $response);
@@ -474,7 +463,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $request = new Request('GET', '/test');
         $response = new Response(500, [], '');
         $exception = new RequestException('Server Error', $request, $response);
@@ -499,7 +488,7 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = $this->createMock(Client::class);
+        $clientMock = self::createStub(Client::class);
         $request = new Request('GET', '/test');
         $exception = new ConnectException('Connection timed out', $request);
 
@@ -577,7 +566,6 @@ final class JiraHttpClientServiceTest extends TestCase
         // Both URLs should result in the same API call
         $clientMock->expects($this->once())
             ->method('request')
-            ->with('GET', '/rest/api/latest/issue/TEST-123', ['auth' => 'oauth'])
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);

@@ -9,6 +9,7 @@ use App\Entity\Team;
 use App\Repository\TeamRepository;
 use App\Validator\Constraints\UniqueTeamName;
 use App\Validator\Constraints\UniqueTeamNameValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
  * @internal
  */
 #[CoversClass(UniqueTeamNameValidator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class UniqueTeamNameValidatorTest extends TestCase
 {
     private TeamRepository&MockObject $teamRepository;
@@ -42,7 +44,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidateThrowsOnWrongConstraintType(): void
     {
-        $constraint = $this->createMock(Constraint::class);
+        $constraint = self::createStub(Constraint::class);
 
         $this->expectException(UnexpectedTypeException::class);
 
