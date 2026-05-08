@@ -80,7 +80,7 @@ final class UniqueUsernameValidatorTest extends TestCase
         $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
-        $this->entityManager->method('getRepository')
+        $this->entityManager->expects(self::once())->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -107,7 +107,7 @@ final class UniqueUsernameValidatorTest extends TestCase
         $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
-        $this->entityManager->method('getRepository')
+        $this->entityManager->expects(self::once())->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -135,7 +135,7 @@ final class UniqueUsernameValidatorTest extends TestCase
         $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
-        $this->entityManager->method('getRepository')
+        $this->entityManager->expects(self::once())->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -168,7 +168,7 @@ final class UniqueUsernameValidatorTest extends TestCase
         $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
-        $this->entityManager->method('getRepository')
+        $this->entityManager->expects(self::once())->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -200,7 +200,7 @@ final class UniqueUsernameValidatorTest extends TestCase
         $repository = self::createStub(EntityRepository::class);
         $repository->method('createQueryBuilder')->willReturn($queryBuilder);
 
-        $this->entityManager->method('getRepository')
+        $this->entityManager->expects(self::once())->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 

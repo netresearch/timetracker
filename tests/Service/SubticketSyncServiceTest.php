@@ -127,7 +127,7 @@ final class SubticketSyncServiceTest extends TestCase
     {
         $ticketSystem = $this->createMock(TicketSystem::class);
         $user = $this->createMock(User::class);
-        $user->method('getTicketSystemAccessToken')->with($ticketSystem)->willReturn(null);
+        $user->expects(self::once())->method('getTicketSystemAccessToken')->with($ticketSystem)->willReturn(null);
         $user->method('getUsername')->willReturn('dev');
 
         $project = $this->createMock(Project::class);
@@ -154,7 +154,7 @@ final class SubticketSyncServiceTest extends TestCase
     {
         $ticketSystem = $this->createMock(TicketSystem::class);
         $user = $this->createMock(User::class);
-        $user->method('getTicketSystemAccessToken')->with($ticketSystem)->willReturn('tok');
+        $user->expects(self::once())->method('getTicketSystemAccessToken')->with($ticketSystem)->willReturn('tok');
         $user->method('getUsername')->willReturn('dev');
 
         $mock = $this->getMockBuilder(Project::class)

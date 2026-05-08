@@ -287,7 +287,7 @@ final class JiraWorkLogServiceTest extends TestCase
         $this->jiraTicketService->method('doesTicketExist')->willReturn(true);
 
         // Worklog exists check
-        $this->jiraHttpClientService->method('doesResourceExist')
+        $this->jiraHttpClientService->expects(self::once())->method('doesResourceExist')
             ->with('issue/ABC-123/worklog/12345')
             ->willReturn(true);
 
@@ -356,7 +356,7 @@ final class JiraWorkLogServiceTest extends TestCase
         $this->jiraTicketService->method('doesTicketExist')->willReturn(true);
 
         // Worklog no longer exists in Jira
-        $this->jiraHttpClientService->method('doesResourceExist')
+        $this->jiraHttpClientService->expects(self::once())->method('doesResourceExist')
             ->with('issue/ABC-123/worklog/12345')
             ->willReturn(false);
 
@@ -502,7 +502,7 @@ final class JiraWorkLogServiceTest extends TestCase
 
         $this->jiraAuthenticationService->method('checkUserTicketSystem')->willReturn(true);
 
-        $this->jiraHttpClientService->method('doesResourceExist')
+        $this->jiraHttpClientService->expects(self::once())->method('doesResourceExist')
             ->with('issue/ABC-123/worklog/12345')
             ->willReturn(false);
 
@@ -529,7 +529,7 @@ final class JiraWorkLogServiceTest extends TestCase
 
         $this->jiraAuthenticationService->method('checkUserTicketSystem')->willReturn(true);
 
-        $this->jiraHttpClientService->method('doesResourceExist')
+        $this->jiraHttpClientService->expects(self::once())->method('doesResourceExist')
             ->with('issue/ABC-123/worklog/12345')
             ->willReturn(true);
 
@@ -743,7 +743,7 @@ final class JiraWorkLogServiceTest extends TestCase
 
         // Return object without 'name' property
         $response = new stdClass();
-        $this->jiraHttpClientService->method('get')
+        $this->jiraHttpClientService->expects(self::once())->method('get')
             ->with('myself')
             ->willReturn($response);
 

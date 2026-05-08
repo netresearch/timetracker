@@ -425,7 +425,7 @@ final class JiraTicketServiceTest extends TestCase
 
         $response->transitions = [$transition1, $transition2];
 
-        $this->httpClient->method('get')
+        $this->httpClient->expects(self::once())->method('get')
             ->with('issue/TEST-123/transitions')
             ->willReturn($response);
 
@@ -543,7 +543,7 @@ final class JiraTicketServiceTest extends TestCase
 
         $response->fields->subtasks = [$subtask];
 
-        $this->httpClient->method('get')
+        $this->httpClient->expects(self::once())->method('get')
             ->with('issue/TEST-123')
             ->willReturn($response);
 

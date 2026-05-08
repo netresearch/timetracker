@@ -33,7 +33,7 @@ final class EntryRepositoryExportTest extends KernelTestCase
     {
         // Symfony's kernel registers an exception handler during boot.
         // Restore it so PHPUnit 12 doesn't flag the test as risky.
-        @restore_exception_handler();
+        restore_exception_handler();
 
         parent::tearDown();
     }

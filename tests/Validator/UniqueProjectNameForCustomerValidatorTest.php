@@ -82,7 +82,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingProjectFound(): void
     {
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'New Project', 'customer' => 1])
             ->willReturn(null);
 
@@ -97,7 +97,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $existingProject = self::createStub(Project::class);
         $existingProject->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Existing Project', 'customer' => 1])
             ->willReturn($existingProject);
 
@@ -112,7 +112,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $existingProject = self::createStub(Project::class);
         $existingProject->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Duplicate Name', 'customer' => 1])
             ->willReturn($existingProject);
 
@@ -132,7 +132,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $existingProject = self::createStub(Project::class);
         $existingProject->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Conflicting Name', 'customer' => 1])
             ->willReturn($existingProject);
 

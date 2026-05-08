@@ -78,7 +78,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenNameIsUnique(): void
     {
-        $this->teamRepository->method('findOneBy')
+        $this->teamRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'New Team'])
             ->willReturn(null);
 
@@ -93,7 +93,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
     {
         $existingTeam = new Team();
 
-        $this->teamRepository->method('findOneBy')
+        $this->teamRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Existing Team'])
             ->willReturn($existingTeam);
 
@@ -117,7 +117,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
     {
         $existingTeam = $this->createTeamWithId(42);
 
-        $this->teamRepository->method('findOneBy')
+        $this->teamRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'My Team'])
             ->willReturn($existingTeam);
 
@@ -134,7 +134,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
     {
         $existingTeam = $this->createTeamWithId(42);
 
-        $this->teamRepository->method('findOneBy')
+        $this->teamRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Other Team'])
             ->willReturn($existingTeam);
 
@@ -158,7 +158,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
     {
         $existingTeam = $this->createTeamWithId(42);
 
-        $this->teamRepository->method('findOneBy')
+        $this->teamRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Taken Name'])
             ->willReturn($existingTeam);
 

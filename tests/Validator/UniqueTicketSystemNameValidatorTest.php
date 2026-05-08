@@ -71,7 +71,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingSystemFound(): void
     {
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'New System'])
             ->willReturn(null);
 
@@ -85,7 +85,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
         $existingSystem = self::createStub(TicketSystem::class);
         $existingSystem->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Existing System'])
             ->willReturn($existingSystem);
 
@@ -102,7 +102,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
         $existingSystem = self::createStub(TicketSystem::class);
         $existingSystem->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Duplicate Name'])
             ->willReturn($existingSystem);
 
@@ -125,7 +125,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
         $existingSystem = self::createStub(TicketSystem::class);
         $existingSystem->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Conflicting Name'])
             ->willReturn($existingSystem);
 

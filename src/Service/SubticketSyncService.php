@@ -16,8 +16,6 @@ use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 
-use function is_scalar;
-
 class SubticketSyncService
 {
     public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
@@ -87,8 +85,8 @@ class SubticketSyncService
             // so we put the main ticket in the subticket list as well
             $allSubtickets[] = $mainTicket;
             foreach ($jiraOAuthApiService->getSubtickets($mainTicket) as $subticket) {
-                if (is_scalar($subticket)) {
-                    $allSubtickets[] = (string) $subticket;
+                if ('' !== $subticket) {
+                    $allSubtickets[] = $subticket;
                 }
             }
         }

@@ -37,7 +37,7 @@ final class QueryCacheServiceTest extends TestCase
         $cacheItem->method('isHit')->willReturn(true);
         $cacheItem->method('get')->willReturn('cached_value');
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -58,7 +58,7 @@ final class QueryCacheServiceTest extends TestCase
         $cacheItem->expects($this->once())->method('set')->with('new_value');
         $cacheItem->expects($this->once())->method('expiresAfter')->with(300);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -97,7 +97,7 @@ final class QueryCacheServiceTest extends TestCase
         $cacheItem->method('isHit')->willReturn(true);
         $cacheItem->method('get')->willReturn(['data' => 'test']);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -112,7 +112,7 @@ final class QueryCacheServiceTest extends TestCase
         $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(false);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -132,7 +132,7 @@ final class QueryCacheServiceTest extends TestCase
         $cacheItem->expects($this->once())->method('set')->with('value');
         $cacheItem->expects($this->once())->method('expiresAfter')->with(300);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -159,7 +159,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function hasReturnsTrueWhenItemExists(): void
     {
-        $this->cachePool->method('hasItem')
+        $this->cachePool->expects(self::once())->method('hasItem')
             ->with('query_test_key')
             ->willReturn(true);
 
@@ -171,7 +171,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function hasReturnsFalseWhenItemDoesNotExist(): void
     {
-        $this->cachePool->method('hasItem')
+        $this->cachePool->expects(self::once())->method('hasItem')
             ->with('query_test_key')
             ->willReturn(false);
 

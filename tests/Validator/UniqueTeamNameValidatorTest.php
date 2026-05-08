@@ -72,7 +72,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingTeamFound(): void
     {
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'New Team'])
             ->willReturn(null);
 
@@ -86,7 +86,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Existing Team'])
             ->willReturn($existingTeam);
 
@@ -103,7 +103,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Duplicate Name'])
             ->willReturn($existingTeam);
 
@@ -115,7 +115,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $violationBuilder->method('setParameter')->willReturnSelf();
         $violationBuilder->expects(self::once())->method('addViolation');
 
-        $this->context->method('buildViolation')
+        $this->context->expects(self::once())->method('buildViolation')
             ->with('The team name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
 
@@ -127,7 +127,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Conflicting Name'])
             ->willReturn($existingTeam);
 
@@ -139,7 +139,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $violationBuilder->method('setParameter')->willReturnSelf();
         $violationBuilder->expects(self::once())->method('addViolation');
 
-        $this->context->method('buildViolation')
+        $this->context->expects(self::once())->method('buildViolation')
             ->with('The team name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
 
@@ -151,7 +151,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $existingTeam = self::createStub(Team::class);
         $existingTeam->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Some Name'])
             ->willReturn($existingTeam);
 
