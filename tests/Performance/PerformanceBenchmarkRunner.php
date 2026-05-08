@@ -395,8 +395,14 @@ final class PerformanceBenchmarkRunner
         $successfulTests = count($successfulResults);
         $failedTests = $totalTests - $successfulTests;
 
-        $executionTimes = array_column($successfulResults, 'execution_time_ms');
-        $memoryUsages = array_column($successfulResults, 'memory_usage_bytes');
+        $executionTimes = array_map(
+            static fn (mixed $value): float => is_numeric($value) ? (float) $value : 0.0,
+            array_column($successfulResults, 'execution_time_ms'),
+        );
+        $memoryUsages = array_map(
+            static fn (mixed $value): float => is_numeric($value) ? (float) $value : 0.0,
+            array_column($successfulResults, 'memory_usage_bytes'),
+        );
 
         if ([] === $executionTimes || [] === $memoryUsages) {
             $report[] = 'No valid performance data to analyze.';
@@ -406,11 +412,9 @@ final class PerformanceBenchmarkRunner
 
         $report[] = sprintf('Total Tests: %d (✅ %d, ❌ %d)', $totalTests, $successfulTests, $failedTests);
         $report[] = sprintf('Average Execution Time: %.1fms', array_sum($executionTimes) / count($executionTimes));
-        /** @var int|float $maxExecutionTime */
         $maxExecutionTime = max($executionTimes);
         $report[] = sprintf('Max Execution Time: %.1fms', $maxExecutionTime);
         $report[] = sprintf('Average Memory Usage: %.2fMB', array_sum($memoryUsages) / count($memoryUsages) / 1024 / 1024);
-        /** @var int|float $maxMemoryUsage */
         $maxMemoryUsage = max($memoryUsages);
         $report[] = sprintf('Max Memory Usage: %.2fMB', $maxMemoryUsage / 1024 / 1024);
     }

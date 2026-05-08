@@ -25,6 +25,7 @@ use stdClass;
 use UnexpectedValueException;
 
 use function is_array;
+use function is_scalar;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
@@ -271,11 +272,11 @@ class JiraHttpClientService
             }
 
             if (isset($data['errorMessages']) && is_array($data['errorMessages'])) {
-                return implode(', ', $data['errorMessages']);
+                return implode(', ', array_map(static fn (mixed $v): string => (string) (is_scalar($v) ? $v : ''), $data['errorMessages']));
             }
 
             if (isset($data['errors']) && is_array($data['errors'])) {
-                return implode(', ', array_values($data['errors']));
+                return implode(', ', array_map(static fn (mixed $v): string => (string) (is_scalar($v) ? $v : ''), array_values($data['errors'])));
             }
 
             return $body;

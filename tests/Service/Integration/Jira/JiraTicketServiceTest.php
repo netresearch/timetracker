@@ -93,15 +93,19 @@ final class JiraTicketServiceTest extends TestCase
 
         $this->httpClient->expects($this->once())
             ->method('post')
-            ->with('issue', $this->callback(static fn (array $data) => 'PROJ' === $data['fields']['project']['key']
+            ->with('issue', self::callback(static function (array $data): bool {
+                /** @var array{fields: array{project: array{key: string}, summary: string, description: string, issuetype: array{name: string}}} $data */
+                return 'PROJ' === $data['fields']['project']['key']
                     && str_contains($data['fields']['summary'], 'ACME Corp')
                     && 'Working on feature X' === $data['fields']['description']
-                    && 'Story' === $data['fields']['issuetype']['name']))
+                    && 'Story' === $data['fields']['issuetype']['name'];
+            }))
             ->willReturn($response);
 
         $result = $this->service->createTicket($entry);
 
-        $this->assertSame('PROJ-123', $result->key);
+        self::assertInstanceOf(stdClass::class, $result);
+        self::assertSame('PROJ-123', $result->key);
     }
 
     #[Test]
@@ -150,8 +154,11 @@ final class JiraTicketServiceTest extends TestCase
 
         $this->httpClient->expects($this->once())
             ->method('post')
-            ->with('issue', $this->callback(
-                static fn (array $data) => 'No description provided' === $data['fields']['description'],
+            ->with('issue', self::callback(
+                static function (array $data): bool {
+                    /** @var array{fields: array{description: string}} $data */
+                    return 'No description provided' === $data['fields']['description'];
+                },
             ))
             ->willReturn($response);
 
@@ -199,8 +206,11 @@ final class JiraTicketServiceTest extends TestCase
 
         $this->httpClient->expects($this->once())
             ->method('post')
-            ->with('issue', $this->callback(
-                static fn (array $data) => $expectedIssueType === $data['fields']['issuetype']['name'],
+            ->with('issue', self::callback(
+                static function (array $data) use ($expectedIssueType): bool {
+                    /** @var array{fields: array{issuetype: array{name: string}}} $data */
+                    return $expectedIssueType === $data['fields']['issuetype']['name'];
+                },
             ))
             ->willReturn($response);
 
@@ -240,7 +250,8 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->searchTickets('project = TEST AND status = Open', [], 10);
 
-        $this->assertSame(0, $result->total);
+        self::assertInstanceOf(stdClass::class, $result);
+        self::assertSame(0, $result->total);
     }
 
     #[Test]
@@ -313,7 +324,8 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->getTicket('TEST-123');
 
-        $this->assertSame('TEST-123', $result->key);
+        self::assertInstanceOf(stdClass::class, $result);
+        self::assertSame('TEST-123', $result->key);
     }
 
     #[Test]
@@ -373,7 +385,8 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->addComment('TEST-123', 'This is a comment');
 
-        $this->assertSame('10001', $result->id);
+        self::assertInstanceOf(stdClass::class, $result);
+        self::assertSame('10001', $result->id);
     }
 
     #[Test]
@@ -590,7 +603,8 @@ final class JiraTicketServiceTest extends TestCase
 
         $this->httpClient->expects($this->once())
             ->method('post')
-            ->with('issue', $this->callback(static function (array $data) {
+            ->with('issue', self::callback(static function (array $data): bool {
+                /** @var array{fields: array{summary: string}} $data */
                 $summary = $data['fields']['summary'];
 
                 return str_contains($summary, 'CustomerY')
@@ -614,8 +628,11 @@ final class JiraTicketServiceTest extends TestCase
 
         $this->httpClient->expects($this->once())
             ->method('post')
-            ->with('issue', $this->callback(
-                static fn (array $data) => 'MyProject' === $data['fields']['summary'],
+            ->with('issue', self::callback(
+                static function (array $data): bool {
+                    /** @var array{fields: array{summary: string}} $data */
+                    return 'MyProject' === $data['fields']['summary'];
+                },
             ))
             ->willReturn($response);
 

@@ -24,6 +24,7 @@ use Symfony\Component\Routing\RouterInterface;
 use Throwable;
 
 use function is_array;
+use function is_scalar;
 use function is_string;
 use function sprintf;
 
@@ -136,9 +137,7 @@ class JiraAuthenticationService
         parse_str($responseBody, $tokens);
 
         if (isset($tokens['oauth_problem'])) {
-            $problem = is_array($tokens['oauth_problem'])
-                ? implode(', ', $tokens['oauth_problem'])
-                : $tokens['oauth_problem'];
+            $problem = $this->stringifyParsedValue($tokens['oauth_problem'], ', ');
             throw new JiraApiException(sprintf('OAuth problem: %s', $problem), 401);
         }
 
@@ -146,11 +145,36 @@ class JiraAuthenticationService
         $result = [];
         foreach ($tokens as $key => $value) {
             if (is_string($key)) {
-                $result[$key] = is_array($value) ? implode(',', $value) : $value;
+                $result[$key] = $this->stringifyParsedValue($value, ',');
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Recursively coerces a value parsed from {@see parse_str()} into a string.
+     */
+    private function stringifyParsedValue(mixed $value, string $separator): string
+    {
+        if (is_array($value)) {
+            $parts = [];
+            foreach ($value as $item) {
+                $parts[] = $this->stringifyParsedValue($item, $separator);
+            }
+
+            return implode($separator, $parts);
+        }
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+
+        return '';
     }
 
     /**

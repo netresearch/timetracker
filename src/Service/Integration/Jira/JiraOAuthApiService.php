@@ -459,7 +459,7 @@ class JiraOAuthApiService
     /**
      * Get an array of ticket numbers that are subtickets of the given issue.
      *
-     * @psalm-return list<mixed>
+     * @return list<string>
      */
     public function getSubtickets(string $sTicket): array
     {

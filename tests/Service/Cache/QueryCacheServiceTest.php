@@ -313,14 +313,18 @@ final class QueryCacheServiceTest extends TestCase
         $this->cachePool->method('save');
 
         $executed = [];
-        $callbacks = [
-            'key1' => static function () use (&$executed) {
-                $executed[] = 'key1';
+        $validCallback = static function () use (&$executed) {
+            $executed[] = 'key1';
 
-                return 'value1';
-            },
-            'key2' => 'not_a_callable',
-        ];
+            return 'value1';
+        };
+
+        // Build the array as mixed so the second entry can be a non-callable
+        // value, exercising the runtime guard inside warmUp().
+        /** @var array<string, mixed> $rawCallbacks */
+        $rawCallbacks = ['key1' => $validCallback, 'key2' => 'not_a_callable'];
+        /** @var array<string, callable(): mixed> $callbacks */
+        $callbacks = $rawCallbacks;
 
         $this->service->warmUp($callbacks);
 

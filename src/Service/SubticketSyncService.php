@@ -30,9 +30,7 @@ class SubticketSyncService
      * @throws Exception When something goes wrong.
      *                   Exception codes are sensible HTTP status codes
      *
-     * @return (mixed|string)[] Array of subticket keys
-     *
-     * @psalm-return list<mixed|string>
+     * @return list<string> Array of subticket keys
      */
     public function syncProjectSubtickets(int|Project $projectOrProjectId): array
     {

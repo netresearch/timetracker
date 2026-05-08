@@ -37,7 +37,7 @@ class JiraTicketService
      *
      * @throws JiraApiException
      */
-    public function createTicket(Entry $entry): mixed
+    public function createTicket(Entry $entry): object
     {
         $project = $entry->getProject();
 
