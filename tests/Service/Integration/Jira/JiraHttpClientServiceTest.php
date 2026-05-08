@@ -27,6 +27,8 @@ use stdClass;
 use Throwable;
 use UnexpectedValueException;
 
+use function array_key_exists;
+
 #[CoversClass(JiraHttpClientService::class)]
 #[AllowMockObjectsWithoutExpectations]
 final class JiraHttpClientServiceTest extends TestCase
@@ -90,6 +92,7 @@ final class JiraHttpClientServiceTest extends TestCase
     {
         $this->authService->expects($this->once())
             ->method('getTokens')
+            ->with($this->user, $this->ticketSystem)
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
         $service = $this->createService();
@@ -106,6 +109,7 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $this->authService->expects($this->once())
             ->method('throwUnauthorizedRedirect')
+            ->with($this->ticketSystem)
             ->willThrowException(new JiraApiUnauthorizedException('Unauthorized'));
 
         $service = $this->createService();
@@ -190,10 +194,16 @@ final class JiraHttpClientServiceTest extends TestCase
             ->onlyMethods(['getClient'])
             ->getMock();
 
-        $clientMock = self::createStub(Client::class);
+        $clientMock = $this->createMock(Client::class);
         $response = new Response(200);
 
-        $clientMock->method('request')
+        $clientMock->expects(self::once())
+            ->method('request')
+            ->with(
+                'HEAD',
+                '/rest/api/latest/issue/TEST-123',
+                self::callback(static fn (array $options): bool => isset($options['auth']) && 'oauth' === $options['auth']),
+            )
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -289,6 +299,12 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $clientMock->expects($this->once())
             ->method('request')
+            ->with(
+                'POST',
+                '/rest/api/latest/issue',
+                self::callback(static fn (array $options): bool => 'oauth' === ($options['auth'] ?? null)
+                    && ['fields' => ['summary' => 'Test issue']] === ($options['json'] ?? null)),
+            )
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -315,6 +331,12 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $clientMock->expects($this->once())
             ->method('request')
+            ->with(
+                'PUT',
+                '/rest/api/latest/issue/TEST-123',
+                self::callback(static fn (array $options): bool => 'oauth' === ($options['auth'] ?? null)
+                    && ['fields' => ['summary' => 'Updated']] === ($options['json'] ?? null)),
+            )
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -341,6 +363,12 @@ final class JiraHttpClientServiceTest extends TestCase
 
         $clientMock->expects($this->once())
             ->method('request')
+            ->with(
+                'DELETE',
+                '/rest/api/latest/issue/TEST-123/worklog/456',
+                self::callback(static fn (array $options): bool => 'oauth' === ($options['auth'] ?? null)
+                    && !array_key_exists('json', $options)),
+            )
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
@@ -566,6 +594,11 @@ final class JiraHttpClientServiceTest extends TestCase
         // Both URLs should result in the same API call
         $clientMock->expects($this->once())
             ->method('request')
+            ->with(
+                'GET',
+                '/rest/api/latest/issue/TEST-123',
+                self::callback(static fn (array $options): bool => 'oauth' === ($options['auth'] ?? null)),
+            )
             ->willReturn($response);
 
         $service->method('getClient')->willReturn($clientMock);
