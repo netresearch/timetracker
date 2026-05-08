@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\Cache;
 
 use App\Service\Cache\QueryCacheService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -15,6 +16,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(QueryCacheService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class QueryCacheServiceTest extends TestCase
 {
     private CacheItemPoolInterface&MockObject $cachePool;
@@ -31,11 +33,11 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function rememberReturnsCachedValueOnHit(): void
     {
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(true);
         $cacheItem->method('get')->willReturn('cached_value');
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -56,7 +58,7 @@ final class QueryCacheServiceTest extends TestCase
         $cacheItem->expects($this->once())->method('set')->with('new_value');
         $cacheItem->expects($this->once())->method('expiresAfter')->with(300);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -91,11 +93,11 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function getReturnsCachedValueOnHit(): void
     {
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(true);
         $cacheItem->method('get')->willReturn(['data' => 'test']);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -107,10 +109,10 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function getReturnsNullOnMiss(): void
     {
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(false);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -130,7 +132,7 @@ final class QueryCacheServiceTest extends TestCase
         $cacheItem->expects($this->once())->method('set')->with('value');
         $cacheItem->expects($this->once())->method('expiresAfter')->with(300);
 
-        $this->cachePool->method('getItem')
+        $this->cachePool->expects(self::once())->method('getItem')
             ->with('query_test_key')
             ->willReturn($cacheItem);
 
@@ -157,7 +159,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function hasReturnsTrueWhenItemExists(): void
     {
-        $this->cachePool->method('hasItem')
+        $this->cachePool->expects(self::once())->method('hasItem')
             ->with('query_test_key')
             ->willReturn(true);
 
@@ -169,7 +171,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function hasReturnsFalseWhenItemDoesNotExist(): void
     {
-        $this->cachePool->method('hasItem')
+        $this->cachePool->expects(self::once())->method('hasItem')
             ->with('query_test_key')
             ->willReturn(false);
 
@@ -277,7 +279,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function warmUpExecutesCallbacks(): void
     {
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(false);
 
         $this->cachePool->method('getItem')->willReturn($cacheItem);
@@ -306,7 +308,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function warmUpSkipsNonCallableEntries(): void
     {
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(false);
 
         $this->cachePool->method('getItem')->willReturn($cacheItem);
@@ -354,7 +356,7 @@ final class QueryCacheServiceTest extends TestCase
     {
         $service = new QueryCacheService($this->cachePool);
 
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(true);
         $cacheItem->method('get')->willReturn('value');
 
@@ -384,7 +386,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function rememberHandlesComplexReturnTypes(): void
     {
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(false);
 
         $this->cachePool->method('getItem')->willReturn($cacheItem);
@@ -419,7 +421,7 @@ final class QueryCacheServiceTest extends TestCase
     #[Test]
     public function rememberCanCacheNullValue(): void
     {
-        $cacheItem = $this->createMock(CacheItemInterface::class);
+        $cacheItem = self::createStub(CacheItemInterface::class);
         $cacheItem->method('isHit')->willReturn(true);
         $cacheItem->method('get')->willReturn(null);
 

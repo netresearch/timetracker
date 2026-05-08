@@ -560,7 +560,7 @@ class Entry extends Base
 
         $ticketUrl = $ticketSystem->getTicketUrl();
 
-        if (null === $ticketUrl || '' === $ticketUrl) {
+        if ('' === $ticketUrl) {
             return $this->getTicket();
         }
 

@@ -29,6 +29,15 @@ final class EntryRepositoryExportTest extends KernelTestCase
         $this->repository = $this->entityManager->getRepository(Entry::class);
     }
 
+    protected function tearDown(): void
+    {
+        // Symfony's kernel registers an exception handler during boot.
+        // Restore it so PHPUnit 12 doesn't flag the test as risky.
+        restore_exception_handler();
+
+        parent::tearDown();
+    }
+
     public function testExportQueryDtoConvertsZeroToNull(): void
     {
         $request = Request::create('/controlling/export', 'GET', [

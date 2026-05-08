@@ -95,10 +95,14 @@ final class RequestEntityHelperTest extends TestCase
     {
         $user = new User();
         $repository = $this->createMock(ServiceEntityRepository::class);
-        $repository->method('find')->with('123')->willReturn($user);
+        $repository->expects(self::once())
+            ->method('find')
+            ->with('123')
+            ->willReturn($user);
 
         $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $managerRegistry->method('getRepository')
+        $managerRegistry->expects(self::once())
+            ->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -110,10 +114,14 @@ final class RequestEntityHelperTest extends TestCase
     public function testFindByIdReturnsNullWhenNotFound(): void
     {
         $repository = $this->createMock(ServiceEntityRepository::class);
-        $repository->method('find')->with('999')->willReturn(null);
+        $repository->expects(self::once())
+            ->method('find')
+            ->with('999')
+            ->willReturn(null);
 
         $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $managerRegistry->method('getRepository')
+        $managerRegistry->expects(self::once())
+            ->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -126,10 +134,14 @@ final class RequestEntityHelperTest extends TestCase
     {
         // Simulate a case where repository returns an unexpected object type
         $repository = $this->createMock(ServiceEntityRepository::class);
-        $repository->method('find')->with('123')->willReturn(new stdClass());
+        $repository->expects(self::once())
+            ->method('find')
+            ->with('123')
+            ->willReturn(new stdClass());
 
         $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $managerRegistry->method('getRepository')
+        $managerRegistry->expects(self::once())
+            ->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -144,10 +156,14 @@ final class RequestEntityHelperTest extends TestCase
     {
         $user = new User();
         $repository = $this->createMock(ServiceEntityRepository::class);
-        $repository->method('find')->with('123')->willReturn($user);
+        $repository->expects(self::once())
+            ->method('find')
+            ->with('123')
+            ->willReturn($user);
 
         $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $managerRegistry->method('getRepository')
+        $managerRegistry->expects(self::once())
+            ->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -161,10 +177,14 @@ final class RequestEntityHelperTest extends TestCase
     public function testUserReturnsNullWhenNotFound(): void
     {
         $repository = $this->createMock(ServiceEntityRepository::class);
-        $repository->method('find')->willReturn(null);
+        $repository->expects(self::once())
+            ->method('find')
+            ->with('999')
+            ->willReturn(null);
 
         $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $managerRegistry->method('getRepository')
+        $managerRegistry->expects(self::once())
+            ->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
 
@@ -193,10 +213,14 @@ final class RequestEntityHelperTest extends TestCase
     {
         $ticketSystem = new TicketSystem();
         $repository = $this->createMock(ServiceEntityRepository::class);
-        $repository->method('find')->with('456')->willReturn($ticketSystem);
+        $repository->expects(self::once())
+            ->method('find')
+            ->with('456')
+            ->willReturn($ticketSystem);
 
         $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $managerRegistry->method('getRepository')
+        $managerRegistry->expects(self::once())
+            ->method('getRepository')
             ->with(TicketSystem::class)
             ->willReturn($repository);
 
@@ -210,10 +234,14 @@ final class RequestEntityHelperTest extends TestCase
     public function testTicketSystemReturnsNullWhenNotFound(): void
     {
         $repository = $this->createMock(ServiceEntityRepository::class);
-        $repository->method('find')->willReturn(null);
+        $repository->expects(self::once())
+            ->method('find')
+            ->with('999')
+            ->willReturn(null);
 
         $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $managerRegistry->method('getRepository')
+        $managerRegistry->expects(self::once())
+            ->method('getRepository')
             ->with(TicketSystem::class)
             ->willReturn($repository);
 

@@ -438,7 +438,7 @@ final class UserTest extends TestCase
     public function testGetTicketSystemAccessTokenReturnsNullWhenNoUserTicketsystem(): void
     {
         $user = new User();
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getId')->willReturn(1);
 
         self::assertNull($user->getTicketSystemAccessToken($ticketSystem));
@@ -500,7 +500,7 @@ final class UserTest extends TestCase
     public function testGetTicketSystemAccessTokenSecretReturnsNullWhenNoUserTicketsystem(): void
     {
         $user = new User();
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getId')->willReturn(1);
 
         self::assertNull($user->getTicketSystemAccessTokenSecret($ticketSystem));

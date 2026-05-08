@@ -130,7 +130,7 @@ final class AccessDeniedSubscriberTest extends TestCase
 
         // User is authenticated via remember_me but NOT fully authenticated
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(false);
 
@@ -156,7 +156,7 @@ final class AccessDeniedSubscriberTest extends TestCase
 
         // User is fully authenticated
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -180,7 +180,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -206,7 +206,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -237,7 +237,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -265,7 +265,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -291,7 +291,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -314,7 +314,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -337,7 +337,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -360,7 +360,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 
@@ -383,7 +383,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         $this->security
-            ->method('isGranted')
+            ->expects(self::once())->method('isGranted')
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(true);
 

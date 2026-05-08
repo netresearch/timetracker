@@ -22,7 +22,7 @@ final class TokenEncryptionServiceTest extends TestCase
 
     public function testConstructorWithValidKey(): void
     {
-        $parameterBag = $this->createMock(ParameterBagInterface::class);
+        $parameterBag = self::createStub(ParameterBagInterface::class);
         $parameterBag->method('get')
             ->willReturnMap([
                 ['app.encryption_key', 'my-secret-key-123'],
@@ -37,7 +37,7 @@ final class TokenEncryptionServiceTest extends TestCase
 
     public function testConstructorFallsBackToAppSecret(): void
     {
-        $parameterBag = $this->createMock(ParameterBagInterface::class);
+        $parameterBag = self::createStub(ParameterBagInterface::class);
         $parameterBag->method('get')
             ->willReturnMap([
                 ['app.encryption_key', null],
@@ -53,7 +53,7 @@ final class TokenEncryptionServiceTest extends TestCase
 
     public function testConstructorThrowsOnEmptyKey(): void
     {
-        $parameterBag = $this->createMock(ParameterBagInterface::class);
+        $parameterBag = self::createStub(ParameterBagInterface::class);
         $parameterBag->method('get')
             ->willReturnMap([
                 ['app.encryption_key', null],
@@ -68,7 +68,7 @@ final class TokenEncryptionServiceTest extends TestCase
 
     public function testConstructorThrowsOnNonStringKey(): void
     {
-        $parameterBag = $this->createMock(ParameterBagInterface::class);
+        $parameterBag = self::createStub(ParameterBagInterface::class);
         $parameterBag->method('get')
             ->willReturnMap([
                 ['app.encryption_key', null],
@@ -288,7 +288,7 @@ final class TokenEncryptionServiceTest extends TestCase
 
     private function createService(string $key = 'test-encryption-key'): TokenEncryptionService
     {
-        $parameterBag = $this->createMock(ParameterBagInterface::class);
+        $parameterBag = self::createStub(ParameterBagInterface::class);
         $parameterBag->method('get')
             ->willReturnMap([
                 ['app.encryption_key', $key],

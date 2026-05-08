@@ -9,6 +9,7 @@ use App\Entity\Project;
 use App\Repository\ProjectRepository;
 use App\Validator\Constraints\UniqueProjectNameForCustomer;
 use App\Validator\Constraints\UniqueProjectNameForCustomerValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
  * @internal
  */
 #[CoversClass(UniqueProjectNameForCustomerValidator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 {
     private ProjectRepository&MockObject $repository;
@@ -39,7 +41,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 
     public function testValidateThrowsOnInvalidConstraintType(): void
     {
-        $constraint = $this->createMock(Constraint::class);
+        $constraint = self::createStub(Constraint::class);
 
         $this->expectException(UnexpectedTypeException::class);
 
@@ -80,7 +82,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingProjectFound(): void
     {
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'New Project', 'customer' => 1])
             ->willReturn(null);
 
@@ -92,10 +94,10 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 
     public function testValidatePassesWhenUpdatingSameProject(): void
     {
-        $existingProject = $this->createMock(Project::class);
+        $existingProject = self::createStub(Project::class);
         $existingProject->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Existing Project', 'customer' => 1])
             ->willReturn($existingProject);
 
@@ -107,10 +109,10 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingProject = $this->createMock(Project::class);
+        $existingProject = self::createStub(Project::class);
         $existingProject->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Duplicate Name', 'customer' => 1])
             ->willReturn($existingProject);
 
@@ -127,10 +129,10 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDifferentProjectHasSameName(): void
     {
-        $existingProject = $this->createMock(Project::class);
+        $existingProject = self::createStub(Project::class);
         $existingProject->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Conflicting Name', 'customer' => 1])
             ->willReturn($existingProject);
 

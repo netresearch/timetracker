@@ -31,6 +31,7 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Psr\Http\Message\ResponseInterface;
+use SensitiveParameter;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Throwable;
@@ -85,7 +86,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      */
-    protected function getFetchAccessTokenClient(string $oAuthRequestToken): Client
+    protected function getFetchAccessTokenClient(#[SensitiveParameter] string $oAuthRequestToken): Client
     {
         return $this->getClient('request', $oAuthRequestToken);
     }
@@ -98,7 +99,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      */
-    protected function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): Client
+    protected function getClient(string $tokenMode = 'user', #[SensitiveParameter] ?string $oAuthToken = null): Client
     {
         if ('user' === $tokenMode) {
             $oAuthTokenSecret = $this->getTokenSecret();
@@ -196,7 +197,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      */
-    public function fetchOAuthAccessToken(string $oAuthRequestToken, string $oAuthVerifier): void
+    public function fetchOAuthAccessToken(#[SensitiveParameter] string $oAuthRequestToken, #[SensitiveParameter] string $oAuthVerifier): void
     {
         try {
             if ('denied' === $oAuthVerifier) {
@@ -618,8 +619,11 @@ class JiraOAuthApiService
      *
      * @return array{oauth_token_secret:string,oauth_token:string}
      */
-    protected function storeToken(string $tokenSecret, string $accessToken = 'token_request_unfinished', bool $avoidConnection = false): array
-    {
+    protected function storeToken(
+        #[SensitiveParameter] string $tokenSecret,
+        #[SensitiveParameter] string $accessToken = 'token_request_unfinished',
+        bool $avoidConnection = false,
+    ): array {
         $repository = $this->managerRegistry->getRepository(UserTicketsystem::class);
         $userTicketSystem = $repository->findOneBy([
             'user' => $this->user,
@@ -681,7 +685,7 @@ class JiraOAuthApiService
         return $this->getJiraBaseUrl() . $this->oAuthAccessUrl;
     }
 
-    protected function getOAuthAuthUrl(string $oAuthToken): string
+    protected function getOAuthAuthUrl(#[SensitiveParameter] string $oAuthToken): string
     {
         return $this->getJiraBaseUrl() . $this->oAuthAuthUrl . '?oauth_token=' . $oAuthToken;
     }

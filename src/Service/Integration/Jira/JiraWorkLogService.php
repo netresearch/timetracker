@@ -11,6 +11,7 @@ namespace App\Service\Integration\Jira;
 
 use App\DTO\Jira\JiraProject;
 use App\DTO\Jira\JiraWorkLog;
+use App\DTO\Jira\JiraWorkLogPayloadDto;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
@@ -137,18 +138,14 @@ class JiraWorkLogService
             $entry->setWorklogId(null);
         }
 
-        // Prepare work log data
-        $workLogData = $this->prepareWorkLogData($entry);
+        // Prepare work log payload (typed DTO)
+        $workLogPayload = $this->prepareWorkLogData($entry);
 
         // Create or update work log
         if (null !== $entry->getWorklogId()) {
-            $workLog = $this->updateWorkLog($ticket, $entry->getWorklogId(), $workLogData);
+            $workLog = $this->updateWorkLog($ticket, $entry->getWorklogId(), $workLogPayload);
         } else {
-            $workLog = $this->createWorkLog($ticket, $workLogData);
-        }
-
-        if (!is_object($workLog)) {
-            throw new JiraApiException('Unexpected response from Jira when updating worklog', 500);
+            $workLog = $this->createWorkLog($ticket, $workLogPayload);
         }
 
         // Convert response to DTO and update entry
@@ -229,11 +226,17 @@ class JiraWorkLogService
     /**
      * Creates new work log in Jira.
      *
-     * @param array<string, mixed> $data
+     * The Jira REST API responds with a JSON object describing the freshly
+     * created worklog. The HTTP client returns this as a json_decode'd stdClass.
+     *
+     * @throws JiraApiException
      */
-    private function createWorkLog(string $ticket, array $data): mixed
+    private function createWorkLog(string $ticket, JiraWorkLogPayloadDto $payload): object
     {
-        $response = $this->jiraHttpClientService->post(sprintf('issue/%s/worklog', $ticket), $data);
+        $response = $this->jiraHttpClientService->post(
+            sprintf('issue/%s/worklog', $ticket),
+            $payload->toArray(),
+        );
 
         if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when creating work log', 500);
@@ -245,11 +248,14 @@ class JiraWorkLogService
     /**
      * Updates existing work log in Jira.
      *
-     * @param array<string, mixed> $data
+     * @throws JiraApiException
      */
-    private function updateWorkLog(string $ticket, int $workLogId, array $data): mixed
+    private function updateWorkLog(string $ticket, int $workLogId, JiraWorkLogPayloadDto $payload): object
     {
-        $response = $this->jiraHttpClientService->put(sprintf('issue/%s/worklog/%d', $ticket, $workLogId), $data);
+        $response = $this->jiraHttpClientService->put(
+            sprintf('issue/%s/worklog/%d', $ticket, $workLogId),
+            $payload->toArray(),
+        );
 
         if (!is_object($response)) {
             throw new JiraApiException('Invalid response from Jira API when updating work log', 500);
@@ -259,17 +265,19 @@ class JiraWorkLogService
     }
 
     /**
-     * Prepares work log data for Jira API.
+     * Prepares work log payload for the Jira API.
      *
-     * @return array<string, mixed>
+     * Builds the strongly-typed {@see JiraWorkLogPayloadDto} from the Entry's
+     * domain data. Centralising the projection here keeps the API contract
+     * (comment / started / timeSpentSeconds) in one place.
      */
-    private function prepareWorkLogData(Entry $entry): array
+    private function prepareWorkLogData(Entry $entry): JiraWorkLogPayloadDto
     {
-        return [
-            'comment' => $this->getWorkLogComment($entry),
-            'started' => $this->getWorkLogStartDate($entry),
-            'timeSpentSeconds' => $entry->getDuration() * 60,
-        ];
+        return new JiraWorkLogPayloadDto(
+            comment: $this->getWorkLogComment($entry),
+            started: $this->getWorkLogStartDate($entry),
+            timeSpentSeconds: $entry->getDuration() * 60,
+        );
     }
 
     /**

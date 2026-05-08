@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Service\Security;
 
 use RuntimeException;
+use SensitiveParameter;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 use function is_string;
@@ -53,7 +54,7 @@ class TokenEncryptionService
      *
      * @return string Base64 encoded encrypted token with IV and auth tag
      */
-    public function encryptToken(string $token): string
+    public function encryptToken(#[SensitiveParameter] string $token): string
     {
         if ('' === $token || '0' === $token) {
             return '';
@@ -99,7 +100,7 @@ class TokenEncryptionService
      *
      * @return string The decrypted plain text token
      */
-    public function decryptToken(string $encryptedToken): string
+    public function decryptToken(#[SensitiveParameter] string $encryptedToken): string
     {
         if ('' === $encryptedToken || '0' === $encryptedToken) {
             return '';
@@ -152,7 +153,7 @@ class TokenEncryptionService
      *
      * @return string The newly encrypted token with fresh IV
      */
-    public function rotateToken(string $encryptedToken): string
+    public function rotateToken(#[SensitiveParameter] string $encryptedToken): string
     {
         $plainToken = $this->decryptToken($encryptedToken);
 

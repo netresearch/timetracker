@@ -14,6 +14,7 @@ use App\EventSubscriber\EntryEventSubscriber;
 use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraIntegrationService;
 use Exception;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Psr\Log\LoggerInterface;
  * @internal
  */
 #[CoversClass(EntryEventSubscriber::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class EntryEventSubscriberTest extends TestCase
 {
     private JiraIntegrationService&MockObject $jiraIntegrationService;
@@ -62,10 +64,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedInvalidatesCacheForUser(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(42);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn(null);
 
@@ -79,7 +81,7 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotInvalidateCacheWhenNoUser(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn(null);
         $entry->method('getProject')->willReturn(null);
 
@@ -92,17 +94,17 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedAutoSyncsToJiraWhenConditionsMet(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getTicket')->willReturn('ABC-123');
@@ -120,10 +122,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenNoProject(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn(null);
 
@@ -136,13 +138,13 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenNoTicketSystem(): void
     {
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn(null);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
 
@@ -155,17 +157,17 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenBookTimeDisabled(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(false);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
 
@@ -178,17 +180,17 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenNotJiraTicketSystem(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::OTRS);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
 
@@ -201,17 +203,17 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenEmptyTicket(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getTicket')->willReturn('');
@@ -225,17 +227,17 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenZeroTicket(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getTicket')->willReturn('0');
@@ -249,17 +251,17 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedLogsErrorOnJiraSyncFailure(): void
     {
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
         $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = $this->createMock(Project::class);
+        $project = self::createStub(Project::class);
         $project->method('getTicketSystem')->willReturn($ticketSystem);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
         $entry->method('getTicket')->willReturn('ABC-123');
@@ -279,10 +281,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryUpdatedInvalidatesCache(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(42);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(false);
 
@@ -296,10 +298,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryUpdatedSyncsToJiraWhenAlreadySynced(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(true);
         $entry->method('getWorklogId')->willReturn(12345);
@@ -317,10 +319,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryUpdatedDoesNotSyncWhenNotPreviouslySynced(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(false);
 
@@ -333,10 +335,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryUpdatedDoesNotSyncWhenNoWorklogId(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(true);
         $entry->method('getWorklogId')->willReturn(null);
@@ -350,10 +352,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryUpdatedLogsWarningOnJiraFailure(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(true);
         $entry->method('getWorklogId')->willReturn(12345);
@@ -373,10 +375,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedInvalidatesCache(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(42);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(false);
 
@@ -390,10 +392,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedDeletesWorklogFromJira(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(true);
         $entry->method('getWorklogId')->willReturn(12345);
@@ -411,10 +413,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedDoesNotDeleteWhenNotSynced(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(false);
 
@@ -427,10 +429,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedDoesNotDeleteWhenNoWorklogId(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(true);
         $entry->method('getWorklogId')->willReturn(null);
@@ -444,10 +446,10 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedLogsWarningOnFailure(): void
     {
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getSyncedToTicketsystem')->willReturn(true);
         $entry->method('getWorklogId')->willReturn(12345);
@@ -467,7 +469,7 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntrySyncedInvalidatesJiraSyncCacheTag(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
 
         $this->queryCacheService->expects(self::once())
             ->method('invalidateTag')
@@ -483,7 +485,7 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntrySyncFailedLogsErrorWithException(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $exception = new Exception('Sync failed');
 
         $this->logger->expects(self::once())
@@ -496,7 +498,7 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntrySyncFailedLogsErrorWithoutException(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
 
         $this->logger->expects(self::once())
             ->method('error')
@@ -508,7 +510,7 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntrySyncFailedLogsErrorWhenContextExceptionIsNotThrowable(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
 
         $this->logger->expects(self::once())
             ->method('error')
@@ -526,7 +528,7 @@ final class EntryEventSubscriberTest extends TestCase
         );
 
         // Just verify it doesn't throw - logger is optional
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn(null);
         $entry->method('getProject')->willReturn(null);
 

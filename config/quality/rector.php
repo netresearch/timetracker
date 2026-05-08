@@ -17,12 +17,13 @@ return RectorConfig::configure()
         __DIR__ . '/../../src',
     ])
     ->withSets([
-        LevelSetList::UP_TO_PHP_84,
+        LevelSetList::UP_TO_PHP_85,
         SetList::CODE_QUALITY,
         SetList::DEAD_CODE,
         SetList::EARLY_RETURN,
         SetList::TYPE_DECLARATION,
-        SymfonySetList::SYMFONY_73,
         SymfonySetList::SYMFONY_CODE_QUALITY,
     ])
+    ->withComposerBased(symfony: true)
+    ->withAttributesSets(symfony: true)
     ->withImportNames(importShortClasses: false);

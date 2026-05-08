@@ -11,6 +11,7 @@ use App\Entity\Project;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraHttpClientService;
 use App\Service\Integration\Jira\JiraTicketService;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 
 #[CoversClass(JiraTicketService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class JiraTicketServiceTest extends TestCase
 {
     private JiraHttpClientService&MockObject $httpClient;
@@ -104,7 +106,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->createTicket($entry);
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame('PROJ-123', $result->key);
     }
 
@@ -250,7 +251,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->searchTickets('project = TEST AND status = Open', [], 10);
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame(0, $result->total);
     }
 
@@ -324,7 +324,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->getTicket('TEST-123');
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame('TEST-123', $result->key);
     }
 
@@ -385,7 +384,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->addComment('TEST-123', 'This is a comment');
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame('10001', $result->id);
     }
 
@@ -427,7 +425,7 @@ final class JiraTicketServiceTest extends TestCase
 
         $response->transitions = [$transition1, $transition2];
 
-        $this->httpClient->method('get')
+        $this->httpClient->expects(self::once())->method('get')
             ->with('issue/TEST-123/transitions')
             ->willReturn($response);
 
@@ -545,7 +543,7 @@ final class JiraTicketServiceTest extends TestCase
 
         $response->fields->subtasks = [$subtask];
 
-        $this->httpClient->method('get')
+        $this->httpClient->expects(self::once())->method('get')
             ->with('issue/TEST-123')
             ->willReturn($response);
 

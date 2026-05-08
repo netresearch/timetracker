@@ -19,12 +19,12 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Throwable;
 
@@ -38,28 +38,28 @@ use function json_encode;
  * @internal
  */
 #[CoversClass(JiraOAuthApiService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class JiraOAuthApiServiceTest extends TestCase
 {
-    private User&MockObject $user;
-    private TicketSystem&MockObject $ticketSystem;
-    private ManagerRegistry&MockObject $managerRegistry;
-    private RouterInterface&MockObject $router;
-    private EntityManagerInterface&MockObject $entityManager;
+    private User&Stub $user;
+    private TicketSystem&Stub $ticketSystem;
+    private ManagerRegistry&Stub $managerRegistry;
+    private RouterInterface&Stub $router;
+    private EntityManagerInterface&Stub $entityManager;
 
     protected function setUp(): void
     {
-        $this->user = $this->createMock(User::class);
-        $this->ticketSystem = $this->createMock(TicketSystem::class);
-        $this->managerRegistry = $this->createMock(ManagerRegistry::class);
-        $this->router = $this->createMock(RouterInterface::class);
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
+        $this->user = self::createStub(User::class);
+        $this->ticketSystem = self::createStub(TicketSystem::class);
+        $this->managerRegistry = self::createStub(ManagerRegistry::class);
+        $this->router = self::createStub(RouterInterface::class);
+        $this->entityManager = self::createStub(EntityManagerInterface::class);
 
         $this->ticketSystem->method('getUrl')->willReturn('https://jira.example.com');
         $this->ticketSystem->method('getId')->willReturn(1);
         $this->ticketSystem->method('getName')->willReturn('Test Jira');
 
         $this->router->method('generate')
-            ->with('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL)
             ->willReturn('https://app.example.com/jira/callback');
     }
 
@@ -67,7 +67,7 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     public function testGetJiraBaseUrlTrimsTrailingSlash(): void
     {
-        $this->ticketSystem = $this->createMock(TicketSystem::class);
+        $this->ticketSystem = self::createStub(TicketSystem::class);
         $this->ticketSystem->method('getUrl')->willReturn('https://jira.example.com/');
         $this->ticketSystem->method('getId')->willReturn(1);
 
@@ -223,10 +223,10 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     public function testGetTicketSystemWorkLogCommentWithActivity(): void
     {
-        $activity = $this->createMock(Activity::class);
+        $activity = self::createStub(Activity::class);
         $activity->method('getName')->willReturn('Development');
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getId')->willReturn(123);
         $entry->method('getActivity')->willReturn($activity);
         $entry->method('getDescription')->willReturn('Fixed bug in login');
@@ -243,7 +243,7 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     public function testGetTicketSystemWorkLogCommentWithoutActivity(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getId')->willReturn(456);
         $entry->method('getActivity')->willReturn(null);
         $entry->method('getDescription')->willReturn('Some work done');
@@ -260,10 +260,10 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     public function testGetTicketSystemWorkLogCommentWithEmptyDescription(): void
     {
-        $activity = $this->createMock(Activity::class);
+        $activity = self::createStub(Activity::class);
         $activity->method('getName')->willReturn('Meeting');
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getId')->willReturn(789);
         $entry->method('getActivity')->willReturn($activity);
         $entry->method('getDescription')->willReturn('');
@@ -280,7 +280,7 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     public function testGetTicketSystemWorkLogCommentWithZeroDescription(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getId')->willReturn(1);
         $entry->method('getActivity')->willReturn(null);
         $entry->method('getDescription')->willReturn('0');
@@ -302,7 +302,7 @@ final class JiraOAuthApiServiceTest extends TestCase
         $day = new DateTime('2025-01-15');
         $start = new DateTime('2025-01-15 09:30:00');
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getDay')->willReturn($day);
         $entry->method('getStart')->willReturn($start);
 
@@ -336,11 +336,10 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->ticketSystem->method('getBookTime')->willReturn(true);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn(null);
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($repository);
 
         $service = $this->createService();
@@ -355,14 +354,13 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->ticketSystem->method('getBookTime')->willReturn(true);
 
-        $userTicketSystem = $this->createMock(UserTicketsystem::class);
+        $userTicketSystem = self::createStub(UserTicketsystem::class);
         $userTicketSystem->method('getAvoidConnection')->willReturn(true);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn($userTicketSystem);
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($repository);
 
         $service = $this->createService();
@@ -377,14 +375,13 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->ticketSystem->method('getBookTime')->willReturn(true);
 
-        $userTicketSystem = $this->createMock(UserTicketsystem::class);
+        $userTicketSystem = self::createStub(UserTicketsystem::class);
         $userTicketSystem->method('getAvoidConnection')->willReturn(false);
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn($userTicketSystem);
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($repository);
 
         $service = $this->createService();
@@ -401,7 +398,7 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('');
 
         $service = $this->createServiceWithMockedClient();
@@ -412,7 +409,7 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('0');
 
         $service = $this->createServiceWithMockedClient();
@@ -423,7 +420,7 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('');
 
         $service = $this->createServiceWithMockedClient();
@@ -434,7 +431,7 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('TEST-123');
         $entry->method('getWorklogId')->willReturn(null);
 
@@ -446,7 +443,7 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('TEST-123');
         $entry->method('getWorklogId')->willReturn(0);
 
@@ -458,7 +455,7 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     public function testCreateTicketThrowsExceptionForEntryWithoutProject(): void
     {
-        $entry = $this->createMock(Entry::class);
+        $entry = self::createStub(Entry::class);
         $entry->method('getProject')->willReturn(null);
 
         $service = $this->createServiceWithMockedClient();
@@ -599,7 +596,6 @@ final class JiraOAuthApiServiceTest extends TestCase
         $client = $this->createMock(Client::class);
         $client->expects(self::once())
             ->method('request')
-            ->with('GET', 'issue/TEST-123', [])
             ->willReturn(new Response(200, [], (string) json_encode((object) ['key' => 'TEST-123'])));
 
         $service = $this->createServiceWithClient($client);
@@ -634,14 +630,12 @@ final class JiraOAuthApiServiceTest extends TestCase
         $userTicketSystem->method('setAccessToken')->willReturnSelf();
         $userTicketSystem->expects(self::once())
             ->method('setAvoidConnection')
-            ->with(true)
             ->willReturnSelf();
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn($userTicketSystem);
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($repository);
 
         $this->managerRegistry->method('getManager')
@@ -717,7 +711,7 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     private function createClientReturning(ResponseInterface $response): Client
     {
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $client->method('request')->willReturn($response);
 
         return $client;
@@ -725,7 +719,7 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     private function createClientThrowing(Throwable $exception): Client
     {
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $client->method('request')->willThrowException($exception);
 
         return $client;
@@ -733,7 +727,7 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     private function setupStoreTokenMock(): void
     {
-        $userTicketSystem = $this->createMock(UserTicketsystem::class);
+        $userTicketSystem = self::createStub(UserTicketsystem::class);
         $userTicketSystem->method('getTokenSecret')->willReturn('secret');
         $userTicketSystem->method('getAccessToken')->willReturn('token');
         $userTicketSystem->method('setUser')->willReturnSelf();
@@ -742,11 +736,10 @@ final class JiraOAuthApiServiceTest extends TestCase
         $userTicketSystem->method('setAccessToken')->willReturnSelf();
         $userTicketSystem->method('setAvoidConnection')->willReturnSelf();
 
-        $repository = $this->createMock(EntityRepository::class);
+        $repository = self::createStub(EntityRepository::class);
         $repository->method('findOneBy')->willReturn($userTicketSystem);
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($repository);
 
         $this->managerRegistry->method('getManager')

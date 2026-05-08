@@ -21,6 +21,7 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
@@ -68,11 +69,9 @@ final class ExportActionPerformanceTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up temporary files
+        // Clean up temporary files recursively (the dir contains a `public/` subdir).
         if (is_dir($this->tempDir)) {
-            $globResult = glob($this->tempDir . '/*');
-            array_map('unlink', false !== $globResult ? $globResult : []);
-            rmdir($this->tempDir);
+            new Filesystem()->remove($this->tempDir);
         }
     }
 

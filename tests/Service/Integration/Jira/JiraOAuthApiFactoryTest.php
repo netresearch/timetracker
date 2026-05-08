@@ -24,8 +24,8 @@ final class JiraOAuthApiFactoryTest extends TestCase
     public function testSetDependenciesStoresDependencies(): void
     {
         $factory = new JiraOAuthApiFactory();
-        $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $router = $this->createMock(RouterInterface::class);
+        $managerRegistry = self::createStub(ManagerRegistry::class);
+        $router = self::createStub(RouterInterface::class);
 
         $factory->setDependencies($managerRegistry, $router);
 
@@ -40,12 +40,12 @@ final class JiraOAuthApiFactoryTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         $factory = new JiraOAuthApiFactory();
-        $managerRegistry = $this->createMock(ManagerRegistry::class);
-        $router = $this->createMock(RouterInterface::class);
+        $managerRegistry = self::createStub(ManagerRegistry::class);
+        $router = self::createStub(RouterInterface::class);
         $factory->setDependencies($managerRegistry, $router);
 
-        $user = $this->createMock(User::class);
-        $ticketSystem = $this->createMock(TicketSystem::class);
+        $user = self::createStub(User::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getUrl')->willReturn('https://jira.example.com');
 
         $factory->create($user, $ticketSystem);

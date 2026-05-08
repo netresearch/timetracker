@@ -16,6 +16,7 @@ use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use SensitiveParameter;
 use Symfony\Component\Yaml\Yaml;
 use UnitEnum;
 
@@ -267,7 +268,7 @@ class LdapClientService
         return $this;
     }
 
-    public function setUserPass(string $password): static
+    public function setUserPass(#[SensitiveParameter] string $password): static
     {
         $this->_userPass = $password;
 

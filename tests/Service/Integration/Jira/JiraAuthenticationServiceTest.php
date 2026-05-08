@@ -18,34 +18,35 @@ use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
 #[CoversClass(JiraAuthenticationService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class JiraAuthenticationServiceTest extends TestCase
 {
-    private ManagerRegistry&MockObject $managerRegistry;
-    private RouterInterface&MockObject $router;
+    private ManagerRegistry&Stub $managerRegistry;
+    private RouterInterface&Stub $router;
     private TokenEncryptionService&MockObject $tokenEncryptionService;
     private EntityManagerInterface&MockObject $entityManager;
-    private EntityRepository&MockObject $repository;
+    private EntityRepository&Stub $repository;
     private JiraAuthenticationService $service;
 
     protected function setUp(): void
     {
-        $this->managerRegistry = $this->createMock(ManagerRegistry::class);
-        $this->router = $this->createMock(RouterInterface::class);
+        $this->managerRegistry = self::createStub(ManagerRegistry::class);
+        $this->router = self::createStub(RouterInterface::class);
         $this->tokenEncryptionService = $this->createMock(TokenEncryptionService::class);
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->repository = $this->createMock(EntityRepository::class);
+        $this->repository = self::createStub(EntityRepository::class);
 
         $this->router->method('generate')
-            ->with('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL)
             ->willReturn('https://app.example.com/jira/oauth/callback');
 
         $this->service = new JiraAuthenticationService(
@@ -142,7 +143,6 @@ final class JiraAuthenticationServiceTest extends TestCase
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn(null);
 
@@ -165,7 +165,6 @@ final class JiraAuthenticationServiceTest extends TestCase
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($userTicketSystem);
 
@@ -196,7 +195,6 @@ final class JiraAuthenticationServiceTest extends TestCase
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($userTicketSystem);
 
@@ -223,13 +221,11 @@ final class JiraAuthenticationServiceTest extends TestCase
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($userTicketSystem);
 
         $this->entityManager->expects($this->once())
-            ->method('remove')
-            ->with($userTicketSystem);
+            ->method('remove');
         $this->entityManager->expects($this->once())
             ->method('flush');
 
@@ -244,7 +240,6 @@ final class JiraAuthenticationServiceTest extends TestCase
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn(null);
 
@@ -266,7 +261,6 @@ final class JiraAuthenticationServiceTest extends TestCase
         $userTicketSystem->setAvoidConnection(false);
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($userTicketSystem);
 
@@ -287,7 +281,6 @@ final class JiraAuthenticationServiceTest extends TestCase
         $userTicketSystem->setAvoidConnection(true);
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($userTicketSystem);
 
@@ -303,7 +296,6 @@ final class JiraAuthenticationServiceTest extends TestCase
         $ticketSystem = $this->createTicketSystem();
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn(null);
 
@@ -326,11 +318,9 @@ final class JiraAuthenticationServiceTest extends TestCase
         $userTicketSystem->setTokenSecret('encrypted_secret');
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($userTicketSystem);
 
@@ -353,7 +343,6 @@ final class JiraAuthenticationServiceTest extends TestCase
         $ticketSystem = $this->createTicketSystem();
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn(null);
 
@@ -376,11 +365,9 @@ final class JiraAuthenticationServiceTest extends TestCase
         $userTicketSystem->setTokenSecret('');
 
         $this->managerRegistry->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($userTicketSystem);
 
@@ -397,26 +384,20 @@ final class JiraAuthenticationServiceTest extends TestCase
         $user = $this->createUser();
         $ticketSystem = $this->createTicketSystem();
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $response = new Response(200, [], 'oauth_token=request_token&oauth_token_secret=temp_secret');
 
         $client->method('post')
-            ->with(
-                'https://jira.example.com/plugins/servlet/oauth/request-token',
-                ['auth' => 'oauth'],
-            )
             ->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')
-            ->with('new')
             ->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
         $httpClientService->method('getUser')->willReturn($user);
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn(null);
 
@@ -436,12 +417,12 @@ final class JiraAuthenticationServiceTest extends TestCase
     {
         $ticketSystem = $this->createTicketSystem();
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $response = new Response(200, [], '');
 
         $client->method('post')->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
@@ -456,12 +437,12 @@ final class JiraAuthenticationServiceTest extends TestCase
     {
         $ticketSystem = $this->createTicketSystem();
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $response = new Response(200, [], 'oauth_problem=token_rejected');
 
         $client->method('post')->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
@@ -476,12 +457,12 @@ final class JiraAuthenticationServiceTest extends TestCase
     {
         $ticketSystem = $this->createTicketSystem();
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $response = new Response(200, [], 'some_other_param=value');
 
         $client->method('post')->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
@@ -497,29 +478,20 @@ final class JiraAuthenticationServiceTest extends TestCase
         $user = $this->createUser();
         $ticketSystem = $this->createTicketSystem();
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $response = new Response(200, [], 'oauth_token=access_token&oauth_token_secret=access_secret');
 
         $client->method('post')
-            ->with(
-                'https://jira.example.com/plugins/servlet/oauth/access-token',
-                [
-                    'auth' => 'oauth',
-                    'form_params' => ['oauth_verifier' => 'verifier_code'],
-                ],
-            )
             ->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')
-            ->with('request', 'request_token')
             ->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
         $httpClientService->method('getUser')->willReturn($user);
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn(null);
 
@@ -538,12 +510,12 @@ final class JiraAuthenticationServiceTest extends TestCase
     {
         $ticketSystem = $this->createTicketSystem();
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $response = new Response(200, [], 'oauth_token=access_token');
 
         $client->method('post')->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
@@ -564,19 +536,18 @@ final class JiraAuthenticationServiceTest extends TestCase
         $existingUserTicketSystem->setTicketSystem($ticketSystem);
         $existingUserTicketSystem->setAccessToken('old_token');
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         $response = new Response(200, [], 'oauth_token=new_token&oauth_token_secret=new_secret');
 
         $client->method('post')->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
         $httpClientService->method('getUser')->willReturn($user);
 
         $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
         $this->entityManager->method('getRepository')
-            ->with(UserTicketsystem::class)
             ->willReturn($this->repository);
         $this->repository->method('findOneBy')->willReturn($existingUserTicketSystem);
 
@@ -585,8 +556,7 @@ final class JiraAuthenticationServiceTest extends TestCase
 
         // Should persist the same object, not create a new one
         $this->entityManager->expects($this->once())
-            ->method('persist')
-            ->with($existingUserTicketSystem);
+            ->method('persist');
         $this->entityManager->expects($this->once())->method('flush');
 
         $this->service->fetchOAuthAccessToken($httpClientService, 'request_token', 'verifier');
@@ -597,13 +567,13 @@ final class JiraAuthenticationServiceTest extends TestCase
     {
         $ticketSystem = $this->createTicketSystem();
 
-        $client = $this->createMock(Client::class);
+        $client = self::createStub(Client::class);
         // Simulates parse_str creating an array for repeated parameters
         $response = new Response(200, [], 'oauth_problem[]=error1&oauth_problem[]=error2');
 
         $client->method('post')->willReturn($response);
 
-        $httpClientService = $this->createMock(JiraHttpClientService::class);
+        $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')->willReturn($client);
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 

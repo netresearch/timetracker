@@ -18,9 +18,11 @@ use App\Security\LdapAuthenticator;
 use App\Service\Ldap\LdapClientService;
 use Doctrine\ORM\EntityManagerInterface;
 use Laminas\Ldap\Exception\LdapException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -41,21 +43,22 @@ use Tests\Fixtures\TokenStub;
  * @internal
  */
 #[CoversClass(LdapAuthenticator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class LdapAuthenticatorTest extends TestCase
 {
     private EntityManagerInterface&MockObject $entityManager;
-    private RouterInterface&MockObject $router;
-    private ParameterBagInterface&MockObject $parameterBag;
-    private LoggerInterface&MockObject $logger;
-    private LdapClientService&MockObject $ldapClient;
+    private RouterInterface&Stub $router;
+    private ParameterBagInterface&Stub $parameterBag;
+    private LoggerInterface&Stub $logger;
+    private LdapClientService&Stub $ldapClient;
 
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->router = $this->createMock(RouterInterface::class);
-        $this->parameterBag = $this->createMock(ParameterBagInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->ldapClient = $this->createMock(LdapClientService::class);
+        $this->router = self::createStub(RouterInterface::class);
+        $this->parameterBag = self::createStub(ParameterBagInterface::class);
+        $this->logger = self::createStub(LoggerInterface::class);
+        $this->ldapClient = self::createStub(LdapClientService::class);
     }
 
     private function makeSubject(): LdapAuthenticator
@@ -200,11 +203,10 @@ final class LdapAuthenticatorTest extends TestCase
 
         $existingUser = new User()->setUsername('testuser');
 
-        $userRepo = $this->createMock(UserRepository::class);
+        $userRepo = self::createStub(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn($existingUser);
 
         $this->entityManager->method('getRepository')
-            ->with(User::class)
             ->willReturn($userRepo);
 
         // Configure LDAP client to allow chaining
@@ -236,7 +238,7 @@ final class LdapAuthenticatorTest extends TestCase
     {
         $this->configureDefaultLdapParams();
 
-        $userRepo = $this->createMock(UserRepository::class);
+        $userRepo = self::createStub(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn(null);
 
         $this->entityManager->method('getRepository')
@@ -280,10 +282,10 @@ final class LdapAuthenticatorTest extends TestCase
 
         $team = new Team()->setName('Dev Team');
 
-        $userRepo = $this->createMock(UserRepository::class);
+        $userRepo = self::createStub(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn(null);
 
-        $teamRepo = $this->createMock(TeamRepository::class);
+        $teamRepo = self::createStub(TeamRepository::class);
         $teamRepo->method('findOneBy')->willReturn($team);
 
         $this->entityManager->method('getRepository')
@@ -332,11 +334,10 @@ final class LdapAuthenticatorTest extends TestCase
             ['ldap_create_user', false], // Creation disabled
         ]);
 
-        $userRepo = $this->createMock(UserRepository::class);
+        $userRepo = self::createStub(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn(null);
 
         $this->entityManager->method('getRepository')
-            ->with(User::class)
             ->willReturn($userRepo);
 
         $this->ldapClient->method('setHost')->willReturnSelf();
@@ -432,7 +433,7 @@ final class LdapAuthenticatorTest extends TestCase
         $request = new Request();
         $request->setSession($session);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getUsername')->willReturn('testuser');
 
         $token = new TokenStub($user);
@@ -446,7 +447,6 @@ final class LdapAuthenticatorTest extends TestCase
     public function testOnAuthenticationSuccessRedirectsToStartWhenNoTarget(): void
     {
         $this->router->method('generate')
-            ->with('_start')
             ->willReturn('/_start');
 
         $authenticator = $this->makeSubject();
@@ -455,7 +455,7 @@ final class LdapAuthenticatorTest extends TestCase
         $request = new Request();
         $request->setSession($session);
 
-        $user = $this->createMock(User::class);
+        $user = self::createStub(User::class);
         $user->method('getUsername')->willReturn('testuser');
 
         $token = new TokenStub($user);
@@ -586,11 +586,10 @@ final class LdapAuthenticatorTest extends TestCase
 
         $existingUser = new User()->setUsername('user@example.com');
 
-        $userRepo = $this->createMock(UserRepository::class);
+        $userRepo = self::createStub(UserRepository::class);
         $userRepo->method('findOneBy')->willReturn($existingUser);
 
         $this->entityManager->method('getRepository')
-            ->with(User::class)
             ->willReturn($userRepo);
 
         $this->ldapClient->method('setHost')->willReturnSelf();

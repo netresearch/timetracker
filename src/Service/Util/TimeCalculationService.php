@@ -86,7 +86,7 @@ class TimeCalculationService
     {
         $days = number_format($duration / (60 * self::HOURS_PER_DAY), 2);
         $hours = (int) floor($duration / 60);
-        $minutes = (int) floor($duration % 60);
+        $minutes = (int) floor(fmod((float) $duration, 60.0));
         if ($minutes < 10) {
             $minutes = (int) ('0' . $minutes);
         }

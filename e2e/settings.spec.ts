@@ -120,10 +120,13 @@ async function saveSettings(page: import('@playwright/test').Page) {
   await page.waitForTimeout(1000);
 }
 
-test.describe('Settings Tab', () => {
-  // Settings persistence tests must run serially because they modify shared user state
-  test.describe.configure({ mode: 'serial' });
+// All tests in this file share user `i.myself` and toggle the same
+// settings, so they must not run in parallel — neither across describes
+// within the file nor across worker shards. Configuring at file level
+// (outside any describe) covers the three describes below.
+test.describe.configure({ mode: 'serial' });
 
+test.describe('Settings Tab', () => {
   test.beforeEach(async ({ page }) => {
     // Use 'i.myself' who has a stable database record
     await loginWithFrozenClock(page, 'i.myself', 'myself123');

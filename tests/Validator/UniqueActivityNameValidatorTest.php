@@ -9,6 +9,7 @@ use App\Entity\Activity;
 use App\Repository\ActivityRepository;
 use App\Validator\Constraints\UniqueActivityName;
 use App\Validator\Constraints\UniqueActivityNameValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
  * @internal
  */
 #[CoversClass(UniqueActivityNameValidator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class UniqueActivityNameValidatorTest extends TestCase
 {
     private ActivityRepository&MockObject $activityRepository;
@@ -39,7 +41,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
     public function testValidateThrowsOnInvalidConstraintType(): void
     {
-        $constraint = $this->createMock(Constraint::class);
+        $constraint = self::createStub(Constraint::class);
 
         $this->expectException(UnexpectedTypeException::class);
 
@@ -69,7 +71,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingActivityFound(): void
     {
-        $this->activityRepository->method('findOneBy')
+        $this->activityRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'New Activity'])
             ->willReturn(null);
 
@@ -80,10 +82,10 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenUpdatingSameActivity(): void
     {
-        $existingActivity = $this->createMock(Activity::class);
+        $existingActivity = self::createStub(Activity::class);
         $existingActivity->method('getId')->willReturn(5);
 
-        $this->activityRepository->method('findOneBy')
+        $this->activityRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Existing Activity'])
             ->willReturn($existingActivity);
 
@@ -97,10 +99,10 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingActivity = $this->createMock(Activity::class);
+        $existingActivity = self::createStub(Activity::class);
         $existingActivity->method('getId')->willReturn(5);
 
-        $this->activityRepository->method('findOneBy')
+        $this->activityRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Duplicate Name'])
             ->willReturn($existingActivity);
 
@@ -112,7 +114,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
         $violationBuilder->method('setParameter')->willReturnSelf();
         $violationBuilder->expects(self::once())->method('addViolation');
 
-        $this->context->method('buildViolation')
+        $this->context->expects(self::once())->method('buildViolation')
             ->with('The activity name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
 
@@ -121,10 +123,10 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDifferentActivityHasSameName(): void
     {
-        $existingActivity = $this->createMock(Activity::class);
+        $existingActivity = self::createStub(Activity::class);
         $existingActivity->method('getId')->willReturn(5);
 
-        $this->activityRepository->method('findOneBy')
+        $this->activityRepository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Conflicting Name'])
             ->willReturn($existingActivity);
 
@@ -136,7 +138,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
         $violationBuilder->method('setParameter')->willReturnSelf();
         $violationBuilder->expects(self::once())->method('addViolation');
 
-        $this->context->method('buildViolation')
+        $this->context->expects(self::once())->method('buildViolation')
             ->with('The activity name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
 

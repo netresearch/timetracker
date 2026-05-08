@@ -17,6 +17,7 @@ use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Exception\Integration\Jira\JiraApiException;
+use stdClass;
 
 use function is_object;
 use function sprintf;
@@ -35,9 +36,13 @@ class JiraTicketService
     /**
      * Creates a new Jira ticket from entry.
      *
+     * Returns the raw `stdClass` response from the Jira REST API
+     * (`json_decode` with `assoc=false`); always exposes a `key` property
+     * because the implementation throws on responses that lack it.
+     *
      * @throws JiraApiException
      */
-    public function createTicket(Entry $entry): object
+    public function createTicket(Entry $entry): stdClass
     {
         $project = $entry->getProject();
 
@@ -74,7 +79,7 @@ class JiraTicketService
 
         $response = $this->jiraHttpClientService->post('issue', $ticketData);
 
-        if (!is_object($response) || !property_exists($response, 'key')) {
+        if (!$response instanceof stdClass || !property_exists($response, 'key')) {
             throw new JiraApiException('Failed to create Jira ticket', 500);
         }
 
@@ -84,13 +89,17 @@ class JiraTicketService
     /**
      * Searches for Jira tickets using JQL.
      *
-     * @param string        $jql    JQL query string
-     * @param array<string> $fields Fields to return
-     * @param int           $limit  Maximum number of results
+     * Returns the raw `stdClass` response from `POST /search`
+     * (`json_decode` with `assoc=false`), exposing at least `issues` and
+     * `total` properties as defined by the Jira REST API contract.
+     *
+     * @param string       $jql    JQL query string
+     * @param list<string> $fields Field names to include in the response
+     * @param int          $limit  Maximum number of results
      *
      * @throws JiraApiException
      */
-    public function searchTickets(string $jql, array $fields = [], int $limit = 1): mixed
+    public function searchTickets(string $jql, array $fields = [], int $limit = 1): stdClass
     {
         $searchData = [
             'jql' => $jql,
@@ -101,7 +110,10 @@ class JiraTicketService
             $searchData['fields'] = $fields;
         }
 
-        return $this->jiraHttpClientService->post('search', $searchData);
+        return $this->ensureObjectResponse(
+            $this->jiraHttpClientService->post('search', $searchData),
+            'search',
+        );
     }
 
     /**
@@ -168,11 +180,15 @@ class JiraTicketService
     /**
      * Gets ticket details from Jira.
      *
-     * @param array<string> $fields
+     * Returns the raw `stdClass` issue resource from `GET /issue/{key}`
+     * (`json_decode` with `assoc=false`), exposing at least `key` and
+     * `fields` as defined by the Jira REST API contract.
+     *
+     * @param list<string> $fields Field names to include in the response
      *
      * @throws JiraApiException
      */
-    public function getTicket(string $ticketKey, array $fields = []): mixed
+    public function getTicket(string $ticketKey, array $fields = []): stdClass
     {
         if ('' === $ticketKey) {
             throw new JiraApiException('Ticket key cannot be empty', 400);
@@ -184,31 +200,45 @@ class JiraTicketService
             $url .= '?fields=' . implode(',', $fields);
         }
 
-        return $this->jiraHttpClientService->get($url);
+        return $this->ensureObjectResponse(
+            $this->jiraHttpClientService->get($url),
+            sprintf('issue/%s', $ticketKey),
+        );
     }
 
     /**
      * Updates a Jira ticket.
      *
-     * @param array<string, mixed> $updateData
+     * Returns the raw `stdClass` response from `PUT /issue/{key}`
+     * (`json_decode` with `assoc=false`); Jira typically responds with an
+     * empty body, in which case the HTTP client returns an empty `stdClass`.
+     *
+     * @param array<string, mixed> $updateData Jira `fields`/`update` payload
      *
      * @throws JiraApiException
      */
-    public function updateTicket(string $ticketKey, array $updateData): mixed
+    public function updateTicket(string $ticketKey, array $updateData): stdClass
     {
         if ('' === $ticketKey) {
             throw new JiraApiException('Ticket key cannot be empty', 400);
         }
 
-        return $this->jiraHttpClientService->put(sprintf('issue/%s', $ticketKey), $updateData);
+        return $this->ensureObjectResponse(
+            $this->jiraHttpClientService->put(sprintf('issue/%s', $ticketKey), $updateData),
+            sprintf('issue/%s update', $ticketKey),
+        );
     }
 
     /**
      * Adds a comment to a Jira ticket.
      *
+     * Returns the raw `stdClass` response from `POST /issue/{key}/comment`
+     * (`json_decode` with `assoc=false`), exposing at least the comment
+     * `id` as defined by the Jira REST API contract.
+     *
      * @throws JiraApiException
      */
-    public function addComment(string $ticketKey, string $comment): mixed
+    public function addComment(string $ticketKey, string $comment): stdClass
     {
         if ('' === $ticketKey) {
             throw new JiraApiException('Ticket key cannot be empty', 400);
@@ -218,9 +248,12 @@ class JiraTicketService
             throw new JiraApiException('Comment cannot be empty', 400);
         }
 
-        return $this->jiraHttpClientService->post(
+        return $this->ensureObjectResponse(
+            $this->jiraHttpClientService->post(
+                sprintf('issue/%s/comment', $ticketKey),
+                ['body' => $comment],
+            ),
             sprintf('issue/%s/comment', $ticketKey),
-            ['body' => $comment],
         );
     }
 
@@ -372,5 +405,25 @@ class JiraTicketService
         // if ($entry->getPriority()) {
         //     $customFields['customfield_10001'] = $entry->getPriority();
         // }
+    }
+
+    /**
+     * Narrows a `mixed` Jira HTTP response to `stdClass`.
+     *
+     * `JiraHttpClientService::sendRequest()` decodes the response body with
+     * `assoc=false` and returns `new stdClass()` for empty bodies, so any
+     * Jira REST endpoint that yields an object payload (or an empty body)
+     * is guaranteed to be a `stdClass` at runtime. Anything else indicates
+     * a malformed response and is rejected.
+     *
+     * @throws JiraApiException
+     */
+    private function ensureObjectResponse(mixed $response, string $context): stdClass
+    {
+        if (!$response instanceof stdClass) {
+            throw new JiraApiException(sprintf('Unexpected non-object response from Jira (%s)', $context), 500);
+        }
+
+        return $response;
     }
 }

@@ -78,15 +78,17 @@ class SubticketSyncService
         $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($userWithJiraAccess, $ticketSystem);
 
         $mainTickets = array_map(trim(...), explode(',', $mainTickets));
+        /** @var list<string> $allSubtickets */
         $allSubtickets = [];
         foreach ($mainTickets as $mainTicket) {
             // we want to make it easy to find matching tickets,
             // so we put the main ticket in the subticket list as well
             $allSubtickets[] = $mainTicket;
-            $allSubtickets = array_merge(
-                $allSubtickets,
-                $jiraOAuthApiService->getSubtickets($mainTicket),
-            );
+            foreach ($jiraOAuthApiService->getSubtickets($mainTicket) as $subticket) {
+                if ('' !== $subticket) {
+                    $allSubtickets[] = $subticket;
+                }
+            }
         }
 
         natcasesort($allSubtickets);

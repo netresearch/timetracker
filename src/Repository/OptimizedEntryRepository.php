@@ -260,7 +260,16 @@ class OptimizedEntryRepository extends ServiceEntityRepository
     /**
      * Finds entries with optimized query using indexes.
      *
-     * @param array<string, mixed> $filter
+     * @param array{
+     *     user_id?: int,
+     *     customer_id?: int,
+     *     project_id?: int,
+     *     activity_id?: int,
+     *     date_from?: DateTimeInterface|string,
+     *     date_to?: DateTimeInterface|string,
+     *     ticket?: string,
+     *     limit?: int
+     * } $filter
      *
      * @return list<Entry>
      */
@@ -310,9 +319,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         // Add limit if specified
         if (isset($filter['limit'])) {
-            /** @var array<string, mixed> $typedFilter */
-            $typedFilter = $filter;
-            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($typedFilter, 'limit', 100));
+            $queryBuilder->setMaxResults(ArrayTypeHelper::getInt($filter, 'limit', 100));
         }
 
         $result = $queryBuilder->getQuery()->getResult();

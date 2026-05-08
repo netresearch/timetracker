@@ -127,11 +127,12 @@ class ExportService
         if ($ticketSystem->getBookTime()
             && TicketSystemType::JIRA === $ticketSystem->getType()
         ) {
-            if (!isset($arApi[$ticketSystem->getId()])) {
-                $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
+            $ticketSystemId = $ticketSystem->getId() ?? '';
+            if (!isset($arApi[$ticketSystemId])) {
+                $arApi[$ticketSystemId] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
             }
 
-            if (isset($arApi[$ticketSystem->getId()])) {
+            if (isset($arApi[$ticketSystemId])) {
                 // Use the ticket system's URL template directly
                 return sprintf($ticketSystem->getTicketUrl(), $entry->getTicket());
             }
@@ -163,11 +164,12 @@ class ExportService
             return '';
         }
 
-        if (!isset($arApi[$ticketSystem->getId()])) {
-            $arApi[$ticketSystem->getId()] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
+        $ticketSystemId = $ticketSystem->getId() ?? '';
+        if (!isset($arApi[$ticketSystemId])) {
+            $arApi[$ticketSystemId] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
         }
 
-        $apiService = $arApi[$ticketSystem->getId()] ?? null;
+        $apiService = $arApi[$ticketSystemId] ?? null;
         if (null === $apiService) {
             return '';
         }

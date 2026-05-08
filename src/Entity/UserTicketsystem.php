@@ -11,6 +11,7 @@ namespace App\Entity;
 
 use App\Model\Base;
 use Doctrine\ORM\Mapping as ORM;
+use SensitiveParameter;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users_ticket_systems')]
@@ -100,11 +101,9 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param string $accessToken
-     *
      * @return $this
      */
-    public function setAccessToken($accessToken): static
+    public function setAccessToken(#[SensitiveParameter] string $accessToken): static
     {
         $this->accessToken = $accessToken;
 
@@ -117,11 +116,9 @@ class UserTicketsystem extends Base
     }
 
     /**
-     * @param string $tokenSecret
-     *
      * @return $this
      */
-    public function setTokenSecret($tokenSecret): static
+    public function setTokenSecret(#[SensitiveParameter] string $tokenSecret): static
     {
         $this->tokenSecret = $tokenSecret;
 

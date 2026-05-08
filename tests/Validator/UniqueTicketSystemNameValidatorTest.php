@@ -9,6 +9,7 @@ use App\Entity\TicketSystem;
 use App\Repository\TicketSystemRepository;
 use App\Validator\Constraints\UniqueTicketSystemName;
 use App\Validator\Constraints\UniqueTicketSystemNameValidator;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
  * @internal
  */
 #[CoversClass(UniqueTicketSystemNameValidator::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class UniqueTicketSystemNameValidatorTest extends TestCase
 {
     private TicketSystemRepository&MockObject $repository;
@@ -39,7 +41,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidateThrowsOnInvalidConstraintType(): void
     {
-        $constraint = $this->createMock(Constraint::class);
+        $constraint = self::createStub(Constraint::class);
 
         $this->expectException(UnexpectedTypeException::class);
 
@@ -69,7 +71,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingSystemFound(): void
     {
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'New System'])
             ->willReturn(null);
 
@@ -80,10 +82,10 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenUpdatingSameSystem(): void
     {
-        $existingSystem = $this->createMock(TicketSystem::class);
+        $existingSystem = self::createStub(TicketSystem::class);
         $existingSystem->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Existing System'])
             ->willReturn($existingSystem);
 
@@ -97,10 +99,10 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingSystem = $this->createMock(TicketSystem::class);
+        $existingSystem = self::createStub(TicketSystem::class);
         $existingSystem->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Duplicate Name'])
             ->willReturn($existingSystem);
 
@@ -120,10 +122,10 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDifferentSystemHasSameName(): void
     {
-        $existingSystem = $this->createMock(TicketSystem::class);
+        $existingSystem = self::createStub(TicketSystem::class);
         $existingSystem->method('getId')->willReturn(5);
 
-        $this->repository->method('findOneBy')
+        $this->repository->expects(self::once())->method('findOneBy')
             ->with(['name' => 'Conflicting Name'])
             ->willReturn($existingSystem);
 

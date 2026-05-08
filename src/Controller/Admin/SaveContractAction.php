@@ -155,7 +155,7 @@ final class SaveContractAction extends BaseController
             return '';
         }
 
-        $contractOld = array_values($contractsOld)[0];
+        $contractOld = array_first($contractsOld);
 
         if ($contractOld->getStart() <= $newStartDate) {
             $oldContractEndDate = clone $newStartDate;

@@ -9,9 +9,11 @@ use ArrayObject;
 use InvalidArgumentException;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -27,14 +29,15 @@ use function is_string;
  * @internal
  */
 #[CoversClass(ModernLdapService::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class ModernLdapServiceTest extends TestCase
 {
-    private ParameterBagInterface&MockObject $parameterBag;
+    private ParameterBagInterface&Stub $parameterBag;
     private LoggerInterface&MockObject $logger;
 
     protected function setUp(): void
     {
-        $this->parameterBag = $this->createMock(ParameterBagInterface::class);
+        $this->parameterBag = self::createStub(ParameterBagInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
     }
 
@@ -551,7 +554,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Use reflection to inject a mock ldap
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')
             ->willThrowException(new LdapException(null, 'Invalid credentials'));
 
@@ -579,7 +582,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Inject mock Ldap that fails
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')
             ->willThrowException(new LdapException(null, 'Auth failed'));
 
@@ -596,7 +599,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Inject mock Ldap that fails on bind
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')
             ->willThrowException(new LdapException(null, 'Connection failed'));
 
@@ -615,11 +618,11 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Create a mock search result
-        $mockResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $mockResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $mockResult->method('count')->willReturn(0);
 
         // Inject mock Ldap
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')->willReturn($mockResult);
 
@@ -638,11 +641,11 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Create a mock search result that returns no user
-        $mockResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $mockResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $mockResult->method('count')->willReturn(0);
 
         // Inject mock Ldap
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')->willReturn($mockResult);
         $mockLdap->method('disconnect');
@@ -718,7 +721,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Inject mock Ldap that throws on search
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')
             ->willThrowException(new LdapException(null, 'Search failed'));
@@ -743,7 +746,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Create mock result that returns one user
-        $mockResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $mockResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $mockResult->method('count')->willReturn(1);
         $mockResult->method('current')->willReturn([
             'dn' => 'sAMAccountName=jdoe,dc=example,dc=com',
@@ -753,7 +756,7 @@ final class ModernLdapServiceTest extends TestCase
             'sn' => ['Doe'],
         ]);
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')->willReturn($mockResult);
         $mockLdap->method('disconnect');
@@ -801,7 +804,7 @@ final class ModernLdapServiceTest extends TestCase
         // Use ArrayObject which implements IteratorAggregate
         $mockResult = new ArrayObject($userEntries);
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')->willReturn($mockResult);
         $mockLdap->method('disconnect');
@@ -827,7 +830,7 @@ final class ModernLdapServiceTest extends TestCase
 
         $service = $this->createService();
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')
             ->willThrowException(new LdapException(null, 'Search error'));
@@ -853,10 +856,10 @@ final class ModernLdapServiceTest extends TestCase
 
         $service = $this->createService();
 
-        $mockResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $mockResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $mockResult->method('count')->willReturn(1);
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')->willReturn($mockResult);
         $mockLdap->method('disconnect');
@@ -875,10 +878,10 @@ final class ModernLdapServiceTest extends TestCase
         $this->configureDefaultParams();
         $service = $this->createService();
 
-        $mockResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $mockResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $mockResult->method('count')->willReturn(0);
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')->willReturn($mockResult);
         $mockLdap->method('disconnect');
@@ -905,14 +908,14 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // First call to findUser returns user with DN
-        $findUserResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $findUserResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $findUserResult->method('count')->willReturn(1);
         $findUserResult->method('current')->willReturn([
             'dn' => 'cn=test,dc=example,dc=com',
             'sAMAccountName' => ['testuser'],
         ]);
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')
             ->willReturnOnConsecutiveCalls(
@@ -935,7 +938,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // First call to findUser returns user with DN
-        $findUserResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $findUserResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $findUserResult->method('count')->willReturn(1);
         $findUserResult->method('current')->willReturn([
             'dn' => 'cn=testuser,dc=example,dc=com',
@@ -956,7 +959,7 @@ final class ModernLdapServiceTest extends TestCase
 
         $groupsResult = new ArrayObject($groupEntries);
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')
             ->willReturnOnConsecutiveCalls($findUserResult, $groupsResult);
@@ -983,10 +986,10 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         // Create a mock search result that returns no user
-        $mockResult = $this->createMock(\Laminas\Ldap\Collection\DefaultIterator::class);
+        $mockResult = self::createStub(\Laminas\Ldap\Collection\DefaultIterator::class);
         $mockResult->method('count')->willReturn(0);
 
-        $mockLdap = $this->createMock(Ldap::class);
+        $mockLdap = self::createStub(Ldap::class);
         $mockLdap->method('bind')->willReturn($mockLdap);
         $mockLdap->method('search')->willReturn($mockResult);
         $mockLdap->method('disconnect');
