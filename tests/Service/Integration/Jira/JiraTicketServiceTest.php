@@ -106,7 +106,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->createTicket($entry);
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame('PROJ-123', $result->key);
     }
 
@@ -252,7 +251,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->searchTickets('project = TEST AND status = Open', [], 10);
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame(0, $result->total);
     }
 
@@ -326,7 +324,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->getTicket('TEST-123');
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame('TEST-123', $result->key);
     }
 
@@ -387,7 +384,6 @@ final class JiraTicketServiceTest extends TestCase
 
         $result = $this->service->addComment('TEST-123', 'This is a comment');
 
-        self::assertInstanceOf(stdClass::class, $result);
         self::assertSame('10001', $result->id);
     }
 

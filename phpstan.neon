@@ -34,19 +34,6 @@ parameters:
         # Temporarily ignore some strict issues until they can be fixed
         - identifier: missingType.generics
 
-        # PHPUnit 13 + phpstan-phpunit stubs flag the `->method('x')->with(...)`
-        # idiom (deprecated since PHPUnit 12.5.11, removed in PHPUnit 14) as
-        # `InvocationStubber::with()` not found and the chained `willReturn()`
-        # as a call on mixed. The pattern still works at runtime under PHPUnit 13;
-        # we'll migrate ~143 occurrences to `->expects(...)->method(...)->with(...)`
-        # in a dedicated test-modernization PR before bumping to PHPUnit 14.
-        -
-            message: '#^Call to an undefined method PHPUnit\\Framework\\MockObject\\InvocationStubber::with\(\)\.$#'
-            path: tests/
-        -
-            message: '#^Cannot call method willReturn\(\) on mixed\.$#'
-            path: tests/
-
     reportUnmatchedIgnoredErrors: true
 
     # Parallel processing for better performance

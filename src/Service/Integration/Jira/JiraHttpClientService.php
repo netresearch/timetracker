@@ -347,7 +347,7 @@ class JiraHttpClientService
      */
     private function getOAuthConsumerKey(): string
     {
-        return $this->ticketSystem->getLogin() ?? '';
+        return $this->ticketSystem->getLogin();
     }
 
     /**
