@@ -25,7 +25,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -38,18 +38,18 @@ jobs:
             type=sha
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push production image
-        uses: docker/bake-action@a66e1c87e2eca0503c343edf1d208c716d54b8a8 # v7.1.0
+        uses: docker/bake-action@6614cfa25eff9a0b2b2697efb0b6159e7680d584 # v7.2.0
         with:
           source: .
           targets: app
@@ -63,7 +63,7 @@ jobs:
             *.cache-to=type=gha,mode=max
 
       - name: Build and push E2E image
-        uses: docker/bake-action@a66e1c87e2eca0503c343edf1d208c716d54b8a8 # v7.1.0
+        uses: docker/bake-action@6614cfa25eff9a0b2b2697efb0b6159e7680d584 # v7.2.0
         with:
           source: .
           targets: app-e2e
