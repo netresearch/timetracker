@@ -28,6 +28,13 @@ use function sprintf;
  */
 class JiraTicketService
 {
+    /**
+     * Jira REST resource path for a single issue.
+     */
+    private const string ISSUE_URL_TEMPLATE = 'issue/%s';
+
+    private const string ERROR_EMPTY_TICKET_KEY = 'Ticket key cannot be empty';
+
     public function __construct(
         private readonly JiraHttpClientService $jiraHttpClientService,
     ) {
@@ -126,7 +133,7 @@ class JiraTicketService
         }
 
         try {
-            $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
+            $this->jiraHttpClientService->get(sprintf(self::ISSUE_URL_TEMPLATE, $ticketKey));
 
             return true;
         } catch (JiraApiException) {
@@ -148,7 +155,7 @@ class JiraTicketService
         }
 
         try {
-            $response = $this->jiraHttpClientService->get(sprintf('issue/%s', $ticketKey));
+            $response = $this->jiraHttpClientService->get(sprintf(self::ISSUE_URL_TEMPLATE, $ticketKey));
 
             if (!is_object($response)) {
                 return [];
@@ -191,10 +198,10 @@ class JiraTicketService
     public function getTicket(string $ticketKey, array $fields = []): stdClass
     {
         if ('' === $ticketKey) {
-            throw new JiraApiException('Ticket key cannot be empty', 400);
+            throw new JiraApiException(self::ERROR_EMPTY_TICKET_KEY, 400);
         }
 
-        $url = sprintf('issue/%s', $ticketKey);
+        $url = sprintf(self::ISSUE_URL_TEMPLATE, $ticketKey);
 
         if ([] !== $fields) {
             $url .= '?fields=' . implode(',', $fields);
@@ -202,7 +209,7 @@ class JiraTicketService
 
         return $this->ensureObjectResponse(
             $this->jiraHttpClientService->get($url),
-            sprintf('issue/%s', $ticketKey),
+            sprintf(self::ISSUE_URL_TEMPLATE, $ticketKey),
         );
     }
 
@@ -220,11 +227,11 @@ class JiraTicketService
     public function updateTicket(string $ticketKey, array $updateData): stdClass
     {
         if ('' === $ticketKey) {
-            throw new JiraApiException('Ticket key cannot be empty', 400);
+            throw new JiraApiException(self::ERROR_EMPTY_TICKET_KEY, 400);
         }
 
         return $this->ensureObjectResponse(
-            $this->jiraHttpClientService->put(sprintf('issue/%s', $ticketKey), $updateData),
+            $this->jiraHttpClientService->put(sprintf(self::ISSUE_URL_TEMPLATE, $ticketKey), $updateData),
             sprintf('issue/%s update', $ticketKey),
         );
     }
@@ -241,7 +248,7 @@ class JiraTicketService
     public function addComment(string $ticketKey, string $comment): stdClass
     {
         if ('' === $ticketKey) {
-            throw new JiraApiException('Ticket key cannot be empty', 400);
+            throw new JiraApiException(self::ERROR_EMPTY_TICKET_KEY, 400);
         }
 
         if ('' === $comment) {
@@ -316,7 +323,7 @@ class JiraTicketService
     public function transitionTicket(string $ticketKey, string $transitionId, array $fields = []): void
     {
         if ('' === $ticketKey) {
-            throw new JiraApiException('Ticket key cannot be empty', 400);
+            throw new JiraApiException(self::ERROR_EMPTY_TICKET_KEY, 400);
         }
 
         if ('' === $transitionId) {

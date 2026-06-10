@@ -38,6 +38,8 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function sprintf;
+
 use const E_USER_DEPRECATED;
 
 /**
@@ -77,6 +79,14 @@ class BaseController extends AbstractController
     }
 
     /**
+     * Triggers a deprecation notice for the given method.
+     */
+    private function triggerMethodDeprecation(string $method, string $advice): void
+    {
+        @trigger_error(sprintf('Method %s is deprecated, %s', $method, $advice), E_USER_DEPRECATED);
+    }
+
+    /**
      * Check if user is logged in using Symfony Security.
      *
      * @throws Exception
@@ -84,7 +94,7 @@ class BaseController extends AbstractController
     #[Deprecated(message: "Use isGranted('IS_AUTHENTICATED_FULLY') directly")]
     protected function isLoggedIn(Request $request): bool
     {
-        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use isGranted(\'IS_AUTHENTICATED_FULLY\') directly', E_USER_DEPRECATED);
+        $this->triggerMethodDeprecation(__METHOD__, "use isGranted('IS_AUTHENTICATED_FULLY') directly");
 
         return $this->isGranted('IS_AUTHENTICATED_FULLY');
     }
@@ -131,7 +141,7 @@ class BaseController extends AbstractController
     #[Deprecated(message: 'Use Security expressions with #[Security] attribute instead')]
     protected function hasUserType(Request $request, UserType $userType): bool
     {
-        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with expressions instead', E_USER_DEPRECATED);
+        $this->triggerMethodDeprecation(__METHOD__, 'use #[Security] attribute with expressions instead');
 
         $currentUser = $this->getUser();
         if ($currentUser instanceof User) {
@@ -147,7 +157,7 @@ class BaseController extends AbstractController
     #[Deprecated(message: "Use #[Security(\"is_granted('ROLE_ADMIN') or (is_granted('ROLE_USER') and user.getType() == 'PL')\")] instead")]
     protected function isPl(Request $request): bool
     {
-        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with user type check instead', E_USER_DEPRECATED);
+        $this->triggerMethodDeprecation(__METHOD__, 'use #[Security] attribute with user type check instead');
 
         return $this->hasUserType($request, UserType::PL);
     }
@@ -158,7 +168,7 @@ class BaseController extends AbstractController
     #[Deprecated(message: "Use #[Security(\"is_granted('ROLE_USER') and user.getType() == 'DEV')\")] instead")]
     protected function isDEV(Request $request): bool
     {
-        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use #[Security] attribute with user type check instead', E_USER_DEPRECATED);
+        $this->triggerMethodDeprecation(__METHOD__, 'use #[Security] attribute with user type check instead');
 
         return $this->hasUserType($request, UserType::DEV);
     }
@@ -179,7 +189,7 @@ class BaseController extends AbstractController
     #[Deprecated(message: "Use isGranted('IS_AUTHENTICATED_FULLY') directly")]
     protected function checkLogin(Request $request): bool
     {
-        @trigger_error('Method ' . __METHOD__ . ' is deprecated, use isGranted(\'IS_AUTHENTICATED_FULLY\') directly', E_USER_DEPRECATED);
+        $this->triggerMethodDeprecation(__METHOD__, "use isGranted('IS_AUTHENTICATED_FULLY') directly");
 
         return $this->isGranted('IS_AUTHENTICATED_FULLY');
     }

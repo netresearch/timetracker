@@ -24,6 +24,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[Map(target: Entry::class)]
 final readonly class EntrySaveDto
 {
+    private const string FORMAT_ISO_DATETIME = 'Y-m-d\TH:i:s';
+
     public function __construct(
         public ?int $id = null,
         #[Assert\NotBlank(message: 'Date is required')]
@@ -94,7 +96,7 @@ final readonly class EntrySaveDto
         }
 
         // Try ISO 8601 format first (from ExtJS: 2026-01-14T00:00:00)
-        $date = DateTime::createFromFormat('Y-m-d\TH:i:s', $this->date);
+        $date = DateTime::createFromFormat(self::FORMAT_ISO_DATETIME, $this->date);
         if (false !== $date) {
             return $date;
         }
@@ -124,7 +126,7 @@ final readonly class EntrySaveDto
         }
 
         // Try ISO 8601 format first (from ExtJS: 2026-01-14T08:00:00)
-        $time = DateTime::createFromFormat('Y-m-d\TH:i:s', $this->start);
+        $time = DateTime::createFromFormat(self::FORMAT_ISO_DATETIME, $this->start);
         if (false !== $time) {
             return $time;
         }
@@ -160,7 +162,7 @@ final readonly class EntrySaveDto
         }
 
         // Try ISO 8601 format first (from ExtJS: 2026-01-14T16:00:00)
-        $time = DateTime::createFromFormat('Y-m-d\TH:i:s', $this->end);
+        $time = DateTime::createFromFormat(self::FORMAT_ISO_DATETIME, $this->end);
         if (false !== $time) {
             return $time;
         }

@@ -42,6 +42,22 @@ use function sprintf;
  */
 class EntryRepository extends ServiceEntityRepository
 {
+    private const string WHERE_USER = 'e.user = :user';
+
+    private const string WHERE_DAY = 'e.day = :day';
+
+    private const string WHERE_ACTIVITY = 'e.activity = :activity';
+
+    private const string WHERE_PROJECT = 'e.project = :project';
+
+    private const string WHERE_CUSTOMER = 'e.customer = :customer';
+
+    private const string WHERE_DAY_UNTIL_END_OF_MONTH = 'e.day <= :endOfMonth';
+
+    private const string WHERE_FIELD_TEMPLATE = 'e.%s = :%s';
+
+    private const string FIELD_PLACEHOLDER = '{field}';
+
     public function __construct(
         ManagerRegistry $registry,
         private readonly TimeCalculationService $timeCalculationService,
@@ -68,8 +84,8 @@ class EntryRepository extends ServiceEntityRepository
     public function getEntriesForDay(User $user, string $day): array
     {
         $result = $this->createQueryBuilder('e')
-            ->where('e.user = :user')
-            ->andWhere('e.day = :day')
+            ->where(self::WHERE_USER)
+            ->andWhere(self::WHERE_DAY)
             ->setParameter('user', $user)
             ->setParameter('day', $day)
             ->getQuery()
@@ -89,7 +105,7 @@ class EntryRepository extends ServiceEntityRepository
     public function getEntriesForMonth(User $user, string $startDate, string $endDate): array
     {
         $result = $this->createQueryBuilder('e')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->andWhere('e.day >= :startDate')
             ->andWhere('e.day <= :endDate')
             ->setParameter('user', $user)
@@ -113,7 +129,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         return (int) $this->createQueryBuilder('e')
             ->select('COUNT(e.id)')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->setParameter('user', $user)
             ->getQuery()
             ->getSingleScalarResult();
@@ -126,7 +142,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $this->createQueryBuilder('e')
             ->delete()
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->setParameter('user', $user)
             ->getQuery()
             ->execute();
@@ -139,7 +155,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $this->createQueryBuilder('e')
             ->delete()
-            ->where('e.activity = :activity')
+            ->where(self::WHERE_ACTIVITY)
             ->setParameter('activity', $activity)
             ->getQuery()
             ->execute();
@@ -152,7 +168,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $this->createQueryBuilder('e')
             ->delete()
-            ->where('e.project = :project')
+            ->where(self::WHERE_PROJECT)
             ->setParameter('project', $project)
             ->getQuery()
             ->execute();
@@ -165,7 +181,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $this->createQueryBuilder('e')
             ->delete()
-            ->where('e.customer = :customer')
+            ->where(self::WHERE_CUSTOMER)
             ->setParameter('customer', $customer)
             ->getQuery()
             ->execute();
@@ -185,7 +201,7 @@ class EntryRepository extends ServiceEntityRepository
             ->leftJoin('e.activity', 'a');
 
         foreach ($conditions as $field => $value) {
-            $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
+            $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
                 ->setParameter($field, $value);
         }
 
@@ -228,7 +244,7 @@ class EntryRepository extends ServiceEntityRepository
             ->select('SUM(e.duration)');
 
         foreach ($conditions as $field => $value) {
-            $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
+            $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
                 ->setParameter($field, $value);
         }
 
@@ -246,7 +262,7 @@ class EntryRepository extends ServiceEntityRepository
             ->select('1');
 
         foreach ($conditions as $field => $value) {
-            $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
+            $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
                 ->setParameter($field, $value);
         }
 
@@ -368,8 +384,8 @@ class EntryRepository extends ServiceEntityRepository
 
         // Get database-agnostic date/time formatting functions
         $formats = $this->getDateTimeFormats();
-        $startTimeFormat = str_replace('{field}', 'start', $formats['timeFormat']);
-        $endTimeFormat = str_replace('{field}', 'end', $formats['timeFormat']);
+        $startTimeFormat = str_replace(self::FIELD_PLACEHOLDER, 'start', $formats['timeFormat']);
+        $endTimeFormat = str_replace(self::FIELD_PLACEHOLDER, 'end', $formats['timeFormat']);
 
         $sql = [];
         $sql['select'] = "SELECT e.id,
@@ -452,7 +468,7 @@ class EntryRepository extends ServiceEntityRepository
                     $queryBuilder->andWhere(sprintf('e.%s %s :%s', $fieldName, $operator, $field))
                         ->setParameter($field, $value);
                 } else {
-                    $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
+                    $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
                         ->setParameter($field, $value);
                 }
             }
@@ -512,7 +528,7 @@ class EntryRepository extends ServiceEntityRepository
                     $queryBuilder->andWhere(sprintf('e.%s %s :%s', $fieldName, $operator, $field))
                         ->setParameter($field, $value);
                 } else {
-                    $queryBuilder->andWhere(sprintf('e.%s = :%s', $field, $field))
+                    $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
                         ->setParameter($field, $value);
                 }
             }
@@ -567,7 +583,7 @@ class EntryRepository extends ServiceEntityRepository
             throw new InvalidArgumentException('Invalid period: ' . $period);
         }
 
-        $groupByFunction = str_replace('{field}', 'e.day', $periodFunctions[$period]);
+        $groupByFunction = str_replace(self::FIELD_PLACEHOLDER, 'e.day', $periodFunctions[$period]);
 
         $sql = "SELECT {$groupByFunction} as period_value,
                        SUM(e.duration) as total_duration,
@@ -652,7 +668,7 @@ class EntryRepository extends ServiceEntityRepository
         // Apply filters
         if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
             if (is_object($arFilter['customer'])) {
-                $queryBuilder->andWhere('e.customer = :customer')
+                $queryBuilder->andWhere(self::WHERE_CUSTOMER)
                     ->setParameter('customer', $arFilter['customer']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.customer) = :customer')
@@ -662,7 +678,7 @@ class EntryRepository extends ServiceEntityRepository
 
         if (isset($arFilter['project']) && '' !== $arFilter['project']) {
             if (is_object($arFilter['project'])) {
-                $queryBuilder->andWhere('e.project = :project')
+                $queryBuilder->andWhere(self::WHERE_PROJECT)
                     ->setParameter('project', $arFilter['project']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.project) = :project')
@@ -672,7 +688,7 @@ class EntryRepository extends ServiceEntityRepository
 
         if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
             if (is_object($arFilter['activity'])) {
-                $queryBuilder->andWhere('e.activity = :activity')
+                $queryBuilder->andWhere(self::WHERE_ACTIVITY)
                     ->setParameter('activity', $arFilter['activity']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.activity) = :activity')
@@ -682,7 +698,7 @@ class EntryRepository extends ServiceEntityRepository
 
         if (isset($arFilter['user']) && '' !== $arFilter['user']) {
             if (is_object($arFilter['user'])) {
-                $queryBuilder->andWhere('e.user = :user')
+                $queryBuilder->andWhere(self::WHERE_USER)
                     ->setParameter('user', $arFilter['user']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.user) = :user')
@@ -732,8 +748,8 @@ class EntryRepository extends ServiceEntityRepository
         ?int $excludeId = null,
     ): array {
         $queryBuilder = $this->createQueryBuilder('e')
-            ->where('e.user = :user')
-            ->andWhere('e.day = :day')
+            ->where(self::WHERE_USER)
+            ->andWhere(self::WHERE_DAY)
             ->andWhere('(
                 (e.start <= :start AND e.end > :start) OR
                 (e.start < :end AND e.end >= :end) OR
@@ -770,7 +786,7 @@ class EntryRepository extends ServiceEntityRepository
             ->leftJoin('e.project', 'p')
             ->leftJoin('e.activity', 'a')
 
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->setParameter('user', $user)
             ->orderBy('e.day', 'ASC')
             ->addOrderBy('e.start', 'ASC');
@@ -821,7 +837,7 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('endOfYear', $endOfYear);
 
         if (0 !== $user) {
-            $queryBuilder->andWhere('e.user = :user')
+            $queryBuilder->andWhere(self::WHERE_USER)
                 ->setParameter('user', $user);
         }
 
@@ -831,18 +847,18 @@ class EntryRepository extends ServiceEntityRepository
             $lastDay = (int) (new DateTime(sprintf('%d-%d-01', $year, $month))->format('t'));
             $endOfMonth = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
             $queryBuilder->andWhere('e.day >= :startOfMonth')
-                ->andWhere('e.day <= :endOfMonth')
+                ->andWhere(self::WHERE_DAY_UNTIL_END_OF_MONTH)
                 ->setParameter('startOfMonth', $startOfMonth)
                 ->setParameter('endOfMonth', $endOfMonth);
         }
 
         if (null !== $project) {
-            $queryBuilder->andWhere('e.project = :project')
+            $queryBuilder->andWhere(self::WHERE_PROJECT)
                 ->setParameter('project', $project);
         }
 
         if (null !== $customer) {
-            $queryBuilder->andWhere('e.customer = :customer')
+            $queryBuilder->andWhere(self::WHERE_CUSTOMER)
                 ->setParameter('customer', $customer);
         }
 
@@ -907,7 +923,7 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('endOfYear', $endOfYear);
 
         if (0 !== $user) {
-            $queryBuilder->andWhere('e.user = :user')
+            $queryBuilder->andWhere(self::WHERE_USER)
                 ->setParameter('user', $user);
         }
 
@@ -917,18 +933,18 @@ class EntryRepository extends ServiceEntityRepository
             $lastDay = (int) (new DateTime(sprintf('%d-%d-01', $year, $month))->format('t'));
             $endOfMonth = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
             $queryBuilder->andWhere('e.day >= :startOfMonth')
-                ->andWhere('e.day <= :endOfMonth')
+                ->andWhere(self::WHERE_DAY_UNTIL_END_OF_MONTH)
                 ->setParameter('startOfMonth', $startOfMonth)
                 ->setParameter('endOfMonth', $endOfMonth);
         }
 
         if (null !== $project) {
-            $queryBuilder->andWhere('e.project = :project')
+            $queryBuilder->andWhere(self::WHERE_PROJECT)
                 ->setParameter('project', $project);
         }
 
         if (null !== $customer) {
-            $queryBuilder->andWhere('e.customer = :customer')
+            $queryBuilder->andWhere(self::WHERE_CUSTOMER)
                 ->setParameter('customer', $customer);
         }
 
@@ -979,7 +995,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, COALESCE(SUM(e.duration), 0) as duration')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->setParameter('user', $userId);
 
         $this->applyPeriodFilter($queryBuilder, $period);
@@ -1136,7 +1152,7 @@ class EntryRepository extends ServiceEntityRepository
                 $endOfMonth = $today->format('Y-m-') . $lastDay;
 
                 $queryBuilder->andWhere('e.day >= :startOfMonth')
-                    ->andWhere('e.day <= :endOfMonth')
+                    ->andWhere(self::WHERE_DAY_UNTIL_END_OF_MONTH)
                     ->setParameter('startOfMonth', $startOfMonth)
                     ->setParameter('endOfMonth', $endOfMonth);
                 break;
@@ -1153,7 +1169,7 @@ class EntryRepository extends ServiceEntityRepository
         $fromDate = $this->calculateFromDate($days);
 
         $result = $this->findEntriesWithRelations()
-            ->andWhere('e.user = :user')
+            ->andWhere(self::WHERE_USER)
             ->andWhere('e.day >= :fromDate')
             ->setParameter('user', $user)
             ->setParameter('fromDate', $fromDate->format('Y-m-d'))
@@ -1353,7 +1369,7 @@ class EntryRepository extends ServiceEntityRepository
             ->leftJoin('e.project', 'p')
             ->leftJoin('e.activity', 'a')
             ->where('e.user = :userId')
-            ->andWhere('e.day = :day')
+            ->andWhere(self::WHERE_DAY)
             ->setParameter('userId', $userId)
             ->setParameter('day', $day)
             ->orderBy('e.start', 'ASC')
@@ -1395,23 +1411,23 @@ class EntryRepository extends ServiceEntityRepository
 
         // Apply filters similar to queryByFilterArray but return results directly
         if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
-            $queryBuilder->andWhere('e.customer = :customer')
+            $queryBuilder->andWhere(self::WHERE_CUSTOMER)
                 ->setParameter('customer', $arFilter['customer']);
         }
 
         if (isset($arFilter['project']) && '' !== $arFilter['project']) {
-            $queryBuilder->andWhere('e.project = :project')
+            $queryBuilder->andWhere(self::WHERE_PROJECT)
                 ->setParameter('project', $arFilter['project']);
         }
 
         if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
-            $queryBuilder->andWhere('e.activity = :activity')
+            $queryBuilder->andWhere(self::WHERE_ACTIVITY)
                 ->setParameter('activity', $arFilter['activity']);
         }
 
         if (isset($arFilter['user']) && '' !== $arFilter['user']) {
             if (is_object($arFilter['user'])) {
-                $queryBuilder->andWhere('e.user = :user')
+                $queryBuilder->andWhere(self::WHERE_USER)
                     ->setParameter('user', $arFilter['user']);
             } else {
                 $queryBuilder->andWhere('IDENTITY(e.user) = :user')

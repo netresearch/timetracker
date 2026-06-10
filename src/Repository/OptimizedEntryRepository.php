@@ -45,6 +45,8 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
     private const int CACHE_TTL = 300;
 
+    private const string WHERE_USER = 'e.user = :user';
+
     public function __construct(
         ManagerRegistry $managerRegistry,
         private readonly ClockInterface $clock,
@@ -72,7 +74,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         $fromDate = $this->calculateFromDate($days);
 
         $queryBuilder = $this->createOptimizedQueryBuilder('e')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->andWhere('e.day >= :fromDate')
             ->setParameter('user', $user)
             ->setParameter('fromDate', $fromDate)
@@ -104,7 +106,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
         ?array $arSort = null,
     ): array {
         $queryBuilder = $this->createOptimizedQueryBuilder('e')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->andWhere($this->generateYearExpression('e.day') . ' = :year')
             ->setParameter('user', $userId)
             ->setParameter('year', $year);
@@ -232,7 +234,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         $queryBuilder = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, SUM(e.duration) as duration')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->setParameter('user', $userId);
 
         $this->applyPeriodFilter($queryBuilder, $period);
@@ -279,7 +281,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
 
         // Apply filters with index-aware ordering
         if (isset($filter['user_id'])) {
-            $queryBuilder->andWhere('e.user = :user')
+            $queryBuilder->andWhere(self::WHERE_USER)
                 ->setParameter('user', $filter['user_id']);
         }
 

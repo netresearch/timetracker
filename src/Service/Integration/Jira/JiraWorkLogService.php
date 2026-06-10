@@ -33,6 +33,11 @@ use function sprintf;
  */
 class JiraWorkLogService
 {
+    /**
+     * Jira REST resource path for a single work log of an issue.
+     */
+    public const string WORKLOG_ITEM_URL_TEMPLATE = 'issue/%s/worklog/%d';
+
     public function __construct(
         private readonly ManagerRegistry $managerRegistry,
         private readonly JiraHttpClientService $jiraHttpClientService,
@@ -203,7 +208,7 @@ class JiraWorkLogService
         }
 
         try {
-            $this->jiraHttpClientService->delete(sprintf('issue/%s/worklog/%d', $ticket, $workLogId));
+            $this->jiraHttpClientService->delete(sprintf(self::WORKLOG_ITEM_URL_TEMPLATE, $ticket, $workLogId));
             $entry->setWorklogId(null);
             $entry->setSyncedToTicketsystem(false);
         } catch (JiraApiInvalidResourceException) {
@@ -219,7 +224,7 @@ class JiraWorkLogService
     private function doesWorkLogExist(string $ticket, int $workLogId): bool
     {
         return $this->jiraHttpClientService->doesResourceExist(
-            sprintf('issue/%s/worklog/%d', $ticket, $workLogId),
+            sprintf(self::WORKLOG_ITEM_URL_TEMPLATE, $ticket, $workLogId),
         );
     }
 
@@ -253,7 +258,7 @@ class JiraWorkLogService
     private function updateWorkLog(string $ticket, int $workLogId, JiraWorkLogPayloadDto $payload): object
     {
         $response = $this->jiraHttpClientService->put(
-            sprintf('issue/%s/worklog/%d', $ticket, $workLogId),
+            sprintf(self::WORKLOG_ITEM_URL_TEMPLATE, $ticket, $workLogId),
             $payload->toArray(),
         );
 
