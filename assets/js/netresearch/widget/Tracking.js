@@ -826,7 +826,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     record.dirty = true;
                     var parsed = showAjaxFailure(grid._errorTitle, response, grid._seriousErrorTitle, 200);
                     if (parsed?.data?.forwardUrl !== undefined) {
-                        setTimeout("window.location.href = '" + parsed.data.forwardUrl + "'", 2000);
+                        setTimeout(() => { globalThis.location.href = parsed.data.forwardUrl; }, 2000);
                     }
                 }
             });
@@ -1103,7 +1103,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 const data = Ext.decode(response.responseText);
                 showNotification(grid._errorTitle, data.message, false);
                 if (data.forwardUrl !== undefined) {
-                    setTimeout("window.location.href = '" + data.forwardUrl + "'", 2000);
+                    setTimeout(() => { globalThis.location.href = data.forwardUrl; }, 2000);
                 }
             }
         });
