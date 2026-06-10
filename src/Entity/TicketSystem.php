@@ -55,9 +55,9 @@ class TicketSystem extends Base
     protected $url;
 
     /**
-     * @var string $ticketUrl
+     * @var string|null $ticketUrl
      */
-    #[ORM\Column(name: 'ticketurl', type: 'string', length: 255, nullable: false)]
+    #[ORM\Column(name: 'ticketurl', type: 'string', length: 255, nullable: true)]
     protected $ticketUrl;
 
     /**
@@ -187,7 +187,7 @@ class TicketSystem extends Base
      *
      * @return $this
      */
-    public function setTicketUrl(string $ticketUrl): static
+    public function setTicketUrl(?string $ticketUrl): static
     {
         $this->ticketUrl = $ticketUrl;
 
@@ -196,10 +196,13 @@ class TicketSystem extends Base
 
     /**
      * Get url pointing to a ticket.
+     *
+     * The database column is nullable (legacy rows): normalize NULL to an
+     * empty string for the string-building callers.
      */
     public function getTicketUrl(): string
     {
-        return $this->ticketUrl;
+        return $this->ticketUrl ?? '';
     }
 
     /**
