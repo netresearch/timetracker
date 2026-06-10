@@ -106,7 +106,7 @@ function createTimeSummary(list, data) {
             getNewDiv(headline[i++], rowOne);
             getNewDiv('\xa0', rowtwo, true);
 
-            Object.keys(value[1]).forEach((key, index) => {
+            Object.keys(value[1]).forEach((key) => {
                 const content = value[1][key].time;
                 getNewDiv(key + ": ", rowOne, true);
                 getNewDiv(content, rowtwo, true);
@@ -140,7 +140,7 @@ function createLabJiraTimeSummay(list, data) {
             var newHeadline = createNewContent(headline[i++], '\xa0', cloneTitle);
             liEl.appendChild(newHeadline);
 
-            Object.keys(value[1]).forEach((key, index) => {
+            Object.keys(value[1]).forEach((key) => {
                 const content = value[1][key].time;
                 var newContent = createNewContent(key + ": ", content, cloneTitle);
                 newContent.style.marginTop = '0px';
