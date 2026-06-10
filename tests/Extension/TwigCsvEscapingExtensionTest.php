@@ -11,6 +11,7 @@ namespace Tests\Extension;
 
 use App\Extension\TwigCsvEscapingExtension;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -66,5 +67,40 @@ final class TwigCsvEscapingExtensionTest extends TestCase
     public function testCsvEscapeHandlesMultipleQuotesInSequence(): void
     {
         self::assertSame('a""""b', $this->extension->csvEscape('a""b'));
+    }
+
+    // ==================== formula injection tests ====================
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function provideFormulaTriggerCases(): array
+    {
+        return [
+            'equals sign' => ['=1+2', "'=1+2"],
+            'plus sign' => ['+SUM(A1:A2)', "'+SUM(A1:A2)"],
+            'minus sign' => ['-2+3', "'-2+3"],
+            'at sign' => ['@cmd', "'@cmd"],
+            'tab' => ["\t=1+2", "'\t=1+2"],
+            'carriage return' => ["\r=1+2", "'\r=1+2"],
+            'line feed' => ["\n=1+2", "'\n=1+2"],
+        ];
+    }
+
+    #[DataProvider('provideFormulaTriggerCases')]
+    public function testCsvEscapePrefixesFormulaTriggerCharacters(string $input, string $expected): void
+    {
+        self::assertSame($expected, $this->extension->csvEscape($input));
+    }
+
+    public function testCsvEscapeCombinesFormulaPrefixWithQuoteDoubling(): void
+    {
+        self::assertSame("'=HYPERLINK(\"\"https://evil.example\"\")", $this->extension->csvEscape('=HYPERLINK("https://evil.example")'));
+    }
+
+    public function testCsvEscapeLeavesFormulaCharactersInsideStringUnchanged(): void
+    {
+        self::assertSame('a=b', $this->extension->csvEscape('a=b'));
+        self::assertSame('1 + 2', $this->extension->csvEscape('1 + 2'));
     }
 }
