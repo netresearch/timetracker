@@ -615,6 +615,32 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertSame('DHLSUP-123456', $entry->getInternalJiraTicketOriginalKey());
     }
 
+    public function testInternalTicketSystemMalformedJiraResponseIsCaughtAndLogged(): void
+    {
+        [$entry] = $this->createInternalProjectEntry('DHLSUP-8');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        // malformed response: issue without a usable key
+        $this->jiraOAuthApiService->method('searchTicket')
+            ->willReturn((object) ['issues' => [(object) ['key' => '']]]);
+
+        $this->jiraOAuthApiService->expects(self::never())
+            ->method('updateEntryJiraWorkLog');
+
+        $this->logger->expects(self::once())
+            ->method('error')
+            ->with('Auto-sync to JIRA failed', self::anything());
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryCreated($event);
+
+        // entry stays unmapped
+        self::assertSame('DHLSUP-8', $entry->getTicket());
+        self::assertNull($entry->getInternalJiraTicketOriginalKey());
+    }
+
     public function testInternalTicketSystemSkippedWhenInternalSystemNotBookable(): void
     {
         $internalTicketSystem = self::createStub(TicketSystem::class);
