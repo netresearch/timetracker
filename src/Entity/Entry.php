@@ -542,9 +542,7 @@ class Entry extends Base
      */
     public function addClass(EntryClass $entryClass): static
     {
-        $this->class = $entryClass;
-
-        return $this;
+        return $this->setClass($entryClass);
     }
 
     /**

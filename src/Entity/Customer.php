@@ -172,13 +172,13 @@ class Customer extends Base
     /**
      * Add projects.
      *
+     * Legacy alias kept for backward compatibility; delegates to addProject().
+     *
      * @return $this
      */
     public function addProjects(Project $project): static
     {
-        $this->projects[] = $project;
-
-        return $this;
+        return $this->addProject($project);
     }
 
     /**
@@ -237,6 +237,8 @@ class Customer extends Base
 
     /**
      * Add projects.
+     *
+     * @return $this
      */
     public function addProject(Project $project): static
     {
