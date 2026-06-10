@@ -53,6 +53,8 @@ final readonly class EntrySaveDto
         public ?int $customer = null,
         #[Assert\Positive(message: 'Activity ID must be positive')]
         public ?int $activity = null,
+        #[Assert\Length(max: 50, maxMessage: 'Ticket cannot be longer than 50 characters')]
+        #[Assert\Regex(pattern: '/^[A-Z0-9\-_]*$/i', message: 'Invalid ticket format')]
         public string $extTicket = '',
     ) {
     }
