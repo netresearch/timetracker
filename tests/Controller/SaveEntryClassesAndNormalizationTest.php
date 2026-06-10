@@ -24,6 +24,9 @@ use Tests\AbstractWebTestCase;
  */
 final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
 {
+    private const string NINE = '09:00:00';
+    private const string TEN = '10:00:00';
+
     /**
      * @param array<string, string|int> $overrides
      *
@@ -60,7 +63,7 @@ final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $result = $this->saveEntry($this->saveParameters(['start' => '09:00:00', 'end' => '10:00:00']));
+        $result = $this->saveEntry($this->saveParameters(['start' => self::NINE, 'end' => self::TEN]));
 
         self::assertSame(EntryClass::DAYBREAK->value, $result['class']);
     }
@@ -69,8 +72,8 @@ final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $this->saveEntry($this->saveParameters(['start' => '09:00:00', 'end' => '10:00:00']));
-        $result = $this->saveEntry($this->saveParameters(['start' => '10:00:00', 'end' => '10:30:00']));
+        $this->saveEntry($this->saveParameters(['start' => self::NINE, 'end' => self::TEN]));
+        $result = $this->saveEntry($this->saveParameters(['start' => self::TEN, 'end' => '10:30:00']));
 
         self::assertSame(EntryClass::PLAIN->value, $result['class']);
     }
@@ -79,7 +82,7 @@ final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $this->saveEntry($this->saveParameters(['start' => '09:00:00', 'end' => '10:00:00']));
+        $this->saveEntry($this->saveParameters(['start' => self::NINE, 'end' => self::TEN]));
         $result = $this->saveEntry($this->saveParameters(['start' => '10:30:00', 'end' => '11:00:00']));
 
         self::assertSame(EntryClass::PAUSE->value, $result['class']);
@@ -89,7 +92,7 @@ final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $this->saveEntry($this->saveParameters(['start' => '09:00:00', 'end' => '10:00:00']));
+        $this->saveEntry($this->saveParameters(['start' => self::NINE, 'end' => self::TEN]));
         $result = $this->saveEntry($this->saveParameters(['start' => '09:30:00', 'end' => '10:30:00']));
 
         self::assertSame(EntryClass::OVERLAP->value, $result['class']);
@@ -102,8 +105,8 @@ final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
         // fixture project 1 has jira_id 'SA'; lower-case input must pass the
         // prefix validation and be stored normalized (v4 parity)
         $result = $this->saveEntry($this->saveParameters([
-            'start' => '09:00:00',
-            'end' => '10:00:00',
+            'start' => self::NINE,
+            'end' => self::TEN,
             'ticket' => 'sa-123',
         ]));
 
@@ -115,8 +118,8 @@ final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
         $this->logInSession('unittest');
 
         $result = $this->saveEntry($this->saveParameters([
-            'start' => '09:00:00',
-            'end' => '10:00:00',
+            'start' => self::NINE,
+            'end' => self::TEN,
             'ticket' => 'SA-77',
             'extTicket' => 'EXT-77',
         ]));

@@ -37,7 +37,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
+use function array_map;
 use function assert;
+use function in_array;
 use function sprintf;
 
 final class SaveEntryAction extends BaseTrackingController
@@ -316,16 +318,12 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $ticketPrefix = (string) $this->ticketService->getPrefix($ticket);
-        foreach (explode(',', $jiraId) as $allowedPrefix) {
-            if (trim($allowedPrefix) === $ticketPrefix) {
-                return null;
-            }
-        }
+        $allowedPrefixes = array_map(trim(...), explode(',', $jiraId));
+        $prefixMatches = in_array($ticketPrefix, $allowedPrefixes, true)
+            || $project->matchesInternalJiraProject($ticketPrefix);
 
-        if ($project->matchesInternalJiraProject($ticketPrefix)) {
-            return null;
-        }
-
-        return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
+        return $prefixMatches
+            ? null
+            : new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
     }
 }
