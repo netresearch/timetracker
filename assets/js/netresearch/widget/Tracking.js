@@ -1125,10 +1125,9 @@ Ext.define('Netresearch.widget.Tracking', {
      * and we do not want to get them with a hard page reload.
      */
     refreshHard: function () {
-        const tracking = this;
-        tracking.customerStore.reloadFromServer(function () {
-            tracking.projectStore.reloadFromServer(function () {
-                tracking.refresh();
+        this.customerStore.reloadFromServer(() => {
+            this.projectStore.reloadFromServer(() => {
+                this.refresh();
             });
         });
     },

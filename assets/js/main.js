@@ -214,7 +214,7 @@ Ext.onReady(function () {
     });
 
     /* Key bindings */
-    new Ext.util.KeyMap(Ext.get(document), [
+    Ext.get(document).addKeyMap({ binding: [
         {
             key: Ext.EventObject.A,
             alt: true,
@@ -312,7 +312,7 @@ Ext.onReady(function () {
             },
             defaultEventAction: 'stopEvent'
         }
-    ]);
+    ] });
 
     countTime();
     checkLoginStatus();

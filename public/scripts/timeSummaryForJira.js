@@ -187,13 +187,9 @@ function getTimeSummary() {
                 list.removeChild(list.lastChild);
             }
 
-            if (this.labJira) {
-                var newDiv = createLabJiraTimeSummay(list, data);
-            } else {
-
-                var newDiv = createTimeSummary(list, data);
-
-            }
+            const newDiv = this.labJira
+                ? createLabJiraTimeSummay(list, data)
+                : createTimeSummary(list, data);
             list.appendChild(newDiv);
             this.button.style.display = 'none';
         })
