@@ -298,7 +298,7 @@ Ext.define('Netresearch.widget.Tracking', {
                         if ((!ticket) || (ticket === "") || (ticket === "-")) {
                             return '-';
                         }
-                        const str = ticket.replaceAll(' ', '').toUpperCase();
+                        const str = ticket.replace(/ /g, '').toUpperCase();
                         const ticketUrl = this.getTicketsystemUrlByTicket(str);
                         return '<a href="' + ticketUrl + '" target="_new">' + str + '</a>';
                     }
@@ -412,10 +412,10 @@ Ext.define('Netresearch.widget.Tracking', {
                     },
                     renderer: function (text) {
                         text = new String('' + text);
-                        text = text.replaceAll('&', '&amp;')
-                            .replaceAll('<', '&lt;')
-                            .replaceAll('>', '&gt;')
-                            .replaceAll('"', '&quot;');
+                        text = text.replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;');
 
                         // replace valid ticketnames with links according to ticket_systems.ticketurl
                         const arr = text.match(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig) || [];
@@ -443,10 +443,10 @@ Ext.define('Netresearch.widget.Tracking', {
                         }
                         const text = new String('' + extTicket);
                         return text
-                            .replaceAll('&', '&amp;')
-                            .replaceAll('<', '&lt;')
-                            .replaceAll('>', '&gt;')
-                            .replaceAll('"', '&quot;')
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
                             .replace(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig, '<a href="https:\/\/bugs.nr/$1" target="_new">$1<\/a>');
                     }
                 }
@@ -782,7 +782,7 @@ Ext.define('Netresearch.widget.Tracking', {
             }
 
             // reformat ticket
-            record.data.ticket = record.data.ticket.replaceAll(' ', '').toUpperCase();
+            record.data.ticket = record.data.ticket.replace(/ /g, '').toUpperCase();
 
             // Normalize start/end times to use entry's date (timefield creates dates with wrong date portion)
             if (record.data.date && record.data.start instanceof Date) {
