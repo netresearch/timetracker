@@ -55,19 +55,19 @@ validate_environment() {
     
     # Check if Docker is running
     if ! docker info >/dev/null 2>&1; then
-        echo -e "${RED}Error: Docker is not running${NC}"
+        echo -e "${RED}Error: Docker is not running${NC}" >&2
         exit 1
     fi
     
     # Check if paratest.xml exists
-    if [ ! -f "config/testing/paratest.xml" ]; then
-        echo -e "${RED}Error: config/testing/paratest.xml configuration not found${NC}"
+    if [[ ! -f "config/testing/paratest.xml" ]]; then
+        echo -e "${RED}Error: config/testing/paratest.xml configuration not found${NC}" >&2
         exit 1
     fi
     
     # Check if test SQL files exist
-    if [ ! -f "sql/full.sql" ]; then
-        echo -e "${RED}Error: sql/full.sql not found${NC}"
+    if [[ ! -f "sql/full.sql" ]]; then
+        echo -e "${RED}Error: sql/full.sql not found${NC}" >&2
         exit 1
     fi
     
@@ -178,7 +178,7 @@ run_benchmark() {
     par_duration=$((par_end - par_start))
     
     # Calculate improvement
-    if [ $seq_duration -gt 0 ]; then
+    if [[ $seq_duration -gt 0 ]]; then
         improvement=$(echo "scale=1; ($seq_duration - $par_duration) * 100 / $seq_duration" | bc -l)
         speedup=$(echo "scale=2; $seq_duration / $par_duration" | bc -l)
     else
@@ -235,12 +235,12 @@ done
 # Main execution
 print_header
 
-if [ -z "$COMMAND" ]; then
+if [[ -z "$COMMAND" ]]; then
     print_usage
     exit 1
 fi
 
-if [ "$VERBOSE" = true ]; then
+if [[ "$VERBOSE" = true ]]; then
     set -x
 fi
 

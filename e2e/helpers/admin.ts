@@ -285,7 +285,7 @@ export async function clickAdminSaveButton(page: Page): Promise<void> {
   // Blur any focused element to close dropdowns
   await page.evaluate(() => {
     const activeElement = document.activeElement as HTMLElement;
-    if (activeElement && activeElement.blur) {
+    if (activeElement?.blur) {
       activeElement.blur();
     }
   });
@@ -299,7 +299,7 @@ export async function clickAdminSaveButton(page: Page): Promise<void> {
       if (text === 'Speichern' || text === 'Save') {
         const rect = btn.getBoundingClientRect();
         const clickEvent = new MouseEvent('click', {
-          view: window,
+          view: globalThis,
           bubbles: true,
           cancelable: true,
           clientX: rect.left + rect.width / 2,
@@ -345,7 +345,7 @@ export async function waitForAdminWindowClose(page: Page): Promise<void> {
       () => {
         const windows = document.querySelectorAll('.x-window');
         for (const w of windows) {
-          const style = window.getComputedStyle(w);
+          const style = globalThis.getComputedStyle(w);
           if (style.display !== 'none' && style.visibility !== 'hidden') {
             return false; // Still have a visible window
           }
@@ -433,7 +433,7 @@ export async function findAdminRowByText(page: Page, text: string): Promise<numb
 
   for (let i = 0; i < count; i++) {
     const rowText = await rows.nth(i).textContent();
-    if (rowText && rowText.includes(text)) {
+    if (rowText?.includes(text)) {
       return i;
     }
   }
@@ -505,7 +505,7 @@ export async function clickNativeSaveButton(page: Page): Promise<boolean> {
       if (text === 'Speichern' || text === 'Save') {
         const rect = btn.getBoundingClientRect();
         const clickEvent = new MouseEvent('click', {
-          view: window,
+          view: globalThis,
           bubbles: true,
           cancelable: true,
           clientX: rect.left + rect.width / 2,

@@ -46,8 +46,8 @@ async function getComboValue(page: import('@playwright/test').Page, name: string
     if (!input) return '';
     // Get the ExtJS component ID from the input's parent
     const field = input.closest('.x-field');
-    if (field && field.id) {
-      const cmp = (window as unknown as { Ext: { getCmp: (id: string) => { getValue: () => unknown } } }).Ext?.getCmp(field.id);
+    if (field?.id) {
+      const cmp = (globalThis as unknown as { Ext: { getCmp: (id: string) => { getValue: () => unknown } } }).Ext?.getCmp(field.id);
       if (cmp && typeof cmp.getValue === 'function') {
         return String(cmp.getValue());
       }
@@ -90,7 +90,7 @@ async function saveSettings(page: import('@playwright/test').Page) {
   // Blur any focused element to ensure field values are committed
   await page.evaluate(() => {
     const activeElement = document.activeElement as HTMLElement;
-    if (activeElement && activeElement.blur) {
+    if (activeElement?.blur) {
       activeElement.blur();
     }
   });
@@ -104,7 +104,7 @@ async function saveSettings(page: import('@playwright/test').Page) {
       if (text === 'Speichern' || text === 'Save') {
         const rect = btn.getBoundingClientRect();
         const clickEvent = new MouseEvent('click', {
-          view: window,
+          view: globalThis,
           bubbles: true,
           cancelable: true,
           clientX: rect.left + rect.width / 2,

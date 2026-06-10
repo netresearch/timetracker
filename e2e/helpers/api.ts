@@ -1,4 +1,4 @@
-import { Page, APIResponse } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 /**
  * Entry data structure from API
@@ -185,7 +185,7 @@ export async function getTimeSummary(page: Page): Promise<{
  */
 export async function getSettingsData(page: Page): Promise<Record<string, unknown>> {
   return await page.evaluate(() => {
-    return (window as unknown as { settingsData: Record<string, unknown> }).settingsData;
+    return (globalThis as unknown as { settingsData: Record<string, unknown> }).settingsData;
   });
 }
 

@@ -89,7 +89,7 @@ final class ExportPerformanceTest extends TestCase
      */
     public function testSmallDatasetExportPerformance(): void
     {
-        $entries = $this->generateTestEntries(50, false);
+        $this->generateTestEntries(50, false);
 
         $this->stopwatch->start('small_export');
         $memoryBefore = memory_get_usage(true);
@@ -132,7 +132,7 @@ final class ExportPerformanceTest extends TestCase
      */
     public function testMediumDatasetExportPerformance(): void
     {
-        $entries = $this->generateTestEntries(500, false);
+        $this->generateTestEntries(500, false);
 
         $this->stopwatch->start('medium_export');
         $memoryBefore = memory_get_usage(true);
@@ -172,7 +172,7 @@ final class ExportPerformanceTest extends TestCase
      */
     public function testLargeDatasetExportPerformance(): void
     {
-        $entries = $this->generateTestEntries(5000, false);
+        $this->generateTestEntries(5000, false);
 
         $this->stopwatch->start('large_export');
         $memoryBefore = memory_get_usage(true);
@@ -325,7 +325,7 @@ final class ExportPerformanceTest extends TestCase
         $memoryUsages = [];
 
         foreach ($sizes as $size) {
-            $entries = $this->generateTestEntries($size, false);
+            $this->generateTestEntries($size, false);
 
             $memoryBefore = memory_get_usage(true);
             $this->exportService->exportEntries(1, 2025, 8);
@@ -362,7 +362,7 @@ final class ExportPerformanceTest extends TestCase
      */
     public function testConcurrentExportSimulation(): void
     {
-        $entries = $this->generateTestEntries(200, false);
+        $this->generateTestEntries(200, false);
 
         $this->stopwatch->start('concurrent_simulation');
         $memoryBefore = memory_get_usage(true);

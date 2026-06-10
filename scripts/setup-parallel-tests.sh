@@ -20,9 +20,9 @@ print_header() {
 print_status() {
     local status=$1
     local message=$2
-    if [ "$status" = "OK" ]; then
+    if [[ "$status" = "OK" ]]; then
         echo -e "[${GREEN}✓${NC}] $message"
-    elif [ "$status" = "WARN" ]; then
+    elif [[ "$status" = "WARN" ]]; then
         echo -e "[${YELLOW}!${NC}] $message"
     else
         echo -e "[${RED}✗${NC}] $message"
@@ -62,7 +62,7 @@ check_configuration_files() {
     echo -e "${YELLOW}Checking configuration files...${NC}"
     
     # Check paratest.xml
-    if [ -f "config/testing/paratest.xml" ]; then
+    if [[ -f "config/testing/paratest.xml" ]]; then
         print_status "OK" "paratest.xml configuration exists"
     else
         print_status "ERROR" "config/testing/paratest.xml configuration missing"
@@ -70,14 +70,14 @@ check_configuration_files() {
     fi
     
     # Check parallel bootstrap
-    if [ -f "tests/parallel-bootstrap.php" ]; then
+    if [[ -f "tests/parallel-bootstrap.php" ]]; then
         print_status "OK" "Parallel bootstrap file exists"
     else
         print_status "WARN" "Parallel bootstrap file not found"
     fi
     
     # Check test structure
-    if [ -d "tests" ]; then
+    if [[ -d "tests" ]]; then
         unit_tests=$(find tests -name "*.php" -not -path "tests/Controller/*" -not -path "tests/Entity/*" | wc -l)
         controller_tests=$(find tests/Controller -name "*.php" 2>/dev/null | wc -l || echo "0")
         print_status "OK" "Test structure valid (Unit: $unit_tests, Controller: $controller_tests)"
@@ -93,7 +93,7 @@ check_database_configuration() {
     echo -e "${YELLOW}Checking database configuration...${NC}"
     
     # Check .env.test
-    if [ -f ".env.test" ]; then
+    if [[ -f ".env.test" ]]; then
         if grep -q "DATABASE_URL" .env.test; then
             print_status "OK" "Test database configuration found"
         else
@@ -104,7 +104,7 @@ check_database_configuration() {
     fi
     
     # Check SQL test data
-    if [ -f "sql/full.sql" ]; then
+    if [[ -f "sql/full.sql" ]]; then
         print_status "OK" "SQL test data source exists"
     else
         print_status "WARN" "sql/full.sql not found"
@@ -118,7 +118,7 @@ check_performance_config() {
     
     # CPU cores
     cores=$(nproc)
-    if [ $cores -ge 4 ]; then
+    if [[ $cores -ge 4 ]]; then
         print_status "OK" "Sufficient CPU cores available ($cores)"
     else
         print_status "WARN" "Limited CPU cores ($cores) - parallel benefits may be reduced"
@@ -126,7 +126,7 @@ check_performance_config() {
     
     # Memory
     total_mem=$(free -m | awk 'NR==2{printf "%.0f", $2}')
-    if [ $total_mem -ge 4096 ]; then
+    if [[ $total_mem -ge 4096 ]]; then
         print_status "OK" "Sufficient memory available (${total_mem}MB)"
     else
         print_status "WARN" "Limited memory (${total_mem}MB) - consider using test:parallel:safe"
@@ -166,11 +166,11 @@ show_recommendations() {
     echo -e "${YELLOW}Based on your system configuration:${NC}"
     echo ""
     
-    if [ $cores -ge 8 ] && [ $memory -ge 8192 ]; then
+    if [[ $cores -ge 8 ]] && [[ $memory -ge 8192 ]]; then
         echo -e "• ${GREEN}Optimal setup detected${NC}"
         echo -e "• Use: ${BLUE}make test-parallel${NC} for maximum speed"
         echo -e "• Use: ${BLUE}composer test:parallel:all${NC} for complete test suite"
-    elif [ $cores -ge 4 ] && [ $memory -ge 4096 ]; then
+    elif [[ $cores -ge 4 ]] && [[ $memory -ge 4096 ]]; then
         echo -e "• ${YELLOW}Good setup for parallel testing${NC}"
         echo -e "• Use: ${BLUE}make test-parallel-safe${NC} for reliable execution"
         echo -e "• Use: ${BLUE}./scripts/parallel-test.sh unit --processes 4${NC}"
@@ -239,7 +239,7 @@ main() {
     
     show_recommendations
     
-    if [ "$1" = "--generate-ci" ]; then
+    if [[ "$1" = "--generate-ci" ]]; then
         generate_ci_config
     fi
     
@@ -247,7 +247,7 @@ main() {
 }
 
 # Parse arguments
-if [ "$1" = "--help" ]; then
+if [[ "$1" = "--help" ]]; then
     echo "Usage: $0 [--generate-ci] [--help]"
     echo ""
     echo "Options:"

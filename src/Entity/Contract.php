@@ -41,44 +41,44 @@ class Contract
     /**
      * @var float
      */
-    #[ORM\Column(type: 'float', nullable: false)]
-    protected $hours_0;
+    #[ORM\Column(name: 'hours_0', type: 'float', nullable: false)]
+    protected $hours0;
 
     /**
      * @var float
      */
-    #[ORM\Column(type: 'float', nullable: false)]
-    protected $hours_1;
+    #[ORM\Column(name: 'hours_1', type: 'float', nullable: false)]
+    protected $hours1;
 
     /**
      * @var float
      */
-    #[ORM\Column(type: 'float', nullable: false)]
-    protected $hours_2;
+    #[ORM\Column(name: 'hours_2', type: 'float', nullable: false)]
+    protected $hours2;
 
     /**
      * @var float
      */
-    #[ORM\Column(type: 'float', nullable: false)]
-    protected $hours_3;
+    #[ORM\Column(name: 'hours_3', type: 'float', nullable: false)]
+    protected $hours3;
 
     /**
      * @var float
      */
-    #[ORM\Column(type: 'float', nullable: false)]
-    protected $hours_4;
+    #[ORM\Column(name: 'hours_4', type: 'float', nullable: false)]
+    protected $hours4;
 
     /**
      * @var float
      */
-    #[ORM\Column(type: 'float', nullable: false)]
-    protected $hours_5;
+    #[ORM\Column(name: 'hours_5', type: 'float', nullable: false)]
+    protected $hours5;
 
     /**
      * @var float
      */
-    #[ORM\Column(type: 'float', nullable: false)]
-    protected $hours_6;
+    #[ORM\Column(name: 'hours_6', type: 'float', nullable: false)]
+    protected $hours6;
 
     /**
      * Get id.
@@ -142,7 +142,7 @@ class Contract
      */
     public function getHours0()
     {
-        return $this->hours_0;
+        return $this->hours0;
     }
 
     /**
@@ -152,7 +152,7 @@ class Contract
      */
     public function setHours0($hours_0): static
     {
-        $this->hours_0 = $hours_0;
+        $this->hours0 = $hours_0;
 
         return $this;
     }
@@ -162,7 +162,7 @@ class Contract
      */
     public function getHours1()
     {
-        return $this->hours_1;
+        return $this->hours1;
     }
 
     /**
@@ -172,7 +172,7 @@ class Contract
      */
     public function setHours1($hours_1): static
     {
-        $this->hours_1 = $hours_1;
+        $this->hours1 = $hours_1;
 
         return $this;
     }
@@ -182,7 +182,7 @@ class Contract
      */
     public function getHours2()
     {
-        return $this->hours_2;
+        return $this->hours2;
     }
 
     /**
@@ -192,7 +192,7 @@ class Contract
      */
     public function setHours2($hours_2): static
     {
-        $this->hours_2 = $hours_2;
+        $this->hours2 = $hours_2;
 
         return $this;
     }
@@ -202,7 +202,7 @@ class Contract
      */
     public function getHours3()
     {
-        return $this->hours_3;
+        return $this->hours3;
     }
 
     /**
@@ -212,7 +212,7 @@ class Contract
      */
     public function setHours3($hours_3): static
     {
-        $this->hours_3 = $hours_3;
+        $this->hours3 = $hours_3;
 
         return $this;
     }
@@ -222,7 +222,7 @@ class Contract
      */
     public function getHours4()
     {
-        return $this->hours_4;
+        return $this->hours4;
     }
 
     /**
@@ -232,7 +232,7 @@ class Contract
      */
     public function setHours4($hours_4): static
     {
-        $this->hours_4 = $hours_4;
+        $this->hours4 = $hours_4;
 
         return $this;
     }
@@ -242,7 +242,7 @@ class Contract
      */
     public function getHours5()
     {
-        return $this->hours_5;
+        return $this->hours5;
     }
 
     /**
@@ -252,7 +252,7 @@ class Contract
      */
     public function setHours5($hours_5): static
     {
-        $this->hours_5 = $hours_5;
+        $this->hours5 = $hours_5;
 
         return $this;
     }
@@ -262,7 +262,7 @@ class Contract
      */
     public function getHours6()
     {
-        return $this->hours_6;
+        return $this->hours6;
     }
 
     /**
@@ -272,7 +272,7 @@ class Contract
      */
     public function setHours6($hours_6): static
     {
-        $this->hours_6 = $hours_6;
+        $this->hours6 = $hours_6;
 
         return $this;
     }

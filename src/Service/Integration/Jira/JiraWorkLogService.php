@@ -334,11 +334,9 @@ class JiraWorkLogService
     /**
      * Sync worklog for an entry with JIRA.
      *
-     * @param array<string, mixed> $worklogData
-     *
      * @return array{worklogId: int|null}
      */
-    public function syncWorkLog(User $user, TicketSystem $ticketSystem, Entry $entry, array $worklogData): array
+    public function syncWorkLog(Entry $entry): array
     {
         // Update the entry's worklog
         $this->updateEntryWorkLog($entry);

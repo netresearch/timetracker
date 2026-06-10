@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { waitForGrid } from './helpers/grid';
-import { goToInterpretationTab, goToTrackingTab } from './helpers/navigation';
+import { goToInterpretationTab } from './helpers/navigation';
 
 /**
  * E2E tests for Interpretation (Analysis/Reporting) features.
