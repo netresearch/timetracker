@@ -6,7 +6,7 @@
     position: absolute;
     top: -40px;
     left: 0;
-    background: #00889A;
+    background: #00707F;
     color: #fff;
     padding: 8px 16px;
     z-index: 10000;
@@ -86,7 +86,7 @@
 }
 
 .user-badge.status_active {
-    background-color: rgba(0, 128, 0, 0.08);
+    background-color: #ebf5eb;
     color: #333;
 }
 
@@ -96,8 +96,8 @@
 }
 
 .user-badge.status_inactive {
-    background-color: rgba(176, 0, 0, 0.08);
-    color: #666;
+    background-color: #f9ebeb;
+    color: #555;
 }
 
 .user-badge.status_inactive .status-indicator {
@@ -117,7 +117,7 @@
 
 .user-badge .badge-logout:hover,
 .user-badge .badge-logout:focus {
-    background-color: rgba(176, 0, 0, 0.1);
+    background-color: #f7e6e6;
     border-color: #B00000;
     color: #B00000;
 }
