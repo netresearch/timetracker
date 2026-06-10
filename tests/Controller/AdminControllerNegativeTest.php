@@ -99,7 +99,7 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->logInSession('unittest');
         $parameter = [
             'username' => 'newuser1',
-            'abbr' => 'XY', // invalid length
+            'abbr' => 'WXYZ', // invalid length (more than 3 characters)
             'teams' => ['1'],
             'locale' => 'de',
             'type' => 'DEV',
