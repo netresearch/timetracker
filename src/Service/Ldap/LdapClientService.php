@@ -414,6 +414,8 @@ class LdapClientService
     /**
      * Authenticate username and password at the LDAP server.
      *
+     * @throws LdapAuthenticationException
+     * @throws LdapConnectionException
      * @throws LdapException
      */
     public function login(): true

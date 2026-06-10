@@ -236,7 +236,7 @@ class Customer extends Base
     }
 
     /**
-     * Add projects.
+     * Add a project.
      *
      * @return $this
      */
