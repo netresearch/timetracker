@@ -31,7 +31,7 @@ class TwigCsvEscapingExtension
      * Characters that spreadsheet applications interpret as a formula trigger
      * when they appear at the start of a cell (OWASP CSV injection).
      */
-    private const FORMULA_TRIGGER_CHARACTERS = ['=', '+', '-', '@', "\t", "\r"];
+    private const FORMULA_TRIGGER_CHARACTERS = ['=', '+', '-', '@', "\t", "\r", "\n"];
 
     #[AsTwigFilter(name: 'csv_escape')]
     public function csvEscape(string $string): string

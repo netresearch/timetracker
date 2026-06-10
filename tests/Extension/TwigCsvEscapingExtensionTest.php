@@ -83,6 +83,7 @@ final class TwigCsvEscapingExtensionTest extends TestCase
             'at sign' => ['@cmd', "'@cmd"],
             'tab' => ["\t=1+2", "'\t=1+2"],
             'carriage return' => ["\r=1+2", "'\r=1+2"],
+            'line feed' => ["\n=1+2", "'\n=1+2"],
         ];
     }
 
