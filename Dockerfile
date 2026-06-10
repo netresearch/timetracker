@@ -39,6 +39,7 @@ RUN set -ex \
         libjpeg62-turbo-dev \
         libfreetype6-dev \
         libicu-dev \
+        procps \
         unzip \
         zlib1g-dev \
     && docker-php-ext-configure gd --with-jpeg --with-freetype \
@@ -217,13 +218,6 @@ ENV APP_ENV=test
 # PRODUCTION - Minimal secure image
 # =============================================================================
 FROM base AS production
-
-# Install procps (provides pgrep, required by the healthcheck script)
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends procps \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy only what's needed from deps stage
 COPY --from=deps --chown=app:app /var/www/html/vendor /var/www/html/vendor
