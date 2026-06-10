@@ -12,11 +12,15 @@ use App\Enum\TicketSystemType;
 use App\Event\EntryEvent;
 use App\EventSubscriber\EntryEventSubscriber;
 use App\Service\Cache\QueryCacheService;
-use App\Service\Integration\Jira\JiraIntegrationService;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Service\Integration\Jira\JiraOAuthApiService;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ObjectManager;
 use Exception;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -27,22 +31,77 @@ use Psr\Log\LoggerInterface;
 #[AllowMockObjectsWithoutExpectations]
 final class EntryEventSubscriberTest extends TestCase
 {
-    private JiraIntegrationService&MockObject $jiraIntegrationService;
+    private JiraOAuthApiFactory&MockObject $jiraOAuthApiFactory;
+    private JiraOAuthApiService&MockObject $jiraOAuthApiService;
+    private ManagerRegistry&MockObject $managerRegistry;
+    private ObjectManager&MockObject $objectManager;
     private QueryCacheService&MockObject $queryCacheService;
     private LoggerInterface&MockObject $logger;
     private EntryEventSubscriber $subscriber;
 
     protected function setUp(): void
     {
-        $this->jiraIntegrationService = $this->createMock(JiraIntegrationService::class);
+        $this->jiraOAuthApiFactory = $this->createMock(JiraOAuthApiFactory::class);
+        $this->jiraOAuthApiService = $this->createMock(JiraOAuthApiService::class);
+        $this->managerRegistry = $this->createMock(ManagerRegistry::class);
+        $this->objectManager = $this->createMock(ObjectManager::class);
+        $this->managerRegistry->method('getManager')->willReturn($this->objectManager);
         $this->queryCacheService = $this->createMock(QueryCacheService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->subscriber = new EntryEventSubscriber(
-            $this->jiraIntegrationService,
+            $this->jiraOAuthApiFactory,
+            $this->managerRegistry,
             $this->queryCacheService,
             $this->logger,
         );
+    }
+
+    /**
+     * Creates an entry stub whose user/project/ticket-system graph satisfies
+     * the subscriber's auto-sync conditions (unless overridden).
+     *
+     * @return array{Entry&Stub, User&Stub, TicketSystem&Stub}
+     */
+    private function createSyncableEntry(
+        bool $bookTime = true,
+        TicketSystemType $type = TicketSystemType::JIRA,
+        string $ticket = 'ABC-123',
+        bool $synced = false,
+        ?int $worklogId = null,
+    ): array {
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $ticketSystem->method('getBookTime')->willReturn($bookTime);
+        $ticketSystem->method('getType')->willReturn($type);
+
+        $project = self::createStub(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = self::createStub(Entry::class);
+        $entry->method('getUser')->willReturn($user);
+        $entry->method('getProject')->willReturn($project);
+        $entry->method('getTicket')->willReturn($ticket);
+        $entry->method('getSyncedToTicketsystem')->willReturn($synced);
+        $entry->method('getWorklogId')->willReturn($worklogId);
+
+        return [$entry, $user, $ticketSystem];
+    }
+
+    private function expectJiraApiCreatedFor(User&Stub $user, TicketSystem&Stub $ticketSystem): void
+    {
+        $this->jiraOAuthApiFactory->expects(self::once())
+            ->method('create')
+            ->with($user, $ticketSystem)
+            ->willReturn($this->jiraOAuthApiService);
+    }
+
+    private function expectNoJiraApi(): void
+    {
+        $this->jiraOAuthApiFactory->expects(self::never())
+            ->method('create');
     }
 
     public function testGetSubscribedEventsReturnsCorrectEvents(): void
@@ -94,24 +153,16 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedAutoSyncsToJiraWhenConditionsMet(): void
     {
-        $ticketSystem = self::createStub(TicketSystem::class);
-        $ticketSystem->method('getBookTime')->willReturn(true);
-        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+        [$entry, $user, $ticketSystem] = $this->createSyncableEntry();
 
-        $project = self::createStub(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
+        $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn($project);
-        $entry->method('getTicket')->willReturn('ABC-123');
-
-        $this->jiraIntegrationService->expects(self::once())
-            ->method('saveWorklog')
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
             ->with($entry);
+
+        $this->objectManager->expects(self::once())
+            ->method('flush');
 
         $this->logger->expects(self::exactly(2))
             ->method('info');
@@ -129,8 +180,7 @@ final class EntryEventSubscriberTest extends TestCase
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn(null);
 
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -148,8 +198,7 @@ final class EntryEventSubscriberTest extends TestCase
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
 
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -157,22 +206,9 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenBookTimeDisabled(): void
     {
-        $ticketSystem = self::createStub(TicketSystem::class);
-        $ticketSystem->method('getBookTime')->willReturn(false);
-        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+        [$entry] = $this->createSyncableEntry(bookTime: false);
 
-        $project = self::createStub(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn($project);
-
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -180,22 +216,9 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenNotJiraTicketSystem(): void
     {
-        $ticketSystem = self::createStub(TicketSystem::class);
-        $ticketSystem->method('getBookTime')->willReturn(true);
-        $ticketSystem->method('getType')->willReturn(TicketSystemType::OTRS);
+        [$entry] = $this->createSyncableEntry(type: TicketSystemType::OTRS);
 
-        $project = self::createStub(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn($project);
-
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -203,23 +226,9 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenEmptyTicket(): void
     {
-        $ticketSystem = self::createStub(TicketSystem::class);
-        $ticketSystem->method('getBookTime')->willReturn(true);
-        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+        [$entry] = $this->createSyncableEntry(ticket: '');
 
-        $project = self::createStub(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn($project);
-        $entry->method('getTicket')->willReturn('');
-
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -227,23 +236,9 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedDoesNotSyncWhenZeroTicket(): void
     {
-        $ticketSystem = self::createStub(TicketSystem::class);
-        $ticketSystem->method('getBookTime')->willReturn(true);
-        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+        [$entry] = $this->createSyncableEntry(ticket: '0');
 
-        $project = self::createStub(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn($project);
-        $entry->method('getTicket')->willReturn('0');
-
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -251,24 +246,13 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryCreatedLogsErrorOnJiraSyncFailure(): void
     {
-        $ticketSystem = self::createStub(TicketSystem::class);
-        $ticketSystem->method('getBookTime')->willReturn(true);
-        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
-
-        $project = self::createStub(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn($project);
-        $entry->method('getTicket')->willReturn('ABC-123');
+        [$entry] = $this->createSyncableEntry();
 
         $exception = new Exception('Jira API error');
-        $this->jiraIntegrationService->expects(self::once())
-            ->method('saveWorklog')
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
             ->willThrowException($exception);
 
         $this->logger->expects(self::once())
@@ -296,19 +280,18 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryUpdated($event);
     }
 
-    public function testOnEntryUpdatedSyncsToJiraWhenAlreadySynced(): void
+    public function testOnEntryUpdatedSyncsWhenAutoSyncConditionsMet(): void
     {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
+        [$entry, $user, $ticketSystem] = $this->createSyncableEntry(synced: true, worklogId: 12345);
 
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(true);
-        $entry->method('getWorklogId')->willReturn(12345);
+        $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $this->jiraIntegrationService->expects(self::once())
-            ->method('saveWorklog')
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
             ->with($entry);
+
+        $this->objectManager->expects(self::once())
+            ->method('flush');
 
         $this->logger->expects(self::exactly(2))
             ->method('info');
@@ -317,34 +300,35 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryUpdated($event);
     }
 
-    public function testOnEntryUpdatedDoesNotSyncWhenNotPreviouslySynced(): void
+    public function testOnEntryUpdatedSyncsWhenNotPreviouslySynced(): void
     {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
+        // Catch-up behavior: entries that were never synced (e.g. saved while
+        // sync was unavailable) are synced on their next update.
+        [$entry, $user, $ticketSystem] = $this->createSyncableEntry();
 
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(false);
+        $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
+            ->with($entry);
+
+        $this->objectManager->expects(self::once())
+            ->method('flush');
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryUpdated($event);
     }
 
-    public function testOnEntryUpdatedDoesNotSyncWhenNoWorklogId(): void
+    public function testOnEntryUpdatedDoesNotSyncWhenNoProject(): void
     {
         $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
         $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(true);
-        $entry->method('getWorklogId')->willReturn(null);
+        $entry->method('getProject')->willReturn(null);
 
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('saveWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryUpdated($event);
@@ -352,17 +336,13 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryUpdatedLogsWarningOnJiraFailure(): void
     {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(true);
-        $entry->method('getWorklogId')->willReturn(12345);
+        [$entry] = $this->createSyncableEntry();
 
         $exception = new Exception('Jira API error');
-        $this->jiraIntegrationService->expects(self::once())
-            ->method('saveWorklog')
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
             ->willThrowException($exception);
 
         $this->logger->expects(self::once())
@@ -392,17 +372,16 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedDeletesWorklogFromJira(): void
     {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
+        [$entry, $user, $ticketSystem] = $this->createSyncableEntry(synced: true, worklogId: 12345);
 
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(true);
-        $entry->method('getWorklogId')->willReturn(12345);
+        $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $this->jiraIntegrationService->expects(self::once())
-            ->method('deleteWorklog')
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('deleteEntryJiraWorkLog')
             ->with($entry);
+
+        $this->objectManager->expects(self::once())
+            ->method('flush');
 
         $this->logger->expects(self::exactly(2))
             ->method('info');
@@ -413,15 +392,9 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedDoesNotDeleteWhenNotSynced(): void
     {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
+        [$entry] = $this->createSyncableEntry();
 
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(false);
-
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('deleteWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryDeleted($event);
@@ -429,16 +402,9 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedDoesNotDeleteWhenNoWorklogId(): void
     {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
+        [$entry] = $this->createSyncableEntry(synced: true);
 
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(true);
-        $entry->method('getWorklogId')->willReturn(null);
-
-        $this->jiraIntegrationService->expects(self::never())
-            ->method('deleteWorklog');
+        $this->expectNoJiraApi();
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryDeleted($event);
@@ -446,17 +412,13 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryDeletedLogsWarningOnFailure(): void
     {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(true);
-        $entry->method('getWorklogId')->willReturn(12345);
+        [$entry] = $this->createSyncableEntry(synced: true, worklogId: 12345);
 
         $exception = new Exception('Jira API error');
-        $this->jiraIntegrationService->expects(self::once())
-            ->method('deleteWorklog')
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('deleteEntryJiraWorkLog')
             ->willThrowException($exception);
 
         $this->logger->expects(self::once())
@@ -523,7 +485,8 @@ final class EntryEventSubscriberTest extends TestCase
     public function testConstructorWithoutLogger(): void
     {
         $subscriber = new EntryEventSubscriber(
-            $this->jiraIntegrationService,
+            $this->jiraOAuthApiFactory,
+            $this->managerRegistry,
             $this->queryCacheService,
         );
 

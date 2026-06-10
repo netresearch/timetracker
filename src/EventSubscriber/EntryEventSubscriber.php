@@ -12,10 +12,12 @@ namespace App\EventSubscriber;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
+use App\Entity\User;
 use App\Enum\TicketSystemType;
 use App\Event\EntryEvent;
 use App\Service\Cache\QueryCacheService;
-use App\Service\Integration\Jira\JiraIntegrationService;
+use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -25,11 +27,17 @@ use function in_array;
 
 /**
  * Handles entry-related events.
+ *
+ * Worklog synchronization deliberately uses the legacy JiraOAuthApiService
+ * (via JiraOAuthApiFactory): it is the only Jira integration path wired into
+ * the service container; the newer JiraIntegrationService stack stays
+ * excluded until token encryption is production-ready.
  */
 class EntryEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly JiraIntegrationService $jiraIntegrationService,
+        private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
+        private readonly ManagerRegistry $managerRegistry,
         private readonly QueryCacheService $queryCacheService,
         private readonly ?LoggerInterface $logger = null,
     ) {
@@ -52,20 +60,12 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $this->logger?->info('Entry created');
 
-        // Invalidate cache for user entries
-        $user = $entry->getUser();
-        $userId = $user?->getId();
-        if (null !== $userId) {
-            $this->queryCacheService->invalidateEntity(
-                Entry::class,
-                $userId,
-            );
-        }
+        $this->invalidateUserEntryCache($entry);
 
         // Check if automatic JIRA sync is needed
         if ($this->shouldAutoSync($entry)) {
             try {
-                $this->jiraIntegrationService->saveWorklog($entry);
+                $this->syncWorklog($entry);
                 $this->logger?->info('Entry auto-synced to JIRA');
             } catch (Exception $e) {
                 $this->logger?->error('Auto-sync to JIRA failed', ['exception' => $e]);
@@ -79,20 +79,14 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $this->logger?->info('Entry updated');
 
-        // Invalidate cache
-        $user = $entry->getUser();
-        $userId = $user?->getId();
-        if (null !== $userId) {
-            $this->queryCacheService->invalidateEntity(
-                Entry::class,
-                $userId,
-            );
-        }
+        $this->invalidateUserEntryCache($entry);
 
-        // Update JIRA if already synced
-        if ($entry->getSyncedToTicketsystem() && null !== $entry->getWorklogId()) {
+        // Sync on every update (v4 parity): updateEntryJiraWorkLog creates a
+        // new worklog or updates the existing one based on the worklog id,
+        // so entries that were never synced are caught up on their next save.
+        if ($this->shouldAutoSync($entry)) {
             try {
-                $this->jiraIntegrationService->saveWorklog($entry);
+                $this->syncWorklog($entry);
                 $this->logger?->info('JIRA worklog updated');
             } catch (Exception $e) {
                 $this->logger?->warning('JIRA worklog update failed', ['exception' => $e]);
@@ -106,20 +100,12 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $this->logger?->info('Entry deleted');
 
-        // Invalidate cache
-        $user = $entry->getUser();
-        $userId = $user?->getId();
-        if (null !== $userId) {
-            $this->queryCacheService->invalidateEntity(
-                Entry::class,
-                $userId,
-            );
-        }
+        $this->invalidateUserEntryCache($entry);
 
         // Delete from JIRA if synced
         if ($entry->getSyncedToTicketsystem() && null !== $entry->getWorklogId()) {
             try {
-                $this->jiraIntegrationService->deleteWorklog($entry);
+                $this->deleteWorklog($entry);
                 $this->logger?->info('JIRA worklog deleted');
             } catch (Exception $e) {
                 $this->logger?->warning('JIRA worklog deletion failed', ['exception' => $e]);
@@ -149,6 +135,49 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // Could trigger notification or retry logic here
     }
 
+    private function invalidateUserEntryCache(Entry $entry): void
+    {
+        $user = $entry->getUser();
+        $userId = $user?->getId();
+        if (null !== $userId) {
+            $this->queryCacheService->invalidateEntity(
+                Entry::class,
+                $userId,
+            );
+        }
+    }
+
+    private function syncWorklog(Entry $entry): void
+    {
+        $user = $entry->getUser();
+        $ticketSystem = $entry->getProject()?->getTicketSystem();
+        if (!$user instanceof User || !$ticketSystem instanceof TicketSystem) {
+            return;
+        }
+
+        $this->jiraOAuthApiFactory->create($user, $ticketSystem)
+            ->updateEntryJiraWorkLog($entry);
+
+        // updateEntryJiraWorkLog sets the worklog id and the synced flag on
+        // the already-persisted entity; flush them or the next sync would
+        // create a duplicate worklog.
+        $this->managerRegistry->getManager()->flush();
+    }
+
+    private function deleteWorklog(Entry $entry): void
+    {
+        $user = $entry->getUser();
+        $ticketSystem = $entry->getProject()?->getTicketSystem();
+        if (!$user instanceof User || !$ticketSystem instanceof TicketSystem) {
+            return;
+        }
+
+        $this->jiraOAuthApiFactory->create($user, $ticketSystem)
+            ->deleteEntryJiraWorkLog($entry);
+
+        $this->managerRegistry->getManager()->flush();
+    }
+
     private function shouldAutoSync(Entry $entry): bool
     {
         // Check if project has auto-sync enabled
@@ -159,6 +188,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $ticketSystem = $project->getTicketSystem();
         if (!$ticketSystem instanceof TicketSystem) {
+            return false;
+        }
+
+        // The Jira client acts on behalf of the entry's user
+        if (!$entry->getUser() instanceof User) {
             return false;
         }
 

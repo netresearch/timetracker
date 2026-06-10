@@ -47,7 +47,6 @@ services:
             - '../src/Service/Integration/Jira/JiraTicketService.php'
             - '../src/Service/Integration/Jira/JiraAuthenticationService.php'
             - '../src/Service/Integration/Jira/JiraIntegrationService.php'
-            - '../src/EventSubscriber/EntryEventSubscriber.php'
 
     # Controllers are tagged automatically
     App\Controller\:
