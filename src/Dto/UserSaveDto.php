@@ -28,8 +28,8 @@ final readonly class UserSaveDto
         #[Assert\Length(min: 3, minMessage: 'Please provide a valid user name with at least 3 letters.')]
         #[UniqueUsername]
         public string $username = '',
-        #[Assert\NotBlank(message: 'Please provide a valid user name abbreviation with 1 to 3 letters.')]
-        #[Assert\Length(max: 3, maxMessage: 'Please provide a valid user name abbreviation with 1 to 3 letters.')]
+        #[Assert\NotBlank(message: 'Please provide a valid user name abbreviation with 1 to 3 characters.')]
+        #[Assert\Length(max: 3, maxMessage: 'Please provide a valid user name abbreviation with 1 to 3 characters.')]
         #[UniqueUserAbbr]
         public string $abbr = '',
         public string $type = '',

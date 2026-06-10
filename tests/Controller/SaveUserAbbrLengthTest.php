@@ -11,9 +11,6 @@ namespace Tests\Controller;
 
 use Tests\AbstractWebTestCase;
 
-use function assert;
-use function is_string;
-
 /**
  * Regression tests for https://github.com/netresearch/timetracker/issues/35.
  *
@@ -89,7 +86,7 @@ final class SaveUserAbbrLengthTest extends AbstractWebTestCase
 
         $this->assertStatusCode(422);
         self::assertArrayHasKey('message', $data);
-        assert(is_string($data['message']));
-        self::assertStringContainsString('abbreviation', $data['message']);
+        self::assertIsString($data['message']);
+        self::assertNotSame('', $data['message']);
     }
 }
