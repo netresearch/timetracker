@@ -218,6 +218,13 @@ ENV APP_ENV=test
 # =============================================================================
 FROM base AS production
 
+# Install procps (provides pgrep, required by the healthcheck script)
+RUN set -ex \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy only what's needed from deps stage
 COPY --from=deps --chown=app:app /var/www/html/vendor /var/www/html/vendor
 COPY --from=deps --chown=app:app /var/www/html/public /var/www/html/public
@@ -226,6 +233,7 @@ COPY --from=deps --chown=app:app /var/www/html/bin /var/www/html/bin
 COPY --from=deps --chown=app:app /var/www/html/src /var/www/html/src
 COPY --from=deps --chown=app:app /var/www/html/templates /var/www/html/templates
 COPY --from=deps --chown=app:app /var/www/html/translations /var/www/html/translations
+COPY --from=deps /var/www/html/migrations /var/www/html/migrations
 COPY --from=deps --chown=app:app /var/www/html/sql /var/www/html/sql
 COPY --from=deps --chown=app:app /var/www/html/var /var/www/html/var
 
