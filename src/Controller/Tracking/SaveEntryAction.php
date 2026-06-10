@@ -24,6 +24,7 @@ use App\Repository\CustomerRepository;
 use App\Repository\EntryRepository;
 use App\Repository\ProjectRepository;
 use App\Response\Error;
+use App\Service\Util\TicketService;
 use BadMethodCallException;
 use DateTime;
 use DateTimeInterface;
@@ -44,10 +45,18 @@ final class SaveEntryAction extends BaseTrackingController
 {
     private ?EventDispatcherInterface $eventDispatcher = null;
 
+    private TicketService $ticketService;
+
     #[Required]
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
         $this->eventDispatcher = $eventDispatcher;
+    }
+
+    #[Required]
+    public function setTicketService(TicketService $ticketService): void
+    {
+        $this->ticketService = $ticketService;
     }
 
     /**
@@ -109,17 +118,9 @@ final class SaveEntryAction extends BaseTrackingController
 
         // Should we check if the ticket belongs to the project
         if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
-            // Use project's jira_id as the expected prefix if it exists
-            $prefix = $project->getJiraId();
-
-            if (null !== $prefix && '' !== $prefix) {
-                if (!str_starts_with($entrySaveDto->ticket, $prefix)) {
-                    return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
-                }
-
-                if (!str_contains($entrySaveDto->ticket, '-')) {
-                    return new Error('Given ticket does not have a valid format.', Response::HTTP_BAD_REQUEST);
-                }
+            $prefixError = $this->validateTicketPrefix($project, $entrySaveDto->ticket);
+            if ($prefixError instanceof Error) {
+                return $prefixError;
             }
         }
 
@@ -260,5 +261,37 @@ final class SaveEntryAction extends BaseTrackingController
         } catch (Throwable $throwable) {
             return new Error('Could not save entry: ' . $throwable->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * TTT-199: check if the ticket prefix matches the project's Jira ID.
+     *
+     * v4 parity: the project's jira_id is a comma-separated list of allowed
+     * prefixes (entries are trimmed before comparison), and the project's
+     * internal Jira project key is accepted as an alternative match.
+     */
+    private function validateTicketPrefix(Project $project, string $ticket): ?Error
+    {
+        $jiraId = $project->getJiraId();
+        if (null === $jiraId || '' === $jiraId) {
+            return null;
+        }
+
+        if (!$this->ticketService->checkFormat($ticket)) {
+            return new Error('Given ticket does not have a valid format.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $ticketPrefix = (string) $this->ticketService->getPrefix($ticket);
+        foreach (explode(',', $jiraId) as $allowedPrefix) {
+            if (trim($allowedPrefix) === $ticketPrefix) {
+                return null;
+            }
+        }
+
+        if ($project->matchesInternalJiraProject($ticketPrefix)) {
+            return null;
+        }
+
+        return new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
     }
 }
