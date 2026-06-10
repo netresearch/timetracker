@@ -51,7 +51,10 @@ final class SaveUserAbbrLengthTest extends AbstractWebTestCase
         $this->assertUserRejected('abbruser5', '');
     }
 
-    private function assertUserSaved(string $username, string $abbr): void
+    /**
+     * @return array<mixed>
+     */
+    private function saveUser(string $username, string $abbr): array
     {
         $this->logInSession('unittest');
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', [
@@ -62,11 +65,19 @@ final class SaveUserAbbrLengthTest extends AbstractWebTestCase
             'type' => 'DEV',
         ], [], ['HTTP_ACCEPT' => 'application/json']);
 
-        $this->assertStatusCode(200);
         $content = $this->client->getResponse()->getContent();
         self::assertIsString($content);
         $data = json_decode($content, true);
         self::assertIsArray($data);
+
+        return $data;
+    }
+
+    private function assertUserSaved(string $username, string $abbr): void
+    {
+        $data = $this->saveUser($username, $abbr);
+
+        $this->assertStatusCode(200);
         // Response payload is [id, username, abbr, type]
         self::assertSame($username, $data[1]);
         self::assertSame($abbr, $data[2]);
@@ -74,20 +85,9 @@ final class SaveUserAbbrLengthTest extends AbstractWebTestCase
 
     private function assertUserRejected(string $username, string $abbr): void
     {
-        $this->logInSession('unittest');
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', [
-            'username' => $username,
-            'abbr' => $abbr,
-            'teams' => ['1'],
-            'locale' => 'de',
-            'type' => 'DEV',
-        ], [], ['HTTP_ACCEPT' => 'application/json']);
+        $data = $this->saveUser($username, $abbr);
 
         $this->assertStatusCode(422);
-        $content = $this->client->getResponse()->getContent();
-        self::assertIsString($content);
-        $data = json_decode($content, true);
-        self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
         assert(is_string($data['message']));
         self::assertStringContainsString('abbreviation', $data['message']);
