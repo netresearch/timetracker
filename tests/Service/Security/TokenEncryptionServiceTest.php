@@ -35,29 +35,12 @@ final class TokenEncryptionServiceTest extends TestCase
         self::assertNotSame('test', $encrypted);
     }
 
-    public function testConstructorFallsBackToAppSecret(): void
-    {
-        $parameterBag = self::createStub(ParameterBagInterface::class);
-        $parameterBag->method('get')
-            ->willReturnMap([
-                ['app.encryption_key', null],
-                ['APP_SECRET', 'fallback-app-secret'],
-            ]);
-
-        $service = new TokenEncryptionService($parameterBag);
-
-        // Verify service works by encrypting a token
-        $encrypted = $service->encryptToken('test');
-        self::assertNotSame('test', $encrypted);
-    }
-
     public function testConstructorThrowsOnEmptyKey(): void
     {
         $parameterBag = self::createStub(ParameterBagInterface::class);
         $parameterBag->method('get')
             ->willReturnMap([
-                ['app.encryption_key', null],
-                ['APP_SECRET', ''],
+                ['app.encryption_key', ''],
             ]);
 
         $this->expectException(RuntimeException::class);
@@ -72,7 +55,6 @@ final class TokenEncryptionServiceTest extends TestCase
         $parameterBag->method('get')
             ->willReturnMap([
                 ['app.encryption_key', null],
-                ['APP_SECRET', null],
             ]);
 
         $this->expectException(RuntimeException::class);

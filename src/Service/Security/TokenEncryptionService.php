@@ -32,8 +32,11 @@ class TokenEncryptionService
 
     public function __construct(ParameterBagInterface $parameterBag)
     {
-        // Get encryption key from environment or generate if not set
-        $key = $parameterBag->get('app.encryption_key') ?? $parameterBag->get('APP_SECRET');
+        // Resolves APP_ENCRYPTION_KEY with APP_SECRET fallback via the
+        // app.encryption_key parameter (env default processor in services.yaml);
+        // a plain get('APP_SECRET') fallback here would throw
+        // ParameterNotFoundException instead of falling back.
+        $key = $parameterBag->get('app.encryption_key');
 
         // Ensure we have a valid key
         if (!is_string($key) || '' === $key) {
