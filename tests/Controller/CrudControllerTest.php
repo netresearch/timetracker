@@ -298,7 +298,6 @@ final class CrudControllerTest extends AbstractWebTestCase
         $this->assertMessage('2 Einträge wurden angelegt.');
 
         // Only count entries created after the bulk operation to ensure test isolation
-        $preExistingCount = count($resultsBefore);
         /** @var array<int, int> $idColumn */
         $idColumn = array_column($resultsBefore, 'id');
         $maxPreExistingId = [] !== $idColumn ? max($idColumn) : 0;

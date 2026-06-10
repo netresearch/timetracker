@@ -33,33 +33,33 @@ use function strlen;
 class LdapClientService
 {
     /** @var string LDAP host name or IP. */
-    protected $_host = '192.168.1.2';
+    protected $host = '192.168.1.2';
 
     /** @var int LDAP host port. */
-    protected $_port = 389;
+    protected $port = 389;
 
     /** @var string LDAP read user name. */
-    protected $_readUser = 'readuser';
+    protected $readUser = 'readuser';
 
     /** @var string LDAP read user password. */
-    protected $_readPass = 'readuser';
+    protected $readPass = 'readuser';
 
     /** @var string LDAP base DN. */
-    protected $_baseDn = 'dc=netresearch,dc=nr';
+    protected $baseDn = 'dc=netresearch,dc=nr';
 
     /** @var string Accountname-Field in LDAP. */
-    protected $_userNameField = 'sAMAccountName';
+    protected $userNameField = 'sAMAccountName';
 
     /** @var string LDAP user auth name - must be set before use */
     // Initialize security-sensitive properties to prevent accidental usage
     // These MUST be explicitly set via setUserName() and setUserPass() before authentication
-    protected string $_userName = '';
+    protected string $userName = '';
 
     /** @var string LDAP user auth password - must be set before use */
-    protected string $_userPass = '';
+    protected string $userPass = '';
 
     /** @var bool Use SSL for LDAP-connection. */
-    protected $_useSSL = false;
+    protected $useSSL = false;
 
     /** @var array<string> */
     protected $teams = [];
@@ -76,12 +76,12 @@ class LdapClientService
     protected function getLdapOptions(): array
     {
         return [
-            'useSsl' => $this->_useSSL,
-            'host' => $this->_host,
-            'username' => $this->_readUser,
-            'password' => $this->_readPass,
-            'baseDn' => $this->_baseDn,
-            'port' => $this->_port,
+            'useSsl' => $this->useSSL,
+            'host' => $this->host,
+            'username' => $this->readUser,
+            'password' => $this->readPass,
+            'baseDn' => $this->baseDn,
+            'port' => $this->port,
         ];
     }
 
@@ -96,7 +96,7 @@ class LdapClientService
     protected function verifyUsername(): array
     {
         // Security check: ensure username is properly set
-        if ('' === $this->_userName) {
+        if ('' === $this->userName) {
             throw new Exception('LDAP username must be set via setUserName() before authentication');
         }
 
@@ -107,11 +107,11 @@ class LdapClientService
 
         try {
             $this->logger->debug('LDAP: Attempting read-only bind', [
-                'host' => $this->_host,
-                'port' => $this->_port,
-                'useSSL' => $this->_useSSL,
-                'bindDn' => $this->_readUser,
-                'baseDn' => $this->_baseDn,
+                'host' => $this->host,
+                'port' => $this->port,
+                'useSSL' => $this->useSSL,
+                'bindDn' => $this->readUser,
+                'baseDn' => $this->baseDn,
             ]);
 
             $ldap->bind();
@@ -120,26 +120,26 @@ class LdapClientService
             $this->logger->error('LDAP: Read-only bind failed', [
                 'error' => $ldapException->getMessage(),
                 'code' => $ldapException->getCode(),
-                'host' => $this->_host,
-                'port' => $this->_port,
-                'useSSL' => $this->_useSSL,
-                'bindDn' => $this->_readUser,
-                'baseDn' => $this->_baseDn,
+                'host' => $this->host,
+                'port' => $this->port,
+                'useSSL' => $this->useSSL,
+                'bindDn' => $this->readUser,
+                'baseDn' => $this->baseDn,
             ]);
 
             throw new Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $ldapException->getMessage() . '', $ldapException->getCode(), $ldapException);
         }
 
-        $searchFilter = '(' . $this->_userNameField . '=' . ldap_escape($this->_userName) . ')';
+        $searchFilter = '(' . $this->userNameField . '=' . ldap_escape($this->userName) . ')';
         $this->logger->debug('LDAP: Searching for user', [
-            'baseDn' => $this->_baseDn,
+            'baseDn' => $this->baseDn,
             'filter' => $searchFilter,
             'scope' => 'sub',
         ]);
 
         $collection = $ldap->search(
             $searchFilter,
-            $this->_baseDn,
+            $this->baseDn,
             Ldap::SEARCH_SCOPE_SUB,
             ['cn', 'distinguishedName', 'dn'],
         );
@@ -147,7 +147,7 @@ class LdapClientService
         if (!is_object($collection) || (0 === $collection->count())) {
             $this->logger->warning('LDAP: User search failed or returned no results.', [
                 'filter' => $searchFilter,
-                'baseDn' => $this->_baseDn,
+                'baseDn' => $this->baseDn,
             ]);
 
             throw new Exception('Username unknown.');
@@ -156,7 +156,7 @@ class LdapClientService
         if ($collection->count() > 1) {
             $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
                 'filter' => $searchFilter,
-                'baseDn' => $this->_baseDn,
+                'baseDn' => $this->baseDn,
                 'count' => $collection->count(),
             ]);
         }
@@ -190,7 +190,7 @@ class LdapClientService
     protected function verifyPassword(array $ldapEntry): bool
     {
         // Security check: ensure password is properly set
-        if ('' === $this->_userPass) {
+        if ('' === $this->userPass) {
             throw new Exception('LDAP password must be set via setUserPass() before authentication');
         }
 
@@ -203,12 +203,12 @@ class LdapClientService
         // If DN extraction failed or returned invalid data, construct it from username
         if (null === $userDn || '' === $userDn || strlen($userDn) < 10) {
             // Construct DN using the original username and our known structure
-            $userDn = sprintf('uid=%s,ou=users,%s', $this->_userName, $this->_baseDn);
+            $userDn = sprintf('uid=%s,ou=users,%s', $this->userName, $this->baseDn);
             $this->logger->debug('LDAP: Constructed DN from username and base DN.', [
                 'original_dn' => $ldapEntry['dn'][0] ?? 'N/A',
                 'constructed_dn' => $userDn,
-                'username' => $this->_userName,
-                'base_dn' => $this->_baseDn,
+                'username' => $this->userName,
+                'base_dn' => $this->baseDn,
             ]);
         }
 
@@ -223,15 +223,15 @@ class LdapClientService
 
         $ldapOptions = $this->getLdapOptions();
         $ldapOptions['username'] = $userDn;
-        $ldapOptions['password'] = $this->_userPass;
+        $ldapOptions['password'] = $this->userPass;
 
         $ldap = new Ldap($ldapOptions);
 
         try {
             $this->logger->debug('LDAP: Attempting user bind.', [
-                'host' => $this->_host,
-                'port' => $this->_port,
-                'useSSL' => $this->_useSSL,
+                'host' => $this->host,
+                'port' => $this->port,
+                'useSSL' => $this->useSSL,
                 'bindDn' => $userDn,
             ]);
 
@@ -241,9 +241,9 @@ class LdapClientService
             $this->logger->error('LDAP: User bind failed.', [
                 'error' => $ldapException->getMessage(),
                 'code' => $ldapException->getCode(),
-                'host' => $this->_host,
-                'port' => $this->_port,
-                'useSSL' => $this->_useSSL,
+                'host' => $this->host,
+                'port' => $this->port,
+                'useSSL' => $this->useSSL,
                 'bindDn' => $userDn,
             ]);
 
@@ -259,7 +259,7 @@ class LdapClientService
             throw new Exception(sprintf("Invalid user name: '%s'", $username));
         }
 
-        $this->_userName = str_replace(
+        $this->userName = str_replace(
             [' ', 'ä', 'ö', 'ü', 'ß', 'é'],
             ['.', 'ae', 'oe', 'ue', 'ss', 'e'],
             strtolower($username),
@@ -270,7 +270,7 @@ class LdapClientService
 
     public function setUserPass(#[SensitiveParameter] string $password): static
     {
-        $this->_userPass = $password;
+        $this->userPass = $password;
 
         return $this;
     }
@@ -344,7 +344,7 @@ class LdapClientService
      */
     public function setHost($host): static
     {
-        $this->_host = $this->toStringValue($host);
+        $this->host = $this->toStringValue($host);
 
         return $this;
     }
@@ -354,7 +354,7 @@ class LdapClientService
      */
     public function setPort($port): static
     {
-        $this->_port = $this->toIntValue($port);
+        $this->port = $this->toIntValue($port);
 
         return $this;
     }
@@ -364,7 +364,7 @@ class LdapClientService
      */
     public function setReadUser($readUser): static
     {
-        $this->_readUser = $this->toStringValue($readUser);
+        $this->readUser = $this->toStringValue($readUser);
 
         return $this;
     }
@@ -374,7 +374,7 @@ class LdapClientService
      */
     public function setReadPass($readPass): static
     {
-        $this->_readPass = $this->toStringValue($readPass);
+        $this->readPass = $this->toStringValue($readPass);
 
         return $this;
     }
@@ -384,7 +384,7 @@ class LdapClientService
      */
     public function setBaseDn($base_dn): static
     {
-        $this->_baseDn = $this->toStringValue($base_dn);
+        $this->baseDn = $this->toStringValue($base_dn);
 
         return $this;
     }
@@ -394,7 +394,7 @@ class LdapClientService
      */
     public function setUseSSL($useSSL): static
     {
-        $this->_useSSL = $this->toBoolValue($useSSL);
+        $this->useSSL = $this->toBoolValue($useSSL);
 
         return $this;
     }
@@ -404,7 +404,7 @@ class LdapClientService
      */
     public function setUserNameField($userNameField): static
     {
-        $this->_userNameField = $this->toStringValue($userNameField);
+        $this->userNameField = $this->toStringValue($userNameField);
 
         return $this;
     }

@@ -8,12 +8,12 @@ use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\HttpFoundation\Request;
 
 /* @var Composer\Autoload\ClassLoader */
-require dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 // Enable E2E coverage collection when COVERAGE_ENABLED=1 (test environment only)
 $appEnv = $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? 'prod';
 if (($appEnv === 'test' || $appEnv === 'dev') && (!empty($_SERVER['COVERAGE_ENABLED']) || !empty($_ENV['COVERAGE_ENABLED']))) {
-    require __DIR__ . '/coverage.php';
+    require_once __DIR__ . '/coverage.php';
 }
 
 // Load cached env vars if the .env.local.php file exists

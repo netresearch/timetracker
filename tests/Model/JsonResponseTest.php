@@ -120,7 +120,7 @@ final class JsonResponseTest extends TestCase
 
     public function testSendReturnsStaticInstance(): void
     {
-        $response = new JsonResponse(['data' => true]);
+        new JsonResponse(['data' => true]);
 
         // Don't actually send (which would output), just verify the method signature
         // by checking the fluent interface works via reflection

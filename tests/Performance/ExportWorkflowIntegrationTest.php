@@ -340,7 +340,6 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
         // Create large dataset
         $this->createTestDataForExport(2000);
 
-        $memoryBefore = memory_get_usage(true);
         $peakBefore = memory_get_peak_usage(true);
 
         $this->client->request('GET', '/controlling/export', [
@@ -349,13 +348,11 @@ final class ExportWorkflowIntegrationTest extends AbstractWebTestCase
             'month' => 8,
         ]);
 
-        $memoryAfter = memory_get_usage(true);
         $peakAfter = memory_get_peak_usage(true);
 
         $response = $this->client->getResponse();
         self::assertSame(200, $response->getStatusCode());
 
-        $memoryUsage = $memoryAfter - $memoryBefore;
         $peakMemoryIncrease = $peakAfter - $peakBefore;
 
         // Memory usage should be reasonable for large datasets

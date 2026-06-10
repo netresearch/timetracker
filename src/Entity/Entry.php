@@ -53,7 +53,7 @@ class Entry extends Base
     protected string $ticket = '';
 
     #[ORM\Column(name: 'worklog_id', type: 'integer', nullable: true)]
-    protected ?int $worklog_id = null;
+    protected ?int $worklogId = null;
 
     #[ORM\Column(type: 'string')]
     protected string $description = '';
@@ -275,7 +275,7 @@ class Entry extends Base
      */
     public function setWorklogId(?int $worklog_id): static
     {
-        $this->worklog_id = $worklog_id;
+        $this->worklogId = $worklog_id;
 
         return $this;
     }
@@ -285,7 +285,7 @@ class Entry extends Base
      */
     public function getWorklogId(): ?int
     {
-        return $this->worklog_id;
+        return $this->worklogId;
     }
 
     public function setDescription(string $description): static

@@ -63,7 +63,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setHost should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $hostProp = $reflection->getProperty('_host');
+        $hostProp = $reflection->getProperty('host');
         self::assertSame('ldap.example.com', $hostProp->getValue($service));
     }
 
@@ -73,7 +73,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setHost(123);
 
         $reflection = new ReflectionClass($service);
-        $hostProp = $reflection->getProperty('_host');
+        $hostProp = $reflection->getProperty('host');
         self::assertSame('123', $hostProp->getValue($service));
     }
 
@@ -83,7 +83,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setHost(null);
 
         $reflection = new ReflectionClass($service);
-        $hostProp = $reflection->getProperty('_host');
+        $hostProp = $reflection->getProperty('host');
         self::assertSame('', $hostProp->getValue($service));
     }
 
@@ -97,7 +97,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setPort should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $portProp = $reflection->getProperty('_port');
+        $portProp = $reflection->getProperty('port');
         self::assertSame(636, $portProp->getValue($service));
     }
 
@@ -107,7 +107,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setPort('389');
 
         $reflection = new ReflectionClass($service);
-        $portProp = $reflection->getProperty('_port');
+        $portProp = $reflection->getProperty('port');
         self::assertSame(389, $portProp->getValue($service));
     }
 
@@ -117,7 +117,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setPort(null);
 
         $reflection = new ReflectionClass($service);
-        $portProp = $reflection->getProperty('_port');
+        $portProp = $reflection->getProperty('port');
         self::assertSame(0, $portProp->getValue($service));
     }
 
@@ -131,7 +131,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setReadUser should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_readUser');
+        $prop = $reflection->getProperty('readUser');
         self::assertSame('cn=reader,dc=example', $prop->getValue($service));
     }
 
@@ -145,7 +145,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setReadPass should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_readPass');
+        $prop = $reflection->getProperty('readPass');
         self::assertSame('secretpass123', $prop->getValue($service));
     }
 
@@ -159,7 +159,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setBaseDn should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_baseDn');
+        $prop = $reflection->getProperty('baseDn');
         self::assertSame('dc=example,dc=com', $prop->getValue($service));
     }
 
@@ -173,7 +173,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setUseSSL should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_useSSL');
+        $prop = $reflection->getProperty('useSSL');
         self::assertTrue($prop->getValue($service));
     }
 
@@ -183,7 +183,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUseSSL(false);
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_useSSL');
+        $prop = $reflection->getProperty('useSSL');
         self::assertFalse($prop->getValue($service));
     }
 
@@ -193,7 +193,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUseSSL(1);
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_useSSL');
+        $prop = $reflection->getProperty('useSSL');
         self::assertTrue($prop->getValue($service));
     }
 
@@ -203,7 +203,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUseSSL(0);
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_useSSL');
+        $prop = $reflection->getProperty('useSSL');
         self::assertFalse($prop->getValue($service));
     }
 
@@ -217,7 +217,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setUserNameField should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userNameField');
+        $prop = $reflection->getProperty('userNameField');
         self::assertSame('uid', $prop->getValue($service));
     }
 
@@ -231,7 +231,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setUserName should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userName');
+        $prop = $reflection->getProperty('userName');
         self::assertSame('john.doe', $prop->getValue($service));
     }
 
@@ -241,7 +241,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUserName('JOHN.DOE');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userName');
+        $prop = $reflection->getProperty('userName');
         self::assertSame('john.doe', $prop->getValue($service));
     }
 
@@ -251,7 +251,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUserName('John Doe');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userName');
+        $prop = $reflection->getProperty('userName');
         self::assertSame('john.doe', $prop->getValue($service));
     }
 
@@ -261,7 +261,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUserName('Jürgen Müller');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userName');
+        $prop = $reflection->getProperty('userName');
         self::assertSame('juergen.mueller', $prop->getValue($service));
     }
 
@@ -271,7 +271,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUserName('Straße');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userName');
+        $prop = $reflection->getProperty('userName');
         self::assertSame('strasse', $prop->getValue($service));
     }
 
@@ -281,7 +281,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUserName('René');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userName');
+        $prop = $reflection->getProperty('userName');
         self::assertSame('rene', $prop->getValue($service));
     }
 
@@ -291,7 +291,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUserName('Köhler Béatrice');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userName');
+        $prop = $reflection->getProperty('userName');
         self::assertSame('koehler.beatrice', $prop->getValue($service));
     }
 
@@ -325,7 +325,7 @@ final class LdapClientServiceTest extends TestCase
         self::assertSame($service, $result, 'setUserPass should return self for chaining');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userPass');
+        $prop = $reflection->getProperty('userPass');
         self::assertSame('myPassword123', $prop->getValue($service));
     }
 
@@ -335,7 +335,7 @@ final class LdapClientServiceTest extends TestCase
         $service->setUserPass('');
 
         $reflection = new ReflectionClass($service);
-        $prop = $reflection->getProperty('_userPass');
+        $prop = $reflection->getProperty('userPass');
         self::assertSame('', $prop->getValue($service));
     }
 
@@ -816,31 +816,31 @@ final class LdapClientServiceTest extends TestCase
         $service = new LdapClientService();
         $reflection = new ReflectionClass($service);
 
-        $hostProp = $reflection->getProperty('_host');
+        $hostProp = $reflection->getProperty('host');
         self::assertSame('192.168.1.2', $hostProp->getValue($service));
 
-        $portProp = $reflection->getProperty('_port');
+        $portProp = $reflection->getProperty('port');
         self::assertSame(389, $portProp->getValue($service));
 
-        $readUserProp = $reflection->getProperty('_readUser');
+        $readUserProp = $reflection->getProperty('readUser');
         self::assertSame('readuser', $readUserProp->getValue($service));
 
-        $readPassProp = $reflection->getProperty('_readPass');
+        $readPassProp = $reflection->getProperty('readPass');
         self::assertSame('readuser', $readPassProp->getValue($service));
 
-        $baseDnProp = $reflection->getProperty('_baseDn');
+        $baseDnProp = $reflection->getProperty('baseDn');
         self::assertSame('dc=netresearch,dc=nr', $baseDnProp->getValue($service));
 
-        $userNameFieldProp = $reflection->getProperty('_userNameField');
+        $userNameFieldProp = $reflection->getProperty('userNameField');
         self::assertSame('sAMAccountName', $userNameFieldProp->getValue($service));
 
-        $userNameProp = $reflection->getProperty('_userName');
+        $userNameProp = $reflection->getProperty('userName');
         self::assertSame('', $userNameProp->getValue($service));
 
-        $userPassProp = $reflection->getProperty('_userPass');
+        $userPassProp = $reflection->getProperty('userPass');
         self::assertSame('', $userPassProp->getValue($service));
 
-        $useSslProp = $reflection->getProperty('_useSSL');
+        $useSslProp = $reflection->getProperty('useSSL');
         self::assertFalse($useSslProp->getValue($service));
     }
 

@@ -149,7 +149,7 @@ final class ExportActionPerformanceTest extends TestCase
         $this->stopwatch->start('medium_excel_export');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request);
+        $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('medium_excel_export');
@@ -187,7 +187,7 @@ final class ExportActionPerformanceTest extends TestCase
         $this->stopwatch->start('large_excel_export');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request);
+        $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('large_excel_export');
@@ -225,7 +225,7 @@ final class ExportActionPerformanceTest extends TestCase
         $this->stopwatch->start('excel_export_enriched');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request);
+        $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('excel_export_enriched');
@@ -257,7 +257,7 @@ final class ExportActionPerformanceTest extends TestCase
         $this->stopwatch->start('statistics_calculation');
         $memoryBefore = memory_get_usage(true);
 
-        $response = $exportAction($request);
+        $exportAction($request);
 
         $memoryAfter = memory_get_usage(true);
         $event = $this->stopwatch->stop('statistics_calculation');

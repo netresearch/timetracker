@@ -124,7 +124,7 @@ class ModernLdapService
      *
      * @return array<int, array<string, mixed>>
      */
-    public function searchUsers(array $criteria, int $limit = 100): array
+    public function searchUsers(array $criteria): array
     {
         try {
             $ldap = $this->getConnectionWithServiceAccount();

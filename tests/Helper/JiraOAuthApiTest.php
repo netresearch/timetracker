@@ -112,7 +112,7 @@ final class JiraOAuthApiTest extends TestCase
         // Force getClient('user') to return a client that triggers 401 on request
         $request = new Request('GET', 'https://jira.example');
         $requestException = new RequestException('Unauthorized', $request, new Response(401));
-        $jiraOAuthApi = $this->makeSubject(static function ($method, $url, $opts) use ($requestException): void {
+        $jiraOAuthApi = $this->makeSubject(static function () use ($requestException): void {
             throw $requestException;
         }, true);
 

@@ -20,6 +20,10 @@ use function function_exists;
 use function is_file;
 use function trim;
 
+use const MYSQLI_REPORT_ERROR;
+use const MYSQLI_REPORT_OFF;
+use const MYSQLI_REPORT_STRICT;
+
 /**
  * Test data management trait.
  *

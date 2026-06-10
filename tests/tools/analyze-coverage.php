@@ -69,7 +69,7 @@ final readonly class TestCoverageAnalyzer
         foreach ($controllers as $controllerClass => $actions) {
             foreach ($actions as $action) {
                 ++$totalActions;
-                $isTestedAction = $this->isActionTested($controllerClass, (string) $action, $tests);
+                $isTestedAction = $this->isActionTested($controllerClass, $tests);
 
                 if (false !== $isTestedAction) {
                     ++$testedActions;
@@ -113,7 +113,6 @@ final readonly class TestCoverageAnalyzer
         foreach ($phpFiles as $file) {
             if ($file instanceof SplFileInfo) {
                 $pathname = $file->getPathname();
-                $relativePath = str_replace($this->controllersPath . '/', '', $pathname);
                 $className = $this->getClassNameFromFile($pathname);
             } else {
                 continue;
@@ -218,7 +217,7 @@ final readonly class TestCoverageAnalyzer
         foreach ($phpFiles as $file) {
             if ($file instanceof SplFileInfo) {
                 $pathname = $file->getPathname();
-                $className = $this->getClassNameFromFile($pathname, 'Tests');
+                $className = $this->getClassNameFromFile($pathname);
             } else {
                 continue;
             }
@@ -251,7 +250,7 @@ final readonly class TestCoverageAnalyzer
     /**
      * @param array<string, array<int, string>> $tests
      */
-    private function isActionTested(string $controllerClass, string $action, array $tests): string|false
+    private function isActionTested(string $controllerClass, array $tests): string|false
     {
         // Extract controller area and action name for better matching
         $controllerInfo = $this->extractControllerInfo($controllerClass);
@@ -262,7 +261,7 @@ final readonly class TestCoverageAnalyzer
 
             if ($this->areasMatch($controllerInfo['area'], $testArea)) {
                 foreach ($testMethods as $testMethod) {
-                    if ($this->matchesTestPattern($controllerInfo['action'], $action, $testMethod)) {
+                    if ($this->matchesTestPattern($controllerInfo['action'], $testMethod)) {
                         return "{$testClass}::{$testMethod}";
                     }
                 }
@@ -275,7 +274,7 @@ final readonly class TestCoverageAnalyzer
     /**
      * Match action method with test method patterns.
      */
-    private function matchesTestPattern(string $actionName, string $methodName, string $testMethod): bool
+    private function matchesTestPattern(string $actionName, string $testMethod): bool
     {
         $normalizedAction = strtolower($actionName);
         $normalizedTest = strtolower(str_replace('test', '', $testMethod));
@@ -436,7 +435,7 @@ final readonly class TestCoverageAnalyzer
     /**
      * Extract class name from file path.
      */
-    private function getClassNameFromFile(string $filePath, string $namespace = 'App'): ?string
+    private function getClassNameFromFile(string $filePath): ?string
     {
         $content = file_get_contents($filePath);
         if (false === $content) {

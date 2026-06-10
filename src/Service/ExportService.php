@@ -41,13 +41,12 @@ class ExportService
     /**
      * Returns entries filtered and ordered.
      *
-     * @param array<string, string>|null $arSort
-     * @param array<int, int>|null       $arProjects
-     * @param array<int, int>|null       $arUsers
+     * @param array<int, int>|null $arProjects
+     * @param array<int, int>|null $arUsers
      *
      * @return list<array<string, int|string|null>>
      */
-    public function getEntries(User $currentUser, ?array $arSort = null, string $strStart = '', string $strEnd = '', ?array $arProjects = null, ?array $arUsers = null): array
+    public function getEntries(User $currentUser, string $strStart = '', string $strEnd = '', ?array $arProjects = null, ?array $arUsers = null): array
     {
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         assert($objectRepository instanceof EntryRepository);

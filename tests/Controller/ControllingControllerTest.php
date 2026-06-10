@@ -159,7 +159,7 @@ final class ControllingControllerTest extends AbstractWebTestCase
         // Mock enrichEntries - expect it called with correct parameters, use callback to call setters on REAL entries
         $exportServiceMock->expects(self::once())
             ->method('enrichEntriesWithTicketInformation')
-            ->willReturnCallback(static function ($userId, array $entries, $includeBillable, $includeTicketTitle, $searchTickets): array {
+            ->willReturnCallback(static function ($userId, array $entries, $includeBillable, $includeTicketTitle): array {
                 foreach ($entries as $entry) {
                     // Use setters ON THE REAL Entry objects
                     if ($entry instanceof \App\Entity\Entry) {

@@ -856,7 +856,7 @@ final class JiraWorkLogServiceTest extends TestCase
         $response->id = '99999';
         $this->jiraHttpClientService->method('post')->willReturn($response);
 
-        $result = $this->service->syncWorkLog($user, $ticketSystem, $entry, []);
+        $result = $this->service->syncWorkLog($entry);
 
         self::assertArrayHasKey('worklogId', $result);
         self::assertSame(99999, $result['worklogId']);

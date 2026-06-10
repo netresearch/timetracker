@@ -310,7 +310,7 @@ final class ExportServiceTest extends TestCase
         $jiraFactory = $this->createJiraFactory();
 
         $service = new ExportService($doctrine, $jiraFactory);
-        $result = $service->getEntries($user, null, '2025-01-01', '2025-01-31');
+        $result = $service->getEntries($user, '2025-01-01', '2025-01-31');
 
         self::assertSame([], $result);
     }
@@ -322,7 +322,7 @@ final class ExportServiceTest extends TestCase
         $jiraFactory = $this->createJiraFactory();
 
         $service = new ExportService($doctrine, $jiraFactory);
-        $result = $service->getEntries($user, null, '', '', [1, 2], [10, 20]);
+        $result = $service->getEntries($user, '', '', [1, 2], [10, 20]);
 
         self::assertSame([], $result);
     }
