@@ -14,10 +14,11 @@ use App\Dto\InterpretationFiltersDto;
 use App\Entity\Entry;
 use App\Entity\User;
 use App\Enum\UserType;
+use App\Exception\InvalidDateFormatException;
+use App\Exception\MissingSearchCriteriaException;
 use App\Repository\EntryRepository;
 use DateInterval;
 use DateTime;
-use Exception;
 use Symfony\Component\HttpFoundation\Request;
 
 use function assert;
@@ -61,7 +62,8 @@ abstract class BaseInterpretationController extends BaseController
     /**
      * Get entries by request parameter.
      *
-     * @throws Exception
+     * @throws InvalidDateFormatException     when the year/month filter cannot be parsed
+     * @throws MissingSearchCriteriaException when no usable filter criteria are given
      *
      * @return list<Entry>
      */
@@ -78,7 +80,7 @@ abstract class BaseInterpretationController extends BaseController
                 $datestart = $year . '-' . $month . '-01';
                 $dateend = DateTime::createFromFormat('Y-m-d', $datestart);
                 if (false === $dateend) {
-                    throw new Exception('Invalid date');
+                    throw new InvalidDateFormatException('Invalid date');
                 }
 
                 $dateend->add(new DateInterval('P1M'));
@@ -87,7 +89,7 @@ abstract class BaseInterpretationController extends BaseController
                 $datestart = $year . '-01-01';
                 $dateend = DateTime::createFromFormat('Y-m-d', $datestart);
                 if (false === $dateend) {
-                    throw new Exception('Invalid date');
+                    throw new InvalidDateFormatException('Invalid date');
                 }
 
                 $dateend->add(new DateInterval('P1Y'));
@@ -99,7 +101,7 @@ abstract class BaseInterpretationController extends BaseController
         }
 
         if (null === $arParams['customer'] && null === $arParams['project'] && null === $arParams['user'] && null === $arParams['ticket']) {
-            throw new Exception($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
+            throw new MissingSearchCriteriaException($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
         }
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);

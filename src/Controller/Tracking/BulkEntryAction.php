@@ -19,6 +19,7 @@ use App\Entity\Project;
 use App\Entity\User;
 use App\Enum\EntryClass;
 use App\Event\EntryEvent;
+use App\Exception\PresetNotFoundException;
 use App\Model\Response;
 use DateInterval;
 use DateTime;
@@ -93,7 +94,7 @@ final class BulkEntryAction extends BaseTrackingController
 
             $preset = $doctrine->getRepository(Preset::class)->find($bulkEntryDto->preset);
             if (!$preset instanceof Preset) {
-                throw new Exception('Preset not found');
+                throw new PresetNotFoundException('Preset not found');
             }
 
             $user = $currentUser;

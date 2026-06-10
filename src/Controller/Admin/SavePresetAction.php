@@ -15,6 +15,7 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Preset;
 use App\Entity\Project;
+use App\Exception\IncompletePresetException;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
@@ -67,7 +68,7 @@ final class SavePresetAction extends BaseController
 
         try {
             if (!$customer instanceof Customer || !$project instanceof Project || !$activity instanceof Activity) {
-                throw new Exception('Please choose a customer, a project and an activity.');
+                throw new IncompletePresetException('Please choose a customer, a project and an activity.');
             }
 
             // Map scalar fields (name, description)

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Enum\EntryClass;
+use App\Exception\InvalidEntryTimeException;
 use App\Model\Base;
 use App\Repository\EntryRepository;
 use DateTime;
@@ -171,14 +172,14 @@ class Entry extends Base
     protected $externalReporter = '';
 
     /**
-     * @throws Exception
+     * @throws InvalidEntryTimeException
      *
      * @return $this
      */
     public function validateDuration(): static
     {
         if ($this->end->getTimestamp() <= $this->start->getTimestamp()) {
-            throw new Exception('Duration must be greater than 0!');
+            throw new InvalidEntryTimeException('Duration must be greater than 0!');
         }
 
         return $this;

@@ -12,6 +12,7 @@ namespace App\Controller\Tracking;
 use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Enum\EntryClass;
+use App\Exception\InvalidEntryTimeException;
 use App\Repository\EntryRepository;
 use DateInterval;
 use DateTime;
@@ -134,7 +135,7 @@ abstract class BaseTrackingController extends BaseController
     /**
      * Validates entry date and time values.
      *
-     * @throws Exception when validation fails
+     * @throws InvalidEntryTimeException when validation fails
      */
     protected function validateEntryDateTime(Entry $entry): void
     {
@@ -142,18 +143,18 @@ abstract class BaseTrackingController extends BaseController
         $end = $entry->getEnd();
 
         if (!$start instanceof DateTime || !$end instanceof DateTime) {
-            throw new Exception('Entry must have valid start and end times');
+            throw new InvalidEntryTimeException('Entry must have valid start and end times');
         }
 
         if ($start >= $end) {
-            throw new Exception('Entry start time must be before end time');
+            throw new InvalidEntryTimeException('Entry start time must be before end time');
         }
 
         new DateInterval('PT23H59M');
         $dateInterval = $start->diff($end);
 
         if ($dateInterval->days > 0 || $dateInterval->h > 23) {
-            throw new Exception('Entry duration cannot exceed 24 hours');
+            throw new InvalidEntryTimeException('Entry duration cannot exceed 24 hours');
         }
     }
 
