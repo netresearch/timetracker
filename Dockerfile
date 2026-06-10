@@ -39,6 +39,7 @@ RUN set -ex \
         libjpeg62-turbo-dev \
         libfreetype6-dev \
         libicu-dev \
+        procps \
         unzip \
         zlib1g-dev \
     && docker-php-ext-configure gd --with-jpeg --with-freetype \
@@ -226,6 +227,7 @@ COPY --from=deps --chown=app:app /var/www/html/bin /var/www/html/bin
 COPY --from=deps --chown=app:app /var/www/html/src /var/www/html/src
 COPY --from=deps --chown=app:app /var/www/html/templates /var/www/html/templates
 COPY --from=deps --chown=app:app /var/www/html/translations /var/www/html/translations
+COPY --from=deps /var/www/html/migrations /var/www/html/migrations
 COPY --from=deps --chown=app:app /var/www/html/sql /var/www/html/sql
 COPY --from=deps --chown=app:app /var/www/html/var /var/www/html/var
 
