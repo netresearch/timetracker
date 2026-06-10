@@ -450,7 +450,7 @@ Ext.define('Netresearch.widget.Tracking', {
                             .replace(/</g, '&lt;')
                             .replace(/>/g, '&gt;')
                             .replace(/"/g, '&quot;')
-                            .replace(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig, '<a href="http:\/\/bugs.nr/$1" target="_new">$1<\/a>');
+                            .replace(/([A-Z]+(::[A-Z0-9]+)?-[0-9]+)/ig, '<a href="https:\/\/bugs.nr/$1" target="_new">$1<\/a>');
                     }
                 }
             ],
@@ -703,7 +703,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 throw "empty baseUrl";
             }
         } catch (err) {
-            baseUrl = 'http://bugs.nr/%s';
+            baseUrl = 'https://bugs.nr/%s';
         }
 
         return baseUrl.split("%s").join(ticket);

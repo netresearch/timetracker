@@ -9,4 +9,4 @@ permissions:
 
 jobs:
   auto-merge:
-    uses: netresearch/.github/.github/workflows/auto-merge-deps.yml@main
+    uses: netresearch/.github/.github/workflows/auto-merge-deps.yml@53469ad0d1024265804184e214318b9895559cc9 # main
