@@ -15,6 +15,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\TicketSystemType;
 use App\Event\EntryEvent;
+use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use Doctrine\Persistence\ManagerRegistry;
@@ -307,7 +308,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         if (!is_object($issue) || !property_exists($issue, 'key') || !is_string($issue->key) || '' === $issue->key) {
-            throw new Exception('Unexpected response from Jira when resolving the internal ticket');
+            throw new JiraApiException('Unexpected response from Jira when resolving the internal ticket', 500);
         }
 
         $entry->setInternalJiraTicketOriginalKey($externalTicket);

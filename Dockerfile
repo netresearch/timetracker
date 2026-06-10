@@ -219,16 +219,18 @@ ENV APP_ENV=test
 # =============================================================================
 FROM base AS production
 
-# Copy only what's needed from deps stage
-COPY --from=deps --chown=app:app /var/www/html/vendor /var/www/html/vendor
-COPY --from=deps --chown=app:app /var/www/html/public /var/www/html/public
-COPY --from=deps --chown=app:app /var/www/html/config /var/www/html/config
-COPY --from=deps --chown=app:app /var/www/html/bin /var/www/html/bin
-COPY --from=deps --chown=app:app /var/www/html/src /var/www/html/src
-COPY --from=deps --chown=app:app /var/www/html/templates /var/www/html/templates
-COPY --from=deps --chown=app:app /var/www/html/translations /var/www/html/translations
+# Copy only what's needed from deps stage. Application code and assets are
+# root-owned and read-only for the runtime user (docker:S6504); only var/
+# must stay writable (cache, logs).
+COPY --from=deps /var/www/html/vendor /var/www/html/vendor
+COPY --from=deps /var/www/html/public /var/www/html/public
+COPY --from=deps /var/www/html/config /var/www/html/config
+COPY --from=deps /var/www/html/bin /var/www/html/bin
+COPY --from=deps /var/www/html/src /var/www/html/src
+COPY --from=deps /var/www/html/templates /var/www/html/templates
+COPY --from=deps /var/www/html/translations /var/www/html/translations
 COPY --from=deps /var/www/html/migrations /var/www/html/migrations
-COPY --from=deps --chown=app:app /var/www/html/sql /var/www/html/sql
+COPY --from=deps /var/www/html/sql /var/www/html/sql
 COPY --from=deps --chown=app:app /var/www/html/var /var/www/html/var
 
 # Copy healthcheck script

@@ -77,7 +77,10 @@ abstract class BaseTrackingController extends BaseController
 
             $start = $entry->getStart();
             $previousEnd = $previous->getEnd();
-            if (!$start instanceof DateTime || !$previousEnd instanceof DateTime) {
+            if (!$start instanceof DateTime) {
+                continue;
+            }
+            if (!$previousEnd instanceof DateTime) {
                 continue;
             }
 
