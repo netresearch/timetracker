@@ -71,14 +71,24 @@ target "_common" {
 # BUILD TARGETS
 # =============================================================================
 
-# Production image
-target "app" {
-  inherits = ["_common"]
-  target   = "production"
+# Tag/label provider for the "app" target.
+#
+# In CI this stub is REPLACED by the bake file that docker/metadata-action
+# generates (the workflow passes it via `files:`), so pushes get the full
+# metadata tag set (semver from git tags, branch name, sha, production,
+# latest). For local `docker buildx bake` runs the stub supplies the
+# defaults that compose.yml expects.
+target "docker-metadata-action" {
   tags = [
     "${REGISTRY}/${IMAGE_NAME}:${TAG}",
     "${REGISTRY}/${IMAGE_NAME}:production",
   ]
+}
+
+# Production image
+target "app" {
+  inherits = ["_common", "docker-metadata-action"]
+  target   = "production"
   labels = {
     "org.opencontainers.image.title"       = "Netresearch TimeTracker"
     "org.opencontainers.image.description" = "Time tracking application"
