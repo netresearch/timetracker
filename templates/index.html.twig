@@ -13,11 +13,11 @@
 
             const environment = {{ environment|json_encode|raw }};
 
-            let customersData = {{ customers|json_encode|raw }};
+            globalThis.customersData = {{ customers|json_encode|raw }};
 
-            let projectsData = {{ projects|json_encode|raw }};
+            globalThis.projectsData = {{ projects|json_encode|raw }};
 
-            let settingsData = {{ settings|json_encode|raw }};
+            globalThis.settingsData = {{ settings|json_encode|raw }};
         </script>
         <script type="text/javascript" src="{{ asset('build/js/ext-js/ext-all.js') }}"></script>
         <script type="text/javascript" src="{{ asset('build/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>

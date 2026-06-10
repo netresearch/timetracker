@@ -8,7 +8,7 @@
 // ==/UserScript==
 
 
-var ticket = null || window.location.href.split('/').slice(-1)[0];
+var ticket = null || globalThis.location.href.split('/').slice(-1)[0];
 var timetrackerUrl = 'https://timetracker/getTicketTimeSummary/' + ticket;
 
 window.addEventListener('load', function () {
@@ -36,7 +36,7 @@ function createButton(labJira, list) {
     button.style.color = "rgb(255, 255, 255)";
     button.style.height = '30px';
 
-    if (labJira == true) {
+    if (labJira) {
         button.style.marginTop = '15px';
     }
 
@@ -55,7 +55,7 @@ function createButton(labJira, list) {
 function getNewDiv(content, div, list = false) {
     var divElement = document.createElement('div');
 
-    if (list == true) {
+    if (list) {
         divElement.style.paddingLeft = '10px';
     }
 
@@ -72,7 +72,7 @@ function createTimeSummary(list, data) {
         "[data-test-id='issue.views.issue-base.context.context-items.primary-items']"
     ).childNodes[0].childNodes[0].childNodes[0];
     var cloneTitle = title.cloneNode(true);
-    var titleText = cloneTitle.childNodes[0].textContent = 'Aufgewendete Zeit';
+    cloneTitle.childNodes[0].textContent = 'Aufgewendete Zeit';
 
     var divTitle = document.createElement('div');
     divTitle.appendChild(cloneTitle);
@@ -97,21 +97,21 @@ function createTimeSummary(list, data) {
 
     var i = 0;
     Object.entries(data).forEach((value) => {
-        time = false || value[1].time;
+        const time = value[1].time;
 
-        if (!time) {
+        if (time) {
+            getNewDiv(headline[i++], rowOne);
+            getNewDiv(value[1].time, rowtwo, true);
+        } else {
             getNewDiv(headline[i++], rowOne);
             getNewDiv('\xa0', rowtwo, true);
 
             Object.keys(value[1]).forEach((key, index) => {
                 name = key;
-                content = value[1][key].time;
+                const content = value[1][key].time;
                 getNewDiv(key + ": ", rowOne, true);
                 getNewDiv(content, rowtwo, true);
             })
-        } else {
-            getNewDiv(headline[i++], rowOne);
-            getNewDiv(value[1].time, rowtwo, true);
         }
     })
     newDiv.appendChild(rowOne);
@@ -130,24 +130,25 @@ function createLabJiraTimeSummay(list, data) {
     var liEl = cloneTitle.childNodes[1].childNodes[1].childNodes[1];
 
     Object.entries(data).forEach((value) => {
-        time = false || value[1].time;
+        const time = value[1].time;
 
-        if (!time) {
+        if (time) {
+
+            var total = createNewContent(headline[i++], value[1].time, cloneTitle);
+            liEl.appendChild(total);
+        } else {
+
             var newHeadline = createNewContent(headline[i++], '\xa0', cloneTitle);
             liEl.appendChild(newHeadline);
 
             Object.keys(value[1]).forEach((key, index) => {
                 name = key;
-                content = value[1][key].time;
+                const content = value[1][key].time;
                 var newContent = createNewContent(key + ": ", content, cloneTitle);
                 newContent.style.marginTop = '0px';
                 liEl.appendChild(newContent);
             })
 
-        } else {
-
-            var total = createNewContent(headline[i++], value[1].time, cloneTitle);
-            liEl.appendChild(total);
         }
     })
 
@@ -162,7 +163,7 @@ function createLabJiraTimeSummay(list, data) {
 function createNewContent(headline, text, clone) {
 
     var content = clone.childNodes[1].childNodes[1].childNodes[1].childNodes[1];
-    var headline = content.getElementsByTagName("dt")[0].innerHTML = headline;
+    content.getElementsByTagName("dt")[0].innerHTML = headline;
     content.getElementsByTagName("dd")[0].innerText = text;
     clone.getElementsByTagName("dd")[0].title = text;
 
@@ -188,12 +189,12 @@ function getTimeSummary() {
                 list.removeChild(list.lastChild);
             }
 
-            if (this.labJira == false) {
+            if (this.labJira) {
+                var newDiv = createLabJiraTimeSummay(list, data);
+            } else {
 
                 var newDiv = createTimeSummary(list, data);
 
-            } else {
-                var newDiv = createLabJiraTimeSummay(list, data);
             }
             list.appendChild(newDiv);
             this.button.style.display = 'none';

@@ -335,7 +335,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             var errors = [];
 
                                             /* Create Error-String and display Error-Window */
-                                            for (i = 0; i < fields.length; i++) {
+                                            for (let i = 0; i < fields.length; i++) {
                                                 errors.push(fields.items[i].getErrors().join(', '));
                                             }
 
@@ -1549,9 +1549,6 @@ Ext.define('Netresearch.widget.Admin', {
             editPreset: function (record) {
                 var projectStore = Ext.create('Netresearch.store.AdminProjects');
                 projectStore.load();
-                var presetStore = Ext.create('Netresearch.store.AdminPresets', {
-                    autoLoad: false
-                });
 
                 if (!record) record = {};
 
@@ -1764,10 +1761,6 @@ Ext.define('Netresearch.widget.Admin', {
                 }
             }, // end listeners
             editTicketSystem: function (record) {
-                var ticketSytemStore = Ext.create('Netresearch.store.TicketSystems', {
-                    autoLoad: false
-                });
-
                 var ticketSystemTypeStore = new Ext.data.ArrayStore({
                     fields: ['type'],
                     data: [
@@ -2247,43 +2240,43 @@ Ext.define('Netresearch.widget.Admin', {
                                     id: 'hours_0',
                                     fieldLabel: panel._hours0Title,
                                     name: 'hours_0',
-                                    value: record.hours_0 !== undefined ? record.hours_0 : 0
+                                    value: record.hours_0 === undefined ? 0 : record.hours_0
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_1',
                                     fieldLabel: panel._hours1Title,
                                     name: 'hours_1',
-                                    value: record.hours_1 !== undefined ? record.hours_1 : 8
+                                    value: record.hours_1 === undefined ? 8 : record.hours_1
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_2',
                                     fieldLabel: panel._hours2Title,
                                     name: 'hours_2',
-                                    value: record.hours_2 !== undefined ? record.hours_2 : 8
+                                    value: record.hours_2 === undefined ? 8 : record.hours_2
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_3',
                                     fieldLabel: panel._hours3Title,
                                     name: 'hours_3',
-                                    value: record.hours_3 !== undefined ? record.hours_3 : 8
+                                    value: record.hours_3 === undefined ? 8 : record.hours_3
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_4',
                                     fieldLabel: panel._hours4Title,
                                     name: 'hours_4',
-                                    value: record.hours_4 !== undefined ? record.hours_4 : 8
+                                    value: record.hours_4 === undefined ? 8 : record.hours_4
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_5',
                                     fieldLabel: panel._hours5Title,
                                     name: 'hours_5',
-                                    value: record.hours_5 !== undefined ? record.hours_5 : 8
+                                    value: record.hours_5 === undefined ? 8 : record.hours_5
                                 }),
                                 new Ext.form.field.Number({
                                     id: 'hours_6',
                                     fieldLabel: panel._hours6Title,
                                     name: 'hours_6',
-                                    value: record.hours_6 !== undefined ? record.hours_6 : 0
+                                    value: record.hours_6 === undefined ? 0 : record.hours_6
                                 })
                             ],
                             buttons: [
@@ -2460,7 +2453,7 @@ function renderCheckbox(val) {
 }
 
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+if (settingsData?.['locale'] == 'de') {
     Ext.apply(Netresearch.widget.Admin.prototype, {
         _tabTitle: 'Administration',
         _nameTitle: 'Name',

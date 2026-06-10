@@ -193,7 +193,7 @@ Ext.define('Netresearch.widget.Controlling', {
             customer = 0;
         }
 
-        window.location.href = 'controlling/export/'
+        globalThis.location.href = 'controlling/export/'
             + user + '/'
             + year + '/'
             + month + '/'
@@ -211,7 +211,7 @@ Ext.define('Netresearch.widget.Controlling', {
 
 });
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+if (settingsData?.['locale'] == 'de') {
     Ext.apply(Netresearch.widget.Controlling.prototype, {
         _monthlyStatement: 'Monats-Abrechnung',
         _userTitle: 'Mitarbeiter',

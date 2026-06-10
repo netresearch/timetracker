@@ -737,7 +737,7 @@ Ext.define('Netresearch.widget.Interpretation', {
             params: searchParams,
             callback: function(records) {
                 // Show alert box if no data were found
-                if (typeof records == 'undefined') {
+                if (records === undefined) {
                     Ext.MessageBox.alert(this._attentionTitle, this._noDataFoundTitle);
                 }
             }
@@ -779,7 +779,7 @@ Ext.define('Netresearch.widget.Interpretation', {
 
 
 function NetresearchWidgetInterpretationLoadSettings(settingsData) {
-    if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+    if (settingsData?.['locale'] == 'de') {
         Ext.apply(Netresearch.widget.Interpretation.prototype, {
             _tabTitle: 'Auswertung',
             _monthTitle: 'Monat',

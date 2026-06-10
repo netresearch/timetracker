@@ -50,14 +50,6 @@ Ext.define('Netresearch.widget.Extras', {
             data: [[1, this._yesTitle], [0, this._noTitle]]
         });
 
-        /*
-        new Ext.data.ArrayStore({
-            fields: ['value', 'displayname'],
-            data: [[1, this._nrHolidaysTitle],  [2, this._nrSickTitle],  [3, this._nrParentTimeTitle],
-                   [4, this._nafHolidaysTitle], [5, this._nafSickTitle], [6, this._nafParentTimeTitle]]
-        });
-        */
-
         var form = new Ext.form.FormPanel({
             url: url + 'tracking/bulkentry',
             frame: true,
@@ -263,7 +255,7 @@ Ext.define('Netresearch.widget.Extras', {
     }
 });
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+if (settingsData?.['locale'] == 'de') {
     Ext.apply(Netresearch.widget.Extras.prototype, {
         _tabTitle: 'Extras',
         _bulkEntryTitle: 'Massen-Eintragung',
