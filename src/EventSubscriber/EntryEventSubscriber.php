@@ -283,7 +283,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $searchResult = $api->searchTicket(
             sprintf(
-                'project = %s AND summary ~ %s',
+                'project = %s AND summary ~ "%s"',
                 $project->getInternalJiraProjectKey() ?? '',
                 $externalTicket,
             ),
@@ -298,7 +298,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
         if (count($issues) > 0) {
             $issue = reset($issues);
         } else {
-            // issue does not exist in the internal Jira, create it
+            // issue does not exist in the internal Jira, create it - with
+            // the EXTERNAL key as its summary (relevant when an already
+            // mirrored entry is edited and the mirror issue vanished: the
+            // entry's ticket holds the internal key at this point)
+            $entry->setTicket($externalTicket);
             $issue = $api->createTicket($entry);
         }
 

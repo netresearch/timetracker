@@ -551,7 +551,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project = OPSDHL AND summary ~ DHLSUP-123456', ['key', 'summary'], 1)
+            ->with('project = OPSDHL AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
 
         $this->jiraOAuthApiService->expects(self::never())
@@ -605,7 +605,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project = OPSDHL AND summary ~ DHLSUP-123456', ['key', 'summary'], 1)
+            ->with('project = OPSDHL AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
 
         $event = new EntryEvent($entry);

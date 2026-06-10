@@ -281,6 +281,12 @@ final class SaveEntryAction extends BaseTrackingController
                 $data['result']['ticket'] = $entry->getTicket();
             }
 
+            // The UI round-trips the original external ticket key of
+            // mirrored entries from this field (v4: part of toArray())
+            if ($entry->hasInternalJiraTicketOriginalKey()) {
+                $data['result']['extTicket'] = $entry->getInternalJiraTicketOriginalKey();
+            }
+
             if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
                 $data['result']['description'] = $entry->getDescription();
             }
