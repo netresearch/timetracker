@@ -505,7 +505,7 @@ function showNotification(title, message, success) {
  * Returns the prefix of a given ticket
  */
 function extractTicketPrefix(ticket) {
-    const regexp = /([A-Za-z]+[A-Za-z0-9]*)-[0-9]+/;
+    const regexp = /([A-Za-z][A-Za-z0-9]*)-[0-9]+/;
     ticket = ticket.toUpperCase() + '';
     const result = ticket.match(regexp);
     if (!result) {
@@ -571,7 +571,7 @@ function findProjects(customer, ticket) {
     }
 
     //find project by ticket prefix
-    const prefixesRegexp = /(?:[ ,]+)?(?<prefix>[A-Za-z][A-Za-z0-9]*)(?:[ ,]+)?/g;
+    const prefixesRegexp = /[ ,]*(?<prefix>[A-Za-z][A-Za-z0-9]*)[ ,]*/g;
     for (let key in projects) {
         project = projects[key];
         if ((undefined == project['jiraId']) || (null == project['jiraId']) || ("" == project['jiraId'])) {
