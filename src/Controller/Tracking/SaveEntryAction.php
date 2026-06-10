@@ -15,7 +15,6 @@ use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
-use App\Enum\EntryClass;
 use App\Event\EntryEvent;
 use App\Model\JsonResponse;
 use App\Model\Response;
@@ -116,9 +115,12 @@ final class SaveEntryAction extends BaseTrackingController
 
         $entryId = $entrySaveDto->id;
 
+        // v4 parity: tickets are stored upper-cased and trimmed
+        $ticket = strtoupper(trim($entrySaveDto->ticket));
+
         // Should we check if the ticket belongs to the project
-        if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
-            $prefixError = $this->validateTicketPrefix($project, $entrySaveDto->ticket);
+        if ('' !== $ticket && '0' !== $ticket) {
+            $prefixError = $this->validateTicketPrefix($project, $ticket);
             if ($prefixError instanceof Error) {
                 return $prefixError;
             }
@@ -142,11 +144,14 @@ final class SaveEntryAction extends BaseTrackingController
             $entry = new Entry();
         }
 
+        // pre-mutation snapshot for the event subscriber (worklog cleanup on
+        // ticket changes) and the day-class recalculation of a moved entry
+        $previousEntry = $isNewEntry ? null : clone $entry;
+
         $entry->setUser($user);
         $entry->setCustomer($customer);
         $entry->setProject($project);
         $entry->setActivity($activity);
-        $entry->setClass(EntryClass::DAYBREAK);
 
         // Use DTO methods for date/time parsing (supports multiple formats)
         $dayDate = $entrySaveDto->getDateAsDateTime();
@@ -177,9 +182,15 @@ final class SaveEntryAction extends BaseTrackingController
             $entry->setDescription($entrySaveDto->description);
         }
 
-        if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
-            $entry->setTicket($entrySaveDto->ticket);
+        if ('' !== $ticket && '0' !== $ticket) {
+            $entry->setTicket($ticket);
         }
+
+        // v4 parity: the UI round-trips the original external ticket key of
+        // mirrored entries in "extTicket" (see internal Jira ticket system)
+        $entry->setInternalJiraTicketOriginalKey(
+            '' !== $entrySaveDto->extTicket ? $entrySaveDto->extTicket : null,
+        );
 
         if (!$project->getActive()) {
             return new Error('Project is no longer active.', Response::HTTP_BAD_REQUEST);
@@ -211,7 +222,24 @@ final class SaveEntryAction extends BaseTrackingController
             // Dispatch entry event for Jira sync and cache invalidation
             if ($this->eventDispatcher instanceof EventDispatcherInterface) {
                 $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
-                $this->eventDispatcher->dispatch(new EntryEvent($entry), $eventName);
+                $this->eventDispatcher->dispatch(
+                    new EntryEvent($entry, ['previous' => $previousEntry]),
+                    $eventName,
+                );
+            }
+
+            // v4 parity: recalculate the day-break/pause/overlap rendering
+            // classes of the affected day(s)
+            $entryDay = $entry->getDay();
+            if ($entryDay instanceof DateTime) {
+                $this->calculateClasses($user->getId() ?? 0, $entryDay->format('Y-m-d'));
+
+                $previousDay = $previousEntry?->getDay();
+                if ($previousDay instanceof DateTime
+                    && $previousDay->format('Y-m-d') !== $entryDay->format('Y-m-d')
+                ) {
+                    $this->calculateClasses($user->getId() ?? 0, $previousDay->format('Y-m-d'));
+                }
             }
 
             // Return JSON response matching test expectations

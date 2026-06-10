@@ -59,65 +59,40 @@ abstract class BaseTrackingController extends BaseController
             return;
         }
 
-        $normalizedEntries = [];
-        foreach ($entries as $entry) {
-            // No need for instanceof check - findByDay always returns Entry[]
-            $normalizedEntries[] = [
-                'id' => (int) $entry->getId(),
-                'start' => $entry->getStart(),
-                'end' => $entry->getEnd(),
-            ];
+        // v4 semantics: the class describes the transition BEFORE an entry.
+        // The first entry of a day always marks the day break; every further
+        // entry is a pause (gap to the previous entry), an overlap (starts
+        // before the previous one ended) or plain (seamless continuation).
+        $firstEntry = $entries[0];
+        if (EntryClass::DAYBREAK !== $firstEntry->getClass()) {
+            $firstEntry->setClass(EntryClass::DAYBREAK);
+            $objectManager->persist($firstEntry);
+            $objectManager->flush();
         }
 
-        if (0 === count($normalizedEntries)) {
-            return;
-        }
+        $counter = count($entries);
+        for ($i = 1; $i < $counter; ++$i) {
+            $entry = $entries[$i];
+            $previous = $entries[$i - 1];
 
-        // Sort by start time - no isset check needed, structure is guaranteed
-        usort(
-            $normalizedEntries,
-            static fn (array $a, array $b): int => $a['start'] <=> $b['start'],
-        );
-        // Calculate overlaps
-        $counter = count($normalizedEntries);
-
-        // Calculate overlaps
-        for ($i = 0; $i < $counter; ++$i) {
-            for ($j = $i + 1; $j < count($normalizedEntries); ++$j) {
-                if ($normalizedEntries[$i]['end'] > $normalizedEntries[$j]['start']) {
-                    // Mark both as overlapping
-                    $this->addEntryClass($normalizedEntries[$i]['id'], EntryClass::OVERLAP);
-                    $this->addEntryClass($normalizedEntries[$j]['id'], EntryClass::OVERLAP);
-                }
+            $start = $entry->getStart();
+            $previousEnd = $previous->getEnd();
+            if (!$start instanceof DateTime || !$previousEnd instanceof DateTime) {
+                continue;
             }
-        }
 
-        // Calculate pauses and day breaks
-        for ($i = 0; $i < count($normalizedEntries) - 1; ++$i) {
-            $current = $normalizedEntries[$i];
-            $next = $normalizedEntries[$i + 1];
-
-            $pauseMinutes = ($next['start']->getTimestamp() - $current['end']->getTimestamp()) / 60;
-
-            if ($pauseMinutes > 0) {
-                if ($pauseMinutes >= 60) {  // 1 hour or more
-                    $this->addEntryClass($current['id'], EntryClass::DAYBREAK);
-                } else {
-                    $this->addEntryClass($current['id'], EntryClass::PAUSE);
-                }
+            $entryClass = EntryClass::PLAIN;
+            if ($start->format('H:i') > $previousEnd->format('H:i')) {
+                $entryClass = EntryClass::PAUSE;
+            } elseif ($start->format('H:i') < $previousEnd->format('H:i')) {
+                $entryClass = EntryClass::OVERLAP;
             }
-        }
-    }
 
-    /**
-     * Add a rendering class to an entry.
-     */
-    private function addEntryClass(int $entryId, EntryClass $entryClass): void
-    {
-        $entry = $this->managerRegistry->getRepository(Entry::class)->find($entryId);
-        if ($entry instanceof Entry) {
-            $entry->addClass($entryClass);
-            $this->managerRegistry->getManager()->flush();
+            if ($entryClass !== $entry->getClass()) {
+                $entry->setClass($entryClass);
+                $objectManager->persist($entry);
+                $objectManager->flush();
+            }
         }
     }
 

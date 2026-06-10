@@ -16,6 +16,7 @@ use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectRepository;
 use Exception;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -500,5 +501,187 @@ final class EntryEventSubscriberTest extends TestCase
 
         // No exception thrown = success
         $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Builds a REAL entry on a project with an internal Jira ticket system
+     * (the "internal ticket system" feature, see GH discussion in NRS-4188).
+     *
+     * @return array{Entry, User&Stub, TicketSystem&Stub}
+     */
+    private function createInternalProjectEntry(string $ticket, ?string $originalKey = null): array
+    {
+        $internalTicketSystem = self::createStub(TicketSystem::class);
+        $internalTicketSystem->method('getBookTime')->willReturn(true);
+        $internalTicketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('hasInternalJiraProjectKey')->willReturn(true);
+        $project->method('getInternalJiraProjectKey')->willReturn('OPSDHL');
+        $project->method('getInternalJiraTicketSystem')->willReturn('9');
+        $project->method('getTicketSystem')->willReturn(null);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $ticketSystemRepository = $this->createMock(ObjectRepository::class);
+        $ticketSystemRepository->method('find')->willReturn($internalTicketSystem);
+        $this->managerRegistry->method('getRepository')
+            ->willReturn($ticketSystemRepository);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket($ticket);
+        if (null !== $originalKey) {
+            $entry->setInternalJiraTicketOriginalKey($originalKey);
+        }
+
+        return [$entry, $user, $internalTicketSystem];
+    }
+
+    public function testInternalTicketSystemRemapsToExistingInternalIssue(): void
+    {
+        [$entry, $user, $internalTicketSystem] = $this->createInternalProjectEntry('DHLSUP-123456');
+
+        $this->jiraOAuthApiFactory->expects(self::atLeastOnce())
+            ->method('create')
+            ->with($user, $internalTicketSystem)
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project = OPSDHL AND summary ~ DHLSUP-123456', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
+
+        $this->jiraOAuthApiService->expects(self::never())
+            ->method('createTicket');
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
+            ->with($entry);
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryCreated($event);
+
+        self::assertSame('OPSDHL-75', $entry->getTicket());
+        self::assertSame('DHLSUP-123456', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    public function testInternalTicketSystemCreatesMissingInternalIssue(): void
+    {
+        [$entry] = $this->createInternalProjectEntry('DHLSUP-7');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->method('searchTicket')
+            ->willReturn((object) ['issues' => []]);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('createTicket')
+            ->with($entry)
+            ->willReturn((object) ['key' => 'OPSDHL-99']);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
+            ->with($entry);
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryCreated($event);
+
+        self::assertSame('OPSDHL-99', $entry->getTicket());
+        self::assertSame('DHLSUP-7', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    public function testInternalTicketSystemUsesOriginalKeyForMirroredEntries(): void
+    {
+        // an already-mirrored entry carries the internal key as its ticket
+        // and the external key in internalJiraTicketOriginalKey
+        [$entry] = $this->createInternalProjectEntry('OPSDHL-75', 'DHLSUP-123456');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project = OPSDHL AND summary ~ DHLSUP-123456', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryUpdated($event);
+
+        self::assertSame('OPSDHL-75', $entry->getTicket());
+        self::assertSame('DHLSUP-123456', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    public function testInternalTicketSystemSkippedWhenInternalSystemNotBookable(): void
+    {
+        $internalTicketSystem = self::createStub(TicketSystem::class);
+        $internalTicketSystem->method('getBookTime')->willReturn(false);
+
+        $project = self::createStub(Project::class);
+        $project->method('hasInternalJiraProjectKey')->willReturn(true);
+        $project->method('getInternalJiraTicketSystem')->willReturn('9');
+        $project->method('getTicketSystem')->willReturn(null);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $ticketSystemRepository = $this->createMock(ObjectRepository::class);
+        $ticketSystemRepository->method('find')->willReturn($internalTicketSystem);
+        $this->managerRegistry->method('getRepository')->willReturn($ticketSystemRepository);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket('DHLSUP-1');
+
+        $this->jiraOAuthApiFactory->expects(self::never())
+            ->method('create');
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryCreated($event);
+
+        self::assertSame('DHLSUP-1', $entry->getTicket());
+    }
+
+    public function testOnEntryUpdatedDeletesPreviousWorklogWhenTicketChanged(): void
+    {
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $ticketSystem->method('getBookTime')->willReturn(true);
+        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket('ABC-2');
+        $entry->setWorklogId(555);
+
+        $previousEntry = new Entry();
+        $previousEntry->setTicket('ABC-1');
+        $previousEntry->setWorklogId(555);
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('deleteEntryJiraWorkLog')
+            ->with($previousEntry);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
+            ->with($entry);
+
+        $event = new EntryEvent($entry, ['previous' => $previousEntry]);
+        $this->subscriber->onEntryUpdated($event);
+
+        self::assertNull($entry->getWorklogId());
     }
 }
