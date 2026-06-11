@@ -65,30 +65,65 @@ class ProjectRepository extends ServiceEntityRepository
                 continue;
             }
 
-            foreach ($userProjects as $userProject) {
-                $up = $userProject['project'] ?? null;
-                if (is_array($up) && ($customerId === ArrayTypeHelper::getInt($up, 'customer'))) {
-                    $projects[$customerId][] = [
-                        'id' => ArrayTypeHelper::getInt($up, 'id', 0) ?? 0,
-                        'name' => ArrayTypeHelper::getString($up, 'name', '') ?? '',
-                        'jiraId' => ArrayTypeHelper::getString($up, 'jiraId'),
-                        'active' => (bool) ($up['active'] ?? false),
-                    ];
-                }
-            }
+            $this->appendCustomerProjects($projects, $customerId, $userProjects, $globalProjects);
+        }
 
-            foreach ($globalProjects as $globalProject) {
-                if ($globalProject instanceof Project) {
-                    $projects[$customerId][] = [
-                        'id' => $globalProject->getId(),
-                        'name' => $globalProject->getName(),
-                        'jiraId' => $globalProject->getJiraId(),
-                        'active' => $globalProject->getActive(),
-                    ];
-                }
+        $this->appendAllProjects($projects, $userProjects, $globalProjects);
+
+        foreach ($projects as &$project) {
+            // Both branches construct arrays; phpstan knows they are arrays
+            usort($project, static fn (array $a, array $b): int => strcmp(
+                ArrayTypeHelper::getString($a, 'name') ?? '',
+                ArrayTypeHelper::getString($b, 'name') ?? '',
+            ));
+        }
+
+        return $projects;
+    }
+
+    /**
+     * Appends the user's projects of the given customer and all global projects
+     * to the per-customer project list.
+     *
+     * @param array<int|string, list<array<string, mixed>>>    $projects
+     * @param array<int, array{project: array<string, mixed>}> $userProjects
+     * @param array<int, Project>                              $globalProjects
+     */
+    private function appendCustomerProjects(array &$projects, int $customerId, array $userProjects, array $globalProjects): void
+    {
+        foreach ($userProjects as $userProject) {
+            $up = $userProject['project'] ?? null;
+            if (is_array($up) && ($customerId === ArrayTypeHelper::getInt($up, 'customer'))) {
+                $projects[$customerId][] = [
+                    'id' => ArrayTypeHelper::getInt($up, 'id', 0) ?? 0,
+                    'name' => ArrayTypeHelper::getString($up, 'name', '') ?? '',
+                    'jiraId' => ArrayTypeHelper::getString($up, 'jiraId'),
+                    'active' => (bool) ($up['active'] ?? false),
+                ];
             }
         }
 
+        foreach ($globalProjects as $globalProject) {
+            if ($globalProject instanceof Project) {
+                $projects[$customerId][] = [
+                    'id' => $globalProject->getId(),
+                    'name' => $globalProject->getName(),
+                    'jiraId' => $globalProject->getJiraId(),
+                    'active' => $globalProject->getActive(),
+                ];
+            }
+        }
+    }
+
+    /**
+     * Appends all user and global projects to the "all" key.
+     *
+     * @param array<int|string, list<array<string, mixed>>>    $projects
+     * @param array<int, array{project: array<string, mixed>}> $userProjects
+     * @param array<int, Project>                              $globalProjects
+     */
+    private function appendAllProjects(array &$projects, array $userProjects, array $globalProjects): void
+    {
         foreach ($userProjects as $userProject) {
             $up = $userProject['project'] ?? null;
             if (is_array($up)) {
@@ -119,13 +154,6 @@ class ProjectRepository extends ServiceEntityRepository
                 ];
             }
         }
-
-        foreach ($projects as &$project) {
-            // Both branches construct arrays; phpstan knows they are arrays
-            usort($project, static fn (array $a, array $b): int => strcmp($a['name'] ?? '', $b['name'] ?? ''));
-        }
-
-        return $projects;
     }
 
     /**

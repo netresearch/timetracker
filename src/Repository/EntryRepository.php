@@ -459,20 +459,7 @@ class EntryRepository extends ServiceEntityRepository
     ): array {
         $queryBuilder = $this->findEntriesWithRelations();
 
-        // Apply filters
-        foreach ($filters as $field => $value) {
-            if (null !== $value && '' !== $value) {
-                if (in_array($field, ['startDate', 'endDate'], true)) {
-                    $operator = 'startDate' === $field ? '>=' : '<=';
-                    $fieldName = 'day';
-                    $queryBuilder->andWhere(sprintf('e.%s %s :%s', $fieldName, $operator, $field))
-                        ->setParameter($field, $value);
-                } else {
-                    $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
-                        ->setParameter($field, $value);
-                }
-            }
-        }
+        $this->applyFieldFilters($queryBuilder, $filters);
 
         // Apply ordering
         $validOrderFields = ['id', 'day', 'start', 'end', 'duration'];
@@ -520,19 +507,7 @@ class EntryRepository extends ServiceEntityRepository
                 'MAX(e.day) as maxDate',
             ]);
 
-        foreach ($filters as $field => $value) {
-            if (null !== $value && '' !== $value) {
-                if (in_array($field, ['startDate', 'endDate'], true)) {
-                    $operator = 'startDate' === $field ? '>=' : '<=';
-                    $fieldName = 'day';
-                    $queryBuilder->andWhere(sprintf('e.%s %s :%s', $fieldName, $operator, $field))
-                        ->setParameter($field, $value);
-                } else {
-                    $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
-                        ->setParameter($field, $value);
-                }
-            }
-        }
+        $this->applyFieldFilters($queryBuilder, $filters);
 
         $rawResult = $queryBuilder->getQuery()->getSingleResult();
 
@@ -665,47 +640,71 @@ class EntryRepository extends ServiceEntityRepository
             ->leftJoin('e.project', 'p')
             ->leftJoin('e.activity', 'a');
 
-        // Apply filters
-        if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
-            if (is_object($arFilter['customer'])) {
-                $queryBuilder->andWhere(self::WHERE_CUSTOMER)
-                    ->setParameter('customer', $arFilter['customer']);
+        $this->applyRelationFilters($queryBuilder, $arFilter);
+        $this->applyDateWindowFilters($queryBuilder, $arFilter);
+        $this->applyFilterPagination($queryBuilder, $arFilter);
+
+        $queryBuilder->orderBy('e.day', 'DESC')
+            ->addOrderBy('e.start', 'DESC');
+
+        /* @phpstan-ignore-next-line */
+        return $queryBuilder->getQuery();
+    }
+
+    /**
+     * Applies generic field equality filters; startDate/endDate map to day range bounds.
+     *
+     * @param array<string, mixed> $filters
+     */
+    private function applyFieldFilters(QueryBuilder $queryBuilder, array $filters): void
+    {
+        foreach ($filters as $field => $value) {
+            if (null === $value) {
+                continue;
+            }
+            if ('' === $value) {
+                continue;
+            }
+            if (in_array($field, ['startDate', 'endDate'], true)) {
+                $operator = 'startDate' === $field ? '>=' : '<=';
+                $queryBuilder->andWhere(sprintf('e.day %s :%s', $operator, $field))
+                    ->setParameter($field, $value);
             } else {
-                $queryBuilder->andWhere('IDENTITY(e.customer) = :customer')
-                    ->setParameter('customer', $arFilter['customer']);
+                $queryBuilder->andWhere(sprintf(self::WHERE_FIELD_TEMPLATE, $field, $field))
+                    ->setParameter($field, $value);
             }
         }
+    }
 
-        if (isset($arFilter['project']) && '' !== $arFilter['project']) {
-            if (is_object($arFilter['project'])) {
-                $queryBuilder->andWhere(self::WHERE_PROJECT)
-                    ->setParameter('project', $arFilter['project']);
-            } else {
-                $queryBuilder->andWhere('IDENTITY(e.project) = :project')
-                    ->setParameter('project', $arFilter['project']);
+    /**
+     * Applies customer/project/activity/user filters; entity objects are compared
+     * directly, scalar identifiers via IDENTITY() on the association.
+     *
+     * @param array<string, mixed> $arFilter
+     */
+    private function applyRelationFilters(QueryBuilder $queryBuilder, array $arFilter): void
+    {
+        foreach (['customer', 'project', 'activity', 'user'] as $field) {
+            if (!isset($arFilter[$field])) {
+                continue;
             }
-        }
-
-        if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
-            if (is_object($arFilter['activity'])) {
-                $queryBuilder->andWhere(self::WHERE_ACTIVITY)
-                    ->setParameter('activity', $arFilter['activity']);
-            } else {
-                $queryBuilder->andWhere('IDENTITY(e.activity) = :activity')
-                    ->setParameter('activity', $arFilter['activity']);
+            if ('' === $arFilter[$field]) {
+                continue;
             }
-        }
+            $dql = is_object($arFilter[$field])
+                ? sprintf('e.%s = :%s', $field, $field)
+                : sprintf('IDENTITY(e.%s) = :%s', $field, $field);
 
-        if (isset($arFilter['user']) && '' !== $arFilter['user']) {
-            if (is_object($arFilter['user'])) {
-                $queryBuilder->andWhere(self::WHERE_USER)
-                    ->setParameter('user', $arFilter['user']);
-            } else {
-                $queryBuilder->andWhere('IDENTITY(e.user) = :user')
-                    ->setParameter('user', $arFilter['user']);
-            }
+            $queryBuilder->andWhere($dql)
+                ->setParameter($field, $arFilter[$field]);
         }
+    }
 
+    /**
+     * @param array<string, mixed> $arFilter
+     */
+    private function applyDateWindowFilters(QueryBuilder $queryBuilder, array $arFilter): void
+    {
         if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
             $queryBuilder->andWhere('e.day >= :datestart')
                 ->setParameter('datestart', $arFilter['datestart']);
@@ -715,9 +714,16 @@ class EntryRepository extends ServiceEntityRepository
             $queryBuilder->andWhere('e.day <= :dateend')
                 ->setParameter('dateend', $arFilter['dateend']);
         }
+    }
 
-        // Apply pagination with safe casting
-        // Prefer 'start' (ExtJS offset) over calculating from 'page'
+    /**
+     * Applies pagination with safe casting.
+     * Prefers 'start' (ExtJS offset) over calculating the offset from 'page'.
+     *
+     * @param array<string, mixed> $arFilter
+     */
+    private function applyFilterPagination(QueryBuilder $queryBuilder, array $arFilter): void
+    {
         $maxResults = isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults']) ? (int) $arFilter['maxResults'] : 50;
         if (isset($arFilter['start']) && is_numeric($arFilter['start'])) {
             $offset = (int) $arFilter['start'];
@@ -727,12 +733,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         $queryBuilder->setMaxResults($maxResults)
-            ->setFirstResult($offset)
-            ->orderBy('e.day', 'DESC')
-            ->addOrderBy('e.start', 'DESC');
-
-        /* @phpstan-ignore-next-line */
-        return $queryBuilder->getQuery();
+            ->setFirstResult($offset);
     }
 
     /**
@@ -828,6 +829,27 @@ class EntryRepository extends ServiceEntityRepository
     ): array {
         $queryBuilder = $this->findEntriesWithRelations();
 
+        $this->applyDateRangeCriteria($queryBuilder, $user, $year, $month, $project, $customer);
+        $this->applySortOrder($queryBuilder, $arSort);
+
+        $result = $queryBuilder->getQuery()->getResult();
+        assert(is_array($result) && array_is_list($result));
+
+        /** @var list<Entry> $result */
+        return $result;
+    }
+
+    /**
+     * Restricts the query to the given year/month and optional user/project/customer.
+     */
+    private function applyDateRangeCriteria(
+        QueryBuilder $queryBuilder,
+        int $user,
+        int $year,
+        ?int $month,
+        ?int $project,
+        ?int $customer,
+    ): void {
         // Use date range instead of YEAR function for DQL compatibility
         $startOfYear = sprintf('%04d-01-01', $year);
         $endOfYear = sprintf('%04d-12-31', $year);
@@ -861,38 +883,46 @@ class EntryRepository extends ServiceEntityRepository
             $queryBuilder->andWhere(self::WHERE_CUSTOMER)
                 ->setParameter('customer', $customer);
         }
+    }
 
-        // Apply sorting
-        if (is_array($arSort) && [] !== $arSort) {
-            foreach ($arSort as $field => $direction) {
-                // Handle both string and boolean values for direction
-                if (is_bool($direction)) {
-                    $direction = $direction ? 'ASC' : 'DESC';
-                } else {
-                    $direction = 'ASC' === strtoupper((string) $direction) ? 'ASC' : 'DESC';
-                }
-
-                // Map logical field names to proper DQL expressions
-                $dqlField = match ($field) {
-                    'user.username' => 'u.username',
-                    'entry.day' => 'e.day',
-                    'entry.start' => 'e.start',
-                    'entry.end' => 'e.end',
-                    default => 'e.' . $field,
-                };
-
-                $queryBuilder->addOrderBy($dqlField, $direction);
-            }
-        } else {
+    /**
+     * Applies the requested sort order, falling back to day/start descending.
+     *
+     * @param array<string, string|bool>|null $arSort
+     */
+    private function applySortOrder(QueryBuilder $queryBuilder, ?array $arSort): void
+    {
+        if (null === $arSort || [] === $arSort) {
             $queryBuilder->orderBy('e.day', 'DESC')
                 ->addOrderBy('e.start', 'DESC');
+
+            return;
         }
 
-        $result = $queryBuilder->getQuery()->getResult();
-        assert(is_array($result) && array_is_list($result));
+        foreach ($arSort as $field => $direction) {
+            // Handle both string and boolean values for direction
+            if (is_bool($direction)) {
+                $direction = $direction ? 'ASC' : 'DESC';
+            } else {
+                $direction = 'ASC' === strtoupper($direction) ? 'ASC' : 'DESC';
+            }
 
-        /** @var list<Entry> $result */
-        return $result;
+            $queryBuilder->addOrderBy($this->mapSortField($field), $direction);
+        }
+    }
+
+    /**
+     * Maps logical field names to proper DQL expressions.
+     */
+    private function mapSortField(string|int $field): string
+    {
+        return match ($field) {
+            'user.username' => 'u.username',
+            'entry.day' => 'e.day',
+            'entry.start' => 'e.start',
+            'entry.end' => 'e.end',
+            default => 'e.' . $field,
+        };
     }
 
     /**
@@ -914,66 +944,8 @@ class EntryRepository extends ServiceEntityRepository
     ): array {
         $queryBuilder = $this->findEntriesWithRelations();
 
-        // Use date range instead of YEAR function for DQL compatibility
-        $startOfYear = sprintf('%04d-01-01', $year);
-        $endOfYear = sprintf('%04d-12-31', $year);
-        $queryBuilder->andWhere('e.day >= :startOfYear')
-            ->andWhere('e.day <= :endOfYear')
-            ->setParameter('startOfYear', $startOfYear)
-            ->setParameter('endOfYear', $endOfYear);
-
-        if (0 !== $user) {
-            $queryBuilder->andWhere(self::WHERE_USER)
-                ->setParameter('user', $user);
-        }
-
-        if (null !== $month && $month > 0) {
-            // Use date range instead of MONTH function for DQL compatibility
-            $startOfMonth = sprintf('%04d-%02d-01', $year, $month);
-            $lastDay = (int) (new DateTime(sprintf('%d-%d-01', $year, $month))->format('t'));
-            $endOfMonth = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
-            $queryBuilder->andWhere('e.day >= :startOfMonth')
-                ->andWhere(self::WHERE_DAY_UNTIL_END_OF_MONTH)
-                ->setParameter('startOfMonth', $startOfMonth)
-                ->setParameter('endOfMonth', $endOfMonth);
-        }
-
-        if (null !== $project) {
-            $queryBuilder->andWhere(self::WHERE_PROJECT)
-                ->setParameter('project', $project);
-        }
-
-        if (null !== $customer) {
-            $queryBuilder->andWhere(self::WHERE_CUSTOMER)
-                ->setParameter('customer', $customer);
-        }
-
-        // Apply sorting
-        if (is_array($arSort) && [] !== $arSort) {
-            foreach ($arSort as $field => $direction) {
-                if (!is_string($field)) {
-                    continue;
-                }
-                if (!is_string($direction)) {
-                    continue;
-                }
-                $direction = 'ASC' === strtoupper($direction) ? 'ASC' : 'DESC';
-
-                // Map logical field names to proper DQL expressions
-                $dqlField = match ($field) {
-                    'user.username' => 'u.username',
-                    'entry.day' => 'e.day',
-                    'entry.start' => 'e.start',
-                    'entry.end' => 'e.end',
-                    default => 'e.' . $field,
-                };
-
-                $queryBuilder->addOrderBy($dqlField, $direction);
-            }
-        } else {
-            $queryBuilder->orderBy('e.day', 'DESC')
-                ->addOrderBy('e.start', 'DESC');
-        }
+        $this->applyDateRangeCriteria($queryBuilder, $user, $year, $month, $project, $customer);
+        $this->applySortOrder($queryBuilder, $arSort);
 
         // Apply pagination
         $queryBuilder->setFirstResult($offset)
@@ -1410,40 +1382,8 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder = $this->findEntriesWithRelations();
 
         // Apply filters similar to queryByFilterArray but return results directly
-        if (isset($arFilter['customer']) && '' !== $arFilter['customer']) {
-            $queryBuilder->andWhere(self::WHERE_CUSTOMER)
-                ->setParameter('customer', $arFilter['customer']);
-        }
-
-        if (isset($arFilter['project']) && '' !== $arFilter['project']) {
-            $queryBuilder->andWhere(self::WHERE_PROJECT)
-                ->setParameter('project', $arFilter['project']);
-        }
-
-        if (isset($arFilter['activity']) && '' !== $arFilter['activity']) {
-            $queryBuilder->andWhere(self::WHERE_ACTIVITY)
-                ->setParameter('activity', $arFilter['activity']);
-        }
-
-        if (isset($arFilter['user']) && '' !== $arFilter['user']) {
-            if (is_object($arFilter['user'])) {
-                $queryBuilder->andWhere(self::WHERE_USER)
-                    ->setParameter('user', $arFilter['user']);
-            } else {
-                $queryBuilder->andWhere('IDENTITY(e.user) = :user')
-                    ->setParameter('user', $arFilter['user']);
-            }
-        }
-
-        if (isset($arFilter['datestart']) && '' !== $arFilter['datestart']) {
-            $queryBuilder->andWhere('e.day >= :datestart')
-                ->setParameter('datestart', $arFilter['datestart']);
-        }
-
-        if (isset($arFilter['dateend']) && '' !== $arFilter['dateend']) {
-            $queryBuilder->andWhere('e.day <= :dateend')
-                ->setParameter('dateend', $arFilter['dateend']);
-        }
+        $this->applyRelationFilters($queryBuilder, $arFilter);
+        $this->applyDateWindowFilters($queryBuilder, $arFilter);
 
         // Apply limit if specified with safe casting
         if (isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults'])) {
