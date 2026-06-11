@@ -263,10 +263,9 @@ final class BulkEntryAction extends BaseTrackingController
             return null;
         }
 
-        $parts = sscanf((string) $workTime, '%d.%d');
-        $hoursPart = (int) ($parts[0] ?? 0);
-        $fractionPart = (int) ($parts[1] ?? 0);
-        $minutesPart = (int) round(60 * ((float) ('0.' . $fractionPart)));
+        $hours = (float) $workTime;
+        $hoursPart = (int) $hours;
+        $minutesPart = (int) round(($hours - $hoursPart) * 60);
         $hoursToAdd = new DateInterval(sprintf('PT%dH%dM', $hoursPart, $minutesPart));
 
         return [
