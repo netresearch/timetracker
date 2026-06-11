@@ -15,6 +15,7 @@ use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\SubticketSyncException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Service\Integration\Jira\JiraOAuthApiService;
 use Doctrine\Persistence\ManagerRegistry;
 
 class SubticketSyncService
@@ -37,17 +38,7 @@ class SubticketSyncService
      */
     public function syncProjectSubtickets(int|Project $projectOrProjectId): array
     {
-        if ($projectOrProjectId instanceof Project) {
-            $project = $projectOrProjectId;
-        } else {
-            $project = $this->managerRegistry
-                ->getRepository(Project::class)
-                ->find($projectOrProjectId);
-        }
-
-        if (!$project instanceof Project) {
-            throw new SubticketSyncException('Project does not exist', 404);
-        }
+        $project = $this->resolveProject($projectOrProjectId);
 
         $ticketSystem = $project->getTicketSystem();
         if (!$ticketSystem instanceof TicketSystem) {
@@ -80,8 +71,46 @@ class SubticketSyncService
         // Create the Jira API service with our service's dependencies
         $jiraOAuthApiService = $this->jiraOAuthApiFactory->create($userWithJiraAccess, $ticketSystem);
 
-        $mainTickets = array_map(trim(...), explode(',', $mainTickets));
-        /** @var list<string> $allSubtickets */
+        $allSubtickets = $this->collectSubtickets($jiraOAuthApiService, array_map(trim(...), explode(',', $mainTickets)));
+
+        natcasesort($allSubtickets);
+
+        // Convert array to comma-separated string for storage
+        $project->setSubtickets(implode(',', $allSubtickets));
+        $em = $this->managerRegistry->getManager();
+        $em->persist($project);
+        $em->flush();
+
+        return array_values($allSubtickets);
+    }
+
+    /**
+     * @throws SubticketSyncException When the project does not exist
+     */
+    private function resolveProject(int|Project $projectOrProjectId): Project
+    {
+        $project = $projectOrProjectId instanceof Project
+            ? $projectOrProjectId
+            : $this->managerRegistry->getRepository(Project::class)->find($projectOrProjectId);
+
+        if (!$project instanceof Project) {
+            throw new SubticketSyncException('Project does not exist', 404);
+        }
+
+        return $project;
+    }
+
+    /**
+     * Fetches the subtickets of all main tickets from Jira.
+     *
+     * @param list<string> $mainTickets
+     *
+     * @throws JiraApiException When fetching subtickets from Jira fails
+     *
+     * @return list<string>
+     */
+    private function collectSubtickets(JiraOAuthApiService $jiraOAuthApiService, array $mainTickets): array
+    {
         $allSubtickets = [];
         foreach ($mainTickets as $mainTicket) {
             // we want to make it easy to find matching tickets,
@@ -94,14 +123,6 @@ class SubticketSyncService
             }
         }
 
-        natcasesort($allSubtickets);
-
-        // Convert array to comma-separated string for storage
-        $project->setSubtickets(implode(',', $allSubtickets));
-        $em = $this->managerRegistry->getManager();
-        $em->persist($project);
-        $em->flush();
-
-        return array_values($allSubtickets);
+        return $allSubtickets;
     }
 }

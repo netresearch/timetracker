@@ -19,6 +19,7 @@ use App\Enum\TicketSystemType;
 use App\Repository\EntryRepository;
 use App\Repository\UserRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Service\Integration\Jira\JiraOAuthApiService;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Generator;
@@ -86,22 +87,32 @@ class ExportService
                 continue;
             }
 
-            $arReturn[] = [
-                'id' => $arEntry->getId(),
-                'user' => $arEntry->getUser() instanceof User ? $arEntry->getUser()->getUsername() : '',
-                'customer' => $arEntry->getCustomer() instanceof Customer ? $arEntry->getCustomer()->getName() : '',
-                'project' => $arEntry->getProject() instanceof Project ? $arEntry->getProject()->getName() : '',
-                'activity' => $arEntry->getActivity() instanceof Activity ? $arEntry->getActivity()->getName() : '',
-                'description' => $arEntry->getDescription(),
-                'start' => $arEntry->getStart()->format('Y-m-d H:i:s'),
-                'end' => $arEntry->getEnd()->format('Y-m-d H:i:s'),
-                'ticket' => $arEntry->getTicket(),
-                'ticket_url' => $this->getTicketUrl($arEntry, $arApi, $currentUser),
-                'worklog_url' => $this->getWorklogUrl($arEntry, $arApi, $currentUser),
-            ];
+            $arReturn[] = $this->buildEntryRow($arEntry, $arApi, $currentUser);
         }
 
         return $arReturn;
+    }
+
+    /**
+     * @param array<int, mixed> $arApi
+     *
+     * @return array<string, int|string|null>
+     */
+    private function buildEntryRow(Entry $entry, array &$arApi, User $currentUser): array
+    {
+        return [
+            'id' => $entry->getId(),
+            'user' => $entry->getUser() instanceof User ? $entry->getUser()->getUsername() : '',
+            'customer' => $entry->getCustomer() instanceof Customer ? $entry->getCustomer()->getName() : '',
+            'project' => $entry->getProject() instanceof Project ? $entry->getProject()->getName() : '',
+            'activity' => $entry->getActivity() instanceof Activity ? $entry->getActivity()->getName() : '',
+            'description' => $entry->getDescription(),
+            'start' => $entry->getStart()->format('Y-m-d H:i:s'),
+            'end' => $entry->getEnd()->format('Y-m-d H:i:s'),
+            'ticket' => $entry->getTicket(),
+            'ticket_url' => $this->getTicketUrl($entry, $arApi, $currentUser),
+            'worklog_url' => $this->getWorklogUrl($entry, $arApi, $currentUser),
+        ];
     }
 
     /**
@@ -231,7 +242,56 @@ class ExportService
             return $entries;
         }
 
-        // Group entries by ticket system to minimize API calls
+        $entriesByTicketSystem = $this->groupEntriesByTicketSystem($entries);
+
+        // Get user for API calls
+        $objectRepository = $this->managerRegistry->getRepository(User::class);
+        assert($objectRepository instanceof UserRepository);
+        $user = $objectRepository->find($userId);
+        if (null === $user) {
+            return $entries;
+        }
+
+        $fields = [];
+        if ($includeBillable) {
+            $fields[] = 'labels';
+        }
+
+        if ($includeTicketTitle) {
+            $fields[] = 'summary';
+        }
+
+        if ([] === $fields) {
+            return $entries;
+        }
+
+        // Fetch ticket information from JIRA for each ticket system
+        foreach ($entriesByTicketSystem as $ticketSystemData) {
+            $jiraApi = $this->jiraOAuthApiFactory->create($user, $ticketSystemData['ticketSystem']);
+            $tickets = array_unique($ticketSystemData['tickets']);
+
+            try {
+                $ticketData = $this->fetchTicketData($jiraApi, $tickets, $fields);
+                $this->applyTicketData($ticketSystemData['entries'], $ticketData, $includeBillable, $includeTicketTitle);
+            } catch (Exception) {
+                // Log error but continue with other entries
+                // In a real implementation, you might want to use a logger here
+                continue;
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Groups entries by bookable Jira ticket system to minimize API calls.
+     *
+     * @param Entry[] $entries
+     *
+     * @return array<int|string, array{ticketSystem: TicketSystem, entries: list<Entry>, tickets: list<string>}>
+     */
+    private function groupEntriesByTicketSystem(array $entries): array
+    {
         $entriesByTicketSystem = [];
         foreach ($entries as $entry) {
             if (!$entry instanceof Entry) {
@@ -269,85 +329,72 @@ class ExportService
             $entriesByTicketSystem[$key]['tickets'][] = $entry->getTicket();
         }
 
-        // Get user for API calls
-        $objectRepository = $this->managerRegistry->getRepository(User::class);
-        assert($objectRepository instanceof UserRepository);
-        $user = $objectRepository->find($userId);
-        if (null === $user) {
-            return $entries;
-        }
+        return $entriesByTicketSystem;
+    }
 
-        // Fetch ticket information from JIRA for each ticket system
-        foreach ($entriesByTicketSystem as $ticketSystemData) {
-            $ticketSystem = $ticketSystemData['ticketSystem'];
-            $tickets = array_unique($ticketSystemData['tickets']);
+    /**
+     * Searches Jira for the given tickets and maps ticket key to its fields object.
+     *
+     * @param array<int, string> $tickets
+     * @param array<int, string> $fields
+     *
+     * @throws Exception
+     *
+     * @return array<int|string, mixed>
+     */
+    private function fetchTicketData(JiraOAuthApiService $jiraOAuthApiService, array $tickets, array $fields): array
+    {
+        // Build JQL query for all tickets
+        $jql = sprintf('key in (%s)', implode(',', $tickets));
 
-            $jiraApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
+        $result = $jiraOAuthApiService->searchTicket($jql, $fields, count($tickets));
+        $ticketData = [];
 
-            // Build JQL query for all tickets
-            $ticketKeys = implode(',', $tickets);
-            $jql = sprintf('key in (%s)', $ticketKeys);
-
-            $fields = [];
-            if ($includeBillable) {
-                $fields[] = 'labels';
-            }
-
-            if ($includeTicketTitle) {
-                $fields[] = 'summary';
-            }
-
-            if ([] === $fields) {
-                continue;
-            }
-
-            try {
-                $result = $jiraApi->searchTicket($jql, $fields, count($tickets));
-                $ticketData = [];
-
-                if (is_object($result) && property_exists($result, 'issues') && is_array($result->issues)) {
-                    foreach ($result->issues as $issue) {
-                        if (is_object($issue) && property_exists($issue, 'key') && property_exists($issue, 'fields')) {
-                            $key = $issue->key;
-                            if (is_string($key) || is_int($key)) {
-                                $ticketData[$key] = $issue->fields;
-                            }
-                        }
+        if (is_object($result) && property_exists($result, 'issues') && is_array($result->issues)) {
+            foreach ($result->issues as $issue) {
+                if (is_object($issue) && property_exists($issue, 'key') && property_exists($issue, 'fields')) {
+                    $key = $issue->key;
+                    if (is_string($key) || is_int($key)) {
+                        $ticketData[$key] = $issue->fields;
                     }
                 }
-
-                // Update entries with ticket information
-                foreach ($ticketSystemData['entries'] as $entry) {
-                    $ticket = $entry->getTicket();
-                    if (!isset($ticketData[$ticket])) {
-                        continue;
-                    }
-
-                    $fields = $ticketData[$ticket];
-
-                    if ($includeBillable && is_object($fields) && property_exists($fields, 'labels')) {
-                        $labels = $fields->labels;
-                        if (is_array($labels)) {
-                            $isBillable = in_array('billable', $labels, true);
-                            $entry->setBillable($isBillable);
-                        }
-                    }
-
-                    if ($includeTicketTitle && is_object($fields) && property_exists($fields, 'summary')) {
-                        $summary = $fields->summary;
-                        if (is_string($summary) || null === $summary) {
-                            $entry->setTicketTitle($summary);
-                        }
-                    }
-                }
-            } catch (Exception) {
-                // Log error but continue with other entries
-                // In a real implementation, you might want to use a logger here
-                continue;
             }
         }
 
-        return $entries;
+        return $ticketData;
+    }
+
+    /**
+     * Updates entries with the fetched ticket information.
+     *
+     * @param list<Entry>              $entries
+     * @param array<int|string, mixed> $ticketData
+     */
+    private function applyTicketData(array $entries, array $ticketData, bool $includeBillable, bool $includeTicketTitle): void
+    {
+        foreach ($entries as $entry) {
+            $ticket = $entry->getTicket();
+            if (!isset($ticketData[$ticket])) {
+                continue;
+            }
+
+            $fields = $ticketData[$ticket];
+
+            if ($includeBillable && is_object($fields) && property_exists($fields, 'labels')) {
+                $labels = $fields->labels;
+                if (is_array($labels)) {
+                    $isBillable = in_array('billable', $labels, true);
+                    $entry->setBillable($isBillable);
+                }
+            }
+
+            if ($includeTicketTitle && is_object($fields) && property_exists($fields, 'summary')) {
+                $summary = $fields->summary;
+                if (is_string($summary) || null === $summary) {
+                    $entry->setTicketTitle($summary);
+                }
+            }
+        }
     }
 
     /**

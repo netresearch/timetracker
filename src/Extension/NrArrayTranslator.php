@@ -100,34 +100,56 @@ class NrArrayTranslator
                 continue;
             }
 
-            foreach ($row[$arrayKey] as $key => $value) {
-                // Ensure key is string and in the allowed keys
-                if (!is_string($key)) {
-                    continue;
-                }
-                if (!in_array($key, $keys, true)) {
-                    continue;
-                }
-                // Ensure value is string before translation
-                if (!is_string($value)) {
-                    continue;
-                }
-                // Ensure we have array access to the nested structure
-                if (!is_array($data[$rowKey] ?? null)) {
-                    continue;
-                }
-                if (!is_array($data[$rowKey][$arrayKey] ?? null)) {
-                    continue;
-                }
-
-                $data[$rowKey][$arrayKey][$key] = $this->translator->trans(
-                    $value,
-                    [],
-                    $languageFile,
-                );
-            }
+            $data = $this->translateRow($data, $row[$arrayKey], $rowKey, $arrayKey, $keys, $languageFile);
         }
 
         return (string) json_encode($data);
+    }
+
+    /**
+     * Translates the allowed keys of a single row and returns the updated data.
+     *
+     * @param array<int|string, mixed> $data
+     * @param iterable<mixed, mixed>   $rowValues
+     * @param array<int, string>       $keys
+     *
+     * @return array<int|string, mixed>
+     */
+    private function translateRow(
+        array $data,
+        iterable $rowValues,
+        int|string $rowKey,
+        string $arrayKey,
+        array $keys,
+        ?string $languageFile,
+    ): array {
+        foreach ($rowValues as $key => $value) {
+            // Ensure key is string and in the allowed keys
+            if (!is_string($key)) {
+                continue;
+            }
+            if (!in_array($key, $keys, true)) {
+                continue;
+            }
+            // Ensure value is string before translation
+            if (!is_string($value)) {
+                continue;
+            }
+            // Ensure we have array access to the nested structure
+            if (!is_array($data[$rowKey] ?? null)) {
+                continue;
+            }
+            if (!is_array($data[$rowKey][$arrayKey] ?? null)) {
+                continue;
+            }
+
+            $data[$rowKey][$arrayKey][$key] = $this->translator->trans(
+                $value,
+                [],
+                $languageFile,
+            );
+        }
+
+        return $data;
     }
 }
