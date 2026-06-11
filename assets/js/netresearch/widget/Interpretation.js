@@ -587,7 +587,6 @@ Ext.define('Netresearch.widget.Interpretation', {
                     valueField: 'id',
                     mode: 'local',
                     listeners: {
-                        scope: this,
                         focus: () => {
                             this.filterableProjectStore.load({
                                 params: {

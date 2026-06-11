@@ -856,8 +856,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return true;
         }
 
-        if ((undefined !== customer) && (false !== customer) && (0 < Number.parseInt(customer))) {
-        } else {
+        if ((undefined === customer) || (false === customer) || !(Number.parseInt(customer) > 0)) {
             customer = 'all';
         }
 
