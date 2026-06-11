@@ -107,51 +107,64 @@ final class BaseControllerDeprecationTest extends TestCase
         self::assertStringContainsString('::isDEV is deprecated', $this->deprecations[0]);
     }
 
-    private function createController(): object
+    private function createController(): DeprecatedShimBaseController
     {
         $user = new User();
         $user->setUsername('unittest');
         $user->setType('PL');
 
-        return new class($user) extends BaseController {
-            public function __construct(private readonly User $user)
-            {
-            }
+        return new DeprecatedShimBaseController($user);
+    }
+}
 
-            public function callIsLoggedIn(Request $request): bool
-            {
-                return $this->isLoggedIn($request);
-            }
+/**
+ * Test double exposing the deprecated protected shims with a fixed user.
+ *
+ * @internal
+ */
+final class DeprecatedShimBaseController extends BaseController
+{
+    public function __construct(private readonly User $user)
+    {
+    }
 
-            public function callCheckLogin(Request $request): bool
-            {
-                return $this->checkLogin($request);
-            }
+    public function callIsLoggedIn(Request $request): bool
+    {
+        // @phpstan-ignore method.deprecated (the shim under test is deprecated by design)
+        return $this->isLoggedIn($request);
+    }
 
-            public function callHasUserType(Request $request, UserType $userType): bool
-            {
-                return $this->hasUserType($request, $userType);
-            }
+    public function callCheckLogin(Request $request): bool
+    {
+        // @phpstan-ignore method.deprecated (the shim under test is deprecated by design)
+        return $this->checkLogin($request);
+    }
 
-            public function callIsPl(Request $request): bool
-            {
-                return $this->isPl($request);
-            }
+    public function callHasUserType(Request $request, UserType $userType): bool
+    {
+        // @phpstan-ignore method.deprecated (the shim under test is deprecated by design)
+        return $this->hasUserType($request, $userType);
+    }
 
-            public function callIsDEV(Request $request): bool
-            {
-                return $this->isDEV($request);
-            }
+    public function callIsPl(Request $request): bool
+    {
+        // @phpstan-ignore method.deprecated (the shim under test is deprecated by design)
+        return $this->isPl($request);
+    }
 
-            protected function isGranted(mixed $attribute, mixed $subject = null): bool
-            {
-                return true;
-            }
+    public function callIsDEV(Request $request): bool
+    {
+        // @phpstan-ignore method.deprecated (the shim under test is deprecated by design)
+        return $this->isDEV($request);
+    }
 
-            protected function getUser(): ?UserInterface
-            {
-                return $this->user;
-            }
-        };
+    protected function isGranted(mixed $attribute, mixed $subject = null): bool
+    {
+        return true;
+    }
+
+    protected function getUser(): UserInterface
+    {
+        return $this->user;
     }
 }
