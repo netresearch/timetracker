@@ -150,10 +150,11 @@ function createLabJiraTimeSummay(list, data) {
         }
     })
 
-    //remove existing data
-    liEl.childNodes[1].remove();
-    liEl.childNodes[2].remove();
-    liEl.childNodes[3].remove();
+    // remove the template's own entries (the first three element children;
+    // the freshly appended ones come after them)
+    for (const node of [...liEl.children].slice(0, 3)) {
+        node.remove();
+    }
 
     return cloneTitle;
 }
