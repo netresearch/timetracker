@@ -282,23 +282,13 @@ class LdapClientService
      */
     private function toStringValue(mixed $value): string
     {
-        if (is_string($value)) {
-            return $value;
-        }
-
-        if (is_int($value) || is_float($value) || is_bool($value)) {
-            return (string) $value;
-        }
-
-        if ($value instanceof BackedEnum) {
-            return (string) $value->value;
-        }
-
-        if ($value instanceof UnitEnum) {
-            return $value->name;
-        }
-
-        return '';
+        return match (true) {
+            is_string($value) => $value,
+            is_int($value), is_float($value), is_bool($value) => (string) $value,
+            $value instanceof BackedEnum => (string) $value->value,
+            $value instanceof UnitEnum => $value->name,
+            default => '',
+        };
     }
 
     /**
@@ -306,23 +296,13 @@ class LdapClientService
      */
     private function toIntValue(mixed $value): int
     {
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return (int) $value;
-        }
-
-        if ($value instanceof BackedEnum) {
-            return (int) $value->value;
-        }
-
-        if (is_float($value) || is_bool($value)) {
-            return (int) $value;
-        }
-
-        return 0;
+        return match (true) {
+            is_int($value) => $value,
+            is_string($value) => (int) $value,
+            $value instanceof BackedEnum => (int) $value->value,
+            is_float($value), is_bool($value) => (int) $value,
+            default => 0,
+        };
     }
 
     /**

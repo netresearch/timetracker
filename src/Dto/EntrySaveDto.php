@@ -95,24 +95,8 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // Try ISO 8601 format first (from ExtJS: 2026-01-14T00:00:00)
-        $date = DateTime::createFromFormat(self::FORMAT_ISO_DATETIME, $this->date);
-        if (false !== $date) {
-            return $date;
-        }
-
-        // Try Y-m-d format (standard ISO date)
-        $date = DateTime::createFromFormat('Y-m-d', $this->date);
-        if (false !== $date) {
-            return $date;
-        }
-
-        // Fallback to generic DateTime parsing
-        try {
-            return new DateTime($this->date);
-        } catch (Exception) {
-            return null;
-        }
+        // ISO 8601 datetime first (from ExtJS: 2026-01-14T00:00:00), then standard ISO date
+        return $this->parseDateTime($this->date, [self::FORMAT_ISO_DATETIME, 'Y-m-d']);
     }
 
     /**
@@ -125,30 +109,8 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // Try ISO 8601 format first (from ExtJS: 2026-01-14T08:00:00)
-        $time = DateTime::createFromFormat(self::FORMAT_ISO_DATETIME, $this->start);
-        if (false !== $time) {
-            return $time;
-        }
-
-        // Handle H:i:s format
-        $time = DateTime::createFromFormat('H:i:s', $this->start);
-        if (false !== $time) {
-            return $time;
-        }
-
-        // Handle H:i format
-        $time = DateTime::createFromFormat('H:i', $this->start);
-        if (false !== $time) {
-            return $time;
-        }
-
-        // Fallback to generic DateTime parsing
-        try {
-            return new DateTime($this->start);
-        } catch (Exception) {
-            return null;
-        }
+        // ISO 8601 datetime first (from ExtJS: 2026-01-14T08:00:00), then time-only formats
+        return $this->parseDateTime($this->start, [self::FORMAT_ISO_DATETIME, 'H:i:s', 'H:i']);
     }
 
     /**
@@ -161,27 +123,28 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // Try ISO 8601 format first (from ExtJS: 2026-01-14T16:00:00)
-        $time = DateTime::createFromFormat(self::FORMAT_ISO_DATETIME, $this->end);
-        if (false !== $time) {
-            return $time;
-        }
+        // ISO 8601 datetime first (from ExtJS: 2026-01-14T16:00:00), then time-only formats
+        return $this->parseDateTime($this->end, [self::FORMAT_ISO_DATETIME, 'H:i:s', 'H:i']);
+    }
 
-        // Handle H:i:s format
-        $time = DateTime::createFromFormat('H:i:s', $this->end);
-        if (false !== $time) {
-            return $time;
-        }
-
-        // Handle H:i format
-        $time = DateTime::createFromFormat('H:i', $this->end);
-        if (false !== $time) {
-            return $time;
+    /**
+     * Parses a date/time string by trying the given formats in order,
+     * falling back to generic DateTime parsing.
+     *
+     * @param list<string> $formats
+     */
+    private function parseDateTime(string $value, array $formats): ?DateTimeInterface
+    {
+        foreach ($formats as $format) {
+            $parsed = DateTime::createFromFormat($format, $value);
+            if (false !== $parsed) {
+                return $parsed;
+            }
         }
 
         // Fallback to generic DateTime parsing
         try {
-            return new DateTime($this->end);
+            return new DateTime($value);
         } catch (Exception) {
             return null;
         }

@@ -35,19 +35,11 @@ final class ArrayTypeHelper
 
         $value = $array[$key];
 
-        if (null === $value) {
-            return $default;
-        }
-
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_numeric($value)) {
-            return (int) $value;
-        }
-
-        return $default;
+        return match (true) {
+            is_int($value) => $value,
+            is_numeric($value) => (int) $value,
+            default => $default,
+        };
     }
 
     /**
@@ -63,19 +55,11 @@ final class ArrayTypeHelper
 
         $value = $array[$key];
 
-        if (null === $value) {
-            return $default;
-        }
-
-        if (is_string($value)) {
-            return $value;
-        }
-
-        if (is_scalar($value)) {
-            return (string) $value;
-        }
-
-        return $default;
+        return match (true) {
+            is_string($value) => $value,
+            is_scalar($value) => (string) $value,
+            default => $default,
+        };
     }
 
     /**

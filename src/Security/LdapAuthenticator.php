@@ -213,19 +213,12 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
 
     private function parsePort(mixed $value): int
     {
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return (int) $value;
-        }
-
-        if ($value instanceof BackedEnum) {
-            return (int) $value->value;
-        }
-
-        return 0;
+        return match (true) {
+            is_int($value) => $value,
+            is_string($value) => (int) $value,
+            $value instanceof BackedEnum => (int) $value->value,
+            default => 0,
+        };
     }
 
     /**
