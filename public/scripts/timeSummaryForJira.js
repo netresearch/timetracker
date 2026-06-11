@@ -127,6 +127,8 @@ function createLabJiraTimeSummay(list, data) {
     let i = 0;
 
     const liEl = cloneTitle.childNodes[1].childNodes[1].childNodes[1];
+    // snapshot the template's own entries before appending replacements
+    const templateEntries = [...liEl.children];
 
     Object.entries(data).forEach((value) => {
         const time = value[1].time;
@@ -150,9 +152,8 @@ function createLabJiraTimeSummay(list, data) {
         }
     })
 
-    // remove the template's own entries (the first three element children;
-    // the freshly appended ones come after them)
-    for (const node of [...liEl.children].slice(0, 3)) {
+    // remove the template's own entries (snapshotted above)
+    for (const node of templateEntries) {
         node.remove();
     }
 

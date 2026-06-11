@@ -164,7 +164,7 @@ Ext.define('Netresearch.widget.Admin', {
                             if (Number.isNaN(Number(teamId))) {
                                 return;
                             }
-                            const team = customerGrid.teamStore.getById(Number.parseInt(teamId));
+                            const team = customerGrid.teamStore.getById(Number.parseInt(teamId, 10));
                             if (null == team) {
                                 return;
                             }
@@ -370,8 +370,8 @@ Ext.define('Netresearch.widget.Admin', {
                 editCustomerWindow.show();
             },
             deleteCustomer: function (record) {
-                const id = Number.parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, (btn) => {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'customer/delete',
@@ -383,7 +383,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(this._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -469,7 +469,7 @@ Ext.define('Netresearch.widget.Admin', {
                         anchor: '100%'
                     },
                     renderer: function (id) {
-                        if (1 > Number.parseInt(id))
+                        if (1 > Number.parseInt(id, 10))
                             return '';
 
                         const record = this.ticketSystemStore.getById(id);
@@ -858,8 +858,8 @@ Ext.define('Netresearch.widget.Admin', {
                 editProjectWindow.show();
             },
             deleteProject: function (record) {
-                const id = Number.parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, (btn) => {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'project/delete',
@@ -974,7 +974,7 @@ Ext.define('Netresearch.widget.Admin', {
                             if (Number.isNaN(Number(teamId))) {
                                 return;
                             }
-                            const team = userGrid.teamStore.getById(Number.parseInt(teamId));
+                            const team = userGrid.teamStore.getById(Number.parseInt(teamId, 10));
                             if (null == team) {
                                 return;
                             }
@@ -1168,8 +1168,8 @@ Ext.define('Netresearch.widget.Admin', {
                 editUserWindow.show();
             },
             deleteUser: function (record) {
-                const id = Number.parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.username, (btn) => {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.username), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'user/delete',
@@ -1181,7 +1181,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(this._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -1353,8 +1353,8 @@ Ext.define('Netresearch.widget.Admin', {
                 editTeamWindow.show();
             },
             deleteTeam: function (record) {
-                const id = Number.parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, (btn) => {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'team/delete',
@@ -1366,7 +1366,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(this._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -1509,8 +1509,8 @@ Ext.define('Netresearch.widget.Admin', {
                 }
             }, // end listeners
             deletePreset: function (record) {
-                const id = Number.parseInt(record.data.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.data.name, (btn) => {
+                const id = Number.parseInt(record.data.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.data.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'preset/delete',
@@ -1522,7 +1522,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(this._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -1877,8 +1877,8 @@ Ext.define('Netresearch.widget.Admin', {
                 editTicketSystemWindow.show();
             },
             deleteTicketSystem: function (record) {
-                const id = Number.parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, (btn) => {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'ticketsystem/delete',
@@ -1890,7 +1890,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(this._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -2050,8 +2050,8 @@ Ext.define('Netresearch.widget.Admin', {
                 editActivityWindow.show();
             },
             deleteActivity: function (record) {
-                const id = Number.parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, (btn) => {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'activity/delete',
@@ -2063,7 +2063,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(this._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -2286,8 +2286,8 @@ Ext.define('Netresearch.widget.Admin', {
                 editContractWindow.show();
             },
             deleteContract: function (record) {
-                const id = Number.parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, (btn) => {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'contract/delete',
@@ -2299,7 +2299,7 @@ Ext.define('Netresearch.widget.Admin', {
                             },
                             failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(this._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }

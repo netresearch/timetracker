@@ -117,7 +117,7 @@ function buildHeaderHtml() {
 }
 
 function switchTab(number) {
-    number = Number.parseInt(number);
+    number = Number.parseInt(number, 10);
     if ((0 > number) || (number > ttt_items.length)) {
         return;
     }
@@ -286,7 +286,7 @@ Ext.onReady(function () {
             key: [Ext.EventObject.ONE, Ext.EventObject.TWO, Ext.EventObject.THREE, Ext.EventObject.FOUR, Ext.EventObject.FIVE, Ext.EventObject.SIX, Ext.EventObject.SEVEN],
             alt: true,
             handler: function (key, e) {
-                switchTab(Number.parseInt(key) - 48);
+                switchTab(Number.parseInt(key, 10) - 48);
                 e.stopEvent();
             },
             defaultEventAction: 'stopEvent'
@@ -520,10 +520,10 @@ function extractTicketPrefix(ticket) {
 
 function findProjects(customer, ticket) {
     // 1. Find all projects by this customer, if defined
-    if ((null == customer) || (undefined == customer) || (1 > Number.parseInt(customer))) {
+    if ((null == customer) || (undefined == customer) || (1 > Number.parseInt(customer, 10))) {
         customer = 'all';
     } else {
-        customer = Number.parseInt(customer);
+        customer = Number.parseInt(customer, 10);
     }
     const projects = projectsData[customer];
 
