@@ -89,88 +89,109 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
             throw new CustomUserMessageAuthenticationException('Invalid username format.');
         }
 
-        $userLoader = function (string $userIdentifier): User {
-            try {
-                // --- Perform LDAP Authentication ---
-                // Cast parameter bag values to expected scalar types
-                $this->ldapClientService
-                    ->setHost($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : '')))
-                    ->setPort($this->parsePort($this->parameterBag->get('ldap_port')))
-                    ->setReadUser($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : '')))
-                    ->setReadPass((string) (is_scalar($this->parameterBag->get('ldap_readpass')) ? $this->parameterBag->get('ldap_readpass') : ''))
-                    ->setBaseDn($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : '')))
-                    ->setUserName($this->sanitizeLdapInput($userIdentifier))
-                    ->setUserPass($this->currentPassword ?? '')
-                    ->setUseSSL((bool) ($this->parameterBag->get('ldap_usessl') ?? false))
-                    ->setUserNameField((string) (is_scalar($this->parameterBag->get('ldap_usernamefield')) ? $this->parameterBag->get('ldap_usernamefield') : ''))
-                    ->login();
-
-                $this->logger->info('LDAP authentication successful.', ['username' => $userIdentifier]);
-
-                $user = $this->entityManager->getRepository(User::class)->findOneBy(['username' => $userIdentifier]);
-                if ($user instanceof User) {
-                    return $user;
-                }
-
-                if (!(bool) $this->parameterBag->get('ldap_create_user')) {
-                    throw new UserNotFoundException(sprintf('User "%s" authenticated via LDAP but not found locally and creation is disabled.', $userIdentifier));
-                }
-
-                $newUser = new User()
-                    ->setUsername($userIdentifier)
-                    ->setType('DEV')
-                    ->setLocale('de');
-
-                if ([] !== $this->ldapClientService->getTeams()) {
-                    $teamRepo = $this->entityManager->getRepository(Team::class);
-                    foreach ($this->ldapClientService->getTeams() as $teamname) {
-                        $team = $teamRepo->findOneBy(['name' => $teamname]);
-                        if ($team instanceof Team) {
-                            $newUser->addTeam($team);
-                        }
-                    }
-                }
-
-                $this->entityManager->persist($newUser);
-                $this->entityManager->flush();
-
-                return $newUser;
-            } catch (LdapException $ldapException) {
-                // Specific LDAP errors
-                $this->logger->error('LDAP authentication error', [
-                    'username' => substr($userIdentifier, 0, 3) . '***',
-                    'error_code' => $ldapException->getCode(),
-                    'error_type' => $ldapException::class,
-                ]);
-
-                // Don't expose LDAP-specific errors to the user
-                throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $ldapException->getCode(), $ldapException);
-            } catch (UserNotFoundException $userException) {
-                // User not found and creation disabled
-                $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
-                throw $userException;
-            } catch (Throwable $throwable) {
-                // Generic error handling
-                $this->logger->error('Unexpected authentication error', [
-                    'username' => substr($userIdentifier, 0, 3) . '***',
-                    'error' => $throwable->getMessage(),
-                    'trace' => $throwable->getTraceAsString(),
-                ]);
-                throw new CustomUserMessageAuthenticationException('An unexpected error occurred during authentication.', [], $throwable->getCode(), $throwable);
-            }
-        };
-
         // Store the current password temporarily for the user loader
         $this->currentPassword = $password;
 
         return new Passport(
-            new UserBadge($username, $userLoader),
+            new UserBadge($username, fn (string $userIdentifier): User => $this->loadUser($userIdentifier)),
             new CustomCredentials(static fn (): true => true, ['username' => $username]),
             [
                 new CsrfTokenBadge('authenticate', $csrfToken),
                 new RememberMeBadge(),
             ],
         );
+    }
+
+    /**
+     * Authenticates the user against LDAP and loads (or creates) the local user record.
+     *
+     * @throws CustomUserMessageAuthenticationException When LDAP authentication fails
+     * @throws UserNotFoundException                    When the user is not found locally and creation is disabled
+     */
+    private function loadUser(string $userIdentifier): User
+    {
+        try {
+            $this->configureLdapClient($userIdentifier)->login();
+
+            $this->logger->info('LDAP authentication successful.', ['username' => $userIdentifier]);
+
+            $user = $this->entityManager->getRepository(User::class)->findOneBy(['username' => $userIdentifier]);
+            if ($user instanceof User) {
+                return $user;
+            }
+
+            if (!(bool) $this->parameterBag->get('ldap_create_user')) {
+                throw new UserNotFoundException(sprintf('User "%s" authenticated via LDAP but not found locally and creation is disabled.', $userIdentifier));
+            }
+
+            return $this->createUserFromLdap($userIdentifier);
+        } catch (LdapException $ldapException) {
+            // Specific LDAP errors
+            $this->logger->error('LDAP authentication error', [
+                'username' => substr($userIdentifier, 0, 3) . '***',
+                'error_code' => $ldapException->getCode(),
+                'error_type' => $ldapException::class,
+            ]);
+
+            // Don't expose LDAP-specific errors to the user
+            throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $ldapException->getCode(), $ldapException);
+        } catch (UserNotFoundException $userException) {
+            // User not found and creation disabled
+            $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
+            throw $userException;
+        } catch (Throwable $throwable) {
+            // Generic error handling
+            $this->logger->error('Unexpected authentication error', [
+                'username' => substr($userIdentifier, 0, 3) . '***',
+                'error' => $throwable->getMessage(),
+                'trace' => $throwable->getTraceAsString(),
+            ]);
+            throw new CustomUserMessageAuthenticationException('An unexpected error occurred during authentication.', [], $throwable->getCode(), $throwable);
+        }
+    }
+
+    /**
+     * Configures the LDAP client from container parameters.
+     * Casts parameter bag values to the expected scalar types.
+     */
+    private function configureLdapClient(string $userIdentifier): LdapClientService
+    {
+        return $this->ldapClientService
+            ->setHost($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_host')) ? $this->parameterBag->get('ldap_host') : '')))
+            ->setPort($this->parsePort($this->parameterBag->get('ldap_port')))
+            ->setReadUser($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_readuser')) ? $this->parameterBag->get('ldap_readuser') : '')))
+            ->setReadPass((string) (is_scalar($this->parameterBag->get('ldap_readpass')) ? $this->parameterBag->get('ldap_readpass') : ''))
+            ->setBaseDn($this->sanitizeLdapInput((string) (is_scalar($this->parameterBag->get('ldap_basedn')) ? $this->parameterBag->get('ldap_basedn') : '')))
+            ->setUserName($this->sanitizeLdapInput($userIdentifier))
+            ->setUserPass($this->currentPassword ?? '')
+            ->setUseSSL((bool) ($this->parameterBag->get('ldap_usessl') ?? false))
+            ->setUserNameField((string) (is_scalar($this->parameterBag->get('ldap_usernamefield')) ? $this->parameterBag->get('ldap_usernamefield') : ''));
+    }
+
+    /**
+     * Creates a local user for an LDAP-authenticated identifier, mapping LDAP teams.
+     */
+    private function createUserFromLdap(string $userIdentifier): User
+    {
+        $newUser = new User()
+            ->setUsername($userIdentifier)
+            ->setType('DEV')
+            ->setLocale('de');
+
+        if ([] !== $this->ldapClientService->getTeams()) {
+            $teamRepo = $this->entityManager->getRepository(Team::class);
+            foreach ($this->ldapClientService->getTeams() as $teamname) {
+                $team = $teamRepo->findOneBy(['name' => $teamname]);
+                if ($team instanceof Team) {
+                    $newUser->addTeam($team);
+                }
+            }
+        }
+
+        $this->entityManager->persist($newUser);
+        $this->entityManager->flush();
+
+        return $newUser;
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): RedirectResponse
@@ -192,19 +213,12 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
 
     private function parsePort(mixed $value): int
     {
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return (int) $value;
-        }
-
-        if ($value instanceof BackedEnum) {
-            return (int) $value->value;
-        }
-
-        return 0;
+        return match (true) {
+            is_int($value) => $value,
+            is_string($value) => (int) $value,
+            $value instanceof BackedEnum => (int) $value->value,
+            default => 0,
+        };
     }
 
     /**

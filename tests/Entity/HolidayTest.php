@@ -68,7 +68,7 @@ final class HolidayTest extends TestCase
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Cannot modify readonly property $name after construction');
 
-        $holiday->setName('Changed Name');
+        $holiday->setName();
     }
 
     // ==================== toArray tests ====================

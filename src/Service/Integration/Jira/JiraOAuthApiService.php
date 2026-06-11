@@ -480,20 +480,38 @@ class JiraOAuthApiService
 
         // Check for epic type tickets
         if ($ticket->isEpic()) {
-            $epicSearchResponse = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
+            return array_merge($subtickets, $this->getEpicSubtickets($sTicket));
+        }
 
-            if (is_object($epicSearchResponse)) {
-                $epicSearchResult = JiraSearchResult::fromApiResponse($epicSearchResponse);
+        return $subtickets;
+    }
 
-                foreach ($epicSearchResult->issues as $epicSubtask) {
-                    if (null !== $epicSubtask->key) {
-                        $subtickets[] = $epicSubtask->key;
+    /**
+     * Collects the issues linked to an epic including their nested subtasks.
+     *
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException
+     *
+     * @return list<string>
+     */
+    private function getEpicSubtickets(string $sTicket): array
+    {
+        $epicSearchResponse = $this->searchTicket('"Epic Link" = ' . $sTicket, ['key', 'subtasks'], 100);
 
-                        // Add nested subtasks
-                        foreach ($epicSubtask->subtaskKeys as $nestedKey) {
-                            $subtickets[] = $nestedKey;
-                        }
-                    }
+        if (!is_object($epicSearchResponse)) {
+            return [];
+        }
+
+        $subtickets = [];
+        $epicSearchResult = JiraSearchResult::fromApiResponse($epicSearchResponse);
+
+        foreach ($epicSearchResult->issues as $epicSubtask) {
+            if (null !== $epicSubtask->key) {
+                $subtickets[] = $epicSubtask->key;
+
+                // Add nested subtasks
+                foreach ($epicSubtask->subtaskKeys as $nestedKey) {
+                    $subtickets[] = $nestedKey;
                 }
             }
         }

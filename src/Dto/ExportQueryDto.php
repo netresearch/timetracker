@@ -82,20 +82,10 @@ final readonly class ExportQueryDto
 
     private static function toBool(mixed $value): bool
     {
-        if (null === $value) {
-            return false;
-        }
-
-        if (is_bool($value)) {
-            return $value;
-        }
-
-        if (is_scalar($value)) {
-            $normalized = strtolower(trim((string) $value));
-
-            return in_array($normalized, ['1', 'true', 'on', 'yes'], true);
-        }
-
-        return false;
+        return match (true) {
+            is_bool($value) => $value,
+            is_scalar($value) => in_array(strtolower(trim((string) $value)), ['1', 'true', 'on', 'yes'], true),
+            default => false,
+        };
     }
 }

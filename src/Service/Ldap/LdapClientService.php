@@ -282,23 +282,13 @@ class LdapClientService
      */
     private function toStringValue(mixed $value): string
     {
-        if (is_string($value)) {
-            return $value;
-        }
-
-        if (is_int($value) || is_float($value) || is_bool($value)) {
-            return (string) $value;
-        }
-
-        if ($value instanceof BackedEnum) {
-            return (string) $value->value;
-        }
-
-        if ($value instanceof UnitEnum) {
-            return $value->name;
-        }
-
-        return '';
+        return match (true) {
+            is_string($value) => $value,
+            is_int($value), is_float($value), is_bool($value) => (string) $value,
+            $value instanceof BackedEnum => (string) $value->value,
+            $value instanceof UnitEnum => $value->name,
+            default => '',
+        };
     }
 
     /**
@@ -306,23 +296,13 @@ class LdapClientService
      */
     private function toIntValue(mixed $value): int
     {
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return (int) $value;
-        }
-
-        if ($value instanceof BackedEnum) {
-            return (int) $value->value;
-        }
-
-        if (is_float($value) || is_bool($value)) {
-            return (int) $value;
-        }
-
-        return 0;
+        return match (true) {
+            is_int($value) => $value,
+            is_string($value) => (int) $value,
+            $value instanceof BackedEnum => (int) $value->value,
+            is_float($value), is_bool($value) => (int) $value,
+            default => 0,
+        };
     }
 
     /**
@@ -454,36 +434,46 @@ class LdapClientService
         $mappingFile = rtrim($this->projectDir, '/') . '/config/ldap_ou_team_mapping.yml';
 
         $this->teams = [];
-        if (file_exists($mappingFile)) {
-            $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
-
-            try {
-                $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
-                if (null === $arMapping || !is_array($arMapping)) {
-                    $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
-
-                    return;
-                }
-
-                /** @var array<string, string> $arMapping */
-                foreach ($arMapping as $group => $teamName) {
-                    if (str_contains(strtolower($dn), 'ou=' . strtolower($group))) {
-                        $this->teams[] = $teamName;
-                        $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
-                    }
-                }
-
-                if ([] === $this->teams) {
-                    $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
-                }
-            } catch (Exception $e) {
-                $this->logger->error('LDAP: Failed to parse team mapping file.', [
-                    'mappingFile' => $mappingFile,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        } else {
+        if (!file_exists($mappingFile)) {
             $this->logger->warning('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
+
+            return;
+        }
+
+        $this->logger->debug('LDAP: Attempting to map OU to teams.', ['dn' => $dn, 'mappingFile' => $mappingFile]);
+
+        try {
+            $this->applyTeamMapping($dn, $mappingFile);
+        } catch (Exception $e) {
+            $this->logger->error('LDAP: Failed to parse team mapping file.', [
+                'mappingFile' => $mappingFile,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Maps the OUs of the given DN to teams using the mapping file.
+     */
+    private function applyTeamMapping(string $dn, string $mappingFile): void
+    {
+        $arMapping = Yaml::parse((string) file_get_contents($mappingFile));
+        if (null === $arMapping || !is_array($arMapping)) {
+            $this->logger->warning('LDAP: Team mapping file is empty or invalid.', ['mappingFile' => $mappingFile]);
+
+            return;
+        }
+
+        /** @var array<string, string> $arMapping */
+        foreach ($arMapping as $group => $teamName) {
+            if (str_contains(strtolower($dn), 'ou=' . strtolower($group))) {
+                $this->teams[] = $teamName;
+                $this->logger->info('LDAP: Mapped OU to team.', ['ou' => $group, 'team' => $teamName, 'dn' => $dn]);
+            }
+        }
+
+        if ([] === $this->teams) {
+            $this->logger->info('LDAP: No matching OUs found in DN for team mapping.', ['dn' => $dn, 'mappingKeys' => array_keys($arMapping)]);
         }
     }
 
@@ -516,16 +506,7 @@ class LdapClientService
 
             if (is_array($value)) {
                 // Already in expected format: array<int, string>
-                $stringValues = [];
-                foreach ($value as $item) {
-                    if (is_string($item)) {
-                        $stringValues[] = $item;
-                    } elseif (is_int($item) || is_float($item) || is_bool($item)) {
-                        $stringValues[] = (string) $item;
-                    }
-                    // Skip non-stringable values
-                }
-                $normalized[$key] = $stringValues;
+                $normalized[$key] = $this->normalizeAttributeValues($value);
             } elseif (is_string($value)) {
                 // Single string value, wrap in array
                 $normalized[$key] = [$value];
@@ -533,5 +514,27 @@ class LdapClientService
         }
 
         return $normalized;
+    }
+
+    /**
+     * Converts an LDAP attribute value list to a list of strings.
+     *
+     * @param array<int|string, mixed> $values
+     *
+     * @return array<int, string>
+     */
+    private function normalizeAttributeValues(array $values): array
+    {
+        $stringValues = [];
+        foreach ($values as $item) {
+            if (is_string($item)) {
+                $stringValues[] = $item;
+            } elseif (is_int($item) || is_float($item) || is_bool($item)) {
+                $stringValues[] = (string) $item;
+            }
+            // Skip non-stringable values
+        }
+
+        return $stringValues;
     }
 }

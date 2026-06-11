@@ -52,23 +52,35 @@ final readonly class JiraIssueFields
             $assignee = JiraAssignee::fromApiResponse($data['assignee']);
         }
 
-        $subtasks = [];
-        if (isset($data['subtasks']) && is_iterable($data['subtasks'])) {
-            foreach ($data['subtasks'] as $subtask) {
-                if (is_object($subtask)) {
-                    $subtasks[] = JiraSubtask::fromApiResponse($subtask);
-                }
-            }
-        }
-
         return new self(
             summary: isset($data['summary']) && is_string($data['summary']) ? $data['summary'] : null,
             description: isset($data['description']) && is_string($data['description']) ? $data['description'] : null,
             issuetype: $issuetype,
             status: $status,
             assignee: $assignee,
-            subtasks: $subtasks,
+            subtasks: self::parseSubtasks($data),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return list<JiraSubtask>
+     */
+    private static function parseSubtasks(array $data): array
+    {
+        if (!isset($data['subtasks']) || !is_iterable($data['subtasks'])) {
+            return [];
+        }
+
+        $subtasks = [];
+        foreach ($data['subtasks'] as $subtask) {
+            if (is_object($subtask)) {
+                $subtasks[] = JiraSubtask::fromApiResponse($subtask);
+            }
+        }
+
+        return $subtasks;
     }
 
     /**

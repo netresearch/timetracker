@@ -44,17 +44,13 @@ final class SaveProjectAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(#[MapRequestPayload] ProjectSaveDto $projectSaveDto): Response|Error|JsonResponse
     {
-        $projectId = $projectSaveDto->id;
-
-        $this->doctrineRegistry->getRepository(TicketSystem::class);
         $ticketSystem = null !== $projectSaveDto->ticket_system ? $this->doctrineRegistry->getRepository(TicketSystem::class)->find($projectSaveDto->ticket_system) : null;
 
-        $this->doctrineRegistry->getRepository(User::class);
-        $projectLead = null !== $projectSaveDto->project_lead ? $this->doctrineRegistry->getRepository(User::class)->find($projectSaveDto->project_lead) : null;
-        $technicalLead = null !== $projectSaveDto->technical_lead ? $this->doctrineRegistry->getRepository(User::class)->find($projectSaveDto->technical_lead) : null;
+        $projectLead = $this->findUser($projectSaveDto->project_lead);
+        $technicalLead = $this->findUser($projectSaveDto->technical_lead);
 
-        $jiraId = null !== $projectSaveDto->jiraId && '' !== $projectSaveDto->jiraId ? strtoupper($projectSaveDto->jiraId) : '';
-        $jiraTicket = null !== $projectSaveDto->jiraTicket && '' !== $projectSaveDto->jiraTicket ? strtoupper($projectSaveDto->jiraTicket) : '';
+        $jiraId = $this->normalizeJiraKey($projectSaveDto->jiraId);
+        $jiraTicket = $this->normalizeJiraKey($projectSaveDto->jiraTicket);
         $active = $projectSaveDto->active;
         $global = $projectSaveDto->global;
         $estimation = $this->timeCalculationService->readableToFullMinutes($projectSaveDto->estimation);
@@ -69,26 +65,9 @@ final class SaveProjectAction extends BaseController
         $internalJiraTicketSystem = $projectSaveDto->internalJiraTicketSystem;
         $internalJiraProjectKey = $projectSaveDto->internalJiraProjectKey;
 
-        if (0 !== $projectId) {
-            $project = $objectRepository->find($projectId);
-            if (!$project instanceof Project) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-        } else {
-            $project = new Project();
-
-            /** @var Customer $customer */
-            $customer = null !== $projectSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($projectSaveDto->customer) : null;
-            if (!$customer instanceof Customer) {
-                $response = new Response($this->translate('Please choose a customer.'));
-                $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
-
-                return $response;
-            }
-
-            $project->setCustomer($customer);
+        $project = $this->loadOrCreateProject($projectSaveDto, $objectRepository);
+        if (!$project instanceof Project) {
+            return $project;
         }
 
         $projectCustomer = $project->getCustomer();
@@ -139,16 +118,64 @@ final class SaveProjectAction extends BaseController
         $data = [$project->getId(), $projectSaveDto->name, $projectCustomer->getId(), $jiraId];
 
         if ($ticketSystem instanceof TicketSystem) {
-            try {
-                if (null !== $project->getId()) {
-                    $this->subticketSyncService->syncProjectSubtickets($project);
-                }
-            } catch (Exception $e) {
-                $data['message'] = $e->getMessage();
+            $syncError = $this->trySyncSubtickets($project);
+            if (null !== $syncError) {
+                $data['message'] = $syncError;
             }
         }
 
         return new JsonResponse($data);
+    }
+
+    private function findUser(?int $userId): ?User
+    {
+        return null !== $userId ? $this->doctrineRegistry->getRepository(User::class)->find($userId) : null;
+    }
+
+    private function normalizeJiraKey(?string $value): string
+    {
+        return null !== $value && '' !== $value ? strtoupper($value) : '';
+    }
+
+    private function loadOrCreateProject(ProjectSaveDto $projectSaveDto, ProjectRepository $projectRepository): Project|Response|Error
+    {
+        if (0 !== $projectSaveDto->id) {
+            $project = $projectRepository->find($projectSaveDto->id);
+
+            return $project instanceof Project
+                ? $project
+                : new Error($this->translator->trans('No entry for id.'), \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
+        }
+
+        /** @var Customer $customer */
+        $customer = null !== $projectSaveDto->customer ? $this->doctrineRegistry->getRepository(Customer::class)->find($projectSaveDto->customer) : null;
+        if (!$customer instanceof Customer) {
+            $response = new Response($this->translate('Please choose a customer.'));
+            $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
+
+            return $response;
+        }
+
+        $project = new Project();
+        $project->setCustomer($customer);
+
+        return $project;
+    }
+
+    /**
+     * Returns the error message when the subticket sync fails, null on success.
+     */
+    private function trySyncSubtickets(Project $project): ?string
+    {
+        try {
+            if (null !== $project->getId()) {
+                $this->subticketSyncService->syncProjectSubtickets($project);
+            }
+
+            return null;
+        } catch (Exception $exception) {
+            return $exception->getMessage();
+        }
     }
 
     private TimeCalculationService $timeCalculationService;

@@ -25,7 +25,7 @@ final class ArchitectureTest
 
     private const string CLASSNAME_EXCEPTION = '*Exception';
 
-    public function test_controllers_should_only_depend_on_business_logic(): Rule
+    public function testControllersShouldOnlyDependOnBusinessLogic(): Rule
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace('App\Controller'))
@@ -45,7 +45,7 @@ final class ArchitectureTest
             ->because('Controllers should only depend on business logic and framework components');
     }
 
-    public function test_entities_should_be_pure_data_models(): Rule
+    public function testEntitiesShouldBePureDataModels(): Rule
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace(self::NAMESPACE_ENTITY))
@@ -60,7 +60,7 @@ final class ArchitectureTest
             ->because('Entities should be pure data models with minimal dependencies');
     }
 
-    public function test_services_can_orchestrate_business_logic(): Rule
+    public function testServicesCanOrchestrateBusinessLogic(): Rule
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace(self::NAMESPACE_SERVICE))
@@ -82,7 +82,7 @@ final class ArchitectureTest
             ->because('Services should handle business logic and orchestration');
     }
 
-    public function test_repositories_should_only_handle_data_access(): Rule
+    public function testRepositoriesShouldOnlyHandleDataAccess(): Rule
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace(self::NAMESPACE_REPOSITORY))
@@ -98,7 +98,7 @@ final class ArchitectureTest
             ->because('Repositories should only handle data access');
     }
 
-    public function test_controllers_must_not_directly_access_repositories(): Rule
+    public function testControllersMustNotDirectlyAccessRepositories(): Rule
     {
         return PHPat::rule()
             ->classes(Selector::inNamespace('App\Controller'))

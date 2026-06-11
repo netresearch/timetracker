@@ -55,9 +55,11 @@ class Holiday extends Base
     }
 
     /**
-     * Set name.
+     * Backward-compatibility shim: $name is readonly, so this always throws.
+     *
+     * @throws BadMethodCallException always; pass the name to the constructor instead
      */
-    public function setName(string $name): void
+    public function setName(): void
     {
         // Cannot modify readonly property after initialization
         throw new BadMethodCallException('Cannot modify readonly property $name after construction. Use constructor instead.');

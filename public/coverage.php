@@ -172,46 +172,7 @@ function generateCoverageReport(string $format): void
         return;
     }
 
-    // Merge all coverage files
-    $mergedCoverage = [];
-    $files = glob(COVERAGE_FILE_PATTERN) ?: [];
-
-    foreach ($files as $file) {
-        $content = @file_get_contents($file);
-        if ($content === false) {
-            error_log('Coverage: Failed to read file ' . $file);
-            continue;
-        }
-
-        $data = json_decode($content, true);
-        if (!is_array($data)) {
-            error_log('Coverage: Invalid JSON in file ' . $file);
-            continue;
-        }
-
-        foreach ($data as $filename => $lines) {
-            if (!isset($mergedCoverage[$filename])) {
-                $mergedCoverage[$filename] = [];
-            }
-            foreach ($lines as $line => $hits) {
-                // Skip dead code
-                if ($hits === -2) {
-                    continue;
-                }
-
-                if (!isset($mergedCoverage[$filename][$line])) {
-                    $mergedCoverage[$filename][$line] = 0;
-                }
-
-                // Xdebug: 1 = executed, -1 = not executed but executable
-                if ($hits === 1) {
-                    $mergedCoverage[$filename][$line] = 1;
-                } elseif ($mergedCoverage[$filename][$line] !== 1 && $hits === -1) {
-                    $mergedCoverage[$filename][$line] = -1;
-                }
-            }
-        }
-    }
+    $mergedCoverage = mergeCoverageFiles();
 
     if ($format === 'clover') {
         header('Content-Type: application/xml');
@@ -222,6 +183,78 @@ function generateCoverageReport(string $format): void
             'coverage' => $mergedCoverage,
         ]);
     }
+}
+
+/**
+ * Merge all collected coverage files into one per-file line map.
+ */
+function mergeCoverageFiles(): array
+{
+    $mergedCoverage = [];
+    $files = glob(COVERAGE_FILE_PATTERN) ?: [];
+
+    foreach ($files as $file) {
+        $data = readCoverageFile($file);
+        if ($data === null) {
+            continue;
+        }
+
+        foreach ($data as $filename => $lines) {
+            if (!is_array($lines)) {
+                continue;
+            }
+
+            $mergedCoverage[$filename] = mergeFileLines($mergedCoverage[$filename] ?? [], $lines);
+        }
+    }
+
+    return $mergedCoverage;
+}
+
+/**
+ * Read and decode a single coverage file, returning null on failure.
+ */
+function readCoverageFile(string $file): ?array
+{
+    $content = @file_get_contents($file);
+    if ($content === false) {
+        error_log('Coverage: Failed to read file ' . $file);
+        return null;
+    }
+
+    $data = json_decode($content, true);
+    if (!is_array($data)) {
+        error_log('Coverage: Invalid JSON in file ' . $file);
+        return null;
+    }
+
+    return $data;
+}
+
+/**
+ * Merge the line hits of one coverage file into the already merged lines.
+ */
+function mergeFileLines(array $mergedLines, array $lines): array
+{
+    foreach ($lines as $line => $hits) {
+        // Skip dead code
+        if ($hits === -2) {
+            continue;
+        }
+
+        if (!isset($mergedLines[$line])) {
+            $mergedLines[$line] = 0;
+        }
+
+        // Xdebug: 1 = executed, -1 = not executed but executable
+        if ($hits === 1) {
+            $mergedLines[$line] = 1;
+        } elseif ($mergedLines[$line] !== 1 && $hits === -1) {
+            $mergedLines[$line] = -1;
+        }
+    }
+
+    return $mergedLines;
 }
 
 /**
