@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace App\Service\Security;
 
-use RuntimeException;
+use App\Exception\TokenEncryptionException;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
@@ -32,12 +32,15 @@ class TokenEncryptionService
 
     public function __construct(ParameterBagInterface $parameterBag)
     {
-        // Get encryption key from environment or generate if not set
-        $key = $parameterBag->get('app.encryption_key') ?? $parameterBag->get('APP_SECRET');
+        // Resolves APP_ENCRYPTION_KEY with APP_SECRET fallback via the
+        // app.encryption_key parameter (env default processor in services.yaml);
+        // a plain get('APP_SECRET') fallback here would throw
+        // ParameterNotFoundException instead of falling back.
+        $key = $parameterBag->get('app.encryption_key');
 
         // Ensure we have a valid key
         if (!is_string($key) || '' === $key) {
-            throw new RuntimeException('Encryption key not configured. Set APP_ENCRYPTION_KEY in environment.');
+            throw new TokenEncryptionException('Encryption key not configured. Set APP_ENCRYPTION_KEY in environment.');
         }
 
         // Derive a proper encryption key from the secret
@@ -50,7 +53,7 @@ class TokenEncryptionService
      *
      * @param string $token The plain text token to encrypt
      *
-     * @throws RuntimeException If encryption fails
+     * @throws TokenEncryptionException If encryption fails
      *
      * @return string Base64 encoded encrypted token with IV and auth tag
      */
@@ -63,7 +66,7 @@ class TokenEncryptionService
         // Generate a random IV for each encryption
         $ivLength = openssl_cipher_iv_length(self::CIPHER_METHOD);
         if (false === $ivLength) {
-            throw new RuntimeException('Failed to get IV length for cipher method');
+            throw new TokenEncryptionException('Failed to get IV length for cipher method');
         }
 
         $iv = openssl_random_pseudo_bytes($ivLength);
@@ -81,7 +84,7 @@ class TokenEncryptionService
         );
 
         if (false === $encrypted) {
-            throw new RuntimeException('Token encryption failed');
+            throw new TokenEncryptionException('Token encryption failed');
         }
 
         // Combine IV, tag and encrypted data
@@ -96,7 +99,7 @@ class TokenEncryptionService
      *
      * @param string $encryptedToken Base64 encoded encrypted token
      *
-     * @throws RuntimeException If decryption fails
+     * @throws TokenEncryptionException If decryption fails
      *
      * @return string The decrypted plain text token
      */
@@ -109,17 +112,17 @@ class TokenEncryptionService
         // Decode from base64
         $combined = base64_decode($encryptedToken, true);
         if (false === $combined) {
-            throw new RuntimeException('Invalid encrypted token format');
+            throw new TokenEncryptionException('Invalid encrypted token format');
         }
 
         $ivLength = openssl_cipher_iv_length(self::CIPHER_METHOD);
         if (false === $ivLength) {
-            throw new RuntimeException('Failed to get IV length for cipher method');
+            throw new TokenEncryptionException('Failed to get IV length for cipher method');
         }
 
         // Extract IV, tag and encrypted data
         if (strlen($combined) < $ivLength + self::TAG_LENGTH) {
-            throw new RuntimeException('Encrypted token too short');
+            throw new TokenEncryptionException('Encrypted token too short');
         }
 
         $iv = substr($combined, 0, $ivLength);
@@ -137,7 +140,7 @@ class TokenEncryptionService
         );
 
         if (false === $decrypted) {
-            throw new RuntimeException('Token decryption failed - token may be corrupted or tampered');
+            throw new TokenEncryptionException('Token decryption failed - token may be corrupted or tampered');
         }
 
         return $decrypted;
@@ -149,7 +152,7 @@ class TokenEncryptionService
      *
      * @param string $encryptedToken The current encrypted token
      *
-     * @throws RuntimeException If token decryption or re-encryption fails
+     * @throws TokenEncryptionException If token decryption or re-encryption fails
      *
      * @return string The newly encrypted token with fresh IV
      */

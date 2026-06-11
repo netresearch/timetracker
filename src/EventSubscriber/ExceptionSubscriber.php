@@ -26,6 +26,8 @@ use Throwable;
  */
 class ExceptionSubscriber implements EventSubscriberInterface
 {
+    private const string ERROR_INTERNAL_SERVER = 'Internal server error';
+
     public function __construct(
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly string $environment = 'prod',
@@ -113,7 +115,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
         // Handle generic exceptions (only show details in dev mode)
         if ('dev' === $this->environment) {
             return new JsonResponse([
-                'error' => 'Internal server error',
+                'error' => self::ERROR_INTERNAL_SERVER,
                 'message' => $throwable->getMessage(),
                 'exception' => $throwable::class,
                 'file' => $throwable->getFile(),
@@ -124,7 +126,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
         // Production mode - hide internal details
         return new JsonResponse([
-            'error' => 'Internal server error',
+            'error' => self::ERROR_INTERNAL_SERVER,
             'message' => 'An unexpected error occurred. Please try again later.',
         ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
@@ -141,7 +143,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
             409 => 'Conflict',
             422 => 'Unprocessable entity',
             429 => 'Too many requests',
-            500 => 'Internal server error',
+            500 => self::ERROR_INTERNAL_SERVER,
             502 => 'Bad gateway',
             503 => 'Service unavailable',
             default => 'Error',

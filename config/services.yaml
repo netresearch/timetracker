@@ -5,6 +5,8 @@
 parameters:
     locale: 'en'
     secret: '%env(APP_SECRET)%'
+    # APP_ENCRYPTION_KEY with fallback to APP_SECRET (via the secret parameter)
+    app.encryption_key: '%env(default:secret:APP_ENCRYPTION_KEY)%'
     app_title: '%env(APP_TITLE)%'
     app_locale: '%env(APP_LOCALE)%'
     app_logo_url: '%env(default:app_logo_url_default:APP_LOGO_URL)%'

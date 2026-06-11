@@ -22,6 +22,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
 {
+    private const string MIME_TYPE_JSON = 'application/json';
+
     public function __construct(
         private Security $security,
         private RouterInterface $router,
@@ -85,14 +87,14 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
         $pathInfo = $request->getPathInfo();
 
         // If explicitly requesting HTML, let Symfony render error403.html.twig
-        $prefersHtml = str_contains($acceptHeader, 'text/html') && !str_contains($acceptHeader, 'application/json');
+        $prefersHtml = str_contains($acceptHeader, 'text/html') && !str_contains($acceptHeader, self::MIME_TYPE_JSON);
         if ($prefersHtml) {
             return;
         }
 
         // Check if request expects JSON response (headers or API-like paths)
-        $isJsonRequest = str_contains($acceptHeader, 'application/json')
-            || str_contains($contentType, 'application/json')
+        $isJsonRequest = str_contains($acceptHeader, self::MIME_TYPE_JSON)
+            || str_contains($contentType, self::MIME_TYPE_JSON)
             || 'XMLHttpRequest' === $request->headers->get('X-Requested-With')
             || str_starts_with($pathInfo, '/get')
             || str_starts_with($pathInfo, '/getAll')

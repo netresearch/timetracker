@@ -11,11 +11,11 @@ namespace App\Service\Entry;
 
 use App\Dto\InterpretationFiltersDto;
 use App\Entity\Entry;
+use App\Exception\InvalidPaginationException;
 use App\Repository\EntryRepository;
 use App\ValueObject\PaginatedEntryCollection;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Tools\Pagination\Paginator;
-use Exception;
 
 use function is_string;
 
@@ -32,7 +32,7 @@ final readonly class EntryQueryService
     /**
      * Find paginated entries based on filters.
      *
-     * @throws Exception When query building fails
+     * @throws InvalidPaginationException When the page parameter is negative
      */
     public function findPaginatedEntries(InterpretationFiltersDto $interpretationFiltersDto): PaginatedEntryCollection
     {
@@ -75,7 +75,7 @@ final readonly class EntryQueryService
 
         // Validate and sanitize inputs
         if ($page < 0) {
-            throw new Exception('page can not be negative.');
+            throw new InvalidPaginationException('page can not be negative.');
         }
 
         $maxResults = $maxResults > 0 ? $maxResults : 50;

@@ -22,6 +22,9 @@ declare(strict_types=1);
 // Coverage storage directory
 define('COVERAGE_DIR', dirname(__DIR__) . '/var/coverage/e2e');
 
+// Glob pattern matching all collected coverage files
+define('COVERAGE_FILE_PATTERN', COVERAGE_DIR . '/*.json');
+
 /**
  * Check if coverage is enabled via environment variable.
  */
@@ -134,7 +137,7 @@ function handleCoverageRequest(): void
 
     switch ($action) {
         case 'status':
-            $files = is_dir(COVERAGE_DIR) ? (glob(COVERAGE_DIR . '/*.json') ?: []) : [];
+            $files = is_dir(COVERAGE_DIR) ? (glob(COVERAGE_FILE_PATTERN) ?: []) : [];
             echo json_encode([
                 'enabled' => function_exists('xdebug_start_code_coverage'),
                 'xdebug_mode' => ini_get('xdebug.mode'),
@@ -171,7 +174,7 @@ function generateCoverageReport(string $format): void
 
     // Merge all coverage files
     $mergedCoverage = [];
-    $files = glob(COVERAGE_DIR . '/*.json') ?: [];
+    $files = glob(COVERAGE_FILE_PATTERN) ?: [];
 
     foreach ($files as $file) {
         $content = @file_get_contents($file);
@@ -294,7 +297,7 @@ function clearCoverageData(): void
         return;
     }
 
-    $files = glob(COVERAGE_DIR . '/*.json') ?: [];
+    $files = glob(COVERAGE_FILE_PATTERN) ?: [];
     foreach ($files as $file) {
         if (!@unlink($file)) {
             error_log('Coverage: Failed to delete file ' . $file);

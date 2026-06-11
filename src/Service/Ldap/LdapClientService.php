@@ -9,13 +9,14 @@ declare(strict_types=1);
 
 namespace App\Service\Ldap;
 
+use App\Exception\Ldap\LdapAuthenticationException;
+use App\Exception\Ldap\LdapConnectionException;
 use BackedEnum;
 use Exception;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 use SensitiveParameter;
 use Symfony\Component\Yaml\Yaml;
 use UnitEnum;
@@ -88,7 +89,8 @@ class LdapClientService
     /**
      * Verify username by searching for it in LDAP.
      *
-     * @throws Exception
+     * @throws LdapAuthenticationException
+     * @throws LdapConnectionException
      * @throws LdapException
      *
      * @return array<string, array<int, string>>
@@ -97,7 +99,7 @@ class LdapClientService
     {
         // Security check: ensure username is properly set
         if ('' === $this->userName) {
-            throw new Exception('LDAP username must be set via setUserName() before authentication');
+            throw new LdapAuthenticationException('LDAP username must be set via setUserName() before authentication');
         }
 
         $ldapOptions = $this->getLdapOptions();
@@ -127,7 +129,7 @@ class LdapClientService
                 'baseDn' => $this->baseDn,
             ]);
 
-            throw new Exception('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $ldapException->getMessage() . '', $ldapException->getCode(), $ldapException);
+            throw new LdapConnectionException('No connection to LDAP: ' . $ldapOptions['host'] . ': ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
         }
 
         $searchFilter = '(' . $this->userNameField . '=' . ldap_escape($this->userName) . ')';
@@ -150,7 +152,7 @@ class LdapClientService
                 'baseDn' => $this->baseDn,
             ]);
 
-            throw new Exception('Username unknown.');
+            throw new LdapAuthenticationException('Username unknown.');
         }
 
         if ($collection->count() > 1) {
@@ -183,7 +185,7 @@ class LdapClientService
      *
      * @param array<string, array<int, string>> $ldapEntry
      *
-     * @throws Exception
+     * @throws LdapAuthenticationException
      *
      * @return true
      */
@@ -191,7 +193,7 @@ class LdapClientService
     {
         // Security check: ensure password is properly set
         if ('' === $this->userPass) {
-            throw new Exception('LDAP password must be set via setUserPass() before authentication');
+            throw new LdapAuthenticationException('LDAP password must be set via setUserPass() before authentication');
         }
 
         // Try multiple ways to extract the DN from LDAP response
@@ -218,7 +220,7 @@ class LdapClientService
                 'entry' => array_map(static fn (array $val): string => implode(', ', $val), $ldapEntry),
             ]);
 
-            throw new Exception('Could not determine user DN for authentication.');
+            throw new LdapAuthenticationException('Could not determine user DN for authentication.');
         }
 
         $ldapOptions = $this->getLdapOptions();
@@ -247,7 +249,7 @@ class LdapClientService
                 'bindDn' => $userDn,
             ]);
 
-            throw new Exception('Login data could not be validated: ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
+            throw new LdapAuthenticationException('Login data could not be validated: ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
         }
 
         return true;
@@ -256,7 +258,7 @@ class LdapClientService
     public function setUserName(string $username): static
     {
         if ('' === $username || '0' === $username) {
-            throw new Exception(sprintf("Invalid user name: '%s'", $username));
+            throw new LdapAuthenticationException(sprintf("Invalid user name: '%s'", $username));
         }
 
         $this->userName = str_replace(
@@ -412,6 +414,8 @@ class LdapClientService
     /**
      * Authenticate username and password at the LDAP server.
      *
+     * @throws LdapAuthenticationException
+     * @throws LdapConnectionException
      * @throws LdapException
      */
     public function login(): true
@@ -421,7 +425,7 @@ class LdapClientService
         );
         // verifyPassword returns bool true; enforce literal true for signature
         if (!$result) {
-            throw new RuntimeException('LDAP verification did not return true');
+            throw new LdapAuthenticationException('LDAP verification did not return true');
         }
 
         return true;
@@ -492,14 +496,14 @@ class LdapClientService
      *
      * @param mixed $rawEntry Raw entry from Collection::getFirst()
      *
-     * @throws Exception When entry is null or invalid
+     * @throws LdapAuthenticationException When entry is null or invalid
      *
      * @return array<string, array<int, string>>
      */
     private function normalizeFirstEntry(mixed $rawEntry): array
     {
         if (null === $rawEntry || !is_array($rawEntry)) {
-            throw new Exception('LDAP entry is null or not an array');
+            throw new LdapAuthenticationException('LDAP entry is null or not an array');
         }
 
         // The actual runtime type is richer than stubs declare.

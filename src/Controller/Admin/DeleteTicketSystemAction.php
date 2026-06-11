@@ -12,11 +12,11 @@ namespace App\Controller\Admin;
 use App\Controller\BaseController;
 use App\Dto\IdDto;
 use App\Entity\TicketSystem;
+use App\Exception\EntityAlreadyDeletedException;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use Exception;
-use RuntimeException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -40,7 +40,7 @@ final class DeleteTicketSystemAction extends BaseController
                 $em->remove($ticketSystem);
                 $em->flush();
             } else {
-                throw new RuntimeException('Already deleted');
+                throw new EntityAlreadyDeletedException('Already deleted');
             }
         } catch (Exception $exception) {
             $reason = '';

@@ -339,7 +339,7 @@ class JiraOAuthApiService
         $workLogId = $entry->getWorklogId();
         if (null !== $workLogId) {
             $response = $this->put(
-                sprintf('issue/%s/worklog/%d', $sTicket, $workLogId),
+                sprintf(JiraWorkLogService::WORKLOG_ITEM_URL_TEMPLATE, $sTicket, $workLogId),
                 $arData,
             );
         } else {
@@ -389,7 +389,7 @@ class JiraOAuthApiService
         try {
             $workLogId = $entry->getWorklogId() ?? 0;
             $this->delete(sprintf(
-                'issue/%s/worklog/%d',
+                JiraWorkLogService::WORKLOG_ITEM_URL_TEMPLATE,
                 $sTicket,
                 $workLogId,
             ));
@@ -508,7 +508,7 @@ class JiraOAuthApiService
      */
     protected function doesWorkLogExist(string $sTicket, int $workLogId): bool
     {
-        return $this->doesResourceExist(sprintf('issue/%s/worklog/%d', $sTicket, $workLogId));
+        return $this->doesResourceExist(sprintf(JiraWorkLogService::WORKLOG_ITEM_URL_TEMPLATE, $sTicket, $workLogId));
     }
 
     /**
