@@ -15,14 +15,14 @@ Ext.define('Netresearch.store.Customers', {
         }
     },
 
-    /* Update projectsData */
+    /* Update customersData */
     reloadFromServer: function(callback) {
         Ext.Ajax.request({
             url: url + 'getCustomers',
             success: function(response) {
                 let data = Ext.decode(response.responseText);
                 //update the locally available customer data
-                consumersData = data;
+                globalThis.customersData = data;
                 callback();
             }
         });
@@ -31,7 +31,6 @@ Ext.define('Netresearch.store.Customers', {
     /* Read data from json var in html source code */
     load: function(onlyActive) {
         var newData = [], record;
-        // console.log("Loading up to " + customersData.length + " customers. " + onlyActive);
         var c = 0;
         for (var key in customersData) {
             record = customersData[key].customer;
@@ -42,7 +41,6 @@ Ext.define('Netresearch.store.Customers', {
 
             if (onlyActive) {
                 if ('1' != record.data.active) {
-                    // console.log(record.get('id') + " is inactive!");
                     continue;
                 }
             }

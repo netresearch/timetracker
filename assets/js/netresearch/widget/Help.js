@@ -135,7 +135,7 @@ Ext.define('Netresearch.widget.Help', {
     }
 });
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+if (settingsData?.['locale'] == 'de') {
     Ext.apply(Netresearch.widget.Help.prototype, {
         _usageTitle: 'Bedienung',
         _shortcutsTitle: 'Shortcuts',

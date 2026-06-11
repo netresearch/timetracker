@@ -104,12 +104,12 @@ Ext.define('Netresearch.widget.Settings', {
                 handler: function() {
                     form.getForm().submit({
                         success: function(form, action) {
-                            if (settingsData.locale != action.result.locale) {
-                                window.location.reload();
-                            } else {
-                                settingsData = action.result.settings;
+                            if (settingsData.locale == action.result.locale) {
+                                globalThis.settingsData = action.result.settings;
                                 ttt_items[0].refresh();
                                 showNotification(widget._successTitle, action.result.message, true);
+                            } else {
+                                globalThis.location.reload();
                             }
                         },
                         failure: function(form, action) {
@@ -145,7 +145,7 @@ Ext.define('Netresearch.widget.Settings', {
     }
 });
 
-if ((undefined != settingsData) && (settingsData['locale'] == 'de')) {
+if (settingsData?.['locale'] == 'de') {
     Ext.apply(Netresearch.widget.Settings.prototype, {
         _yesTitle: 'Ja',
         _noTitle: 'Nein',

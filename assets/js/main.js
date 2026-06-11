@@ -74,19 +74,21 @@ function buildHeaderHtml() {
         parts.push('<iframe id="nrnavi" src="' + globalConfig.header_url + '" title="Navigation"></iframe>');
     }
 
-    // Main header with semantic structure
-    parts.push('<header class="app-header" role="banner">');
-
-    // Logo section
-    parts.push('<div class="header-logo">');
-    parts.push('<img id="logo" src="' + globalConfig.logo_url + '" alt="' + (globalConfig.app_name || 'TimeTracker') + ' - Home">');
-    parts.push('</div>');
+    // Main header with semantic structure, followed by the logo section
+    parts.push(
+        '<header class="app-header" role="banner">',
+        '<div class="header-logo">',
+        '<img id="logo" src="' + globalConfig.logo_url + '" alt="' + (globalConfig.app_name || 'TimeTracker') + ' - Home">',
+        '</div>'
+    );
 
     // User badge (status + logout merged)
     if (typeof statusUrlJson !== 'undefined' || typeof logoutUrlHtml !== 'undefined') {
-        parts.push('<div id="user-badge" class="user-badge status_inactive" role="status" aria-live="polite" aria-label="' + strings['User status'] + '">');
-        parts.push('<span class="status-indicator" aria-hidden="true"></span>');
-        parts.push('<span class="user-name">' + strings['Not logged in'] + '</span>');
+        parts.push(
+            '<div id="user-badge" class="user-badge status_inactive" role="status" aria-live="polite" aria-label="' + strings['User status'] + '">',
+            '<span class="status-indicator" aria-hidden="true"></span>',
+            '<span class="user-name">' + strings['Not logged in'] + '</span>'
+        );
         if (typeof logoutUrlHtml !== 'undefined') {
             parts.push('<a href="' + logoutUrlHtml + '" class="badge-logout" aria-label="' + strings['Logout'] + '">' + strings['Logout'] + '</a>');
         }
@@ -94,22 +96,22 @@ function buildHeaderHtml() {
     }
 
     // Working time section
-    parts.push('<section class="header-worktime" aria-label="' + strings['Working time'] + '">');
-    parts.push('<dl class="worktime-list">');
-    parts.push('<div class="worktime-item"><dt>' + strings['Today'] + '</dt><dd id="worktime-day">0:00</dd></div>');
-    parts.push('<div class="worktime-item"><dt>' + strings['Week'] + '</dt><dd id="worktime-week">0:00</dd></div>');
-    parts.push('<div class="worktime-item"><dt>' + strings['Month'] + '</dt><dd id="worktime-month">0:00</dd></div>');
-    parts.push('</dl>');
+    parts.push(
+        '<section class="header-worktime" aria-label="' + strings['Working time'] + '">',
+        '<dl class="worktime-list">',
+        '<div class="worktime-item"><dt>' + strings['Today'] + '</dt><dd id="worktime-day">0:00</dd></div>',
+        '<div class="worktime-item"><dt>' + strings['Week'] + '</dt><dd id="worktime-week">0:00</dd></div>',
+        '<div class="worktime-item"><dt>' + strings['Month'] + '</dt><dd id="worktime-month">0:00</dd></div>',
+        '</dl>'
+    );
 
     // Monthly overview link
-    if (typeof globalConfig.monthly_overview_url !== 'undefined' &&
+    if (globalConfig.monthly_overview_url !== undefined &&
         globalConfig.monthly_overview_url != null &&
         globalConfig.monthly_overview_url !== '') {
         parts.push('<a id="sumlink" href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_blank" rel="noopener noreferrer" class="worktime-link">' + strings['Monthly overview'] + '</a>');
     }
-    parts.push('</section>');
-
-    parts.push('</header>');
+    parts.push('</section>', '</header>');
 
     return parts.join('');
 }
@@ -156,7 +158,7 @@ Ext.onReady(function () {
 
     /* Helper to check if user has a specific role */
     function hasRole(role) {
-        return settingsData && settingsData['roles'] && settingsData['roles'].includes(role);
+        return settingsData?.['roles']?.includes(role);
     }
 
     /* Show admin tab if user has ROLE_ADMIN */
@@ -212,7 +214,7 @@ Ext.onReady(function () {
     });
 
     /* Key bindings */
-    const keyMap = new Ext.util.KeyMap(Ext.get(document), [
+    Ext.get(document).addKeyMap({ binding: [
         {
             key: Ext.EventObject.A,
             alt: true,
@@ -310,7 +312,7 @@ Ext.onReady(function () {
             },
             defaultEventAction: 'stopEvent'
         }
-    ]);
+    ] });
 
     countTime();
     checkLoginStatus();
@@ -438,7 +440,7 @@ function parseAjaxError(response) {
         }
     } catch (e) { }
     if (!message) {
-        if (data && data.message) {
+        if (data?.message) {
             message = data.message;
         } else {
             message = response.responseText;
@@ -580,7 +582,7 @@ function findProjects(customer, ticket) {
 
         const projectPrefixes = [...project['jiraId'].matchAll(prefixesRegexp)];
         for (var i = 0; i < projectPrefixes.length; i++) {
-            projectPrefix = projectPrefixes[i][1];
+            const projectPrefix = projectPrefixes[i][1];
             if (projectPrefix == prefix) {
                 validProjects.push(project);
                 break;

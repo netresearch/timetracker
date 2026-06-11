@@ -1,3 +1,5 @@
+{# JSON_HEX_* flags so |json_encode output cannot break out of <script> (e.g. a literal </script> in customer names) #}
+{% set jsonHexFlags = constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT') %}
 <!DOCTYPE HTML>
 <html lang="{{ app.request.locale }}">
     <head>
@@ -7,17 +9,17 @@
         <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('build/css/timetracker.css') }}" type="text/css">
         <script type="text/javascript">
-            const statusUrlJson = {{ url('check_status')|escape|json_encode|raw }};
-            const logoutUrlHtml = {{ url('_logout')|escape|json_encode|raw }};
-            const globalConfig = {{ globalConfig|json_encode|raw }};
+            const statusUrlJson = {{ url('check_status')|escape|json_encode(jsonHexFlags)|raw }};
+            const logoutUrlHtml = {{ url('_logout')|escape|json_encode(jsonHexFlags)|raw }};
+            const globalConfig = {{ globalConfig|json_encode(jsonHexFlags)|raw }};
 
-            const environment = {{ environment|json_encode|raw }};
+            const environment = {{ environment|json_encode(jsonHexFlags)|raw }};
 
-            let customersData = {{ customers|json_encode|raw }};
+            globalThis.customersData = {{ customers|json_encode(jsonHexFlags)|raw }};
 
-            let projectsData = {{ projects|json_encode|raw }};
+            globalThis.projectsData = {{ projects|json_encode(jsonHexFlags)|raw }};
 
-            let settingsData = {{ settings|json_encode|raw }};
+            globalThis.settingsData = {{ settings|json_encode(jsonHexFlags)|raw }};
         </script>
         <script type="text/javascript" src="{{ asset('build/js/ext-js/ext-all.js') }}"></script>
         <script type="text/javascript" src="{{ asset('build/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>
@@ -26,12 +28,12 @@
         {% for flashMessage in app.session.flashbag.get('error') %}
 
             <script type="text/javascript">
-                alert({{ flashMessage|json_encode|raw }});
+                alert({{ flashMessage|json_encode(jsonHexFlags)|raw }});
             </script>
 
         {% endfor %}
         <script type="text/javascript">
-            const url = {{ url('_start')|escape|json_encode|raw }};
+            const url = {{ url('_start')|escape|json_encode(jsonHexFlags)|raw }};
         </script>
     </head>
     <body>

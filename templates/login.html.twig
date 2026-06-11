@@ -1,3 +1,5 @@
+{# JSON_HEX_* flags so |json_encode output cannot break out of <script> #}
+{% set jsonHexFlags = constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT') %}
 <!DOCTYPE HTML>
 <html>
     <head>
@@ -9,7 +11,7 @@
         <script type="text/javascript" src="{{ asset('build/js/ext-js/ext-all.js') }}"></script>
         <script type="text/javascript" src="{{ asset('build/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>
         <script type="text/javascript">
-            var url = {{ url('_start')|escape|json_encode|raw }};
+            var url = {{ url('_start')|escape|json_encode(jsonHexFlags)|raw }};
         	Ext.onReady(function() {
 				var window = Ext.create('Ext.window.Window', {
 					title: 'Login',

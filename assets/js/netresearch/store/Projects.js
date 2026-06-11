@@ -24,7 +24,7 @@ Ext.define('Netresearch.store.Projects', {
             success: function(response) {
                 let data = Ext.decode(response.responseText);
                 //update the locally available project data
-                projectsData = data;
+                globalThis.projectsData = data;
                 callback();
             }
         });
@@ -47,9 +47,8 @@ Ext.define('Netresearch.store.Projects', {
 
         // merge empty prefix projects, if any
         if ((null !== ticket) && (undefined !== ticket) && (ticket.length > 0)) {
-            projects2 = findProjects(customer, "");
+            const projects2 = findProjects(customer, "");
             if (projects2) {
-                // console.log("Merged " + projects2.length + " projects with empty prefixes");
                 projects = projects.concat(projects2);
             }
         }
@@ -72,7 +71,6 @@ Ext.define('Netresearch.store.Projects', {
 
             if (onlyActive) {
                 if ('1' != record.data.active) {
-                    // console.log("Project " + record.data.id + " is inactive.");
                     continue;
                 }
             }
@@ -80,9 +78,6 @@ Ext.define('Netresearch.store.Projects', {
             newData.push(record);
 
             this.add(record);
-
-            // if (customer != 'all')
-            //    console.log("Loading project " + record.data.id + " (" + record.data.name + " of customer " + record.data.customer + ") for customer " + customer);
         }
 
         this.loadRecords(newData, {"append": false});
