@@ -14,7 +14,6 @@ use App\Entity\Entry;
 use App\Enum\EntryClass;
 use App\Exception\InvalidEntryTimeException;
 use App\Repository\EntryRepository;
-use DateInterval;
 use DateTime;
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -150,7 +149,6 @@ abstract class BaseTrackingController extends BaseController
             throw new InvalidEntryTimeException('Entry start time must be before end time');
         }
 
-        new DateInterval('PT23H59M');
         $dateInterval = $start->diff($end);
 
         if ($dateInterval->days > 0 || $dateInterval->h > 23) {
