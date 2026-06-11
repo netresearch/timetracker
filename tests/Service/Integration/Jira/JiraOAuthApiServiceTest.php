@@ -617,6 +617,65 @@ final class JiraOAuthApiServiceTest extends TestCase
         self::assertSame([], $result);
     }
 
+    public function testGetSubticketsReturnsSubtaskKeysForRegularTicket(): void
+    {
+        $issueBody = (string) json_encode((object) [
+            'key' => 'TEST-1',
+            'fields' => (object) [
+                'issuetype' => (object) ['name' => 'Task'],
+                'subtasks' => [
+                    (object) ['key' => 'TEST-2'],
+                    (object) ['key' => 'TEST-3'],
+                ],
+            ],
+        ]);
+
+        $client = $this->createClientReturningSequence(
+            new Response(200, [], '{}'),
+            new Response(200, [], $issueBody),
+        );
+
+        $service = $this->createServiceWithClient($client);
+
+        self::assertSame(['TEST-2', 'TEST-3'], $service->getSubtickets('TEST-1'));
+    }
+
+    public function testGetSubticketsIncludesEpicChildIssuesAndNestedSubtasks(): void
+    {
+        $epicBody = (string) json_encode((object) [
+            'key' => 'EPIC-1',
+            'fields' => (object) [
+                'issuetype' => (object) ['name' => 'Epic'],
+                'subtasks' => [
+                    (object) ['key' => 'EPIC-1-S1'],
+                ],
+            ],
+        ]);
+
+        $searchBody = (string) json_encode((object) [
+            'issues' => [
+                (object) [
+                    'key' => 'STORY-1',
+                    'fields' => (object) [
+                        'subtasks' => [
+                            (object) ['key' => 'STORY-2'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $client = $this->createClientReturningSequence(
+            new Response(200, [], '{}'),
+            new Response(200, [], $epicBody),
+            new Response(200, [], $searchBody),
+        );
+
+        $service = $this->createServiceWithClient($client);
+
+        self::assertSame(['EPIC-1-S1', 'STORY-1', 'STORY-2'], $service->getSubtickets('EPIC-1'));
+    }
+
     // ==================== fetchOAuthAccessToken tests ====================
 
     public function testFetchOAuthAccessTokenDeletesTokensWhenDenied(): void
@@ -721,6 +780,14 @@ final class JiraOAuthApiServiceTest extends TestCase
     {
         $client = self::createStub(Client::class);
         $client->method('request')->willThrowException($exception);
+
+        return $client;
+    }
+
+    private function createClientReturningSequence(ResponseInterface ...$responses): Client
+    {
+        $client = self::createStub(Client::class);
+        $client->method('request')->willReturnOnConsecutiveCalls(...array_values($responses));
 
         return $client;
     }
