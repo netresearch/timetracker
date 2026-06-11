@@ -45,12 +45,12 @@ Ext.define('Netresearch.widget.Extras', {
         this.on('render', this.refreshStores, this);
 
         /* Little store for yes/no dropdown */
-        var yesnoSourceModel = new Ext.data.ArrayStore({
+        const yesnoSourceModel = new Ext.data.ArrayStore({
             fields: ['value', 'displayname'],
             data: [[1, this._yesTitle], [0, this._noTitle]]
         });
 
-        var form = new Ext.form.FormPanel({
+        const form = new Ext.form.FormPanel({
             url: url + 'tracking/bulkentry',
             frame: true,
             title: this._bulkEntryTitle,
@@ -153,20 +153,20 @@ Ext.define('Netresearch.widget.Extras', {
                 text: 'Eintragen',
                 scope: this,
                 handler: function () {
-                    var date = new Date();
+                    const date = new Date();
                     date.setMilliseconds(0);
                     date.setSeconds(0);
                     date.setMinutes(0);
                     date.setHours(0);
 
-                    var preset = Ext.getCmp("cnt-preset").value;
-                    var startdate = Ext.getCmp("cnt-startdate").value;
-                    var enddate = Ext.getCmp("cnt-enddate").value;
-                    var starttime = Ext.getCmp("cnt-starttime").value;
-                    var endtime = Ext.getCmp("cnt-endtime").value;
-                    var skipweekend = Ext.getCmp("cnt-skipweekend").value;
-                    var skipholidays = Ext.getCmp("cnt-skipholidays").value;
-                    var usecontract = Ext.getCmp("cnt-usecontract").value;
+                    const preset = Ext.getCmp("cnt-preset").value;
+                    const startdate = Ext.getCmp("cnt-startdate").value;
+                    const enddate = Ext.getCmp("cnt-enddate").value;
+                    const starttime = Ext.getCmp("cnt-starttime").value;
+                    const endtime = Ext.getCmp("cnt-endtime").value;
+                    const skipweekend = Ext.getCmp("cnt-skipweekend").value;
+                    const skipholidays = Ext.getCmp("cnt-skipholidays").value;
+                    const usecontract = Ext.getCmp("cnt-usecontract").value;
 
                     if ((undefined == preset) || ('' == preset)) {
                         alert(this._choosePresetTitle);
@@ -204,7 +204,7 @@ Ext.define('Netresearch.widget.Extras', {
                         }
                     }
 
-                    var data = {
+                    const data = {
                         startdate: startdate,
                         enddate: enddate,
                         starttime: starttime,
@@ -215,7 +215,7 @@ Ext.define('Netresearch.widget.Extras', {
                         usecontract: usecontract
                     };
 
-                    var panel = this;
+                    const panel = this;
                     Ext.Ajax.request({
                         url: url + 'tracking/bulkentry',
                         params: data,
@@ -231,7 +231,7 @@ Ext.define('Netresearch.widget.Extras', {
         });
 
         /* Define container panel */
-        var extrasPanel = Ext.create('Ext.panel.Panel', {
+        const extrasPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
             title: this._bulkEntryTitle,
@@ -240,7 +240,7 @@ Ext.define('Netresearch.widget.Extras', {
             margin: '0 0 10 0',
             items: [form]
         });
-        var config = {
+        const config = {
             title: this._tabTitle,
             items: [extrasPanel]
         };
