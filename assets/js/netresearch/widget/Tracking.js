@@ -96,7 +96,7 @@ Ext.define('Netresearch.widget.Tracking', {
                  */
                 getRowClass: function (record, index) {
                     // new algorithm using backend
-                    switch (parseInt(record.data.class)) {
+                    switch (Number.parseInt(record.data.class)) {
                         case 1: return '';
                         case 2: return 'night-row-bottom';
                         case 4: return 'pause-row-bottom';
@@ -264,20 +264,20 @@ Ext.define('Netresearch.widget.Tracking', {
 
                                 let editStartColumn = 6;
                                 let edited = false;
-                                if (0 < parseInt(result['customer'])) {
+                                if (0 < Number.parseInt(result['customer'])) {
                                     editStartColumn = 7;
-                                    if (selection[0].data.customer !== parseInt(result['customer'])) {
-                                        selection[0].data.customer = parseInt(result['customer']);
+                                    if (selection[0].data.customer !== Number.parseInt(result['customer'])) {
+                                        selection[0].data.customer = Number.parseInt(result['customer']);
                                         selection[0].data.project = 0;
                                         edited = true;
                                     }
                                 }
 
-                                if (0 < parseInt(result['id'])) {
+                                if (0 < Number.parseInt(result['id'])) {
                                     if ((editStartColumn === 7) && (result['sure'] !== false))
                                         editStartColumn = 7;
-                                    if (selection[0].data.project !== parseInt(result['id'])) {
-                                        selection[0].data.project = parseInt(result['id']);
+                                    if (selection[0].data.project !== Number.parseInt(result['id'])) {
+                                        selection[0].data.project = Number.parseInt(result['id']);
                                         edited = true;
                                     }
                                 }
@@ -581,7 +581,7 @@ Ext.define('Netresearch.widget.Tracking', {
                             for (let key in projects) {
                                 const value = projects[key];
                                 if (value.id === record.data.project) {
-                                    record.data.customer = parseInt(value.customer);
+                                    record.data.customer = Number.parseInt(value.customer);
                                     record.commit();
                                     this.customerStore.load();
                                     break;
@@ -615,7 +615,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
         if (validProjects.length == 1) {
             this.debug && console.log("Mapped to customer " + customer + " and project " + " (sure, single)");
-            return { customer: parseInt(customer), id: parseInt(id), sure: sure };
+            return { customer: Number.parseInt(customer), id: Number.parseInt(id), sure: sure };
         }
 
         for (let i = 1; i < validProjects.length; i++) {
@@ -627,16 +627,16 @@ Ext.define('Netresearch.widget.Tracking', {
         }
 
         // If we found no unique project, lets take the last used one
-        if ((parseInt(customer) > 0) && (id === 0)) {
-            id = parseInt(this.findLastProjectByTicket(ticket, parseInt(customer)));
+        if ((Number.parseInt(customer) > 0) && (id === 0)) {
+            id = Number.parseInt(this.findLastProjectByTicket(ticket, Number.parseInt(customer)));
             if (!id) {
-                id = parseInt(this.findLastProjectByPrefix(extractTicketPrefix(ticket), parseInt(customer)));
+                id = Number.parseInt(this.findLastProjectByPrefix(extractTicketPrefix(ticket), Number.parseInt(customer)));
                 sure = false;
             }
         }
 
         this.debug && console.log("Mapped to customer " + customer + " and project " + id + (sure ? " (sure)" : " (unsure)"));
-        return { customer: parseInt(customer), id: parseInt(id), sure: sure };
+        return { customer: Number.parseInt(customer), id: Number.parseInt(id), sure: sure };
     },
 
     /*
@@ -647,9 +647,9 @@ Ext.define('Netresearch.widget.Tracking', {
 
         for (let i = 0; i < store.getCount() && i < 100; i++) {
             const record = store.getAt(i);
-            if (parseInt(record.data.customer) != customer)
+            if (Number.parseInt(record.data.customer) != customer)
                 continue;
-            if (1 > parseInt(record.data.project))
+            if (1 > Number.parseInt(record.data.project))
                 continue;
             if ((undefined != record.data.ticket) && (null != record.data.ticket) && (record.data.ticket.length > 0)) {
                 if (record.data.ticket == ticket) {
@@ -672,9 +672,9 @@ Ext.define('Netresearch.widget.Tracking', {
 
         for (let i = 0; i < store.getCount() && i < 100; i++) {
             const record = store.getAt(i);
-            if (parseInt(record.data.customer) != customer)
+            if (Number.parseInt(record.data.customer) != customer)
                 continue;
-            if (1 > parseInt(record.data.project))
+            if (1 > Number.parseInt(record.data.project))
                 continue;
             if ((undefined != record.data.ticket) && (null != record.data.ticket) && (record.data.ticket.length > 0)) {
                 if (extractTicketPrefix(record.data.ticket) == prefix)
@@ -729,7 +729,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
 
         const record = this.store.getAt(index);
-        if ((undefined != record) && (0 < parseInt(record.data.id)))
+        if ((undefined != record) && (0 < Number.parseInt(record.data.id)))
             this.getSummary(record.data.id);
     },
 
@@ -755,7 +755,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
         }
 
-        if ((0 === parseInt(record.data.project + 0)) || (0 === parseInt(record.data.customer + 0)) || (0 === parseInt(record.data.activity + 0))) {
+        if ((0 === Number.parseInt(record.data.project + 0)) || (0 === Number.parseInt(record.data.customer + 0)) || (0 === Number.parseInt(record.data.activity + 0))) {
             return;
         }
 
@@ -777,8 +777,8 @@ Ext.define('Netresearch.widget.Tracking', {
                 return;
             }
 
-            if ((true !== projectCheck) && (0 < parseInt(projectCheck))) {
-                record.data.project = parseInt(projectCheck);
+            if ((true !== projectCheck) && (0 < Number.parseInt(projectCheck))) {
+                record.data.project = Number.parseInt(projectCheck);
             }
 
             // reformat ticket
@@ -858,7 +858,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return true;
         }
 
-        if ((undefined !== customer) && (false !== customer) && (0 < parseInt(customer))) {
+        if ((undefined !== customer) && (false !== customer) && (0 < Number.parseInt(customer))) {
         } else {
             customer = 'all';
         }
@@ -1040,15 +1040,15 @@ Ext.define('Netresearch.widget.Tracking', {
             shortDescription += ' | ' + ticket;
         }
 
-        if (0 < parseInt(record.data.customer)) {
+        if (0 < Number.parseInt(record.data.customer)) {
             shortDescription += ' | ' + this.getCustomerName(record.data.customer);
         }
 
-        if (0 < parseInt(record.data.project)) {
+        if (0 < Number.parseInt(record.data.project)) {
             shortDescription += ' | ' + this.getProjectName(record.data.project);
         }
 
-        if (0 < parseInt(record.data.activity)) {
+        if (0 < Number.parseInt(record.data.activity)) {
             shortDescription += ' | ' + this.getActivityName(record.data.activity);
         }
 
@@ -1072,7 +1072,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
 
         // Easy deletion of unsaved records
-        if (0 >= parseInt(record.data.id)) {
+        if (0 >= Number.parseInt(record.data.id)) {
             this.getStore().remove(record);
             this.clearProjectStore();
             this.selectRow(index);
@@ -1081,7 +1081,7 @@ Ext.define('Netresearch.widget.Tracking', {
         }
 
         // Delete saved records only after server deletion
-        const id = parseInt(record.data.id);
+        const id = Number.parseInt(record.data.id);
         Ext.Ajax.request({
             url: url + 'tracking/delete',
             params: {
@@ -1167,7 +1167,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * 11:28 ==> 11:30
      */
     round5: function (x) {
-        return (x % 5) >= 2.5 ? parseInt(x / 5) * 5 + 5 : parseInt(x / 5) * 5;
+        return (x % 5) >= 2.5 ? Number.parseInt(x / 5) * 5 + 5 : Number.parseInt(x / 5) * 5;
     },
 
     /*
@@ -1199,7 +1199,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * Return given time in "H:i" representation
      */
     formatTime: function (value) {
-        if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+        if (!value || !(value instanceof Date) || Number.isNaN(value.getTime())) {
             return '';
         }
         return Ext.Date.dateFormat(value, 'H:i');

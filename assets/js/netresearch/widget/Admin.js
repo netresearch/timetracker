@@ -161,10 +161,10 @@ Ext.define('Netresearch.widget.Admin', {
                         let output = '';
                         /* Display space separated list of related teams */
                         Ext.each(value, function (teamId) {
-                            if (isNaN(teamId)) {
+                            if (Number.isNaN(Number(teamId))) {
                                 return;
                             }
-                            const team = customerGrid.teamStore.getById(parseInt(teamId));
+                            const team = customerGrid.teamStore.getById(Number.parseInt(teamId));
                             if (null == team) {
                                 return;
                             }
@@ -371,7 +371,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             deleteCustomer: function (record) {
                 const grid = this;
-                const id = parseInt(record.id);
+                const id = Number.parseInt(record.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
@@ -472,7 +472,7 @@ Ext.define('Netresearch.widget.Admin', {
                         anchor: '100%'
                     },
                     renderer: function (id) {
-                        if (1 > parseInt(id))
+                        if (1 > Number.parseInt(id))
                             return '';
 
                         const record = this.ticketSystemStore.getById(id);
@@ -862,7 +862,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             deleteProject: function (record) {
                 const grid = this;
-                const id = parseInt(record.id);
+                const id = Number.parseInt(record.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
@@ -981,10 +981,10 @@ Ext.define('Netresearch.widget.Admin', {
                         /* Display space seperated list of related teams */
                         let output = '';
                         Ext.each(value, function (teamId) {
-                            if (isNaN(teamId)) {
+                            if (Number.isNaN(Number(teamId))) {
                                 return;
                             }
-                            const team = userGrid.teamStore.getById(parseInt(teamId));
+                            const team = userGrid.teamStore.getById(Number.parseInt(teamId));
                             if (null == team) {
                                 return;
                             }
@@ -1179,7 +1179,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             deleteUser: function (record) {
                 const grid = this;
-                const id = parseInt(record.id);
+                const id = Number.parseInt(record.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.username, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
@@ -1367,7 +1367,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             deleteTeam: function (record) {
                 const grid = this;
-                const id = parseInt(record.id);
+                const id = Number.parseInt(record.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
@@ -1526,7 +1526,7 @@ Ext.define('Netresearch.widget.Admin', {
             }, // end listeners
             deletePreset: function (record) {
                 const grid = this;
-                const id = parseInt(record.data.id);
+                const id = Number.parseInt(record.data.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.data.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
@@ -1896,7 +1896,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             deleteTicketSystem: function (record) {
                 const grid = this;
-                const id = parseInt(record.id);
+                const id = Number.parseInt(record.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
@@ -2071,7 +2071,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             deleteActivity: function (record) {
                 const grid = this;
-                const id = parseInt(record.id);
+                const id = Number.parseInt(record.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
@@ -2309,7 +2309,7 @@ Ext.define('Netresearch.widget.Admin', {
             },
             deleteContract: function (record) {
                 const grid = this;
-                const id = parseInt(record.id);
+                const id = Number.parseInt(record.id);
                 Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
                     if (btn == 'yes') {
                         Ext.Ajax.request({

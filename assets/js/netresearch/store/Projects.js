@@ -38,7 +38,7 @@ Ext.define('Netresearch.store.Projects', {
     loadData: function(data, customer, ticket, onlyActive) {
 
         // Check if we are valid already
-        if (this.currentCustomer && (this.currentCustomer == parseInt(customer)))
+        if (this.currentCustomer && (this.currentCustomer == Number.parseInt(customer)))
             return;
 
         let projects = findProjects(customer, ticket)
@@ -53,7 +53,7 @@ Ext.define('Netresearch.store.Projects', {
             }
         }
 
-        this.currentCustomer = parseInt(customer);
+        this.currentCustomer = Number.parseInt(customer);
 
         const newData = [];
         let record;
