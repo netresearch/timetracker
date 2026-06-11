@@ -200,6 +200,10 @@ function mergeCoverageFiles(): array
         }
 
         foreach ($data as $filename => $lines) {
+            if (!is_array($lines)) {
+                continue;
+            }
+
             $mergedCoverage[$filename] = mergeFileLines($mergedCoverage[$filename] ?? [], $lines);
         }
     }

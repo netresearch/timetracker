@@ -100,29 +100,27 @@ class NrArrayTranslator
                 continue;
             }
 
-            $data = $this->translateRow($data, $row[$arrayKey], $rowKey, $arrayKey, $keys, $languageFile);
+            $this->translateRow($data, $row[$arrayKey], $rowKey, $arrayKey, $keys, $languageFile);
         }
 
         return (string) json_encode($data);
     }
 
     /**
-     * Translates the allowed keys of a single row and returns the updated data.
+     * Translates the allowed keys of a single row in place.
      *
      * @param array<int|string, mixed> $data
      * @param iterable<mixed, mixed>   $rowValues
      * @param array<int, string>       $keys
-     *
-     * @return array<int|string, mixed>
      */
     private function translateRow(
-        array $data,
+        array &$data,
         iterable $rowValues,
         int|string $rowKey,
         string $arrayKey,
         array $keys,
         ?string $languageFile,
-    ): array {
+    ): void {
         foreach ($rowValues as $key => $value) {
             // Ensure key is string and in the allowed keys
             if (!is_string($key)) {
@@ -149,7 +147,5 @@ class NrArrayTranslator
                 $languageFile,
             );
         }
-
-        return $data;
     }
 }
