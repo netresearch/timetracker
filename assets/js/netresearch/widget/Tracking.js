@@ -1091,12 +1091,12 @@ Ext.define('Netresearch.widget.Tracking', {
                 this.selectRow(index);
                 this.getView().refresh();
                 if (data.alert) {
-                    showNotification(grid._attentionTitle, data.alert, false);
+                    showNotification(this._attentionTitle, data.alert, false);
                 }
             },
             failure: function (response) {
                 const data = Ext.decode(response.responseText);
-                showNotification(grid._errorTitle, data.message, false);
+                showNotification(this._errorTitle, data.message, false);
                 if (data.forwardUrl !== undefined) {
                     setTimeout(() => { globalThis.location.href = data.forwardUrl; }, 2000);
                 }
