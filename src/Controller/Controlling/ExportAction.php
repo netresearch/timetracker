@@ -11,6 +11,7 @@ namespace App\Controller\Controlling;
 
 use App\Controller\BaseController;
 use App\Dto\ExportQueryDto;
+use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
@@ -21,6 +22,7 @@ use DateTimeInterface;
 use InvalidArgumentException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -53,14 +55,7 @@ final class ExportAction extends BaseController
     {
         // Map legacy path parameters to query parameters for backward compatibility
         // This must happen BEFORE creating the DTO (hence we can't use #[MapQueryString])
-        $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
-        foreach ($attributeKeysToMap as $attributeKeyToMap) {
-            if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
-                $attributeValue = $request->attributes->get($attributeKeyToMap);
-                $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
-                $request->query->set($attributeKeyToMap, $stringValue);
-            }
-        }
+        $this->mapLegacyPathParameters($request);
 
         // Create DTO from query params (which now includes mapped path params)
         $exportQueryDto = ExportQueryDto::fromRequest($request);
@@ -121,119 +116,165 @@ final class ExportAction extends BaseController
 
         $sheet = $spreadsheet->getSheet(0);
 
+        $this->writeHeadings($sheet, $showBillableField, $exportQueryDto->tickettitles);
+
+        $lineNumber = 3;
+        $stats = [];
+        foreach ($entries as $entry) {
+            $abbr = null !== $entry->getUser() ? (string) $entry->getUser()->getAbbr() : '';
+            $activityName = $this->collectEntryStats($stats, $abbr, $entry->getActivity());
+
+            $this->writeEntryRow($sheet, $lineNumber, $entry, $abbr, $activityName, $showBillableField, $exportQueryDto->tickettitles);
+
+            ++$lineNumber;
+        }
+
+        $this->writeStatsSheet($spreadsheet->getSheet(2), $stats, $exportQueryDto->month);
+
+        return $this->buildXlsxResponse($spreadsheet, $filename);
+    }
+
+    private function mapLegacyPathParameters(Request $request): void
+    {
+        $attributeKeysToMap = ['project', 'userid', 'year', 'month', 'customer', 'billable'];
+        foreach ($attributeKeysToMap as $attributeKeyToMap) {
+            if ($request->attributes->has($attributeKeyToMap) && !$request->query->has($attributeKeyToMap)) {
+                $attributeValue = $request->attributes->get($attributeKeyToMap);
+                $stringValue = is_scalar($attributeValue) ? (string) $attributeValue : '';
+                $request->query->set($attributeKeyToMap, $stringValue);
+            }
+        }
+    }
+
+    private function writeHeadings(Worksheet $worksheet, bool $showBillableField, bool $showTicketTitles): void
+    {
         $headingStyle = [
             'font' => [
                 'bold' => true,
             ],
         ];
         if ($showBillableField) {
-            $sheet->setCellValue('N2', 'billable');
-            $sheet->getStyle('N2')->applyFromArray($headingStyle);
+            $worksheet->setCellValue('N2', 'billable');
+            $worksheet->getStyle('N2')->applyFromArray($headingStyle);
         }
 
-        if ($exportQueryDto->tickettitles) {
-            $sheet->setCellValue('O2', 'Tickettitel');
-            $sheet->getStyle('O2')->applyFromArray($headingStyle);
+        if ($showTicketTitles) {
+            $worksheet->setCellValue('O2', 'Tickettitel');
+            $worksheet->getStyle('O2')->applyFromArray($headingStyle);
+        }
+    }
+
+    /**
+     * Counts holidays/sickdays per user abbreviation and resolves the activity name.
+     *
+     * @param array<string, array{holidays: int, sickdays: int}> $stats
+     */
+    private function collectEntryStats(array &$stats, string $abbr, ?Activity $activity): string
+    {
+        if (!isset($stats[$abbr])) {
+            $stats[$abbr] = [
+                'holidays' => 0,
+                'sickdays' => 0,
+            ];
         }
 
-        $lineNumber = 3;
-        $stats = [];
-        foreach ($entries as $entry) {
-            $abbr = null !== $entry->getUser() ? (string) $entry->getUser()->getAbbr() : '';
-            if (!isset($stats[$abbr])) {
-                $stats[$abbr] = [
-                    'holidays' => 0,
-                    'sickdays' => 0,
-                ];
-            }
-
-            $activity = $entry->getActivity();
-            if (null !== $activity) {
-                if ($activity->isHoliday()) {
-                    ++$stats[$abbr]['holidays'];
-                }
-
-                if ($activity->isSick()) {
-                    ++$stats[$abbr]['sickdays'];
-                }
-
-                $activity = $activity->getName();
-            } else {
-                $activity = ' ';
-            }
-
-            if ($entry->getDay() instanceof DateTimeInterface) {
-                self::setCellDate($sheet, 'A', $lineNumber, $entry->getDay());
-            }
-
-            if ($entry->getStart() instanceof DateTimeInterface) {
-                self::setCellHours($sheet, 'B', $lineNumber, $entry->getStart());
-            }
-
-            if ($entry->getEnd() instanceof DateTimeInterface) {
-                self::setCellHours($sheet, 'C', $lineNumber, $entry->getEnd());
-            }
-
-            $customerName = '';
-            $customerEntity = $entry->getCustomer();
-            if ($customerEntity instanceof Customer) {
-                $customerName = (string) $customerEntity->getName();
-            } else {
-                $projectEntity = $entry->getProject();
-                if ($projectEntity instanceof Project && $projectEntity->getCustomer() instanceof Customer) {
-                    $customerName = (string) $projectEntity->getCustomer()->getName();
-                }
-            }
-
-            $sheet->setCellValue('D' . $lineNumber, $customerName);
-
-            $projectName = '';
-            $projectEntity = $entry->getProject();
-            if ($projectEntity instanceof Project) {
-                $projectName = $projectEntity->getName();
-            }
-
-            $sheet->setCellValue('E' . $lineNumber, $projectName);
-            $sheet->setCellValue('F' . $lineNumber, $activity);
-            $sheet->setCellValue('G' . $lineNumber, $entry->getDescription());
-            $sheet->setCellValue('H' . $lineNumber, $entry->getTicket());
-            $sheet->setCellValue('I' . $lineNumber, '=C' . $lineNumber . '-B' . $lineNumber);
-            $sheet->setCellValue('J' . $lineNumber, $abbr);
-            $sheet->setCellValue('K' . $lineNumber, $entry->getExternalReporter());
-            $sheet->setCellValue('L' . $lineNumber, $entry->getExternalSummary());
-            $sheet->setCellValue('M' . $lineNumber, implode(', ', $entry->getExternalLabels()));
-            if ($showBillableField) {
-                $sheet->setCellValue('N' . $lineNumber, (int) ((bool) $entry->getBillable()));
-            }
-
-            if ($exportQueryDto->tickettitles) {
-                $sheet->setCellValue('O' . $lineNumber, $entry->getTicketTitle());
-            }
-
-            ++$lineNumber;
+        if (!$activity instanceof Activity) {
+            return ' ';
         }
 
-        $sheet = $spreadsheet->getSheet(2);
+        if ($activity->isHoliday()) {
+            ++$stats[$abbr]['holidays'];
+        }
+
+        if ($activity->isSick()) {
+            ++$stats[$abbr]['sickdays'];
+        }
+
+        return $activity->getName();
+    }
+
+    private function writeEntryRow(
+        Worksheet $worksheet,
+        int $lineNumber,
+        Entry $entry,
+        string $abbr,
+        string $activityName,
+        bool $showBillableField,
+        bool $showTicketTitles,
+    ): void {
+        self::setCellDate($worksheet, 'A', $lineNumber, $entry->getDay());
+        self::setCellHours($worksheet, 'B', $lineNumber, $entry->getStart());
+        self::setCellHours($worksheet, 'C', $lineNumber, $entry->getEnd());
+
+        $worksheet->setCellValue('D' . $lineNumber, $this->resolveCustomerName($entry));
+        $worksheet->setCellValue('E' . $lineNumber, $this->resolveProjectName($entry));
+        $worksheet->setCellValue('F' . $lineNumber, $activityName);
+        $worksheet->setCellValue('G' . $lineNumber, $entry->getDescription());
+        $worksheet->setCellValue('H' . $lineNumber, $entry->getTicket());
+        $worksheet->setCellValue('I' . $lineNumber, '=C' . $lineNumber . '-B' . $lineNumber);
+        $worksheet->setCellValue('J' . $lineNumber, $abbr);
+        $worksheet->setCellValue('K' . $lineNumber, $entry->getExternalReporter());
+        $worksheet->setCellValue('L' . $lineNumber, $entry->getExternalSummary());
+        $worksheet->setCellValue('M' . $lineNumber, implode(', ', $entry->getExternalLabels()));
+        if ($showBillableField) {
+            $worksheet->setCellValue('N' . $lineNumber, (int) ((bool) $entry->getBillable()));
+        }
+
+        if ($showTicketTitles) {
+            $worksheet->setCellValue('O' . $lineNumber, $entry->getTicketTitle());
+        }
+    }
+
+    private function resolveCustomerName(Entry $entry): string
+    {
+        $customerEntity = $entry->getCustomer();
+        if ($customerEntity instanceof Customer) {
+            return (string) $customerEntity->getName();
+        }
+
+        $projectEntity = $entry->getProject();
+        if ($projectEntity instanceof Project && $projectEntity->getCustomer() instanceof Customer) {
+            return (string) $projectEntity->getCustomer()->getName();
+        }
+
+        return '';
+    }
+
+    private function resolveProjectName(Entry $entry): string
+    {
+        $projectEntity = $entry->getProject();
+
+        return $projectEntity instanceof Project ? $projectEntity->getName() : '';
+    }
+
+    /**
+     * @param array<string, array{holidays: int, sickdays: int}> $stats
+     */
+    private function writeStatsSheet(Worksheet $worksheet, array $stats, int $month): void
+    {
         $lineNumber = 2;
         ksort($stats);
         foreach ($stats as $user => $userStats) {
-            $sheet->setCellValue('A' . $lineNumber, $user);
-            $sheet->setCellValue('B' . $lineNumber, $exportQueryDto->month);
-            $sheet->setCellValue('D' . $lineNumber, '=SUMIF(ZE!$J$1:$J$5000,A' . $lineNumber . ',ZE!$I$1:$I$5000)');
-            $sheet->getStyle('D' . $lineNumber)
+            $worksheet->setCellValue('A' . $lineNumber, $user);
+            $worksheet->setCellValue('B' . $lineNumber, $month);
+            $worksheet->setCellValue('D' . $lineNumber, '=SUMIF(ZE!$J$1:$J$5000,A' . $lineNumber . ',ZE!$I$1:$I$5000)');
+            $worksheet->getStyle('D' . $lineNumber)
                 ->getNumberFormat()
                 ->setFormatCode('[HH]:MM');
             if ($userStats['holidays'] > 0) {
-                $sheet->setCellValue('E' . $lineNumber, $userStats['holidays']);
+                $worksheet->setCellValue('E' . $lineNumber, $userStats['holidays']);
             }
 
             if ($userStats['sickdays'] > 0) {
-                $sheet->setCellValue('F' . $lineNumber, $userStats['sickdays']);
+                $worksheet->setCellValue('F' . $lineNumber, $userStats['sickdays']);
             }
 
             ++$lineNumber;
         }
+    }
 
+    private function buildXlsxResponse(Spreadsheet $spreadsheet, string $filename): Response
+    {
         $tmp = tempnam(sys_get_temp_dir(), 'ttt-export-');
         $filePath = false !== $tmp
             ? $tmp

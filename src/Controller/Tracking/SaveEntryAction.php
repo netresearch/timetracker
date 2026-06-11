@@ -73,68 +73,31 @@ final class SaveEntryAction extends BaseTrackingController
         #[CurrentUser]
         User $user,
     ): Response|JsonResponse|Error {
-        $customerRepo = $this->managerRegistry->getRepository(Customer::class);
-        assert($customerRepo instanceof CustomerRepository);
-
-        $customerId = $entrySaveDto->getCustomerId();
-        if (null === $customerId) {
-            return new JsonResponse(['error' => 'Customer ID is required'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $customer = $customerRepo->findOneById($customerId);
-
+        $customer = $this->resolveCustomer($entrySaveDto->getCustomerId());
         if (!$customer instanceof Customer) {
-            return new Error('Given customer does not exist.', Response::HTTP_BAD_REQUEST);
+            return $customer;
         }
 
-        $projectRepo = $this->managerRegistry->getRepository(Project::class);
-        assert($projectRepo instanceof ProjectRepository);
-
-        $projectId = $entrySaveDto->getProjectId();
-        if (null === $projectId) {
-            return new JsonResponse(['error' => 'Project ID is required'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $project = $projectRepo->findOneById($projectId);
-
+        $project = $this->resolveProject($entrySaveDto->getProjectId());
         if (!$project instanceof Project) {
-            return new Error('Given project does not exist.', Response::HTTP_BAD_REQUEST);
+            return $project;
         }
 
-        $activityRepo = $this->managerRegistry->getRepository(Activity::class);
-        assert($activityRepo instanceof ActivityRepository);
-
-        $activityId = $entrySaveDto->getActivityId();
-        if (null === $activityId) {
-            return new JsonResponse(['error' => 'Activity ID is required'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $activity = $activityRepo->findOneById($activityId);
-
+        $activity = $this->resolveActivity($entrySaveDto->getActivityId());
         if (!$activity instanceof Activity) {
-            return new Error('Given activity does not exist.', Response::HTTP_BAD_REQUEST);
+            return $activity;
         }
-
-        $entryId = $entrySaveDto->id;
 
         // v4 parity: tickets are stored upper-cased and trimmed
         $ticket = strtoupper(trim($entrySaveDto->ticket));
 
         // Should we check if the ticket belongs to the project
-        if ('' !== $ticket && '0' !== $ticket) {
-            $prefixError = $this->validateTicketPrefix($project, $ticket);
-            if ($prefixError instanceof Error) {
-                return $prefixError;
-            }
+        $ticketError = $this->validateTicket($project, $ticket);
+        if ($ticketError instanceof Error) {
+            return $ticketError;
         }
 
-        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
-        assert($entryRepo instanceof EntryRepository);
-
-        $entry = null;
-        if (null !== $entryId) {
-            $entry = $entryRepo->findOneById($entryId);
-        }
+        $entry = $this->findExistingEntry($entrySaveDto->id);
 
         // Check if someone else already owns the entry (if exists)
         if ($entry instanceof Entry && $entry->getUserId() !== $user->getId()) {
@@ -142,7 +105,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $isNewEntry = !$entry instanceof Entry;
-        if ($isNewEntry) {
+        if (!$entry instanceof Entry) {
             $entry = new Entry();
         }
 
@@ -150,34 +113,132 @@ final class SaveEntryAction extends BaseTrackingController
         // ticket changes) and the day-class recalculation of a moved entry
         $previousEntry = $isNewEntry ? null : clone $entry;
 
+        $populateError = $this->populateEntry($entry, $entrySaveDto, $user, $customer, $project, $activity, $ticket);
+        if ($populateError instanceof Error) {
+            return $populateError;
+        }
+
+        if (!$project->getActive()) {
+            return new Error('Project is no longer active.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $durationError = $this->calculateDuration($entry);
+        if ($durationError instanceof Error) {
+            return $durationError;
+        }
+
+        try {
+            $this->persistEntry($entry, $isNewEntry, $previousEntry);
+
+            // v4 parity: recalculate the day-break/pause/overlap rendering
+            // classes of the affected day(s)
+            $this->recalculateDayClasses($entry, $previousEntry, $user);
+
+            // Return JSON response matching test expectations
+            return $this->buildEntryResponse($entry, $entrySaveDto);
+        } catch (Throwable $throwable) {
+            return new Error('Could not save entry: ' . $throwable->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function resolveCustomer(?int $customerId): Customer|JsonResponse|Error
+    {
+        if (null === $customerId) {
+            return new JsonResponse(['error' => 'Customer ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $customerRepo = $this->managerRegistry->getRepository(Customer::class);
+        assert($customerRepo instanceof CustomerRepository);
+
+        $customer = $customerRepo->findOneById($customerId);
+
+        if (!$customer instanceof Customer) {
+            return new Error('Given customer does not exist.', Response::HTTP_BAD_REQUEST);
+        }
+
+        return $customer;
+    }
+
+    private function resolveProject(?int $projectId): Project|JsonResponse|Error
+    {
+        if (null === $projectId) {
+            return new JsonResponse(['error' => 'Project ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $projectRepo = $this->managerRegistry->getRepository(Project::class);
+        assert($projectRepo instanceof ProjectRepository);
+
+        $project = $projectRepo->findOneById($projectId);
+
+        if (!$project instanceof Project) {
+            return new Error('Given project does not exist.', Response::HTTP_BAD_REQUEST);
+        }
+
+        return $project;
+    }
+
+    private function resolveActivity(?int $activityId): Activity|JsonResponse|Error
+    {
+        if (null === $activityId) {
+            return new JsonResponse(['error' => 'Activity ID is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $activityRepo = $this->managerRegistry->getRepository(Activity::class);
+        assert($activityRepo instanceof ActivityRepository);
+
+        $activity = $activityRepo->findOneById($activityId);
+
+        if (!$activity instanceof Activity) {
+            return new Error('Given activity does not exist.', Response::HTTP_BAD_REQUEST);
+        }
+
+        return $activity;
+    }
+
+    private function validateTicket(Project $project, string $ticket): ?Error
+    {
+        if ('' === $ticket || '0' === $ticket) {
+            return null;
+        }
+
+        return $this->validateTicketPrefix($project, $ticket);
+    }
+
+    private function findExistingEntry(?int $entryId): ?Entry
+    {
+        if (null === $entryId) {
+            return null;
+        }
+
+        $entryRepo = $this->managerRegistry->getRepository(Entry::class);
+        assert($entryRepo instanceof EntryRepository);
+
+        return $entryRepo->findOneById($entryId);
+    }
+
+    /**
+     * Applies the request data to the entry; returns an error for invalid date/time formats.
+     */
+    private function populateEntry(
+        Entry $entry,
+        EntrySaveDto $entrySaveDto,
+        User $user,
+        Customer $customer,
+        Project $project,
+        Activity $activity,
+        string $ticket,
+    ): ?Error {
         $entry->setUser($user);
         $entry->setCustomer($customer);
         $entry->setProject($project);
         $entry->setActivity($activity);
 
         // Use DTO methods for date/time parsing (supports multiple formats)
-        $dayDate = $entrySaveDto->getDateAsDateTime();
-        if (!$dayDate instanceof DateTimeInterface && '' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
-            return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
-        }
-        if ($dayDate instanceof DateTimeInterface) {
-            $entry->setDay(DateTime::createFromInterface($dayDate));
-        }
-
-        $startTime = $entrySaveDto->getStartAsDateTime();
-        if (!$startTime instanceof DateTimeInterface && '' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
-            return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
-        }
-        if ($startTime instanceof DateTimeInterface) {
-            $entry->setStart(DateTime::createFromInterface($startTime));
-        }
-
-        $endTime = $entrySaveDto->getEndAsDateTime();
-        if (!$endTime instanceof DateTimeInterface && '' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
-            return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
-        }
-        if ($endTime instanceof DateTimeInterface) {
-            $entry->setEnd(DateTime::createFromInterface($endTime));
+        $dateError = $this->applyDay($entry, $entrySaveDto)
+            ?? $this->applyStart($entry, $entrySaveDto)
+            ?? $this->applyEnd($entry, $entrySaveDto);
+        if ($dateError instanceof Error) {
+            return $dateError;
         }
 
         if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
@@ -194,109 +255,162 @@ final class SaveEntryAction extends BaseTrackingController
             '' !== $entrySaveDto->extTicket ? $entrySaveDto->extTicket : null,
         );
 
-        if (!$project->getActive()) {
-            return new Error('Project is no longer active.', Response::HTTP_BAD_REQUEST);
+        return null;
+    }
+
+    private function applyDay(Entry $entry, EntrySaveDto $entrySaveDto): ?Error
+    {
+        $dayDate = $entrySaveDto->getDateAsDateTime();
+        if (!$dayDate instanceof DateTimeInterface && '' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
+            return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
 
-        // Calculate duration
-        if ($entry->getStart() instanceof DateTime && $entry->getEnd() instanceof DateTime) {
-            $start = $entry->getStart();
-            $end = $entry->getEnd();
-
-            if ($start >= $end) {
-                return new Error('Start time cannot be after end time.', Response::HTTP_BAD_REQUEST);
-            }
-
-            $interval = $start->diff($end);
-            $hours = $interval->h;
-            $minutes = $interval->i;
-
-            // Convert to decimal hours with minutes as fractional part, then to minutes as integer
-            $duration = (float) $hours + ((float) $minutes / 60.0);
-            $entry->setDuration((int) round($duration * 60));
+        if ($dayDate instanceof DateTimeInterface) {
+            $entry->setDay(DateTime::createFromInterface($dayDate));
         }
 
-        try {
-            $entityManager = $this->managerRegistry->getManager();
-            $entityManager->persist($entry);
-            $entityManager->flush();
+        return null;
+    }
 
-            // Dispatch entry event for Jira sync and cache invalidation
-            if ($this->eventDispatcher instanceof EventDispatcherInterface) {
-                $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
-                $this->eventDispatcher->dispatch(
-                    new EntryEvent($entry, ['previous' => $previousEntry]),
-                    $eventName,
-                );
-            }
-
-            // v4 parity: recalculate the day-break/pause/overlap rendering
-            // classes of the affected day(s)
-            $entryDay = $entry->getDay();
-            if ($entryDay instanceof DateTime) {
-                $this->calculateClasses($user->getId() ?? 0, $entryDay->format('Y-m-d'));
-
-                $previousDay = $previousEntry?->getDay();
-                if ($previousDay instanceof DateTime
-                    && $previousDay->format('Y-m-d') !== $entryDay->format('Y-m-d')
-                ) {
-                    $this->calculateClasses($user->getId() ?? 0, $previousDay->format('Y-m-d'));
-                }
-            }
-
-            // Return JSON response matching test expectations
-            $day = $entry->getDay();
-            $start = $entry->getStart();
-            $end = $entry->getEnd();
-            $user = $entry->getUser();
-            $customer = $entry->getCustomer();
-            $project = $entry->getProject();
-            $activity = $entry->getActivity();
-
-            if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime
-                || !$user instanceof User || !$customer instanceof Customer
-                || !$project instanceof Project || !$activity instanceof Activity) {
-                return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
-
-            $durationMinutes = $entry->getDuration();
-            $durationString = sprintf('%02d:%02d', (int) ($durationMinutes / 60), $durationMinutes % 60);
-
-            $data = [
-                'result' => [
-                    'id' => $entry->getId(),
-                    'date' => $day->format('d/m/Y'),
-                    'start' => $start->format('H:i'),
-                    'end' => $end->format('H:i'),
-                    'user' => $user->getId(),
-                    'customer' => $customer->getId(),
-                    'project' => $project->getId(),
-                    'activity' => $activity->getId(),
-                    'duration' => $durationString,
-                    'durationMinutes' => $durationMinutes,
-                    'class' => $entry->getClass()->value,
-                ],
-            ];
-
-            // Include ticket and description if present
-            if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
-                $data['result']['ticket'] = $entry->getTicket();
-            }
-
-            // The UI round-trips the original external ticket key of
-            // mirrored entries from this field (v4: part of toArray())
-            if ($entry->hasInternalJiraTicketOriginalKey()) {
-                $data['result']['extTicket'] = $entry->getInternalJiraTicketOriginalKey();
-            }
-
-            if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
-                $data['result']['description'] = $entry->getDescription();
-            }
-
-            return new JsonResponse($data);
-        } catch (Throwable $throwable) {
-            return new Error('Could not save entry: ' . $throwable->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+    private function applyStart(Entry $entry, EntrySaveDto $entrySaveDto): ?Error
+    {
+        $startTime = $entrySaveDto->getStartAsDateTime();
+        if (!$startTime instanceof DateTimeInterface && '' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
+            return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
         }
+
+        if ($startTime instanceof DateTimeInterface) {
+            $entry->setStart(DateTime::createFromInterface($startTime));
+        }
+
+        return null;
+    }
+
+    private function applyEnd(Entry $entry, EntrySaveDto $entrySaveDto): ?Error
+    {
+        $endTime = $entrySaveDto->getEndAsDateTime();
+        if (!$endTime instanceof DateTimeInterface && '' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
+            return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($endTime instanceof DateTimeInterface) {
+            $entry->setEnd(DateTime::createFromInterface($endTime));
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculates and sets the entry duration; returns an error when start is not before end.
+     */
+    private function calculateDuration(Entry $entry): ?Error
+    {
+        $start = $entry->getStart();
+        $end = $entry->getEnd();
+
+        if (!$start instanceof DateTime || !$end instanceof DateTime) {
+            return null;
+        }
+
+        if ($start >= $end) {
+            return new Error('Start time cannot be after end time.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $interval = $start->diff($end);
+        $hours = $interval->h;
+        $minutes = $interval->i;
+
+        // Convert to decimal hours with minutes as fractional part, then to minutes as integer
+        $duration = (float) $hours + ((float) $minutes / 60.0);
+        $entry->setDuration((int) round($duration * 60));
+
+        return null;
+    }
+
+    private function persistEntry(Entry $entry, bool $isNewEntry, ?Entry $previousEntry): void
+    {
+        $entityManager = $this->managerRegistry->getManager();
+        $entityManager->persist($entry);
+        $entityManager->flush();
+
+        // Dispatch entry event for Jira sync and cache invalidation
+        if ($this->eventDispatcher instanceof EventDispatcherInterface) {
+            $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
+            $this->eventDispatcher->dispatch(
+                new EntryEvent($entry, ['previous' => $previousEntry]),
+                $eventName,
+            );
+        }
+    }
+
+    private function recalculateDayClasses(Entry $entry, ?Entry $previousEntry, User $user): void
+    {
+        $entryDay = $entry->getDay();
+        if (!$entryDay instanceof DateTime) {
+            return;
+        }
+
+        $this->calculateClasses($user->getId() ?? 0, $entryDay->format('Y-m-d'));
+
+        $previousDay = $previousEntry?->getDay();
+        if ($previousDay instanceof DateTime
+            && $previousDay->format('Y-m-d') !== $entryDay->format('Y-m-d')
+        ) {
+            $this->calculateClasses($user->getId() ?? 0, $previousDay->format('Y-m-d'));
+        }
+    }
+
+    private function buildEntryResponse(Entry $entry, EntrySaveDto $entrySaveDto): JsonResponse|Error
+    {
+        $day = $entry->getDay();
+        $start = $entry->getStart();
+        $end = $entry->getEnd();
+        $entryUser = $entry->getUser();
+        $customer = $entry->getCustomer();
+        $project = $entry->getProject();
+        $activity = $entry->getActivity();
+
+        if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime
+            || !$entryUser instanceof User || !$customer instanceof Customer
+            || !$project instanceof Project || !$activity instanceof Activity) {
+            return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $durationMinutes = $entry->getDuration();
+        $durationString = sprintf('%02d:%02d', (int) ($durationMinutes / 60), $durationMinutes % 60);
+
+        $data = [
+            'result' => [
+                'id' => $entry->getId(),
+                'date' => $day->format('d/m/Y'),
+                'start' => $start->format('H:i'),
+                'end' => $end->format('H:i'),
+                'user' => $entryUser->getId(),
+                'customer' => $customer->getId(),
+                'project' => $project->getId(),
+                'activity' => $activity->getId(),
+                'duration' => $durationString,
+                'durationMinutes' => $durationMinutes,
+                'class' => $entry->getClass()->value,
+            ],
+        ];
+
+        // Include ticket and description if present
+        if ('' !== $entrySaveDto->ticket && '0' !== $entrySaveDto->ticket) {
+            $data['result']['ticket'] = $entry->getTicket();
+        }
+
+        // The UI round-trips the original external ticket key of
+        // mirrored entries from this field (v4: part of toArray())
+        if ($entry->hasInternalJiraTicketOriginalKey()) {
+            $data['result']['extTicket'] = $entry->getInternalJiraTicketOriginalKey();
+        }
+
+        if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
+            $data['result']['description'] = $entry->getDescription();
+        }
+
+        return new JsonResponse($data);
     }
 
     /**
