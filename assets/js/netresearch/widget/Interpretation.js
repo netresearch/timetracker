@@ -159,9 +159,9 @@ Ext.define('Netresearch.widget.Interpretation', {
     initComponent: function() {
         this.on('render', this.refreshStores, this);
 
-        var chartWidth = Ext.getBody().getWidth() - 40;
+        const chartWidth = Ext.getBody().getWidth() - 40;
 
-        var customerPanel = Ext.create('Ext.panel.Panel', {
+        const customerPanel = Ext.create('Ext.panel.Panel', {
             frame: true,
             title: this._effortByCustomerTitle,
             collapsible: false,
@@ -220,7 +220,7 @@ Ext.define('Netresearch.widget.Interpretation', {
             ]
         });
 
-        var projectPanel = Ext.create('Ext.panel.Panel', {
+        const projectPanel = Ext.create('Ext.panel.Panel', {
             frame: true,
             title: this._effortByProjectTitle,
             collapsible: false,
@@ -280,7 +280,7 @@ Ext.define('Netresearch.widget.Interpretation', {
         });
 
 
-        var activityPanel = Ext.create('Ext.panel.Panel', {
+        const activityPanel = Ext.create('Ext.panel.Panel', {
             frame: true,
             title: this._effortByActivityTitle,
             collapsible: false,
@@ -339,7 +339,7 @@ Ext.define('Netresearch.widget.Interpretation', {
             ]
         });
 
-        var timePanel = Ext.create('Ext.panel.Panel', {
+        const timePanel = Ext.create('Ext.panel.Panel', {
             title: this._effortByDaysTitle,
             frame: true,
             collapsible: false,
@@ -387,7 +387,7 @@ Ext.define('Netresearch.widget.Interpretation', {
             ]
         });
 
-        var ticketPanel = Ext.create('Ext.panel.Panel', {
+        const ticketPanel = Ext.create('Ext.panel.Panel', {
             frame: true,
             margin: '0 0 10 0',
             title: this._effortByTicketTitle,
@@ -446,7 +446,7 @@ Ext.define('Netresearch.widget.Interpretation', {
             ]
         });
 
-        var developerPanel = Ext.create('Ext.panel.Panel', {
+        const developerPanel = Ext.create('Ext.panel.Panel', {
             frame: true,
             margin: '0 0 10 0',
             title: this._effortByUserTitle,
@@ -505,7 +505,7 @@ Ext.define('Netresearch.widget.Interpretation', {
             ]
         });
 
-        var entryGrid =
+        const entryGrid =
             Ext.create('Netresearch.widget.Tracking', {
                 width: chartWidth,
                 height: 600,
@@ -522,7 +522,7 @@ Ext.define('Netresearch.widget.Interpretation', {
                 addInlineEntry: function(record) { alert("Nope!"); }
         });
 
-        var entryPanel = Ext.create('Ext.panel.Panel', {
+        const entryPanel = Ext.create('Ext.panel.Panel', {
             frame: true,
             margin: '0 0 10 0',
             title: this._lastEntriesTitle,
@@ -536,8 +536,8 @@ Ext.define('Netresearch.widget.Interpretation', {
             ]
         });
 
-        var widget = this;
-        var config = {
+        const widget = this;
+        const config = {
             title: this._tabTitle,
             autoScroll: true,
             bodyPadding: 5,
@@ -693,15 +693,15 @@ Ext.define('Netresearch.widget.Interpretation', {
     },
 
     refresh: function() {
-        var datestart = Ext.getCmp('datestart-interpretation').getValue();
-        var dateend = Ext.getCmp('dateend-interpretation').getValue();
-        var customer = Ext.getCmp('customer-interpretation').getValue();
-        var project = Ext.getCmp('project-interpretation').getValue();
-        var team = Ext.getCmp('team-interpretation').getValue();
-        var user = Ext.getCmp('user-interpretation').getValue();
-        var activity = Ext.getCmp('activity-interpretation').getValue();
-        var ticket = Ext.getCmp('ticket-interpretation').getValue();
-        var description = Ext.getCmp('description-interpretation').getValue();
+        const datestart = Ext.getCmp('datestart-interpretation').getValue();
+        const dateend = Ext.getCmp('dateend-interpretation').getValue();
+        const customer = Ext.getCmp('customer-interpretation').getValue();
+        const project = Ext.getCmp('project-interpretation').getValue();
+        const team = Ext.getCmp('team-interpretation').getValue();
+        const user = Ext.getCmp('user-interpretation').getValue();
+        const activity = Ext.getCmp('activity-interpretation').getValue();
+        const ticket = Ext.getCmp('ticket-interpretation').getValue();
+        const description = Ext.getCmp('description-interpretation').getValue();
 
         // Same check as server-side
         if ((!customer) && (!project) && (!user) && (!ticket) && (!datestart) && (!dateend) && (!team)) {
@@ -709,7 +709,7 @@ Ext.define('Netresearch.widget.Interpretation', {
             return;
         }
 
-        var searchParams = {
+        const searchParams = {
             datestart: datestart,
             dateend: dateend,
             customer: customer,
@@ -766,11 +766,11 @@ Ext.define('Netresearch.widget.Interpretation', {
     },
 
     displayShortcuts: function() {
-        var shortcuts = new Array(
+        const shortcuts = new Array(
                 'ALT-R: ' + this._refreshTitle + ' (<b>R</b>efresh)',
                 '',
                 '?: ' + this._showHelpTitle);
-        var grid = this;
+        const grid = this;
         Ext.MessageBox.alert(this._shortcutsTitle, shortcuts.join('<br/>'), function(btn) {
             grid.getView().el.focus();
         });

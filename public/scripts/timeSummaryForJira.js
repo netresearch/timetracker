@@ -8,13 +8,13 @@
 // ==/UserScript==
 
 
-var ticket = null || globalThis.location.href.split('/').slice(-1)[0];
-var timetrackerUrl = 'https://timetracker/getTicketTimeSummary/' + ticket;
+const ticket = globalThis.location.href.split('/').slice(-1)[0];
+const timetrackerUrl = 'https://timetracker/getTicketTimeSummary/' + ticket;
 
 window.addEventListener('load', function () {
 
-    var list = document.getElementById('viewissuesidebar');
-    var labJira = true;
+    let list = document.getElementById('viewissuesidebar');
+    let labJira = true;
 
     if (list === null) {
         labJira = false;
@@ -29,7 +29,7 @@ window.addEventListener('load', function () {
 
 function createButton(labJira, list) {
 
-    var button = document.createElement('button');
+    const button = document.createElement('button');
     button.innerText = 'Zeiten aus Timetracker laden';
     button.style.marginBottom = '35px';
     button.style.background = "rgb(0, 82, 204)";
@@ -53,49 +53,49 @@ function createButton(labJira, list) {
 
 
 function getNewDiv(content, div, list = false) {
-    var divElement = document.createElement('div');
+    const divElement = document.createElement('div');
 
     if (list) {
         divElement.style.paddingLeft = '10px';
     }
 
     divElement.style.marginTop = '5px';
-    var nodeContent = document.createTextNode(content);
+    const nodeContent = document.createTextNode(content);
     divElement.appendChild(nodeContent);
     div.appendChild(divElement);
 }
 
 function createTimeSummary(list, data) {
 
-    var headline = ['Gesamtzeit:\xa0\xa0', 'T\u00e4tigkeiten:', 'Personen:'];
-    var title = document.querySelector(
+    const headline = ['Gesamtzeit:\xa0\xa0', 'T\u00e4tigkeiten:', 'Personen:'];
+    const title = document.querySelector(
         "[data-test-id='issue.views.issue-base.context.context-items.primary-items']"
     ).childNodes[0].childNodes[0].childNodes[0];
-    var cloneTitle = title.cloneNode(true);
+    const cloneTitle = title.cloneNode(true);
     cloneTitle.childNodes[0].textContent = 'Aufgewendete Zeit';
 
-    var divTitle = document.createElement('div');
+    const divTitle = document.createElement('div');
     divTitle.appendChild(cloneTitle);
     list.appendChild(divTitle);
 
-    var newDiv = document.createElement('div');
+    const newDiv = document.createElement('div');
     newDiv.style.marginBottom = '20px';
     newDiv.style.display = 'flex';
-    newDiv.appendChild.felxdirection = 'row';
-    newDiv.style.fleyWrap = 'wrap';
+    newDiv.style.flexDirection = 'row';
+    newDiv.style.flexWrap = 'wrap';
     newDiv.style.width = '100%';
 
-    var rowOne = document.createElement('div');
+    const rowOne = document.createElement('div');
     rowOne.className = 'one';
     rowOne.style.display = 'flex';
     rowOne.style.flexDirection = 'column';
     rowOne.style.flexBasis = '100%';
     rowOne.style.flex = 'inherit';
 
-    var rowtwo = rowOne.cloneNode(true);
+    const rowtwo = rowOne.cloneNode(true);
     rowtwo.className = 'two';
 
-    var i = 0;
+    let i = 0;
     Object.entries(data).forEach((value) => {
         const time = value[1].time;
 
@@ -119,30 +119,30 @@ function createTimeSummary(list, data) {
 }
 
 function createLabJiraTimeSummay(list, data) {
-    var headline = ["<b>Gesamtzeit:\xa0\xa0</b>", "<b>T\u00e4tigkeiten:</b>", "<b>Personen:</b>"];
+    const headline = ["<b>Gesamtzeit:\xa0\xa0</b>", "<b>T\u00e4tigkeiten:</b>", "<b>Personen:</b>"];
 
-    var title = document.getElementById('datesmodule');
-    var cloneTitle = title.cloneNode(true);
+    const title = document.getElementById('datesmodule');
+    const cloneTitle = title.cloneNode(true);
     cloneTitle.childNodes[0].childNodes[1].textContent = 'Aufgewendete Zeit';
-    var i = 0;
+    let i = 0;
 
-    var liEl = cloneTitle.childNodes[1].childNodes[1].childNodes[1];
+    const liEl = cloneTitle.childNodes[1].childNodes[1].childNodes[1];
 
     Object.entries(data).forEach((value) => {
         const time = value[1].time;
 
         if (time) {
 
-            var total = createNewContent(headline[i++], value[1].time, cloneTitle);
+            const total = createNewContent(headline[i++], value[1].time, cloneTitle);
             liEl.appendChild(total);
         } else {
 
-            var newHeadline = createNewContent(headline[i++], '\xa0', cloneTitle);
+            const newHeadline = createNewContent(headline[i++], '\xa0', cloneTitle);
             liEl.appendChild(newHeadline);
 
             Object.keys(value[1]).forEach((key) => {
                 const content = value[1][key].time;
-                var newContent = createNewContent(key + ": ", content, cloneTitle);
+                const newContent = createNewContent(key + ": ", content, cloneTitle);
                 newContent.style.marginTop = '0px';
                 liEl.appendChild(newContent);
             })
@@ -160,7 +160,7 @@ function createLabJiraTimeSummay(list, data) {
 
 function createNewContent(headline, text, clone) {
 
-    var content = clone.childNodes[1].childNodes[1].childNodes[1].childNodes[1];
+    const content = clone.childNodes[1].childNodes[1].childNodes[1].childNodes[1];
     content.getElementsByTagName("dt")[0].innerHTML = headline;
     content.getElementsByTagName("dd")[0].innerText = text;
     clone.getElementsByTagName("dd")[0].title = text;
@@ -171,7 +171,7 @@ function createNewContent(headline, text, clone) {
 
 function getTimeSummary() {
 
-    var list = this.list;
+    const list = this.list;
 
     fetch(this.url)
         .then(function (response) {

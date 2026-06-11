@@ -30,9 +30,10 @@ Ext.define('Netresearch.store.Customers', {
 
     /* Read data from json var in html source code */
     load: function(onlyActive) {
-        var newData = [], record;
-        var c = 0;
-        for (var key in customersData) {
+        const newData = [];
+        let record;
+        let c = 0;
+        for (const key in customersData) {
             record = customersData[key].customer;
 
             if (!(record instanceof Ext.data.Model)) {

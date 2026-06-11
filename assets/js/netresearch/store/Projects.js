@@ -41,7 +41,7 @@ Ext.define('Netresearch.store.Projects', {
         if (this.currentCustomer && (this.currentCustomer == parseInt(customer)))
             return;
 
-        var projects = findProjects(customer, ticket)
+        let projects = findProjects(customer, ticket)
         if (!projects)
             projects = new Array();
 
@@ -55,14 +55,15 @@ Ext.define('Netresearch.store.Projects', {
 
         this.currentCustomer = parseInt(customer);
 
-        var newData = [], record;
+        const newData = [];
+        let record;
 
         if (! projects.length) {
             this.removeAll();
             return;
         }
 
-        for (var key in projects) {
+        for (const key in projects) {
             record = projects[key];
 
             if (!(record instanceof Ext.data.Model)) {

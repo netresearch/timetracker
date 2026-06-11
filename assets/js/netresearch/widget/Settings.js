@@ -30,12 +30,12 @@ Ext.define('Netresearch.widget.Settings', {
         this.on('render', this.refreshStores, this);
 
         /* Little store for yes/no dropdown */
-        var yesnoSourceModel = new Ext.data.ArrayStore({
+        const yesnoSourceModel = new Ext.data.ArrayStore({
             fields: ['value', 'displayname'],
             data: [[1, this._yesTitle], [0, this._noTitle]]
         });
 
-        var localesStore = new Ext.data.ArrayStore({
+        const localesStore = new Ext.data.ArrayStore({
             fields: ['value', 'displayname'],
             data: [
                 ['de', 'Deutsch'],
@@ -46,8 +46,8 @@ Ext.define('Netresearch.widget.Settings', {
             ]
         });
 
-        var widget = this;
-        var form = new Ext.form.FormPanel({
+        const widget = this;
+        const form = new Ext.form.FormPanel({
             url: url + 'settings/save',
             frame: true,
             title: this._gridBehaviourTitle,
@@ -121,7 +121,7 @@ Ext.define('Netresearch.widget.Settings', {
         });
 
         /* Define container panel */
-        var settingsPanel = Ext.create('Ext.panel.Panel', {
+        const settingsPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
             title: this._generalSettingsTitle,
@@ -130,7 +130,7 @@ Ext.define('Netresearch.widget.Settings', {
             margin: '0 0 10 0',
             items: [ form ]
         });
-        var config = {
+        const config = {
             title: this._tabTitle,
             items: [ settingsPanel ]
         };

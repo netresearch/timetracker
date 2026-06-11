@@ -359,7 +359,7 @@ Ext.define('Netresearch.widget.Tracking', {
                         listeners: {
                             scope: this,
                             focus: function (field, value) {
-                                var ticket = this.getSelectedField('ticket');
+                                let ticket = this.getSelectedField('ticket');
                                 if ((ticket == "") || (ticket == "-")) {
                                     ticket = null;
                                 }
@@ -498,7 +498,7 @@ Ext.define('Netresearch.widget.Tracking', {
                     listeners: {
                         afterrender: function (field, eOpts) {
                             /* Set interval dropdown default value to 3 days */
-                            var defaultValue = '3';
+                            const defaultValue = '3';
                             field.setValue(defaultValue);
                             this.days = defaultValue;
                         },
@@ -724,11 +724,11 @@ Ext.define('Netresearch.widget.Tracking', {
      * Show info on selected or first entry's ticket / project and customer
      */
     showInfoOnSelectedEntry: function () {
-        var index = this.getSelectedIndex();
+        const index = this.getSelectedIndex();
         if (0 > index)
             return;
 
-        var record = this.store.getAt(index);
+        const record = this.store.getAt(index);
         if ((undefined != record) && (0 < parseInt(record.data.id)))
             this.getSummary(record.data.id);
     },
@@ -766,7 +766,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
         if ('undefined' == typeof (record.saveInProgress)) {
             // Check if customer and project are related
-            var projectCheck = this.checkCustomerProjectRelation(record.data.customer, record.data.project);
+            const projectCheck = this.checkCustomerProjectRelation(record.data.customer, record.data.project);
             if (!projectCheck) {
                 showNotification(this._errorTitle,
                     this._customerProjectMismatchTitle
@@ -806,7 +806,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 params: record.data,
                 success: function (response) {
                     record.saveInProgress = undefined;
-                    var data = Ext.decode(response.responseText);
+                    const data = Ext.decode(response.responseText);
 
                     if (data.result) {
                         record.data.duration = new Date(0, 0, 0, 0, data.result.durationMinutes, 0, 0);
@@ -824,7 +824,7 @@ Ext.define('Netresearch.widget.Tracking', {
                 failure: function (response) {
                     record.saveInProgress = undefined;
                     record.dirty = true;
-                    var parsed = showAjaxFailure(grid._errorTitle, response, grid._seriousErrorTitle, 200);
+                    const parsed = showAjaxFailure(grid._errorTitle, response, grid._seriousErrorTitle, 200);
                     if (parsed?.data?.forwardUrl !== undefined) {
                         setTimeout(() => { globalThis.location.href = parsed.data.forwardUrl; }, 2000);
                     }
@@ -916,7 +916,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * Format summary report (right click -> info)
      */
     formatSummary: function (title, summary) {
-        var str = "<h2>" + title + " " + summary.name + "</h2>"
+        let str = "<h2>" + title + " " + summary.name + "</h2>"
             + this._entriesTitle + ": " + summary.entries
             + ", " + this._totalDurationTitle + ": " + formatDuration(summary.total, true);
 

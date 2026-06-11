@@ -424,10 +424,10 @@ function handleRedirect(response, title, message) {
  * - Otherwise: returns response.responseText
  */
 function parseAjaxError(response) {
-    var data = undefined;
-    var message = '';
+    let data;
+    let message = '';
     try {
-        var ct = (response.getResponseHeader ? response.getResponseHeader('Content-Type') : '') || '';
+        const ct = (response.getResponseHeader ? response.getResponseHeader('Content-Type') : '') || '';
         if (ct.indexOf('json') !== -1) {
             try { data = Ext.decode(response.responseText); } catch (e) { }
         }
@@ -454,10 +454,10 @@ function parseAjaxError(response) {
  * Applies a fallback when the plain response text looks like a stack trace.
  */
 function showAjaxFailure(title, response, fallbackMessage, shortTextThreshold) {
-    var parsed = parseAjaxError(response);
-    var threshold = (typeof shortTextThreshold === 'number') ? shortTextThreshold : 200;
-    var isPlain = (parsed.message === response.responseText);
-    var message = parsed.message;
+    const parsed = parseAjaxError(response);
+    const threshold = (typeof shortTextThreshold === 'number') ? shortTextThreshold : 200;
+    const isPlain = (parsed.message === response.responseText);
+    let message = parsed.message;
     if ((!message) || (isPlain && response.responseText && response.responseText.length >= threshold)) {
         message = fallbackMessage || 'An error occurred.';
     }
@@ -465,7 +465,7 @@ function showAjaxFailure(title, response, fallbackMessage, shortTextThreshold) {
     return parsed;
 }
 
-var notification = undefined;
+let notification;
 
 /**
  * Displays a toaster like message
@@ -525,7 +525,7 @@ function findProjects(customer, ticket) {
     } else {
         customer = parseInt(customer);
     }
-    var projects = projectsData[customer];
+    const projects = projectsData[customer];
 
     // 2. Filter projects by prefix, if defined
     if ((null == ticket) || (undefined == ticket)) {
@@ -581,7 +581,7 @@ function findProjects(customer, ticket) {
         }
 
         const projectPrefixes = [...project['jiraId'].matchAll(prefixesRegexp)];
-        for (var i = 0; i < projectPrefixes.length; i++) {
+        for (let i = 0; i < projectPrefixes.length; i++) {
             const projectPrefix = projectPrefixes[i][1];
             if (projectPrefix == prefix) {
                 validProjects.push(project);
