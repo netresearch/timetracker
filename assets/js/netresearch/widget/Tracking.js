@@ -72,8 +72,7 @@ Ext.define('Netresearch.widget.Tracking', {
         this.startTime = this.roundTime(this.getNewDate());
 
         const entryStore = Ext.create('Netresearch.store.Entries');
-        const grid = this;
-        entryStore.on("load", function () { grid.selectRow(0); });
+        entryStore.on("load", () => { this.selectRow(0); });
 
         if (this.autoRefreshInterval === true) {
             this.autoRefreshInterval = globalThis.setInterval(
@@ -800,11 +799,10 @@ Ext.define('Netresearch.widget.Tracking', {
                 );
             }
 
-            const grid = this;
             Ext.Ajax.request({
                 url: url + 'tracking/save',
                 params: record.data,
-                success: function (response) {
+                success: (response) => {
                     record.saveInProgress = undefined;
                     const data = Ext.decode(response.responseText);
 
@@ -816,15 +814,15 @@ Ext.define('Netresearch.widget.Tracking', {
                         record.commit();
                     }
                     if (data.alert) {
-                        showNotification(grid._attentionTitle, data.alert, false);
+                        showNotification(this._attentionTitle, data.alert, false);
                     }
 
                     countTime();
                 },
-                failure: function (response) {
+                failure: (response) => {
                     record.saveInProgress = undefined;
                     record.dirty = true;
-                    const parsed = showAjaxFailure(grid._errorTitle, response, grid._seriousErrorTitle, 200);
+                    const parsed = showAjaxFailure(this._errorTitle, response, this._seriousErrorTitle, 200);
                     if (parsed?.data?.forwardUrl !== undefined) {
                         setTimeout(() => { globalThis.location.href = parsed.data.forwardUrl; }, 2000);
                     }
@@ -961,14 +959,13 @@ Ext.define('Netresearch.widget.Tracking', {
                 }
 
                 /* Display info window with summary data */
-                const grid = this;
                 const infowindow = new Ext.Window({
                     title: this._overviewTitle,
                     html: dlgMessage,
                     width: 525,
                     listeners: {
-                        close: function () {
-                            grid.getView().el.focus();
+                        close: () => {
+                            this.getView().el.focus();
                         }
                     }
                 });
@@ -1031,7 +1028,6 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
 
         /* compose a message for the customer to re-check basic activity data */
-        const grid = this;
         const duration = this.formatTime(record.data.duration);
         const ticket = record.data.ticket;
         const description = record.data.description;
@@ -1055,11 +1051,11 @@ Ext.define('Netresearch.widget.Tracking', {
         shortDescription += ' | ' + description;
 
         /* Display confirm message before deletion */
-        Ext.Msg.confirm(this._attentionTitle, this._confirmDeleteTitle + '<br />' + shortDescription, function (btn) {
+        Ext.Msg.confirm(this._attentionTitle, this._confirmDeleteTitle + '<br />' + shortDescription, (btn) => {
             if (btn === 'yes') {
-                grid.deleteEntry(index);
+                this.deleteEntry(index);
             }
-            grid.getView().el.focus();
+            this.getView().el.focus();
         });
     },
 
@@ -1370,9 +1366,8 @@ Ext.define('Netresearch.widget.Tracking', {
             'ALT-X: Liste exportieren (E<b>x</b>port)',
             '',
             '?: Hilfefenster anzeigen'];
-        const grid = this;
-        Ext.MessageBox.alert('Shortcuts', shortcuts.join('<br/>'), function (btn) {
-            grid.getView().el.focus();
+        Ext.MessageBox.alert('Shortcuts', shortcuts.join('<br/>'), (btn) => {
+            this.getView().el.focus();
         });
     },
 

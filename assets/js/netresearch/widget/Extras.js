@@ -215,15 +215,14 @@ Ext.define('Netresearch.widget.Extras', {
                         usecontract: usecontract
                     };
 
-                    const panel = this;
                     Ext.Ajax.request({
                         url: url + 'tracking/bulkentry',
                         params: data,
-                        success: function (response) {
-                            showNotification(panel._successTitle, response.responseText, true);
+                        success: (response) => {
+                            showNotification(this._successTitle, response.responseText, true);
                         },
-                        failure: function (response) {
-                            showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
+                        failure: (response) => {
+                            showAjaxFailure(this._errorTitle, response, this._seriousErrorTitle, 200);
                         }
                     });
                 }
