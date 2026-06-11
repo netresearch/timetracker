@@ -210,7 +210,7 @@ trait JsonAssertionsTrait
         // Handle specific translation issues based on the messages.de.yml
         $translationMap = [
             '%num% Einträge wurden angelegt.' => '%num% entries have been added',
-            'Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.' => 'No contract for user found. Please use custome time.',
+            'Für den Benutzer wurde kein Vertrag gefunden. Bitte verwenden Sie eine benutzerdefinierte Zeit.' => 'No contract for user found. Please use custom time.',
         ];
 
         // Check if there's a known translation mapping

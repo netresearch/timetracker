@@ -23,6 +23,8 @@ use App\Service\Integration\Jira\JiraOAuthApiService;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Generator;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 use function assert;
 use function count;
@@ -35,7 +37,7 @@ use function sprintf;
 
 class ExportService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory, private readonly LoggerInterface $logger = new NullLogger())
     {
     }
 
@@ -273,9 +275,11 @@ class ExportService
             try {
                 $ticketData = $this->fetchTicketData($jiraApi, $tickets, $fields);
                 $this->applyTicketData($ticketSystemData['entries'], $ticketData, $includeBillable, $includeTicketTitle);
-            } catch (Exception) {
-                // Log error but continue with other entries
-                // In a real implementation, you might want to use a logger here
+            } catch (Exception $exception) {
+                $this->logger->warning('Export: could not enrich entries with Jira ticket data', [
+                    'exception' => $exception,
+                ]);
+
                 continue;
             }
         }

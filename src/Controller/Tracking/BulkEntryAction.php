@@ -126,7 +126,7 @@ final class BulkEntryAction extends BaseTrackingController
             $contractHoursArray = $this->loadContractHours($bulkEntryDto, $user);
             if (null === $contractHoursArray) {
                 return $this->createResponse(
-                    $this->translator->trans('No contract for user found. Please use custome time.'),
+                    $this->translator->trans('No contract for user found. Please use custom time.'),
                     \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY,
                 );
             }
