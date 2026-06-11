@@ -72,8 +72,7 @@ Ext.define('Netresearch.widget.Tracking', {
         this.startTime = this.roundTime(this.getNewDate());
 
         const entryStore = Ext.create('Netresearch.store.Entries');
-        const grid = this;
-        entryStore.on("load", function () { grid.selectRow(0); });
+        entryStore.on("load", () => { this.selectRow(0); });
 
         if (this.autoRefreshInterval === true) {
             this.autoRefreshInterval = globalThis.setInterval(
@@ -96,7 +95,7 @@ Ext.define('Netresearch.widget.Tracking', {
                  */
                 getRowClass: function (record, index) {
                     // new algorithm using backend
-                    switch (parseInt(record.data.class)) {
+                    switch (Number.parseInt(record.data.class, 10)) {
                         case 1: return '';
                         case 2: return 'night-row-bottom';
                         case 4: return 'pause-row-bottom';
@@ -264,20 +263,20 @@ Ext.define('Netresearch.widget.Tracking', {
 
                                 let editStartColumn = 6;
                                 let edited = false;
-                                if (0 < parseInt(result['customer'])) {
+                                if (0 < Number.parseInt(result['customer'], 10)) {
                                     editStartColumn = 7;
-                                    if (selection[0].data.customer !== parseInt(result['customer'])) {
-                                        selection[0].data.customer = parseInt(result['customer']);
+                                    if (selection[0].data.customer !== Number.parseInt(result['customer'], 10)) {
+                                        selection[0].data.customer = Number.parseInt(result['customer'], 10);
                                         selection[0].data.project = 0;
                                         edited = true;
                                     }
                                 }
 
-                                if (0 < parseInt(result['id'])) {
+                                if (0 < Number.parseInt(result['id'], 10)) {
                                     if ((editStartColumn === 7) && (result['sure'] !== false))
                                         editStartColumn = 7;
-                                    if (selection[0].data.project !== parseInt(result['id'])) {
-                                        selection[0].data.project = parseInt(result['id']);
+                                    if (selection[0].data.project !== Number.parseInt(result['id'], 10)) {
+                                        selection[0].data.project = Number.parseInt(result['id'], 10);
                                         edited = true;
                                     }
                                 }
@@ -581,7 +580,7 @@ Ext.define('Netresearch.widget.Tracking', {
                             for (let key in projects) {
                                 const value = projects[key];
                                 if (value.id === record.data.project) {
-                                    record.data.customer = parseInt(value.customer);
+                                    record.data.customer = Number.parseInt(value.customer, 10);
                                     record.commit();
                                     this.customerStore.load();
                                     break;
@@ -615,7 +614,7 @@ Ext.define('Netresearch.widget.Tracking', {
 
         if (validProjects.length == 1) {
             this.debug && console.log("Mapped to customer " + customer + " and project " + " (sure, single)");
-            return { customer: parseInt(customer), id: parseInt(id), sure: sure };
+            return { customer: Number.parseInt(customer, 10), id: Number.parseInt(id, 10), sure: sure };
         }
 
         for (let i = 1; i < validProjects.length; i++) {
@@ -627,16 +626,16 @@ Ext.define('Netresearch.widget.Tracking', {
         }
 
         // If we found no unique project, lets take the last used one
-        if ((parseInt(customer) > 0) && (id === 0)) {
-            id = parseInt(this.findLastProjectByTicket(ticket, parseInt(customer)));
+        if ((Number.parseInt(customer, 10) > 0) && (id === 0)) {
+            id = Number.parseInt(this.findLastProjectByTicket(ticket, Number.parseInt(customer, 10)));
             if (!id) {
-                id = parseInt(this.findLastProjectByPrefix(extractTicketPrefix(ticket), parseInt(customer)));
+                id = Number.parseInt(this.findLastProjectByPrefix(extractTicketPrefix(ticket), Number.parseInt(customer, 10)));
                 sure = false;
             }
         }
 
         this.debug && console.log("Mapped to customer " + customer + " and project " + id + (sure ? " (sure)" : " (unsure)"));
-        return { customer: parseInt(customer), id: parseInt(id), sure: sure };
+        return { customer: Number.parseInt(customer, 10), id: Number.parseInt(id, 10), sure: sure };
     },
 
     /*
@@ -647,9 +646,9 @@ Ext.define('Netresearch.widget.Tracking', {
 
         for (let i = 0; i < store.getCount() && i < 100; i++) {
             const record = store.getAt(i);
-            if (parseInt(record.data.customer) != customer)
+            if (Number.parseInt(record.data.customer, 10) != customer)
                 continue;
-            if (1 > parseInt(record.data.project))
+            if (1 > Number.parseInt(record.data.project, 10))
                 continue;
             if ((undefined != record.data.ticket) && (null != record.data.ticket) && (record.data.ticket.length > 0)) {
                 if (record.data.ticket == ticket) {
@@ -672,9 +671,9 @@ Ext.define('Netresearch.widget.Tracking', {
 
         for (let i = 0; i < store.getCount() && i < 100; i++) {
             const record = store.getAt(i);
-            if (parseInt(record.data.customer) != customer)
+            if (Number.parseInt(record.data.customer, 10) != customer)
                 continue;
-            if (1 > parseInt(record.data.project))
+            if (1 > Number.parseInt(record.data.project, 10))
                 continue;
             if ((undefined != record.data.ticket) && (null != record.data.ticket) && (record.data.ticket.length > 0)) {
                 if (extractTicketPrefix(record.data.ticket) == prefix)
@@ -729,7 +728,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
 
         const record = this.store.getAt(index);
-        if ((undefined != record) && (0 < parseInt(record.data.id)))
+        if ((undefined != record) && (0 < Number.parseInt(record.data.id, 10)))
             this.getSummary(record.data.id);
     },
 
@@ -755,7 +754,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
         }
 
-        if ((0 === parseInt(record.data.project + 0)) || (0 === parseInt(record.data.customer + 0)) || (0 === parseInt(record.data.activity + 0))) {
+        if ((0 === Number.parseInt(record.data.project + 0, 10)) || (0 === Number.parseInt(record.data.customer + 0, 10)) || (0 === Number.parseInt(record.data.activity + 0, 10))) {
             return;
         }
 
@@ -777,8 +776,8 @@ Ext.define('Netresearch.widget.Tracking', {
                 return;
             }
 
-            if ((true !== projectCheck) && (0 < parseInt(projectCheck))) {
-                record.data.project = parseInt(projectCheck);
+            if ((true !== projectCheck) && (0 < Number.parseInt(projectCheck, 10))) {
+                record.data.project = Number.parseInt(projectCheck, 10);
             }
 
             // reformat ticket
@@ -800,11 +799,10 @@ Ext.define('Netresearch.widget.Tracking', {
                 );
             }
 
-            const grid = this;
             Ext.Ajax.request({
                 url: url + 'tracking/save',
                 params: record.data,
-                success: function (response) {
+                success: (response) => {
                     record.saveInProgress = undefined;
                     const data = Ext.decode(response.responseText);
 
@@ -816,15 +814,15 @@ Ext.define('Netresearch.widget.Tracking', {
                         record.commit();
                     }
                     if (data.alert) {
-                        showNotification(grid._attentionTitle, data.alert, false);
+                        showNotification(this._attentionTitle, data.alert, false);
                     }
 
                     countTime();
                 },
-                failure: function (response) {
+                failure: (response) => {
                     record.saveInProgress = undefined;
                     record.dirty = true;
-                    const parsed = showAjaxFailure(grid._errorTitle, response, grid._seriousErrorTitle, 200);
+                    const parsed = showAjaxFailure(this._errorTitle, response, this._seriousErrorTitle, 200);
                     if (parsed?.data?.forwardUrl !== undefined) {
                         setTimeout(() => { globalThis.location.href = parsed.data.forwardUrl; }, 2000);
                     }
@@ -858,8 +856,8 @@ Ext.define('Netresearch.widget.Tracking', {
             return true;
         }
 
-        if ((undefined !== customer) && (false !== customer) && (0 < parseInt(customer))) {
-        } else {
+        const customerId = Number.parseInt(customer, 10);
+        if (Number.isNaN(customerId) || customerId <= 0) {
             customer = 'all';
         }
 
@@ -961,14 +959,13 @@ Ext.define('Netresearch.widget.Tracking', {
                 }
 
                 /* Display info window with summary data */
-                const grid = this;
                 const infowindow = new Ext.Window({
                     title: this._overviewTitle,
                     html: dlgMessage,
                     width: 525,
                     listeners: {
-                        close: function () {
-                            grid.getView().el.focus();
+                        close: () => {
+                            this.getView().el.focus();
                         }
                     }
                 });
@@ -1031,7 +1028,6 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
 
         /* compose a message for the customer to re-check basic activity data */
-        const grid = this;
         const duration = this.formatTime(record.data.duration);
         const ticket = record.data.ticket;
         const description = record.data.description;
@@ -1040,26 +1036,26 @@ Ext.define('Netresearch.widget.Tracking', {
             shortDescription += ' | ' + ticket;
         }
 
-        if (0 < parseInt(record.data.customer)) {
+        if (0 < Number.parseInt(record.data.customer, 10)) {
             shortDescription += ' | ' + this.getCustomerName(record.data.customer);
         }
 
-        if (0 < parseInt(record.data.project)) {
+        if (0 < Number.parseInt(record.data.project, 10)) {
             shortDescription += ' | ' + this.getProjectName(record.data.project);
         }
 
-        if (0 < parseInt(record.data.activity)) {
+        if (0 < Number.parseInt(record.data.activity, 10)) {
             shortDescription += ' | ' + this.getActivityName(record.data.activity);
         }
 
         shortDescription += ' | ' + description;
 
         /* Display confirm message before deletion */
-        Ext.Msg.confirm(this._attentionTitle, this._confirmDeleteTitle + '<br />' + shortDescription, function (btn) {
+        Ext.Msg.confirm(this._attentionTitle, this._confirmDeleteTitle + '<br />' + Ext.String.htmlEncode(shortDescription), (btn) => {
             if (btn === 'yes') {
-                grid.deleteEntry(index);
+                this.deleteEntry(index);
             }
-            grid.getView().el.focus();
+            this.getView().el.focus();
         });
     },
 
@@ -1072,7 +1068,7 @@ Ext.define('Netresearch.widget.Tracking', {
             return;
 
         // Easy deletion of unsaved records
-        if (0 >= parseInt(record.data.id)) {
+        if (0 >= Number.parseInt(record.data.id, 10)) {
             this.getStore().remove(record);
             this.clearProjectStore();
             this.selectRow(index);
@@ -1081,7 +1077,7 @@ Ext.define('Netresearch.widget.Tracking', {
         }
 
         // Delete saved records only after server deletion
-        const id = parseInt(record.data.id);
+        const id = Number.parseInt(record.data.id, 10);
         Ext.Ajax.request({
             url: url + 'tracking/delete',
             params: {
@@ -1096,12 +1092,12 @@ Ext.define('Netresearch.widget.Tracking', {
                 this.selectRow(index);
                 this.getView().refresh();
                 if (data.alert) {
-                    showNotification(grid._attentionTitle, data.alert, false);
+                    showNotification(this._attentionTitle, data.alert, false);
                 }
             },
             failure: function (response) {
                 const data = Ext.decode(response.responseText);
-                showNotification(grid._errorTitle, data.message, false);
+                showNotification(this._errorTitle, data.message, false);
                 if (data.forwardUrl !== undefined) {
                     setTimeout(() => { globalThis.location.href = data.forwardUrl; }, 2000);
                 }
@@ -1167,7 +1163,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * 11:28 ==> 11:30
      */
     round5: function (x) {
-        return (x % 5) >= 2.5 ? parseInt(x / 5) * 5 + 5 : parseInt(x / 5) * 5;
+        return (x % 5) >= 2.5 ? Math.trunc(x / 5) * 5 + 5 : Math.trunc(x / 5) * 5;
     },
 
     /*
@@ -1199,7 +1195,7 @@ Ext.define('Netresearch.widget.Tracking', {
      * Return given time in "H:i" representation
      */
     formatTime: function (value) {
-        if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+        if (!value || !(value instanceof Date) || Number.isNaN(value.getTime())) {
             return '';
         }
         return Ext.Date.dateFormat(value, 'H:i');
@@ -1370,9 +1366,8 @@ Ext.define('Netresearch.widget.Tracking', {
             'ALT-X: Liste exportieren (E<b>x</b>port)',
             '',
             '?: Hilfefenster anzeigen'];
-        const grid = this;
-        Ext.MessageBox.alert('Shortcuts', shortcuts.join('<br/>'), function (btn) {
-            grid.getView().el.focus();
+        Ext.MessageBox.alert('Shortcuts', shortcuts.join('<br/>'), (btn) => {
+            this.getView().el.focus();
         });
     },
 

@@ -46,7 +46,6 @@ Ext.define('Netresearch.widget.Settings', {
             ]
         });
 
-        const widget = this;
         const form = new Ext.form.FormPanel({
             url: url + 'settings/save',
             frame: true,
@@ -101,19 +100,19 @@ Ext.define('Netresearch.widget.Settings', {
             }],
             buttons: [{
                 text: this._saveTitle,
-                handler: function() {
+                handler: () => {
                     form.getForm().submit({
-                        success: function(form, action) {
+                        success: (form, action) => {
                             if (settingsData.locale == action.result.locale) {
                                 globalThis.settingsData = action.result.settings;
                                 ttt_items[0].refresh();
-                                showNotification(widget._successTitle, action.result.message, true);
+                                showNotification(this._successTitle, action.result.message, true);
                             } else {
                                 globalThis.location.reload();
                             }
                         },
-                        failure: function(form, action) {
-                            showNotification(widget._errorTitle, action.result.message, false);
+                        failure: (form, action) => {
+                            showNotification(this._errorTitle, action.result.message, false);
                         }
                     });
                 }

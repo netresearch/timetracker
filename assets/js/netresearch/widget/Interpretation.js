@@ -536,7 +536,6 @@ Ext.define('Netresearch.widget.Interpretation', {
             ]
         });
 
-        const widget = this;
         const config = {
             title: this._tabTitle,
             autoScroll: true,
@@ -570,8 +569,8 @@ Ext.define('Netresearch.widget.Interpretation', {
                     valueField: 'id',
                     mode: 'local',
                     listeners: {
-                        select: function(field, value) {
-                            widget.filterableProjectStore.load({
+                        select: (field, value) => {
+                            this.filterableProjectStore.load({
                                 params: {
                                     customer: value[0].data.id
                                 }
@@ -588,9 +587,8 @@ Ext.define('Netresearch.widget.Interpretation', {
                     valueField: 'id',
                     mode: 'local',
                     listeners: {
-                        scope: this,
-                        focus: function() {
-                            widget.filterableProjectStore.load({
+                        focus: () => {
+                            this.filterableProjectStore.load({
                                 params: {
                                     customer: Ext.getCmp('customer-interpretation').getValue()
                                 }
@@ -645,15 +643,15 @@ Ext.define('Netresearch.widget.Interpretation', {
                 {
                     iconCls: 'icon-refresh',
                     tooltip: this._refreshTitle,
-                    handler: function() {
-                        widget.refresh();
+                    handler: () => {
+                        this.refresh();
                     }
                 },
                 {
                     iconCls: 'icon-delete',
                     tooltip: this._resetTitle,
-                    handler: function() {
-                        widget.reset();
+                    handler: () => {
+                        this.reset();
                     }
                 }
             ],
@@ -770,9 +768,8 @@ Ext.define('Netresearch.widget.Interpretation', {
                 'ALT-R: ' + this._refreshTitle + ' (<b>R</b>efresh)',
                 '',
                 '?: ' + this._showHelpTitle);
-        const grid = this;
-        Ext.MessageBox.alert(this._shortcutsTitle, shortcuts.join('<br/>'), function(btn) {
-            grid.getView().el.focus();
+        Ext.MessageBox.alert(this._shortcutsTitle, shortcuts.join('<br/>'), (btn) => {
+            this.getView().el.focus();
         });
     }
 });

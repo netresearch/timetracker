@@ -161,10 +161,10 @@ Ext.define('Netresearch.widget.Admin', {
                         let output = '';
                         /* Display space separated list of related teams */
                         Ext.each(value, function (teamId) {
-                            if (isNaN(teamId)) {
+                            if (Number.isNaN(Number(teamId))) {
                                 return;
                             }
-                            const team = customerGrid.teamStore.getById(parseInt(teamId));
+                            const team = customerGrid.teamStore.getById(Number.parseInt(teamId, 10));
                             if (null == team) {
                                 return;
                             }
@@ -370,37 +370,34 @@ Ext.define('Netresearch.widget.Admin', {
                 editCustomerWindow.show();
             },
             deleteCustomer: function (record) {
-                const grid = this;
-                const id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'customer/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
-                            failure: function (response) {
+                            failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
                 });
             },
             refresh: function () {
-                let grid = this;
-                let lastFocused = grid.getSelectionModel().getLastFocused();
+                let lastFocused = this.getSelectionModel().getLastFocused();
 
                 this.store.load({
                     //restore selection after refreshing
-                    callback: function () {
+                    callback: () => {
                         if (lastFocused) {
-                            let record = grid.getStore().getById(lastFocused.getId());
-                            grid.getSelectionModel().setLastFocused(record);
+                            let record = this.getStore().getById(lastFocused.getId());
+                            this.getSelectionModel().setLastFocused(record);
                         }
                     }
                 });
@@ -472,7 +469,7 @@ Ext.define('Netresearch.widget.Admin', {
                         anchor: '100%'
                     },
                     renderer: function (id) {
-                        if (1 > parseInt(id))
+                        if (1 > Number.parseInt(id, 10))
                             return '';
 
                         const record = this.ticketSystemStore.getById(id);
@@ -861,18 +858,16 @@ Ext.define('Netresearch.widget.Admin', {
                 editProjectWindow.show();
             },
             deleteProject: function (record) {
-                const grid = this;
-                const id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'project/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
                             failure: function (response) {
                                 const data = Ext.decode(response.responseText);
@@ -890,16 +885,14 @@ Ext.define('Netresearch.widget.Admin', {
                 );
             },
             syncProjectSubtickets: function (project) {
-                const grid = this;
                 Ext.Ajax.request({
                     method: 'POST',
                     url: url + 'projects/' + project.id + '/syncsubtickets',
-                    scope: this,
-                    success: function (response) {
+                    success: (response) => {
                         const data = Ext.decode(response.responseText);
                         project['subtickets'] = data.subtickets;
-                        grid.refresh();
-                        grid.showProjectSubtickets(project);
+                        this.refresh();
+                        this.showProjectSubtickets(project);
                     },
                     failure: function (response) {
                         const data = Ext.decode(response.responseText);
@@ -908,13 +901,11 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             syncAllProjectSubtickets: function () {
-                const grid = this;
                 Ext.Ajax.request({
                     method: 'POST',
                     url: url + 'projects/syncsubtickets',
-                    scope: this,
-                    success: function (response) {
-                        grid.refresh();
+                    success: (response) => {
+                        this.refresh();
                         showNotification(panel._successTitle, panel._subticketSyncFinishedTitle, true);
                     },
                     failure: function (response) {
@@ -924,17 +915,16 @@ Ext.define('Netresearch.widget.Admin', {
                 });
             },
             refresh: function () {
-                let grid = this;
-                let lastFocused = grid.getSelectionModel().getLastFocused();
+                let lastFocused = this.getSelectionModel().getLastFocused();
 
                 this.customerStore.load();
                 this.ticketSystemStore.load();
                 this.store.load({
                     //restore selection after refreshing
-                    callback: function () {
+                    callback: () => {
                         if (lastFocused) {
-                            let record = grid.getStore().getById(lastFocused.getId());
-                            grid.getSelectionModel().setLastFocused(record);
+                            let record = this.getStore().getById(lastFocused.getId());
+                            this.getSelectionModel().setLastFocused(record);
                         }
                     }
                 });
@@ -981,10 +971,10 @@ Ext.define('Netresearch.widget.Admin', {
                         /* Display space seperated list of related teams */
                         let output = '';
                         Ext.each(value, function (teamId) {
-                            if (isNaN(teamId)) {
+                            if (Number.isNaN(Number(teamId))) {
                                 return;
                             }
-                            const team = userGrid.teamStore.getById(parseInt(teamId));
+                            const team = userGrid.teamStore.getById(Number.parseInt(teamId, 10));
                             if (null == team) {
                                 return;
                             }
@@ -1178,38 +1168,35 @@ Ext.define('Netresearch.widget.Admin', {
                 editUserWindow.show();
             },
             deleteUser: function (record) {
-                const grid = this;
-                const id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.username, function (btn) {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.username), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'user/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
-                            failure: function (response) {
+                            failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
                 });
             },
             refresh: function () {
-                let grid = this;
-                let lastFocused = grid.getSelectionModel().getLastFocused();
+                let lastFocused = this.getSelectionModel().getLastFocused();
 
                 this.teamStore.load();
                 this.store.load({
                     //restore selection after refreshing
-                    callback: function () {
+                    callback: () => {
                         if (lastFocused) {
-                            let record = grid.getStore().getById(lastFocused.getId());
-                            grid.getSelectionModel().setLastFocused(record);
+                            let record = this.getStore().getById(lastFocused.getId());
+                            this.getSelectionModel().setLastFocused(record);
                         }
                     }
                 });
@@ -1366,38 +1353,35 @@ Ext.define('Netresearch.widget.Admin', {
                 editTeamWindow.show();
             },
             deleteTeam: function (record) {
-                const grid = this;
-                const id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'team/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
-                            failure: function (response) {
+                            failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
                 });
             },
             refresh: function () {
-                let grid = this;
-                let lastFocused = grid.getSelectionModel().getLastFocused();
+                let lastFocused = this.getSelectionModel().getLastFocused();
 
                 this.userStore.load();
                 this.store.load({
                     //restore selection after refreshing
-                    callback: function () {
+                    callback: () => {
                         if (lastFocused) {
-                            let record = grid.getStore().getById(lastFocused.getId());
-                            grid.getSelectionModel().setLastFocused(record);
+                            let record = this.getStore().getById(lastFocused.getId());
+                            this.getSelectionModel().setLastFocused(record);
                         }
                     }
                 });
@@ -1525,22 +1509,20 @@ Ext.define('Netresearch.widget.Admin', {
                 }
             }, // end listeners
             deletePreset: function (record) {
-                const grid = this;
-                const id = parseInt(record.data.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.data.name, function (btn) {
+                const id = Number.parseInt(record.data.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.data.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'preset/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
-                            failure: function (response) {
+                            failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -1895,22 +1877,20 @@ Ext.define('Netresearch.widget.Admin', {
                 editTicketSystemWindow.show();
             },
             deleteTicketSystem: function (record) {
-                const grid = this;
-                const id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'ticketsystem/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
-                            failure: function (response) {
+                            failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -2070,22 +2050,20 @@ Ext.define('Netresearch.widget.Admin', {
                 editActivityWindow.show();
             },
             deleteActivity: function (record) {
-                const grid = this;
-                const id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'activity/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
-                            failure: function (response) {
+                            failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }
@@ -2308,22 +2286,20 @@ Ext.define('Netresearch.widget.Admin', {
                 editContractWindow.show();
             },
             deleteContract: function (record) {
-                const grid = this;
-                const id = parseInt(record.id);
-                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + record.name, function (btn) {
+                const id = Number.parseInt(record.id, 10);
+                Ext.Msg.confirm('Achtung', 'Wirklich löschen?<br />' + Ext.String.htmlEncode(record.name), (btn) => {
                     if (btn == 'yes') {
                         Ext.Ajax.request({
                             url: url + 'contract/delete',
                             params: {
                                 id: id
                             },
-                            scope: this,
-                            success: function (response) {
-                                grid.refresh();
+                            success: (response) => {
+                                this.refresh();
                             },
-                            failure: function (response) {
+                            failure: (response) => {
                                 const data = Ext.decode(response.responseText);
-                                showNotification(grid._errorTitle, data.message, false);
+                                showNotification(panel._errorTitle, data.message, false);
                             }
                         });
                     }

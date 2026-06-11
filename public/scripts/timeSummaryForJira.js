@@ -127,6 +127,8 @@ function createLabJiraTimeSummay(list, data) {
     let i = 0;
 
     const liEl = cloneTitle.childNodes[1].childNodes[1].childNodes[1];
+    // snapshot the template's own entries before appending replacements
+    const templateEntries = [...liEl.children];
 
     Object.entries(data).forEach((value) => {
         const time = value[1].time;
@@ -150,10 +152,10 @@ function createLabJiraTimeSummay(list, data) {
         }
     })
 
-    //remove existing data
-    liEl.removeChild(liEl.childNodes[1]);
-    liEl.removeChild(liEl.childNodes[2]);
-    liEl.removeChild(liEl.childNodes[3]);
+    // remove the template's own entries (snapshotted above)
+    for (const node of templateEntries) {
+        node.remove();
+    }
 
     return cloneTitle;
 }
@@ -184,7 +186,7 @@ function getTimeSummary() {
 
             if (list.lastChild.textContent == 'Es liegen keine Informationen vor.') {
 
-                list.removeChild(list.lastChild);
+                list.lastChild.remove();
             }
 
             const newDiv = this.labJira
