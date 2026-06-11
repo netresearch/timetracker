@@ -16,7 +16,7 @@ Ext.define('Netresearch.widget.Help', {
     initComponent: function() {
 
         /* Define container panel */
-        var usagePanel = Ext.create('Ext.panel.Panel', {
+        const usagePanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
             title: this._usageTitle,
@@ -43,7 +43,7 @@ Ext.define('Netresearch.widget.Help', {
 
 
         /* Define container panel */
-        var shortcutPanel = Ext.create('Ext.panel.Panel', {
+        const shortcutPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
             title: this._shortcutsTitle,
@@ -84,7 +84,7 @@ Ext.define('Netresearch.widget.Help', {
         });
 
         /* Define container panel */
-        var issuesPanel = Ext.create('Ext.panel.Panel', {
+        const issuesPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
             title: this._issuesTitle,
@@ -101,7 +101,7 @@ Ext.define('Netresearch.widget.Help', {
         });
 
         /* Define container panel */
-        var linksPanel = Ext.create('Ext.panel.Panel', {
+        const linksPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
             title: this._linksTitle,
@@ -124,7 +124,7 @@ Ext.define('Netresearch.widget.Help', {
         });
 
 
-        var config = {
+        const config = {
             title: this._helpTitle,
             items: [ usagePanel, shortcutPanel, issuesPanel, linksPanel ]
         };
