@@ -383,21 +383,44 @@ class ExportService
             }
 
             $fields = $ticketData[$ticket];
-
-            if ($includeBillable && is_object($fields) && property_exists($fields, 'labels')) {
-                $labels = $fields->labels;
-                if (is_array($labels)) {
-                    $isBillable = in_array('billable', $labels, true);
-                    $entry->setBillable($isBillable);
-                }
+            if (!is_object($fields)) {
+                continue;
             }
 
-            if ($includeTicketTitle && is_object($fields) && property_exists($fields, 'summary')) {
-                $summary = $fields->summary;
-                if (is_string($summary) || null === $summary) {
-                    $entry->setTicketTitle($summary);
-                }
+            if ($includeBillable) {
+                $this->applyBillable($entry, $fields);
             }
+
+            if ($includeTicketTitle) {
+                $this->applyTicketTitle($entry, $fields);
+            }
+        }
+    }
+
+    /**
+     * Marks the entry billable when the ticket carries the "billable" label.
+     */
+    private function applyBillable(Entry $entry, object $fields): void
+    {
+        if (!property_exists($fields, 'labels') || !is_array($fields->labels)) {
+            return;
+        }
+
+        $entry->setBillable(in_array('billable', $fields->labels, true));
+    }
+
+    /**
+     * Copies the ticket summary onto the entry.
+     */
+    private function applyTicketTitle(Entry $entry, object $fields): void
+    {
+        if (!property_exists($fields, 'summary')) {
+            return;
+        }
+
+        $summary = $fields->summary;
+        if (is_string($summary) || null === $summary) {
+            $entry->setTicketTitle($summary);
         }
     }
 
