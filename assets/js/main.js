@@ -424,7 +424,7 @@ function handleRedirect(response, title, message) {
  * - Otherwise: returns response.responseText
  */
 function parseAjaxError(response) {
-    let data = undefined;
+    let data;
     let message = '';
     try {
         const ct = (response.getResponseHeader ? response.getResponseHeader('Content-Type') : '') || '';
@@ -465,7 +465,7 @@ function showAjaxFailure(title, response, fallbackMessage, shortTextThreshold) {
     return parsed;
 }
 
-let notification = undefined;
+let notification;
 
 /**
  * Displays a toaster like message

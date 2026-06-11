@@ -248,7 +248,7 @@ Ext.define('Netresearch.widget.Admin', {
                     autoLoad: false
                 });
 
-                const window = Ext.create('Ext.window.Window', {
+                const editCustomerWindow = Ext.create('Ext.window.Window', {
                     title: panel._editCustomerTitle,
                     modal: true,
                     width: 400,
@@ -354,7 +354,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function (response) {
-                                                window.close();
+                                                editCustomerWindow.close();
                                             },
                                             failure: function (response) {
                                                 showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
@@ -367,7 +367,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editCustomerWindow.show();
             },
             deleteCustomer: function (record) {
                 const grid = this;
@@ -645,7 +645,7 @@ Ext.define('Netresearch.widget.Admin', {
                     record = {};
                 }
 
-                const window = Ext.create('Ext.window.Window', {
+                const editProjectWindow = Ext.create('Ext.window.Window', {
                     title: panel._editProjectTitle,
                     modal: true,
                     width: 400,
@@ -845,7 +845,7 @@ Ext.define('Netresearch.widget.Admin', {
                                                 if (data.message) {
                                                     showNotification(panel._errorTitle, data.message, false);
                                                 }
-                                                window.close();
+                                                editProjectWindow.close();
                                             },
                                             failure: function (response) {
                                                 showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
@@ -858,7 +858,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editProjectWindow.show();
             },
             deleteProject: function (record) {
                 const grid = this;
@@ -1058,7 +1058,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                const window = Ext.create('Ext.window.Window', {
+                const editUserWindow = Ext.create('Ext.window.Window', {
                     title: panel._editUserTitle,
                     modal: true,
                     width: 400,
@@ -1162,7 +1162,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function (response) {
-                                                window.close();
+                                                editUserWindow.close();
                                             },
                                             failure: function (response) {
                                                 showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
@@ -1175,7 +1175,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editUserWindow.show();
             },
             deleteUser: function (record) {
                 const grid = this;
@@ -1295,7 +1295,7 @@ Ext.define('Netresearch.widget.Admin', {
                 leadUserStore.load();
                 record = record || {};
 
-                const window = Ext.create('Ext.window.Window', {
+                const editTeamWindow = Ext.create('Ext.window.Window', {
                     title: panel._editTeamTitle,
                     modal: true,
                     width: 400,
@@ -1349,7 +1349,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function (response) {
-                                                window.close();
+                                                editTeamWindow.close();
                                                 showNotification(panel._successTitle, panel._teamSavedTitle, true);
                                             },
                                             failure: function (response) {
@@ -1363,7 +1363,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editTeamWindow.show();
             },
             deleteTeam: function (record) {
                 const grid = this;
@@ -1552,7 +1552,7 @@ Ext.define('Netresearch.widget.Admin', {
 
                 if (!record) record = {};
 
-                const window = Ext.create('Ext.window.Window', {
+                const editPresetWindow = Ext.create('Ext.window.Window', {
                     title: panel._editPresetTitle,
                     modal: true,
                     width: 400,
@@ -1641,7 +1641,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function (response) {
-                                                window.close();
+                                                editPresetWindow.close();
                                             },
                                             failure: function (response) {
                                                 showAjaxFailure(panel._errorTitle, response, panel._seriousErrorTitle, 200);
@@ -1654,7 +1654,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editPresetWindow.show();
             },
             refresh: function () {
                 this.customerStore.load();
@@ -1770,7 +1770,7 @@ Ext.define('Netresearch.widget.Admin', {
 
                 if (!record) record = {};
 
-                const window = Ext.create('Ext.window.Window', {
+                const editTicketSystemWindow = Ext.create('Ext.window.Window', {
                     title: panel._editTicketSystemTitle,
                     modal: true,
                     width: 600,
@@ -1878,7 +1878,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function (response) {
-                                                window.close();
+                                                editTicketSystemWindow.close();
                                                 showNotification(panel._successTitle, panel._ticketSystemSavedTitle, true);
                                             },
                                             failure: function (response) {
@@ -1892,7 +1892,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editTicketSystemWindow.show();
             },
             deleteTicketSystem: function (record) {
                 const grid = this;
@@ -1999,7 +1999,7 @@ Ext.define('Netresearch.widget.Admin', {
             editActivity: function (record) {
                 record = record || {};
 
-                const window = Ext.create('Ext.window.Window', {
+                const editActivityWindow = Ext.create('Ext.window.Window', {
                     title: panel._editActivityTitle,
                     modal: true,
                     width: 400,
@@ -2053,7 +2053,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function (response) {
-                                                window.close();
+                                                editActivityWindow.close();
                                                 showNotification(panel._successTitle, panel._activitySavedTitle, true);
                                             },
                                             failure: function (response) {
@@ -2067,7 +2067,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editActivityWindow.show();
             },
             deleteActivity: function (record) {
                 const grid = this;
@@ -2184,7 +2184,7 @@ Ext.define('Netresearch.widget.Admin', {
 
                 record = record || {};
 
-                const window = Ext.create('Ext.window.Window', {
+                const editContractWindow = Ext.create('Ext.window.Window', {
                     title: panel._editContractTitle,
                     modal: true,
                     width: 400,
@@ -2291,7 +2291,7 @@ Ext.define('Netresearch.widget.Admin', {
                                             params: values,
                                             scope: this,
                                             success: function (response) {
-                                                window.close();
+                                                editContractWindow.close();
                                                 showNotification(panel._successTitle, panel._contractSavedTitle, true);
                                             },
                                             failure: function (response) {
@@ -2305,7 +2305,7 @@ Ext.define('Netresearch.widget.Admin', {
                     ]
                 });
 
-                window.show();
+                editContractWindow.show();
             },
             deleteContract: function (record) {
                 const grid = this;

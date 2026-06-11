@@ -8,7 +8,7 @@
 // ==/UserScript==
 
 
-const ticket = null || globalThis.location.href.split('/').slice(-1)[0];
+const ticket = globalThis.location.href.split('/').slice(-1)[0];
 const timetrackerUrl = 'https://timetracker/getTicketTimeSummary/' + ticket;
 
 window.addEventListener('load', function () {
@@ -81,8 +81,8 @@ function createTimeSummary(list, data) {
     const newDiv = document.createElement('div');
     newDiv.style.marginBottom = '20px';
     newDiv.style.display = 'flex';
-    newDiv.appendChild.felxdirection = 'row';
-    newDiv.style.fleyWrap = 'wrap';
+    newDiv.style.flexDirection = 'row';
+    newDiv.style.flexWrap = 'wrap';
     newDiv.style.width = '100%';
 
     const rowOne = document.createElement('div');
