@@ -129,7 +129,7 @@ class LdapClientService
                 'baseDn' => $this->baseDn,
             ]);
 
-            throw new LdapConnectionException('No connection to LDAP: ' . $this->getLdapOptions()['host'] . ': ' . $ldapException->getMessage() . '', $ldapException->getCode(), $ldapException);
+            throw new LdapConnectionException('No connection to LDAP: ' . $ldapOptions['host'] . ': ' . $ldapException->getMessage(), $ldapException->getCode(), $ldapException);
         }
 
         $searchFilter = '(' . $this->userNameField . '=' . ldap_escape($this->userName) . ')';
