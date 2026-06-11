@@ -33,36 +33,36 @@ Ext.define('Netresearch.widget.Controlling', {
     initComponent: function() {
         this.on('render', this.refreshStores, this);
 
-        var monthArray = Ext.Array.map(Ext.Date.monthNames, function (e) { return [e]; });
-        var months = [];
-        for (var c=1; c <= 12; c++) {
+        const monthArray = Ext.Array.map(Ext.Date.monthNames, function (e) { return [e]; });
+        const months = [];
+        for (let c=1; c <= 12; c++) {
             months.push({
                 value: c,
                 displayname: monthArray[(c-1)]
             });
         }
 
-        var monthStore = new Ext.data.Store({
+        const monthStore = new Ext.data.Store({
             fields: ['value', 'displayname'],
             data: months
         });
 
         // Calculate last 5 years dynamically
-        var years = [
+        const years = [
             { year: this.curYear }];
-        for (var y = 1; y <= 4; y++)
+        for (let y = 1; y <= 4; y++)
             years.push({year: this.curYear - y });
-        var yearStore = Ext.create('Ext.data.Store', {
+        const yearStore = Ext.create('Ext.data.Store', {
             fields: ['year'],
             data: years
         });
 
-        var date = new Date();
-        var curMonth = date.getMonth() + 1;
+        const date = new Date();
+        let curMonth = date.getMonth() + 1;
         if (curMonth > 1)
             curMonth--;
 
-        var form = new Ext.form.FormPanel({
+        const form = new Ext.form.FormPanel({
             url: url + 'controlling/export',
             title: this._monthlyStatement,
             bodyPadding: '20',
@@ -150,20 +150,20 @@ Ext.define('Netresearch.widget.Controlling', {
                 text: this._exportTitle,
                 scope: this,
                 handler: function() {
-                    var user = Ext.getCmp("cnt-user").value;
-                    var year = parseInt(Ext.getCmp("cnt-year").value) || 0;
-                    var month = parseInt(Ext.getCmp("cnt-month").value) || 0;
-                    var project = Ext.getCmp("cnt-project").value;
-                    var customer = Ext.getCmp("cnt-customer").value;
-                    var billable = +Ext.getCmp("cnt-billable").value;
-                    var tickettitles = +Ext.getCmp("cnt-tickettitles").value;
+                    const user = Ext.getCmp("cnt-user").value;
+                    const year = parseInt(Ext.getCmp("cnt-year").value) || 0;
+                    const month = parseInt(Ext.getCmp("cnt-month").value) || 0;
+                    const project = Ext.getCmp("cnt-project").value;
+                    const customer = Ext.getCmp("cnt-customer").value;
+                    const billable = +Ext.getCmp("cnt-billable").value;
+                    const tickettitles = +Ext.getCmp("cnt-tickettitles").value;
                     this.exportEntries(user, year, month, project, customer, billable, tickettitles);
                 }
             }]
         });
 
         /* Define container panel */
-        var controllingPanel = Ext.create('Ext.panel.Panel', {
+        const controllingPanel = Ext.create('Ext.panel.Panel', {
             layout: 'fit',
             frame: true,
             title: this._monthlyStatement,
@@ -172,7 +172,7 @@ Ext.define('Netresearch.widget.Controlling', {
             margin: '0 0 10 0',
             items: [ form ]
         });
-        var config = {
+        const config = {
             title: this._tabTitle,
             items: [ controllingPanel ]
         };
