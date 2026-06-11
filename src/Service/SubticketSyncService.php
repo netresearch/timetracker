@@ -28,8 +28,9 @@ class SubticketSyncService
      *
      * The project lead user's Jira tokens are used for access.
      *
-     * @throws SubticketSyncException When the project or its ticket system setup is incomplete.
-     *                                Exception codes are sensible HTTP status codes
+     * @throws SubticketSyncException When the project does not exist or its ticket system
+     *                                setup is incomplete (no ticket system, no lead user,
+     *                                no token). Exception codes are sensible HTTP status codes
      * @throws JiraApiException       When fetching subtickets from Jira fails
      *
      * @return list<string> Array of subticket keys
