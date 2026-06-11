@@ -151,9 +151,9 @@ function createLabJiraTimeSummay(list, data) {
     })
 
     //remove existing data
-    liEl.removeChild(liEl.childNodes[1]);
-    liEl.removeChild(liEl.childNodes[2]);
-    liEl.removeChild(liEl.childNodes[3]);
+    liEl.childNodes[1].remove();
+    liEl.childNodes[2].remove();
+    liEl.childNodes[3].remove();
 
     return cloneTitle;
 }
@@ -184,7 +184,7 @@ function getTimeSummary() {
 
             if (list.lastChild.textContent == 'Es liegen keine Informationen vor.') {
 
-                list.removeChild(list.lastChild);
+                list.lastChild.remove();
             }
 
             const newDiv = this.labJira
