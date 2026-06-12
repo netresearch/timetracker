@@ -61,6 +61,28 @@
     object-fit: contain;
 }
 
+/* Menu linking to views already migrated to the new (non-ExtJS) UI */
+.header-nav {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.header-nav-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    color: #1a56a0;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.header-nav-link:hover,
+.header-nav-link:focus {
+    text-decoration: underline;
+}
+
 /* User Badge (status + logout merged) */
 .user-badge {
     display: flex;

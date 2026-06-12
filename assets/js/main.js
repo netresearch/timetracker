@@ -39,6 +39,8 @@ let strings = {
     'Week': 'Week',
     'Month': 'Month',
     'Monthly overview': 'Monthly overview',
+    'Monthly overview (new)': 'Monthly overview (new)',
+    'New interface': 'New interface',
     'Logout': 'Logout',
     'Not logged in': 'Not logged in',
     'User status': 'User status',
@@ -51,6 +53,8 @@ if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
         'Week': 'Woche',
         'Month': 'Monat',
         'Monthly overview': 'Monatsauswertung',
+        'Monthly overview (new)': 'Monatsauswertung (neu)',
+        'New interface': 'Neue Oberfläche',
         'Logout': 'Abmelden',
         'Not logged in': 'Nicht angemeldet',
         'User status': 'Benutzerstatus',
@@ -80,6 +84,13 @@ function buildHeaderHtml() {
         '<div class="header-logo">',
         '<img id="logo" src="' + globalConfig.logo_url + '" alt="' + (globalConfig.app_name || 'TimeTracker') + ' - Home">',
         '</div>'
+    );
+
+    // Menu for views already migrated to the new (non-ExtJS) UI
+    parts.push(
+        '<nav class="header-nav" aria-label="' + strings['New interface'] + '">',
+        '<a href="/ui/month" class="header-nav-link">' + strings['Monthly overview (new)'] + '</a>',
+        '</nav>'
     );
 
     // User badge (status + logout merged)
