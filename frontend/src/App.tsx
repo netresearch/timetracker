@@ -1,11 +1,10 @@
 import { Navigate, Route, Router } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { type ParentProps } from 'solid-js'
+import { onMount, type ParentProps } from 'solid-js'
 
 import { SessionExpiredError } from './api/client'
-import { ThemeToggle } from './components/ThemeToggle'
 import { appConfig } from './config'
-import { m } from './paraglide/messages.js'
+import { initHeaderDynamics } from './header'
 import Month from './pages/Month'
 
 const queryClient = new QueryClient({
@@ -17,23 +16,16 @@ const queryClient = new QueryClient({
   },
 })
 
+// The page chrome (header + main nav) is server-rendered by
+// templates/partials/header.html.twig, shared with the ExtJS shell;
+// this layout only animates it and hosts the routed content.
 function Layout(props: ParentProps) {
-  const config = appConfig()
+  onMount(() => {
+    initHeaderDynamics(appConfig())
+  })
 
   return (
     <QueryClientProvider client={queryClient}>
-      <a class="skip-link" href="#main-content">
-        {m.app_skip_to_content()}
-      </a>
-      <header class="app-header">
-        <p class="app-title">{config.appTitle}</p>
-        <nav class="app-nav" aria-label={config.appTitle}>
-          <a class="app-nav-link" href={config.legacyUrl}>
-            {m.app_classic_ui()}
-          </a>
-        </nav>
-        <ThemeToggle />
-      </header>
       <main id="main-content">{props.children}</main>
     </QueryClientProvider>
   )

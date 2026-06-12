@@ -43,6 +43,11 @@ final class SpaAction extends BaseController
         $settings = $user->getSettings();
 
         return $this->render('ui/index.html.twig', [
+            'globalConfig' => [
+                'logo_url' => $this->params->get('app_logo_url'),
+                'monthly_overview_url' => $this->params->get('app_monthly_overview_url'),
+                'header_url' => $this->params->get('app_header_url'),
+            ],
             'apptitle' => $this->params->get('app_title'),
             'locale' => $settings['locale'],
             'settings' => $settings,

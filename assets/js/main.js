@@ -35,97 +35,18 @@ const cellEditing = Ext.create('Ext.grid.plugin.CellEditing', {
 });
 
 let strings = {
-    'Today': 'Today',
-    'Week': 'Week',
-    'Month': 'Month',
-    'Monthly overview': 'Monthly overview',
-    'Monthly overview (new)': 'Monthly overview (new)',
-    'New interface': 'New interface',
-    'Logout': 'Logout',
-    'Not logged in': 'Not logged in',
-    'User status': 'User status',
-    'Working time': 'Working time'
+    'Not logged in': 'Not logged in'
 };
 
 if ((undefined !== settingsData) && (settingsData.locale === 'de')) {
     strings = {
-        'Today': 'Heute',
-        'Week': 'Woche',
-        'Month': 'Monat',
-        'Monthly overview': 'Monatsauswertung',
-        'Monthly overview (new)': 'Monatsauswertung (neu)',
-        'New interface': 'Neue Oberfläche',
-        'Logout': 'Abmelden',
-        'Not logged in': 'Nicht angemeldet',
-        'User status': 'Benutzerstatus',
-        'Working time': 'Arbeitszeit'
+        'Not logged in': 'Nicht angemeldet'
     };
 }
 
 let ttt_container = undefined;
 let ttt_tabpanel = undefined;
 let ttt_items = [];
-
-/**
- * Builds semantic, accessible header HTML.
- * Uses <header>, proper ARIA attributes, and flexbox-ready structure.
- */
-function buildHeaderHtml() {
-    const parts = [];
-
-    // External header iframe (if configured)
-    if (globalConfig.header_url && globalConfig.header_url !== '') {
-        parts.push('<iframe id="nrnavi" src="' + globalConfig.header_url + '" title="Navigation"></iframe>');
-    }
-
-    // Main header with semantic structure, followed by the logo section
-    parts.push(
-        '<header class="app-header" role="banner">',
-        '<div class="header-logo">',
-        '<img id="logo" src="' + globalConfig.logo_url + '" alt="' + (globalConfig.app_name || 'TimeTracker') + ' - Home">',
-        '</div>'
-    );
-
-    // Menu for views already migrated to the new (non-ExtJS) UI
-    parts.push(
-        '<nav class="header-nav" aria-label="' + strings['New interface'] + '">',
-        '<a href="/ui/month" class="header-nav-link">' + strings['Monthly overview (new)'] + '</a>',
-        '</nav>'
-    );
-
-    // User badge (status + logout merged)
-    if (typeof statusUrlJson !== 'undefined' || typeof logoutUrlHtml !== 'undefined') {
-        parts.push(
-            '<div id="user-badge" class="user-badge status_inactive" role="status" aria-live="polite" aria-label="' + strings['User status'] + '">',
-            '<span class="status-indicator" aria-hidden="true"></span>',
-            '<span class="user-name">' + strings['Not logged in'] + '</span>'
-        );
-        if (typeof logoutUrlHtml !== 'undefined') {
-            parts.push('<a href="' + logoutUrlHtml + '" class="badge-logout" aria-label="' + strings['Logout'] + '">' + strings['Logout'] + '</a>');
-        }
-        parts.push('</div>');
-    }
-
-    // Working time section
-    parts.push(
-        '<section class="header-worktime" aria-label="' + strings['Working time'] + '">',
-        '<dl class="worktime-list">',
-        '<div class="worktime-item"><dt>' + strings['Today'] + '</dt><dd id="worktime-day">0:00</dd></div>',
-        '<div class="worktime-item"><dt>' + strings['Week'] + '</dt><dd id="worktime-week">0:00</dd></div>',
-        '<div class="worktime-item"><dt>' + strings['Month'] + '</dt><dd id="worktime-month">0:00</dd></div>',
-        '</dl>'
-    );
-
-    // Monthly overview link
-    if (globalConfig.monthly_overview_url !== undefined &&
-        globalConfig.monthly_overview_url != null &&
-        globalConfig.monthly_overview_url !== '') {
-        parts.push('<a id="sumlink" href="' + globalConfig.monthly_overview_url + settingsData.user_name + '" target="_blank" rel="noopener noreferrer" class="worktime-link">' + strings['Monthly overview'] + '</a>');
-    }
-    parts.push('</section>', '</header>');
-
-    return parts.join('');
-}
 
 function switchTab(number) {
     number = Number.parseInt(number, 10);
@@ -207,8 +128,8 @@ Ext.onReady(function () {
         }
     });
 
-    /* Build semantic header HTML */
-    const headerHtml = buildHeaderHtml();
+    /* Adopt the server-rendered shared header (templates/partials/header.html.twig) */
+    const headerEl = Ext.get('page-header');
 
     /* Render whole layout into grid div */
     ttt_container = Ext.create('Ext.container.Viewport', {
@@ -216,9 +137,9 @@ Ext.onReady(function () {
         renderTo: Ext.get('grid'),
         items: [{
             region: 'north',
-            height: 80,
+            height: headerEl ? headerEl.getHeight() : 126,
             id: 'header',
-            html: headerHtml
+            contentEl: 'page-header'
         },
             ttt_tabpanel
         ]

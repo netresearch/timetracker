@@ -29,6 +29,10 @@ final class UiSpaActionTest extends AbstractWebTestCase
         self::assertStringContainsString('"userName":"unittest"', $content);
         self::assertStringContainsString('"locale"', $content);
         self::assertStringContainsString('id="app"', $content);
+        // Shared chrome from partials/header.html.twig
+        self::assertStringContainsString('id="page-header"', $content);
+        self::assertStringContainsString('class="main-nav"', $content);
+        self::assertStringContainsString('id="user-badge"', $content);
     }
 
     public function testCatchAllServesClientSideRoutes(): void

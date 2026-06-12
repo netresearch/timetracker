@@ -6,6 +6,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ apptitle }}</title>
+        <link rel="stylesheet" href="{{ asset('build/css/header.css') }}">
         {{ vite_entry_link_tags('app') }}
         <script>
             window.APP_CONFIG = {{ {
@@ -20,6 +21,7 @@
         {{ vite_entry_script_tags('app') }}
     </head>
     <body>
+        {% include 'partials/header.html.twig' with {'active': 'month'} %}
         <div id="app"></div>
     </body>
 </html>

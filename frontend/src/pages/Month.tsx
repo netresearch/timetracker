@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/solid-query'
 import { createMemo, For, Match, Show, Switch } from 'solid-js'
 
 import { holidaysQuery, monthTimesQuery } from '../api/queries'
+import { ThemeToggle } from '../components/ThemeToggle'
 import { appConfig } from '../config'
 import { formatDay, formatMinutes, formatMonthTitle } from '../lib/format'
 import { computeMonth, type DayRow } from '../lib/month'
@@ -95,6 +96,7 @@ export default function Month() {
             )}
           </Show>
         </nav>
+        <ThemeToggle />
       </div>
 
       <Switch>

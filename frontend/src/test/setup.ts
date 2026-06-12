@@ -40,6 +40,15 @@ Object.defineProperty(window, 'localStorage', {
   configurable: true,
 })
 
+// jsdom has no ResizeObserver; Ark UI's Zag machines expect it.
+class ResizeObserverStub implements ResizeObserver {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+window.ResizeObserver ??= ResizeObserverStub
+
 window.APP_CONFIG = {
   locale: 'en',
   userId: 1,
