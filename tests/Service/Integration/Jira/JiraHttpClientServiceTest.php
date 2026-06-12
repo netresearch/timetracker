@@ -147,7 +147,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(UnexpectedValueException::class);
-        $this->expectExceptionMessage('Invalid token mode: invalid');
+        $this->expectExceptionMessageIsOrContains('Invalid token mode: invalid');
 
         $service->getClient('invalid');
     }
@@ -177,7 +177,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('OAuth private key not configured');
+        $this->expectExceptionMessageIsOrContains('OAuth private key not configured');
 
         $service->getClient('user');
     }
@@ -425,7 +425,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $service->method('getClient')->willReturn($clientMock);
 
         $this->expectException(JiraApiInvalidResourceException::class);
-        $this->expectExceptionMessage('Resource not found');
+        $this->expectExceptionMessageIsOrContains('Resource not found');
 
         $service->get('issue/INVALID-123');
     }
@@ -500,7 +500,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $service->method('getClient')->willReturn($clientMock);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Empty response');
+        $this->expectExceptionMessageIsOrContains('Empty response');
 
         $service->get('issue/TEST-123');
     }
@@ -524,7 +524,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $service->method('getClient')->willReturn($clientMock);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Network error connecting to Jira');
+        $this->expectExceptionMessageIsOrContains('Network error connecting to Jira');
 
         $service->get('issue/TEST-123');
     }
@@ -549,7 +549,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $service->method('getClient')->willReturn($clientMock);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('not valid json');
+        $this->expectExceptionMessageIsOrContains('not valid json');
 
         $service->post('issue', []);
     }
@@ -572,7 +572,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $service->method('getClient')->willReturn($clientMock);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Invalid JSON response from Jira');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON response from Jira');
 
         $service->get('issue/TEST-123');
     }

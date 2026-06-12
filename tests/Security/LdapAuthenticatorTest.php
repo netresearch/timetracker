@@ -143,7 +143,7 @@ final class LdapAuthenticatorTest extends TestCase
         $request = new Request([], ['_username' => '', '_password' => 'pass']);
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Username and password cannot be empty.');
+        $this->expectExceptionMessageIsOrContains('Username and password cannot be empty.');
 
         $authenticator->authenticate($request);
     }
@@ -154,7 +154,7 @@ final class LdapAuthenticatorTest extends TestCase
         $request = new Request([], ['_username' => 'user', '_password' => '']);
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Username and password cannot be empty.');
+        $this->expectExceptionMessageIsOrContains('Username and password cannot be empty.');
 
         $authenticator->authenticate($request);
     }
@@ -165,7 +165,7 @@ final class LdapAuthenticatorTest extends TestCase
         $request = new Request([], ['_username' => '', '_password' => '']);
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Username and password cannot be empty.');
+        $this->expectExceptionMessageIsOrContains('Username and password cannot be empty.');
 
         $authenticator->authenticate($request);
     }
@@ -177,7 +177,7 @@ final class LdapAuthenticatorTest extends TestCase
         $request = new Request([], ['_username' => 'user<script>', '_password' => 'pass']);
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Invalid username format.');
+        $this->expectExceptionMessageIsOrContains('Invalid username format.');
 
         $authenticator->authenticate($request);
     }
@@ -190,7 +190,7 @@ final class LdapAuthenticatorTest extends TestCase
         $request = new Request([], ['_username' => $longUsername, '_password' => 'pass']);
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Invalid username format.');
+        $this->expectExceptionMessageIsOrContains('Invalid username format.');
 
         $authenticator->authenticate($request);
     }
@@ -385,7 +385,7 @@ final class LdapAuthenticatorTest extends TestCase
         $userBadge = $passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge::class);
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Authentication failed. Please check your credentials.');
+        $this->expectExceptionMessageIsOrContains('Authentication failed. Please check your credentials.');
 
         self::assertNotNull($userBadge);
         $userBadge->getUser();
@@ -413,7 +413,7 @@ final class LdapAuthenticatorTest extends TestCase
         $userBadge = $passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge::class);
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('An unexpected error occurred during authentication.');
+        $this->expectExceptionMessageIsOrContains('An unexpected error occurred during authentication.');
 
         self::assertNotNull($userBadge);
         $userBadge->getUser();

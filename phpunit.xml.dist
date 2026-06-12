@@ -62,6 +62,7 @@
             <!-- Repository unit tests -->
             <file>tests/Repository/EntryRepositoryTest.php</file>
             <file>tests/Repository/InterpretationUserFilterTest.php</file>
+            <file>tests/Repository/OptimizedEntryRepositoryCacheTest.php</file>
             <!-- Security unit tests (not RememberMeRedirectTest) -->
             <file>tests/Security/LdapAuthenticatorTest.php</file>
         </testsuite>

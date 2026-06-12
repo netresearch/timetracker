@@ -22,6 +22,7 @@ use function assert;
 use function count;
 use function is_array;
 use function is_scalar;
+use function is_string;
 use function sprintf;
 use function strlen;
 
@@ -186,9 +187,12 @@ class ModernLdapService
                 assert(is_array($cn));
                 assert(is_array($description));
 
+                $name = $cn[0] ?? null;
+                $descriptionValue = $description[0] ?? null;
+
                 $groups[] = [
-                    'name' => $cn[0] ?? '',
-                    'description' => $description[0] ?? '',
+                    'name' => is_string($name) ? $name : '',
+                    'description' => is_string($descriptionValue) ? $descriptionValue : '',
                 ];
             }
 

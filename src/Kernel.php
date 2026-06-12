@@ -23,9 +23,14 @@ class Kernel extends BaseKernel
     use MicroKernelTrait;
 
     /**
+     * The deprecated HttpKernel BundleInterface must stay until Symfony 9
+     * changes the parent registerBundles() signature — the replacement
+     * interface is not covariant with it.
+     *
      * @return iterable<BundleInterface>
      */
     #[Override]
+    // @phpstan-ignore return.deprecatedInterface
     public function registerBundles(): iterable
     {
         $contents = require $this->getProjectDir() . '/config/bundles.php';
@@ -34,6 +39,7 @@ class Kernel extends BaseKernel
             assert(is_array($envs));
             if (($envs[$this->environment] ?? $envs['all'] ?? false) === true) {
                 $bundle = new $class();
+                // @phpstan-ignore instanceof.deprecatedInterface
                 assert($bundle instanceof BundleInterface);
                 yield $bundle;
             }

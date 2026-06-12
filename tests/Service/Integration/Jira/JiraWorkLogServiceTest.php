@@ -407,7 +407,7 @@ final class JiraWorkLogServiceTest extends TestCase
             ->willReturn('invalid response');
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Invalid response from Jira API when creating work log');
+        $this->expectExceptionMessageIsOrContains('Invalid response from Jira API when creating work log');
 
         $this->service->updateEntryWorkLog($entry);
     }
@@ -444,7 +444,7 @@ final class JiraWorkLogServiceTest extends TestCase
             ->willReturn($response);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Unexpected response from Jira when updating worklog');
+        $this->expectExceptionMessageIsOrContains('Unexpected response from Jira when updating worklog');
 
         $this->service->updateEntryWorkLog($entry);
     }
@@ -761,7 +761,7 @@ final class JiraWorkLogServiceTest extends TestCase
             ->willThrowException(new Exception('Auth failed'));
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Jira connection validation failed: Auth failed');
+        $this->expectExceptionMessageIsOrContains('Jira connection validation failed: Auth failed');
 
         $this->service->validateConnection($user, $ticketSystem);
     }
@@ -817,7 +817,7 @@ final class JiraWorkLogServiceTest extends TestCase
             ->willThrowException(new Exception('API error'));
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Failed to get Jira project info: API error');
+        $this->expectExceptionMessageIsOrContains('Failed to get Jira project info: API error');
 
         $this->service->getProjectInfo('PROJ', $user, $ticketSystem);
     }

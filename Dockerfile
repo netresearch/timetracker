@@ -98,7 +98,7 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 # Bun is the package manager of the new SolidJS frontend (frontend/)
-COPY --from=oven/bun:1.3.12 /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
 
 # Copy dependency manifests first (better cache)
 COPY --chown=app:app package.json package-lock.json ./
@@ -152,7 +152,6 @@ USER app
 FROM deps AS dev
 
 ARG XDEBUG_VERSION
-ARG PCOV_VERSION
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 
@@ -166,9 +165,9 @@ RUN set -ex \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Xdebug and PCOV
-RUN pecl install xdebug-${XDEBUG_VERSION} pcov-${PCOV_VERSION} \
-    && docker-php-ext-enable xdebug pcov
+# Install Xdebug (debugging and coverage driver; enable coverage via XDEBUG_MODE=coverage)
+RUN pecl install xdebug-${XDEBUG_VERSION} \
+    && docker-php-ext-enable xdebug
 
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
 

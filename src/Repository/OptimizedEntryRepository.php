@@ -229,7 +229,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             assert(isset($cachedResult['duration'], $cachedResult['count']));
             assert(is_int($cachedResult['duration']) && is_int($cachedResult['count']));
 
-            return $cachedResult;
+            return ['duration' => $cachedResult['duration'], 'count' => $cachedResult['count']];
         }
 
         $queryBuilder = $this->createQueryBuilder('e')

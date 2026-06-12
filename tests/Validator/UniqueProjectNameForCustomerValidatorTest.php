@@ -36,7 +36,6 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $this->repository = $this->createMock(ProjectRepository::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new UniqueProjectNameForCustomerValidator($this->repository);
-        $this->validator->initialize($this->context);
     }
 
     public function testValidateThrowsOnInvalidConstraintType(): void
@@ -46,14 +45,14 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $this->expectException(UnexpectedTypeException::class);
 
         $dto = new ProjectSaveDto(name: 'Test', customer: 1);
-        $this->validator->validate($dto, $constraint);
+        $this->validator->validateInContext($dto, $constraint, $this->context);
     }
 
     public function testValidateReturnsEarlyForNonDtoValue(): void
     {
         $this->repository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate('not-a-dto', new UniqueProjectNameForCustomer());
+        $this->validator->validateInContext('not-a-dto', new UniqueProjectNameForCustomer(), $this->context);
     }
 
     public function testValidateReturnsEarlyForEmptyName(): void
@@ -61,7 +60,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $this->repository->expects(self::never())->method('findOneBy');
 
         $dto = new ProjectSaveDto(name: '', customer: 1);
-        $this->validator->validate($dto, new UniqueProjectNameForCustomer());
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
     }
 
     public function testValidateReturnsEarlyForZeroStringName(): void
@@ -69,7 +68,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $this->repository->expects(self::never())->method('findOneBy');
 
         $dto = new ProjectSaveDto(name: '0', customer: 1);
-        $this->validator->validate($dto, new UniqueProjectNameForCustomer());
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
     }
 
     public function testValidateReturnsEarlyForNullCustomer(): void
@@ -77,7 +76,7 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $this->repository->expects(self::never())->method('findOneBy');
 
         $dto = new ProjectSaveDto(name: 'Project', customer: null);
-        $this->validator->validate($dto, new UniqueProjectNameForCustomer());
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
     }
 
     public function testValidatePassesWhenNoExistingProjectFound(): void
@@ -89,61 +88,59 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
         $this->context->expects(self::never())->method('buildViolation');
 
         $dto = new ProjectSaveDto(name: 'New Project', customer: 1);
-        $this->validator->validate($dto, new UniqueProjectNameForCustomer());
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
     }
 
     public function testValidatePassesWhenUpdatingSameProject(): void
     {
-        $existingProject = self::createStub(Project::class);
-        $existingProject->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Existing Project', 'customer' => 1])
-            ->willReturn($existingProject);
+        $this->mockExistingProjectFound('Existing Project');
 
         $this->context->expects(self::never())->method('buildViolation');
 
         $dto = new ProjectSaveDto(id: 5, name: 'Existing Project', customer: 1);
-        $this->validator->validate($dto, new UniqueProjectNameForCustomer());
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingProject = self::createStub(Project::class);
-        $existingProject->method('getId')->willReturn(5);
+        $this->mockExistingProjectFound('Duplicate Name');
 
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Duplicate Name', 'customer' => 1])
-            ->willReturn($existingProject);
-
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->method('setParameter')->willReturnSelf();
-        $violationBuilder->expects(self::once())->method('addViolation');
-
-        $this->context->method('buildViolation')
-            ->willReturn($violationBuilder);
+        $this->expectSingleViolation();
 
         $dto = new ProjectSaveDto(id: 0, name: 'Duplicate Name', customer: 1);
-        $this->validator->validate($dto, new UniqueProjectNameForCustomer());
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentProjectHasSameName(): void
+    {
+        $this->mockExistingProjectFound('Conflicting Name');
+
+        $this->expectSingleViolation();
+
+        $dto = new ProjectSaveDto(id: 10, name: 'Conflicting Name', customer: 1);
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
+    }
+
+    /**
+     * Mocks the repository so the uniqueness lookup finds an existing project (id 5) with $name for customer 1.
+     */
+    private function mockExistingProjectFound(string $name): void
     {
         $existingProject = self::createStub(Project::class);
         $existingProject->method('getId')->willReturn(5);
 
         $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Conflicting Name', 'customer' => 1])
+            ->with(['name' => $name, 'customer' => 1])
             ->willReturn($existingProject);
+    }
 
+    private function expectSingleViolation(): void
+    {
         $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $violationBuilder->method('setParameter')->willReturnSelf();
         $violationBuilder->expects(self::once())->method('addViolation');
 
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
-
-        $dto = new ProjectSaveDto(id: 10, name: 'Conflicting Name', customer: 1);
-        $this->validator->validate($dto, new UniqueProjectNameForCustomer());
     }
 }

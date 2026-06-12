@@ -32,7 +32,6 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
     {
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new CustomerTeamsRequiredValidator();
-        $this->validator->initialize($this->context);
     }
 
     // ==================== Constraint type tests ====================
@@ -43,7 +42,7 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
 
         $this->expectException(UnexpectedTypeException::class);
 
-        $this->validator->validate(new CustomerSaveDto(), $constraint);
+        $this->validator->validateInContext(new CustomerSaveDto(), $constraint, $this->context);
     }
 
     // ==================== Non-CustomerSaveDto value tests ====================
@@ -53,14 +52,14 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
         $this->context->expects(self::never())->method('buildViolation');
 
         // Validate with a string instead of CustomerSaveDto
-        $this->validator->validate('not a dto', new CustomerTeamsRequired());
+        $this->validator->validateInContext('not a dto', new CustomerTeamsRequired(), $this->context);
     }
 
     public function testValidateSkipsNullValue(): void
     {
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate(null, new CustomerTeamsRequired());
+        $this->validator->validateInContext(null, new CustomerTeamsRequired(), $this->context);
     }
 
     // ==================== Valid cases (no violation) ====================
@@ -77,7 +76,7 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
 
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate($dto, new CustomerTeamsRequired());
+        $this->validator->validateInContext($dto, new CustomerTeamsRequired(), $this->context);
     }
 
     public function testValidatePassesWhenNotGlobalButHasTeams(): void
@@ -92,7 +91,7 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
 
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate($dto, new CustomerTeamsRequired());
+        $this->validator->validateInContext($dto, new CustomerTeamsRequired(), $this->context);
     }
 
     // ==================== Invalid cases (violation) ====================
@@ -115,7 +114,7 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
             ->with('Teams must be specified when customer is not global.')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate($dto, new CustomerTeamsRequired());
+        $this->validator->validateInContext($dto, new CustomerTeamsRequired(), $this->context);
     }
 
     public function testValidateUsesCustomMessage(): void
@@ -139,6 +138,6 @@ final class CustomerTeamsRequiredValidatorTest extends TestCase
             ->with('Custom error message')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate($dto, $constraint);
+        $this->validator->validateInContext($dto, $constraint, $this->context);
     }
 }

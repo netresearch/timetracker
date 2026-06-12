@@ -112,7 +112,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $ticketSystem = $this->createTicketSystem();
 
         $this->expectException(JiraApiUnauthorizedException::class);
-        $this->expectExceptionMessage('Unauthorized. Redirecting to Jira OAuth.');
+        $this->expectExceptionMessageIsOrContains('Unauthorized. Redirecting to Jira OAuth.');
 
         $this->service->throwUnauthorizedRedirect($ticketSystem);
     }
@@ -310,19 +310,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $user = $this->createUser();
         $ticketSystem = $this->createTicketSystem();
 
-        $userTicketSystem = new UserTicketsystem();
-        $userTicketSystem->setUser($user);
-        $userTicketSystem->setTicketSystem($ticketSystem);
-        $userTicketSystem->setAvoidConnection(false);
-        $userTicketSystem->setAccessToken('encrypted_token');
-        $userTicketSystem->setTokenSecret('encrypted_secret');
-
-        $this->managerRegistry->method('getRepository')
-            ->willReturn($this->repository);
-        $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
-        $this->entityManager->method('getRepository')
-            ->willReturn($this->repository);
-        $this->repository->method('findOneBy')->willReturn($userTicketSystem);
+        $userTicketSystem = $this->mockStoredUserTicketSystem($user, $ticketSystem, 'encrypted_token', 'encrypted_secret');
 
         $this->tokenEncryptionService->method('decryptToken')
             ->willReturnMap([
@@ -357,19 +345,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $user = $this->createUser();
         $ticketSystem = $this->createTicketSystem();
 
-        $userTicketSystem = new UserTicketsystem();
-        $userTicketSystem->setUser($user);
-        $userTicketSystem->setTicketSystem($ticketSystem);
-        $userTicketSystem->setAvoidConnection(false);
-        $userTicketSystem->setAccessToken('');
-        $userTicketSystem->setTokenSecret('');
-
-        $this->managerRegistry->method('getRepository')
-            ->willReturn($this->repository);
-        $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
-        $this->entityManager->method('getRepository')
-            ->willReturn($this->repository);
-        $this->repository->method('findOneBy')->willReturn($userTicketSystem);
+        $this->mockStoredUserTicketSystem($user, $ticketSystem, '', '');
 
         $this->tokenEncryptionService->method('decryptToken')->willReturn('');
 
@@ -381,31 +357,10 @@ final class JiraAuthenticationServiceTest extends TestCase
     #[Test]
     public function fetchOAuthRequestTokenSucceeds(): void
     {
-        $user = $this->createUser();
-        $ticketSystem = $this->createTicketSystem();
+        $httpClientService = $this->createHttpClientServiceWithResponse('oauth_token=request_token&oauth_token_secret=temp_secret');
+        $httpClientService->method('getUser')->willReturn($this->createUser());
 
-        $client = self::createStub(Client::class);
-        $response = new Response(200, [], 'oauth_token=request_token&oauth_token_secret=temp_secret');
-
-        $client->method('post')
-            ->willReturn($response);
-
-        $httpClientService = self::createStub(JiraHttpClientService::class);
-        $httpClientService->method('getClient')
-            ->willReturn($client);
-        $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
-        $httpClientService->method('getUser')->willReturn($user);
-
-        $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
-        $this->entityManager->method('getRepository')
-            ->willReturn($this->repository);
-        $this->repository->method('findOneBy')->willReturn(null);
-
-        $this->tokenEncryptionService->method('encryptToken')
-            ->willReturnCallback(static fn (string $token): string => 'encrypted_' . $token);
-
-        $this->entityManager->expects($this->once())->method('persist');
-        $this->entityManager->expects($this->once())->method('flush');
+        $this->expectNewTokenPersisted();
 
         $requestToken = $this->service->fetchOAuthRequestToken($httpClientService);
 
@@ -415,19 +370,10 @@ final class JiraAuthenticationServiceTest extends TestCase
     #[Test]
     public function fetchOAuthRequestTokenThrowsOnEmptyResponse(): void
     {
-        $ticketSystem = $this->createTicketSystem();
-
-        $client = self::createStub(Client::class);
-        $response = new Response(200, [], '');
-
-        $client->method('post')->willReturn($response);
-
-        $httpClientService = self::createStub(JiraHttpClientService::class);
-        $httpClientService->method('getClient')->willReturn($client);
-        $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
+        $httpClientService = $this->createHttpClientServiceWithResponse('');
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Empty response from Jira OAuth endpoint');
+        $this->expectExceptionMessageIsOrContains('Empty response from Jira OAuth endpoint');
 
         $this->service->fetchOAuthRequestToken($httpClientService);
     }
@@ -435,19 +381,10 @@ final class JiraAuthenticationServiceTest extends TestCase
     #[Test]
     public function fetchOAuthRequestTokenThrowsOnOAuthProblem(): void
     {
-        $ticketSystem = $this->createTicketSystem();
-
-        $client = self::createStub(Client::class);
-        $response = new Response(200, [], 'oauth_problem=token_rejected');
-
-        $client->method('post')->willReturn($response);
-
-        $httpClientService = self::createStub(JiraHttpClientService::class);
-        $httpClientService->method('getClient')->willReturn($client);
-        $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
+        $httpClientService = $this->createHttpClientServiceWithResponse('oauth_problem=token_rejected');
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('OAuth problem: token_rejected');
+        $this->expectExceptionMessageIsOrContains('OAuth problem: token_rejected');
 
         $this->service->fetchOAuthRequestToken($httpClientService);
     }
@@ -455,19 +392,10 @@ final class JiraAuthenticationServiceTest extends TestCase
     #[Test]
     public function fetchOAuthRequestTokenThrowsOnMissingToken(): void
     {
-        $ticketSystem = $this->createTicketSystem();
-
-        $client = self::createStub(Client::class);
-        $response = new Response(200, [], 'some_other_param=value');
-
-        $client->method('post')->willReturn($response);
-
-        $httpClientService = self::createStub(JiraHttpClientService::class);
-        $httpClientService->method('getClient')->willReturn($client);
-        $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
+        $httpClientService = $this->createHttpClientServiceWithResponse('some_other_param=value');
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Could not fetch OAuth request token');
+        $this->expectExceptionMessageIsOrContains('Could not fetch OAuth request token');
 
         $this->service->fetchOAuthRequestToken($httpClientService);
     }
@@ -475,31 +403,10 @@ final class JiraAuthenticationServiceTest extends TestCase
     #[Test]
     public function fetchOAuthAccessTokenSucceeds(): void
     {
-        $user = $this->createUser();
-        $ticketSystem = $this->createTicketSystem();
+        $httpClientService = $this->createHttpClientServiceWithResponse('oauth_token=access_token&oauth_token_secret=access_secret');
+        $httpClientService->method('getUser')->willReturn($this->createUser());
 
-        $client = self::createStub(Client::class);
-        $response = new Response(200, [], 'oauth_token=access_token&oauth_token_secret=access_secret');
-
-        $client->method('post')
-            ->willReturn($response);
-
-        $httpClientService = self::createStub(JiraHttpClientService::class);
-        $httpClientService->method('getClient')
-            ->willReturn($client);
-        $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
-        $httpClientService->method('getUser')->willReturn($user);
-
-        $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
-        $this->entityManager->method('getRepository')
-            ->willReturn($this->repository);
-        $this->repository->method('findOneBy')->willReturn(null);
-
-        $this->tokenEncryptionService->method('encryptToken')
-            ->willReturnCallback(static fn (string $token): string => 'encrypted_' . $token);
-
-        $this->entityManager->expects($this->once())->method('persist');
-        $this->entityManager->expects($this->once())->method('flush');
+        $this->expectNewTokenPersisted();
 
         // Should not throw - persist/flush expectations above act as the assertions
         $this->service->fetchOAuthAccessToken($httpClientService, 'request_token', 'verifier_code');
@@ -520,7 +427,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Could not fetch OAuth access token');
+        $this->expectExceptionMessageIsOrContains('Could not fetch OAuth access token');
 
         $this->service->fetchOAuthAccessToken($httpClientService, 'request_token', 'verifier_code');
     }
@@ -565,21 +472,72 @@ final class JiraAuthenticationServiceTest extends TestCase
     #[Test]
     public function fetchOAuthRequestTokenHandlesArrayOAuthProblem(): void
     {
-        $ticketSystem = $this->createTicketSystem();
-
-        $client = self::createStub(Client::class);
         // Simulates parse_str creating an array for repeated parameters
-        $response = new Response(200, [], 'oauth_problem[]=error1&oauth_problem[]=error2');
+        $httpClientService = $this->createHttpClientServiceWithResponse('oauth_problem[]=error1&oauth_problem[]=error2');
+
+        $this->expectException(JiraApiException::class);
+        $this->expectExceptionMessageIsOrContains('OAuth problem:');
+
+        $this->service->fetchOAuthRequestToken($httpClientService);
+    }
+
+    /**
+     * Creates a stored UserTicketsystem and wires registry/entity manager/repository to return it.
+     */
+    private function mockStoredUserTicketSystem(
+        User $user,
+        TicketSystem $ticketSystem,
+        string $accessToken,
+        string $tokenSecret,
+    ): UserTicketsystem {
+        $userTicketSystem = new UserTicketsystem();
+        $userTicketSystem->setUser($user);
+        $userTicketSystem->setTicketSystem($ticketSystem);
+        $userTicketSystem->setAvoidConnection(false);
+        $userTicketSystem->setAccessToken($accessToken);
+        $userTicketSystem->setTokenSecret($tokenSecret);
+
+        $this->managerRegistry->method('getRepository')
+            ->willReturn($this->repository);
+        $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
+        $this->entityManager->method('getRepository')
+            ->willReturn($this->repository);
+        $this->repository->method('findOneBy')->willReturn($userTicketSystem);
+
+        return $userTicketSystem;
+    }
+
+    /**
+     * Creates a JiraHttpClientService stub whose HTTP client returns $responseBody.
+     */
+    private function createHttpClientServiceWithResponse(string $responseBody): JiraHttpClientService&Stub
+    {
+        $client = self::createStub(Client::class);
+        $response = new Response(200, [], $responseBody);
 
         $client->method('post')->willReturn($response);
 
         $httpClientService = self::createStub(JiraHttpClientService::class);
         $httpClientService->method('getClient')->willReturn($client);
-        $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
+        $httpClientService->method('getTicketSystem')->willReturn($this->createTicketSystem());
 
-        $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('OAuth problem:');
+        return $httpClientService;
+    }
 
-        $this->service->fetchOAuthRequestToken($httpClientService);
+    /**
+     * Wires token storage for a new UserTicketsystem and expects it to be persisted and flushed.
+     */
+    private function expectNewTokenPersisted(): void
+    {
+        $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
+        $this->entityManager->method('getRepository')
+            ->willReturn($this->repository);
+        $this->repository->method('findOneBy')->willReturn(null);
+
+        $this->tokenEncryptionService->method('encryptToken')
+            ->willReturnCallback(static fn (string $token): string => 'encrypted_' . $token);
+
+        $this->entityManager->expects($this->once())->method('persist');
+        $this->entityManager->expects($this->once())->method('flush');
     }
 }

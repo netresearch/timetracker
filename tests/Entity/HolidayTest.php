@@ -44,7 +44,7 @@ final class HolidayTest extends TestCase
         $holiday = new Holiday('2024-12-25', 'Christmas');
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Cannot modify readonly property $day after construction');
+        $this->expectExceptionMessageIsOrContains('Cannot modify readonly property $day after construction');
 
         $holiday->setDay('2024-12-26');
     }
@@ -54,7 +54,7 @@ final class HolidayTest extends TestCase
         $holiday = new Holiday('2024-12-25', 'Christmas');
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Cannot modify readonly property $day after construction');
+        $this->expectExceptionMessageIsOrContains('Cannot modify readonly property $day after construction');
 
         $holiday->setDay(new DateTime('2024-12-26'));
     }
@@ -66,7 +66,7 @@ final class HolidayTest extends TestCase
         $holiday = new Holiday('2024-12-25', 'Christmas');
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Cannot modify readonly property $name after construction');
+        $this->expectExceptionMessageIsOrContains('Cannot modify readonly property $name after construction');
 
         $holiday->setName();
     }

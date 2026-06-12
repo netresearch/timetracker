@@ -37,7 +37,6 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $this->repository = $this->createMock(TeamRepository::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new UniqueTeamNameValidator($this->repository);
-        $this->validator->initialize($this->context);
     }
 
     public function testValidateThrowsOnInvalidConstraintType(): void
@@ -46,28 +45,28 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
         $this->expectException(UnexpectedTypeException::class);
 
-        $this->validator->validate('test', $constraint);
+        $this->validator->validateInContext('test', $constraint, $this->context);
     }
 
     public function testValidateReturnsEarlyForNullValue(): void
     {
         $this->repository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(null, new UniqueTeamName());
+        $this->validator->validateInContext(null, new UniqueTeamName(), $this->context);
     }
 
     public function testValidateReturnsEarlyForEmptyStringValue(): void
     {
         $this->repository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate('', new UniqueTeamName());
+        $this->validator->validateInContext('', new UniqueTeamName(), $this->context);
     }
 
     public function testValidateReturnsEarlyForNonStringValue(): void
     {
         $this->repository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(123, new UniqueTeamName());
+        $this->validator->validateInContext(123, new UniqueTeamName(), $this->context);
     }
 
     public function testValidatePassesWhenNoExistingTeamFound(): void
@@ -78,82 +77,50 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('New Team', new UniqueTeamName());
+        $this->validator->validateInContext('New Team', new UniqueTeamName(), $this->context);
     }
 
     public function testValidatePassesWhenUpdatingSameTeam(): void
     {
-        $existingTeam = self::createStub(Team::class);
-        $existingTeam->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Existing Team'])
-            ->willReturn($existingTeam);
+        $this->mockExistingTeamFound('Existing Team');
 
         $dto = new TeamSaveDto(id: 5, name: 'Existing Team', lead_user_id: 1);
 
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('Existing Team', new UniqueTeamName());
+        $this->validator->validateInContext('Existing Team', new UniqueTeamName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingTeam = self::createStub(Team::class);
-        $existingTeam->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Duplicate Name'])
-            ->willReturn($existingTeam);
+        $this->mockExistingTeamFound('Duplicate Name');
 
         $dto = new TeamSaveDto(id: 0, name: 'Duplicate Name', lead_user_id: 1);
 
         $this->context->method('getObject')->willReturn($dto);
 
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->method('setParameter')->willReturnSelf();
-        $violationBuilder->expects(self::once())->method('addViolation');
+        $this->expectSingleViolation();
 
-        $this->context->expects(self::once())->method('buildViolation')
-            ->with('The team name "{{ value }}" already exists.')
-            ->willReturn($violationBuilder);
-
-        $this->validator->validate('Duplicate Name', new UniqueTeamName());
+        $this->validator->validateInContext('Duplicate Name', new UniqueTeamName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentTeamHasSameName(): void
     {
-        $existingTeam = self::createStub(Team::class);
-        $existingTeam->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Conflicting Name'])
-            ->willReturn($existingTeam);
+        $this->mockExistingTeamFound('Conflicting Name');
 
         $dto = new TeamSaveDto(id: 10, name: 'Conflicting Name', lead_user_id: 1);
 
         $this->context->method('getObject')->willReturn($dto);
 
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->method('setParameter')->willReturnSelf();
-        $violationBuilder->expects(self::once())->method('addViolation');
+        $this->expectSingleViolation();
 
-        $this->context->expects(self::once())->method('buildViolation')
-            ->with('The team name "{{ value }}" already exists.')
-            ->willReturn($violationBuilder);
-
-        $this->validator->validate('Conflicting Name', new UniqueTeamName());
+        $this->validator->validateInContext('Conflicting Name', new UniqueTeamName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenContextObjectIsNotDto(): void
     {
-        $existingTeam = self::createStub(Team::class);
-        $existingTeam->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Some Name'])
-            ->willReturn($existingTeam);
+        $this->mockExistingTeamFound('Some Name');
 
         // Context object is not a TeamSaveDto (simulating raw validation without DTO)
         $this->context->method('getObject')->willReturn(new stdClass());
@@ -165,6 +132,30 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Some Name', new UniqueTeamName());
+        $this->validator->validateInContext('Some Name', new UniqueTeamName(), $this->context);
+    }
+
+    /**
+     * Mocks the repository so the uniqueness lookup finds an existing team (id 5) with $name.
+     */
+    private function mockExistingTeamFound(string $name): void
+    {
+        $existingTeam = self::createStub(Team::class);
+        $existingTeam->method('getId')->willReturn(5);
+
+        $this->repository->expects(self::once())->method('findOneBy')
+            ->with(['name' => $name])
+            ->willReturn($existingTeam);
+    }
+
+    private function expectSingleViolation(): void
+    {
+        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
+        $violationBuilder->method('setParameter')->willReturnSelf();
+        $violationBuilder->expects(self::once())->method('addViolation');
+
+        $this->context->expects(self::once())->method('buildViolation')
+            ->with('The team name "{{ value }}" already exists.')
+            ->willReturn($violationBuilder);
     }
 }
