@@ -187,8 +187,8 @@ class ModernLdapService
                 assert(is_array($cn));
                 assert(is_array($description));
 
-                $name = $cn[0] ?? '';
-                $descriptionValue = $description[0] ?? '';
+                $name = $cn[0] ?? null;
+                $descriptionValue = $description[0] ?? null;
 
                 $groups[] = [
                     'name' => is_string($name) ? $name : '',
