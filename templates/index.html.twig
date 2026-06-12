@@ -7,6 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ apptitle }}</title>
         <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
+        <link rel="stylesheet" href="{{ asset('build/css/header.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('build/css/timetracker.css') }}" type="text/css">
         <script type="text/javascript">
             const statusUrlJson = {{ url('check_status')|escape|json_encode(jsonHexFlags)|raw }};
@@ -37,7 +38,7 @@
         </script>
     </head>
     <body>
-        <a href="#main-content" class="skip-link">{{ 'Skip to main content'|trans }}</a>
+        {% include 'partials/header.html.twig' with {'active': 'tracking'} %}
         <div id="grid"></div>
     </body>
 </html>

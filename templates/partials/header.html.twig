@@ -1,0 +1,38 @@
+{# Shared page header + main navigation.
+   Rendered identically by the ExtJS shell (index.html.twig, adopted into the
+   viewport north region via contentEl) and the SolidJS shell (ui/index.html.twig).
+   Required context: globalConfig, settings, apptitle, active ('tracking'|'month'). #}
+<div id="page-header" class="page-header">
+    <a href="#main-content" class="skip-link">{{ 'Skip to main content'|trans }}</a>
+    {% if globalConfig.header_url is defined and globalConfig.header_url %}
+        <iframe id="nrnavi" src="{{ globalConfig.header_url }}" title="Navigation"></iframe>
+    {% endif %}
+    <header class="app-header" role="banner">
+        <div class="header-logo">
+            <img id="logo" src="{{ globalConfig.logo_url }}" alt="{{ apptitle }} - Home">
+        </div>
+        <div id="user-badge" class="user-badge status_active" role="status" aria-live="polite" aria-label="{{ 'User status'|trans }}">
+            <span class="status-indicator" aria-hidden="true"></span>
+            <span class="user-name">{{ settings.user_name }}</span>
+            <a href="{{ url('_logout') }}" class="badge-logout" aria-label="{{ 'Logout'|trans }}">{{ 'Logout'|trans }}</a>
+        </div>
+        <section class="header-worktime" aria-label="{{ 'Working time'|trans }}">
+            <dl class="worktime-list">
+                <div class="worktime-item"><dt>{{ 'Today'|trans }}</dt><dd id="worktime-day">0:00</dd></div>
+                <div class="worktime-item"><dt>{{ 'Week'|trans }}</dt><dd id="worktime-week">0:00</dd></div>
+                <div class="worktime-item"><dt>{{ 'Month'|trans }}</dt><dd id="worktime-month">0:00</dd></div>
+            </dl>
+            {% if globalConfig.monthly_overview_url is defined and globalConfig.monthly_overview_url %}
+                <a id="sumlink" href="{{ globalConfig.monthly_overview_url ~ settings.user_name }}" target="_blank" rel="noopener noreferrer" class="worktime-link">{{ 'Monthly overview'|trans }}</a>
+            {% endif %}
+        </section>
+    </header>
+    <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
+        <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"
+           {% if active == 'tracking' %}aria-current="page"{% endif %}
+           href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
+        <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
+           {% if active == 'month' %}aria-current="page"{% endif %}
+           href="{{ path('ui_spa', {'path': 'month'}) }}">{{ 'Monthly overview'|trans }}</a>
+    </nav>
+</div>
