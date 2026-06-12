@@ -1,0 +1,25 @@
+{# JSON_HEX_* flags so |json_encode output cannot break out of <script> #}
+{% set jsonHexFlags = constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT') %}
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ apptitle }}</title>
+        {{ vite_entry_link_tags('app') }}
+        <script>
+            window.APP_CONFIG = {{ {
+                'locale': locale,
+                'userId': settings.user_id,
+                'userName': settings.user_name,
+                'appTitle': apptitle,
+                'logoutUrl': url('_logout'),
+                'legacyUrl': url('_start'),
+            }|json_encode(jsonHexFlags)|raw }};
+        </script>
+        {{ vite_entry_script_tags('app') }}
+    </head>
+    <body>
+        <div id="app"></div>
+    </body>
+</html>
