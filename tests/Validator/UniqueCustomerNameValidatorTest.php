@@ -9,9 +9,7 @@ use App\Entity\Customer;
 use App\Validator\Constraints\UniqueCustomerName;
 use App\Validator\Constraints\UniqueCustomerNameValidator;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
-use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -20,7 +18,6 @@ use stdClass;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
-use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 
 /**
  * Unit tests for UniqueCustomerNameValidator.
@@ -31,6 +28,8 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 #[AllowMockObjectsWithoutExpectations]
 final class UniqueCustomerNameValidatorTest extends TestCase
 {
+    use UniquenessValidatorMockTrait;
+
     private EntityManagerInterface&MockObject $entityManager;
     private ExecutionContextInterface&MockObject $context;
     private UniqueCustomerNameValidator $validator;
@@ -67,7 +66,7 @@ final class UniqueCustomerNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingCustomerFound(): void
     {
-        $this->mockRepositoryResult(null);
+        $this->mockRepositoryResult($this->entityManager, Customer::class, null);
 
         $dto = new CustomerSaveDto(id: 0, name: 'New Customer');
         $this->context->method('getObject')->willReturn($dto);
@@ -80,7 +79,7 @@ final class UniqueCustomerNameValidatorTest extends TestCase
     {
         // When updating the same customer, the andWhere clause excludes it,
         // so the query returns null (no other customer with that name)
-        $this->mockRepositoryResult(null);
+        $this->mockRepositoryResult($this->entityManager, Customer::class, null);
 
         $dto = new CustomerSaveDto(id: 5, name: 'Existing Customer');
         $this->context->method('getObject')->willReturn($dto);
@@ -94,12 +93,12 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $existingCustomer = self::createStub(Customer::class);
         $existingCustomer->method('getId')->willReturn(5);
 
-        $this->mockRepositoryResult($existingCustomer);
+        $this->mockRepositoryResult($this->entityManager, Customer::class, $existingCustomer);
 
         $dto = new CustomerSaveDto(id: 0, name: 'Duplicate Name');
         $this->context->method('getObject')->willReturn($dto);
 
-        $this->expectSingleViolation();
+        $this->expectSingleViolation($this->context);
 
         $this->validator->validateInContext('Duplicate Name', new UniqueCustomerName(), $this->context);
     }
@@ -109,12 +108,12 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $existingCustomer = self::createStub(Customer::class);
         $existingCustomer->method('getId')->willReturn(5);
 
-        $this->mockRepositoryResult($existingCustomer);
+        $this->mockRepositoryResult($this->entityManager, Customer::class, $existingCustomer);
 
         $dto = new CustomerSaveDto(id: 10, name: 'Conflicting Name');
         $this->context->method('getObject')->willReturn($dto);
 
-        $this->expectSingleViolation();
+        $this->expectSingleViolation($this->context);
 
         $this->validator->validateInContext('Conflicting Name', new UniqueCustomerName(), $this->context);
     }
@@ -124,44 +123,13 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $existingCustomer = self::createStub(Customer::class);
         $existingCustomer->method('getId')->willReturn(5);
 
-        $this->mockRepositoryResult($existingCustomer);
+        $this->mockRepositoryResult($this->entityManager, Customer::class, $existingCustomer);
 
         // Context object is not a CustomerSaveDto (simulating raw validation)
         $this->context->method('getObject')->willReturn(new stdClass());
 
-        $this->expectSingleViolation();
+        $this->expectSingleViolation($this->context);
 
         $this->validator->validateInContext('Some Name', new UniqueCustomerName(), $this->context);
-    }
-
-    /**
-     * Mocks the repository chain so the uniqueness query returns $result.
-     */
-    private function mockRepositoryResult(?object $result): void
-    {
-        $query = self::createStub(Query::class);
-        $query->method('getOneOrNullResult')->willReturn($result);
-
-        $queryBuilder = self::createStub(QueryBuilder::class);
-        $queryBuilder->method('where')->willReturnSelf();
-        $queryBuilder->method('setParameter')->willReturnSelf();
-        $queryBuilder->method('andWhere')->willReturnSelf();
-        $queryBuilder->method('getQuery')->willReturn($query);
-
-        $repository = self::createStub(EntityRepository::class);
-        $repository->method('createQueryBuilder')->willReturn($queryBuilder);
-
-        $this->entityManager->expects(self::once())->method('getRepository')
-            ->with(Customer::class)
-            ->willReturn($repository);
-    }
-
-    private function expectSingleViolation(): void
-    {
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->expects(self::once())->method('addViolation');
-
-        $this->context->method('buildViolation')
-            ->willReturn($violationBuilder);
     }
 }
