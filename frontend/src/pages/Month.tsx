@@ -37,7 +37,11 @@ export default function Month() {
     const now = new Date()
     const year = Number(searchParams.year ?? now.getFullYear())
     const month = Number(searchParams.month ?? now.getMonth() + 1)
-    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    // Bounds also guard against Number('') === 0, which Date() would map to 1900.
+    if (
+      !Number.isInteger(year) || year < 1970 || year > 2100
+      || !Number.isInteger(month) || month < 1 || month > 12
+    ) {
       return { year: now.getFullYear(), month: now.getMonth() + 1 }
     }
 
@@ -160,19 +164,17 @@ export default function Month() {
                     <th scope="row">{m.month_due_until_today()}</th>
                     <td
                       class={`numeric ${
-                        data().sum.worked - data().sum.expectedUntilToday < 0
-                          ? 'status-danger'
-                          : 'status-success'
+                        data().sum.diffUntilToday < 0 ? 'status-danger' : 'status-success'
                       }`}
                     >
-                      {formatMinutes(data().sum.worked - data().sum.expectedUntilToday, true)}
+                      {formatMinutes(data().sum.diffUntilToday, true)}
                     </td>
                   </tr>
                   <tr>
                     <th scope="row">{m.month_due_until_eom()}</th>
                     <td
                       class={`numeric ${
-                        data().sum.diffUntilToday < 0 ? 'status-danger' : 'status-success'
+                        data().sum.diff < 0 ? 'status-danger' : 'status-success'
                       }`}
                     >
                       {formatMinutes(data().sum.diff, true)}
