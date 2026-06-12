@@ -358,7 +358,7 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
     public function testGetTimeSummaryByPeriodThrowsForInvalidPeriod(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid period: invalid');
+        $this->expectExceptionMessageIsOrContains('Invalid period: invalid');
 
         $this->repository->getTimeSummaryByPeriod('invalid', []);
     }

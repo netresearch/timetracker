@@ -43,7 +43,7 @@
     "doctrine/orm": "^3.5",
     "doctrine/persistence": "^4.0",
     "guzzlehttp/guzzle": "^7.9",
-    "guzzlehttp/oauth-subscriber": "^0.8.1",
+    "guzzlehttp/oauth-subscriber": "^0.9.1",
     "laminas/laminas-ldap": "^2.19",
     "pentatrion/vite-bundle": "^8.2",
     "phpoffice/phpspreadsheet": "^5.0",

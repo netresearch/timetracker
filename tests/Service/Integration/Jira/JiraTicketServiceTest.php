@@ -115,7 +115,7 @@ final class JiraTicketServiceTest extends TestCase
         $entry = $this->createEntry();
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Entry has no project');
+        $this->expectExceptionMessageIsOrContains('Entry has no project');
 
         $this->service->createTicket($entry);
     }
@@ -127,7 +127,7 @@ final class JiraTicketServiceTest extends TestCase
         $entry = $this->createEntry($project);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Project has no Jira ID configured');
+        $this->expectExceptionMessageIsOrContains('Project has no Jira ID configured');
 
         $this->service->createTicket($entry);
     }
@@ -139,7 +139,7 @@ final class JiraTicketServiceTest extends TestCase
         $entry = $this->createEntry($project);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Project has no Jira ID configured');
+        $this->expectExceptionMessageIsOrContains('Project has no Jira ID configured');
 
         $this->service->createTicket($entry);
     }
@@ -175,7 +175,7 @@ final class JiraTicketServiceTest extends TestCase
         $this->httpClient->method('post')->willReturn(new stdClass());
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Failed to create Jira ticket');
+        $this->expectExceptionMessageIsOrContains('Failed to create Jira ticket');
 
         $this->service->createTicket($entry);
     }
@@ -189,7 +189,7 @@ final class JiraTicketServiceTest extends TestCase
         $this->httpClient->method('post')->willReturn(['key' => 'TEST-1']);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Failed to create Jira ticket');
+        $this->expectExceptionMessageIsOrContains('Failed to create Jira ticket');
 
         $this->service->createTicket($entry);
     }
@@ -344,7 +344,7 @@ final class JiraTicketServiceTest extends TestCase
     public function getTicketThrowsOnEmptyKey(): void
     {
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Ticket key cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Ticket key cannot be empty');
 
         $this->service->getTicket('');
     }
@@ -366,7 +366,7 @@ final class JiraTicketServiceTest extends TestCase
     public function updateTicketThrowsOnEmptyKey(): void
     {
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Ticket key cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Ticket key cannot be empty');
 
         $this->service->updateTicket('', ['fields' => []]);
     }
@@ -391,7 +391,7 @@ final class JiraTicketServiceTest extends TestCase
     public function addCommentThrowsOnEmptyTicketKey(): void
     {
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Ticket key cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Ticket key cannot be empty');
 
         $this->service->addComment('', 'Comment');
     }
@@ -400,7 +400,7 @@ final class JiraTicketServiceTest extends TestCase
     public function addCommentThrowsOnEmptyComment(): void
     {
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Comment cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Comment cannot be empty');
 
         $this->service->addComment('TEST-123', '');
     }
@@ -510,7 +510,7 @@ final class JiraTicketServiceTest extends TestCase
     public function transitionTicketThrowsOnEmptyTicketKey(): void
     {
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Ticket key cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Ticket key cannot be empty');
 
         $this->service->transitionTicket('', '21');
     }
@@ -519,7 +519,7 @@ final class JiraTicketServiceTest extends TestCase
     public function transitionTicketThrowsOnEmptyTransitionId(): void
     {
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Transition ID cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Transition ID cannot be empty');
 
         $this->service->transitionTicket('TEST-123', '');
     }

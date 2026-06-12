@@ -461,7 +461,7 @@ final class JiraOAuthApiServiceTest extends TestCase
         $service = $this->createServiceWithMockedClient();
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Entry has no project');
+        $this->expectExceptionMessageIsOrContains('Entry has no project');
 
         $service->createTicket($entry);
     }
@@ -520,7 +520,7 @@ final class JiraOAuthApiServiceTest extends TestCase
         $method = $reflection->getMethod('getPrivateKeyFile');
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Invalid certificate');
+        $this->expectExceptionMessageIsOrContains('Invalid certificate');
 
         $method->invoke($service);
     }
@@ -539,7 +539,7 @@ final class JiraOAuthApiServiceTest extends TestCase
         $method = $reflection->getMethod('extractTokens');
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('An unknown error occurred while requesting OAuth token');
+        $this->expectExceptionMessageIsOrContains('An unknown error occurred while requesting OAuth token');
 
         $method->invoke($service, $response);
     }

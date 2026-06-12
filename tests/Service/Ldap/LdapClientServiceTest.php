@@ -300,7 +300,7 @@ final class LdapClientServiceTest extends TestCase
         $service = new LdapClientService();
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage("Invalid user name: ''");
+        $this->expectExceptionMessageIsOrContains("Invalid user name: ''");
 
         $service->setUserName('');
     }
@@ -310,7 +310,7 @@ final class LdapClientServiceTest extends TestCase
         $service = new LdapClientService();
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage("Invalid user name: '0'");
+        $this->expectExceptionMessageIsOrContains("Invalid user name: '0'");
 
         $service->setUserName('0');
     }
@@ -603,7 +603,7 @@ final class LdapClientServiceTest extends TestCase
         $method = $reflection->getMethod('normalizeFirstEntry');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('LDAP entry is null or not an array');
+        $this->expectExceptionMessageIsOrContains('LDAP entry is null or not an array');
 
         $method->invoke($service, null);
     }
@@ -616,7 +616,7 @@ final class LdapClientServiceTest extends TestCase
         $method = $reflection->getMethod('normalizeFirstEntry');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('LDAP entry is null or not an array');
+        $this->expectExceptionMessageIsOrContains('LDAP entry is null or not an array');
 
         $method->invoke($service, 'not an array');
     }
@@ -854,7 +854,7 @@ final class LdapClientServiceTest extends TestCase
         $method = $reflection->getMethod('verifyUsername');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('LDAP username must be set via setUserName() before authentication');
+        $this->expectExceptionMessageIsOrContains('LDAP username must be set via setUserName() before authentication');
 
         $method->invoke($service);
     }
@@ -872,7 +872,7 @@ final class LdapClientServiceTest extends TestCase
         $ldapEntry = ['distinguishedname' => ['CN=Test,DC=example']];
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('LDAP password must be set via setUserPass() before authentication');
+        $this->expectExceptionMessageIsOrContains('LDAP password must be set via setUserPass() before authentication');
 
         $method->invoke($service, $ldapEntry);
     }

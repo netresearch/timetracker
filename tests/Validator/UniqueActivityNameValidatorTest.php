@@ -36,7 +36,6 @@ final class UniqueActivityNameValidatorTest extends TestCase
         $this->activityRepository = $this->createMock(ActivityRepository::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new UniqueActivityNameValidator($this->activityRepository);
-        $this->validator->initialize($this->context);
     }
 
     public function testValidateThrowsOnInvalidConstraintType(): void
@@ -45,28 +44,28 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
         $this->expectException(UnexpectedTypeException::class);
 
-        $this->validator->validate('test', $constraint);
+        $this->validator->validateInContext('test', $constraint, $this->context);
     }
 
     public function testValidateReturnsEarlyForNullValue(): void
     {
         $this->activityRepository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(null, new UniqueActivityName());
+        $this->validator->validateInContext(null, new UniqueActivityName(), $this->context);
     }
 
     public function testValidateReturnsEarlyForEmptyStringValue(): void
     {
         $this->activityRepository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate('', new UniqueActivityName());
+        $this->validator->validateInContext('', new UniqueActivityName(), $this->context);
     }
 
     public function testValidateReturnsEarlyForNonStringValue(): void
     {
         $this->activityRepository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(123, new UniqueActivityName());
+        $this->validator->validateInContext(123, new UniqueActivityName(), $this->context);
     }
 
     public function testValidatePassesWhenNoExistingActivityFound(): void
@@ -77,7 +76,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('New Activity', new UniqueActivityName());
+        $this->validator->validateInContext('New Activity', new UniqueActivityName(), $this->context);
     }
 
     public function testValidatePassesWhenUpdatingSameActivity(): void
@@ -94,7 +93,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('Existing Activity', new UniqueActivityName());
+        $this->validator->validateInContext('Existing Activity', new UniqueActivityName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
@@ -118,7 +117,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
             ->with('The activity name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Duplicate Name', new UniqueActivityName());
+        $this->validator->validateInContext('Duplicate Name', new UniqueActivityName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentActivityHasSameName(): void
@@ -142,6 +141,6 @@ final class UniqueActivityNameValidatorTest extends TestCase
             ->with('The activity name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Conflicting Name', new UniqueActivityName());
+        $this->validator->validateInContext('Conflicting Name', new UniqueActivityName(), $this->context);
     }
 }

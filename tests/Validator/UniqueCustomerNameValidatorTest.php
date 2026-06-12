@@ -40,7 +40,6 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new UniqueCustomerNameValidator($this->entityManager);
-        $this->validator->initialize($this->context);
     }
 
     public function testValidateThrowsOnInvalidConstraintType(): void
@@ -49,21 +48,21 @@ final class UniqueCustomerNameValidatorTest extends TestCase
 
         $this->expectException(UnexpectedTypeException::class);
 
-        $this->validator->validate('test', $constraint);
+        $this->validator->validateInContext('test', $constraint, $this->context);
     }
 
     public function testValidateReturnsEarlyForNullValue(): void
     {
         $this->entityManager->expects(self::never())->method('getRepository');
 
-        $this->validator->validate(null, new UniqueCustomerName());
+        $this->validator->validateInContext(null, new UniqueCustomerName(), $this->context);
     }
 
     public function testValidateReturnsEarlyForEmptyStringValue(): void
     {
         $this->entityManager->expects(self::never())->method('getRepository');
 
-        $this->validator->validate('', new UniqueCustomerName());
+        $this->validator->validateInContext('', new UniqueCustomerName(), $this->context);
     }
 
     public function testValidatePassesWhenNoExistingCustomerFound(): void
@@ -88,7 +87,7 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('New Customer', new UniqueCustomerName());
+        $this->validator->validateInContext('New Customer', new UniqueCustomerName(), $this->context);
     }
 
     public function testValidatePassesWhenUpdatingSameCustomer(): void
@@ -115,7 +114,7 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('Existing Customer', new UniqueCustomerName());
+        $this->validator->validateInContext('Existing Customer', new UniqueCustomerName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDuplicateNameFoundForNewCustomer(): void
@@ -148,7 +147,7 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Duplicate Name', new UniqueCustomerName());
+        $this->validator->validateInContext('Duplicate Name', new UniqueCustomerName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentCustomerHasSameName(): void
@@ -181,7 +180,7 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Conflicting Name', new UniqueCustomerName());
+        $this->validator->validateInContext('Conflicting Name', new UniqueCustomerName(), $this->context);
     }
 
     public function testValidateHandlesNonDtoContextObject(): void
@@ -213,6 +212,6 @@ final class UniqueCustomerNameValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Some Name', new UniqueCustomerName());
+        $this->validator->validateInContext('Some Name', new UniqueCustomerName(), $this->context);
     }
 }

@@ -37,7 +37,6 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $this->teamRepository = $this->createMock(TeamRepository::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new UniqueTeamNameValidator($this->teamRepository);
-        $this->validator->initialize($this->context);
     }
 
     // ==================== Constraint type tests ====================
@@ -48,7 +47,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
         $this->expectException(UnexpectedTypeException::class);
 
-        $this->validator->validate('Team Name', $constraint);
+        $this->validator->validateInContext('Team Name', $constraint, $this->context);
     }
 
     // ==================== Empty/null value tests ====================
@@ -57,21 +56,21 @@ final class UniqueTeamNameValidatorTest extends TestCase
     {
         $this->teamRepository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(null, new UniqueTeamName());
+        $this->validator->validateInContext(null, new UniqueTeamName(), $this->context);
     }
 
     public function testValidateSkipsEmptyString(): void
     {
         $this->teamRepository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate('', new UniqueTeamName());
+        $this->validator->validateInContext('', new UniqueTeamName(), $this->context);
     }
 
     public function testValidateSkipsNonStringValue(): void
     {
         $this->teamRepository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(123, new UniqueTeamName());
+        $this->validator->validateInContext(123, new UniqueTeamName(), $this->context);
     }
 
     // ==================== Unique name tests ====================
@@ -84,7 +83,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
 
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('New Team', new UniqueTeamName());
+        $this->validator->validateInContext('New Team', new UniqueTeamName(), $this->context);
     }
 
     // ==================== Duplicate name tests ====================
@@ -108,7 +107,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
             ->with('The team name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Existing Team', new UniqueTeamName());
+        $this->validator->validateInContext('Existing Team', new UniqueTeamName(), $this->context);
     }
 
     // ==================== Update existing team tests ====================
@@ -127,7 +126,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('My Team', new UniqueTeamName());
+        $this->validator->validateInContext('My Team', new UniqueTeamName(), $this->context);
     }
 
     public function testValidateFailsWhenUpdatingToDifferentExistingName(): void
@@ -151,7 +150,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
             ->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Other Team', new UniqueTeamName());
+        $this->validator->validateInContext('Other Team', new UniqueTeamName(), $this->context);
     }
 
     public function testValidateFailsWhenCreatingNewWithExistingName(): void
@@ -175,7 +174,7 @@ final class UniqueTeamNameValidatorTest extends TestCase
             ->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Taken Name', new UniqueTeamName());
+        $this->validator->validateInContext('Taken Name', new UniqueTeamName(), $this->context);
     }
 
     // ==================== Helper methods ====================

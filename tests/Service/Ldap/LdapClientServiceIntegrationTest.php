@@ -115,7 +115,7 @@ final class LdapClientServiceIntegrationTest extends TestCase
             ->setUserPass('anypassword');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Username unknown.');
+        $this->expectExceptionMessageIsOrContains('Username unknown.');
 
         $this->service->login();
     }
@@ -127,7 +127,7 @@ final class LdapClientServiceIntegrationTest extends TestCase
             ->setUserPass('');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('LDAP password must be set via setUserPass() before authentication');
+        $this->expectExceptionMessageIsOrContains('LDAP password must be set via setUserPass() before authentication');
 
         $this->service->login();
     }

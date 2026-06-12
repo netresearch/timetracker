@@ -44,7 +44,7 @@ final class TokenEncryptionServiceTest extends TestCase
             ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Encryption key not configured');
+        $this->expectExceptionMessageIsOrContains('Encryption key not configured');
 
         new TokenEncryptionService($parameterBag);
     }
@@ -58,7 +58,7 @@ final class TokenEncryptionServiceTest extends TestCase
             ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Encryption key not configured');
+        $this->expectExceptionMessageIsOrContains('Encryption key not configured');
 
         new TokenEncryptionService($parameterBag);
     }
@@ -124,7 +124,7 @@ final class TokenEncryptionServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid encrypted token format');
+        $this->expectExceptionMessageIsOrContains('Invalid encrypted token format');
 
         // Invalid base64 characters
         $service->decryptToken('not-valid-base64!!!');
@@ -135,7 +135,7 @@ final class TokenEncryptionServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Encrypted token too short');
+        $this->expectExceptionMessageIsOrContains('Encrypted token too short');
 
         // Valid base64 but decoded content is too short
         $service->decryptToken(base64_encode('short'));
@@ -151,7 +151,7 @@ final class TokenEncryptionServiceTest extends TestCase
         $corruptedData = str_repeat('x', 40);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Token decryption failed');
+        $this->expectExceptionMessageIsOrContains('Token decryption failed');
 
         $service->decryptToken(base64_encode($corruptedData));
     }
@@ -260,7 +260,7 @@ final class TokenEncryptionServiceTest extends TestCase
         $encrypted = $service1->encryptToken($originalToken);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Token decryption failed');
+        $this->expectExceptionMessageIsOrContains('Token decryption failed');
 
         // Different key should fail to decrypt
         $service2->decryptToken($encrypted);

@@ -103,7 +103,7 @@ final class JiraIntegrationServiceTest extends TestCase
         $entry->method('getEnd')->willReturn(new DateTime('+1 hour'));
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Entry has no associated user');
+        $this->expectExceptionMessageIsOrContains('Entry has no associated user');
 
         $this->service->saveWorklog($entry);
     }
@@ -166,7 +166,7 @@ final class JiraIntegrationServiceTest extends TestCase
             ->method('error');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('API Error');
+        $this->expectExceptionMessageIsOrContains('API Error');
 
         $this->service->saveWorklog($entry);
     }
@@ -226,7 +226,7 @@ final class JiraIntegrationServiceTest extends TestCase
         $entry->method('getProject')->willReturn(null);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Entry has no associated project');
+        $this->expectExceptionMessageIsOrContains('Entry has no associated project');
 
         $this->service->deleteWorklog($entry);
     }
@@ -245,7 +245,7 @@ final class JiraIntegrationServiceTest extends TestCase
             ->willReturn($this->createMock(TicketSystemRepository::class));
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Project has no ticket system configured');
+        $this->expectExceptionMessageIsOrContains('Project has no ticket system configured');
 
         $this->service->deleteWorklog($entry);
     }
@@ -264,7 +264,7 @@ final class JiraIntegrationServiceTest extends TestCase
         $entry->method('getUser')->willReturn(null);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Entry has no associated user');
+        $this->expectExceptionMessageIsOrContains('Entry has no associated user');
 
         $this->service->deleteWorklog($entry);
     }
@@ -327,7 +327,7 @@ final class JiraIntegrationServiceTest extends TestCase
             ->method('error');
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Delete failed');
+        $this->expectExceptionMessageIsOrContains('Delete failed');
 
         $this->service->deleteWorklog($entry);
     }

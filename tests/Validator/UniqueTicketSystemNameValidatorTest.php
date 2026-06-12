@@ -36,7 +36,6 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
         $this->repository = $this->createMock(TicketSystemRepository::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new UniqueTicketSystemNameValidator($this->repository);
-        $this->validator->initialize($this->context);
     }
 
     public function testValidateThrowsOnInvalidConstraintType(): void
@@ -45,28 +44,28 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
         $this->expectException(UnexpectedTypeException::class);
 
-        $this->validator->validate('test', $constraint);
+        $this->validator->validateInContext('test', $constraint, $this->context);
     }
 
     public function testValidateReturnsEarlyForNullValue(): void
     {
         $this->repository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(null, new UniqueTicketSystemName());
+        $this->validator->validateInContext(null, new UniqueTicketSystemName(), $this->context);
     }
 
     public function testValidateReturnsEarlyForEmptyStringValue(): void
     {
         $this->repository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate('', new UniqueTicketSystemName());
+        $this->validator->validateInContext('', new UniqueTicketSystemName(), $this->context);
     }
 
     public function testValidateReturnsEarlyForNonStringValue(): void
     {
         $this->repository->expects(self::never())->method('findOneBy');
 
-        $this->validator->validate(123, new UniqueTicketSystemName());
+        $this->validator->validateInContext(123, new UniqueTicketSystemName(), $this->context);
     }
 
     public function testValidatePassesWhenNoExistingSystemFound(): void
@@ -77,7 +76,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('New System', new UniqueTicketSystemName());
+        $this->validator->validateInContext('New System', new UniqueTicketSystemName(), $this->context);
     }
 
     public function testValidatePassesWhenUpdatingSameSystem(): void
@@ -94,7 +93,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('Existing System', new UniqueTicketSystemName());
+        $this->validator->validateInContext('Existing System', new UniqueTicketSystemName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
@@ -117,7 +116,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Duplicate Name', new UniqueTicketSystemName());
+        $this->validator->validateInContext('Duplicate Name', new UniqueTicketSystemName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentSystemHasSameName(): void
@@ -140,6 +139,6 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('Conflicting Name', new UniqueTicketSystemName());
+        $this->validator->validateInContext('Conflicting Name', new UniqueTicketSystemName(), $this->context);
     }
 }

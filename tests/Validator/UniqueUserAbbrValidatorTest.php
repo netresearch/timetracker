@@ -40,7 +40,6 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->context = $this->createMock(ExecutionContextInterface::class);
         $this->validator = new UniqueUserAbbrValidator($this->entityManager);
-        $this->validator->initialize($this->context);
     }
 
     public function testValidateThrowsOnInvalidConstraintType(): void
@@ -49,21 +48,21 @@ final class UniqueUserAbbrValidatorTest extends TestCase
 
         $this->expectException(UnexpectedTypeException::class);
 
-        $this->validator->validate('test', $constraint);
+        $this->validator->validateInContext('test', $constraint, $this->context);
     }
 
     public function testValidateReturnsEarlyForNullValue(): void
     {
         $this->entityManager->expects(self::never())->method('getRepository');
 
-        $this->validator->validate(null, new UniqueUserAbbr());
+        $this->validator->validateInContext(null, new UniqueUserAbbr(), $this->context);
     }
 
     public function testValidateReturnsEarlyForEmptyStringValue(): void
     {
         $this->entityManager->expects(self::never())->method('getRepository');
 
-        $this->validator->validate('', new UniqueUserAbbr());
+        $this->validator->validateInContext('', new UniqueUserAbbr(), $this->context);
     }
 
     public function testValidatePassesWhenNoExistingUserFound(): void
@@ -88,7 +87,7 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('NUS', new UniqueUserAbbr());
+        $this->validator->validateInContext('NUS', new UniqueUserAbbr(), $this->context);
     }
 
     public function testValidatePassesWhenUpdatingSameUser(): void
@@ -115,7 +114,7 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $this->context->method('getObject')->willReturn($dto);
         $this->context->expects(self::never())->method('buildViolation');
 
-        $this->validator->validate('EXI', new UniqueUserAbbr());
+        $this->validator->validateInContext('EXI', new UniqueUserAbbr(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDuplicateAbbrFoundForNewUser(): void
@@ -148,7 +147,7 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('DUP', new UniqueUserAbbr());
+        $this->validator->validateInContext('DUP', new UniqueUserAbbr(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentUserHasSameAbbr(): void
@@ -181,7 +180,7 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('CON', new UniqueUserAbbr());
+        $this->validator->validateInContext('CON', new UniqueUserAbbr(), $this->context);
     }
 
     public function testValidateHandlesNonDtoContextObject(): void
@@ -213,6 +212,6 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
 
-        $this->validator->validate('ABC', new UniqueUserAbbr());
+        $this->validator->validateInContext('ABC', new UniqueUserAbbr(), $this->context);
     }
 }

@@ -198,7 +198,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Username cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Username cannot be empty');
 
         $this->invokeVoidMethod($service, 'validateInput', ['', 'password']);
     }
@@ -209,7 +209,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Password cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Password cannot be empty');
 
         $this->invokeVoidMethod($service, 'validateInput', ['username', '']);
     }
@@ -220,7 +220,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Username is too long');
+        $this->expectExceptionMessageIsOrContains('Username is too long');
 
         $this->invokeVoidMethod($service, 'validateInput', [str_repeat('a', 256), 'password']);
     }
@@ -667,7 +667,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Username cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Username cannot be empty');
 
         $service->authenticate('0', 'password');
     }
@@ -678,7 +678,7 @@ final class ModernLdapServiceTest extends TestCase
         $service = $this->createService();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Password cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Password cannot be empty');
 
         $service->authenticate('validuser', '0');
     }

@@ -112,7 +112,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $ticketSystem = $this->createTicketSystem();
 
         $this->expectException(JiraApiUnauthorizedException::class);
-        $this->expectExceptionMessage('Unauthorized. Redirecting to Jira OAuth.');
+        $this->expectExceptionMessageIsOrContains('Unauthorized. Redirecting to Jira OAuth.');
 
         $this->service->throwUnauthorizedRedirect($ticketSystem);
     }
@@ -427,7 +427,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Empty response from Jira OAuth endpoint');
+        $this->expectExceptionMessageIsOrContains('Empty response from Jira OAuth endpoint');
 
         $this->service->fetchOAuthRequestToken($httpClientService);
     }
@@ -447,7 +447,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('OAuth problem: token_rejected');
+        $this->expectExceptionMessageIsOrContains('OAuth problem: token_rejected');
 
         $this->service->fetchOAuthRequestToken($httpClientService);
     }
@@ -467,7 +467,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Could not fetch OAuth request token');
+        $this->expectExceptionMessageIsOrContains('Could not fetch OAuth request token');
 
         $this->service->fetchOAuthRequestToken($httpClientService);
     }
@@ -520,7 +520,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('Could not fetch OAuth access token');
+        $this->expectExceptionMessageIsOrContains('Could not fetch OAuth access token');
 
         $this->service->fetchOAuthAccessToken($httpClientService, 'request_token', 'verifier_code');
     }
@@ -578,7 +578,7 @@ final class JiraAuthenticationServiceTest extends TestCase
         $httpClientService->method('getTicketSystem')->willReturn($ticketSystem);
 
         $this->expectException(JiraApiException::class);
-        $this->expectExceptionMessage('OAuth problem:');
+        $this->expectExceptionMessageIsOrContains('OAuth problem:');
 
         $this->service->fetchOAuthRequestToken($httpClientService);
     }

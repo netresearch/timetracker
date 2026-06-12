@@ -50,7 +50,7 @@ final class SubticketSyncServiceTest extends TestCase
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Project does not exist');
+        $this->expectExceptionMessageIsOrContains('Project does not exist');
         $this->expectExceptionCode(404);
         $subticketSyncService->syncProjectSubtickets(123);
     }
@@ -70,7 +70,7 @@ final class SubticketSyncServiceTest extends TestCase
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('No ticket system configured for project');
+        $this->expectExceptionMessageIsOrContains('No ticket system configured for project');
         $this->expectExceptionCode(400);
         $subticketSyncService->syncProjectSubtickets(1);
     }
@@ -118,7 +118,7 @@ final class SubticketSyncServiceTest extends TestCase
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Project has no lead user');
+        $this->expectExceptionMessageIsOrContains('Project has no lead user');
         $this->expectExceptionCode(400);
         $subticketSyncService->syncProjectSubtickets(1);
     }
@@ -145,7 +145,7 @@ final class SubticketSyncServiceTest extends TestCase
 
         $subticketSyncService = $this->createService($registry, $factory);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Project user has no token for ticket system');
+        $this->expectExceptionMessageIsOrContains('Project user has no token for ticket system');
         $this->expectExceptionCode(400);
         $subticketSyncService->syncProjectSubtickets(1);
     }

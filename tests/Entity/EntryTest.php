@@ -180,7 +180,7 @@ final class EntryTest extends TestCase
         $entry->setStart($start);
         $entry->setEnd($end);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Duration must be greater than 0!');
+        $this->expectExceptionMessageIsOrContains('Duration must be greater than 0!');
         $entry->validateDuration();
     }
 
