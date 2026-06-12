@@ -20,20 +20,17 @@ variable "PHP_BASE_IMAGE" {
 }
 
 variable "NODE_VERSION" {
-  default = "22"
+  default = "24"
 }
 
 variable "COMPOSER_IMAGE" {
-  default = "composer:2.8"
+  default = "composer:2.10"
 }
 
 variable "XDEBUG_VERSION" {
-  default = "3.5.0"
+  default = "3.5.3"
 }
 
-variable "PCOV_VERSION" {
-  default = "1.0.12"
-}
 
 # =============================================================================
 # IMAGE METADATA
@@ -63,7 +60,6 @@ target "_common" {
     NODE_VERSION   = NODE_VERSION
     COMPOSER_IMAGE = COMPOSER_IMAGE
     XDEBUG_VERSION = XDEBUG_VERSION
-    PCOV_VERSION   = PCOV_VERSION
   }
 }
 
@@ -98,7 +94,7 @@ target "app" {
   }
 }
 
-# Development image (local development with Xdebug, PCOV, dev tools)
+# Development image (local development with Xdebug, dev tools)
 target "app-dev" {
   inherits = ["_common"]
   target   = "dev"
@@ -117,7 +113,7 @@ target "app-tools" {
 }
 
 # E2E/CI image (used for all CI jobs: lint, test, e2e)
-# Includes Xdebug, PCOV, Playwright with pre-installed browsers
+# Includes Xdebug (also the coverage driver), Playwright with pre-installed browsers
 target "app-e2e" {
   inherits = ["_common"]
   target   = "e2e"

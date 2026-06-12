@@ -237,16 +237,16 @@ e2e-install:
 	@echo "Installing Playwright browsers..."
 	npx playwright install chromium
 
-# Coverage with parallel execution (using PCOV for speed)
+# Coverage with parallel execution (Xdebug coverage mode)
 coverage: prepare-test-sql
-	@echo "Running parallel test coverage with PCOV..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PARATEST_PARALLEL=1 -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
+	@echo "Running parallel test coverage with Xdebug..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage -e PARATEST_PARALLEL=1 -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev ./bin/paratest --configuration=config/testing/paratest.xml --processes=$$(nproc) --testsuite=unit-parallel --coverage-html var/coverage-parallel
 	@echo "Coverage HTML: var/coverage-parallel/index.html"
 
-# Traditional coverage (sequential, using PCOV)
+# Traditional coverage (sequential, Xdebug coverage mode)
 coverage-sequential: prepare-test-sql
-	@echo "Running sequential test coverage with PCOV..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e PHP_MEMORY_LIMIT=2G -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
+	@echo "Running sequential test coverage with Xdebug..."
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage -e PHP_MEMORY_LIMIT=2G -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:
