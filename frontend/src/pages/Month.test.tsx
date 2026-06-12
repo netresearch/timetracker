@@ -49,32 +49,36 @@ describe('Month page', () => {
     vi.useRealTimers()
   })
 
-  it('renders one row per day plus the holiday label', async () => {
-    const { container, getAllByRole, getByText, unmount } = renderMonth()
+  it('renders a calendar cell per day plus the holiday label', async () => {
+    const { container, getAllByRole, getByText, getByRole, unmount } = renderMonth()
 
     await waitFor(() => {
       expect(getAllByRole('table')).toHaveLength(2)
     })
 
-    // June has 30 days; the summary table adds its 4 rows.
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(34)
+    // June 2026: 30 day cells across 5 calendar weeks, plus 5 summary rows.
+    expect(container.querySelectorAll('td.cell')).toHaveLength(30)
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(10)
     expect(getByText('Pfingstmontag')).toBeInTheDocument()
-    expect(getByText('June 2026')).toBeInTheDocument()
+    // Month chips: past months are links, future months are not.
+    expect(getByRole('link', { name: 'May' })).toBeInTheDocument()
+    expect(getByText('Jul').closest('a')).toBeNull()
 
     unmount()
   })
 
   it('excludes future bookings from the until-today summary', async () => {
-    const { getAllByRole, getByText, unmount } = renderMonth()
+    const { getAllByRole, getAllByText, getByText, unmount } = renderMonth()
 
     await waitFor(() => {
       expect(getAllByRole('table')).toHaveLength(2)
     })
 
     // 21 working days (holiday on Mon 1st), 9 of them until the frozen 12th.
-    // Until today: 8h worked (on the holiday) - 9 * 8h expected = -64:00;
-    // the 8h booked on the future 19th must not count yet.
-    expect(getByText('-64:00')).toBeInTheDocument()
+    // Until today: 8h worked (on the holiday) - 9 * 8h expected = -64:00
+    // (shown in the ring AND the summary row); the 8h booked on the future
+    // 19th must not count yet.
+    expect(getAllByText('-64:00').length).toBeGreaterThanOrEqual(2)
     // Whole month: 16h worked - 21 * 8h expected = -152:00.
     expect(getByText('-152:00')).toBeInTheDocument()
 
