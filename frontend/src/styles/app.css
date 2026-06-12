@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+/*
+ * Semantic design tokens. Every text/background pair is chosen for WCAG 2.2
+ * 1.4.6 (contrast enhanced, >= 7:1 for normal text) in BOTH color schemes —
+ * verify per theme when changing any value.
+ */
+:root {
+  color-scheme: light dark;
+
+  --color-bg: light-dark(#ffffff, #15181c);
+  --color-surface: light-dark(#f3f5f7, #1d2127);
+  --color-text: light-dark(#1c1e21, #f1f2f4);
+  --color-text-muted: light-dark(#50555b, #b9bec4);
+  --color-border: light-dark(#c4c9ce, #3c434b);
+  --color-link: light-dark(#0a4f8f, #93c1f8);
+  --color-focus: light-dark(#0a4f8f, #93c1f8);
+
+  --color-success-bg: light-dark(#e0f0e0, #20351f);
+  --color-success-text: light-dark(#114416, #c6e8c4);
+  --color-warning-bg: light-dark(#fbf0d4, #3b3012);
+  --color-warning-text: light-dark(#594400, #f1d68c);
+  --color-danger-bg: light-dark(#fae1e1, #421b1d);
+  --color-danger-text: light-dark(#761219, #f5bdc0);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, sans-serif;
+  /* WCAG 1.4.8: generous line height. */
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* WCAG 2.4.13 focus appearance: >= 2px indicator with strong contrast. */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* WCAG 2.3.3: no animation for users who opted out. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--color-bg);
+  color: var(--color-link);
+  padding: 0.75rem 1rem;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+.app-header {
+  align-items: center;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.app-title {
+  font-weight: 600;
+  margin: 0;
+}
+
+.app-nav {
+  flex: 1;
+}
+
+/* WCAG 2.5.5: interactive targets >= 44x44 CSS px. */
+.app-nav-link,
+.action-button,
+.month-nav-link,
+.theme-toggle-item {
+  align-items: center;
+  display: inline-flex;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+}
+
+a {
+  color: var(--color-link);
+}
+
+main {
+  margin: 0 auto;
+  max-width: 70rem;
+  padding: 1rem;
+}
+
+.theme-toggle {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  display: inline-flex;
+}
+
+.theme-toggle-item {
+  cursor: pointer;
+  justify-content: center;
+}
+
+.theme-toggle-item[data-state='checked'] {
+  background: var(--color-link);
+  border-radius: 0.4rem;
+  color: var(--color-bg);
+}
+
+.month-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.month-nav {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.month-nav-current {
+  font-weight: 600;
+  min-width: 9rem;
+  text-align: center;
+}
+
+.month-tables {
+  align-items: start;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+/* Mobile: stack the tables. */
+@media (max-width: 48rem) {
+  .month-tables {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.data-table caption {
+  font-weight: 600;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.data-table .numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.is-offday td {
+  color: var(--color-text-muted);
+}
+
+.status-success {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.status-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.status-danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.action-button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
