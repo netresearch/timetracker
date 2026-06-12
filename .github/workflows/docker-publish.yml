@@ -62,7 +62,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           set: |
             *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
+            *.cache-to=type=gha,mode=max,ignore-error=true
 
       - name: Build and push E2E image
         uses: docker/bake-action@6614cfa25eff9a0b2b2697efb0b6159e7680d584 # v7.2.0
@@ -73,4 +73,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           set: |
             *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
+            *.cache-to=type=gha,mode=max,ignore-error=true
