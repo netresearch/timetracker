@@ -61,17 +61,8 @@ final class SubticketSyncServiceTest extends TestCase
             'getTicketSystem' => null,
         ]);
 
-        $repo = $this->createMock(ObjectRepository::class);
-        $repo->method('find')->willReturn($project);
-        $registry = $this->createMock(ManagerRegistry::class);
-        $registry->method('getRepository')->willReturn($repo);
-        $factory = $this->createMock(JiraOAuthApiFactory::class);
-        assert($factory instanceof JiraOAuthApiFactory);
-
-        $subticketSyncService = $this->createService($registry, $factory);
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessageIsOrContains('No ticket system configured for project');
-        $this->expectExceptionCode(400);
+        $subticketSyncService = $this->createServiceForProjectMock($project);
+        $this->expectSyncException('No ticket system configured for project');
         $subticketSyncService->syncProjectSubtickets(1);
     }
 
@@ -109,17 +100,8 @@ final class SubticketSyncServiceTest extends TestCase
         $project->method('getProjectLead')->willReturn(null);
         $project->method('getName')->willReturn('P1');
 
-        $repo = $this->createMock(ObjectRepository::class);
-        $repo->method('find')->willReturn($project);
-        $registry = $this->createMock(ManagerRegistry::class);
-        $registry->method('getRepository')->willReturn($repo);
-        $factory = $this->createMock(JiraOAuthApiFactory::class);
-        assert($factory instanceof JiraOAuthApiFactory);
-
-        $subticketSyncService = $this->createService($registry, $factory);
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessageIsOrContains('Project has no lead user');
-        $this->expectExceptionCode(400);
+        $subticketSyncService = $this->createServiceForProjectMock($project);
+        $this->expectSyncException('Project has no lead user');
         $subticketSyncService->syncProjectSubtickets(1);
     }
 
@@ -136,17 +118,8 @@ final class SubticketSyncServiceTest extends TestCase
         $project->method('getProjectLead')->willReturn($user);
         $project->method('getName')->willReturn('P1');
 
-        $repo = $this->createMock(ObjectRepository::class);
-        $repo->method('find')->willReturn($project);
-        $registry = $this->createMock(ManagerRegistry::class);
-        $registry->method('getRepository')->willReturn($repo);
-        $factory = $this->createMock(JiraOAuthApiFactory::class);
-        assert($factory instanceof JiraOAuthApiFactory);
-
-        $subticketSyncService = $this->createService($registry, $factory);
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessageIsOrContains('Project user has no token for ticket system');
-        $this->expectExceptionCode(400);
+        $subticketSyncService = $this->createServiceForProjectMock($project);
+        $this->expectSyncException('Project user has no token for ticket system');
         $subticketSyncService->syncProjectSubtickets(1);
     }
 
@@ -196,5 +169,27 @@ final class SubticketSyncServiceTest extends TestCase
         $result = $subticketSyncService->syncProjectSubtickets(1);
 
         self::assertSame(['ABC-1', 'ABC-2', 'DEF-2'], $result);
+    }
+
+    /**
+     * Creates the service with a repository that returns $project for any find().
+     */
+    private function createServiceForProjectMock(Project $project): SubticketSyncService
+    {
+        $repo = $this->createMock(ObjectRepository::class);
+        $repo->method('find')->willReturn($project);
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->method('getRepository')->willReturn($repo);
+        $factory = $this->createMock(JiraOAuthApiFactory::class);
+        assert($factory instanceof JiraOAuthApiFactory);
+
+        return $this->createService($registry, $factory);
+    }
+
+    private function expectSyncException(string $message): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageIsOrContains($message);
+        $this->expectExceptionCode(400);
     }
 }

@@ -81,12 +81,7 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenUpdatingSameSystem(): void
     {
-        $existingSystem = self::createStub(TicketSystem::class);
-        $existingSystem->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Existing System'])
-            ->willReturn($existingSystem);
+        $this->mockExistingSystemFound('Existing System');
 
         $dto = new TicketSystemSaveDto(id: 5, name: 'Existing System');
 
@@ -98,47 +93,50 @@ final class UniqueTicketSystemNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingSystem = self::createStub(TicketSystem::class);
-        $existingSystem->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Duplicate Name'])
-            ->willReturn($existingSystem);
+        $this->mockExistingSystemFound('Duplicate Name');
 
         $dto = new TicketSystemSaveDto(id: 0, name: 'Duplicate Name');
 
         $this->context->method('getObject')->willReturn($dto);
 
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->method('setParameter')->willReturnSelf();
-        $violationBuilder->expects(self::once())->method('addViolation');
-
-        $this->context->method('buildViolation')
-            ->willReturn($violationBuilder);
+        $this->expectSingleViolation();
 
         $this->validator->validateInContext('Duplicate Name', new UniqueTicketSystemName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentSystemHasSameName(): void
     {
-        $existingSystem = self::createStub(TicketSystem::class);
-        $existingSystem->method('getId')->willReturn(5);
-
-        $this->repository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Conflicting Name'])
-            ->willReturn($existingSystem);
+        $this->mockExistingSystemFound('Conflicting Name');
 
         $dto = new TicketSystemSaveDto(id: 10, name: 'Conflicting Name');
 
         $this->context->method('getObject')->willReturn($dto);
 
+        $this->expectSingleViolation();
+
+        $this->validator->validateInContext('Conflicting Name', new UniqueTicketSystemName(), $this->context);
+    }
+
+    /**
+     * Mocks the repository so the uniqueness lookup finds an existing system (id 5) with $name.
+     */
+    private function mockExistingSystemFound(string $name): void
+    {
+        $existingSystem = self::createStub(TicketSystem::class);
+        $existingSystem->method('getId')->willReturn(5);
+
+        $this->repository->expects(self::once())->method('findOneBy')
+            ->with(['name' => $name])
+            ->willReturn($existingSystem);
+    }
+
+    private function expectSingleViolation(): void
+    {
         $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $violationBuilder->method('setParameter')->willReturnSelf();
         $violationBuilder->expects(self::once())->method('addViolation');
 
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
-
-        $this->validator->validateInContext('Conflicting Name', new UniqueTicketSystemName(), $this->context);
     }
 }

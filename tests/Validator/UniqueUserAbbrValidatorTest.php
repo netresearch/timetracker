@@ -67,21 +67,7 @@ final class UniqueUserAbbrValidatorTest extends TestCase
 
     public function testValidatePassesWhenNoExistingUserFound(): void
     {
-        $query = self::createStub(Query::class);
-        $query->method('getOneOrNullResult')->willReturn(null);
-
-        $queryBuilder = self::createStub(QueryBuilder::class);
-        $queryBuilder->method('where')->willReturnSelf();
-        $queryBuilder->method('setParameter')->willReturnSelf();
-        $queryBuilder->method('andWhere')->willReturnSelf();
-        $queryBuilder->method('getQuery')->willReturn($query);
-
-        $repository = self::createStub(EntityRepository::class);
-        $repository->method('createQueryBuilder')->willReturn($queryBuilder);
-
-        $this->entityManager->expects(self::once())->method('getRepository')
-            ->with(User::class)
-            ->willReturn($repository);
+        $this->mockRepositoryResult(null);
 
         $dto = new UserSaveDto(id: 0, username: 'newuser', abbr: 'NUS', teams: [1]);
         $this->context->method('getObject')->willReturn($dto);
@@ -94,21 +80,7 @@ final class UniqueUserAbbrValidatorTest extends TestCase
     {
         // When updating the same user, the andWhere clause excludes it,
         // so the query returns null (no other user with that abbr)
-        $query = self::createStub(Query::class);
-        $query->method('getOneOrNullResult')->willReturn(null);
-
-        $queryBuilder = self::createStub(QueryBuilder::class);
-        $queryBuilder->method('where')->willReturnSelf();
-        $queryBuilder->method('setParameter')->willReturnSelf();
-        $queryBuilder->method('andWhere')->willReturnSelf();
-        $queryBuilder->method('getQuery')->willReturn($query);
-
-        $repository = self::createStub(EntityRepository::class);
-        $repository->method('createQueryBuilder')->willReturn($queryBuilder);
-
-        $this->entityManager->expects(self::once())->method('getRepository')
-            ->with(User::class)
-            ->willReturn($repository);
+        $this->mockRepositoryResult(null);
 
         $dto = new UserSaveDto(id: 5, username: 'existinguser', abbr: 'EXI', teams: [1]);
         $this->context->method('getObject')->willReturn($dto);
@@ -122,30 +94,12 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $existingUser = self::createStub(User::class);
         $existingUser->method('getId')->willReturn(5);
 
-        $query = self::createStub(Query::class);
-        $query->method('getOneOrNullResult')->willReturn($existingUser);
-
-        $queryBuilder = self::createStub(QueryBuilder::class);
-        $queryBuilder->method('where')->willReturnSelf();
-        $queryBuilder->method('setParameter')->willReturnSelf();
-        $queryBuilder->method('andWhere')->willReturnSelf();
-        $queryBuilder->method('getQuery')->willReturn($query);
-
-        $repository = self::createStub(EntityRepository::class);
-        $repository->method('createQueryBuilder')->willReturn($queryBuilder);
-
-        $this->entityManager->expects(self::once())->method('getRepository')
-            ->with(User::class)
-            ->willReturn($repository);
+        $this->mockRepositoryResult($existingUser);
 
         $dto = new UserSaveDto(id: 0, username: 'newuser', abbr: 'DUP', teams: [1]);
         $this->context->method('getObject')->willReturn($dto);
 
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->expects(self::once())->method('addViolation');
-
-        $this->context->method('buildViolation')
-            ->willReturn($violationBuilder);
+        $this->expectSingleViolation();
 
         $this->validator->validateInContext('DUP', new UniqueUserAbbr(), $this->context);
     }
@@ -155,8 +109,38 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $existingUser = self::createStub(User::class);
         $existingUser->method('getId')->willReturn(5);
 
+        $this->mockRepositoryResult($existingUser);
+
+        $dto = new UserSaveDto(id: 10, username: 'anotheruser', abbr: 'CON', teams: [1]);
+        $this->context->method('getObject')->willReturn($dto);
+
+        $this->expectSingleViolation();
+
+        $this->validator->validateInContext('CON', new UniqueUserAbbr(), $this->context);
+    }
+
+    public function testValidateHandlesNonDtoContextObject(): void
+    {
+        $existingUser = self::createStub(User::class);
+        $existingUser->method('getId')->willReturn(5);
+
+        $this->mockRepositoryResult($existingUser);
+
+        // Context object is not a UserSaveDto
+        $this->context->method('getObject')->willReturn(new stdClass());
+
+        $this->expectSingleViolation();
+
+        $this->validator->validateInContext('ABC', new UniqueUserAbbr(), $this->context);
+    }
+
+    /**
+     * Mocks the repository chain so the uniqueness query returns $result.
+     */
+    private function mockRepositoryResult(?object $result): void
+    {
         $query = self::createStub(Query::class);
-        $query->method('getOneOrNullResult')->willReturn($existingUser);
+        $query->method('getOneOrNullResult')->willReturn($result);
 
         $queryBuilder = self::createStub(QueryBuilder::class);
         $queryBuilder->method('where')->willReturnSelf();
@@ -170,48 +154,14 @@ final class UniqueUserAbbrValidatorTest extends TestCase
         $this->entityManager->expects(self::once())->method('getRepository')
             ->with(User::class)
             ->willReturn($repository);
-
-        $dto = new UserSaveDto(id: 10, username: 'anotheruser', abbr: 'CON', teams: [1]);
-        $this->context->method('getObject')->willReturn($dto);
-
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->expects(self::once())->method('addViolation');
-
-        $this->context->method('buildViolation')
-            ->willReturn($violationBuilder);
-
-        $this->validator->validateInContext('CON', new UniqueUserAbbr(), $this->context);
     }
 
-    public function testValidateHandlesNonDtoContextObject(): void
+    private function expectSingleViolation(): void
     {
-        $existingUser = self::createStub(User::class);
-        $existingUser->method('getId')->willReturn(5);
-
-        $query = self::createStub(Query::class);
-        $query->method('getOneOrNullResult')->willReturn($existingUser);
-
-        $queryBuilder = self::createStub(QueryBuilder::class);
-        $queryBuilder->method('where')->willReturnSelf();
-        $queryBuilder->method('setParameter')->willReturnSelf();
-        $queryBuilder->method('getQuery')->willReturn($query);
-
-        $repository = self::createStub(EntityRepository::class);
-        $repository->method('createQueryBuilder')->willReturn($queryBuilder);
-
-        $this->entityManager->expects(self::once())->method('getRepository')
-            ->with(User::class)
-            ->willReturn($repository);
-
-        // Context object is not a UserSaveDto
-        $this->context->method('getObject')->willReturn(new stdClass());
-
         $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $violationBuilder->expects(self::once())->method('addViolation');
 
         $this->context->method('buildViolation')
             ->willReturn($violationBuilder);
-
-        $this->validator->validateInContext('ABC', new UniqueUserAbbr(), $this->context);
     }
 }

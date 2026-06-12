@@ -81,12 +81,7 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
     public function testValidatePassesWhenUpdatingSameActivity(): void
     {
-        $existingActivity = self::createStub(Activity::class);
-        $existingActivity->method('getId')->willReturn(5);
-
-        $this->activityRepository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Existing Activity'])
-            ->willReturn($existingActivity);
+        $this->mockExistingActivityFound('Existing Activity');
 
         $dto = new ActivitySaveDto(id: 5, name: 'Existing Activity');
 
@@ -98,41 +93,45 @@ final class UniqueActivityNameValidatorTest extends TestCase
 
     public function testValidateAddsViolationWhenDuplicateNameFound(): void
     {
-        $existingActivity = self::createStub(Activity::class);
-        $existingActivity->method('getId')->willReturn(5);
-
-        $this->activityRepository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Duplicate Name'])
-            ->willReturn($existingActivity);
+        $this->mockExistingActivityFound('Duplicate Name');
 
         $dto = new ActivitySaveDto(id: 0, name: 'Duplicate Name');
 
         $this->context->method('getObject')->willReturn($dto);
 
-        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
-        $violationBuilder->method('setParameter')->willReturnSelf();
-        $violationBuilder->expects(self::once())->method('addViolation');
-
-        $this->context->expects(self::once())->method('buildViolation')
-            ->with('The activity name "{{ value }}" already exists.')
-            ->willReturn($violationBuilder);
+        $this->expectSingleViolation();
 
         $this->validator->validateInContext('Duplicate Name', new UniqueActivityName(), $this->context);
     }
 
     public function testValidateAddsViolationWhenDifferentActivityHasSameName(): void
     {
-        $existingActivity = self::createStub(Activity::class);
-        $existingActivity->method('getId')->willReturn(5);
-
-        $this->activityRepository->expects(self::once())->method('findOneBy')
-            ->with(['name' => 'Conflicting Name'])
-            ->willReturn($existingActivity);
+        $this->mockExistingActivityFound('Conflicting Name');
 
         $dto = new ActivitySaveDto(id: 10, name: 'Conflicting Name');
 
         $this->context->method('getObject')->willReturn($dto);
 
+        $this->expectSingleViolation();
+
+        $this->validator->validateInContext('Conflicting Name', new UniqueActivityName(), $this->context);
+    }
+
+    /**
+     * Mocks the repository so the uniqueness lookup finds an existing activity (id 5) with $name.
+     */
+    private function mockExistingActivityFound(string $name): void
+    {
+        $existingActivity = self::createStub(Activity::class);
+        $existingActivity->method('getId')->willReturn(5);
+
+        $this->activityRepository->expects(self::once())->method('findOneBy')
+            ->with(['name' => $name])
+            ->willReturn($existingActivity);
+    }
+
+    private function expectSingleViolation(): void
+    {
         $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $violationBuilder->method('setParameter')->willReturnSelf();
         $violationBuilder->expects(self::once())->method('addViolation');
@@ -140,7 +139,5 @@ final class UniqueActivityNameValidatorTest extends TestCase
         $this->context->expects(self::once())->method('buildViolation')
             ->with('The activity name "{{ value }}" already exists.')
             ->willReturn($violationBuilder);
-
-        $this->validator->validateInContext('Conflicting Name', new UniqueActivityName(), $this->context);
     }
 }
