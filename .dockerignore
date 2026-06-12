@@ -16,6 +16,8 @@
 # Dependencies (reinstalled in build)
 vendor
 node_modules
+frontend/node_modules
+frontend/src/paraglide
 
 # Environment files
 .env.local

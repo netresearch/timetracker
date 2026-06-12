@@ -97,9 +97,15 @@ RUN set -ex \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Bun is the package manager of the new SolidJS frontend (frontend/)
+COPY --from=oven/bun:1.3.12 /usr/local/bin/bun /usr/local/bin/bun
+
 # Copy dependency manifests first (better cache)
 COPY --chown=app:app package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
+
+COPY --chown=app:app frontend/package.json frontend/bun.lock ./frontend/
+RUN bun install --cwd frontend --frozen-lockfile
 
 COPY --chown=app:app composer.json composer.lock symfony.lock ./
 
@@ -118,8 +124,9 @@ ENV APP_ENV=prod
 RUN composer dump-autoload --optimize --classmap-authoritative \
     && composer run-script post-install-cmd --no-interaction || true
 
-# Build frontend assets
-RUN npm run build
+# Build frontend assets (legacy ExtJS via Encore, new SolidJS UI via Vite)
+RUN npm run build \
+    && bun run --cwd frontend build
 
 # Create var directories
 RUN mkdir -p var/log var/cache \
