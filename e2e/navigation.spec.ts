@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import {
-  goToTab,
   goToTrackingTab,
   goToAuswertungPage,
   goToSettingsPage,
+  goToAdminPage,
   getVisibleTabs,
   NAV_LINKS,
-  TABS,
 } from './helpers/navigation';
 import { waitForGrid } from './helpers/grid';
 
@@ -90,7 +89,7 @@ test.describe('Tab Navigation', () => {
 });
 
 test.describe('Role-Based Tab Visibility', () => {
-  test('PL user should see Administration tab and Billing nav link', async ({ page }) => {
+  test('PL user should see Administration + Billing nav links, not the ExtJS tabs', async ({ page }) => {
     // Login as i.myself who has type PL (Project Lead) which grants ROLE_ADMIN
     await login(page, 'i.myself', 'myself123');
     await waitForGrid(page);
@@ -98,29 +97,26 @@ test.describe('Role-Based Tab Visibility', () => {
     const tabs = await getVisibleTabs(page);
     console.log('Visible tabs for PL user:', tabs);
 
-    // PL users (ROLE_ADMIN) should see the Administration ExtJS tab. Its index
-    // shifts down as tabs migrate out, so match on the label, not the prefix.
+    // Administration and Controlling/Abrechnung both moved to the SolidJS UI —
+    // for ROLE_ADMIN they are reached via the header nav links, not ExtJS tabs.
     const hasAdminTab = tabs.some((t) => /Administration/i.test(t));
-    expect(hasAdminTab).toBe(true);
-
-    // Controlling/Abrechnung moved to the SolidJS UI — for ROLE_PL/ROLE_ADMIN it
-    // is reachable via the Billing header nav link, not an ExtJS tab.
+    expect(hasAdminTab).toBe(false);
     const hasControllingTab = tabs.some((t) => /Controlling|Abrechnung/i.test(t));
     expect(hasControllingTab).toBe(false);
+
+    await expect(page.locator(NAV_LINKS.admin)).toBeVisible();
     await expect(page.locator(NAV_LINKS.billing)).toBeVisible();
   });
 
-  test('PL user should be able to navigate to Administration tab', async ({ page }) => {
+  test('PL user should be able to navigate to the Administration page', async ({ page }) => {
     await login(page, 'i.myself', 'myself123');
     await waitForGrid(page);
 
-    // Navigate to Administration tab
-    await goToTab(page, TABS.administration);
+    await goToAdminPage(page);
 
-    // Admin panel should load (check for admin-specific content)
-    await page.waitForTimeout(1000);
-    const adminContent = page.locator('.x-panel, .x-grid').first();
-    await expect(adminContent).toBeVisible();
+    await expect(page).toHaveURL(/\/ui\/admin/);
+    await expect(page.locator('section.admin-page')).toBeVisible();
+    await expect(page.locator('nav.admin-subnav')).toBeVisible();
   });
 });
 

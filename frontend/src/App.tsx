@@ -3,9 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import { createEffect, onMount, type Component, type ParentProps } from 'solid-js'
 
 import { SessionExpiredError } from './api/client'
-import { appConfig, canBill, canBulkEnter } from './config'
+import { appConfig, canBill, canBulkEnter, hasRole } from './config'
 import { initHeaderDynamics } from './header'
 import { syncNav } from './nav'
+import Admin from './pages/Admin'
 import Auswertung from './pages/Auswertung'
 import Billing from './pages/Billing'
 import Extras from './pages/Extras'
@@ -64,6 +65,7 @@ export default function App() {
       <Route path="/help" component={Help} />
       <Route path="/extras" component={guarded(Extras, canBulkEnter)} />
       <Route path="/billing" component={guarded(Billing, canBill)} />
+      <Route path="/admin" component={guarded(Admin, () => hasRole('ROLE_ADMIN'))} />
       <Route path="*rest" component={RedirectToMonth} />
     </Router>
   )

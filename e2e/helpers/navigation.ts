@@ -3,19 +3,15 @@ import { Page } from '@playwright/test';
 /**
  * Tab names in the ExtJS shell.
  *
- * The Extras, Settings, Controlling/Abrechnung, Help and Interpretation/
- * Auswertung tabs were migrated out of the ExtJS shell into the SolidJS UI
- * (served under /ui) and are reached via the shared header nav links
+ * The Extras, Settings, Controlling/Abrechnung, Help, Interpretation/Auswertung
+ * and Administration tabs were migrated out of the ExtJS shell into the SolidJS
+ * UI (served under /ui) and are reached via the shared header nav links
  * (a.main-nav-link[data-nav=...]). The ExtJS tab bar now holds only Time
- * Tracking (1) and — for admins — Administration (2). Tab titles are prefixed
- * with their 1-based index by addTab() in assets/js/main.js (e.g. "2:
- * Administration"); these matchers deliberately match on the label only, so
- * they survive the index shifting down as tabs are removed during the
- * migration. (Label-only patterns also avoid the super-linear `\d+:.*` form.)
+ * Tracking (1); the matcher uses the label only (also avoiding the
+ * super-linear `\d+:.*` form).
  */
 export const TABS = {
   tracking: /Time Tracking|Zeiterfassung/i,
-  administration: /Administration/i,
   charts: /Charts|Diagramme/i, // Legacy, may not exist in numbered tabs
 } as const;
 
@@ -31,6 +27,7 @@ export const NAV_LINKS = {
   billing: 'a.main-nav-link[data-nav="billing"]',
   settings: 'a.main-nav-link[data-nav="settings"]',
   help: 'a.main-nav-link[data-nav="help"]',
+  admin: 'a.main-nav-link[data-nav="admin"]',
 } as const;
 
 /**
@@ -89,6 +86,16 @@ export async function goToSettingsPage(page: Page): Promise<void> {
   await page.locator(NAV_LINKS.settings).click();
   await page.waitForURL(/\/ui\/settings/, { timeout: 10000 });
   await page.waitForSelector('form.stack-form', { timeout: 10000 });
+}
+
+/**
+ * Navigate to the SolidJS Administration page via the shared header nav link.
+ * (Formerly the ExtJS Administration tab; only visible to ROLE_ADMIN.)
+ */
+export async function goToAdminPage(page: Page): Promise<void> {
+  await page.locator(NAV_LINKS.admin).click();
+  await page.waitForURL(/\/ui\/admin/, { timeout: 10000 });
+  await page.waitForSelector('section.admin-page', { timeout: 10000 });
 }
 
 /**

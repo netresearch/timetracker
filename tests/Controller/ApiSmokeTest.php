@@ -13,6 +13,7 @@ use Tests\AbstractWebTestCase;
 
 use function assert;
 use function is_array;
+use function sprintf;
 
 /**
  * @internal
@@ -123,6 +124,17 @@ final class ApiSmokeTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
+
+        // Secrets must never be shipped to the client (camel- and snake-case).
+        foreach ($data as $row) {
+            self::assertIsArray($row);
+            self::assertArrayHasKey('ticketSystem', $row);
+            $ticketSystem = $row['ticketSystem'];
+            assert(is_array($ticketSystem));
+            foreach (['password', 'privateKey', 'private_key', 'publicKey', 'public_key', 'oauthConsumerKey', 'oauth_consumer_key', 'oauthConsumerSecret', 'oauth_consumer_secret'] as $secret) {
+                self::assertArrayNotHasKey($secret, $ticketSystem, sprintf('Secret "%s" leaked in /getTicketSystems', $secret));
+            }
+        }
     }
 
     public function testGetTimeSummary(): void

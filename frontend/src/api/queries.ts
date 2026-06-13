@@ -94,13 +94,25 @@ export function presetsQuery() {
   }
 }
 
-// --- Interpretation ("Auswertung") ---
+// --- Shared option sources (Interpretation/Auswertung + Administration) ---
 
 export interface TeamRecord {
   team: { id: number; name: string }
 }
 export interface ActivityRecord {
   activity: { id: number; name: string }
+}
+export interface TicketSystemRecord {
+  ticketSystem: { id: number; name: string }
+}
+
+export function ticketSystemsQuery() {
+  return {
+    queryKey: ['all-ticketsystems'] as const,
+    queryFn: () => getJson<TicketSystemRecord[]>('/getTicketSystems'),
+    select: (records: TicketSystemRecord[]): NamedOption[] =>
+      records.map((r) => ({ id: r.ticketSystem.id, label: r.ticketSystem.name })),
+  }
 }
 
 export function teamsQuery() {

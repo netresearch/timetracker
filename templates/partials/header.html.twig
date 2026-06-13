@@ -51,6 +51,11 @@
                {% if active == 'billing' %}aria-current="page"{% endif %}
                data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
         {% endif %}
+        {% if isAdmin %}
+            <a class="main-nav-link{% if active == 'admin' %} is-active{% endif %}"
+               {% if active == 'admin' %}aria-current="page"{% endif %}
+               data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
+        {% endif %}
         <a class="main-nav-link{% if active == 'settings' %} is-active{% endif %}"
            {% if active == 'settings' %}aria-current="page"{% endif %}
            data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}">{{ 'Settings'|trans }}</a>

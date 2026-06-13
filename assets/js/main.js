@@ -80,22 +80,11 @@ Ext.onReady(function () {
 
     addTab(trackingWidget);
 
-    /* Helper to check if user has a specific role */
-    function hasRole(role) {
-        return settingsData?.['roles']?.includes(role);
-    }
-
-    /* Show admin tab if user has ROLE_ADMIN */
-    if (hasRole('ROLE_ADMIN')) {
-        const adminWidget = Ext.create('Netresearch.widget.Admin', { itemId: 'admin' });
-        addTab(adminWidget);
-    }
-
     /*
-     * Auswertung (Interpretation), Extras, Settings, Controlling (Abrechnung)
-     * and Help have moved to the new SolidJS UI (frontend/, served under /ui)
-     * and are reached via the shared header navigation — see
-     * templates/partials/header.html.twig.
+     * Auswertung (Interpretation), Administration, Extras, Settings,
+     * Controlling (Abrechnung) and Help have moved to the new SolidJS UI
+     * (frontend/, served under /ui) and are reached via the shared header
+     * navigation — see templates/partials/header.html.twig.
      */
 
     Ext.tip.QuickTipManager.init();
