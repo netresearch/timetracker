@@ -63,8 +63,12 @@ export default function Billing() {
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i)
 
-  const monthLabel = (value: number) =>
-    new Intl.DateTimeFormat(config.locale, { month: 'long' }).format(new Date(2000, value - 1, 1))
+  // Use the 15th so a timezone offset can't shift the label to another month.
+  const monthOptions = createMemo(() => {
+    const formatter = new Intl.DateTimeFormat(config.locale, { month: 'long' })
+
+    return MONTH_VALUES.map((value) => ({ value, label: formatter.format(new Date(2000, value - 1, 15)) }))
+  })
 
   const href = createMemo(() =>
     exportHref({
@@ -81,7 +85,7 @@ export default function Billing() {
   return (
     <section class="form-page">
       <h2>{m.billing_title()}</h2>
-      <Show when={users.isError || customers.isError}>
+      <Show when={users.isError || projects.isError || customers.isError}>
         <p role="alert">{m.app_load_error()}</p>
       </Show>
       <form class="stack-form" onSubmit={(event) => event.preventDefault()}>
@@ -119,8 +123,8 @@ export default function Billing() {
         <label class="field">
           <span>{m.billing_month()}</span>
           <select value={month()} onInput={(event) => setMonth(Number(event.currentTarget.value))}>
-            <For each={MONTH_VALUES}>
-              {(value) => <option value={value}>{monthLabel(value)}</option>}
+            <For each={monthOptions()}>
+              {(option) => <option value={option.value}>{option.label}</option>}
             </For>
           </select>
         </label>
