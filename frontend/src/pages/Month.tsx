@@ -147,6 +147,15 @@ export default function Month() {
     return Math.min(100, Math.round((data.sum.worked / data.sum.expectedUntilToday) * 1000) / 10)
   })
 
+  const monthTitle = createMemo(() =>
+    formatMonthTitle(new Date(target().year, target().month - 1, 1), config.locale),
+  )
+  const weeks = createMemo(() => {
+    const data = report()
+
+    return data === null ? [] : buildWeeks(data.days, new Date())
+  })
+
   return (
     <section class="month-report">
       <div class="month-toolbar">
@@ -231,7 +240,7 @@ export default function Month() {
             <div class="month-layout">
               <table class="calendar">
                 <caption class="visually-hidden">
-                  {m.month_calendar_label({ month: formatMonthTitle(new Date(target().year, target().month - 1, 1), config.locale) })}
+                  {m.month_calendar_label({ month: monthTitle() })}
                 </caption>
                 <thead>
                   <tr>
@@ -239,7 +248,7 @@ export default function Month() {
                   </tr>
                 </thead>
                 <tbody>
-                  <For each={buildWeeks(data().days, new Date())}>
+                  <For each={weeks()}>
                     {(week) => (
                       <tr>
                         <For each={week}>
