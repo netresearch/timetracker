@@ -48,7 +48,7 @@ export default function Help() {
 
   return (
     <section class="help-page">
-      <h2>{m.help_title()}</h2>
+      <h2 class="visually-hidden">{m.help_title()}</h2>
 
       <section class="help-section">
         <h3>{m.help_usage()}</h3>

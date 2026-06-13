@@ -76,7 +76,7 @@ export default function Extras() {
 
   return (
     <section class="form-page">
-      <h2>{m.extras_title()}</h2>
+      <h2 class="visually-hidden">{m.extras_title()}</h2>
       <Show when={presets.isError}>
         <p role="alert">{m.app_load_error()}</p>
       </Show>
