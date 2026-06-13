@@ -3,7 +3,6 @@ import { createSignal, For } from 'solid-js'
 import { adminEntities } from '../admin/entities'
 import { useOptionSources } from '../admin/options'
 import { AdminCrudShell } from '../components/AdminCrudShell'
-import { ThemeToggle } from '../components/ThemeToggle'
 import { m } from '../paraglide/messages.js'
 
 export default function Admin() {
@@ -15,10 +14,7 @@ export default function Admin() {
 
   return (
     <section class="admin-page">
-      <div class="month-toolbar">
-        <h2>{m.admin_title()}</h2>
-        <ThemeToggle />
-      </div>
+      <h2 class="visually-hidden">{m.admin_title()}</h2>
 
       <nav class="admin-subnav" aria-label={m.admin_title()}>
         <For each={entities}>

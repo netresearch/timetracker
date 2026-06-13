@@ -84,7 +84,7 @@ export default function Billing() {
 
   return (
     <section class="form-page">
-      <h2>{m.billing_title()}</h2>
+      <h2 class="visually-hidden">{m.billing_title()}</h2>
       <Show when={users.isError || projects.isError || customers.isError}>
         <p role="alert">{m.app_load_error()}</p>
       </Show>

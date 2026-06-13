@@ -16,7 +16,6 @@ import {
   usersQuery,
 } from '../api/queries'
 import { EffortChart, type EffortRow } from '../components/EffortChart'
-import { ThemeToggle } from '../components/ThemeToggle'
 import { appConfig } from '../config'
 import { m } from '../paraglide/messages.js'
 
@@ -116,10 +115,7 @@ export default function Auswertung() {
 
   return (
     <section class="auswertung">
-      <div class="month-toolbar">
-        <h2>{m.auswertung_title()}</h2>
-        <ThemeToggle />
-      </div>
+      <h2 class="visually-hidden">{m.auswertung_title()}</h2>
 
       <form
         class="filter-bar"

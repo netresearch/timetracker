@@ -2,10 +2,26 @@
    Shared page header + main navigation.
    Loaded by BOTH the ExtJS shell and the SolidJS shell (/ui) — keep this file
    framework-neutral; markup lives in templates/partials/header.html.twig.
+
+   Theming: colours use light-dark() so the header follows the user's theme.
+   The SolidJS theme switch sets data-theme on <html>; we map that to
+   color-scheme here so light-dark() resolves on BOTH shells (the SPA design
+   tokens in app.css are not loaded on the ExtJS shell). With no explicit
+   choice the header follows the OS (prefers-color-scheme).
    ========================================================================== */
 
 .page-header {
-    background-color: #D2D2D2;
+    color-scheme: light dark;
+    background-color: light-dark(#D2D2D2, #1d2127);
+    color: light-dark(#1f2937, #f1f2f4);
+}
+
+:root[data-theme="light"] .page-header {
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] .page-header {
+    color-scheme: dark;
 }
 
 /* Skip Link (WCAG 2.4.1) */
@@ -57,6 +73,13 @@
     object-fit: contain;
 }
 
+/* Theme switch slot (the SolidJS ThemeToggle is portalled in here on /ui). */
+.header-theme {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
 /* User Badge (status + logout merged) */
 .user-badge {
     display: flex;
@@ -82,8 +105,8 @@
 }
 
 .user-badge.status_active {
-    background-color: #c1cbc1;
-    color: #333;
+    background-color: light-dark(#c1cbc1, #283330);
+    color: light-dark(#333, #e6e9ec);
 }
 
 .user-badge.status_active .status-indicator {
@@ -92,8 +115,8 @@
 }
 
 .user-badge.status_inactive {
-    background-color: #cfc1c1;
-    color: #444;
+    background-color: light-dark(#cfc1c1, #332828);
+    color: light-dark(#444, #e6e9ec);
 }
 
 .user-badge.status_inactive .status-indicator {
@@ -104,18 +127,18 @@
     margin-left: 4px;
     padding: 2px 8px;
     font-size: 11px;
-    color: #666;
+    color: light-dark(#666, #c4c9cf);
     text-decoration: none;
-    border: 1px solid #ddd;
+    border: 1px solid light-dark(#ddd, #4a525b);
     border-radius: 3px;
     transition: all 0.2s;
 }
 
 .user-badge .badge-logout:hover,
 .user-badge .badge-logout:focus {
-    background-color: #cfbdbd;
-    border-color: #B00000;
-    color: #8F0000;
+    background-color: light-dark(#cfbdbd, #4a2a2c);
+    border-color: light-dark(#B00000, #e0888c);
+    color: light-dark(#8F0000, #f5bdc0);
 }
 
 .user-badge .badge-logout:focus {
@@ -144,7 +167,7 @@
     flex-direction: column;
     align-items: center;
     padding: 4px 12px;
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.07));
     border-radius: 4px;
     min-width: 70px;
 }
@@ -152,7 +175,7 @@
 .worktime-item dt {
     font-size: 10px;
     text-transform: uppercase;
-    color: #666;
+    color: light-dark(#666, #b9bec4);
     letter-spacing: 0.5px;
     margin: 0;
 }
@@ -160,13 +183,13 @@
 .worktime-item dd {
     font-size: 14px;
     font-weight: 600;
-    color: #333;
+    color: light-dark(#333, #f1f2f4);
     margin: 0;
 }
 
 .worktime-link {
     font-size: 12px;
-    color: #00707F;
+    color: light-dark(#00707F, #6fd0dd);
     text-decoration: none;
     padding: 4px 8px;
     border-radius: 4px;
@@ -175,7 +198,7 @@
 
 .worktime-link:hover,
 .worktime-link:focus {
-    background-color: rgba(0, 136, 154, 0.1);
+    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.15));
     text-decoration: underline;
 }
 
@@ -193,9 +216,9 @@
     display: flex;
     gap: 4px;
     padding: 0 16px;
-    background-color: #c6c9cc;
-    border-top: 1px solid #b5b8bc;
-    border-bottom: 1px solid #9aa0a6;
+    background-color: light-dark(#c6c9cc, #21262d);
+    border-top: 1px solid light-dark(#b5b8bc, #2f353d);
+    border-bottom: 1px solid light-dark(#9aa0a6, #11151a);
 }
 
 .main-nav-link {
@@ -203,7 +226,7 @@
     align-items: center;
     min-height: 44px;
     padding: 0 16px;
-    color: #1f2937;
+    color: light-dark(#1f2937, #e6e9ec);
     font-family: Arial, sans-serif;
     font-size: 13px;
     font-weight: 600;
@@ -213,10 +236,10 @@
 
 .main-nav-link:hover,
 .main-nav-link:focus {
-    background-color: rgba(0, 136, 154, 0.1);
+    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.15));
 }
 
 .main-nav-link.is-active {
-    border-bottom-color: #00889A;
-    color: #00707F;
+    border-bottom-color: light-dark(#00889A, #6fd0dd);
+    color: light-dark(#00707F, #6fd0dd);
 }

@@ -30,6 +30,9 @@
                 <a id="sumlink" href="{{ globalConfig.monthly_overview_url ~ settings.user_name }}" target="_blank" rel="noopener noreferrer" class="worktime-link">{{ 'Monthly overview'|trans }}</a>
             {% endif %}
         </section>
+        {# Theme switch — the SolidJS shell portals its ThemeToggle in here
+           (frontend/src/App.tsx); empty on the ExtJS shell, which has no SPA. #}
+        <div id="theme-toggle-mount" class="header-theme"></div>
     </header>
     <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
         <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"

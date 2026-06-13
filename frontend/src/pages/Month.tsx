@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/solid-query'
 import { createMemo, For, Index, Match, Show, Switch } from 'solid-js'
 
 import { holidaysQuery, monthTimesQuery } from '../api/queries'
-import { ThemeToggle } from '../components/ThemeToggle'
 import { appConfig } from '../config'
 import { formatMinutes, formatMonthTitle } from '../lib/format'
 import { computeMonth, type DayRow } from '../lib/month'
@@ -159,12 +158,11 @@ export default function Month() {
   return (
     <section class="month-report">
       <div class="month-toolbar">
-        <h2>{m.month_title()}</h2>
+        <h2 class="visually-hidden">{m.month_title()}</h2>
         <div class="month-toolbar-actions">
           <A class="today-button" href={monthHref(currentTarget.year, currentTarget.month)}>
             {m.month_today()}
           </A>
-          <ThemeToggle />
         </div>
       </div>
 
