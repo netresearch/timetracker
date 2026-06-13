@@ -1,5 +1,5 @@
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
-import { createSignal, For, Match, Show, Switch } from 'solid-js'
+import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js'
 
 import { ApiError, getJson, postJson } from '../api/client'
 import { m } from '../paraglide/messages.js'
@@ -33,10 +33,11 @@ export function AdminCrudShell(props: {
   // descriptor's rowKey and drop any row whose wrapper is missing or null —
   // handing the grid an undefined row would crash it (reading a column value
   // off undefined).
-  const rows = (): Row[] =>
+  const rows = createMemo<Row[]>(() =>
     (list.data ?? [])
       .map((row) => row?.[props.descriptor.rowKey])
-      .filter((row): row is Row => row != null && typeof row === 'object')
+      .filter((row): row is Row => row != null && typeof row === 'object'),
+  )
 
   function openForm(row: Row | null) {
     setError('')
@@ -158,12 +159,13 @@ function FieldControl(props: {
   const disabled = () => props.editing && props.field.lockedOnEdit === true
   const text = () => String(value() ?? '')
 
-  const selectOptions = (): { value: string | number; label: string }[] =>
+  const selectOptions = createMemo<{ value: string | number; label: string }[]>(() =>
     props.field.staticOptions
       ? props.field.staticOptions.map((option) => ({ value: option.value, label: option.label() }))
       : props.field.source
         ? props.options(props.field.source).map((option) => ({ value: option.id, label: option.label }))
-        : []
+        : [],
+  )
 
   const toggleMulti = (optionValue: number, checked: boolean) => {
     const current = new Set((props.values[props.field.name] as number[] | undefined) ?? [])
