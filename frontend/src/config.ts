@@ -3,6 +3,10 @@ export interface AppConfig {
   userId: number
   userName: string
   appTitle: string
+  roles: string[]
+  showEmptyLine: boolean
+  suggestTime: boolean
+  showFuture: boolean
   logoutUrl: string
   legacyUrl: string
 }
@@ -22,4 +26,18 @@ export function appConfig(): AppConfig {
   }
 
   return config
+}
+
+export function hasRole(role: string): boolean {
+  return appConfig().roles.includes(role)
+}
+
+/** Project leads and admins may use the billing export. */
+export function canBill(): boolean {
+  return hasRole('ROLE_PL') || hasRole('ROLE_ADMIN')
+}
+
+/** Bulk entry depends on presets, which are ROLE_ADMIN-only. */
+export function canBulkEnter(): boolean {
+  return hasRole('ROLE_ADMIN')
 }

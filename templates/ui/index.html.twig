@@ -14,6 +14,10 @@
                 'userId': settings.user_id,
                 'userName': settings.user_name,
                 'appTitle': apptitle,
+                'roles': settings.roles,
+                'showEmptyLine': settings.show_empty_line == 1,
+                'suggestTime': settings.suggest_time == 1,
+                'showFuture': settings.show_future == 1,
                 'logoutUrl': url('_logout'),
                 'legacyUrl': url('_start'),
             }|json_encode(jsonHexFlags)|raw }};

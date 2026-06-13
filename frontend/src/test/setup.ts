@@ -54,6 +54,10 @@ window.APP_CONFIG = {
   userId: 1,
   userName: 'unittest',
   appTitle: 'TimeTracker',
+  roles: ['ROLE_USER', 'ROLE_PL', 'ROLE_ADMIN'],
+  showEmptyLine: false,
+  suggestTime: false,
+  showFuture: false,
   logoutUrl: '/logout',
   legacyUrl: '/',
 }
