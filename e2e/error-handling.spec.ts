@@ -168,27 +168,18 @@ test.describe('Success Notifications', () => {
   });
 
   test('should show success notification after settings save', async ({ page }) => {
-    // Go to Settings tab
-    const settingsTab = page.locator('.x-tab, button').filter({ hasText: /Settings|Einstellungen/i }).first();
-    await settingsTab.click();
-    await page.waitForTimeout(500);
+    // Settings moved to the SolidJS UI; reach it via the shared header nav link.
+    await page.locator('a.main-nav-link[data-nav="settings"]').click();
+    await page.waitForURL(/\/ui\/settings/, { timeout: 10000 });
+    await page.waitForSelector('form.stack-form', { timeout: 10000 });
 
-    // Hide debug toolbar if present
-    await page.evaluate(() => {
-      const toolbar = document.querySelector('.sf-toolbar');
-      if (toolbar) (toolbar as HTMLElement).style.display = 'none';
-    });
+    // Click the Save button (leave locale unchanged — a locale change would
+    // reload the page instead of showing the inline success status).
+    const saveButton = page.locator('form.stack-form button.primary-button');
+    await saveButton.click();
 
-    // Click save button
-    const saveButton = page.locator('.x-btn').filter({ hasText: /Save|Speichern/i }).first();
-    if (await saveButton.isVisible()) {
-      await saveButton.click();
-      await page.waitForTimeout(1000);
-
-      // Check for success notification
-      const hasNotification = await page.locator('.x-window, .x-msg').isVisible().catch(() => false);
-      console.log(`Success notification visible: ${hasNotification}`);
-    }
+    // The SolidJS page shows an inline success status on a successful save.
+    await expect(page.locator('.form-status.is-ok')).toBeVisible({ timeout: 10000 });
   });
 
   test('should show success notification after entry delete', async ({ page }) => {

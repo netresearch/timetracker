@@ -1,17 +1,33 @@
 import { Page } from '@playwright/test';
 
 /**
- * Tab names in the application
+ * Tab names in the ExtJS shell.
+ *
+ * The Extras, Settings, Controlling/Abrechnung and Help tabs were migrated out
+ * of the ExtJS shell into the SolidJS UI (served under /ui) and are reached via
+ * the shared header nav links (a.main-nav-link[data-nav=...]). The ExtJS tab
+ * bar now holds only Time Tracking (1), Interpretation (2) and — for admins —
+ * Administration (3). Tab titles are prefixed with their 1-based index by
+ * addTab() in assets/js/main.js.
  */
 export const TABS = {
   tracking: /1:.*Time Tracking|Zeiterfassung/i,
   interpretation: /2:.*Interpretation|Auswertung/i,
-  extras: /3:.*Extras/i,
-  settings: /4:.*Settings|Einstellungen/i,
-  administration: /5:.*Administration/i,
-  controlling: /6:.*Controlling|Abrechnung/i,
-  help: /7:.*Help|Hilfe/i,
+  administration: /3:.*Administration/i,
   charts: /Charts|Diagramme/i, // Legacy, may not exist in numbered tabs
+} as const;
+
+/**
+ * Shared-header navigation links for features migrated to the SolidJS UI.
+ * Present on both the ExtJS page (/) and the SPA (/ui/...). Clicking one is a
+ * full navigation to the corresponding /ui route.
+ */
+export const NAV_LINKS = {
+  month: 'a.main-nav-link[data-nav="month"]',
+  extras: 'a.main-nav-link[data-nav="extras"]',
+  billing: 'a.main-nav-link[data-nav="billing"]',
+  settings: 'a.main-nav-link[data-nav="settings"]',
+  help: 'a.main-nav-link[data-nav="help"]',
 } as const;
 
 /**
@@ -50,19 +66,23 @@ export async function goToChartsTab(page: Page): Promise<void> {
 }
 
 /**
- * Navigate to Controlling tab
+ * Navigate to the SolidJS Billing page via the shared header nav link.
+ * (Formerly the ExtJS Controlling/Abrechnung tab.)
  */
-export async function goToControllingTab(page: Page): Promise<void> {
-  await goToTab(page, TABS.controlling);
+export async function goToBillingPage(page: Page): Promise<void> {
+  await page.locator(NAV_LINKS.billing).click();
+  await page.waitForURL(/\/ui\/billing/, { timeout: 10000 });
+  await page.waitForSelector('form.stack-form', { timeout: 10000 });
 }
 
 /**
- * Navigate to Settings tab
+ * Navigate to the SolidJS Settings page via the shared header nav link.
+ * (Formerly the ExtJS Settings/Einstellungen tab.)
  */
-export async function goToSettingsTab(page: Page): Promise<void> {
-  await goToTab(page, TABS.settings);
-  // Wait for settings form
-  await page.waitForSelector('input[name="locale"]', { timeout: 5000 }).catch(() => {});
+export async function goToSettingsPage(page: Page): Promise<void> {
+  await page.locator(NAV_LINKS.settings).click();
+  await page.waitForURL(/\/ui\/settings/, { timeout: 10000 });
+  await page.waitForSelector('form.stack-form', { timeout: 10000 });
 }
 
 /**

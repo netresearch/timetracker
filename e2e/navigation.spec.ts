@@ -4,8 +4,9 @@ import {
   goToTab,
   goToTrackingTab,
   goToInterpretationTab,
-  goToSettingsTab,
+  goToSettingsPage,
   getVisibleTabs,
+  NAV_LINKS,
   TABS,
 } from './helpers/navigation';
 import { waitForGrid } from './helpers/grid';
@@ -21,18 +22,25 @@ test.describe('Tab Navigation', () => {
   });
 
   test('should display main tabs after login', async ({ page }) => {
-    // All users should see at least Time Tracking and Settings tabs
+    // The ExtJS tab bar now holds only Time Tracking (1) and Interpretation (2)
+    // for a non-admin user; Settings/Extras/Billing/Help moved to the SolidJS UI
+    // and live in the shared header nav.
     const tabs = await getVisibleTabs(page);
     console.log('Visible tabs:', tabs);
 
     expect(tabs.length).toBeGreaterThan(0);
 
-    // Check that essential tabs are present (using partial text match)
+    // Essential ExtJS tabs are present (using partial text match)
     const hasTrackingTab = tabs.some((t) => /Zeiterfassung|Time Tracking|1:/i.test(t));
-    const hasSettingsTab = tabs.some((t) => /Einstellungen|Settings|4:/i.test(t));
+    const hasInterpretationTab = tabs.some((t) => /Auswertung|Interpretation|2:/i.test(t));
 
     expect(hasTrackingTab).toBe(true);
-    expect(hasSettingsTab).toBe(true);
+    expect(hasInterpretationTab).toBe(true);
+
+    // Settings is no longer an ExtJS tab — it is reached via the header nav link.
+    const hasSettingsTab = tabs.some((t) => /Einstellungen|Settings/i.test(t));
+    expect(hasSettingsTab).toBe(false);
+    await expect(page.locator(NAV_LINKS.settings)).toBeVisible();
   });
 
   test('should navigate to Time Tracking tab', async ({ page }) => {
@@ -60,17 +68,21 @@ test.describe('Tab Navigation', () => {
     expect(hasInterpretationContent).toBe(true);
   });
 
-  test('should navigate to Settings tab', async ({ page }) => {
-    await goToSettingsTab(page);
+  test('should navigate to Settings via header nav link', async ({ page }) => {
+    // Settings moved to the SolidJS UI; the header nav link is a full navigation
+    // to /ui/settings.
+    await goToSettingsPage(page);
 
-    // Settings form should be visible
-    await expect(page.locator('input[name="locale"]')).toBeAttached();
-    await expect(page.locator('input[name="show_empty_line"]')).toBeAttached();
+    await expect(page).toHaveURL(/\/ui\/settings/);
+
+    // SolidJS settings form should be visible
+    await expect(page.locator('select[name="locale"]')).toBeAttached();
+    await expect(page.locator('input[type="checkbox"][name="show_empty_line"]')).toBeAttached();
   });
 
   test('should persist active tab on page reload', async ({ page }) => {
-    // Go to Settings tab
-    await goToSettingsTab(page);
+    // Switch to the Interpretation ExtJS tab
+    await goToInterpretationTab(page);
 
     // Reload the page
     await page.reload();
@@ -83,7 +95,7 @@ test.describe('Tab Navigation', () => {
 });
 
 test.describe('Role-Based Tab Visibility', () => {
-  test('PL user should see Administration and Controlling tabs', async ({ page }) => {
+  test('PL user should see Administration tab and Billing nav link', async ({ page }) => {
     // Login as i.myself who has type PL (Project Lead) which grants ROLE_ADMIN
     await login(page, 'i.myself', 'myself123');
     await waitForGrid(page);
@@ -91,13 +103,15 @@ test.describe('Role-Based Tab Visibility', () => {
     const tabs = await getVisibleTabs(page);
     console.log('Visible tabs for PL user:', tabs);
 
-    // PL users should see Administration tab (requires ROLE_ADMIN)
-    const hasAdminTab = tabs.some((t) => /Administration|5:/i.test(t));
+    // PL users (ROLE_ADMIN) should see the Administration ExtJS tab (now tab 3)
+    const hasAdminTab = tabs.some((t) => /Administration|3:/i.test(t));
     expect(hasAdminTab).toBe(true);
 
-    // PL users should see Controlling tab (requires ROLE_PL or ROLE_ADMIN)
-    const hasControllingTab = tabs.some((t) => /Controlling|Abrechnung|6:/i.test(t));
-    expect(hasControllingTab).toBe(true);
+    // Controlling/Abrechnung moved to the SolidJS UI — for ROLE_PL/ROLE_ADMIN it
+    // is reachable via the Billing header nav link, not an ExtJS tab.
+    const hasControllingTab = tabs.some((t) => /Controlling|Abrechnung/i.test(t));
+    expect(hasControllingTab).toBe(false);
+    await expect(page.locator(NAV_LINKS.billing)).toBeVisible();
   });
 
   test('PL user should be able to navigate to Administration tab', async ({ page }) => {
@@ -231,8 +245,8 @@ test.describe('Responsive Behavior', () => {
     // Grid should still be visible
     await expect(page.locator('.x-grid')).toBeVisible();
 
-    // Navigation should still work
-    await goToSettingsTab(page);
-    await expect(page.locator('input[name="locale"]')).toBeAttached();
+    // Header navigation to the SolidJS settings page should still work
+    await goToSettingsPage(page);
+    await expect(page.locator('select[name="locale"]')).toBeAttached();
   });
 });
