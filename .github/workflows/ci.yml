@@ -62,6 +62,10 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dependencies
+          # Vite writes its manifest to public/build-ui/.vite/ — a hidden dir
+          # that upload-artifact drops by default, which left the SPA without
+          # its entrypoints on the E2E runner.
+          include-hidden-files: true
           path: |
             vendor/
             bin/
