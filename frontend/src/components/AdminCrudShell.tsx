@@ -29,7 +29,14 @@ export function AdminCrudShell(props: {
   const [error, setError] = createSignal('')
   const [saving, setSaving] = createSignal(false)
 
-  const rows = () => (list.data ?? []).map((row) => row[props.descriptor.rowKey] as Row)
+  // List payloads are row-wrapped ({customer:{…}}, {user:{…}}, …). Unwrap by the
+  // descriptor's rowKey and drop any row whose wrapper is missing or null —
+  // handing the grid an undefined row would crash it (reading a column value
+  // off undefined).
+  const rows = (): Row[] =>
+    (list.data ?? [])
+      .map((row) => row?.[props.descriptor.rowKey])
+      .filter((row): row is Row => row != null && typeof row === 'object')
 
   function openForm(row: Row | null) {
     setError('')

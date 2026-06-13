@@ -101,6 +101,30 @@ describe('Admin', () => {
     unmount()
   })
 
+  it('does not crash on list rows with a missing or null wrapper', async () => {
+    // A prod list row whose rowKey wrapper is absent/null must not crash the
+    // grid (regression: it read `.name` off an undefined unwrapped row).
+    getJson.mockImplementation((path: string) => {
+      switch (path) {
+        case '/getAllCustomers':
+          return Promise.resolve([
+            { customer: { id: 1, name: 'ACME', active: true, global: false, teams: [] } },
+            { customer: null },
+            {},
+          ])
+        default:
+          return Promise.resolve([])
+      }
+    })
+    const { getByRole, queryAllByRole, unmount } = renderAdmin()
+
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    // Only the one well-formed customer renders; the malformed rows are dropped.
+    expect(queryAllByRole('row').length).toBe(2) // header + 1 data row
+
+    unmount()
+  })
+
   it('has no automatically detectable accessibility violations', async () => {
     mockEndpoints()
     const { container, getByRole, unmount } = renderAdmin()
