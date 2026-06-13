@@ -1,7 +1,11 @@
 {# Shared page header + main navigation.
    Rendered identically by the ExtJS shell (index.html.twig, adopted into the
    viewport north region via contentEl) and the SolidJS shell (ui/index.html.twig).
-   Required context: globalConfig, settings, apptitle, active ('tracking'|'month'). #}
+   Required context: globalConfig, settings, apptitle, active.
+   `active` marks the current item server-side; SPA routes refine it client-side
+   (frontend/src/nav.ts). settings.roles gates the role-restricted items. #}
+{% set isAdmin = 'ROLE_ADMIN' in settings.roles %}
+{% set canBill = isAdmin or 'ROLE_PL' in settings.roles %}
 <div id="page-header" class="page-header">
     <a href="#main-content" class="skip-link">{{ 'Skip to main content'|trans }}</a>
     {% if globalConfig.header_url is defined and globalConfig.header_url %}
@@ -33,6 +37,22 @@
            href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
         <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
            {% if active == 'month' %}aria-current="page"{% endif %}
-           href="{{ path('ui_spa', {'path': 'month'}) }}">{{ 'Monthly overview'|trans }}</a>
+           data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}">{{ 'Monthly overview'|trans }}</a>
+        {% if isAdmin %}
+            <a class="main-nav-link{% if active == 'extras' %} is-active{% endif %}"
+               {% if active == 'extras' %}aria-current="page"{% endif %}
+               data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}">{{ 'Extras'|trans }}</a>
+        {% endif %}
+        {% if canBill %}
+            <a class="main-nav-link{% if active == 'billing' %} is-active{% endif %}"
+               {% if active == 'billing' %}aria-current="page"{% endif %}
+               data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
+        {% endif %}
+        <a class="main-nav-link{% if active == 'settings' %} is-active{% endif %}"
+           {% if active == 'settings' %}aria-current="page"{% endif %}
+           data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}">{{ 'Settings'|trans }}</a>
+        <a class="main-nav-link{% if active == 'help' %} is-active{% endif %}"
+           {% if active == 'help' %}aria-current="page"{% endif %}
+           data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}">{{ 'Help'|trans }}</a>
     </nav>
 </div>

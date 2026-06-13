@@ -33,6 +33,11 @@ final class UiSpaActionTest extends AbstractWebTestCase
         self::assertStringContainsString('id="page-header"', $content);
         self::assertStringContainsString('class="main-nav"', $content);
         self::assertStringContainsString('id="user-badge"', $content);
+        // Roles are exposed for client-side nav gating; the always-on migrated
+        // tabs (settings, help) appear in the shared nav regardless of role.
+        self::assertStringContainsString('"roles"', $content);
+        self::assertStringContainsString('data-nav="settings"', $content);
+        self::assertStringContainsString('data-nav="help"', $content);
     }
 
     public function testCatchAllServesClientSideRoutes(): void
