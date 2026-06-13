@@ -792,6 +792,12 @@ kbd {
   white-space: nowrap;
 }
 
+/* Sortable headers carry their padding on the inner button so the whole cell
+   is clickable; the cell itself then has none. */
+.data-table thead th:has(.th-sort) {
+  padding: 0;
+}
+
 .data-table tbody td {
   border-top: 1px solid var(--color-border);
   padding: 0.55rem 0.9rem;
@@ -815,20 +821,29 @@ kbd {
   text-align: center;
 }
 
-/* Sortable column header — a borderless button so the label itself sorts;
-   inline-flex follows the cell's text-align (numeric/boolean columns). */
+/* Sortable column header — a borderless button that fills the whole cell so
+   the entire header is clickable (and keyboard-focusable as a real button). */
 .th-sort {
   align-items: center;
   background: none;
   border: 0;
   color: inherit;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   font: inherit;
   gap: 0.3rem;
   letter-spacing: inherit;
-  padding: 0;
+  padding: 0.5rem 0.9rem;
   text-transform: inherit;
+  width: 100%;
+}
+
+.data-table th.numeric .th-sort {
+  justify-content: flex-end;
+}
+
+.data-table th.boolean .th-sort {
+  justify-content: center;
 }
 
 .th-sort:hover {

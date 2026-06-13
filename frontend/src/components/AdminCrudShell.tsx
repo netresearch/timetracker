@@ -83,7 +83,7 @@ export function AdminCrudShell(props: {
     const filtered = query === '' ? decorated : decorated.filter((entry) => entry.haystack.includes(query))
     if (current && sortCol) {
       const factor = current.dir === 'asc' ? 1 : -1
-      filtered.sort((a, b) => factor * a.sortKey.localeCompare(b.sortKey, undefined, { numeric: true, sensitivity: 'base' }))
+      filtered.sort((a, b) => factor * a.sortKey.localeCompare(b.sortKey, undefined, { numeric: true }))
     }
 
     return filtered.map((entry) => entry.row)
