@@ -1,0 +1,96 @@
+import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
+import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
+import { fireEvent, render, waitFor } from '@solidjs/testing-library'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'vitest-axe'
+
+import Auswertung from './Auswertung'
+
+const getJson = vi.fn()
+
+vi.mock('../api/client', () => ({
+  SessionExpiredError: class extends Error {},
+  ApiError: class extends Error {},
+  getJson: (...args: unknown[]) => getJson(...args),
+}))
+
+function mockEndpoints() {
+  getJson.mockImplementation((path: string) => {
+    if (path === '/interpretation/customer')
+      return Promise.resolve([
+        { id: 1, name: 'ACME', hours: 8, quota: '80.00%' },
+        { id: 2, name: 'Globex', hours: 2, quota: '20.00%' },
+      ])
+    if (path === '/interpretation/time')
+      return Promise.resolve([{ id: null, name: '26-06-01', day: '01.06.', hours: 4, quota: '100.00%' }])
+    if (path === '/interpretation/entries')
+      return Promise.resolve([
+        { entry: { id: 5, date: '01/06/2026', ticket: 'ABC-1', description: 'work', duration: '8:00', quota: '100.00%' } },
+      ])
+    if (path.startsWith('/interpretation/')) return Promise.resolve([])
+    // dropdown endpoints
+    if (path === '/getAllCustomers') return Promise.resolve([{ customer: { id: 1, name: 'ACME' } }])
+
+    return Promise.resolve([])
+  })
+}
+
+function renderPage() {
+  const history = createMemoryHistory()
+  history.set({ value: '/auswertung' })
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+  return render(() => (
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter history={history}>
+        <Route path="/auswertung" component={Auswertung} />
+      </MemoryRouter>
+    </QueryClientProvider>
+  ))
+}
+
+afterEach(() => getJson.mockReset())
+
+describe('Auswertung', () => {
+  it('auto-loads for the current user and renders the effort charts and entries', async () => {
+    mockEndpoints()
+    const { getByText, getByRole, unmount } = renderPage()
+
+    // user defaults to self (config.userId=1) → criteria met → charts load.
+    await waitFor(() => expect(getByRole('rowheader', { name: 'ACME' })).toBeInTheDocument())
+    expect(getByRole('heading', { name: 'Effort by customer' })).toBeInTheDocument()
+    expect(getByText('80.00%')).toBeInTheDocument()
+    // entries table
+    expect(getByRole('cell', { name: 'ABC-1' })).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('applies a changed filter on refresh', async () => {
+    mockEndpoints()
+    const { getByRole, container, unmount } = renderPage()
+    await waitFor(() => expect(getByRole('rowheader', { name: 'ACME' })).toBeInTheDocument())
+
+    getJson.mockClear()
+    // Change a filter so the query key actually changes, then submit.
+    const ticket = container.querySelector('input[type=text]') as HTMLInputElement
+    fireEvent.input(ticket, { target: { value: 'ABC-1' } })
+    fireEvent.click(getByRole('button', { name: 'Refresh' }))
+
+    await waitFor(() =>
+      expect(getJson).toHaveBeenCalledWith('/interpretation/customer', expect.objectContaining({ ticket: 'ABC-1', user: 1 })),
+    )
+
+    unmount()
+  })
+
+  it('has no automatically detectable accessibility violations', async () => {
+    mockEndpoints()
+    const { container, getByRole, unmount } = renderPage()
+    await waitFor(() => expect(getByRole('rowheader', { name: 'ACME' })).toBeInTheDocument())
+
+    expect(await axe(container)).toHaveNoViolations()
+
+    unmount()
+  })
+})

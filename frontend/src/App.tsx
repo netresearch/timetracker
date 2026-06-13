@@ -6,6 +6,7 @@ import { SessionExpiredError } from './api/client'
 import { appConfig, canBill, canBulkEnter } from './config'
 import { initHeaderDynamics } from './header'
 import { syncNav } from './nav'
+import Auswertung from './pages/Auswertung'
 import Billing from './pages/Billing'
 import Extras from './pages/Extras'
 import Help from './pages/Help'
@@ -58,6 +59,7 @@ export default function App() {
     <Router base="/ui" root={Layout}>
       <Route path="/" component={RedirectToMonth} />
       <Route path="/month" component={Month} />
+      <Route path="/auswertung" component={Auswertung} />
       <Route path="/settings" component={Settings} />
       <Route path="/help" component={Help} />
       <Route path="/extras" component={guarded(Extras, canBulkEnter)} />

@@ -93,3 +93,115 @@ export function presetsQuery() {
       records.map((r) => ({ id: r.preset.id, label: r.preset.name })),
   }
 }
+
+// --- Interpretation ("Auswertung") ---
+
+export interface TeamRecord {
+  team: { id: number; name: string }
+}
+export interface ActivityRecord {
+  activity: { id: number; name: string }
+}
+
+export function teamsQuery() {
+  return {
+    queryKey: ['all-teams'] as const,
+    queryFn: () => getJson<TeamRecord[]>('/getAllTeams'),
+    select: (records: TeamRecord[]): NamedOption[] =>
+      records.map((r) => ({ id: r.team.id, label: r.team.name })),
+  }
+}
+
+export function activitiesQuery() {
+  return {
+    queryKey: ['all-activities'] as const,
+    queryFn: () => getJson<ActivityRecord[]>('/getActivities'),
+    select: (records: ActivityRecord[]): NamedOption[] =>
+      records.map((r) => ({ id: r.activity.id, label: r.activity.name })),
+  }
+}
+
+/** Shared filter shape for every interpretation view. */
+export interface InterpretationFilters {
+  datestart: string
+  dateend: string
+  customer: number
+  project: number
+  team: number
+  user: number
+  activity: number
+  ticket: string
+  description: string
+}
+
+/** A grouped-effort row: name + hours, with a preformatted quota string. */
+export interface GroupRow {
+  id: number | null
+  name: string
+  hours: number
+  quota: string
+}
+
+export type InterpretationGroup = 'customer' | 'project' | 'ticket' | 'activity' | 'user'
+
+// The backend only accepts a query when at least one of customer/project/
+// user/ticket (or year+month) is set; otherwise it answers 406. Mirror that
+// so we don't fire requests that can only fail.
+export function hasInterpretationCriteria(filters: InterpretationFilters): boolean {
+  return filters.customer > 0 || filters.project > 0 || filters.user > 0 || filters.ticket.trim() !== ''
+}
+
+function filterParams(filters: InterpretationFilters): Record<string, string | number> {
+  const params: Record<string, string | number> = {}
+  if (filters.datestart) params.datestart = filters.datestart
+  if (filters.dateend) params.dateend = filters.dateend
+  if (filters.customer > 0) params.customer = filters.customer
+  if (filters.project > 0) params.project = filters.project
+  if (filters.team > 0) params.team = filters.team
+  if (filters.user > 0) params.user = filters.user
+  if (filters.activity > 0) params.activity = filters.activity
+  if (filters.ticket.trim() !== '') params.ticket = filters.ticket.trim()
+  if (filters.description.trim() !== '') params.description = filters.description.trim()
+
+  return params
+}
+
+export function groupQuery(group: InterpretationGroup, filters: InterpretationFilters) {
+  return {
+    queryKey: ['interpretation', group, filters] as const,
+    queryFn: () => getJson<GroupRow[]>(`/interpretation/${group}`, filterParams(filters)),
+    enabled: hasInterpretationCriteria(filters),
+  }
+}
+
+export function timeSeriesQuery(filters: InterpretationFilters) {
+  return {
+    queryKey: ['interpretation', 'time', filters] as const,
+    queryFn: () => getJson<WorktimeRecord[]>('/interpretation/time', filterParams(filters)),
+    enabled: hasInterpretationCriteria(filters),
+  }
+}
+
+export interface EntryRecord {
+  entry: {
+    id: number
+    date: string | null
+    start: string | null
+    end: string | null
+    customer: number | null
+    project: number | null
+    activity: number | null
+    description: string
+    ticket: string
+    duration: string
+    quota: string
+  }
+}
+
+export function lastEntriesQuery(filters: InterpretationFilters) {
+  return {
+    queryKey: ['interpretation', 'entries', filters] as const,
+    queryFn: () => getJson<EntryRecord[]>('/interpretation/entries', filterParams(filters)),
+    enabled: hasInterpretationCriteria(filters),
+  }
+}

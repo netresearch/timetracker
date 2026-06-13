@@ -78,11 +78,7 @@ Ext.onReady(function () {
         autoRefreshInterval: true
     });
 
-    NetresearchWidgetInterpretationLoadSettings(settingsData);
-    const interpretationWidget = Ext.create('Netresearch.widget.Interpretation', { itemId: 'interpretation' });
-
     addTab(trackingWidget);
-    addTab(interpretationWidget);
 
     /* Helper to check if user has a specific role */
     function hasRole(role) {
@@ -96,9 +92,10 @@ Ext.onReady(function () {
     }
 
     /*
-     * Extras, Settings, Controlling (Abrechnung) and Help have moved to the new
-     * SolidJS UI (frontend/, served under /ui) and are reached via the shared
-     * header navigation — see templates/partials/header.html.twig.
+     * Auswertung (Interpretation), Extras, Settings, Controlling (Abrechnung)
+     * and Help have moved to the new SolidJS UI (frontend/, served under /ui)
+     * and are reached via the shared header navigation — see
+     * templates/partials/header.html.twig.
      */
 
     Ext.tip.QuickTipManager.init();
@@ -194,8 +191,6 @@ Ext.onReady(function () {
             handler: function () {
                 if (ttt_tabpanel.isActiveTab('tracking'))
                     trackingWidget.refresh();
-                if (ttt_tabpanel.isActiveTab('interpretation'))
-                    interpretationWidget.refresh();
             },
             defaultEventAction: 'stopEvent'
         }, {
@@ -225,11 +220,6 @@ Ext.onReady(function () {
 
                 if (ttt_tabpanel.isActiveTab('tracking')) {
                     trackingWidget.displayShortcuts();
-                    e.stopEvent();
-                }
-
-                if (ttt_tabpanel.isActiveTab('interpretation')) {
-                    interpretationWidget.displayShortcuts();
                     e.stopEvent();
                 }
 
