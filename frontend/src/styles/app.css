@@ -471,3 +471,196 @@ main {
   border-radius: 0.4rem;
   color: var(--color-bg);
 }
+
+/* ---- Form pages (Settings, Extras, Billing) ---- */
+
+.form-page,
+.help-page {
+  margin: 0 auto;
+  max-width: 44rem;
+}
+
+.form-page h2,
+.help-page h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.4rem;
+}
+
+.stack-form {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.6rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field > span {
+  font-weight: 600;
+}
+
+.field select,
+.field input[type='date'],
+.field input[type='time'] {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  font: inherit;
+  min-height: 44px;
+  padding: 0 0.6rem;
+}
+
+.field-row {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 32rem) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-check {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.field-check input {
+  height: 20px;
+  width: 20px;
+}
+
+.field-hint {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin: -0.4rem 0 0;
+}
+
+.form-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+
+.primary-button {
+  align-items: center;
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  color: light-dark(#ffffff, #10171a);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.2rem;
+  text-decoration: none;
+}
+
+.primary-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.primary-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.form-status.is-ok {
+  color: var(--color-success-text);
+}
+
+.form-status.is-error {
+  color: var(--color-danger-text);
+}
+
+/* ---- Help page ---- */
+
+.help-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  margin-bottom: 1.2rem;
+  padding: 1.2rem 1.6rem;
+}
+
+.help-section h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  margin: 0 0 0.8rem;
+}
+
+.help-section ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.help-section li {
+  margin: 0.3rem 0;
+}
+
+.shortcut-tables {
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 40rem) {
+  .shortcut-tables {
+    grid-template-columns: 1fr;
+  }
+}
+
+.shortcut-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.shortcut-table caption {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding-bottom: 0.4rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.shortcut-table th,
+.shortcut-table td {
+  border-top: 1px solid var(--color-border);
+  padding: 0.5rem 0.4rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.shortcut-table th {
+  white-space: nowrap;
+  width: 1%;
+}
+
+kbd {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  padding: 2px 7px;
+}
