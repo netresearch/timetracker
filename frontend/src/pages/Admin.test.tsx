@@ -1,0 +1,113 @@
+import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
+import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
+import { fireEvent, render, waitFor } from '@solidjs/testing-library'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'vitest-axe'
+
+import Admin from './Admin'
+
+const getJson = vi.fn()
+const postJson = vi.fn()
+
+vi.mock('../api/client', () => ({
+  SessionExpiredError: class extends Error {},
+  ApiError: class extends Error {
+    constructor(public status: number, message: string) {
+      super(message)
+    }
+  },
+  getJson: (...args: unknown[]) => getJson(...args),
+  postJson: (...args: unknown[]) => postJson(...args),
+}))
+
+function mockEndpoints() {
+  getJson.mockImplementation((path: string) => {
+    switch (path) {
+      case '/getAllCustomers':
+        return Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
+      case '/getAllTeams':
+        return Promise.resolve([{ team: { id: 2, name: 'Backend', lead_user_id: 3 } }])
+      case '/getAllUsers':
+        return Promise.resolve([{ user: { id: 3, username: 'jdoe', abbr: 'JD', type: 'DEV', teams: [2] } }])
+      case '/getAllProjects':
+        return Promise.resolve([{ project: { id: 4, name: 'Site', customer: 1, jiraId: 'ABC', active: true, global: false } }])
+      case '/getActivities':
+        return Promise.resolve([{ activity: { id: 5, name: 'Dev', needsTicket: false, factor: 1 } }])
+      case '/getTicketSystems':
+        return Promise.resolve([{ ticketSystem: { id: 6, name: 'Jira', type: 'JIRA', bookTime: true, url: 'https://x' } }])
+      default:
+        return Promise.resolve([])
+    }
+  })
+}
+
+function renderAdmin() {
+  const history = createMemoryHistory()
+  history.set({ value: '/admin' })
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+  return render(() => (
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter history={history}>
+        <Route path="/admin" component={Admin} />
+      </MemoryRouter>
+    </QueryClientProvider>
+  ))
+}
+
+afterEach(() => {
+  getJson.mockReset()
+  postJson.mockReset()
+})
+
+describe('Admin', () => {
+  it('lists the first entity (customers) and renders relation columns', async () => {
+    mockEndpoints()
+    const { getByRole, getByText, unmount } = renderAdmin()
+
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    // teams relation column resolves id 2 → "Backend"
+    expect(getByText('Backend')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('switches entity via the sub-nav', async () => {
+    mockEndpoints()
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Users' }))
+    await waitFor(() => expect(getByRole('cell', { name: 'jdoe' })).toBeInTheDocument())
+
+    unmount()
+  })
+
+  it('saves a new customer as typed JSON', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue([7, 'New', true, false, []])
+    const { getByRole, container, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Add' }))
+    const name = container.querySelector('.modal input[type=text]') as HTMLInputElement
+    fireEvent.input(name, { target: { value: 'New' } })
+    fireEvent.submit(container.querySelector('.modal form') as HTMLFormElement)
+
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ name: 'New', active: true, global: false })),
+    )
+
+    unmount()
+  })
+
+  it('has no automatically detectable accessibility violations', async () => {
+    mockEndpoints()
+    const { container, getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    expect(await axe(container)).toHaveNoViolations()
+
+    unmount()
+  })
+})

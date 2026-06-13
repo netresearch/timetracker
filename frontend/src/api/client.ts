@@ -87,3 +87,42 @@ export async function postForm(
 
   return text
 }
+
+/**
+ * POSTs a typed JSON body — the admin save/delete endpoints bind it via
+ * Symfony #[MapRequestPayload], which keeps booleans/arrays/ints typed (form
+ * encoding would flatten them). On a non-2xx the body is either an
+ * App\Response\Error envelope ({message}) or a plain-text business-rule
+ * message; both are surfaced as ApiError.message.
+ */
+export async function postJson<T = unknown>(
+  path: string,
+  payload: Record<string, unknown>,
+): Promise<T> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(payload),
+  })
+
+  if (landedOnLogin(response)) {
+    redirectToLogin()
+  }
+
+  const text = await response.text()
+  if (!response.ok) {
+    let message = text
+    try {
+      const parsed = JSON.parse(text) as { message?: string }
+      if (typeof parsed.message === 'string') {
+        message = parsed.message
+      }
+    } catch {
+      // Plain-text body — use it verbatim.
+    }
+    throw new ApiError(response.status, message || `${path}: HTTP ${response.status}`)
+  }
+
+  return (text ? JSON.parse(text) : null) as T
+}
