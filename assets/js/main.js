@@ -80,13 +80,9 @@ Ext.onReady(function () {
 
     NetresearchWidgetInterpretationLoadSettings(settingsData);
     const interpretationWidget = Ext.create('Netresearch.widget.Interpretation', { itemId: 'interpretation' });
-    const extrasWidget = Ext.create('Netresearch.widget.Extras', { itemId: 'extras' });
-    const settingsWidget = Ext.create('Netresearch.widget.Settings', { itemId: 'settings' });
 
     addTab(trackingWidget);
     addTab(interpretationWidget);
-    addTab(extrasWidget);
-    addTab(settingsWidget);
 
     /* Helper to check if user has a specific role */
     function hasRole(role) {
@@ -99,14 +95,11 @@ Ext.onReady(function () {
         addTab(adminWidget);
     }
 
-    /* Show controlling tab if user has ROLE_PL or ROLE_ADMIN */
-    if (hasRole('ROLE_PL') || hasRole('ROLE_ADMIN')) {
-        const controllingWidget = Ext.create('Netresearch.widget.Controlling', { itemId: 'controlling' });
-        addTab(controllingWidget);
-    }
-
-    const helpWidget = Ext.create('Netresearch.widget.Help', { itemId: 'help' });
-    addTab(helpWidget);
+    /*
+     * Extras, Settings, Controlling (Abrechnung) and Help have moved to the new
+     * SolidJS UI (frontend/, served under /ui) and are reached via the shared
+     * header navigation — see templates/partials/header.html.twig.
+     */
 
     Ext.tip.QuickTipManager.init();
 
