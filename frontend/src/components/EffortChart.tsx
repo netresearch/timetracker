@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js'
+import { createMemo, For, Show } from 'solid-js'
 
 import { formatMinutes } from '../lib/format'
 import { m } from '../paraglide/messages.js'
@@ -16,7 +16,9 @@ export interface EffortRow {
  * the design tokens so it themes with light/dark automatically.
  */
 export function EffortChart(props: { title: string; rows: EffortRow[] }) {
-  const max = () => Math.max(1, ...props.rows.map((row) => row.minutes))
+  // Memoize so the O(N) reduction runs once per rows change, not once per row
+  // on every reactive read inside the <For> below.
+  const max = createMemo(() => Math.max(1, ...props.rows.map((row) => row.minutes)))
 
   return (
     <section class="effort-chart">

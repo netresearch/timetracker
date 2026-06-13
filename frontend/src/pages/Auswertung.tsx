@@ -59,10 +59,13 @@ function toEffortRows(rows: GroupRow[] | undefined): EffortRow[] {
 /** One grouped-effort chart, driven by the applied filters. */
 function GroupChart(props: { group: InterpretationGroup; title: string; filters: InterpretationFilters }) {
   const query = useQuery(() => groupQuery(props.group, props.filters))
+  const rows = createMemo(() => toEffortRows(query.data))
 
   return (
     <Show when={!query.isError} fallback={<section class="effort-chart"><h3>{props.title}</h3><p role="alert">{m.app_load_error()}</p></section>}>
-      <EffortChart title={props.title} rows={toEffortRows(query.data)} />
+      <Show when={!query.isLoading} fallback={<section class="effort-chart"><h3>{props.title}</h3><p class="effort-empty">{m.app_loading()}</p></section>}>
+        <EffortChart title={props.title} rows={rows()} />
+      </Show>
     </Show>
   )
 }
@@ -176,34 +179,40 @@ export default function Auswertung() {
           <For each={GROUPS}>
             {(entry) => <GroupChart group={entry.group} title={entry.title()} filters={applied()} />}
           </For>
-          <EffortChart title={m.auswertung_by_day()} rows={timeRows()} />
+          <Show when={!timeSeries.isError} fallback={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p role="alert">{m.app_load_error()}</p></section>}>
+            <Show when={!timeSeries.isLoading} fallback={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p class="effort-empty">{m.app_loading()}</p></section>}>
+              <EffortChart title={m.auswertung_by_day()} rows={timeRows()} />
+            </Show>
+          </Show>
         </div>
 
         <section class="effort-chart">
           <h3>{m.auswertung_last_entries()}</h3>
           <Show when={!entries.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th scope="col">{m.auswertung_date()}</th>
-                  <th scope="col">{m.auswertung_ticket()}</th>
-                  <th scope="col">{m.auswertung_description()}</th>
-                  <th scope="col" class="numeric">{m.auswertung_hours()}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <For each={entries.data ?? []}>
-                  {(record) => (
-                    <tr>
-                      <td>{record.entry.date}</td>
-                      <td>{record.entry.ticket}</td>
-                      <td>{record.entry.description}</td>
-                      <td class="numeric">{record.entry.duration}</td>
-                    </tr>
-                  )}
-                </For>
-              </tbody>
-            </table>
+            <Show when={!entries.isLoading} fallback={<p class="effort-empty">{m.app_loading()}</p>}>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{m.auswertung_date()}</th>
+                    <th scope="col">{m.auswertung_ticket()}</th>
+                    <th scope="col">{m.auswertung_description()}</th>
+                    <th scope="col" class="numeric">{m.auswertung_hours()}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <For each={entries.data}>
+                    {(record) => (
+                      <tr>
+                        <td>{record.entry.date}</td>
+                        <td>{record.entry.ticket}</td>
+                        <td>{record.entry.description}</td>
+                        <td class="numeric">{record.entry.duration}</td>
+                      </tr>
+                    )}
+                  </For>
+                </tbody>
+              </table>
+            </Show>
           </Show>
         </section>
       </Show>
