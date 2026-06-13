@@ -8,13 +8,14 @@ import { Page } from '@playwright/test';
  * (served under /ui) and are reached via the shared header nav links
  * (a.main-nav-link[data-nav=...]). The ExtJS tab bar now holds only Time
  * Tracking (1) and — for admins — Administration (2). Tab titles are prefixed
- * with their 1-based index by addTab() in assets/js/main.js, so the
- * Administration matcher is intentionally index-agnostic (it shifts down as
- * tabs are removed during the migration).
+ * with their 1-based index by addTab() in assets/js/main.js (e.g. "2:
+ * Administration"); these matchers deliberately match on the label only, so
+ * they survive the index shifting down as tabs are removed during the
+ * migration. (Label-only patterns also avoid the super-linear `\d+:.*` form.)
  */
 export const TABS = {
-  tracking: /\d+:.*Time Tracking|Zeiterfassung/i,
-  administration: /\d+:.*Administration/i,
+  tracking: /Time Tracking|Zeiterfassung/i,
+  administration: /Administration/i,
   charts: /Charts|Diagramme/i, // Legacy, may not exist in numbered tabs
 } as const;
 
