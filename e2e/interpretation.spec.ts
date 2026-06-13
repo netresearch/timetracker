@@ -1,68 +1,51 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { waitForGrid } from './helpers/grid';
-import { goToInterpretationTab } from './helpers/navigation';
+import { goToAuswertungPage } from './helpers/navigation';
 
 /**
- * E2E tests for Interpretation (Analysis/Reporting) features.
+ * E2E tests for the Evaluation (Auswertung) feature.
  *
- * The Interpretation tab provides various views and groupings of time entries.
+ * The Interpretation/Auswertung tab was migrated out of the ExtJS shell into
+ * the SolidJS UI (frontend/src/pages/Auswertung.tsx), served at
+ * `/ui/auswertung`. These tests drive that page; the grouped-effort charts
+ * render for the logged-in user's own entries by default. The API-endpoint
+ * tests further below exercise the backend the page consumes.
  */
 
-test.describe('Interpretation Tab', () => {
+test.describe('Evaluation (Auswertung) page', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
     await waitForGrid(page);
+    await goToAuswertungPage(page);
   });
 
-  test('should display interpretation tab', async ({ page }) => {
-    await goToInterpretationTab(page);
-
-    // Wait for content to load
-    await page.waitForTimeout(1000);
-
-    // Should have filter controls
-    const hasFilters = await page.locator('.x-form-item, input[type="text"]').count();
-    expect(hasFilters).toBeGreaterThan(0);
+  test('should display the evaluation page with a filter bar', async ({ page }) => {
+    await expect(page.locator('form.filter-bar')).toBeVisible();
+    // Selects for customer/project/team/user/activity plus the ticket/description text inputs.
+    expect(await page.locator('form.filter-bar select').count()).toBeGreaterThan(0);
   });
 
-  test('should have date range filter', async ({ page }) => {
-    await goToInterpretationTab(page);
-    await page.waitForTimeout(500);
-
-    // Look for date picker or date fields
-    const dateFields = page.locator('input[type="text"]').filter({ hasText: /\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2}/i });
-    const dateFieldCount = await dateFields.count();
-
-    // Also check for date picker triggers
-    const dateTriggers = page.locator('.x-form-date-trigger, .x-form-trigger');
-    const triggerCount = await dateTriggers.count();
-
-    console.log(`Date fields: ${dateFieldCount}, Triggers: ${triggerCount}`);
-
-    // Should have some form controls
-    expect(dateFieldCount + triggerCount).toBeGreaterThan(0);
+  test('should have a start and end date filter', async ({ page }) => {
+    await expect(page.locator('form.filter-bar input[type="date"]')).toHaveCount(2);
   });
 
-  test('should filter entries by date range', async ({ page }) => {
-    await goToInterpretationTab(page);
-    await page.waitForTimeout(500);
+  test('should render effort results when filters are applied', async ({ page }) => {
+    // The default filter targets the logged-in user (user > 0), so the effort
+    // charts and last-entries table render without further input. Applying the
+    // (unchanged) filter must keep them visible.
+    await page.locator('form.filter-bar button[type="submit"]').click();
+    await expect(page.locator('.effort-charts')).toBeVisible();
+    await expect(page.locator('.effort-chart').first()).toBeVisible();
+  });
 
-    // Find and click the search/filter button
-    const searchButton = page.locator('.x-btn').filter({ hasText: /Search|Suchen|Filter/i });
+  test('should reset filters back to defaults', async ({ page }) => {
+    const ticket = page.locator('form.filter-bar input[type="text"]').first();
+    await ticket.fill('ABC-123');
+    await expect(ticket).toHaveValue('ABC-123');
 
-    if ((await searchButton.count()) > 0) {
-      await searchButton.click();
-      await page.waitForTimeout(1000);
-
-      // Check if results are displayed
-      const hasResults =
-        (await page.locator('.x-grid').isVisible()) ||
-        (await page.locator('.x-chart').isVisible()) ||
-        (await page.locator('table').isVisible());
-
-      expect(hasResults).toBe(true);
-    }
+    await page.locator('form.filter-bar button[type="button"]').click();
+    await expect(ticket).toHaveValue('');
   });
 });
 
@@ -153,54 +136,26 @@ test.describe('Entry Filtering', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
     await waitForGrid(page);
+    await goToAuswertungPage(page);
   });
 
-  test('should filter entries by customer in interpretation view', async ({ page }) => {
-    await goToInterpretationTab(page);
-    await page.waitForTimeout(500);
-
-    // Find customer dropdown/combo
-    const customerField = page.locator('input[name="customer"], input[name="customerId"]');
-
-    if ((await customerField.count()) > 0) {
-      // Get the combo trigger
-      const trigger = customerField.locator('xpath=ancestor::*[contains(@class, "x-field")]//div[contains(@class, "x-form-trigger")]');
-
-      if ((await trigger.count()) > 0) {
-        await trigger.click();
-        await page.waitForTimeout(300);
-
-        // Select first item from dropdown
-        const firstItem = page.locator('.x-boundlist-item').first();
-        if ((await firstItem.count()) > 0) {
-          await firstItem.click();
-        }
-      }
-    }
+  test('should expose customer/project/user filters defaulting to "all"', async ({ page }) => {
+    // The five relation filters (customer, project, team, user, activity) each
+    // carry a "0" = all option as their first entry.
+    const selects = page.locator('form.filter-bar select');
+    expect(await selects.count()).toBeGreaterThanOrEqual(5);
+    await expect(selects.first().locator('option[value="0"]')).toHaveCount(1);
   });
 
-  test('should filter entries by project in interpretation view', async ({ page }) => {
-    await goToInterpretationTab(page);
-    await page.waitForTimeout(500);
-
-    // Find project dropdown/combo
-    const projectField = page.locator('input[name="project"], input[name="projectId"]');
-
-    if ((await projectField.count()) > 0) {
-      console.log('Project field found in interpretation view');
+  test('should keep the page functional after changing a filter', async ({ page }) => {
+    const customer = page.locator('form.filter-bar select').first();
+    const options = customer.locator('option');
+    // Only exercise selection when seed data provides at least one real option.
+    if ((await options.count()) > 1) {
+      await customer.selectOption({ index: 1 });
     }
-  });
-
-  test('should filter entries by user in interpretation view', async ({ page }) => {
-    await goToInterpretationTab(page);
-    await page.waitForTimeout(500);
-
-    // Find user dropdown/combo
-    const userField = page.locator('input[name="user"], input[name="userId"]');
-
-    if ((await userField.count()) > 0) {
-      console.log('User field found in interpretation view');
-    }
+    await page.locator('form.filter-bar button[type="submit"]').click();
+    await expect(page.locator('section.auswertung')).toBeVisible();
   });
 });
 

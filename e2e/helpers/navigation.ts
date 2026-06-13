@@ -3,17 +3,18 @@ import { Page } from '@playwright/test';
 /**
  * Tab names in the ExtJS shell.
  *
- * The Extras, Settings, Controlling/Abrechnung and Help tabs were migrated out
- * of the ExtJS shell into the SolidJS UI (served under /ui) and are reached via
- * the shared header nav links (a.main-nav-link[data-nav=...]). The ExtJS tab
- * bar now holds only Time Tracking (1), Interpretation (2) and — for admins —
- * Administration (3). Tab titles are prefixed with their 1-based index by
- * addTab() in assets/js/main.js.
+ * The Extras, Settings, Controlling/Abrechnung, Help and Interpretation/
+ * Auswertung tabs were migrated out of the ExtJS shell into the SolidJS UI
+ * (served under /ui) and are reached via the shared header nav links
+ * (a.main-nav-link[data-nav=...]). The ExtJS tab bar now holds only Time
+ * Tracking (1) and — for admins — Administration (2). Tab titles are prefixed
+ * with their 1-based index by addTab() in assets/js/main.js, so the
+ * Administration matcher is intentionally index-agnostic (it shifts down as
+ * tabs are removed during the migration).
  */
 export const TABS = {
-  tracking: /1:.*Time Tracking|Zeiterfassung/i,
-  interpretation: /2:.*Interpretation|Auswertung/i,
-  administration: /3:.*Administration/i,
+  tracking: /\d+:.*Time Tracking|Zeiterfassung/i,
+  administration: /\d+:.*Administration/i,
   charts: /Charts|Diagramme/i, // Legacy, may not exist in numbered tabs
 } as const;
 
@@ -24,6 +25,7 @@ export const TABS = {
  */
 export const NAV_LINKS = {
   month: 'a.main-nav-link[data-nav="month"]',
+  auswertung: 'a.main-nav-link[data-nav="auswertung"]',
   extras: 'a.main-nav-link[data-nav="extras"]',
   billing: 'a.main-nav-link[data-nav="billing"]',
   settings: 'a.main-nav-link[data-nav="settings"]',
@@ -52,10 +54,13 @@ export async function goToTrackingTab(page: Page): Promise<void> {
 }
 
 /**
- * Navigate to Interpretation tab
+ * Navigate to the SolidJS Evaluation (Auswertung) page via the shared header
+ * nav link. (Formerly the ExtJS Interpretation/Auswertung tab.)
  */
-export async function goToInterpretationTab(page: Page): Promise<void> {
-  await goToTab(page, TABS.interpretation);
+export async function goToAuswertungPage(page: Page): Promise<void> {
+  await page.locator(NAV_LINKS.auswertung).click();
+  await page.waitForURL(/\/ui\/auswertung/, { timeout: 10000 });
+  await page.waitForSelector('section.auswertung', { timeout: 10000 });
 }
 
 /**
