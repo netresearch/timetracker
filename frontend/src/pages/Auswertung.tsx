@@ -186,6 +186,7 @@ export default function Auswertung() {
           <h3>{m.auswertung_last_entries()}</h3>
           <Show when={!entries.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
             <Show when={!entries.isLoading} fallback={<p class="effort-empty">{m.app_loading()}</p>}>
+              <div class="table-scroll">
               <table class="data-table">
                 <thead>
                   <tr>
@@ -208,6 +209,7 @@ export default function Auswertung() {
                   </For>
                 </tbody>
               </table>
+              </div>
             </Show>
           </Show>
         </section>

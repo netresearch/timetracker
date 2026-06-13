@@ -3,7 +3,7 @@ import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js'
 
 import { ApiError, getJson, postJson } from '../api/client'
 import { m } from '../paraglide/messages.js'
-import type { EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
+import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
 type Row = Record<string, unknown>
 
@@ -38,6 +38,48 @@ export function AdminCrudShell(props: {
       .map((row) => row?.[props.descriptor.rowKey])
       .filter((row): row is Row => row != null && typeof row === 'object'),
   )
+
+  // Column sorting. cellText() yields exactly what the grid shows (id→label,
+  // ✓/—, …) so the sort order matches the visible values. Clicking a header
+  // cycles none → ascending → descending → none.
+  const [sort, setSort] = createSignal<{ key: string; dir: 'asc' | 'desc' } | null>(null)
+
+  const cellText = (row: Row, col: ColumnDef): string =>
+    col.render ? col.render(row, props.options) : String(row[col.key] ?? '')
+
+  function toggleSort(key: string) {
+    setSort((current) =>
+      current?.key !== key ? { key, dir: 'asc' } : current.dir === 'asc' ? { key, dir: 'desc' } : null,
+    )
+  }
+
+  const ariaSort = (key: string): 'ascending' | 'descending' | 'none' => {
+    const current = sort()
+
+    return current?.key === key ? (current.dir === 'asc' ? 'ascending' : 'descending') : 'none'
+  }
+
+  const sortGlyph = (key: string): string => {
+    const current = sort()
+
+    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : ''
+  }
+
+  const sortedRows = createMemo<Row[]>(() => {
+    const current = sort()
+    const data = rows()
+    const col = current && props.descriptor.columns.find((c) => c.key === current.key)
+    if (!current || !col) {
+      return data
+    }
+    const factor = current.dir === 'asc' ? 1 : -1
+    // Read the visible text once per row here (in the tracked memo), then sort
+    // on the precomputed strings so the comparator stays pure.
+    const keyed = data.map((row) => ({ row, text: cellText(row, col) }))
+    keyed.sort((a, b) => factor * a.text.localeCompare(b.text, undefined, { numeric: true, sensitivity: 'base' }))
+
+    return keyed.map((entry) => entry.row)
+  })
 
   function openForm(row: Row | null) {
     setError('')
@@ -88,29 +130,48 @@ export function AdminCrudShell(props: {
       </div>
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
-        <table class="data-table admin-table">
-          <thead>
-            <tr>
-              <For each={props.descriptor.columns}>{(col) => <th scope="col">{col.label()}</th>}</For>
-              <th scope="col">{m.admin_actions()}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <For each={rows()}>
-              {(row) => (
-                <tr>
-                  <For each={props.descriptor.columns}>
-                    {(col) => <td>{col.render ? col.render(row, props.options) : String(row[col.key] ?? '')}</td>}
-                  </For>
-                  <td class="admin-row-actions">
-                    <button type="button" class="link-button" onClick={() => openForm(row)}>{m.admin_edit()}</button>
-                    <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>{m.admin_delete()}</button>
-                  </td>
-                </tr>
-              )}
-            </For>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table class="data-table admin-table">
+            <thead>
+              <tr>
+                <For each={props.descriptor.columns}>
+                  {(col) => (
+                    <th
+                      scope="col"
+                      classList={{ numeric: col.align === 'right', boolean: col.align === 'center' }}
+                      aria-sort={ariaSort(col.key)}
+                    >
+                      <button type="button" class="th-sort" onClick={() => toggleSort(col.key)}>
+                        <span>{col.label()}</span>
+                        <span class="th-sort-glyph" aria-hidden="true">{sortGlyph(col.key)}</span>
+                      </button>
+                    </th>
+                  )}
+                </For>
+                <th scope="col">{m.admin_actions()}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <For each={sortedRows()}>
+                {(row) => (
+                  <tr>
+                    <For each={props.descriptor.columns}>
+                      {(col) => (
+                        <td classList={{ numeric: col.align === 'right', boolean: col.align === 'center' }}>
+                          {cellText(row, col)}
+                        </td>
+                      )}
+                    </For>
+                    <td class="admin-row-actions">
+                      <button type="button" class="link-button" onClick={() => openForm(row)}>{m.admin_edit()}</button>
+                      <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>{m.admin_delete()}</button>
+                    </td>
+                  </tr>
+                )}
+              </For>
+            </tbody>
+          </table>
+        </div>
       </Show>
 
       <Show when={editing()}>

@@ -43,8 +43,8 @@ export function adminEntities(): EntityDescriptor[] {
       columns: [
         { key: 'name', label: () => m.admin_f_name() },
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },
-        { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active) },
-        { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global) },
+        { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center' },
+        { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global), align: 'center' },
       ],
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
@@ -69,8 +69,8 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'name', label: () => m.admin_f_name() },
         { key: 'customer', label: () => m.admin_f_customer(), render: (row, o) => rel('customers')(row, 'customer', o) },
         { key: 'jiraId', label: () => m.admin_f_jira_id() },
-        { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active) },
-        { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global) },
+        { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center' },
+        { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global), align: 'center' },
       ],
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
@@ -221,7 +221,7 @@ export function adminEntities(): EntityDescriptor[] {
       columns: [
         { key: 'name', label: () => m.admin_f_name() },
         { key: 'type', label: () => m.admin_f_type() },
-        { key: 'bookTime', label: () => m.admin_f_book_time(), render: (row) => mark(pick(row, 'bookTime', 'book_time')) },
+        { key: 'bookTime', label: () => m.admin_f_book_time(), render: (row) => mark(pick(row, 'bookTime', 'book_time')), align: 'center' },
         { key: 'url', label: () => m.admin_f_url() },
       ],
       fields: [
@@ -266,8 +266,8 @@ export function adminEntities(): EntityDescriptor[] {
       deleteEndpoint: '/activity/delete',
       columns: [
         { key: 'name', label: () => m.admin_f_name() },
-        { key: 'needsTicket', label: () => m.admin_f_needs_ticket(), render: (row) => mark(pick(row, 'needsTicket', 'needs_ticket')) },
-        { key: 'factor', label: () => m.admin_f_factor() },
+        { key: 'needsTicket', label: () => m.admin_f_needs_ticket(), render: (row) => mark(pick(row, 'needsTicket', 'needs_ticket')), align: 'center' },
+        { key: 'factor', label: () => m.admin_f_factor(), align: 'right' },
       ],
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
