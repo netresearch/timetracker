@@ -1,32 +1,79 @@
 import { A, useSearchParams } from '@solidjs/router'
 import { useQuery } from '@tanstack/solid-query'
-import { createMemo, For, Match, Show, Switch } from 'solid-js'
+import { createMemo, For, Index, Match, Show, Switch } from 'solid-js'
 
 import { holidaysQuery, monthTimesQuery } from '../api/queries'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { appConfig } from '../config'
-import { formatDay, formatMinutes, formatMonthTitle } from '../lib/format'
+import { formatMinutes, formatMonthTitle } from '../lib/format'
 import { computeMonth, type DayRow } from '../lib/month'
 import { hoursPerWeekday } from '../lib/settings'
 import { m } from '../paraglide/messages.js'
 
 interface MonthTarget {
   year: number
+  /** 1-based month. */
   month: number
 }
 
-function firstOfMonth(target: MonthTarget): Date {
-  return new Date(target.year, target.month - 1, 1)
+type DayCategory = 'ok' | 'over' | 'warn' | 'bad' | 'off' | 'future' | 'empty'
+
+interface CalendarCell {
+  day: DayRow | null
+  category: DayCategory
+  isToday: boolean
 }
 
-function shiftMonth(target: MonthTarget, by: number): MonthTarget {
-  const date = new Date(target.year, target.month - 1 + by, 1)
-
-  return { year: date.getFullYear(), month: date.getMonth() + 1 }
+function monthHref(year: number, month: number): string {
+  return `/month?year=${year}&month=${month}`
 }
 
-function monthHref(target: MonthTarget): string {
-  return `/month?year=${target.year}&month=${target.month}`
+function categorize(day: DayRow): DayCategory {
+  if (day.holiday !== null) {
+    return 'off'
+  }
+
+  if (day.isFuture) {
+    return 'future'
+  }
+
+  if (day.worked === 0) {
+    return 'bad'
+  }
+
+  if (day.diff < 0) {
+    return 'warn'
+  }
+
+  return day.diff > 0 ? 'over' : 'ok'
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+/** Calendar weeks (Mon-Sun), padded with empty cells around the month. */
+function buildWeeks(days: DayRow[], today: Date): CalendarCell[][] {
+  const cells: CalendarCell[] = []
+  const firstWeekday = days[0] ? (days[0].date.getDay() + 6) % 7 : 0
+  for (let i = 0; i < firstWeekday; i++) {
+    cells.push({ day: null, category: 'empty', isToday: false })
+  }
+
+  for (const day of days) {
+    cells.push({ day, category: categorize(day), isToday: isSameDay(day.date, today) })
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push({ day: null, category: 'empty', isToday: false })
+  }
+
+  const weeks: CalendarCell[][] = []
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7))
+  }
+
+  return weeks
 }
 
 export default function Month() {
@@ -48,13 +95,20 @@ export default function Month() {
     return { year, month }
   })
 
-  // Only months in the past get a "next" link, mirroring the previous UI.
-  const next = createMemo<MonthTarget | null>(() => {
-    const now = new Date()
-    const viewed = firstOfMonth(target())
-    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const now = new Date()
+  const currentTarget: MonthTarget = { year: now.getFullYear(), month: now.getMonth() + 1 }
 
-    return viewed.getTime() < currentMonth.getTime() ? shiftMonth(target(), 1) : null
+  const monthLabels = createMemo(() => {
+    const format = new Intl.DateTimeFormat(config.locale, { month: 'short' })
+
+    return Array.from({ length: 12 }, (_, i) => format.format(new Date(2000, i, 1)))
+  })
+
+  const weekdayLabels = createMemo(() => {
+    const format = new Intl.DateTimeFormat(config.locale, { weekday: 'short' })
+
+    // 2024-01-01 is a Monday.
+    return Array.from({ length: 7 }, (_, i) => format.format(new Date(2024, 0, 1 + i)))
   })
 
   const times = useQuery(() => monthTimesQuery(target().year, target().month, config.userId))
@@ -78,30 +132,91 @@ export default function Month() {
     })
   })
 
-  const statusClass = (status: DayRow['status']): string =>
-    status === 'none' ? '' : `status-${status}`
+  const workingDays = createMemo(() => {
+    const data = report()
+
+    return data === null ? 0 : data.days.filter((day) => day.holiday === null).length
+  })
+
+  const ringPercent = createMemo(() => {
+    const data = report()
+    if (data === null || data.sum.expectedUntilToday === 0) {
+      return 100
+    }
+
+    return Math.min(100, Math.round((data.sum.worked / data.sum.expectedUntilToday) * 1000) / 10)
+  })
+
+  const monthTitle = createMemo(() =>
+    formatMonthTitle(new Date(target().year, target().month - 1, 1), config.locale),
+  )
+  const weeks = createMemo(() => {
+    const data = report()
+
+    return data === null ? [] : buildWeeks(data.days, new Date())
+  })
 
   return (
     <section class="month-report">
-      <div class="month-header">
+      <div class="month-toolbar">
         <h2>{m.month_title()}</h2>
-        <nav class="month-nav" aria-label={m.month_title()}>
-          <A class="month-nav-link" href={monthHref(shiftMonth(target(), -1))}>
-            <span aria-hidden="true">&laquo;</span> {m.month_previous()}
+        <div class="month-toolbar-actions">
+          <A class="today-button" href={monthHref(currentTarget.year, currentTarget.month)}>
+            {m.month_today()}
           </A>
-          <span class="month-nav-current" aria-current="date">
-            {formatMonthTitle(firstOfMonth(target()), config.locale)}
-          </span>
-          <Show when={next()}>
-            {(toMonth) => (
-              <A class="month-nav-link" href={monthHref(toMonth())}>
-                {m.month_next()} <span aria-hidden="true">&raquo;</span>
-              </A>
-            )}
-          </Show>
-        </nav>
-        <ThemeToggle />
+          <ThemeToggle />
+        </div>
       </div>
+
+      <nav class="month-chips" aria-label={m.month_title()}>
+        <span class="year-switch">
+          <A
+            class="year-arrow"
+            aria-label={m.month_previous_year()}
+            href={monthHref(target().year - 1, target().month)}
+          >
+            <span aria-hidden="true">‹</span>
+          </A>
+          <b>{target().year}</b>
+          <Show
+            when={target().year < currentTarget.year}
+            fallback={<span class="year-arrow is-disabled" aria-hidden="true">›</span>}
+          >
+            <A
+              class="year-arrow"
+              aria-label={m.month_next_year()}
+              href={monthHref(target().year + 1, target().month)}
+            >
+              <span aria-hidden="true">›</span>
+            </A>
+          </Show>
+        </span>
+        <Index each={monthLabels()}>
+          {(label, index) => {
+            const month = index + 1
+            const isFuture = () =>
+              target().year > currentTarget.year
+              || (target().year === currentTarget.year && month > currentTarget.month)
+            const isActive = () => month === target().month
+
+            return (
+              <Show
+                when={!isFuture()}
+                fallback={<span class="month-chip is-future">{label()}</span>}
+              >
+                <A
+                  class="month-chip"
+                  classList={{ 'is-active': isActive() }}
+                  aria-current={isActive() ? 'date' : undefined}
+                  href={monthHref(target().year, month)}
+                >
+                  {label()}
+                </A>
+              </Show>
+            )
+          }}
+        </Index>
+      </nav>
 
       <Switch>
         <Match when={times.isError || holidays.isError}>
@@ -122,66 +237,96 @@ export default function Month() {
         </Match>
         <Match when={report()}>
           {(data) => (
-            <div class="month-tables">
-              <table class="data-table">
+            <div class="month-layout">
+              <table class="calendar">
                 <caption class="visually-hidden">
-                  {m.month_title()}: {formatMonthTitle(firstOfMonth(target()), config.locale)}
+                  {m.month_calendar_label({ month: monthTitle() })}
                 </caption>
                 <thead>
                   <tr>
-                    <th scope="col">{m.month_th_date()}</th>
-                    <th scope="col" class="numeric">{m.month_th_worked()}</th>
-                    <th scope="col" class="numeric">{m.month_th_due()}</th>
+                    <For each={weekdayLabels()}>{(label) => <th scope="col">{label}</th>}</For>
                   </tr>
                 </thead>
                 <tbody>
-                  <For each={data().days}>
-                    {(day) => (
-                      <tr class={day.holiday !== null ? 'is-offday' : ''}>
-                        <td>{day.holiday ?? formatDay(day.date, config.locale)}</td>
-                        <td class="numeric">{formatMinutes(day.worked)}</td>
-                        <td class={`numeric ${statusClass(day.status)}`}>
-                          {formatMinutes(day.diff, true)}
-                        </td>
+                  <For each={weeks()}>
+                    {(week) => (
+                      <tr>
+                        <For each={week}>
+                          {(cell) => (
+                            <Show when={cell.day} fallback={<td class="cell-empty" />}>
+                              {(day) => (
+                                <td
+                                  class={`cell cell-${cell.category}`}
+                                  classList={{ 'cell-today': cell.isToday }}
+                                >
+                                  <span class="cell-num">{day().date.getDate()}</span>
+                                  <Switch>
+                                    <Match when={day().holiday !== null && day().date.getDay() !== 0 && day().date.getDay() !== 6}>
+                                      <span class="cell-holiday">{day().holiday}</span>
+                                    </Match>
+                                    <Match when={cell.category !== 'off' && cell.category !== 'future'}>
+                                      <span class="cell-time">{formatMinutes(day().worked)}</span>
+                                      <span class="cell-delta">{formatMinutes(day().diff, true)}</span>
+                                      <span
+                                        class="cell-bar"
+                                        style={{
+                                          '--fill': day().expected > 0
+                                            ? `${Math.min(100, (day().worked / day().expected) * 100)}%`
+                                            : '100%',
+                                        }}
+                                      />
+                                    </Match>
+                                  </Switch>
+                                </td>
+                              )}
+                            </Show>
+                          )}
+                        </For>
                       </tr>
                     )}
                   </For>
                 </tbody>
               </table>
 
-              <table class="data-table summary-table">
-                <caption>{m.month_summary()}</caption>
-                <tbody>
-                  <tr>
-                    <th scope="row">{m.month_expected()}</th>
-                    <td class="numeric">{formatMinutes(data().sum.expected)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">{m.month_worked()}</th>
-                    <td class="numeric">{formatMinutes(data().sum.worked)}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">{m.month_due_until_today()}</th>
-                    <td
-                      class={`numeric ${
-                        data().sum.diffUntilToday < 0 ? 'status-danger' : 'status-success'
-                      }`}
-                    >
+              <aside class="summary-card">
+                <h3>{m.month_summary()}</h3>
+                <div class="summary-ring" style={{ '--pct': `${ringPercent()}%` }}>
+                  <div>
+                    <b class={data().sum.diffUntilToday < 0 ? 'is-neg' : 'is-pos'}>
                       {formatMinutes(data().sum.diffUntilToday, true)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">{m.month_due_until_eom()}</th>
-                    <td
-                      class={`numeric ${
-                        data().sum.diff < 0 ? 'status-danger' : 'status-success'
-                      }`}
-                    >
-                      {formatMinutes(data().sum.diff, true)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </b>
+                    <span>{m.month_balance_until_today()}</span>
+                  </div>
+                </div>
+                <table class="summary-table">
+                  <tbody>
+                    <tr>
+                      <th scope="row">{m.month_expected_month()}</th>
+                      <td>{formatMinutes(data().sum.expected)}<small> · {m.month_working_days({ count: workingDays() })}</small></td>
+                    </tr>
+                    <tr>
+                      <th scope="row">{m.month_worked()}</th>
+                      <td>{formatMinutes(data().sum.worked)}</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">{m.month_expected_until_today()}</th>
+                      <td>{formatMinutes(data().sum.expectedUntilToday)}</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">{m.month_balance_until_today()}</th>
+                      <td class={data().sum.diffUntilToday < 0 ? 'is-neg' : 'is-pos'}>
+                        {formatMinutes(data().sum.diffUntilToday, true)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">{m.month_balance_eom()}</th>
+                      <td class={data().sum.diff < 0 ? 'is-neg' : 'is-pos'}>
+                        {formatMinutes(data().sum.diff, true)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </aside>
             </div>
           )}
         </Match>

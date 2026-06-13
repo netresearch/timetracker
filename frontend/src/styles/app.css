@@ -1,5 +1,30 @@
 @import "tailwindcss";
 
+/* Self-hosted fonts (vendored woff2 from Fontsource, no third-party requests). */
+@font-face {
+  font-family: "Bricolage Grotesque Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("../assets/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("../assets/fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");
+}
+
 /*
  * Semantic design tokens. Every text/background pair is chosen for WCAG 2.2
  * 1.4.6 (contrast enhanced, >= 7:1 for normal text) in BOTH color schemes —
@@ -8,13 +33,18 @@
 :root {
   color-scheme: light dark;
 
-  --color-bg: light-dark(#ffffff, #15181c);
-  --color-surface: light-dark(#f3f5f7, #1d2127);
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+
+  --color-bg: light-dark(#f6f8f9, #15181c);
+  --color-surface: light-dark(#ffffff, #1d2127);
   --color-text: light-dark(#1c1e21, #f1f2f4);
   --color-text-muted: light-dark(#50555b, #b9bec4);
-  --color-border: light-dark(#c4c9ce, #3c434b);
+  --color-border: light-dark(#dde5e8, #3c434b);
   --color-link: light-dark(#0a4f8f, #93c1f8);
   --color-focus: light-dark(#0a4f8f, #93c1f8);
+  --color-accent: light-dark(#00707f, #6fd0dd);
+  --color-accent-soft: light-dark(#e0f0f2, #0f3a40);
 
   --color-success-bg: light-dark(#e0f0e0, #20351f);
   --color-success-text: light-dark(#114416, #c6e8c4);
@@ -35,7 +65,8 @@
 body {
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-body);
+  font-size: 15px;
   /* WCAG 1.4.8: generous line height. */
   line-height: 1.5;
   margin: 0;
@@ -73,7 +104,7 @@ body {
 
 /* WCAG 2.5.5: interactive targets >= 44x44 CSS px. */
 .action-button,
-.month-nav-link,
+.today-button,
 .theme-toggle-item {
   align-items: center;
   display: inline-flex;
@@ -88,9 +119,341 @@ a {
 
 main {
   margin: 0 auto;
-  max-width: 70rem;
-  padding: 1rem;
+  max-width: 76rem;
+  padding: 1.5rem 2rem;
 }
+
+/* ---- Toolbar ---- */
+
+.month-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.month-toolbar h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.month-toolbar-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.today-button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+  color: var(--color-accent);
+  font-weight: 700;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.today-button:hover,
+.today-button:focus-visible {
+  background: var(--color-accent-soft);
+}
+
+/* ---- Month chips ---- */
+
+.month-chips {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 1.4rem;
+}
+
+.year-switch {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  gap: 2px;
+  margin-right: 0.6rem;
+}
+
+.year-switch b {
+  color: var(--color-text);
+}
+
+.year-arrow {
+  align-items: center;
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  font-size: 1.1rem;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  text-decoration: none;
+}
+
+.year-arrow:hover:not(.is-disabled) {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.year-arrow.is-disabled {
+  opacity: 0.35;
+}
+
+.month-chip {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  text-decoration: none;
+}
+
+.month-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.month-chip.is-active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: light-dark(#ffffff, #10171a);
+}
+
+.month-chip.is-future {
+  opacity: 0.45;
+}
+
+/* ---- Layout ---- */
+
+.month-layout {
+  align-items: start;
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+@media (max-width: 56rem) {
+  .month-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- Calendar ---- */
+
+.calendar {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-collapse: separate;
+  border-radius: 16px;
+  border-spacing: 6px;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+.calendar thead th {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 0;
+  text-transform: uppercase;
+}
+
+.calendar td {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  height: 86px;
+  padding: 8px 10px;
+  vertical-align: top;
+  width: 14.28%;
+}
+
+.calendar .cell {
+  position: relative;
+}
+
+.cell-num {
+  color: var(--color-text-muted);
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cell-time {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.cell-delta {
+  display: block;
+  font-size: 0.75rem;
+}
+
+.cell-holiday {
+  color: var(--color-text-muted);
+  display: block;
+  font-size: 0.75rem;
+}
+
+.cell-bar {
+  background: var(--color-border);
+  border-radius: 2px;
+  bottom: 8px;
+  display: block;
+  height: 4px;
+  left: 10px;
+  overflow: hidden;
+  position: absolute;
+  right: 10px;
+}
+
+.cell-bar::after {
+  background: currentcolor;
+  border-radius: 2px;
+  content: "";
+  display: block;
+  height: 100%;
+  width: var(--fill, 0%);
+}
+
+.cell-ok .cell-delta,
+.cell-ok .cell-bar { color: var(--color-success-text); }
+.cell-over .cell-delta,
+.cell-over .cell-bar { color: var(--color-accent); }
+.cell-warn .cell-delta,
+.cell-warn .cell-bar { color: var(--color-warning-text); }
+.cell-bad .cell-delta,
+.cell-bad .cell-bar { color: var(--color-danger-text); }
+
+.cell-off {
+  background: var(--color-bg);
+  border-style: dashed;
+}
+
+.cell-future {
+  opacity: 0.45;
+}
+
+.cell-empty {
+  border-color: transparent;
+}
+
+.cell-today {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.cell-today .cell-num {
+  color: var(--color-accent);
+}
+
+/* ---- Summary ---- */
+
+.summary-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.4rem;
+}
+
+.summary-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.summary-ring {
+  background: conic-gradient(var(--color-accent) 0 var(--pct, 0%), var(--color-border) var(--pct, 0%) 100%);
+  border-radius: 50%;
+  display: grid;
+  height: 156px;
+  margin: 0 auto 1.2rem;
+  place-items: center;
+  width: 156px;
+}
+
+.summary-ring > div {
+  background: var(--color-surface);
+  border-radius: 50%;
+  display: grid;
+  height: 122px;
+  place-items: center;
+  text-align: center;
+  width: 122px;
+}
+
+.summary-ring b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.summary-ring span {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.summary-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.summary-table th,
+.summary-table td {
+  border-top: 1px solid var(--color-border);
+  font-size: 0.92rem;
+  padding: 0.6rem 0;
+}
+
+.summary-table th {
+  font-weight: 400;
+  text-align: left;
+}
+
+.summary-table td {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: right;
+}
+
+.summary-table small {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.is-neg { color: var(--color-danger-text); }
+.is-pos { color: var(--color-success-text); }
+
+.action-button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* ---- Theme toggle (Ark UI segment group) ---- */
 
 .theme-toggle {
   border: 1px solid var(--color-border);
@@ -107,88 +470,4 @@ main {
   background: var(--color-link);
   border-radius: 0.4rem;
   color: var(--color-bg);
-}
-
-.month-header {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-between;
-}
-
-.month-nav {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.month-nav-current {
-  font-weight: 600;
-  min-width: 9rem;
-  text-align: center;
-}
-
-.month-tables {
-  align-items: start;
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-}
-
-/* Mobile: stack the tables. */
-@media (max-width: 48rem) {
-  .month-tables {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.data-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.data-table caption {
-  font-weight: 600;
-  padding: 0.5rem;
-  text-align: left;
-}
-
-.data-table th,
-.data-table td {
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.5rem;
-  text-align: left;
-}
-
-.data-table .numeric {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-.is-offday td {
-  color: var(--color-text-muted);
-}
-
-.status-success {
-  background: var(--color-success-bg);
-  color: var(--color-success-text);
-}
-
-.status-warning {
-  background: var(--color-warning-bg);
-  color: var(--color-warning-text);
-}
-
-.status-danger {
-  background: var(--color-danger-bg);
-  color: var(--color-danger-text);
-}
-
-.action-button {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 0.4rem;
-  color: var(--color-text);
-  cursor: pointer;
 }
