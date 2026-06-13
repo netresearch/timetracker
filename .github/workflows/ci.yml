@@ -44,11 +44,19 @@ jobs:
         run: |
           docker compose run --rm app-e2e npm install --legacy-peer-deps
 
-      - name: Build frontend assets
+      - name: Build legacy ExtJS assets (Encore)
         env:
           COMPOSE_PROFILES: e2e
         run: |
           docker compose run --rm app-e2e npm run build
+
+      - name: Build SolidJS UI assets (Vite)
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          # The compose mount masks the image's frontend build, so build the
+          # Vite app into the host-mounted public/build-ui that the E2E app serves.
+          docker compose run --rm app-e2e sh -c 'cd frontend && bun install --frozen-lockfile && bun run build'
 
       - name: Upload dependencies artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -59,6 +67,7 @@ jobs:
             bin/
             node_modules/
             public/build/
+            public/build-ui/
           retention-days: 1
 
   frontend:
