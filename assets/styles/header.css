@@ -127,7 +127,7 @@
     margin-left: 4px;
     padding: 2px 8px;
     font-size: 11px;
-    color: light-dark(#666, #c4c9cf);
+    color: light-dark(#333, #c4c9cf);
     text-decoration: none;
     border: 1px solid light-dark(#ddd, #4a525b);
     border-radius: 3px;
@@ -175,7 +175,7 @@
 .worktime-item dt {
     font-size: 10px;
     text-transform: uppercase;
-    color: light-dark(#666, #b9bec4);
+    color: light-dark(#50555b, #b9bec4);
     letter-spacing: 0.5px;
     margin: 0;
 }
