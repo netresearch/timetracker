@@ -664,3 +664,105 @@ kbd {
   font-size: 0.82rem;
   padding: 2px 7px;
 }
+
+/* ---- Auswertung (evaluation) ---- */
+
+.auswertung {
+  margin: 0 auto;
+  max-width: 76rem;
+}
+
+.filter-bar {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+  padding: 1.2rem 1.4rem;
+}
+
+.filter-grid {
+  display: grid;
+  gap: 0.9rem 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.effort-charts {
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  margin-bottom: 1.4rem;
+}
+
+.effort-chart {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.2rem 1.4rem;
+}
+
+.effort-chart h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin: 0 0 0.8rem;
+}
+
+.effort-empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.effort-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.effort-table thead th {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding-bottom: 0.3rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.effort-table .numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  width: 4.5rem;
+}
+
+.effort-table td,
+.effort-table th {
+  border-top: 1px solid var(--color-border);
+  padding: 0.4rem 0.4rem;
+  vertical-align: middle;
+}
+
+/* The bar sits behind the label inside the row-header cell. */
+.effort-bar-cell {
+  font-weight: 400;
+  position: relative;
+  text-align: left;
+}
+
+.effort-bar {
+  background: var(--color-accent-soft);
+  border-radius: 4px;
+  inset: 3px auto 3px 0;
+  position: absolute;
+  z-index: 0;
+}
+
+.effort-bar-label {
+  overflow: hidden;
+  position: relative;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  z-index: 1;
+}

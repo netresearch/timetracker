@@ -38,6 +38,9 @@
         <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
            {% if active == 'month' %}aria-current="page"{% endif %}
            data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}">{{ 'Monthly overview'|trans }}</a>
+        <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
+           {% if active == 'auswertung' %}aria-current="page"{% endif %}
+           data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
         {% if isAdmin %}
             <a class="main-nav-link{% if active == 'extras' %} is-active{% endif %}"
                {% if active == 'extras' %}aria-current="page"{% endif %}

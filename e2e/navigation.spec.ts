@@ -3,7 +3,7 @@ import { login } from './helpers/auth';
 import {
   goToTab,
   goToTrackingTab,
-  goToInterpretationTab,
+  goToAuswertungPage,
   goToSettingsPage,
   getVisibleTabs,
   NAV_LINKS,
@@ -22,20 +22,23 @@ test.describe('Tab Navigation', () => {
   });
 
   test('should display main tabs after login', async ({ page }) => {
-    // The ExtJS tab bar now holds only Time Tracking (1) and Interpretation (2)
-    // for a non-admin user; Settings/Extras/Billing/Help moved to the SolidJS UI
-    // and live in the shared header nav.
+    // The ExtJS tab bar now holds only Time Tracking (1) for a non-admin user;
+    // Interpretation/Auswertung, Settings, Extras, Billing and Help moved to the
+    // SolidJS UI and live in the shared header nav.
     const tabs = await getVisibleTabs(page);
     console.log('Visible tabs:', tabs);
 
     expect(tabs.length).toBeGreaterThan(0);
 
-    // Essential ExtJS tabs are present (using partial text match)
+    // Time Tracking remains in the ExtJS shell (partial text match).
     const hasTrackingTab = tabs.some((t) => /Zeiterfassung|Time Tracking|1:/i.test(t));
-    const hasInterpretationTab = tabs.some((t) => /Auswertung|Interpretation|2:/i.test(t));
-
     expect(hasTrackingTab).toBe(true);
-    expect(hasInterpretationTab).toBe(true);
+
+    // Interpretation/Auswertung is no longer an ExtJS tab — it is reached via
+    // the header nav link.
+    const hasInterpretationTab = tabs.some((t) => /Auswertung|Interpretation/i.test(t));
+    expect(hasInterpretationTab).toBe(false);
+    await expect(page.locator(NAV_LINKS.auswertung)).toBeVisible();
 
     // Settings is no longer an ExtJS tab — it is reached via the header nav link.
     const hasSettingsTab = tabs.some((t) => /Einstellungen|Settings/i.test(t));
@@ -50,22 +53,16 @@ test.describe('Tab Navigation', () => {
     await expect(page.locator('.x-grid')).toBeVisible();
   });
 
-  test('should navigate to Interpretation tab', async ({ page }) => {
-    await goToInterpretationTab(page);
+  test('should navigate to Evaluation via header nav link', async ({ page }) => {
+    // Interpretation/Auswertung moved to the SolidJS UI; the header nav link is a
+    // full navigation to /ui/auswertung.
+    await goToAuswertungPage(page);
 
-    // Wait for interpretation content to load
-    await page.waitForTimeout(1000);
+    await expect(page).toHaveURL(/\/ui\/auswertung/);
 
-    // Should show interpretation content: charts, grids, panels, or form items
-    const hasInterpretationContent =
-      (await page.locator('.x-grid').first().isVisible().catch(() => false)) ||
-      (await page.locator('.x-form-item').first().isVisible().catch(() => false)) ||
-      (await page.locator('.x-panel-body').first().isVisible().catch(() => false)) ||
-      (await page.locator('.x-chart, .x-draw').first().isVisible().catch(() => false)) ||
-      // Check for visible text that indicates Interpretation tab content
-      (await page.getByText(/Effort by|Hours|Customer|Project/i).first().isVisible().catch(() => false));
-
-    expect(hasInterpretationContent).toBe(true);
+    // SolidJS evaluation page should be visible with its filter bar.
+    await expect(page.locator('section.auswertung')).toBeVisible();
+    await expect(page.locator('form.filter-bar')).toBeVisible();
   });
 
   test('should navigate to Settings via header nav link', async ({ page }) => {
@@ -80,16 +77,14 @@ test.describe('Tab Navigation', () => {
     await expect(page.locator('input[type="checkbox"][name="show_empty_line"]')).toBeAttached();
   });
 
-  test('should persist active tab on page reload', async ({ page }) => {
-    // Switch to the Interpretation ExtJS tab
-    await goToInterpretationTab(page);
+  test('should restore the tracking grid on page reload', async ({ page }) => {
+    await goToTrackingTab(page);
 
     // Reload the page
     await page.reload();
     await page.waitForSelector('.x-tab-bar', { timeout: 10000 });
 
-    // Note: Tab persistence depends on app implementation
-    // Default behavior is to show Time Tracking tab after reload
+    // Default behavior is to show the Time Tracking tab after reload.
     await waitForGrid(page);
   });
 });
@@ -103,8 +98,9 @@ test.describe('Role-Based Tab Visibility', () => {
     const tabs = await getVisibleTabs(page);
     console.log('Visible tabs for PL user:', tabs);
 
-    // PL users (ROLE_ADMIN) should see the Administration ExtJS tab (now tab 3)
-    const hasAdminTab = tabs.some((t) => /Administration|3:/i.test(t));
+    // PL users (ROLE_ADMIN) should see the Administration ExtJS tab. Its index
+    // shifts down as tabs migrate out, so match on the label, not the prefix.
+    const hasAdminTab = tabs.some((t) => /Administration/i.test(t));
     expect(hasAdminTab).toBe(true);
 
     // Controlling/Abrechnung moved to the SolidJS UI — for ROLE_PL/ROLE_ADMIN it
