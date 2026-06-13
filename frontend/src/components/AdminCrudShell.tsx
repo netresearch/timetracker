@@ -113,13 +113,18 @@ export function AdminCrudShell(props: {
       </Show>
 
       <Show when={editing()}>
-        <div class="modal-backdrop" onClick={() => setEditing(null)}>
+        <div
+          class="modal-backdrop"
+          onClick={() => setEditing(null)}
+          onKeyDown={(event) => { if (event.key === 'Escape') setEditing(null) }}
+        >
           <div
             class="modal"
             role="dialog"
             aria-modal="true"
             aria-label={props.descriptor.title()}
             onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => { if (event.key === 'Escape') setEditing(null) }}
           >
             <form class="stack-form" onSubmit={(event) => void submit(event)}>
               <For each={props.descriptor.fields}>

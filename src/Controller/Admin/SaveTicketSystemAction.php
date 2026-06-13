@@ -74,36 +74,46 @@ final class SaveTicketSystemAction extends BaseController
         }
 
         // The list payload (GetTicketSystemsAction) never ships credentials, so
-        // the edit form opens these fields blank. A blank submission must mean
-        // "keep the stored value", not "wipe it" — capture the existing secrets
-        // and restore any that came in empty after the DTO is mapped over.
-        $storedPassword = $ticketSystem->getPassword();
-        $storedPublicKey = $ticketSystem->getPublicKey();
-        $storedPrivateKey = $ticketSystem->getPrivateKey();
-        $storedOauthConsumerKey = $ticketSystem->getOauthConsumerKey();
-        $storedOauthConsumerSecret = $ticketSystem->getOauthConsumerSecret();
+        // the edit form opens these fields blank. For an EXISTING system a blank
+        // submission must mean "keep the stored value", not "wipe it": capture
+        // the stored secrets up front and restore any field that came in empty
+        // after the DTO is mapped over. A brand-new system has nothing to
+        // preserve (and its credential getters are not yet initialised), so this
+        // only applies when editing.
+        $storedSecrets = null;
+        if (null !== $id) {
+            $storedSecrets = [
+                'password' => $ticketSystem->getPassword(),
+                'publicKey' => $ticketSystem->getPublicKey(),
+                'privateKey' => $ticketSystem->getPrivateKey(),
+                'oauthConsumerKey' => $ticketSystem->getOauthConsumerKey(),
+                'oauthConsumerSecret' => $ticketSystem->getOauthConsumerSecret(),
+            ];
+        }
 
         try {
             $this->objectMapper->map($ticketSystemSaveDto, $ticketSystem);
 
-            if ('' === $ticketSystemSaveDto->password) {
-                $ticketSystem->setPassword($storedPassword);
-            }
+            if (null !== $storedSecrets) {
+                if ('' === $ticketSystemSaveDto->password) {
+                    $ticketSystem->setPassword($storedSecrets['password']);
+                }
 
-            if ('' === $ticketSystemSaveDto->publicKey) {
-                $ticketSystem->setPublicKey($storedPublicKey);
-            }
+                if ('' === $ticketSystemSaveDto->publicKey) {
+                    $ticketSystem->setPublicKey($storedSecrets['publicKey']);
+                }
 
-            if ('' === $ticketSystemSaveDto->privateKey) {
-                $ticketSystem->setPrivateKey($storedPrivateKey);
-            }
+                if ('' === $ticketSystemSaveDto->privateKey) {
+                    $ticketSystem->setPrivateKey($storedSecrets['privateKey']);
+                }
 
-            if (null === $ticketSystemSaveDto->oauthConsumerKey || '' === $ticketSystemSaveDto->oauthConsumerKey) {
-                $ticketSystem->setOauthConsumerKey($storedOauthConsumerKey);
-            }
+                if (null === $ticketSystemSaveDto->oauthConsumerKey || '' === $ticketSystemSaveDto->oauthConsumerKey) {
+                    $ticketSystem->setOauthConsumerKey($storedSecrets['oauthConsumerKey']);
+                }
 
-            if (null === $ticketSystemSaveDto->oauthConsumerSecret || '' === $ticketSystemSaveDto->oauthConsumerSecret) {
-                $ticketSystem->setOauthConsumerSecret($storedOauthConsumerSecret);
+                if (null === $ticketSystemSaveDto->oauthConsumerSecret || '' === $ticketSystemSaveDto->oauthConsumerSecret) {
+                    $ticketSystem->setOauthConsumerSecret($storedSecrets['oauthConsumerSecret']);
+                }
             }
 
             $em = $this->doctrineRegistry->getManager();
