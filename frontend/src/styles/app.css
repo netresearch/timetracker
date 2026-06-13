@@ -767,6 +767,94 @@ kbd {
   z-index: 1;
 }
 
+/* ---- Data tables (admin lists + last-entries) ---- */
+
+/* Lets wide tables scroll sideways on narrow screens instead of overflowing. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.data-table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+}
+
+.data-table thead th {
+  background: var(--color-accent-soft);
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 0.9rem;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Sortable headers carry their padding on the inner button so the whole cell
+   is clickable; the cell itself then has none. */
+.data-table thead th:has(.th-sort) {
+  padding: 0;
+}
+
+.data-table tbody td {
+  border-top: 1px solid var(--color-border);
+  padding: 0.55rem 0.9rem;
+  vertical-align: middle;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: light-dark(rgba(0, 0, 0, 0.025), rgba(255, 255, 255, 0.035));
+}
+
+.data-table tbody tr:hover {
+  background: var(--color-accent-soft);
+}
+
+.data-table .numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.data-table .boolean {
+  text-align: center;
+}
+
+/* Sortable column header — a borderless button that fills the whole cell so
+   the entire header is clickable (and keyboard-focusable as a real button). */
+.th-sort {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 0.3rem;
+  letter-spacing: inherit;
+  padding: 0.5rem 0.9rem;
+  text-transform: inherit;
+  width: 100%;
+}
+
+.data-table th.numeric .th-sort {
+  justify-content: flex-end;
+}
+
+.data-table th.boolean .th-sort {
+  justify-content: center;
+}
+
+.th-sort:hover {
+  color: var(--color-accent);
+}
+
+.th-sort-glyph {
+  color: var(--color-accent);
+  font-size: 0.7rem;
+}
+
 /* ---- Admin ---- */
 
 .admin-page {
@@ -807,8 +895,26 @@ kbd {
 .admin-crud-toolbar {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 0.9rem;
+}
+
+/* Free-text filter input; pushed to the right of the toolbar. */
+.admin-filter {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  color: var(--color-text);
+  font: inherit;
+  margin-left: auto;
+  min-height: 40px;
+  min-width: 12rem;
+  padding: 0 0.7rem;
+}
+
+.admin-no-matches {
+  margin-top: 0.9rem;
 }
 
 .admin-table {

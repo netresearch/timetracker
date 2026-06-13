@@ -8,6 +8,8 @@ export interface ColumnDef {
   label: () => string
   /** Render a cell from the raw row object (e.g. id→name, bool→✓). */
   render?: (row: Record<string, unknown>, options: OptionLookup) => string
+  /** Cell/header alignment. Numbers → 'right', booleans (✓/—) → 'center'. */
+  align?: 'left' | 'right' | 'center'
 }
 
 export type FieldType = 'text' | 'number' | 'checkbox' | 'date' | 'select' | 'multiselect' | 'textarea'

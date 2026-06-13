@@ -3,7 +3,7 @@ import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js'
 
 import { ApiError, getJson, postJson } from '../api/client'
 import { m } from '../paraglide/messages.js'
-import type { EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
+import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
 type Row = Record<string, unknown>
 
@@ -38,6 +38,56 @@ export function AdminCrudShell(props: {
       .map((row) => row?.[props.descriptor.rowKey])
       .filter((row): row is Row => row != null && typeof row === 'object'),
   )
+
+  // Column sorting. cellText() yields exactly what the grid shows (id→label,
+  // ✓/—, …) so the sort order matches the visible values. Clicking a header
+  // cycles none → ascending → descending → none.
+  const [sort, setSort] = createSignal<{ key: string; dir: 'asc' | 'desc' } | null>(null)
+  // Free-text filter: matches against the visible text of every column.
+  const [filter, setFilter] = createSignal('')
+
+  const cellText = (row: Row, col: ColumnDef): string =>
+    col.render ? col.render(row, props.options) : String(row[col.key] ?? '')
+
+  function toggleSort(key: string) {
+    setSort((current) =>
+      current?.key !== key ? { key, dir: 'asc' } : current.dir === 'asc' ? { key, dir: 'desc' } : null,
+    )
+  }
+
+  const ariaSort = (key: string): 'ascending' | 'descending' | 'none' => {
+    const current = sort()
+
+    return current?.key === key ? (current.dir === 'asc' ? 'ascending' : 'descending') : 'none'
+  }
+
+  const sortGlyph = (key: string): string => {
+    const current = sort()
+
+    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : ''
+  }
+
+  const visibleRows = createMemo<Row[]>(() => {
+    const current = sort()
+    const query = filter().trim().toLowerCase()
+    const columns = props.descriptor.columns
+    const sortCol = current && columns.find((c) => c.key === current.key)
+    // Compute the visible text per row once here (in the tracked memo): a
+    // haystack for the free-text filter and the active column's sort key. The
+    // filter/sort callbacks then work on plain strings only.
+    const decorated = rows().map((row) => ({
+      row,
+      haystack: query === '' ? '' : columns.map((col) => cellText(row, col)).join('').toLowerCase(),
+      sortKey: sortCol ? cellText(row, sortCol) : '',
+    }))
+    const filtered = query === '' ? decorated : decorated.filter((entry) => entry.haystack.includes(query))
+    if (current && sortCol) {
+      const factor = current.dir === 'asc' ? 1 : -1
+      filtered.sort((a, b) => factor * a.sortKey.localeCompare(b.sortKey, undefined, { numeric: true }))
+    }
+
+    return filtered.map((entry) => entry.row)
+  })
 
   function openForm(row: Row | null) {
     setError('')
@@ -85,32 +135,62 @@ export function AdminCrudShell(props: {
         <Show when={error()}>
           <span role="alert" class="form-status is-error">{error()}</span>
         </Show>
+        <input
+          type="search"
+          class="admin-filter"
+          placeholder={m.admin_filter()}
+          aria-label={m.admin_filter()}
+          value={filter()}
+          onInput={(event) => setFilter(event.currentTarget.value)}
+        />
       </div>
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
-        <table class="data-table admin-table">
-          <thead>
-            <tr>
-              <For each={props.descriptor.columns}>{(col) => <th scope="col">{col.label()}</th>}</For>
-              <th scope="col">{m.admin_actions()}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <For each={rows()}>
-              {(row) => (
-                <tr>
-                  <For each={props.descriptor.columns}>
-                    {(col) => <td>{col.render ? col.render(row, props.options) : String(row[col.key] ?? '')}</td>}
-                  </For>
-                  <td class="admin-row-actions">
-                    <button type="button" class="link-button" onClick={() => openForm(row)}>{m.admin_edit()}</button>
-                    <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>{m.admin_delete()}</button>
-                  </td>
-                </tr>
-              )}
-            </For>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table class="data-table admin-table">
+            <thead>
+              <tr>
+                <For each={props.descriptor.columns}>
+                  {(col) => (
+                    <th
+                      scope="col"
+                      classList={{ numeric: col.align === 'right', boolean: col.align === 'center' }}
+                      aria-sort={ariaSort(col.key)}
+                    >
+                      <button type="button" class="th-sort" onClick={() => toggleSort(col.key)}>
+                        <span>{col.label()}</span>
+                        <span class="th-sort-glyph" aria-hidden="true">{sortGlyph(col.key)}</span>
+                      </button>
+                    </th>
+                  )}
+                </For>
+                <th scope="col">{m.admin_actions()}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <For each={visibleRows()}>
+                {(row) => (
+                  <tr>
+                    <For each={props.descriptor.columns}>
+                      {(col) => (
+                        <td classList={{ numeric: col.align === 'right', boolean: col.align === 'center' }}>
+                          {cellText(row, col)}
+                        </td>
+                      )}
+                    </For>
+                    <td class="admin-row-actions">
+                      <button type="button" class="link-button" onClick={() => openForm(row)}>{m.admin_edit()}</button>
+                      <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>{m.admin_delete()}</button>
+                    </td>
+                  </tr>
+                )}
+              </For>
+            </tbody>
+          </table>
+        </div>
+        <Show when={filter().trim() !== '' && visibleRows().length === 0}>
+          <p role="status" class="effort-empty admin-no-matches">{m.admin_no_matches()}</p>
+        </Show>
       </Show>
 
       <Show when={editing()}>

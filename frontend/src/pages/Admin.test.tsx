@@ -125,6 +125,26 @@ describe('Admin', () => {
     unmount()
   })
 
+  it('filters the list by the free-text query', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([
+            { customer: { id: 1, name: 'ACME', active: true, global: true, teams: [] } },
+            { customer: { id: 2, name: 'Globex', active: true, global: true, teams: [] } },
+          ])
+        : Promise.resolve([]),
+    )
+    const { getByRole, queryByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.input(getByRole('searchbox'), { target: { value: 'glob' } })
+
+    await waitFor(() => expect(queryByRole('cell', { name: 'ACME' })).not.toBeInTheDocument())
+    expect(getByRole('cell', { name: 'Globex' })).toBeInTheDocument()
+
+    unmount()
+  })
+
   it('has no automatically detectable accessibility violations', async () => {
     mockEndpoints()
     const { container, getByRole, unmount } = renderAdmin()
