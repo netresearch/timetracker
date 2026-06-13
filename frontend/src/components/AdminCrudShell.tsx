@@ -43,6 +43,8 @@ export function AdminCrudShell(props: {
   // ✓/—, …) so the sort order matches the visible values. Clicking a header
   // cycles none → ascending → descending → none.
   const [sort, setSort] = createSignal<{ key: string; dir: 'asc' | 'desc' } | null>(null)
+  // Free-text filter: matches against the visible text of every column.
+  const [filter, setFilter] = createSignal('')
 
   const cellText = (row: Row, col: ColumnDef): string =>
     col.render ? col.render(row, props.options) : String(row[col.key] ?? '')
@@ -65,20 +67,26 @@ export function AdminCrudShell(props: {
     return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : ''
   }
 
-  const sortedRows = createMemo<Row[]>(() => {
+  const visibleRows = createMemo<Row[]>(() => {
     const current = sort()
-    const data = rows()
-    const col = current && props.descriptor.columns.find((c) => c.key === current.key)
-    if (!current || !col) {
-      return data
+    const query = filter().trim().toLowerCase()
+    const columns = props.descriptor.columns
+    const sortCol = current && columns.find((c) => c.key === current.key)
+    // Compute the visible text per row once here (in the tracked memo): a
+    // haystack for the free-text filter and the active column's sort key. The
+    // filter/sort callbacks then work on plain strings only.
+    const decorated = rows().map((row) => ({
+      row,
+      haystack: query === '' ? '' : columns.map((col) => cellText(row, col)).join('').toLowerCase(),
+      sortKey: sortCol ? cellText(row, sortCol) : '',
+    }))
+    const filtered = query === '' ? decorated : decorated.filter((entry) => entry.haystack.includes(query))
+    if (current && sortCol) {
+      const factor = current.dir === 'asc' ? 1 : -1
+      filtered.sort((a, b) => factor * a.sortKey.localeCompare(b.sortKey, undefined, { numeric: true, sensitivity: 'base' }))
     }
-    const factor = current.dir === 'asc' ? 1 : -1
-    // Read the visible text once per row here (in the tracked memo), then sort
-    // on the precomputed strings so the comparator stays pure.
-    const keyed = data.map((row) => ({ row, text: cellText(row, col) }))
-    keyed.sort((a, b) => factor * a.text.localeCompare(b.text, undefined, { numeric: true, sensitivity: 'base' }))
 
-    return keyed.map((entry) => entry.row)
+    return filtered.map((entry) => entry.row)
   })
 
   function openForm(row: Row | null) {
@@ -127,6 +135,14 @@ export function AdminCrudShell(props: {
         <Show when={error()}>
           <span role="alert" class="form-status is-error">{error()}</span>
         </Show>
+        <input
+          type="search"
+          class="admin-filter"
+          placeholder={m.admin_filter()}
+          aria-label={m.admin_filter()}
+          value={filter()}
+          onInput={(event) => setFilter(event.currentTarget.value)}
+        />
       </div>
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
@@ -152,7 +168,7 @@ export function AdminCrudShell(props: {
               </tr>
             </thead>
             <tbody>
-              <For each={sortedRows()}>
+              <For each={visibleRows()}>
                 {(row) => (
                   <tr>
                     <For each={props.descriptor.columns}>
@@ -172,6 +188,9 @@ export function AdminCrudShell(props: {
             </tbody>
           </table>
         </div>
+        <Show when={filter().trim() !== '' && visibleRows().length === 0}>
+          <p role="status" class="effort-empty admin-no-matches">{m.admin_no_matches()}</p>
+        </Show>
       </Show>
 
       <Show when={editing()}>

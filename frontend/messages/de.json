@@ -113,6 +113,8 @@
   "admin_delete": "Löschen",
   "admin_cancel": "Abbrechen",
   "admin_actions": "Aktionen",
+  "admin_filter": "Filtern…",
+  "admin_no_matches": "Keine Treffer für den Filter.",
   "admin_delete_confirm": "Wirklich löschen?",
   "admin_yes": "Ja",
   "admin_no": "Nein",

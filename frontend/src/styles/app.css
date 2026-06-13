@@ -880,8 +880,26 @@ kbd {
 .admin-crud-toolbar {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 0.9rem;
+}
+
+/* Free-text filter input; pushed to the right of the toolbar. */
+.admin-filter {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  color: var(--color-text);
+  font: inherit;
+  margin-left: auto;
+  min-height: 40px;
+  min-width: 12rem;
+  padding: 0 0.7rem;
+}
+
+.admin-no-matches {
+  margin-top: 0.9rem;
 }
 
 .admin-table {
