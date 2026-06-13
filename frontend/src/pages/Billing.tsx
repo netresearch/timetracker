@@ -29,15 +29,12 @@ function OptionSelect(props: {
       <span>{props.label}</span>
       <select
         disabled={props.loading}
+        value={props.value}
         onInput={(event) => props.onInput(Number(event.currentTarget.value))}
       >
         <option value="0">{m.billing_all()}</option>
         <For each={props.options ?? []}>
-          {(option) => (
-            <option value={option.id} selected={option.id === props.value}>
-              {option.label}
-            </option>
-          )}
+          {(option) => <option value={option.id}>{option.label}</option>}
         </For>
       </select>
     </label>
@@ -47,12 +44,15 @@ function OptionSelect(props: {
 export default function Billing() {
   const config = appConfig()
   const now = new Date()
-  const defaultMonth = now.getMonth() === 0 ? 1 : now.getMonth() // previous month, 1-based
+  // Default to the previous month; in January that is December of last year.
+  const isJanuary = now.getMonth() === 0
+  const defaultYear = isJanuary ? now.getFullYear() - 1 : now.getFullYear()
+  const defaultMonth = isJanuary ? 12 : now.getMonth() // previous month, 1-based
 
   const [user, setUser] = createSignal(0)
   const [project, setProject] = createSignal(0)
   const [customer, setCustomer] = createSignal(0)
-  const [year, setYear] = createSignal(now.getFullYear())
+  const [year, setYear] = createSignal(defaultYear)
   const [month, setMonth] = createSignal(defaultMonth)
   const [billable, setBillable] = createSignal(false)
   const [ticketTitles, setTicketTitles] = createSignal(false)
@@ -109,20 +109,18 @@ export default function Billing() {
 
         <label class="field">
           <span>{m.billing_year()}</span>
-          <select onInput={(event) => setYear(Number(event.currentTarget.value))}>
+          <select value={year()} onInput={(event) => setYear(Number(event.currentTarget.value))}>
             <For each={years}>
-              {(value) => <option value={value} selected={value === year()}>{value}</option>}
+              {(value) => <option value={value}>{value}</option>}
             </For>
           </select>
         </label>
 
         <label class="field">
           <span>{m.billing_month()}</span>
-          <select onInput={(event) => setMonth(Number(event.currentTarget.value))}>
+          <select value={month()} onInput={(event) => setMonth(Number(event.currentTarget.value))}>
             <For each={MONTH_VALUES}>
-              {(value) => (
-                <option value={value} selected={value === month()}>{monthLabel(value)}</option>
-              )}
+              {(value) => <option value={value}>{monthLabel(value)}</option>}
             </For>
           </select>
         </label>

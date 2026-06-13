@@ -85,6 +85,7 @@ export default function Extras() {
           <span>{m.extras_preset()}</span>
           <select
             disabled={presets.isPending}
+            value={preset()}
             onInput={(event) => setPreset(Number(event.currentTarget.value))}
           >
             <option value="0">—</option>
