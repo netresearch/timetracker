@@ -35,6 +35,7 @@ final class GetTicketSystemsAction extends BaseController
         'password',
         'publicKey', 'public_key',
         'privateKey', 'private_key',
+        'oauthConsumerKey', 'oauth_consumer_key',
         'oauthConsumerSecret', 'oauth_consumer_secret',
     ];
 

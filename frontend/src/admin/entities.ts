@@ -243,8 +243,9 @@ export function adminEntities(): EntityDescriptor[] {
         { name: 'oauthConsumerSecret', label: () => m.admin_f_oauth_secret(), type: 'textarea' },
       ],
       rowLabel: (row) => str(row.name),
-      // Secrets are not returned by the list (server-side filtered), so the
-      // form opens them blank; the backend keeps the stored value when blank.
+      // Credentials are not returned by the list (server-side filtered), so the
+      // form opens them blank; the backend keeps the stored value when a field
+      // is submitted blank (see SaveTicketSystemAction preserve-on-blank).
       toForm: (row) => row === null
         ? { id: 0, name: '', type: 'JIRA', bookTime: false, url: '', ticketUrl: '', login: '', password: '', publicKey: '', privateKey: '', oauthConsumerKey: '', oauthConsumerSecret: '' }
         : {
@@ -252,7 +253,7 @@ export function adminEntities(): EntityDescriptor[] {
             bookTime: bool(pick(row, 'bookTime', 'book_time')),
             url: str(row.url), ticketUrl: str(pick(row, 'ticketUrl', 'ticket_url')),
             login: str(row.login), password: '', publicKey: '', privateKey: '',
-            oauthConsumerKey: str(pick(row, 'oauthConsumerKey', 'oauth_consumer_key')), oauthConsumerSecret: '',
+            oauthConsumerKey: '', oauthConsumerSecret: '',
           },
       toPayload: (v) => ({ ...v }),
     },

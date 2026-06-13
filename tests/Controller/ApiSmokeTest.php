@@ -131,7 +131,7 @@ final class ApiSmokeTest extends AbstractWebTestCase
             self::assertArrayHasKey('ticketSystem', $row);
             $ticketSystem = $row['ticketSystem'];
             assert(is_array($ticketSystem));
-            foreach (['password', 'privateKey', 'private_key', 'publicKey', 'public_key', 'oauthConsumerSecret', 'oauth_consumer_secret'] as $secret) {
+            foreach (['password', 'privateKey', 'private_key', 'publicKey', 'public_key', 'oauthConsumerKey', 'oauth_consumer_key', 'oauthConsumerSecret', 'oauth_consumer_secret'] as $secret) {
                 self::assertArrayNotHasKey($secret, $ticketSystem, sprintf('Secret "%s" leaked in /getTicketSystems', $secret));
             }
         }

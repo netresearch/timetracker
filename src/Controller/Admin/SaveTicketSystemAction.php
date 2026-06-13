@@ -73,8 +73,38 @@ final class SaveTicketSystemAction extends BaseController
             return $response;
         }
 
+        // The list payload (GetTicketSystemsAction) never ships credentials, so
+        // the edit form opens these fields blank. A blank submission must mean
+        // "keep the stored value", not "wipe it" — capture the existing secrets
+        // and restore any that came in empty after the DTO is mapped over.
+        $storedPassword = $ticketSystem->getPassword();
+        $storedPublicKey = $ticketSystem->getPublicKey();
+        $storedPrivateKey = $ticketSystem->getPrivateKey();
+        $storedOauthConsumerKey = $ticketSystem->getOauthConsumerKey();
+        $storedOauthConsumerSecret = $ticketSystem->getOauthConsumerSecret();
+
         try {
             $this->objectMapper->map($ticketSystemSaveDto, $ticketSystem);
+
+            if ('' === $ticketSystemSaveDto->password) {
+                $ticketSystem->setPassword($storedPassword);
+            }
+
+            if ('' === $ticketSystemSaveDto->publicKey) {
+                $ticketSystem->setPublicKey($storedPublicKey);
+            }
+
+            if ('' === $ticketSystemSaveDto->privateKey) {
+                $ticketSystem->setPrivateKey($storedPrivateKey);
+            }
+
+            if (null === $ticketSystemSaveDto->oauthConsumerKey || '' === $ticketSystemSaveDto->oauthConsumerKey) {
+                $ticketSystem->setOauthConsumerKey($storedOauthConsumerKey);
+            }
+
+            if (null === $ticketSystemSaveDto->oauthConsumerSecret || '' === $ticketSystemSaveDto->oauthConsumerSecret) {
+                $ticketSystem->setOauthConsumerSecret($storedOauthConsumerSecret);
+            }
 
             $em = $this->doctrineRegistry->getManager();
             $em->persist($ticketSystem);
