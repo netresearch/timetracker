@@ -957,15 +957,21 @@ th[aria-sort='descending'] .th-sort-glyph {
 }
 
 .modal-backdrop {
-  align-items: flex-start;
   background: rgba(0, 0, 0, 0.45);
+  inset: 0;
+  position: fixed;
+  z-index: 100;
+}
+
+.modal-positioner {
+  align-items: flex-start;
   display: flex;
   inset: 0;
   justify-content: center;
   overflow-y: auto;
   padding: 4vh 1rem;
   position: fixed;
-  z-index: 100;
+  z-index: 101;
 }
 
 .modal {

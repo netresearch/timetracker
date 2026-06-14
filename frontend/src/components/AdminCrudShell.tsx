@@ -1,5 +1,7 @@
+import { Dialog } from '@ark-ui/solid/dialog'
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
+import { Portal } from 'solid-js/web'
 
 import { ApiError, getJson, postJson } from '../api/client'
 import { m } from '../paraglide/messages.js'
@@ -218,37 +220,38 @@ export function AdminCrudShell(props: {
         </Show>
       </Show>
 
-      <Show when={editing()}>
-        <div
-          class="modal-backdrop"
-          onClick={() => setEditing(null)}
-          onKeyDown={(event) => { if (event.key === 'Escape') setEditing(null) }}
-        >
-          <div
-            class="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={props.descriptor.title()}
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => { if (event.key === 'Escape') setEditing(null) }}
-          >
-            <form class="stack-form" onSubmit={(event) => void submit(event)}>
-              <For each={props.descriptor.fields}>
-                {(field) => <FieldControl field={field} values={values()} setField={setField} options={props.options} editing={editing() !== null && Number(values().id ?? 0) > 0} />}
-              </For>
-              <div class="form-actions">
-                <button type="submit" class="primary-button" disabled={saving()}>
-                  {saving() ? m.app_saving() : m.app_save()}
-                </button>
-                <button type="button" class="action-button" onClick={() => setEditing(null)}>{m.admin_cancel()}</button>
-                <Show when={error()}>
-                  <span role="alert" class="form-status is-error">{error()}</span>
-                </Show>
-              </div>
-            </form>
-          </div>
-        </div>
-      </Show>
+      {/* Ark UI Dialog gives the edit form a real focus trap, focus-on-open,
+          focus-return to the triggering button, scroll lock and Escape/outside
+          dismissal — handled by the library rather than the previous hand-rolled
+          backdrop. */}
+      <Dialog.Root
+        open={editing() !== null}
+        onOpenChange={(details) => { if (!details.open) setEditing(null) }}
+        lazyMount
+        unmountOnExit
+      >
+        <Portal>
+          <Dialog.Backdrop class="modal-backdrop" />
+          <Dialog.Positioner class="modal-positioner">
+            <Dialog.Content class="modal" aria-label={props.descriptor.title()}>
+              <form class="stack-form" onSubmit={(event) => void submit(event)}>
+                <For each={props.descriptor.fields}>
+                  {(field) => <FieldControl field={field} values={values()} setField={setField} options={props.options} editing={editing() !== null && Number(values().id ?? 0) > 0} />}
+                </For>
+                <div class="form-actions">
+                  <button type="submit" class="primary-button" disabled={saving()}>
+                    {saving() ? m.app_saving() : m.app_save()}
+                  </button>
+                  <button type="button" class="action-button" onClick={() => setEditing(null)}>{m.admin_cancel()}</button>
+                  <Show when={error()}>
+                    <span role="alert" class="form-status is-error">{error()}</span>
+                  </Show>
+                </div>
+              </form>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </div>
   )
 }

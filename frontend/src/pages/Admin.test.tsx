@@ -86,13 +86,19 @@ describe('Admin', () => {
   it('saves a new customer as typed JSON', async () => {
     mockEndpoints()
     postJson.mockResolvedValue([7, 'New', true, false, []])
-    const { getByRole, container, unmount } = renderAdmin()
+    const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Add' }))
-    const name = container.querySelector('.modal input[type=text]') as HTMLInputElement
+    // The dialog is portalled to document.body (Ark UI), so query the document.
+    const name = await waitFor(() => {
+      const input = document.querySelector('.modal input[type=text]')
+      if (!(input instanceof HTMLInputElement)) throw new Error('dialog not open')
+
+      return input
+    })
     fireEvent.input(name, { target: { value: 'New' } })
-    fireEvent.submit(container.querySelector('.modal form') as HTMLFormElement)
+    fireEvent.submit(document.querySelector('.modal form') as HTMLFormElement)
 
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ name: 'New', active: true, global: false })),
