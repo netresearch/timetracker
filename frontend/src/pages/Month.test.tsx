@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import type { HolidayRecord, WorktimeRecord } from '../api/queries'
-import Month from './Month'
+import Month, { resolveDayTokens } from './Month'
 
 // One booking in the past, one in the future (Fri 2026-06-19) relative to the
 // frozen "today" — the until-today summary must ignore the future one.
@@ -121,5 +121,30 @@ describe('Month page', () => {
     expect(await axe(container)).toHaveNoViolations()
 
     unmount()
+  })
+})
+
+describe('resolveDayTokens', () => {
+  const now = new Date(2026, 5, 15) // Mon 2026-06-15 (local)
+
+  it('resolves "today" to the local day key', () => {
+    expect(resolveDayTokens('today', now)).toEqual(['2026-06-15'])
+  })
+
+  it('resolves "current-week" to the local Mon–Sun keys', () => {
+    expect(resolveDayTokens('current-week', now)).toEqual([
+      '2026-06-15', '2026-06-16', '2026-06-17', '2026-06-18', '2026-06-19', '2026-06-20', '2026-06-21',
+    ])
+  })
+
+  it('resolves "current-month" to every day of the local month', () => {
+    const keys = resolveDayTokens('current-month', now)
+    expect(keys).toHaveLength(30)
+    expect(keys[0]).toBe('2026-06-01')
+    expect(keys.at(-1)).toBe('2026-06-30')
+  })
+
+  it('passes through an explicit CSV of keys', () => {
+    expect(resolveDayTokens('2026-06-01, 2026-06-02 ,', now)).toEqual(['2026-06-01', '2026-06-02'])
   })
 })

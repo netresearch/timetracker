@@ -14,11 +14,10 @@
    (theme cycle), so it works on BOTH shells. #}
 {% set isAdmin = 'ROLE_ADMIN' in settings.roles %}
 {% set canBill = isAdmin or 'ROLE_PL' in settings.roles %}
-{# Each worktime badge deep-links to the Overview pre-scoped to that period. #}
-{% set weekDays = [] %}
-{% for i in 0..6 %}
-    {% set weekDays = weekDays|merge(["monday this week +#{i} days"|date('Y-m-d')]) %}
-{% endfor %}
+{# Each worktime badge deep-links to the Overview pre-scoped to that period.
+   The Today/Week links use symbolic tokens (resolved client-side against the
+   local clock in Month.tsx) instead of server-computed dates, so they never
+   skew with the server timezone. #}
 {% set monthPath = path('ui_spa', {'path': 'month'}) %}
 <div id="page-header" class="page-header">
     <a href="#main-content" class="skip-link">{{ 'Skip to main content'|trans }}</a>
@@ -83,11 +82,11 @@
             <dl class="worktime-list">
                 <div class="worktime-item worktime-item-link">
                     <dt>{{ 'Today'|trans }}</dt>
-                    <dd><a id="worktime-day" data-nav="month" href="{{ monthPath }}?days={{ 'now'|date('Y-m-d') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Today'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-day" data-nav="month" href="{{ monthPath }}?days=today" aria-label="{{ 'Overview'|trans }}: {{ 'Today'|trans }}">0:00</a></dd>
                 </div>
                 <div class="worktime-item worktime-item-link">
                     <dt>{{ 'Week'|trans }}</dt>
-                    <dd><a id="worktime-week" data-nav="month" href="{{ monthPath }}?days={{ weekDays|join(',') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Week'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-week" data-nav="month" href="{{ monthPath }}?days=current-week" aria-label="{{ 'Overview'|trans }}: {{ 'Week'|trans }}">0:00</a></dd>
                 </div>
                 <div class="worktime-item worktime-item-link worktime-item-month">
                     <dt>{{ 'Month'|trans }}</dt>
