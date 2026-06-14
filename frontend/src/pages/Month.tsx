@@ -496,7 +496,7 @@ export default function Month() {
                 <table class="summary-table">
                   <tbody>
                     <tr>
-                      <th scope="row">{scope() === 'selection' ? m.month_expected() : m.month_expected_month()}</th>
+                      <th scope="row">{scope() === 'month' ? m.month_expected_month() : m.month_expected()}</th>
                       <td>{formatMinutes(sum().expected)}<small> · {m.month_working_days({ count: workingDays() })}</small></td>
                     </tr>
                     <tr>
@@ -516,7 +516,7 @@ export default function Month() {
                           </td>
                         </tr>
                         <tr>
-                          <th scope="row">{m.month_balance_eom()}</th>
+                          <th scope="row">{scope() === 'year' ? m.month_balance() : m.month_balance_eom()}</th>
                           <td class={sum().diff < 0 ? 'is-neg' : 'is-pos'}>
                             {formatMinutes(sum().diff, true)}
                           </td>
