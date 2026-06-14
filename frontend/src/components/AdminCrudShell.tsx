@@ -1,7 +1,11 @@
+import { Dialog } from '@ark-ui/solid/dialog'
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
-import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js'
+import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
+import { createStore, reconcile } from 'solid-js/store'
+import { Portal } from 'solid-js/web'
 
-import { ApiError, getJson, postJson } from '../api/client'
+import { apiErrorMessage, getJson, postJson } from '../api/client'
+import { optionSourceKey } from '../api/queries'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -24,10 +28,34 @@ export function AdminCrudShell(props: {
     queryFn: () => getJson<Row[]>(props.descriptor.listEndpoint),
   }))
 
+  // A save/delete changes both this grid's rows and the shared option source
+  // that other entities resolve relation labels from and that every edit-form
+  // dropdown reads. The grid and the option source are separate caches of the
+  // same endpoint (['admin-list', key] vs ['all-<key>']), so invalidate both —
+  // otherwise cross-entity columns and dropdowns keep showing stale labels.
+  async function refreshAfterMutation() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: listKey() }),
+      queryClient.invalidateQueries({ queryKey: optionSourceKey(props.descriptor.key) }),
+    ])
+  }
+
   const [editing, setEditing] = createSignal<FormValues | null>(null)
-  const [values, setValues] = createSignal<FormValues>({})
+  // A store (not a signal) so typing in one field updates only that field's
+  // control instead of recreating the whole object and re-evaluating every
+  // FieldControl on each keystroke.
+  const [values, setValues] = createStore<FormValues>({})
   const [error, setError] = createSignal('')
   const [saving, setSaving] = createSignal(false)
+  // Transient success confirmation (save/delete) shown in the toolbar.
+  const [notice, setNotice] = createSignal('')
+  let noticeTimer: ReturnType<typeof setTimeout> | undefined
+  function flashNotice(message: string) {
+    setNotice(message)
+    clearTimeout(noticeTimer)
+    noticeTimer = setTimeout(() => setNotice(''), 3000)
+  }
+  onCleanup(() => clearTimeout(noticeTimer))
 
   // List payloads are row-wrapped ({customer:{…}}, {user:{…}}, …). Unwrap by the
   // descriptor's rowKey and drop any row whose wrapper is missing or null —
@@ -61,42 +89,52 @@ export function AdminCrudShell(props: {
     return current?.key === key ? (current.dir === 'asc' ? 'ascending' : 'descending') : 'none'
   }
 
+  // Active column shows its direction; the rest show a dim neutral cue so
+  // sortability is discoverable at rest (incl. on touch, where there's no hover).
   const sortGlyph = (key: string): string => {
     const current = sort()
 
-    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : ''
+    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : '⇅'
   }
+
+  // Decorate each row with its full-text haystack ONCE per data/columns/options
+  // change — not per keystroke. Filtering then only runs `.includes` on these
+  // precomputed strings, so typing in the filter box stays cheap on big lists.
+  const decorated = createMemo(() => {
+    const columns = props.descriptor.columns
+
+    return rows().map((row) => ({
+      row,
+      haystack: columns.map((col) => cellText(row, col)).join(' ').toLowerCase(),
+    }))
+  })
 
   const visibleRows = createMemo<Row[]>(() => {
     const current = sort()
     const query = filter().trim().toLowerCase()
-    const columns = props.descriptor.columns
-    const sortCol = current && columns.find((c) => c.key === current.key)
-    // Compute the visible text per row once here (in the tracked memo): a
-    // haystack for the free-text filter and the active column's sort key. The
-    // filter/sort callbacks then work on plain strings only.
-    const decorated = rows().map((row) => ({
-      row,
-      haystack: query === '' ? '' : columns.map((col) => cellText(row, col)).join('').toLowerCase(),
-      sortKey: sortCol ? cellText(row, sortCol) : '',
-    }))
-    const filtered = query === '' ? decorated : decorated.filter((entry) => entry.haystack.includes(query))
-    if (current && sortCol) {
-      const factor = current.dir === 'asc' ? 1 : -1
-      filtered.sort((a, b) => factor * a.sortKey.localeCompare(b.sortKey, undefined, { numeric: true }))
+    const matched = query === '' ? decorated() : decorated().filter((entry) => entry.haystack.includes(query))
+    const sortCol = current && props.descriptor.columns.find((c) => c.key === current.key)
+    if (!current || !sortCol) {
+      return matched.map((entry) => entry.row)
     }
+    const factor = current.dir === 'asc' ? 1 : -1
 
-    return filtered.map((entry) => entry.row)
+    return matched
+      .map((entry) => ({ row: entry.row, key: cellText(entry.row, sortCol) }))
+      .sort((a, b) => factor * a.key.localeCompare(b.key, undefined, { numeric: true }))
+      .map((entry) => entry.row)
   })
 
   function openForm(row: Row | null) {
     setError('')
-    setValues(props.descriptor.toForm(row))
-    setEditing(props.descriptor.toForm(row))
+    const form = props.descriptor.toForm(row)
+    // reconcile replaces every key (and drops stale ones) in one diffed update.
+    setValues(reconcile(form))
+    setEditing(form)
   }
 
   function setField(name: string, value: FormValues[string]) {
-    setValues((current) => ({ ...current, [name]: value }))
+    setValues(name, value)
   }
 
   async function submit(event: SubmitEvent) {
@@ -104,11 +142,12 @@ export function AdminCrudShell(props: {
     setSaving(true)
     setError('')
     try {
-      await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload(values()))
-      await queryClient.invalidateQueries({ queryKey: listKey() })
+      await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload({ ...values }))
+      await refreshAfterMutation()
       setEditing(null)
+      flashNotice(m.admin_saved())
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : m.app_load_error())
+      setError(apiErrorMessage(caught, m.app_load_error()))
     } finally {
       setSaving(false)
     }
@@ -120,9 +159,10 @@ export function AdminCrudShell(props: {
     }
     try {
       await postJson(props.descriptor.deleteEndpoint, { id: row.id })
-      await queryClient.invalidateQueries({ queryKey: listKey() })
+      await refreshAfterMutation()
+      flashNotice(m.admin_deleted())
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : m.app_load_error())
+      setError(apiErrorMessage(caught, m.app_load_error()))
     }
   }
 
@@ -134,6 +174,9 @@ export function AdminCrudShell(props: {
         </button>
         <Show when={error()}>
           <span role="alert" class="form-status is-error">{error()}</span>
+        </Show>
+        <Show when={notice()}>
+          <span role="status" class="form-status is-ok">{notice()}</span>
         </Show>
         <input
           type="search"
@@ -191,39 +234,43 @@ export function AdminCrudShell(props: {
         <Show when={filter().trim() !== '' && visibleRows().length === 0}>
           <p role="status" class="effort-empty admin-no-matches">{m.admin_no_matches()}</p>
         </Show>
+        <Show when={filter().trim() === '' && !list.isPending && visibleRows().length === 0}>
+          <p class="effort-empty admin-no-matches">{m.admin_empty()}</p>
+        </Show>
       </Show>
 
-      <Show when={editing()}>
-        <div
-          class="modal-backdrop"
-          onClick={() => setEditing(null)}
-          onKeyDown={(event) => { if (event.key === 'Escape') setEditing(null) }}
-        >
-          <div
-            class="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={props.descriptor.title()}
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => { if (event.key === 'Escape') setEditing(null) }}
-          >
-            <form class="stack-form" onSubmit={(event) => void submit(event)}>
-              <For each={props.descriptor.fields}>
-                {(field) => <FieldControl field={field} values={values()} setField={setField} options={props.options} editing={editing() !== null && Number(values().id ?? 0) > 0} />}
-              </For>
-              <div class="form-actions">
-                <button type="submit" class="primary-button" disabled={saving()}>
-                  {saving() ? m.app_saving() : m.app_save()}
-                </button>
-                <button type="button" class="action-button" onClick={() => setEditing(null)}>{m.admin_cancel()}</button>
-                <Show when={error()}>
-                  <span role="alert" class="form-status is-error">{error()}</span>
-                </Show>
-              </div>
-            </form>
-          </div>
-        </div>
-      </Show>
+      {/* Ark UI Dialog gives the edit form a real focus trap, focus-on-open,
+          focus-return to the triggering button, scroll lock and Escape/outside
+          dismissal — handled by the library rather than the previous hand-rolled
+          backdrop. */}
+      <Dialog.Root
+        open={editing() !== null}
+        onOpenChange={(details) => { if (!details.open) setEditing(null) }}
+        lazyMount
+        unmountOnExit
+      >
+        <Portal>
+          <Dialog.Backdrop class="modal-backdrop" />
+          <Dialog.Positioner class="modal-positioner">
+            <Dialog.Content class="modal" aria-label={props.descriptor.title()}>
+              <form class="stack-form" onSubmit={(event) => void submit(event)}>
+                <For each={props.descriptor.fields}>
+                  {(field) => <FieldControl field={field} values={values} setField={setField} options={props.options} editing={editing() !== null && Number(values.id ?? 0) > 0} />}
+                </For>
+                <div class="form-actions">
+                  <button type="submit" class="primary-button" disabled={saving()}>
+                    {saving() ? m.app_saving() : m.app_save()}
+                  </button>
+                  <button type="button" class="action-button" onClick={() => setEditing(null)}>{m.admin_cancel()}</button>
+                  <Show when={error()}>
+                    <span role="alert" class="form-status is-error">{error()}</span>
+                  </Show>
+                </div>
+              </form>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { createMemo, For, Index, Match, Show, Switch } from 'solid-js'
 
 import { holidaysQuery, monthTimesQuery } from '../api/queries'
 import { appConfig } from '../config'
-import { formatMinutes, formatMonthTitle } from '../lib/format'
+import { formatDay, formatMinutes, formatMonthTitle } from '../lib/format'
 import { computeMonth, type DayRow } from '../lib/month'
 import { hoursPerWeekday } from '../lib/settings'
 import { m } from '../paraglide/messages.js'
@@ -49,6 +49,30 @@ function categorize(day: DayRow): DayCategory {
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+/**
+ * Full spoken description of a day cell. The visual cell conveys weekend/holiday
+ * and over/under status mostly through colour and small spans; this label makes
+ * the same information available to screen readers (and weekends, whose label is
+ * visually hidden, are surfaced here via day.holiday).
+ */
+function cellAriaLabel(day: DayRow, locale: string): string {
+  const date = formatDay(day.date, locale)
+  if (day.holiday !== null) {
+    return m.month_cell_off({ date, label: day.holiday })
+  }
+
+  if (day.isFuture) {
+    return date
+  }
+
+  return m.month_cell_working({
+    date,
+    worked: formatMinutes(day.worked),
+    expected: formatMinutes(day.expected),
+    diff: formatMinutes(day.diff, true),
+  })
 }
 
 /** Calendar weeks (Mon-Sun), padded with empty cells around the month. */
@@ -205,7 +229,7 @@ export default function Month() {
                 <A
                   class="month-chip"
                   classList={{ 'is-active': isActive() }}
-                  aria-current={isActive() ? 'date' : undefined}
+                  aria-current={isActive() ? 'page' : undefined}
                   href={monthHref(target().year, month)}
                 >
                   {label()}
@@ -236,6 +260,7 @@ export default function Month() {
         <Match when={report()}>
           {(data) => (
             <div class="month-layout">
+              <div class="table-scroll">
               <table class="calendar">
                 <caption class="visually-hidden">
                   {m.month_calendar_label({ month: monthTitle() })}
@@ -256,6 +281,7 @@ export default function Month() {
                                 <td
                                   class={`cell cell-${cell.category}`}
                                   classList={{ 'cell-today': cell.isToday }}
+                                  aria-label={cellAriaLabel(day(), config.locale)}
                                 >
                                   <span class="cell-num">{day().date.getDate()}</span>
                                   <Switch>
@@ -285,6 +311,7 @@ export default function Month() {
                   </For>
                 </tbody>
               </table>
+              </div>
 
               <aside class="summary-card">
                 <h3>{m.month_summary()}</h3>
@@ -295,6 +322,7 @@ export default function Month() {
                     </b>
                     <span>{m.month_balance_until_today()}</span>
                   </div>
+                  <span class="visually-hidden">{m.month_progress({ pct: ringPercent() })}</span>
                 </div>
                 <table class="summary-table">
                   <tbody>

@@ -35,6 +35,8 @@ function Layout(props: ParentProps) {
   // header chrome rather than each page's body. Resolve the slot in onMount so
   // we read the DOM after it's ready, not during component setup.
   const [themeMount, setThemeMount] = createSignal<HTMLElement | null>(null)
+  let mainRef: HTMLElement | undefined
+  let initialRoute = true
 
   onMount(() => {
     initHeaderDynamics(appConfig())
@@ -43,12 +45,21 @@ function Layout(props: ParentProps) {
 
   createEffect(() => {
     syncNav(location.pathname)
+    // On client-side navigation (not the first paint) move focus to the page
+    // region so keyboard/screen-reader users land on the new content instead
+    // of staying on the just-clicked nav link (WCAG 2.4.3).
+    if (initialRoute) {
+      initialRoute = false
+
+      return
+    }
+    mainRef?.focus()
   })
 
   return (
     <QueryClientProvider client={queryClient}>
       <Show when={themeMount()}>{(mount) => <Portal mount={mount()}><ThemeToggle /></Portal>}</Show>
-      <main id="main-content">{props.children}</main>
+      <main id="main-content" ref={(el) => { mainRef = el }} tabindex="-1">{props.children}</main>
     </QueryClientProvider>
   )
 }

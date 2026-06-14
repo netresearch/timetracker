@@ -31,6 +31,28 @@ async function goToSettingsPage(page: import('@playwright/test').Page) {
   await page.waitForSelector('form.stack-form', { timeout: 15000 });
 }
 
+// The ExtJS tracking grid loads its data behind a masking spinner; clicking
+// "Add" before the mask clears is a no-op, which left the row-prefill tests
+// flaky under CI load (the awaited cell never appeared). Wait for the grid
+// container AND the load mask to clear before interacting.
+async function waitForTrackingGridReady(page: import('@playwright/test').Page) {
+  await page.waitForSelector('.x-grid', { timeout: 15000 });
+  await page.waitForSelector('.x-mask', { state: 'hidden', timeout: 10000 }).catch(() => {});
+}
+
+// Click the grid's "Add" toolbar button and wait for the freshly inserted row
+// to render, returning its third cell (the start-time column).
+async function addRowAndGetStartCell(page: import('@playwright/test').Page) {
+  const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
+  await expect(addButton).toBeVisible();
+  await addButton.click();
+
+  const firstRow = page.locator('.x-grid-row, .x-grid-item').first();
+  await expect(firstRow).toBeVisible({ timeout: 10000 });
+
+  return firstRow.locator('.x-grid-cell').nth(2);
+}
+
 // Helper to set a checkbox setting's checked state (no-op if already in state)
 async function setCheckboxValue(page: import('@playwright/test').Page, name: string, checked: boolean) {
   await page.locator(`input[type="checkbox"][name="${name}"]`).setChecked(checked);
@@ -156,24 +178,14 @@ test.describe('Settings Effectiveness', () => {
     await applySettingsApi(page, { show_empty_line: 0, suggest_time: 1, show_future: 0 });
 
     await page.goto('/');
-    await page.waitForSelector('.x-grid', { timeout: 15000 });
+    await waitForTrackingGridReady(page);
 
-    // Add a new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
-    await addButton.click();
+    const startCell = await addRowAndGetStartCell(page);
 
-    // Wait for new row to be added
-    await page.waitForTimeout(500);
-
-    // Check if start time is pre-filled (not empty)
-    const startCell = page.locator('.x-grid-row').first().locator('.x-grid-cell').nth(2);
-    const startText = await startCell.textContent();
-
-    console.log(`Start time value (suggest_time=1): ${startText}`);
-
-    // With suggest_time enabled, start should be pre-filled with current time (not empty)
-    // The format should be HH:MM
-    expect(startText).toMatch(/\d{1,2}:\d{2}|^\s*$/);
+    // With suggest_time enabled the start column is pre-filled with the (frozen)
+    // current time in HH:MM. toHaveText retries, so a slow grid render no longer
+    // races the assertion.
+    await expect(startCell).toHaveText(/\d{1,2}:\d{2}/, { timeout: 10000 });
   });
 
   test('suggest_time disabled should not pre-fill times', async ({ page }) => {
@@ -181,22 +193,12 @@ test.describe('Settings Effectiveness', () => {
     await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
 
     await page.goto('/');
-    await page.waitForSelector('.x-grid', { timeout: 15000 });
+    await waitForTrackingGridReady(page);
 
-    // Add a new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
-    await addButton.click();
+    const startCell = await addRowAndGetStartCell(page);
 
-    await page.waitForTimeout(500);
-
-    // Check if start time is empty (00:00 or empty)
-    const startCell = page.locator('.x-grid-row').first().locator('.x-grid-cell').nth(2);
-    const startText = await startCell.textContent();
-
-    console.log(`Start time value (suggest_time=0): ${startText}`);
-
-    // With suggest_time disabled, start should be empty or 00:00
-    expect(startText?.trim() === '' || startText === '00:00').toBeTruthy();
+    // With suggest_time disabled the start column stays empty (or 00:00).
+    await expect(startCell).toHaveText(/^(\s*|00:00)$/, { timeout: 10000 });
   });
 
   test('show_empty_line should add empty row after editing first row', async ({ page }) => {
@@ -204,7 +206,7 @@ test.describe('Settings Effectiveness', () => {
     await applySettingsApi(page, { show_empty_line: 1, suggest_time: 0, show_future: 0 });
 
     await page.goto('/');
-    await page.waitForSelector('.x-grid', { timeout: 15000 });
+    await waitForTrackingGridReady(page);
 
     // Get initial row count
     const initialRowCount = await page.locator('.x-grid-row, .x-grid-item').count();

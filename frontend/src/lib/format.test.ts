@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatDay, formatMinutes, formatMonthTitle } from './format'
+import { formatDay, formatMinutes, formatMonthTitle, isoDate, pad2 } from './format'
 
 describe('formatMinutes', () => {
   it('formats positive minutes as HH:MM', () => {
@@ -32,5 +32,17 @@ describe('date formatting', () => {
   it('formats day rows per locale', () => {
     expect(formatDay(date, 'en')).toBe('Jun 9, 2026')
     expect(formatDay(date, 'de')).toBe('09.06.2026')
+  })
+
+  it('pads to two digits', () => {
+    expect(pad2(1)).toBe('01')
+    expect(pad2(12)).toBe('12')
+    expect(pad2(0)).toBe('00')
+  })
+
+  it('formats a local ISO date without a timezone shift', () => {
+    // Jan 5 → zero-padded; the local date must not roll back a day (toISOString would).
+    expect(isoDate(new Date(2026, 0, 5))).toBe('2026-01-05')
+    expect(isoDate(date)).toBe('2026-06-09')
   })
 })

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 
-import { customersQuery, projectsQuery, usersQuery, type NamedOption } from '../api/queries'
+import { customersQuery, projectsQuery, usersQuery } from '../api/queries'
+import { OptionSelect } from '../components/OptionSelect'
 import { appConfig } from '../config'
 import { m } from '../paraglide/messages.js'
 
@@ -15,30 +16,6 @@ function exportHref(params: Record<string, string | number>): string {
   }
 
   return `/controlling/export?${query.toString()}`
-}
-
-function OptionSelect(props: {
-  label: string
-  value: number
-  onInput: (value: number) => void
-  options: NamedOption[] | undefined
-  loading: boolean
-}) {
-  return (
-    <label class="field">
-      <span>{props.label}</span>
-      <select
-        disabled={props.loading}
-        value={props.value}
-        onInput={(event) => props.onInput(Number(event.currentTarget.value))}
-      >
-        <option value="0">{m.billing_all()}</option>
-        <For each={props.options ?? []}>
-          {(option) => <option value={option.id}>{option.label}</option>}
-        </For>
-      </select>
-    </label>
-  )
 }
 
 export default function Billing() {
@@ -82,6 +59,10 @@ export default function Billing() {
     }),
   )
 
+  // The selects are disabled until their reference data resolves; block the
+  // export the same way so it can't fire against a half-loaded form.
+  const referencesPending = () => users.isPending || projects.isPending || customers.isPending
+
   return (
     <section class="form-page">
       <h2 class="visually-hidden">{m.billing_title()}</h2>
@@ -94,21 +75,24 @@ export default function Billing() {
           value={user()}
           onInput={setUser}
           options={users.data}
-          loading={users.isPending}
+          allLabel={m.billing_all()}
+          disabled={users.isPending}
         />
         <OptionSelect
           label={m.billing_project()}
           value={project()}
           onInput={setProject}
           options={projects.data}
-          loading={projects.isPending}
+          allLabel={m.billing_all()}
+          disabled={projects.isPending}
         />
         <OptionSelect
           label={m.billing_customer()}
           value={customer()}
           onInput={setCustomer}
           options={customers.data}
-          loading={customers.isPending}
+          allLabel={m.billing_all()}
+          disabled={customers.isPending}
         />
 
         <label class="field">
@@ -141,7 +125,16 @@ export default function Billing() {
         <div class="form-actions">
           {/* A real navigation (anchor with download), not fetch, so the
               browser saves the attachment from the XLSX response. */}
-          <a class="primary-button" href={href()} download="">
+          <a
+            class="primary-button"
+            classList={{ 'is-disabled': referencesPending() }}
+            href={href()}
+            download=""
+            aria-disabled={referencesPending() ? 'true' : undefined}
+            onClick={(event) => {
+              if (referencesPending()) event.preventDefault()
+            }}
+          >
             {m.billing_export()}
           </a>
         </div>

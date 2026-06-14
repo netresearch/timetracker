@@ -189,7 +189,7 @@
 
 .worktime-link {
     font-size: 12px;
-    color: light-dark(#00707F, #6fd0dd);
+    color: light-dark(#00525c, #6fd0dd);
     text-decoration: none;
     padding: 4px 8px;
     border-radius: 4px;
@@ -241,5 +241,17 @@
 
 .main-nav-link.is-active {
     border-bottom-color: light-dark(#00889A, #6fd0dd);
-    color: light-dark(#00707F, #6fd0dd);
+    color: light-dark(#00525c, #6fd0dd);
+}
+
+/* WCAG 2.3.3: honour reduced-motion for the header's own transitions
+   (the SPA app.css has its own guard, but this file ships to both shells). */
+@media (prefers-reduced-motion: reduce) {
+    .skip-link,
+    .user-badge,
+    .user-badge .badge-logout,
+    .worktime-link,
+    .main-nav-link {
+        transition: none;
+    }
 }

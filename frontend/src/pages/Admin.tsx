@@ -1,4 +1,4 @@
-import { createSignal, For } from 'solid-js'
+import { createSignal, For, Show } from 'solid-js'
 
 import { adminEntities } from '../admin/entities'
 import { useOptionSources } from '../admin/options'
@@ -32,7 +32,12 @@ export default function Admin() {
         </For>
       </nav>
 
-      <AdminCrudShell descriptor={active()} options={lookup} />
+      {/* keyed on the active entity so the shell remounts on switch — its sort,
+          filter and any open edit form reset instead of bleeding across
+          entities (and binding an open form to the wrong save endpoint). */}
+      <Show when={activeKey()} keyed>
+        <AdminCrudShell descriptor={active()} options={lookup} />
+      </Show>
     </section>
   )
 }

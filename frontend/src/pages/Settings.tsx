@@ -1,6 +1,6 @@
 import { createSignal, For, Show } from 'solid-js'
 
-import { ApiError, postForm } from '../api/client'
+import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
 import { m } from '../paraglide/messages.js'
 
@@ -10,12 +10,12 @@ interface SaveResponse {
   message: string
 }
 
+// Only the locales the UI actually ships translations for (paraglide compiles
+// en + de; AppConfig.locale is typed 'en' | 'de'). Offering es/fr/ru let users
+// pick a language that then rendered as the base locale — a broken choice.
 const LANGUAGES = [
   { value: 'de', label: 'Deutsch' },
   { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'ru', label: 'Русский' },
 ]
 
 const BOOL_SETTINGS = [
@@ -66,7 +66,7 @@ export default function Settings() {
 
       setStatus({ kind: 'ok' })
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : m.settings_save_error()
+      const message = apiErrorMessage(error, m.settings_save_error())
       setStatus({ kind: 'error', message })
     }
   }

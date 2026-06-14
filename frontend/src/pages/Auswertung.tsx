@@ -6,22 +6,21 @@ import {
   customersQuery,
   groupQuery,
   type GroupRow,
+  hasInterpretationCriteria,
   type InterpretationFilters,
   type InterpretationGroup,
   lastEntriesQuery,
-  type NamedOption,
   projectsQuery,
   teamsQuery,
   timeSeriesQuery,
   usersQuery,
 } from '../api/queries'
 import { EffortChart, type EffortRow } from '../components/EffortChart'
+import { OptionSelect } from '../components/OptionSelect'
+import { QueryBoundary } from '../components/QueryBoundary'
 import { appConfig } from '../config'
+import { isoDate } from '../lib/format'
 import { m } from '../paraglide/messages.js'
-
-function isoDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
 
 function defaultFilters(userId: number): InterpretationFilters {
   const now = new Date()
@@ -55,36 +54,20 @@ function toEffortRows(rows: GroupRow[] | undefined): EffortRow[] {
   }))
 }
 
-/** One grouped-effort chart, driven by the applied filters. */
+/** One grouped-effort chart, driven by the applied filters. The chart card and
+ *  heading stay visible across loading/error so the layout doesn't jump. */
 function GroupChart(props: { group: InterpretationGroup; title: string; filters: InterpretationFilters }) {
   const query = useQuery(() => groupQuery(props.group, props.filters))
   const rows = createMemo(() => toEffortRows(query.data))
 
   return (
-    <Show when={!query.isError} fallback={<section class="effort-chart"><h3>{props.title}</h3><p role="alert">{m.app_load_error()}</p></section>}>
-      <Show when={!query.isLoading} fallback={<section class="effort-chart"><h3>{props.title}</h3><p class="effort-empty">{m.app_loading()}</p></section>}>
-        <EffortChart title={props.title} rows={rows()} />
-      </Show>
-    </Show>
-  )
-}
-
-function FilterSelect(props: {
-  label: string
-  value: number
-  onInput: (value: number) => void
-  options: NamedOption[] | undefined
-}) {
-  return (
-    <label class="field">
-      <span>{props.label}</span>
-      <select value={props.value} onInput={(event) => props.onInput(Number(event.currentTarget.value))}>
-        <option value="0">{m.auswertung_all()}</option>
-        <For each={props.options ?? []}>
-          {(option) => <option value={option.id}>{option.label}</option>}
-        </For>
-      </select>
-    </label>
+    <QueryBoundary
+      query={query}
+      error={<section class="effort-chart"><h3>{props.title}</h3><p role="alert">{m.app_load_error()}</p></section>}
+      loading={<section class="effort-chart"><h3>{props.title}</h3><p class="effort-empty">{m.app_loading()}</p></section>}
+    >
+      <EffortChart title={props.title} rows={rows()} />
+    </QueryBoundary>
   )
 }
 
@@ -136,11 +119,11 @@ export default function Auswertung() {
         </div>
 
         <div class="filter-grid">
-          <FilterSelect label={m.auswertung_customer()} value={filters().customer} onInput={(v) => set('customer', v)} options={customers.data} />
-          <FilterSelect label={m.auswertung_project()} value={filters().project} onInput={(v) => set('project', v)} options={projects.data} />
-          <FilterSelect label={m.auswertung_team()} value={filters().team} onInput={(v) => set('team', v)} options={teams.data} />
-          <FilterSelect label={m.auswertung_user()} value={filters().user} onInput={(v) => set('user', v)} options={users.data} />
-          <FilterSelect label={m.auswertung_activity()} value={filters().activity} onInput={(v) => set('activity', v)} options={activities.data} />
+          <OptionSelect label={m.auswertung_customer()} value={filters().customer} onInput={(v) => set('customer', v)} options={customers.data} allLabel={m.auswertung_all()} />
+          <OptionSelect label={m.auswertung_project()} value={filters().project} onInput={(v) => set('project', v)} options={projects.data} allLabel={m.auswertung_all()} />
+          <OptionSelect label={m.auswertung_team()} value={filters().team} onInput={(v) => set('team', v)} options={teams.data} allLabel={m.auswertung_all()} />
+          <OptionSelect label={m.auswertung_user()} value={filters().user} onInput={(v) => set('user', v)} options={users.data} allLabel={m.auswertung_all()} />
+          <OptionSelect label={m.auswertung_activity()} value={filters().activity} onInput={(v) => set('activity', v)} options={activities.data} allLabel={m.auswertung_all()} />
           <label class="field">
             <span>{m.auswertung_ticket()}</span>
             <input type="text" value={filters().ticket} onInput={(e) => set('ticket', e.currentTarget.value)} />
@@ -168,25 +151,26 @@ export default function Auswertung() {
       </form>
 
       <Show
-        when={applied().customer > 0 || applied().project > 0 || applied().user > 0 || applied().ticket.trim() !== ''}
-        fallback={<p role="status" class="effort-empty">{m.auswertung_pick_filter()}</p>}
+        when={hasInterpretationCriteria(applied())}
+        fallback={<p class="effort-empty">{m.auswertung_pick_filter()}</p>}
       >
         <div class="effort-charts">
           <For each={GROUPS}>
             {(entry) => <GroupChart group={entry.group} title={entry.title()} filters={applied()} />}
           </For>
-          <Show when={!timeSeries.isError} fallback={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p role="alert">{m.app_load_error()}</p></section>}>
-            <Show when={!timeSeries.isLoading} fallback={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p class="effort-empty">{m.app_loading()}</p></section>}>
-              <EffortChart title={m.auswertung_by_day()} rows={timeRows()} />
-            </Show>
-          </Show>
+          <QueryBoundary
+            query={timeSeries}
+            error={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p role="alert">{m.app_load_error()}</p></section>}
+            loading={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p class="effort-empty">{m.app_loading()}</p></section>}
+          >
+            <EffortChart title={m.auswertung_by_day()} rows={timeRows()} />
+          </QueryBoundary>
         </div>
 
         <section class="effort-chart">
           <h3>{m.auswertung_last_entries()}</h3>
-          <Show when={!entries.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
-            <Show when={!entries.isLoading} fallback={<p class="effort-empty">{m.app_loading()}</p>}>
-              <div class="table-scroll">
+          <QueryBoundary query={entries}>
+            <div class="table-scroll">
               <table class="data-table">
                 <thead>
                   <tr>
@@ -209,9 +193,8 @@ export default function Auswertung() {
                   </For>
                 </tbody>
               </table>
-              </div>
-            </Show>
-          </Show>
+            </div>
+          </QueryBoundary>
         </section>
       </Show>
     </section>

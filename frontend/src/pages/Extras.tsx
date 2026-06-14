@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/solid-query'
 import { createSignal, For, Show } from 'solid-js'
 
-import { ApiError, postForm } from '../api/client'
+import { apiErrorMessage, postForm } from '../api/client'
 import { presetsQuery } from '../api/queries'
 import { m } from '../paraglide/messages.js'
 
@@ -69,7 +69,7 @@ export default function Extras() {
       setStatus({ kind: 'ok', message })
     } catch (caught) {
       // The endpoint returns the validation/error message as the 422 body.
-      const message = caught instanceof ApiError ? caught.message : m.app_load_error()
+      const message = apiErrorMessage(caught, m.app_load_error())
       setStatus({ kind: 'error', message })
     }
   }

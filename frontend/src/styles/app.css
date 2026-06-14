@@ -44,6 +44,9 @@
   --color-link: light-dark(#0a4f8f, #93c1f8);
   --color-focus: light-dark(#0a4f8f, #93c1f8);
   --color-accent: light-dark(#00707f, #6fd0dd);
+  /* Darker accent for accent-coloured TEXT — #00707f is only ~4.4:1 on
+     surfaces; this hits the ≥7:1 (AAA) target for small text in light mode. */
+  --color-accent-text: light-dark(#00525c, #6fd0dd);
   --color-accent-soft: light-dark(#e0f0f2, #0f3a40);
 
   --color-success-bg: light-dark(#e0f0e0, #20351f);
@@ -262,6 +265,9 @@ main {
   border-spacing: 6px;
   padding: 0.75rem;
   width: 100%;
+  /* Keep the 7 columns legible on narrow screens — the .table-scroll wrapper
+     then scrolls horizontally instead of cramping the cells. */
+  min-width: 34rem;
 }
 
 .calendar thead th {
@@ -336,7 +342,7 @@ main {
 .cell-ok .cell-delta,
 .cell-ok .cell-bar { color: var(--color-success-text); }
 .cell-over .cell-delta,
-.cell-over .cell-bar { color: var(--color-accent); }
+.cell-over .cell-bar { color: var(--color-accent-text); }
 .cell-warn .cell-delta,
 .cell-warn .cell-bar { color: var(--color-warning-text); }
 .cell-bad .cell-delta,
@@ -574,11 +580,12 @@ main {
   text-decoration: none;
 }
 
-.primary-button:hover:not(:disabled) {
+.primary-button:hover:not(:disabled):not(.is-disabled) {
   filter: brightness(1.08);
 }
 
-.primary-button:disabled {
+.primary-button:disabled,
+.primary-button.is-disabled {
   cursor: progress;
   opacity: 0.6;
 }
@@ -851,8 +858,16 @@ kbd {
 }
 
 .th-sort-glyph {
-  color: var(--color-accent);
+  color: var(--color-text-muted);
   font-size: 0.7rem;
+  opacity: 0.55;
+}
+
+/* The actively-sorted column's direction glyph is emphasised. */
+th[aria-sort='ascending'] .th-sort-glyph,
+th[aria-sort='descending'] .th-sort-glyph {
+  color: var(--color-accent);
+  opacity: 1;
 }
 
 /* ---- Admin ---- */
@@ -946,15 +961,21 @@ kbd {
 }
 
 .modal-backdrop {
-  align-items: flex-start;
   background: rgba(0, 0, 0, 0.45);
+  inset: 0;
+  position: fixed;
+  z-index: 100;
+}
+
+.modal-positioner {
+  align-items: flex-start;
   display: flex;
   inset: 0;
   justify-content: center;
   overflow-y: auto;
   padding: 4vh 1rem;
   position: fixed;
-  z-index: 100;
+  z-index: 101;
 }
 
 .modal {
