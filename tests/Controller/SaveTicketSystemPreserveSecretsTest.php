@@ -70,6 +70,13 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         ], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
 
+        // The save response must not echo the stored credentials back to the
+        // client (the list endpoint strips them too — same SECRET_KEYS).
+        $body = (string) $this->client->getResponse()->getContent();
+        foreach (self::SECRETS as $secret) {
+            self::assertStringNotContainsString($secret, $body, 'save response leaked a credential');
+        }
+
         $container = $this->client->getContainer();
         /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
         $doctrine = $container->get('doctrine');

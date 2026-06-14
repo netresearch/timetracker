@@ -38,6 +38,37 @@ final class TicketSystemTest extends TestCase
         self::assertSame('Jira Cloud', $ticketSystem->getName());
     }
 
+    // ==================== toSafeArray tests ====================
+
+    public function testToSafeArrayOmitsEverySecretKeyInBothSpellings(): void
+    {
+        $ticketSystem = new TicketSystem();
+        $ticketSystem->setName('Jira')
+            ->setUrl('https://jira.example.test')
+            ->setLogin('svc')
+            ->setPassword('s3cr3t')
+            ->setPublicKey('pub')
+            ->setPrivateKey('priv')
+            ->setOauthConsumerKey('ck')
+            ->setOauthConsumerSecret('cs');
+
+        $safe = $ticketSystem->toSafeArray();
+
+        foreach (TicketSystem::SECRET_KEYS as $secretKey) {
+            self::assertArrayNotHasKey($secretKey, $safe);
+        }
+
+        self::assertArrayNotHasKey('password', $safe);
+        // Non-secret fields survive.
+        self::assertSame('Jira', $safe['name']);
+        self::assertSame('https://jira.example.test', $safe['url']);
+        self::assertSame('svc', $safe['login']);
+        // No stored secret value leaks under any key.
+        self::assertNotContains('s3cr3t', $safe);
+        self::assertNotContains('priv', $safe);
+        self::assertNotContains('cs', $safe);
+    }
+
     // ==================== BookTime tests ====================
 
     public function testBookTimeIsFalseByDefault(): void
