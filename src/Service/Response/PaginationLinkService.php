@@ -49,12 +49,10 @@ final readonly class PaginationLinkService
         $links = [];
 
         // Self link (current page)
-        $queryParams['page'] = $paginatedEntryCollection->currentPage;
-        $links['self'] = $route . http_build_query($queryParams);
+        $links['self'] = $route . http_build_query(array_merge($queryParams, ['page' => $paginatedEntryCollection->currentPage]));
 
         // Last page link
-        $queryParams['page'] = $paginatedEntryCollection->getLastPage();
-        $links['last'] = $route . http_build_query($queryParams);
+        $links['last'] = $route . http_build_query(array_merge($queryParams, ['page' => $paginatedEntryCollection->getLastPage()]));
 
         // Previous page link
         $links['prev'] = $paginatedEntryCollection->hasPreviousPage()
