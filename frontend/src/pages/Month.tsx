@@ -181,14 +181,7 @@ export default function Month() {
 
   return (
     <section class="month-report">
-      <div class="month-toolbar">
-        <h2 class="visually-hidden">{m.month_title()}</h2>
-        <div class="month-toolbar-actions">
-          <A class="today-button" href={monthHref(currentTarget.year, currentTarget.month)}>
-            {m.month_today()}
-          </A>
-        </div>
-      </div>
+      <h2 class="visually-hidden">{m.month_title()}</h2>
 
       <nav class="month-chips" aria-label={m.month_title()}>
         <span class="year-switch">
@@ -238,6 +231,9 @@ export default function Month() {
             )
           }}
         </Index>
+        <A class="today-button month-today" href={monthHref(currentTarget.year, currentTarget.month)}>
+          {m.month_today()}
+        </A>
       </nav>
 
       <Switch>

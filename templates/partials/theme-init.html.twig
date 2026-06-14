@@ -1,0 +1,61 @@
+{# Framework-neutral light/dark theming shared by BOTH shells (the ExtJS shell
+   and the SolidJS /ui shell). Applies the saved preference before first paint
+   (no flash) and, once the DOM is ready, wires the segmented toggle rendered in
+   the shared header (partials/header.html.twig). This is the single source of
+   truth for theming — neither shell needs framework-specific theme code. #}
+<script>
+(function () {
+    var KEY = 'timetracker-theme';
+    function read() {
+        try {
+            // Accessing localStorage can throw a SecurityError when storage is
+            // disabled (private mode, sandboxed iframe, enterprise policy). This
+            // runs synchronously in <head>, so swallow it and fall back.
+            var value = window.localStorage.getItem(KEY);
+            return value === 'light' || value === 'dark' ? value : 'system';
+        } catch (error) {
+            return 'system';
+        }
+    }
+    function apply(preference) {
+        if (preference === 'system') {
+            delete document.documentElement.dataset.theme;
+        } else {
+            document.documentElement.dataset.theme = preference;
+        }
+    }
+    // Apply immediately (still in <head>) so the first paint matches the choice.
+    apply(read());
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var buttons = document.querySelectorAll('.theme-toggle-item');
+        if (buttons.length === 0) {
+            return;
+        }
+        function mark(preference) {
+            buttons.forEach(function (button) {
+                var active = button.getAttribute('data-theme-value') === preference;
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                button.classList.toggle('is-active', active);
+            });
+        }
+        mark(read());
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                var preference = button.getAttribute('data-theme-value');
+                try {
+                    if (preference === 'system') {
+                        window.localStorage.removeItem(KEY);
+                    } else {
+                        window.localStorage.setItem(KEY, preference);
+                    }
+                } catch (error) {
+                    // Storage disabled/restricted — apply for this session only.
+                }
+                apply(preference);
+                mark(preference);
+            });
+        });
+    });
+})();
+</script>

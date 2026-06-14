@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('build/css/header.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('build/css/timetracker.css') }}" type="text/css">
+        {% include 'partials/theme-init.html.twig' %}
         <script type="text/javascript">
             const statusUrlJson = {{ url('check_status')|escape|json_encode(jsonHexFlags)|raw }};
             const logoutUrlHtml = {{ url('_logout')|escape|json_encode(jsonHexFlags)|raw }};

@@ -1,10 +1,8 @@
 import { Navigate, Route, Router, useLocation } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { createEffect, createSignal, onMount, Show, type Component, type ParentProps } from 'solid-js'
-import { Portal } from 'solid-js/web'
+import { createEffect, onMount, type Component, type ParentProps } from 'solid-js'
 
 import { SessionExpiredError } from './api/client'
-import { ThemeToggle } from './components/ThemeToggle'
 import { appConfig, canBill, canBulkEnter, hasRole } from './config'
 import { initHeaderDynamics } from './header'
 import { syncNav } from './nav'
@@ -30,17 +28,14 @@ const queryClient = new QueryClient({
 // this layout animates it, syncs the active nav item, and hosts the route.
 function Layout(props: ParentProps) {
   const location = useLocation()
-  // The theme switch lives in the server-rendered header (shared with the
-  // ExtJS shell); portal the SolidJS control into its slot so it sits in the
-  // header chrome rather than each page's body. Resolve the slot in onMount so
-  // we read the DOM after it's ready, not during component setup.
-  const [themeMount, setThemeMount] = createSignal<HTMLElement | null>(null)
+  // Theming (apply + toggle) is handled framework-neutrally by the shared
+  // header (templates/partials/theme-init.html.twig), so it works on both the
+  // ExtJS and SolidJS shells and the SPA needs no theme code of its own.
   let mainRef: HTMLElement | undefined
   let initialRoute = true
 
   onMount(() => {
     initHeaderDynamics(appConfig())
-    setThemeMount(document.getElementById('theme-toggle-mount'))
   })
 
   createEffect(() => {
@@ -58,7 +53,6 @@ function Layout(props: ParentProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Show when={themeMount()}>{(mount) => <Portal mount={mount()}><ThemeToggle /></Portal>}</Show>
       <main id="main-content" ref={(el) => { mainRef = el }} tabindex="-1">{props.children}</main>
     </QueryClientProvider>
   )
