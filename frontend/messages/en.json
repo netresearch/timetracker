@@ -23,6 +23,7 @@
   "month_worked": "Worked",
   "month_expected_until_today": "Expected until today",
   "month_balance_until_today": "Balance until today",
+  "month_progress": "Worked {pct}% of the target so far",
   "month_balance_eom": "Balance until end of month",
   "month_working_days": "{count} working days",
   "month_saturday": "Saturday",

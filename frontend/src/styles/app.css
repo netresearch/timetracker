@@ -44,6 +44,9 @@
   --color-link: light-dark(#0a4f8f, #93c1f8);
   --color-focus: light-dark(#0a4f8f, #93c1f8);
   --color-accent: light-dark(#00707f, #6fd0dd);
+  /* Darker accent for accent-coloured TEXT — #00707f is only ~4.4:1 on
+     surfaces; this hits the ≥7:1 (AAA) target for small text in light mode. */
+  --color-accent-text: light-dark(#00525c, #6fd0dd);
   --color-accent-soft: light-dark(#e0f0f2, #0f3a40);
 
   --color-success-bg: light-dark(#e0f0e0, #20351f);
@@ -336,7 +339,7 @@ main {
 .cell-ok .cell-delta,
 .cell-ok .cell-bar { color: var(--color-success-text); }
 .cell-over .cell-delta,
-.cell-over .cell-bar { color: var(--color-accent); }
+.cell-over .cell-bar { color: var(--color-accent-text); }
 .cell-warn .cell-delta,
 .cell-warn .cell-bar { color: var(--color-warning-text); }
 .cell-bad .cell-delta,

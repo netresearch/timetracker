@@ -205,7 +205,7 @@ export default function Month() {
                 <A
                   class="month-chip"
                   classList={{ 'is-active': isActive() }}
-                  aria-current={isActive() ? 'date' : undefined}
+                  aria-current={isActive() ? 'page' : undefined}
                   href={monthHref(target().year, month)}
                 >
                   {label()}
@@ -295,6 +295,7 @@ export default function Month() {
                     </b>
                     <span>{m.month_balance_until_today()}</span>
                   </div>
+                  <span class="visually-hidden">{m.month_progress({ pct: ringPercent() })}</span>
                 </div>
                 <table class="summary-table">
                   <tbody>

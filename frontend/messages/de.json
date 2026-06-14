@@ -23,6 +23,7 @@
   "month_worked": "Ist",
   "month_expected_until_today": "Soll bis heute",
   "month_balance_until_today": "Saldo bis heute",
+  "month_progress": "{pct} % des Solls bis heute gearbeitet",
   "month_balance_eom": "Saldo bis Monatsende",
   "month_working_days": "{count} Arbeitstage",
   "month_saturday": "Samstag",
