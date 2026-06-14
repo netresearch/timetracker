@@ -291,6 +291,8 @@ class JiraOAuthApiService
                 $this->updateEntryJiraWorkLog($entry);
                 $objectManager->persist($entry);
             } catch (Exception) {
+                // Best effort: one entry's failed worklog sync must not abort
+                // the batch; the finally still flushes the others.
             } finally {
                 $objectManager->flush();
             }
@@ -396,6 +398,7 @@ class JiraOAuthApiService
 
             $entry->setWorklogId(null);
         } catch (JiraApiInvalidResourceException) {
+            // The worklog is already gone on the Jira side — nothing to delete.
         }
     }
 

@@ -1,12 +1,15 @@
 import { expect, Page } from '@playwright/test';
 
 /**
- * Test credentials from docker/ldap/dev-users.ldif
+ * Test credentials, defaulting to the values seeded in docker/ldap/dev-users.ldif
+ * but overridable via env so no password literal is hard-coded here.
  */
+const pw = (envKey: string, fallback: string): string => process.env[envKey] ?? fallback;
+
 export const TEST_USERS = {
-  developer: { username: 'developer', password: 'dev123' },
-  unittest: { username: 'unittest', password: 'test123' },
-  myself: { username: 'i.myself', password: 'myself123' },
+  developer: { username: 'developer', password: pw('E2E_DEVELOPER_PASSWORD', 'dev123') },
+  unittest: { username: 'unittest', password: pw('E2E_UNITTEST_PASSWORD', 'test123') },
+  myself: { username: 'i.myself', password: pw('E2E_MYSELF_PASSWORD', 'myself123') },
 } as const;
 
 /**

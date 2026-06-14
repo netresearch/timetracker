@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { installFrozenClock } from './helpers/clock';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 /**
  * The Billing page derives both its default period and the selectable year list

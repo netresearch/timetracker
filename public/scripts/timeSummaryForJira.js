@@ -8,7 +8,7 @@
 // ==/UserScript==
 
 
-const ticket = globalThis.location.href.split('/').slice(-1)[0];
+const ticket = globalThis.location.href.split('/').at(-1);
 const timetrackerUrl = 'https://timetracker/getTicketTimeSummary/' + ticket;
 
 window.addEventListener('load', function () {

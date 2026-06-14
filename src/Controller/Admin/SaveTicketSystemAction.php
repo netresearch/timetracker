@@ -80,40 +80,13 @@ final class SaveTicketSystemAction extends BaseController
         // after the DTO is mapped over. A brand-new system has nothing to
         // preserve (and its credential getters are not yet initialised), so this
         // only applies when editing.
-        $storedSecrets = null;
-        if (null !== $id) {
-            $storedSecrets = [
-                'password' => $ticketSystem->getPassword(),
-                'publicKey' => $ticketSystem->getPublicKey(),
-                'privateKey' => $ticketSystem->getPrivateKey(),
-                'oauthConsumerKey' => $ticketSystem->getOauthConsumerKey(),
-                'oauthConsumerSecret' => $ticketSystem->getOauthConsumerSecret(),
-            ];
-        }
+        $storedSecrets = null !== $id ? $this->captureStoredSecrets($ticketSystem) : null;
 
         try {
             $this->objectMapper->map($ticketSystemSaveDto, $ticketSystem);
 
             if (null !== $storedSecrets) {
-                if ('' === $ticketSystemSaveDto->password) {
-                    $ticketSystem->setPassword($storedSecrets['password']);
-                }
-
-                if ('' === $ticketSystemSaveDto->publicKey) {
-                    $ticketSystem->setPublicKey($storedSecrets['publicKey']);
-                }
-
-                if ('' === $ticketSystemSaveDto->privateKey) {
-                    $ticketSystem->setPrivateKey($storedSecrets['privateKey']);
-                }
-
-                if (null === $ticketSystemSaveDto->oauthConsumerKey || '' === $ticketSystemSaveDto->oauthConsumerKey) {
-                    $ticketSystem->setOauthConsumerKey($storedSecrets['oauthConsumerKey']);
-                }
-
-                if (null === $ticketSystemSaveDto->oauthConsumerSecret || '' === $ticketSystemSaveDto->oauthConsumerSecret) {
-                    $ticketSystem->setOauthConsumerSecret($storedSecrets['oauthConsumerSecret']);
-                }
+                $this->restoreBlankSecrets($ticketSystem, $ticketSystemSaveDto, $storedSecrets);
             }
 
             $em = $this->doctrineRegistry->getManager();
@@ -130,5 +103,48 @@ final class SaveTicketSystemAction extends BaseController
         // save response must not echo password/keys/OAuth secrets back to the
         // browser (they were just persisted server-side).
         return new JsonResponse($ticketSystem->toSafeArray());
+    }
+
+    /**
+     * @return array{password: string, publicKey: string, privateKey: string, oauthConsumerKey: ?string, oauthConsumerSecret: ?string}
+     */
+    private function captureStoredSecrets(TicketSystem $ticketSystem): array
+    {
+        return [
+            'password' => $ticketSystem->getPassword(),
+            'publicKey' => $ticketSystem->getPublicKey(),
+            'privateKey' => $ticketSystem->getPrivateKey(),
+            'oauthConsumerKey' => $ticketSystem->getOauthConsumerKey(),
+            'oauthConsumerSecret' => $ticketSystem->getOauthConsumerSecret(),
+        ];
+    }
+
+    /**
+     * Restore any credential the secret-free edit form submitted blank to its
+     * stored value, so a blank field means "keep" rather than "wipe".
+     *
+     * @param array{password: string, publicKey: string, privateKey: string, oauthConsumerKey: ?string, oauthConsumerSecret: ?string} $storedSecrets
+     */
+    private function restoreBlankSecrets(TicketSystem $ticketSystem, TicketSystemSaveDto $dto, array $storedSecrets): void
+    {
+        if ('' === $dto->password) {
+            $ticketSystem->setPassword($storedSecrets['password']);
+        }
+
+        if ('' === $dto->publicKey) {
+            $ticketSystem->setPublicKey($storedSecrets['publicKey']);
+        }
+
+        if ('' === $dto->privateKey) {
+            $ticketSystem->setPrivateKey($storedSecrets['privateKey']);
+        }
+
+        if (null === $dto->oauthConsumerKey || '' === $dto->oauthConsumerKey) {
+            $ticketSystem->setOauthConsumerKey($storedSecrets['oauthConsumerKey']);
+        }
+
+        if (null === $dto->oauthConsumerSecret || '' === $dto->oauthConsumerSecret) {
+            $ticketSystem->setOauthConsumerSecret($storedSecrets['oauthConsumerSecret']);
+        }
     }
 }

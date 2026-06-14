@@ -223,13 +223,8 @@
 }
 
 /* Theme toggle (segmented System / Light / Dark) — framework-neutral, lives in
-   the shared header so it works on both shells. Wired by theme-init.html.twig. */
-.header-theme {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-
+   the shared header so it works on both shells. Wired by theme-init.html.twig.
+   (.header-theme itself is styled once near the logo block above.) */
 .theme-toggle {
     display: inline-flex;
     border: 1px solid light-dark(#a9adb2, #3a414a);

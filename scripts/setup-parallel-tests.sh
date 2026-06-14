@@ -226,8 +226,9 @@ EOF
 }
 
 main() {
+    local mode="${1:-}"
     print_header
-    
+
     check_dependencies
     check_configuration_files
     check_database_configuration
@@ -239,7 +240,7 @@ main() {
     
     show_recommendations
     
-    if [[ "$1" = "--generate-ci" ]]; then
+    if [[ "$mode" = "--generate-ci" ]]; then
         generate_ci_config
     fi
     

@@ -389,14 +389,14 @@ class EntryRepository extends ServiceEntityRepository
 
         $sql = [];
         $sql['select'] = "SELECT e.id,
-        	{$formats['dateFormat']} AS `date`,
-        	{$startTimeFormat} AS `start`,
-         	{$endTimeFormat} AS `end`,
-        	e.user_id AS user,
-        	e.customer_id AS customer,
-        	e.project_id AS project,
-        	e.activity_id AS activity,
-        	e.description,
+            {$formats['dateFormat']} AS `date`,
+            {$startTimeFormat} AS `start`,
+             {$endTimeFormat} AS `end`,
+            e.user_id AS user,
+            e.customer_id AS customer,
+            e.project_id AS project,
+            e.activity_id AS activity,
+            e.description,
             e.ticket,
             e.class,
             e.duration,
@@ -1127,6 +1127,10 @@ class EntryRepository extends ServiceEntityRepository
                     ->andWhere(self::WHERE_DAY_UNTIL_END_OF_MONTH)
                     ->setParameter('startOfMonth', $startOfMonth)
                     ->setParameter('endOfMonth', $endOfMonth);
+                break;
+
+            default:
+                // All Period cases are handled above; no filter for anything else.
                 break;
         }
     }

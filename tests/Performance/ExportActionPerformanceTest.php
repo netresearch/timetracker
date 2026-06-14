@@ -558,11 +558,9 @@ final class ExportActionPerformanceTest extends TestCase
         $activity = new Activity();
         $activity->setName('Performance Testing Activity');
 
-        if ($withStats) {
-            // Some entries will be holidays/sick days for statistics testing
-            if (random_int(1, 10) <= 2) { // 20% chance
-                $activity->setName($activity->getName() . ' (Holiday)');
-            }
+        // Some entries (~20%) become holidays/sick days for statistics testing.
+        if ($withStats && random_int(1, 10) <= 2) {
+            $activity->setName($activity->getName() . ' (Holiday)');
         }
 
         return $activity;

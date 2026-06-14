@@ -63,11 +63,9 @@ function startCoverageCollection(): void
         return;
     }
 
-    if (!is_dir(COVERAGE_DIR)) {
-        if (!@mkdir(COVERAGE_DIR, 0755, true) && !is_dir(COVERAGE_DIR)) {
-            error_log('Coverage: Failed to create directory ' . COVERAGE_DIR);
-            return;
-        }
+    if (!is_dir(COVERAGE_DIR) && !@mkdir(COVERAGE_DIR, 0755, true) && !is_dir(COVERAGE_DIR)) {
+        error_log('Coverage: Failed to create directory ' . COVERAGE_DIR);
+        return;
     }
 
     // Start collecting coverage with dead code analysis
@@ -157,6 +155,12 @@ function handleCoverageRequest(): void
         case 'clear':
             clearCoverageData();
             echo json_encode(['status' => 'cleared']);
+            break;
+
+        default:
+            // Unreachable: $action is validated against the allow-list above.
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid action']);
             break;
     }
 }

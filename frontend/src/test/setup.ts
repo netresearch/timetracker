@@ -8,7 +8,7 @@ expect.extend(axeMatchers)
 // Storage and is non-functional without --localstorage-file; replace it with
 // a working in-memory implementation for the test environment.
 class MemoryStorage implements Storage {
-  #data = new Map<string, string>()
+  readonly #data = new Map<string, string>()
 
   get length(): number {
     return this.#data.size
@@ -40,11 +40,20 @@ Object.defineProperty(window, 'localStorage', {
   configurable: true,
 })
 
-// jsdom has no ResizeObserver; Ark UI's Zag machines expect it.
+// jsdom has no ResizeObserver; Ark UI's Zag machines expect it. The methods are
+// intentional no-ops — jsdom never lays out, so there is nothing to observe.
 class ResizeObserverStub implements ResizeObserver {
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
+  observe(): void {
+    /* no-op: jsdom does not lay out elements */
+  }
+
+  unobserve(): void {
+    /* no-op */
+  }
+
+  disconnect(): void {
+    /* no-op */
+  }
 }
 
 window.ResizeObserver ??= ResizeObserverStub
