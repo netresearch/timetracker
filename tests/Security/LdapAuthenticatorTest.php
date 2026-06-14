@@ -28,6 +28,7 @@ use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -463,6 +464,50 @@ final class LdapAuthenticatorTest extends TestCase
         $response = $authenticator->onAuthenticationSuccess($request, $token, 'main');
 
         self::assertSame(Response::HTTP_FOUND, $response->getStatusCode());
+    }
+
+    public function testOnAuthenticationSuccessReturnsJsonForXhr(): void
+    {
+        $this->router->method('generate')->willReturn('/_start');
+
+        $authenticator = $this->makeSubject();
+
+        $session = new Session(new MockArraySessionStorage());
+        $session->set('_security.main.target_path', '/dashboard');
+
+        $request = new Request();
+        $request->setSession($session);
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest');
+
+        $user = self::createStub(User::class);
+        $user->method('getUsername')->willReturn('testuser');
+
+        $response = $authenticator->onAuthenticationSuccess($request, new TokenStub($user), 'main');
+
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        self::assertSame(['ok' => true, 'redirect' => '/dashboard'], json_decode((string) $response->getContent(), true));
+    }
+
+    // ==================== onAuthenticationFailure() tests ====================
+
+    public function testOnAuthenticationFailureReturnsJsonForXhr(): void
+    {
+        $authenticator = $this->makeSubject();
+
+        $request = new Request();
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest');
+
+        $response = $authenticator->onAuthenticationFailure(
+            $request,
+            new CustomUserMessageAuthenticationException('Authentication failed.'),
+        );
+
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
+        $payload = json_decode((string) $response->getContent(), true);
+        self::assertIsArray($payload);
+        self::assertFalse($payload['ok']);
     }
 
     // ==================== getLoginUrl() tests ====================

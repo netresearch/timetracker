@@ -22,6 +22,8 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
+use function is_string;
+
 class SecurityController extends AbstractController
 {
     private TokenStorageInterface $tokenStorage;
@@ -59,9 +61,12 @@ class SecurityController extends AbstractController
 
         // Render login form with error handling
         // Works for both GET (initial display) and POST (after failed authentication)
+        $logoUrl = $this->getParameter('app_logo_url');
+
         return $this->render('login.html.twig', [
             'locale' => 'en',
             'apptitle' => 'Netresearch TimeTracker',
+            'logo_url' => is_string($logoUrl) ? $logoUrl : '',
             'last_username' => $this->authenticationUtils->getLastUsername(),
             'error' => $this->authenticationUtils->getLastAuthenticationError(),
         ]);
