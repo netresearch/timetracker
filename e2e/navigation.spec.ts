@@ -6,7 +6,6 @@ import {
   goToSettingsPage,
   goToAdminPage,
   getVisibleTabs,
-  openMoreMenu,
   NAV_LINKS,
 } from './helpers/navigation';
 import { waitForGrid } from './helpers/grid';
@@ -43,9 +42,9 @@ test.describe('Tab Navigation', () => {
     // Settings is no longer an ExtJS tab — it is reached via the header nav link.
     const hasSettingsTab = tabs.some((t) => /Einstellungen|Settings/i.test(t));
     expect(hasSettingsTab).toBe(false);
-    // Settings now lives in the header "More" overflow menu.
-    await openMoreMenu(page);
-    await expect(page.locator(NAV_LINKS.settings)).toBeVisible();
+    // Settings is a header nav link (inline, or folded into "More" at narrow
+    // widths) — assert it's present in the header rather than its placement.
+    await expect(page.locator(NAV_LINKS.settings)).toBeAttached();
   });
 
   test('should navigate to Time Tracking tab', async ({ page }) => {
@@ -107,10 +106,10 @@ test.describe('Role-Based Tab Visibility', () => {
     const hasControllingTab = tabs.some((t) => /Controlling|Abrechnung/i.test(t));
     expect(hasControllingTab).toBe(false);
 
-    // Administration and Billing live in the header "More" overflow menu.
-    await openMoreMenu(page);
-    await expect(page.locator(NAV_LINKS.admin)).toBeVisible();
-    await expect(page.locator(NAV_LINKS.billing)).toBeVisible();
+    // Administration and Billing are header nav links (inline, or folded into
+    // "More" at narrow widths) — assert presence, not placement.
+    await expect(page.locator(NAV_LINKS.admin)).toBeAttached();
+    await expect(page.locator(NAV_LINKS.billing)).toBeAttached();
   });
 
   test('PL user should be able to navigate to the Administration page', async ({ page }) => {

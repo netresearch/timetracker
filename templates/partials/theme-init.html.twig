@@ -63,7 +63,13 @@
             button.setAttribute('aria-label', THEME_LABEL + ': ' + LABELS[preference] + ' — ' + SWITCH_TO + ' ' + LABELS[next]);
             button.setAttribute('title', THEME_LABEL + ': ' + LABELS[preference]);
             icons.forEach(function (icon) {
-                icon.hidden = icon.getAttribute('data-theme-icon') !== preference;
+                // <svg> is an SVGElement and does not reflect the .hidden IDL
+                // property to the attribute, so toggle the attribute directly.
+                if (icon.getAttribute('data-theme-icon') === preference) {
+                    icon.removeAttribute('hidden');
+                } else {
+                    icon.setAttribute('hidden', '');
+                }
             });
         }
         mark(read());

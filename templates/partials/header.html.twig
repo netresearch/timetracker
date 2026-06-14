@@ -40,39 +40,40 @@
             <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
                {% if active == 'auswertung' %}aria-current="page"{% endif %}
                data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
+            {% if isAdmin %}
+                <a class="main-nav-link{% if active == 'extras' %} is-active{% endif %}"
+                   {% if active == 'extras' %}aria-current="page"{% endif %}
+                   data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}">{{ 'Extras'|trans }}</a>
+            {% endif %}
+            {% if canBill %}
+                <a class="main-nav-link{% if active == 'billing' %} is-active{% endif %}"
+                   {% if active == 'billing' %}aria-current="page"{% endif %}
+                   data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
+            {% endif %}
+            {% if isAdmin %}
+                <a class="main-nav-link{% if active == 'admin' %} is-active{% endif %}"
+                   {% if active == 'admin' %}aria-current="page"{% endif %}
+                   data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
+            {% endif %}
+            {# Settings & Help carry an icon that shows only when they fold into
+               the "More" menu (hidden inline via CSS). #}
+            <a class="main-nav-link{% if active == 'settings' %} is-active{% endif %}"
+               {% if active == 'settings' %}aria-current="page"{% endif %}
+               data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0 1.6 1.6 0 0 0-1.7-1.6 1.6 1.6 0 0 0-1.8.3 2 2 0 1 1-2.8-2.8 1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H2a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.5-1.3 1.6 1.6 0 0 0-.3-1.8 2 2 0 1 1 2.8-2.8 1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0 1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3 2 2 0 1 1 2.8 2.8 1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4 1.6 1.6 0 0 0-1.5 1z"/></svg>{{ 'Settings'|trans }}</a>
+            <a class="main-nav-link{% if active == 'help' %} is-active{% endif %}"
+               {% if active == 'help' %}aria-current="page"{% endif %}
+               data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.6 2.3-2.6 4"/><circle cx="12" cy="17.4" r="1.1" fill="currentColor" stroke="none"/></svg>{{ 'Help'|trans }}</a>
 
-            {# Overflow menu — secondary, role-gated, plus Settings & Help. The
-               links keep .main-nav-link + data-nav so routing and active styling
-               are unchanged. #}
-            <div class="nav-more">
+            {# Overflow disclosure — empty until the priority-overflow script
+               folds bar items into it; the whole control hides when it's empty
+               (header-behavior.html.twig). #}
+            <div class="nav-more" hidden>
                 <button type="button" class="nav-more-btn" id="nav-more-btn"
                         aria-haspopup="true" aria-expanded="false" aria-controls="nav-more-menu">
                     {{ 'More'|trans }}
                     <svg class="nav-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="nav-more-menu" id="nav-more-menu" role="menu" aria-label="{{ 'More'|trans }}" hidden>
-                    {% if isAdmin %}
-                        <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'extras' %} is-active{% endif %}"
-                           {% if active == 'extras' %}aria-current="page"{% endif %}
-                           data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}"><span class="nav-menu-ico" aria-hidden="true"></span>{{ 'Extras'|trans }}</a>
-                    {% endif %}
-                    {% if canBill %}
-                        <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'billing' %} is-active{% endif %}"
-                           {% if active == 'billing' %}aria-current="page"{% endif %}
-                           data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}"><span class="nav-menu-ico" aria-hidden="true"></span>{{ 'Billing'|trans }}</a>
-                    {% endif %}
-                    {% if isAdmin %}
-                        <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'admin' %} is-active{% endif %}"
-                           {% if active == 'admin' %}aria-current="page"{% endif %}
-                           data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}"><span class="nav-menu-ico" aria-hidden="true"></span>{{ 'Administration'|trans }}</a>
-                    {% endif %}
-                    <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'settings' %} is-active{% endif %}"
-                       {% if active == 'settings' %}aria-current="page"{% endif %}
-                       data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0 1.6 1.6 0 0 0-1.7-1.6 1.6 1.6 0 0 0-1.8.3 2 2 0 1 1-2.8-2.8 1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H2a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.5-1.3 1.6 1.6 0 0 0-.3-1.8 2 2 0 1 1 2.8-2.8 1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0 1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3 2 2 0 1 1 2.8 2.8 1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4 1.6 1.6 0 0 0-1.5 1z"/></svg>{{ 'Settings'|trans }}</a>
-                    <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'help' %} is-active{% endif %}"
-                       {% if active == 'help' %}aria-current="page"{% endif %}
-                       data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.6 2.3-2.6 4"/><circle cx="12" cy="17.4" r="1.1" fill="currentColor" stroke="none"/></svg>{{ 'Help'|trans }}</a>
-                </div>
+                <div class="nav-more-menu" id="nav-more-menu" role="menu" aria-label="{{ 'More'|trans }}" hidden></div>
             </div>
         </nav>
 

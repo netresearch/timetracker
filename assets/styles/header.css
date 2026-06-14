@@ -132,6 +132,11 @@
     align-items: center;
 }
 
+/* Overflow disclosure is empty (and hidden) until items fold into it. */
+.nav-more[hidden] {
+    display: none;
+}
+
 .nav-more-btn {
     display: inline-flex;
     align-items: center;
@@ -162,7 +167,7 @@
 
 .nav-more-menu {
     position: absolute;
-    top: calc(100% + 4px);
+    top: 100%;
     left: 0;
     z-index: 1000;
     min-width: 220px;
@@ -200,6 +205,12 @@
     width: 18px;
     height: 18px;
     display: inline-block;
+}
+
+/* Settings/Help carry an icon only inside the "More" menu; inline in the bar
+   they show as plain text like the other items. */
+.main-nav-link:not(.nav-menu-item) .nav-menu-ico {
+    display: none;
 }
 
 /* ---- Working time badges ---- */

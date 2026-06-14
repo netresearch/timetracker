@@ -44,9 +44,8 @@ export async function goToTab(page: Page, tabName: RegExp | string): Promise<voi
 }
 
 /**
- * Open the header "More" overflow menu. The secondary/role-gated nav links
- * (Extras, Billing, Administration) plus Settings and Help live inside it, so
- * they must be revealed before they can be clicked.
+ * Open the header "More" overflow menu (only meaningful when items have folded
+ * into it — the control is hidden otherwise).
  */
 export async function openMoreMenu(page: Page): Promise<void> {
   const button = page.locator('#nav-more-btn');
@@ -54,6 +53,19 @@ export async function openMoreMenu(page: Page): Promise<void> {
     await button.click();
   }
   await page.locator('#nav-more-menu').waitFor({ state: 'visible' });
+}
+
+/**
+ * Click a header nav link, regardless of whether the priority-overflow has kept
+ * it inline or folded it into the "More" menu (which depends on viewport width).
+ */
+export async function clickHeaderNav(page: Page, selector: string): Promise<void> {
+  const link = page.locator(selector);
+  if (!(await link.isVisible())) {
+    // Folded into "More" — reveal it first (the control is then visible).
+    await openMoreMenu(page);
+  }
+  await link.click();
 }
 
 /**
@@ -86,8 +98,7 @@ export async function goToChartsTab(page: Page): Promise<void> {
  * (Formerly the ExtJS Controlling/Abrechnung tab.)
  */
 export async function goToBillingPage(page: Page): Promise<void> {
-  await openMoreMenu(page);
-  await page.locator(NAV_LINKS.billing).click();
+  await clickHeaderNav(page, NAV_LINKS.billing);
   await page.waitForURL(/\/ui\/billing/, { timeout: 10000 });
   await page.waitForSelector('form.stack-form', { timeout: 10000 });
 }
@@ -97,8 +108,7 @@ export async function goToBillingPage(page: Page): Promise<void> {
  * (Formerly the ExtJS Settings/Einstellungen tab.)
  */
 export async function goToSettingsPage(page: Page): Promise<void> {
-  await openMoreMenu(page);
-  await page.locator(NAV_LINKS.settings).click();
+  await clickHeaderNav(page, NAV_LINKS.settings);
   await page.waitForURL(/\/ui\/settings/, { timeout: 10000 });
   await page.waitForSelector('form.stack-form', { timeout: 10000 });
 }
@@ -108,8 +118,7 @@ export async function goToSettingsPage(page: Page): Promise<void> {
  * (Formerly the ExtJS Administration tab; only visible to ROLE_ADMIN.)
  */
 export async function goToAdminPage(page: Page): Promise<void> {
-  await openMoreMenu(page);
-  await page.locator(NAV_LINKS.admin).click();
+  await clickHeaderNav(page, NAV_LINKS.admin);
   await page.waitForURL(/\/ui\/admin/, { timeout: 10000 });
   await page.waitForSelector('section.admin-page', { timeout: 10000 });
 }
