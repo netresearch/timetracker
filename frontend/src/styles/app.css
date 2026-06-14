@@ -166,8 +166,25 @@ main {
   margin-right: 0.6rem;
 }
 
-.year-switch b {
+/* The year is a toggle: active = summary scoped to the whole year. */
+.year-toggle {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-radius: 8px;
   color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 2px 8px;
+}
+
+.year-toggle:hover {
+  background: var(--color-accent-soft);
+}
+
+.year-toggle.is-active {
+  background: var(--color-accent);
+  color: var(--color-surface);
 }
 
 .year-arrow {
@@ -349,6 +366,78 @@ main {
   color: var(--color-accent);
 }
 
+/* Each day is a toggle button filling its cell; clicking selects/deselects it
+   and scopes the summary to the selection. */
+.cell-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.cell-btn:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.cell-selected {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+.cell-selected .cell-num {
+  color: var(--color-accent);
+}
+
+/* Calendar-week badge column (first column of each row). */
+.cw-cell {
+  border: 0;
+  height: auto;
+  padding: 0;
+  vertical-align: middle;
+  width: 2.5rem;
+}
+
+.cw-badge {
+  appearance: none;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 4px 6px;
+  width: 100%;
+}
+
+.cw-badge:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.cw-badge[aria-pressed="true"] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-surface);
+}
+
+.cw-badge:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* ---- Summary ---- */
 
 .summary-card {
@@ -363,6 +452,11 @@ main {
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0 0 1rem;
+}
+
+.summary-scope {
+  color: var(--color-accent);
+  font-weight: 600;
 }
 
 .summary-ring {
@@ -475,9 +569,11 @@ main {
   font-weight: 600;
 }
 
+/* All text-like inputs, selects and textareas in a field share the same
+   recognisable box (checkboxes/radios keep their native look in .field-check). */
+.field input:not([type='checkbox']):not([type='radio']),
 .field select,
-.field input[type='date'],
-.field input[type='time'] {
+.field textarea {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -485,6 +581,20 @@ main {
   font: inherit;
   min-height: 44px;
   padding: 0 0.6rem;
+}
+
+.field textarea {
+  min-height: 5rem;
+  padding: 0.5rem 0.6rem;
+  resize: vertical;
+}
+
+.field input:not([type='checkbox']):not([type='radio']):focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
 }
 
 .field-row {

@@ -1,6 +1,6 @@
 import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { render, waitFor } from '@solidjs/testing-library'
+import { fireEvent, render, waitFor } from '@solidjs/testing-library'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -81,6 +81,32 @@ describe('Month page', () => {
     expect(getAllByText('-64:00').length).toBeGreaterThanOrEqual(2)
     // Whole month: 16h worked - 21 * 8h expected = -152:00.
     expect(getByText('-152:00')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('scopes the summary to a clicked day and toggles it back off', async () => {
+    const { container, getByText, queryByText, getAllByText, unmount } = renderMonth()
+    await waitFor(() => expect(container.querySelectorAll('td.cell')).toHaveLength(30))
+
+    // Whole-month balance is shown initially.
+    expect(getByText('-152:00')).toBeInTheDocument()
+
+    // Click Tue 2026-06-02 (a working day: 0 worked, 8h expected → -08:00).
+    const dayButtons = [...container.querySelectorAll<HTMLButtonElement>('button.cell-btn')]
+    const june2 = dayButtons.find((b) => b.querySelector('.cell-num')?.textContent === '2')
+    fireEvent.click(june2 as HTMLButtonElement)
+
+    await waitFor(() => expect(getByText('1 selected')).toBeInTheDocument())
+    // Summary now reflects only that day: -08:00 balance (ring + row), month total gone.
+    expect(getAllByText('-08:00').length).toBeGreaterThanOrEqual(2)
+    expect(queryByText('-152:00')).not.toBeInTheDocument()
+    expect(june2).toHaveAttribute('aria-pressed', 'true')
+
+    // Clicking again deselects → back to the whole-month scope.
+    fireEvent.click(june2 as HTMLButtonElement)
+    await waitFor(() => expect(getByText('-152:00')).toBeInTheDocument())
+    expect(june2).toHaveAttribute('aria-pressed', 'false')
 
     unmount()
   })

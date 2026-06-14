@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { computeMonth, type ComputeMonthInput } from './month'
+import { computeMonth, type ComputeMonthInput, isoWeek, summarize } from './month'
 
 const WEEKEND = { saturday: 'Saturday', sunday: 'Sunday' }
 
@@ -122,5 +122,35 @@ describe('computeMonth', () => {
 
     expect(days[4]?.expected).toBe(240)
     expect(days[3]?.expected).toBe(480)
+  })
+})
+
+describe('summarize', () => {
+  it('sums an arbitrary day subset and matches computeMonth over the full month', () => {
+    const { days, sum } = computeMonth(input({ entries: [{ name: '26-06-01', hours: 8 }, { name: '26-06-02', hours: 4 }] }))
+    expect(summarize(days)).toEqual(sum)
+  })
+
+  it('only counts non-future days toward the until-today figures', () => {
+    const { days } = computeMonth(input({ entries: [{ name: '26-06-01', hours: 8 }] }))
+    const future = days.filter((day) => day.isFuture)
+    const subset = summarize(future)
+    expect(subset.expectedUntilToday).toBe(0)
+    expect(subset.diffUntilToday).toBe(0)
+    expect(subset.expected).toBeGreaterThan(0)
+  })
+
+  it('ignores holiday/weekend expected hours', () => {
+    const { days } = computeMonth(input())
+    const weekendOnly = days.filter((day) => day.holiday !== null)
+    expect(summarize(weekendOnly).expected).toBe(0)
+  })
+})
+
+describe('isoWeek', () => {
+  it('computes ISO-8601 week numbers (Mon-start)', () => {
+    expect(isoWeek(new Date(2026, 0, 1))).toBe(1) // Thu 2026-01-01 → W01
+    expect(isoWeek(new Date(2026, 5, 12))).toBe(24) // Fri 2026-06-12
+    expect(isoWeek(new Date(2024, 11, 30))).toBe(1) // Mon 2024-12-30 → W01 of 2025
   })
 })
