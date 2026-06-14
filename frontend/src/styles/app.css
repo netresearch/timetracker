@@ -265,6 +265,9 @@ main {
   border-spacing: 6px;
   padding: 0.75rem;
   width: 100%;
+  /* Keep the 7 columns legible on narrow screens — the .table-scroll wrapper
+     then scrolls horizontally instead of cramping the cells. */
+  min-width: 34rem;
 }
 
 .calendar thead th {

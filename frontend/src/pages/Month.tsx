@@ -236,6 +236,7 @@ export default function Month() {
         <Match when={report()}>
           {(data) => (
             <div class="month-layout">
+              <div class="table-scroll">
               <table class="calendar">
                 <caption class="visually-hidden">
                   {m.month_calendar_label({ month: monthTitle() })}
@@ -285,6 +286,7 @@ export default function Month() {
                   </For>
                 </tbody>
               </table>
+              </div>
 
               <aside class="summary-card">
                 <h3>{m.month_summary()}</h3>
