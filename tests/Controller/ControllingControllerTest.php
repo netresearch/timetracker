@@ -36,6 +36,26 @@ final class ControllingControllerTest extends AbstractWebTestCase
         self::assertStringContainsString('02_developer', (string) $contentDisposition); // userid 2 = 'developer'
     }
 
+    /**
+     * The export ships any user's entries via ?userid=, so it must be denied to
+     * non-privileged roles (DEV/USER). 'developer' (fixture id 2) is a DEV and
+     * must not be able to export anyone's data — the IDOR guard.
+     */
+    public function testExportActionForbiddenForNonAdmin(): void
+    {
+        $this->logInSession('developer');
+        // Accept JSON so the ExceptionSubscriber renders the AccessDenied as a
+        // 403 response rather than an HTML error page; the IsGranted gate itself
+        // blocks the request regardless of the requested format.
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/controlling/export', [
+            'year' => 2020,
+            'month' => 2,
+            'userid' => 1,
+            'project' => 0,
+        ], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(403);
+    }
+
     public function testExportActionInvalidMonth(): void
     {
         $this->logInSession('unittest');
