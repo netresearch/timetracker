@@ -10,12 +10,12 @@ interface SaveResponse {
   message: string
 }
 
+// Only the locales the UI actually ships translations for (paraglide compiles
+// en + de; AppConfig.locale is typed 'en' | 'de'). Offering es/fr/ru let users
+// pick a language that then rendered as the base locale — a broken choice.
 const LANGUAGES = [
   { value: 'de', label: 'Deutsch' },
   { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'ru', label: 'Русский' },
 ]
 
 const BOOL_SETTINGS = [
