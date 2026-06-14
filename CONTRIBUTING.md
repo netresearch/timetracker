@@ -42,7 +42,7 @@ Before contributing, ensure you have:
 
 - **Development Environment**: Follow the [Developer Setup Guide](docs/DEVELOPER_SETUP.md)
 - **Understanding of the Codebase**: Read the [Project Architecture](docs/PROJECT_INDEX.md)
-- **Familiarity with our Stack**: PHP 8.5, Symfony 8.0, MySQL, Redis
+- **Familiarity with our Stack**: PHP 8.5, Symfony 8, MySQL, Redis
 - **Git Knowledge**: Basic understanding of Git workflows
 
 ### First Contribution
