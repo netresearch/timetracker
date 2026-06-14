@@ -1,0 +1,242 @@
+{# Framework-neutral header interactivity shared by BOTH shells (ExtJS and the
+   SolidJS /ui shell):
+     - a priority-overflow nav: all nav items start in the bar; as the viewport
+       narrows, items fold (from the end) into a "More" menu and the Today/Week
+       (then Month) badges collapse, so the theme/user/logout cluster is never
+       clipped. "More" is hidden whenever nothing has overflowed.
+     - the "More" disclosure (hover- and click/keyboard-operable) and the mobile
+       hamburger drawer.
+   Theme cycling lives in theme-init.html.twig. Idempotent — guarded so
+   re-includes (or a shell that renders the header twice) wire handlers once. #}
+<script>
+(function () {
+    if (window.__ttHeaderBehaviorWired) {
+        return;
+    }
+    window.__ttHeaderBehaviorWired = true;
+
+    // Below this width the whole nav collapses into the hamburger drawer (CSS);
+    // above it, the priority-overflow logic governs what stays in the bar.
+    var COLLAPSE_QUERY = '(max-width: 600px)';
+    var CLOSE_DELAY_MS = 180;
+
+    function ready(fn) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fn);
+        } else {
+            fn();
+        }
+    }
+
+    ready(function () {
+        var header = document.querySelector('.app-header');
+        var moreBtn = document.getElementById('nav-more-btn');
+        var moreMenu = document.getElementById('nav-more-menu');
+        var moreWrap = moreBtn ? moreBtn.closest('.nav-more') : null;
+        var burger = document.getElementById('nav-burger');
+        var drawer = document.getElementById('nav-drawer');
+        var nav = header ? header.querySelector('.main-nav') : null;
+
+        function setExpanded(button, panel, open) {
+            if (button === null || panel === null) {
+                return;
+            }
+            button.setAttribute('aria-expanded', open ? 'true' : 'false');
+            panel.hidden = !open;
+        }
+        function closeMore() {
+            setExpanded(moreBtn, moreMenu, false);
+        }
+        function openMore() {
+            if (moreWrap !== null && !moreWrap.hidden) {
+                setExpanded(moreBtn, moreMenu, true);
+            }
+        }
+        function closeDrawer() {
+            if (burger === null || drawer === null) {
+                return;
+            }
+            setExpanded(burger, drawer, false);
+            burger.setAttribute('aria-label', burger.getAttribute('data-label-open') || 'Open menu');
+        }
+
+        if (moreBtn !== null && moreMenu !== null && moreWrap !== null) {
+            var closeTimer = null;
+            var cancelClose = function () {
+                if (closeTimer) {
+                    clearTimeout(closeTimer);
+                    closeTimer = null;
+                }
+            };
+            var scheduleClose = function () {
+                cancelClose();
+                closeTimer = setTimeout(closeMore, CLOSE_DELAY_MS);
+            };
+
+            moreBtn.addEventListener('click', function () {
+                cancelClose();
+                var open = moreBtn.getAttribute('aria-expanded') === 'true';
+                if (!open) {
+                    closeDrawer();
+                }
+                setExpanded(moreBtn, moreMenu, !open);
+            });
+            // Hover to open; a short close delay bridges the button→menu move so
+            // it doesn't snap shut between them.
+            moreWrap.addEventListener('mouseenter', function () {
+                cancelClose();
+                openMore();
+            });
+            moreWrap.addEventListener('mouseleave', scheduleClose);
+            // Close once a menu item is chosen — SPA links don't reload the page.
+            moreMenu.addEventListener('click', function (event) {
+                if (event.target.closest('a')) {
+                    closeMore();
+                }
+            });
+            // Close when focus leaves the disclosure entirely (keyboard).
+            moreWrap.addEventListener('focusout', function (event) {
+                if (!moreWrap.contains(event.relatedTarget)) {
+                    closeMore();
+                }
+            });
+        }
+
+        if (burger !== null && drawer !== null) {
+            burger.setAttribute('data-label-open', burger.getAttribute('aria-label') || 'Open menu');
+            burger.addEventListener('click', function () {
+                var open = burger.getAttribute('aria-expanded') === 'true';
+                if (!open) {
+                    closeMore();
+                }
+                setExpanded(burger, drawer, !open);
+                burger.setAttribute('aria-label', open
+                    ? (burger.getAttribute('data-label-open') || 'Open menu')
+                    : (burger.getAttribute('data-label-close') || 'Close menu'));
+            });
+            drawer.addEventListener('click', function (event) {
+                if (event.target.closest('a')) {
+                    closeDrawer();
+                }
+            });
+        }
+
+        // Click outside closes any open disclosure.
+        document.addEventListener('click', function (event) {
+            if (moreMenu !== null && moreWrap !== null && !moreWrap.contains(event.target)) {
+                closeMore();
+            }
+            if (drawer !== null && burger !== null
+                && !drawer.contains(event.target) && !burger.contains(event.target)) {
+                closeDrawer();
+            }
+        });
+
+        // Escape closes and returns focus to the trigger.
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') {
+                return;
+            }
+            if (moreBtn !== null && moreBtn.getAttribute('aria-expanded') === 'true') {
+                closeMore();
+                moreBtn.focus();
+            }
+            if (burger !== null && drawer !== null && burger.getAttribute('aria-expanded') === 'true') {
+                closeDrawer();
+                burger.focus();
+            }
+        });
+
+        /* ---- Priority-overflow nav ------------------------------------- */
+        if (header === null || nav === null || moreMenu === null || moreWrap === null) {
+            return;
+        }
+        var worktime = header.querySelector('.header-worktime');
+        var badges = worktime
+            ? Array.prototype.slice.call(worktime.querySelectorAll('.worktime-item:not(.worktime-item-month)'))
+            : [];
+        // All nav items, in priority order (direct <a> children of .main-nav).
+        var items = Array.prototype.slice.call(nav.children).filter(function (el) {
+            return el.tagName === 'A' && el.classList.contains('main-nav-link');
+        });
+        var collapseMq = window.matchMedia(COLLAPSE_QUERY);
+        var laying = false;
+
+        function restore() {
+            items.forEach(function (link) {
+                if (link.parentNode === moreMenu) {
+                    nav.insertBefore(link, moreWrap);
+                }
+                link.classList.remove('nav-menu-item');
+                var spacer = link.querySelector('.is-auto-spacer');
+                if (spacer) {
+                    spacer.remove();
+                }
+            });
+            badges.forEach(function (badge) { badge.classList.remove('is-collapsed'); });
+            if (worktime) {
+                worktime.classList.remove('is-collapsed');
+            }
+        }
+
+        function overflowing() {
+            return header.scrollWidth > header.clientWidth + 1;
+        }
+
+        function pushToMenu(link) {
+            link.classList.add('nav-menu-item');
+            if (!link.querySelector('.nav-menu-ico')) {
+                var spacer = document.createElement('span');
+                spacer.className = 'nav-menu-ico is-auto-spacer';
+                spacer.setAttribute('aria-hidden', 'true');
+                link.insertBefore(spacer, link.firstChild);
+            }
+            moreMenu.appendChild(link);
+        }
+
+        function layout() {
+            if (laying) {
+                return;
+            }
+            laying = true;
+            restore();
+            // Measure with "More" hidden so it doesn't itself force an overflow.
+            moreWrap.hidden = true;
+            if (!collapseMq.matches && overflowing()) {
+                moreWrap.hidden = false;
+                // 1) Fold bar items into "More" from the end until the bar fits.
+                for (var i = items.length - 1; i >= 0 && overflowing(); i--) {
+                    pushToMenu(items[i]);
+                }
+                // Keep the folded items in original (priority) order in the menu.
+                items.forEach(function (link) {
+                    if (link.parentNode === moreMenu) {
+                        moreMenu.appendChild(link);
+                    }
+                });
+                // 2) Still tight → drop Today/Week badges, then the whole block.
+                for (var j = 0; j < badges.length && overflowing(); j++) {
+                    badges[j].classList.add('is-collapsed');
+                }
+                if (worktime && overflowing()) {
+                    worktime.classList.add('is-collapsed');
+                }
+                if (moreMenu.children.length === 0) {
+                    moreWrap.hidden = true;
+                }
+            }
+            laying = false;
+        }
+
+        if (typeof window.ResizeObserver === 'function') {
+            new window.ResizeObserver(layout).observe(header);
+        } else {
+            window.addEventListener('resize', layout);
+        }
+        if (typeof collapseMq.addEventListener === 'function') {
+            collapseMq.addEventListener('change', layout);
+        }
+        layout();
+    });
+})();
+</script>

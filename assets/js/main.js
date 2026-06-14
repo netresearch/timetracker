@@ -243,6 +243,15 @@ function formatDuration(duration, inDays) {
     return text;
 }
 
+/**
+ * Formats a duration as person-days only (e.g. '18.5 PT') for the Month badge.
+ */
+function formatDays(duration) {
+    const days = Math.floor(duration / (60 * 8) * 100) / 100;
+
+    return days + ' PT';
+}
+
 /*
  * Counts and displays worktime for today, this week and this month in the header
  */
@@ -254,7 +263,9 @@ function countTime() {
             const data = Ext.decode(response.responseText);
             Ext.get('worktime-day').update(formatDuration(data.today.duration, false));
             Ext.get('worktime-week').update(formatDuration(data.week.duration, false));
-            Ext.get('worktime-month').update(formatDuration(data.month.duration, true));
+            // Month shows person-days only; hours stay in the title for reference.
+            Ext.get('worktime-month').update(formatDays(data.month.duration));
+            Ext.get('worktime-month').set({ title: formatDuration(data.month.duration, false) });
         }
     });
 }
@@ -263,6 +274,19 @@ function countTime() {
  * Checks login status via JSON API and updates the status indicator.
  * Polls every 90 seconds to keep status current.
  */
+function applyLoginStatus(loggedIn) {
+    // Update every user badge (desktop header + mobile drawer share .js-user-badge).
+    const name = loggedIn ? settingsData.user_name : strings['Not logged in'];
+    document.querySelectorAll('.js-user-badge').forEach(function (badge) {
+        badge.classList.toggle('status_active', loggedIn);
+        badge.classList.toggle('status_inactive', !loggedIn);
+        const userNameEl = badge.querySelector('.js-user-name');
+        if (userNameEl) {
+            userNameEl.textContent = name;
+        }
+    });
+}
+
 function checkLoginStatus() {
     if (typeof statusUrlJson === 'undefined') {
         return;
@@ -273,34 +297,10 @@ function checkLoginStatus() {
         scope: this,
         success: function (response) {
             const data = Ext.decode(response.responseText);
-            const badgeEl = Ext.get('user-badge');
-            const userNameEl = document.querySelector('#user-badge .user-name');
-            if (badgeEl) {
-                if (data.loginStatus) {
-                    badgeEl.removeCls('status_inactive');
-                    badgeEl.addCls('status_active');
-                    if (userNameEl && settingsData.user_name) {
-                        userNameEl.textContent = settingsData.user_name;
-                    }
-                } else {
-                    badgeEl.removeCls('status_active');
-                    badgeEl.addCls('status_inactive');
-                    if (userNameEl) {
-                        userNameEl.textContent = strings['Not logged in'];
-                    }
-                }
-            }
+            applyLoginStatus(!!data.loginStatus);
         },
         failure: function () {
-            const badgeEl = Ext.get('user-badge');
-            const userNameEl = document.querySelector('#user-badge .user-name');
-            if (badgeEl) {
-                badgeEl.removeCls('status_active');
-                badgeEl.addCls('status_inactive');
-                if (userNameEl) {
-                    userNameEl.textContent = strings['Not logged in'];
-                }
-            }
+            applyLoginStatus(false);
         }
     });
 

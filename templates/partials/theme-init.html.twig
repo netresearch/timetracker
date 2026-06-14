@@ -1,8 +1,8 @@
 {# Framework-neutral light/dark theming shared by BOTH shells (the ExtJS shell
    and the SolidJS /ui shell). Applies the saved preference before first paint
-   (no flash) and, once the DOM is ready, wires the segmented toggle rendered in
-   the shared header (partials/header.html.twig). This is the single source of
-   truth for theming — neither shell needs framework-specific theme code. #}
+   (no flash) and, once the DOM is ready, wires the single-button theme cycle
+   rendered in the shared header (partials/header.html.twig). This is the single
+   source of truth for theming — neither shell needs framework-specific theme code. #}
 <script>
 (function () {
     var KEY = 'timetracker-theme';
@@ -27,34 +27,58 @@
     // Apply immediately (still in <head>) so the first paint matches the choice.
     apply(read());
 
+    // i18n labels (passed from Twig so screen-reader text follows the locale).
+    var ORDER = ['system', 'light', 'dark'];
+    var LABELS = {
+        system: {{ ('System'|trans)|json_encode|raw }},
+        light: {{ ('Light'|trans)|json_encode|raw }},
+        dark: {{ ('Dark'|trans)|json_encode|raw }}
+    };
+    var THEME_LABEL = {{ ('Theme'|trans)|json_encode|raw }};
+    var SWITCH_TO = {{ ('Switch to'|trans)|json_encode|raw }};
+
+    function store(preference) {
+        try {
+            if (preference === 'system') {
+                window.localStorage.removeItem(KEY);
+            } else {
+                window.localStorage.setItem(KEY, preference);
+            }
+        } catch (error) {
+            // Storage disabled/restricted — apply for this session only.
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        var buttons = document.querySelectorAll('.theme-toggle-item');
-        if (buttons.length === 0) {
+        var button = document.getElementById('theme-cycle');
+        if (button === null) {
             return;
         }
+        var icons = button.querySelectorAll('[data-theme-icon]');
         function mark(preference) {
-            buttons.forEach(function (button) {
-                var active = button.getAttribute('data-theme-value') === preference;
-                button.setAttribute('aria-pressed', active ? 'true' : 'false');
-                button.classList.toggle('is-active', active);
+            var next = ORDER[(ORDER.indexOf(preference) + 1) % ORDER.length];
+            // A single cycle button has three states, so aria-pressed cannot
+            // encode it — keep the current mode and the next action in the
+            // accessible name instead (WCAG 4.1.2).
+            button.setAttribute('aria-label', THEME_LABEL + ': ' + LABELS[preference] + ' — ' + SWITCH_TO + ' ' + LABELS[next]);
+            button.setAttribute('title', THEME_LABEL + ': ' + LABELS[preference]);
+            icons.forEach(function (icon) {
+                // <svg> is an SVGElement and does not reflect the .hidden IDL
+                // property to the attribute, so toggle the attribute directly.
+                if (icon.getAttribute('data-theme-icon') === preference) {
+                    icon.removeAttribute('hidden');
+                } else {
+                    icon.setAttribute('hidden', '');
+                }
             });
         }
         mark(read());
-        buttons.forEach(function (button) {
-            button.addEventListener('click', function () {
-                var preference = button.getAttribute('data-theme-value');
-                try {
-                    if (preference === 'system') {
-                        window.localStorage.removeItem(KEY);
-                    } else {
-                        window.localStorage.setItem(KEY, preference);
-                    }
-                } catch (error) {
-                    // Storage disabled/restricted — apply for this session only.
-                }
-                apply(preference);
-                mark(preference);
-            });
+        button.addEventListener('click', function () {
+            var current = read();
+            var next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
+            store(next);
+            apply(next);
+            mark(next);
         });
     });
 })();

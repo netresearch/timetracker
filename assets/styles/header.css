@@ -3,11 +3,16 @@
    Loaded by BOTH the ExtJS shell and the SolidJS shell (/ui) — keep this file
    framework-neutral; markup lives in templates/partials/header.html.twig.
 
+   Layout: a single app-bar. Primary nav inline; secondary/role-gated items plus
+   Settings & Help fold into a "More" disclosure; worktime badges, a single
+   theme-cycle button and the user/logout cluster follow. Below 880px the nav
+   collapses behind a hamburger drawer (WCAG 1.4.10 reflow).
+
    Theming: colours use light-dark() so the header follows the user's theme.
-   The SolidJS theme switch sets data-theme on <html>; we map that to
-   color-scheme here so light-dark() resolves on BOTH shells (the SPA design
-   tokens in app.css are not loaded on the ExtJS shell). With no explicit
-   choice the header follows the OS (prefers-color-scheme).
+   theme-init.html.twig sets data-theme on <html>; we map that to color-scheme
+   here so light-dark() resolves on BOTH shells (the SPA design tokens in app.css
+   are not loaded on the ExtJS shell). With no explicit choice the header follows
+   the OS (prefers-color-scheme).
    ========================================================================== */
 
 .page-header {
@@ -45,19 +50,18 @@
     outline-offset: 2px;
 }
 
-/* App Header - Flexbox Layout */
+/* App Header — single app-bar row */
 .app-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    height: 80px;
-    padding: 0 16px;
+    min-height: 64px;
+    padding: 8px 16px;
     font-family: Arial, sans-serif;
     font-size: 13px;
-    gap: 16px;
+    gap: 12px;
 }
 
-/* Logo Section */
+/* Logo */
 .header-logo {
     flex-shrink: 0;
     display: flex;
@@ -66,93 +70,154 @@
 
 #logo {
     display: block;
-    max-height: 50px;
-    max-width: 200px;
+    max-height: 44px;
+    max-width: 180px;
     width: auto;
     height: auto;
     object-fit: contain;
 }
 
-/* Theme switch slot (the SolidJS ThemeToggle is portalled in here on /ui). */
-.header-theme {
+/* Pushes the right-hand cluster (worktime/theme/user) to the far edge. */
+.header-spacer {
+    flex: 1 1 auto;
+    min-width: 8px;
+}
+
+/* ---- Primary navigation (inline) ---- */
+.main-nav {
     display: flex;
     align-items: center;
+    gap: 2px;
     flex-shrink: 0;
 }
 
-/* User Badge (status + logout merged) */
-.user-badge {
-    display: flex;
+.main-nav-link {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: 4px;
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 0 14px;
+    color: light-dark(#1f2937, #e6e9ec);
+    font-family: Arial, sans-serif;
     font-size: 13px;
-    font-weight: 500;
-    flex-shrink: 0;
-    transition: background-color 0.2s;
-}
-
-.user-badge .status-indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.user-badge .user-name {
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
     white-space: nowrap;
 }
 
-.user-badge.status_active {
-    background-color: light-dark(#c1cbc1, #283330);
-    color: light-dark(#333, #e6e9ec);
+.main-nav-link:hover,
+.main-nav-link:focus-visible {
+    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.15));
 }
 
-.user-badge.status_active .status-indicator {
-    background-color: #22c55e;
-    box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+.main-nav-link.is-active {
+    border-bottom-color: light-dark(#00889A, #6fd0dd);
+    color: light-dark(#00525c, #6fd0dd);
 }
 
-.user-badge.status_inactive {
-    background-color: light-dark(#cfc1c1, #332828);
-    color: light-dark(#444, #e6e9ec);
+.main-nav-link:focus-visible,
+.nav-more-btn:focus-visible,
+.theme-cycle:focus-visible,
+.nav-burger:focus-visible,
+.drawer-link:focus-visible {
+    outline: 2px solid light-dark(#00889A, #6fd0dd);
+    outline-offset: -2px;
 }
 
-.user-badge.status_inactive .status-indicator {
-    background-color: #9ca3af;
+/* ---- "More" overflow disclosure ---- */
+.nav-more {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
-.user-badge .badge-logout {
-    margin-left: 4px;
-    padding: 2px 8px;
-    font-size: 11px;
-    color: light-dark(#333, #c4c9cf);
-    text-decoration: none;
-    border: 1px solid light-dark(#ddd, #4a525b);
-    border-radius: 3px;
-    transition: all 0.2s;
+/* Overflow disclosure is empty (and hidden) until items fold into it. */
+.nav-more[hidden] {
+    display: none;
 }
 
-.user-badge .badge-logout:hover,
-.user-badge .badge-logout:focus {
-    background-color: light-dark(#cfbdbd, #4a2a2c);
-    border-color: light-dark(#B00000, #e0888c);
-    color: light-dark(#8F0000, #f5bdc0);
+.nav-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 0 12px;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: light-dark(#1f2937, #e6e9ec);
 }
 
-.user-badge .badge-logout:focus {
-    outline: 2px solid #00889A;
-    outline-offset: 1px;
+.nav-more-btn:hover {
+    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.15));
 }
 
-/* Working Time Section */
+.nav-more-btn[aria-expanded="true"] .nav-chevron {
+    transform: rotate(180deg);
+}
+
+.nav-chevron {
+    transition: transform 0.15s ease;
+}
+
+.nav-more-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 220px;
+    padding: 6px;
+    background-color: light-dark(#ffffff, #1d2127);
+    border: 1px solid light-dark(#c3c8cd, #3c434b);
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.nav-more-menu[hidden] {
+    display: none;
+}
+
+.nav-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border-bottom: 0;
+    border-radius: 7px;
+    box-sizing: border-box;
+}
+
+.nav-menu-item.is-active {
+    border-bottom: 0;
+    background-color: light-dark(#e0f0f2, #0f3a40);
+    color: light-dark(#00525c, #6fd0dd);
+}
+
+.nav-menu-ico {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+}
+
+/* Settings/Help carry an icon only inside the "More" menu; inline in the bar
+   they show as plain text like the other items. */
+.main-nav-link:not(.nav-menu-item) .nav-menu-ico {
+    display: none;
+}
+
+/* ---- Working time badges ---- */
 .header-worktime {
     display: flex;
     align-items: center;
-    gap: 16px;
-    flex: 1;
-    justify-content: flex-end;
+    flex-shrink: 0;
 }
 
 .worktime-list {
@@ -166,10 +231,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    min-height: 44px;
     padding: 4px 12px;
     background-color: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.07));
-    border-radius: 4px;
-    min-width: 70px;
+    border-radius: 6px;
+    min-width: 68px;
 }
 
 .worktime-item dt {
@@ -187,9 +254,20 @@
     margin: 0;
 }
 
-/* The whole month badge is a link to the monthly overview. The <a> stays
-   inside <dd> (so the <dl> grouping is valid), but a stretched ::after overlay
-   makes the entire badge — label included — the click target. */
+.worktime-item-month dd a {
+    color: light-dark(#00525c, #6fd0dd);
+    font-weight: 700;
+}
+
+/* Collapsed by the priority-overflow script when the bar runs out of room. */
+.worktime-item.is-collapsed,
+.header-worktime.is-collapsed {
+    display: none;
+}
+
+/* The whole badge is a link to the monthly overview. The <a> stays inside <dd>
+   (so the <dl> grouping is valid), but a stretched ::after overlay makes the
+   entire badge — label included — the click target. */
 .worktime-item-link {
     position: relative;
     cursor: pointer;
@@ -210,7 +288,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: 4px;
+    border-radius: 6px;
 }
 
 .worktime-item-link:hover dd a {
@@ -222,55 +300,209 @@
     outline-offset: 1px;
 }
 
-/* Theme toggle (segmented System / Light / Dark) — framework-neutral, lives in
-   the shared header so it works on both shells. Wired by theme-init.html.twig.
-   (.header-theme itself is styled once near the logo block above.) */
-.theme-toggle {
-    display: inline-flex;
-    border: 1px solid light-dark(#a9adb2, #3a414a);
-    border-radius: 6px;
-    overflow: hidden;
-    background-color: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.04));
+/* ---- Theme cycle (single button: System → Light → Dark) ---- */
+.header-theme {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
 }
 
-.theme-toggle-item {
-    appearance: none;
-    border: 0;
-    background: transparent;
+.theme-cycle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
     margin: 0;
-    padding: 6px 10px;
-    min-height: 32px;
-    font: inherit;
-    font-size: 12px;
+    background-color: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.04));
+    border: 1px solid light-dark(#a9adb2, #3a414a);
+    border-radius: 8px;
     cursor: pointer;
     color: light-dark(#3a4047, #c4c9cf);
     transition: background-color 0.15s, color 0.15s;
 }
 
-.theme-toggle-item + .theme-toggle-item {
-    border-left: 1px solid light-dark(#bcc0c5, #3a414a);
-}
-
-.theme-toggle-item:hover {
+.theme-cycle:hover {
     background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.12));
+    color: light-dark(#00525c, #6fd0dd);
 }
 
-.theme-toggle-item.is-active {
-    background-color: light-dark(#00889A, #6fd0dd);
-    color: light-dark(#fff, #11151a);
+.theme-ico {
+    width: 20px;
+    height: 20px;
+}
+
+.theme-ico[hidden] {
+    display: none;
+}
+
+/* ---- User cluster (status + logout) ---- */
+.header-account {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.user-badge .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.user-badge .user-name {
+    white-space: nowrap;
+}
+
+.user-badge.status_active {
+    background-color: light-dark(#c1cbc1, #283330);
+    color: light-dark(#333, #e6e9ec);
+}
+
+.js-user-badge.status_active .status-indicator {
+    background-color: #22c55e;
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+
+.user-badge.status_inactive {
+    background-color: light-dark(#cfc1c1, #332828);
+    color: light-dark(#444, #e6e9ec);
+}
+
+.js-user-badge.status_inactive .status-indicator {
+    background-color: #9ca3af;
+    box-shadow: none;
+}
+
+.badge-logout,
+.drawer-logout {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 12px;
+    color: light-dark(#333, #c4c9cf);
+    text-decoration: none;
+    border: 1px solid light-dark(#ddd, #4a525b);
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.badge-logout:hover,
+.badge-logout:focus-visible,
+.drawer-logout:hover,
+.drawer-logout:focus-visible {
+    background-color: light-dark(#cfbdbd, #4a2a2c);
+    border-color: light-dark(#B00000, #e0888c);
+    color: light-dark(#8F0000, #f5bdc0);
+}
+
+.badge-logout:focus-visible,
+.drawer-logout:focus-visible {
+    outline: 2px solid #00889A;
+    outline-offset: 1px;
+}
+
+/* ---- Hamburger + mobile drawer (shown < 880px) ---- */
+.nav-burger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: 1px solid light-dark(#a9adb2, #3a414a);
+    border-radius: 8px;
+    cursor: pointer;
+    color: light-dark(#1f2937, #e6e9ec);
+    flex-shrink: 0;
+}
+
+.mobile-drawer {
+    border-top: 1px solid light-dark(#b5b8bc, #2f353d);
+    background-color: light-dark(#e4e6e8, #21262d);
+    padding: 8px;
+}
+
+.mobile-drawer[hidden] {
+    display: none;
+}
+
+.drawer-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-link {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 12px;
+    color: light-dark(#1f2937, #e6e9ec);
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 7px;
+    border-left: 3px solid transparent;
+}
+
+.drawer-link:hover,
+.drawer-link:focus-visible {
+    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.15));
+}
+
+.drawer-link.is-active {
+    border-left-color: light-dark(#00889A, #6fd0dd);
+    color: light-dark(#00525c, #6fd0dd);
+}
+
+.drawer-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 6px 4px;
+    border-top: 1px solid light-dark(#b5b8bc, #2f353d);
+}
+
+.drawer-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
     font-weight: 600;
 }
 
-.theme-toggle-item:focus-visible {
-    outline: 2px solid light-dark(#00889A, #6fd0dd);
-    outline-offset: -2px;
+.drawer-user .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .theme-toggle-item,
-    .worktime-item-link {
-        transition: none;
-    }
+/* ExtJS shell only: the shared header is adopted into a fixed-height Viewport
+   "north" region (#header / #header-body) whose default overflow clips the
+   "More" dropdown and the mobile drawer. Let them paint outside the region.
+   (These IDs don't exist on the SolidJS /ui shell, so this is a no-op there.) */
+#header,
+#header-body {
+    overflow: visible !important;
 }
 
 /* External Navigation iFrame */
@@ -282,37 +514,39 @@
     display: block;
 }
 
-/* Main navigation - directly above the content/tab area, identical on both shells */
-.main-nav {
-    display: flex;
-    gap: 4px;
-    padding: 0 16px;
-    background-color: light-dark(#c6c9cc, #21262d);
-    border-top: 1px solid light-dark(#b5b8bc, #2f353d);
-    border-bottom: 1px solid light-dark(#9aa0a6, #11151a);
+/* ==========================================================================
+   Responsive (WCAG 1.4.10). Above 600px the priority-overflow script keeps the
+   bar tidy by folding primary items into "More" and collapsing the Today/Week
+   (then Month) badges as width shrinks, so the theme/user/logout cluster is
+   never clipped. At/below 600px — and as a no-JS fallback — the whole nav and
+   the user cluster collapse behind the hamburger drawer; the Month (PT) badge
+   and theme cycle stay in the bar.
+   ========================================================================== */
+@media (max-width: 600px) {
+    .main-nav,
+    .header-account,
+    .worktime-item:not(.worktime-item-month) {
+        display: none;
+    }
+
+    .header-spacer {
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+
+    .header-worktime {
+        margin-left: auto;
+    }
+
+    .nav-burger {
+        display: inline-flex;
+    }
 }
 
-.main-nav-link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 16px;
-    color: light-dark(#1f2937, #e6e9ec);
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    border-bottom: 3px solid transparent;
-}
-
-.main-nav-link:hover,
-.main-nav-link:focus {
-    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.15));
-}
-
-.main-nav-link.is-active {
-    border-bottom-color: light-dark(#00889A, #6fd0dd);
-    color: light-dark(#00525c, #6fd0dd);
+@media (max-width: 400px) {
+    .header-worktime {
+        display: none;
+    }
 }
 
 /* WCAG 2.3.3: honour reduced-motion for the header's own transitions
@@ -320,8 +554,10 @@
 @media (prefers-reduced-motion: reduce) {
     .skip-link,
     .user-badge,
-    .user-badge .badge-logout,
-    .worktime-link,
+    .badge-logout,
+    .worktime-item-link,
+    .theme-cycle,
+    .nav-chevron,
     .main-nav-link {
         transition: none;
     }
