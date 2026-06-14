@@ -1,6 +1,7 @@
 import { Dialog } from '@ark-ui/solid/dialog'
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
+import { createStore, reconcile } from 'solid-js/store'
 import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
@@ -40,7 +41,10 @@ export function AdminCrudShell(props: {
   }
 
   const [editing, setEditing] = createSignal<FormValues | null>(null)
-  const [values, setValues] = createSignal<FormValues>({})
+  // A store (not a signal) so typing in one field updates only that field's
+  // control instead of recreating the whole object and re-evaluating every
+  // FieldControl on each keystroke.
+  const [values, setValues] = createStore<FormValues>({})
   const [error, setError] = createSignal('')
   const [saving, setSaving] = createSignal(false)
   // Transient success confirmation (save/delete) shown in the toolbar.
@@ -123,12 +127,14 @@ export function AdminCrudShell(props: {
 
   function openForm(row: Row | null) {
     setError('')
-    setValues(props.descriptor.toForm(row))
-    setEditing(props.descriptor.toForm(row))
+    const form = props.descriptor.toForm(row)
+    // reconcile replaces every key (and drops stale ones) in one diffed update.
+    setValues(reconcile(form))
+    setEditing(form)
   }
 
   function setField(name: string, value: FormValues[string]) {
-    setValues((current) => ({ ...current, [name]: value }))
+    setValues(name, value)
   }
 
   async function submit(event: SubmitEvent) {
@@ -136,7 +142,7 @@ export function AdminCrudShell(props: {
     setSaving(true)
     setError('')
     try {
-      await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload(values()))
+      await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload({ ...values }))
       await refreshAfterMutation()
       setEditing(null)
       flashNotice(m.admin_saved())
@@ -249,7 +255,7 @@ export function AdminCrudShell(props: {
             <Dialog.Content class="modal" aria-label={props.descriptor.title()}>
               <form class="stack-form" onSubmit={(event) => void submit(event)}>
                 <For each={props.descriptor.fields}>
-                  {(field) => <FieldControl field={field} values={values()} setField={setField} options={props.options} editing={editing() !== null && Number(values().id ?? 0) > 0} />}
+                  {(field) => <FieldControl field={field} values={values} setField={setField} options={props.options} editing={editing() !== null && Number(values.id ?? 0) > 0} />}
                 </For>
                 <div class="form-actions">
                   <button type="submit" class="primary-button" disabled={saving()}>

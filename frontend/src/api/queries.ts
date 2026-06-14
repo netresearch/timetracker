@@ -74,7 +74,7 @@ function optionSourceQuery(
     queryFn: () => getJson<OptionRow[]>(endpoint),
     select: (records: OptionRow[]): NamedOption[] =>
       records
-        .map((record) => record[rowKey])
+        .map((record) => record?.[rowKey])
         .filter((inner): inner is NonNullable<typeof inner> => inner != null)
         .map((inner) => ({ id: inner.id, label: String(inner[nameField] ?? '') })),
     staleTime: REFERENCE_STALE_TIME,
