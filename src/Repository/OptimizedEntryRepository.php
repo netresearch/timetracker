@@ -375,6 +375,10 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                     ->setParameter('year', $today->format('Y'))
                     ->setParameter('month', $today->format('m'));
                 break;
+
+            default:
+                // All Period cases are handled above; no filter for anything else.
+                break;
         }
     }
 

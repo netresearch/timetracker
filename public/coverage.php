@@ -158,6 +158,12 @@ function handleCoverageRequest(): void
             clearCoverageData();
             echo json_encode(['status' => 'cleared']);
             break;
+
+        default:
+            // Unreachable: $action is validated against the allow-list above.
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid action']);
+            break;
     }
 }
 

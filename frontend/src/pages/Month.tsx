@@ -99,6 +99,39 @@ function buildWeeks(days: DayRow[], today: Date): CalendarCell[][] {
   return weeks
 }
 
+/** Progress-bar fill for a day, clamped to 100%. */
+function fillPercent(day: DayRow): string {
+  return day.expected > 0 ? `${Math.min(100, (day.worked / day.expected) * 100)}%` : '100%'
+}
+
+/** One calendar day cell. Extracted from the grid so the table render doesn't
+ *  nest render closures (week → cell → day → switch) more than allowed. */
+function CalendarDayCell(props: { cell: CalendarCell; locale: string }) {
+  return (
+    <Show when={props.cell.day} fallback={<td class="cell-empty" />}>
+      {(day) => (
+        <td
+          class={`cell cell-${props.cell.category}`}
+          classList={{ 'cell-today': props.cell.isToday }}
+          aria-label={cellAriaLabel(day(), props.locale)}
+        >
+          <span class="cell-num">{day().date.getDate()}</span>
+          <Switch>
+            <Match when={day().holiday !== null && day().date.getDay() !== 0 && day().date.getDay() !== 6}>
+              <span class="cell-holiday">{day().holiday}</span>
+            </Match>
+            <Match when={props.cell.category !== 'off' && props.cell.category !== 'future'}>
+              <span class="cell-time">{formatMinutes(day().worked)}</span>
+              <span class="cell-delta">{formatMinutes(day().diff, true)}</span>
+              <span class="cell-bar" style={{ '--fill': fillPercent(day()) }} />
+            </Match>
+          </Switch>
+        </td>
+      )}
+    </Show>
+  )
+}
+
 export default function Month() {
   const config = appConfig()
   const [searchParams] = useSearchParams()
@@ -243,8 +276,8 @@ export default function Month() {
             type="button"
             class="action-button"
             onClick={() => {
-              void times.refetch()
-              void holidays.refetch()
+              times.refetch()
+              holidays.refetch()
             }}
           >
             {m.app_retry()}
@@ -271,36 +304,7 @@ export default function Month() {
                     {(week) => (
                       <tr>
                         <For each={week}>
-                          {(cell) => (
-                            <Show when={cell.day} fallback={<td class="cell-empty" />}>
-                              {(day) => (
-                                <td
-                                  class={`cell cell-${cell.category}`}
-                                  classList={{ 'cell-today': cell.isToday }}
-                                  aria-label={cellAriaLabel(day(), config.locale)}
-                                >
-                                  <span class="cell-num">{day().date.getDate()}</span>
-                                  <Switch>
-                                    <Match when={day().holiday !== null && day().date.getDay() !== 0 && day().date.getDay() !== 6}>
-                                      <span class="cell-holiday">{day().holiday}</span>
-                                    </Match>
-                                    <Match when={cell.category !== 'off' && cell.category !== 'future'}>
-                                      <span class="cell-time">{formatMinutes(day().worked)}</span>
-                                      <span class="cell-delta">{formatMinutes(day().diff, true)}</span>
-                                      <span
-                                        class="cell-bar"
-                                        style={{
-                                          '--fill': day().expected > 0
-                                            ? `${Math.min(100, (day().worked / day().expected) * 100)}%`
-                                            : '100%',
-                                        }}
-                                      />
-                                    </Match>
-                                  </Switch>
-                                </td>
-                              )}
-                            </Show>
-                          )}
+                          {(cell) => <CalendarDayCell cell={cell} locale={config.locale} />}
                         </For>
                       </tr>
                     )}

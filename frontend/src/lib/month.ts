@@ -76,6 +76,19 @@ function dayStatus(day: Pick<DayRow, 'holiday' | 'isFuture' | 'worked' | 'expect
   return 'danger'
 }
 
+/** Weekend label, holiday name, or null for a regular working day. */
+function resolveHoliday(date: Date, weekday: number, input: ComputeMonthInput): string | null {
+  if (weekday === 0) {
+    return input.weekendLabels.sunday
+  }
+
+  if (weekday === 6) {
+    return input.weekendLabels.saturday
+  }
+
+  return input.holidays.get(isoDateKey(date)) ?? null
+}
+
 export function computeMonth(input: ComputeMonthInput): { days: DayRow[]; sum: MonthSummary } {
   const minutesByDay = new Map<string, number>()
   const sum: MonthSummary = { worked: 0, expected: 0, expectedUntilToday: 0, diff: 0, diffUntilToday: 0 }
@@ -91,12 +104,7 @@ export function computeMonth(input: ComputeMonthInput): { days: DayRow[]; sum: M
 
   while (cursor.getMonth() === input.month - 1) {
     const weekday = cursor.getDay()
-    const holiday
-      = weekday === 0
-        ? input.weekendLabels.sunday
-        : weekday === 6
-          ? input.weekendLabels.saturday
-          : (input.holidays.get(isoDateKey(cursor)) ?? null)
+    const holiday = resolveHoliday(cursor, weekday, input)
 
     const expected = holiday !== null ? 0 : input.hoursPerWeekday(weekday) * 60
     const worked = minutesByDay.get(shortDateKey(cursor)) ?? 0

@@ -1128,6 +1128,10 @@ class EntryRepository extends ServiceEntityRepository
                     ->setParameter('startOfMonth', $startOfMonth)
                     ->setParameter('endOfMonth', $endOfMonth);
                 break;
+
+            default:
+                // All Period cases are handled above; no filter for anything else.
+                break;
         }
     }
 
