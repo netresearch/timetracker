@@ -131,9 +131,9 @@ export default function Auswertung() {
     setFilters(next)
     setApplied(next)
   }
-  // Highlight whichever preset matches the applied range (clears on manual edit).
+  // Highlight whichever preset matches the current range (clears on manual edit).
   const activePreset = createMemo(() => {
-    const current = applied()
+    const current = filters()
 
     return RANGE_PRESETS.find((preset) => {
       const [start, end] = preset.range()
