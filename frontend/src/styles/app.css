@@ -569,9 +569,11 @@ main {
   font-weight: 600;
 }
 
+/* All text-like inputs, selects and textareas in a field share the same
+   recognisable box (checkboxes/radios keep their native look in .field-check). */
+.field input:not([type='checkbox']):not([type='radio']),
 .field select,
-.field input[type='date'],
-.field input[type='time'] {
+.field textarea {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -579,6 +581,20 @@ main {
   font: inherit;
   min-height: 44px;
   padding: 0 0.6rem;
+}
+
+.field textarea {
+  min-height: 5rem;
+  padding: 0.5rem 0.6rem;
+  resize: vertical;
+}
+
+.field input:not([type='checkbox']):not([type='radio']):focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
 }
 
 .field-row {
