@@ -48,7 +48,12 @@ final class ExportAction extends BaseController
     /**
      * @throws InvalidArgumentException When export parameters are invalid or file operations fail
      */
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    // Controlling exports any user's entries via ?userid=, so the route must be
+    // restricted to the roles that may see other people's data. Both PL and
+    // ADMIN carry ROLE_ADMIN (DEV/USER do not), which is exactly the frontend's
+    // canBill() gate (ROLE_PL || ROLE_ADMIN); enforcing it here closes the IDOR
+    // a plain IS_AUTHENTICATED_FULLY left open.
+    #[IsGranted('ROLE_ADMIN')]
     #[Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0], methods: ['GET'])]
     public function __invoke(Request $request): Response

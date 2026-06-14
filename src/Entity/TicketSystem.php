@@ -85,6 +85,23 @@ class TicketSystem extends Base
     protected ?string $oauthConsumerSecret = null;
 
     /**
+     * Credential fields that must never leave the server. They are needed only
+     * server-side, so both the list endpoint (GetTicketSystemsAction) and the
+     * save response (SaveTicketSystemAction) strip them. Base::toArray() emits
+     * each protected property in both camelCase and snake_case, so both
+     * spellings are listed here.
+     *
+     * @var list<string>
+     */
+    public const array SECRET_KEYS = [
+        'password',
+        'publicKey', 'public_key',
+        'privateKey', 'private_key',
+        'oauthConsumerKey', 'oauth_consumer_key',
+        'oauthConsumerSecret', 'oauth_consumer_secret',
+    ];
+
+    /**
      * Get id.
      *
      * @return int
@@ -312,5 +329,21 @@ class TicketSystem extends Base
         $this->oauthConsumerSecret = $oauthConsumerSecret;
 
         return $this;
+    }
+
+    /**
+     * toArray() without the secret credential fields — the only shape that may
+     * be sent to a client.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSafeArray(): array
+    {
+        $data = $this->toArray();
+        foreach (self::SECRET_KEYS as $secretKey) {
+            unset($data[$secretKey]);
+        }
+
+        return $data;
     }
 }

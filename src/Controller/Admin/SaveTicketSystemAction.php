@@ -126,6 +126,9 @@ final class SaveTicketSystemAction extends BaseController
             return $response;
         }
 
-        return new JsonResponse($ticketSystem->toArray());
+        // Strip the secret credentials the list endpoint also withholds — the
+        // save response must not echo password/keys/OAuth secrets back to the
+        // browser (they were just persisted server-side).
+        return new JsonResponse($ticketSystem->toSafeArray());
     }
 }
