@@ -28,6 +28,8 @@
   "month_working_days": "{count} working days",
   "month_saturday": "Saturday",
   "month_sunday": "Sunday",
+  "month_cell_off": "{date}: {label}",
+  "month_cell_working": "{date}: worked {worked} of {expected}, balance {diff}",
   "settings_title": "Settings",
   "settings_language": "Language",
   "settings_show_empty_line": "Always show an empty line",

@@ -28,6 +28,8 @@
   "month_working_days": "{count} Arbeitstage",
   "month_saturday": "Samstag",
   "month_sunday": "Sonntag",
+  "month_cell_off": "{date}: {label}",
+  "month_cell_working": "{date}: {worked} von {expected} gearbeitet, Saldo {diff}",
   "settings_title": "Einstellungen",
   "settings_language": "Sprache",
   "settings_show_empty_line": "Immer leere Zeile anzeigen",
