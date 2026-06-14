@@ -1,7 +1,7 @@
 # Netresearch TimeTracker
 
 [![PHP Version](https://img.shields.io/badge/php-8.5-blue.svg)](https://www.php.net)
-[![Symfony](https://img.shields.io/badge/symfony-8.0-green.svg)](https://symfony.com)
+[![Symfony](https://img.shields.io/badge/symfony-8-green.svg)](https://symfony.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-red.svg)](LICENSE)
 [![CI Status](https://github.com/netresearch/timetracker/workflows/CI/badge.svg)](https://github.com/netresearch/timetracker/actions)
 [![codecov](https://codecov.io/gh/netresearch/timetracker/graph/badge.svg)](https://codecov.io/gh/netresearch/timetracker)

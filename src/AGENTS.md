@@ -4,14 +4,14 @@
 
 ## Overview
 
-Symfony 7.3 application code: controllers, services, entities, repositories, security, and commands.
+Symfony 8 application code: controllers, services, entities, repositories, security, and commands.
 Uses Doctrine ORM 3, Twig templating, and PSR-12 coding standards.
 
 ## Setup & environment
 
 - Install: `composer install`
-- PHP version: 8.4
-- Framework: Symfony 7.3
+- PHP version: 8.5
+- Framework: Symfony 8
 - Required extensions: `ldap`, `pdo_mysql`, `mbstring`, `json`, `intl`
 - Environment: Copy `.env` to `.env.local` and configure `DATABASE_URL`, `LDAP_*`
 
