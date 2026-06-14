@@ -854,8 +854,16 @@ kbd {
 }
 
 .th-sort-glyph {
-  color: var(--color-accent);
+  color: var(--color-text-muted);
   font-size: 0.7rem;
+  opacity: 0.55;
+}
+
+/* The actively-sorted column's direction glyph is emphasised. */
+th[aria-sort='ascending'] .th-sort-glyph,
+th[aria-sort='descending'] .th-sort-glyph {
+  color: var(--color-accent);
+  opacity: 1;
 }
 
 /* ---- Admin ---- */

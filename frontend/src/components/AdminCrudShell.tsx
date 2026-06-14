@@ -1,5 +1,5 @@
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
-import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js'
+import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
 
 import { ApiError, getJson, postJson } from '../api/client'
 import { m } from '../paraglide/messages.js'
@@ -28,6 +28,15 @@ export function AdminCrudShell(props: {
   const [values, setValues] = createSignal<FormValues>({})
   const [error, setError] = createSignal('')
   const [saving, setSaving] = createSignal(false)
+  // Transient success confirmation (save/delete) shown in the toolbar.
+  const [notice, setNotice] = createSignal('')
+  let noticeTimer: ReturnType<typeof setTimeout> | undefined
+  function flashNotice(message: string) {
+    setNotice(message)
+    clearTimeout(noticeTimer)
+    noticeTimer = setTimeout(() => setNotice(''), 3000)
+  }
+  onCleanup(() => clearTimeout(noticeTimer))
 
   // List payloads are row-wrapped ({customer:{…}}, {user:{…}}, …). Unwrap by the
   // descriptor's rowKey and drop any row whose wrapper is missing or null —
@@ -61,10 +70,12 @@ export function AdminCrudShell(props: {
     return current?.key === key ? (current.dir === 'asc' ? 'ascending' : 'descending') : 'none'
   }
 
+  // Active column shows its direction; the rest show a dim neutral cue so
+  // sortability is discoverable at rest (incl. on touch, where there's no hover).
   const sortGlyph = (key: string): string => {
     const current = sort()
 
-    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : ''
+    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : '⇅'
   }
 
   // Decorate each row with its full-text haystack ONCE per data/columns/options
@@ -113,6 +124,7 @@ export function AdminCrudShell(props: {
       await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload(values()))
       await queryClient.invalidateQueries({ queryKey: listKey() })
       setEditing(null)
+      flashNotice(m.admin_saved())
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : m.app_load_error())
     } finally {
@@ -127,6 +139,7 @@ export function AdminCrudShell(props: {
     try {
       await postJson(props.descriptor.deleteEndpoint, { id: row.id })
       await queryClient.invalidateQueries({ queryKey: listKey() })
+      flashNotice(m.admin_deleted())
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : m.app_load_error())
     }
@@ -140,6 +153,9 @@ export function AdminCrudShell(props: {
         </button>
         <Show when={error()}>
           <span role="alert" class="form-status is-error">{error()}</span>
+        </Show>
+        <Show when={notice()}>
+          <span role="status" class="form-status is-ok">{notice()}</span>
         </Show>
         <input
           type="search"
@@ -196,6 +212,9 @@ export function AdminCrudShell(props: {
         </div>
         <Show when={filter().trim() !== '' && visibleRows().length === 0}>
           <p role="status" class="effort-empty admin-no-matches">{m.admin_no_matches()}</p>
+        </Show>
+        <Show when={filter().trim() === '' && !list.isPending && visibleRows().length === 0}>
+          <p class="effort-empty admin-no-matches">{m.admin_empty()}</p>
         </Show>
       </Show>
 
