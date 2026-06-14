@@ -19,11 +19,8 @@ import { EffortChart, type EffortRow } from '../components/EffortChart'
 import { OptionSelect } from '../components/OptionSelect'
 import { QueryBoundary } from '../components/QueryBoundary'
 import { appConfig } from '../config'
+import { isoDate } from '../lib/format'
 import { m } from '../paraglide/messages.js'
-
-function isoDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
 
 function defaultFilters(userId: number): InterpretationFilters {
   const now = new Date()

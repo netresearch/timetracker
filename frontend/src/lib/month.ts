@@ -1,6 +1,8 @@
 // Pure month-report calculation, ported from timetracker-ui's Month.vue
 // (analyze()). Kept framework-free so it is unit-testable in isolation.
 
+import { isoDate, pad2 } from './format'
+
 export type DayStatus = 'none' | 'success' | 'warning' | 'danger'
 
 export interface DayRow {
@@ -39,10 +41,6 @@ export interface ComputeMonthInput {
   weekendLabels: { saturday: string; sunday: string }
 }
 
-function pad2(value: number): string {
-  return String(value).padStart(2, '0')
-}
-
 /** Key format used by /interpretation/time records: 'yy-mm-dd'. */
 function shortDateKey(date: Date): string {
   return `${pad2(date.getFullYear() % 100)}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
@@ -50,7 +48,7 @@ function shortDateKey(date: Date): string {
 
 /** Key format used by /getHolidays records: 'YYYY-MM-DD'. */
 function isoDateKey(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+  return isoDate(date)
 }
 
 function isAfterDay(date: Date, reference: Date): boolean {

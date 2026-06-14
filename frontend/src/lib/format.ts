@@ -1,5 +1,10 @@
-function pad2(value: number): string {
+export function pad2(value: number): string {
   return String(value).padStart(2, '0')
+}
+
+/** Local calendar date as 'YYYY-MM-DD' (no timezone shift, unlike toISOString). */
+export function isoDate(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 }
 
 /** Formats minutes as '[+|-]HH:MM'; the sign is shown for negatives always, for positives on request. */
