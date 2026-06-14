@@ -84,6 +84,23 @@ describe('Auswertung', () => {
     unmount()
   })
 
+  it('applies a date-range preset immediately and marks it active', async () => {
+    mockEndpoints()
+    const { getByRole, unmount } = renderPage()
+    await waitFor(() => expect(getByRole('rowheader', { name: 'ACME' })).toBeInTheDocument())
+
+    getJson.mockClear()
+    fireEvent.click(getByRole('button', { name: 'Last year' }))
+
+    const y = new Date().getFullYear() - 1
+    await waitFor(() =>
+      expect(getJson).toHaveBeenCalledWith('/interpretation/customer', expect.objectContaining({ datestart: `${y}-01-01`, dateend: `${y}-12-31` })),
+    )
+    expect(getByRole('button', { name: 'Last year' })).toHaveAttribute('aria-pressed', 'true')
+
+    unmount()
+  })
+
   it('has no automatically detectable accessibility violations', async () => {
     mockEndpoints()
     const { container, getByRole, unmount } = renderPage()
