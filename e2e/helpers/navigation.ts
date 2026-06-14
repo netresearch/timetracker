@@ -48,10 +48,10 @@ export async function goToTab(page: Page, tabName: RegExp | string): Promise<voi
  * into it — the control is hidden otherwise).
  */
 export async function openMoreMenu(page: Page): Promise<void> {
-  const button = page.locator('#nav-more-btn');
-  if ((await button.getAttribute('aria-expanded')) !== 'true') {
-    await button.click();
-  }
+  // Hover opens the menu (mouse semantics). A real click would move the pointer
+  // onto the button first — firing the hover-open — and then toggle it back shut,
+  // so hovering is the reliable way to open it.
+  await page.locator('#nav-more-btn').hover();
   await page.locator('#nav-more-menu').waitFor({ state: 'visible' });
 }
 

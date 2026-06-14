@@ -73,7 +73,7 @@
                     {{ 'More'|trans }}
                     <svg class="nav-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
-                <div class="nav-more-menu" id="nav-more-menu" role="menu" aria-label="{{ 'More'|trans }}" hidden></div>
+                <div class="nav-more-menu" id="nav-more-menu" aria-label="{{ 'More'|trans }}" hidden></div>
             </div>
         </nav>
 
@@ -108,9 +108,9 @@
         </div>
 
         <div class="header-account">
-            <span id="user-badge" class="user-badge status_active" role="status" aria-live="polite" aria-label="{{ 'User status'|trans }}">
+            <span id="user-badge" class="user-badge js-user-badge status_active" role="status" aria-live="polite" aria-label="{{ 'User status'|trans }}">
                 <span class="status-indicator" aria-hidden="true"></span>
-                <span class="user-name">{{ settings.user_name }}</span>
+                <span class="user-name js-user-name">{{ settings.user_name }}</span>
             </span>
             <a href="{{ url('_logout') }}" class="badge-logout" aria-label="{{ 'Logout'|trans }}">{{ 'Logout'|trans }}</a>
         </div>
@@ -144,8 +144,8 @@
             <a class="drawer-link{% if active == 'help' %} is-active{% endif %}" data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}">{{ 'Help'|trans }}</a>
         </nav>
         <div class="drawer-foot">
-            <span class="drawer-user"><span class="status-indicator" aria-hidden="true"></span>{{ settings.user_name }}</span>
-            <a href="{{ url('_logout') }}" class="badge-logout">{{ 'Logout'|trans }}</a>
+            <span class="drawer-user js-user-badge status_active"><span class="status-indicator" aria-hidden="true"></span><span class="user-name js-user-name">{{ settings.user_name }}</span></span>
+            <a href="{{ url('_logout') }}" class="drawer-logout" aria-label="{{ 'Logout'|trans }}">{{ 'Logout'|trans }}</a>
         </div>
     </div>
 </div>

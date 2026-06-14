@@ -37,17 +37,15 @@ function setText(id: string, text: string): void {
 }
 
 function setBadge(loggedIn: boolean, userName: string): void {
-  const badge = document.getElementById('user-badge')
-  if (badge === null) {
-    return
-  }
-
-  badge.classList.toggle('status_active', loggedIn)
-  badge.classList.toggle('status_inactive', !loggedIn)
-  const name = badge.querySelector('.user-name')
-  if (name !== null) {
-    name.textContent = userName
-  }
+  // Update every user badge (desktop header + mobile drawer share .js-user-badge).
+  document.querySelectorAll('.js-user-badge').forEach((badge) => {
+    badge.classList.toggle('status_active', loggedIn)
+    badge.classList.toggle('status_inactive', !loggedIn)
+    const name = badge.querySelector('.js-user-name')
+    if (name !== null) {
+      name.textContent = userName
+    }
+  })
 }
 
 async function updateWorktime(): Promise<void> {

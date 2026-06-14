@@ -372,7 +372,7 @@
     color: light-dark(#333, #e6e9ec);
 }
 
-.user-badge.status_active .status-indicator {
+.js-user-badge.status_active .status-indicator {
     background-color: #22c55e;
     box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
 }
@@ -382,11 +382,13 @@
     color: light-dark(#444, #e6e9ec);
 }
 
-.user-badge.status_inactive .status-indicator {
+.js-user-badge.status_inactive .status-indicator {
     background-color: #9ca3af;
+    box-shadow: none;
 }
 
-.badge-logout {
+.badge-logout,
+.drawer-logout {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -400,13 +402,16 @@
 }
 
 .badge-logout:hover,
-.badge-logout:focus-visible {
+.badge-logout:focus-visible,
+.drawer-logout:hover,
+.drawer-logout:focus-visible {
     background-color: light-dark(#cfbdbd, #4a2a2c);
     border-color: light-dark(#B00000, #e0888c);
     color: light-dark(#8F0000, #f5bdc0);
 }
 
-.badge-logout:focus-visible {
+.badge-logout:focus-visible,
+.drawer-logout:focus-visible {
     outline: 2px solid #00889A;
     outline-offset: 1px;
 }
@@ -489,7 +494,15 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: #22c55e;
+}
+
+/* ExtJS shell only: the shared header is adopted into a fixed-height Viewport
+   "north" region (#header / #header-body) whose default overflow clips the
+   "More" dropdown and the mobile drawer. Let them paint outside the region.
+   (These IDs don't exist on the SolidJS /ui shell, so this is a no-op there.) */
+#header,
+#header-body {
+    overflow: visible !important;
 }
 
 /* External Navigation iFrame */

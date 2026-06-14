@@ -73,8 +73,7 @@
                 closeTimer = setTimeout(closeMore, CLOSE_DELAY_MS);
             };
 
-            moreBtn.addEventListener('click', function (event) {
-                event.stopPropagation();
+            moreBtn.addEventListener('click', function () {
                 cancelClose();
                 var open = moreBtn.getAttribute('aria-expanded') === 'true';
                 if (!open) {
@@ -105,8 +104,7 @@
 
         if (burger !== null && drawer !== null) {
             burger.setAttribute('data-label-open', burger.getAttribute('aria-label') || 'Open menu');
-            burger.addEventListener('click', function (event) {
-                event.stopPropagation();
+            burger.addEventListener('click', function () {
                 var open = burger.getAttribute('aria-expanded') === 'true';
                 if (!open) {
                     closeMore();
@@ -170,7 +168,6 @@
                     nav.insertBefore(link, moreWrap);
                 }
                 link.classList.remove('nav-menu-item');
-                link.removeAttribute('role');
                 var spacer = link.querySelector('.is-auto-spacer');
                 if (spacer) {
                     spacer.remove();
@@ -188,7 +185,6 @@
 
         function pushToMenu(link) {
             link.classList.add('nav-menu-item');
-            link.setAttribute('role', 'menuitem');
             if (!link.querySelector('.nav-menu-ico')) {
                 var spacer = document.createElement('span');
                 spacer.className = 'nav-menu-ico is-auto-spacer';
