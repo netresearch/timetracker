@@ -6,6 +6,8 @@ import {
   groupQuery,
   hasInterpretationCriteria,
   type InterpretationFilters,
+  optionSourceKey,
+  ticketSystemsQuery,
   usersQuery,
 } from './queries'
 
@@ -68,5 +70,15 @@ describe('option-source select', () => {
 
   it('gives reference sources a long staleTime', () => {
     expect(customersQuery().staleTime).toBeGreaterThanOrEqual(60_000)
+  })
+
+  // AdminCrudShell invalidates optionSourceKey(descriptor.key) after a save so
+  // dropdowns/relation columns refresh. That only works if the key derived from
+  // the admin entity key matches the key the option-source query actually uses.
+  it('derives the same key the option-source query registers', () => {
+    expect(optionSourceKey('customers')).toEqual(['all-customers'])
+    expect(customersQuery().queryKey).toEqual(optionSourceKey('customers'))
+    expect(usersQuery().queryKey).toEqual(optionSourceKey('users'))
+    expect(ticketSystemsQuery().queryKey).toEqual(optionSourceKey('ticketsystems'))
   })
 })

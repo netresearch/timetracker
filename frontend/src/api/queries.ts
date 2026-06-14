@@ -50,16 +50,27 @@ export interface NamedOption {
 // refetching on every window refocus.
 const REFERENCE_STALE_TIME = 5 * 60_000
 
+/**
+ * Cache key for an entity's reference/option source. The admin grid caches the
+ * same endpoint under ['admin-list', entity]; the dropdowns and relation
+ * columns read from this separate ['all-<entity>'] cache, so a mutation must
+ * invalidate both (see AdminCrudShell). The entity name matches the admin
+ * EntityDescriptor.key, which is why a save can derive this key.
+ */
+export function optionSourceKey(entity: string): readonly [string] {
+  return [`all-${entity}`] as const
+}
+
 type OptionRow = Record<string, { id: number; name?: string; username?: string }>
 
 function optionSourceQuery(
-  key: string,
+  entity: string,
   endpoint: string,
   rowKey: string,
   nameField: 'name' | 'username' = 'name',
 ) {
   return () => ({
-    queryKey: [key] as const,
+    queryKey: optionSourceKey(entity),
     queryFn: () => getJson<OptionRow[]>(endpoint),
     select: (records: OptionRow[]): NamedOption[] =>
       records
@@ -70,13 +81,13 @@ function optionSourceQuery(
   })
 }
 
-export const usersQuery = optionSourceQuery('all-users', '/getAllUsers', 'user', 'username')
-export const projectsQuery = optionSourceQuery('all-projects', '/getAllProjects', 'project')
-export const customersQuery = optionSourceQuery('all-customers', '/getAllCustomers', 'customer')
-export const presetsQuery = optionSourceQuery('all-presets', '/getAllPresets', 'preset')
-export const teamsQuery = optionSourceQuery('all-teams', '/getAllTeams', 'team')
-export const ticketSystemsQuery = optionSourceQuery('all-ticketsystems', '/getTicketSystems', 'ticketSystem')
-export const activitiesQuery = optionSourceQuery('all-activities', '/getActivities', 'activity')
+export const usersQuery = optionSourceQuery('users', '/getAllUsers', 'user', 'username')
+export const projectsQuery = optionSourceQuery('projects', '/getAllProjects', 'project')
+export const customersQuery = optionSourceQuery('customers', '/getAllCustomers', 'customer')
+export const presetsQuery = optionSourceQuery('presets', '/getAllPresets', 'preset')
+export const teamsQuery = optionSourceQuery('teams', '/getAllTeams', 'team')
+export const ticketSystemsQuery = optionSourceQuery('ticketsystems', '/getTicketSystems', 'ticketSystem')
+export const activitiesQuery = optionSourceQuery('activities', '/getActivities', 'activity')
 
 /** Shared filter shape for every interpretation view. */
 export interface InterpretationFilters {

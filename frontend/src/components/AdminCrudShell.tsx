@@ -4,6 +4,7 @@ import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 's
 import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
+import { optionSourceKey } from '../api/queries'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -25,6 +26,18 @@ export function AdminCrudShell(props: {
     queryKey: listKey(),
     queryFn: () => getJson<Row[]>(props.descriptor.listEndpoint),
   }))
+
+  // A save/delete changes both this grid's rows and the shared option source
+  // that other entities resolve relation labels from and that every edit-form
+  // dropdown reads. The grid and the option source are separate caches of the
+  // same endpoint (['admin-list', key] vs ['all-<key>']), so invalidate both —
+  // otherwise cross-entity columns and dropdowns keep showing stale labels.
+  async function refreshAfterMutation() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: listKey() }),
+      queryClient.invalidateQueries({ queryKey: optionSourceKey(props.descriptor.key) }),
+    ])
+  }
 
   const [editing, setEditing] = createSignal<FormValues | null>(null)
   const [values, setValues] = createSignal<FormValues>({})
@@ -124,7 +137,7 @@ export function AdminCrudShell(props: {
     setError('')
     try {
       await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload(values()))
-      await queryClient.invalidateQueries({ queryKey: listKey() })
+      await refreshAfterMutation()
       setEditing(null)
       flashNotice(m.admin_saved())
     } catch (caught) {
@@ -140,7 +153,7 @@ export function AdminCrudShell(props: {
     }
     try {
       await postJson(props.descriptor.deleteEndpoint, { id: row.id })
-      await queryClient.invalidateQueries({ queryKey: listKey() })
+      await refreshAfterMutation()
       flashNotice(m.admin_deleted())
     } catch (caught) {
       setError(apiErrorMessage(caught, m.app_load_error()))
