@@ -67,26 +67,32 @@ export function AdminCrudShell(props: {
     return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : ''
   }
 
+  // Decorate each row with its full-text haystack ONCE per data/columns/options
+  // change — not per keystroke. Filtering then only runs `.includes` on these
+  // precomputed strings, so typing in the filter box stays cheap on big lists.
+  const decorated = createMemo(() => {
+    const columns = props.descriptor.columns
+
+    return rows().map((row) => ({
+      row,
+      haystack: columns.map((col) => cellText(row, col)).join(' ').toLowerCase(),
+    }))
+  })
+
   const visibleRows = createMemo<Row[]>(() => {
     const current = sort()
     const query = filter().trim().toLowerCase()
-    const columns = props.descriptor.columns
-    const sortCol = current && columns.find((c) => c.key === current.key)
-    // Compute the visible text per row once here (in the tracked memo): a
-    // haystack for the free-text filter and the active column's sort key. The
-    // filter/sort callbacks then work on plain strings only.
-    const decorated = rows().map((row) => ({
-      row,
-      haystack: query === '' ? '' : columns.map((col) => cellText(row, col)).join('').toLowerCase(),
-      sortKey: sortCol ? cellText(row, sortCol) : '',
-    }))
-    const filtered = query === '' ? decorated : decorated.filter((entry) => entry.haystack.includes(query))
-    if (current && sortCol) {
-      const factor = current.dir === 'asc' ? 1 : -1
-      filtered.sort((a, b) => factor * a.sortKey.localeCompare(b.sortKey, undefined, { numeric: true }))
+    const matched = query === '' ? decorated() : decorated().filter((entry) => entry.haystack.includes(query))
+    const sortCol = current && props.descriptor.columns.find((c) => c.key === current.key)
+    if (!current || !sortCol) {
+      return matched.map((entry) => entry.row)
     }
+    const factor = current.dir === 'asc' ? 1 : -1
 
-    return filtered.map((entry) => entry.row)
+    return matched
+      .map((entry) => ({ row: entry.row, key: cellText(entry.row, sortCol) }))
+      .sort((a, b) => factor * a.key.localeCompare(b.key, undefined, { numeric: true }))
+      .map((entry) => entry.row)
   })
 
   function openForm(row: Row | null) {

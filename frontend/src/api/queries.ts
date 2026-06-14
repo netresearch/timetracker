@@ -39,99 +39,44 @@ export function holidaysQuery(year: number, month: number) {
   }
 }
 
-// Dropdown sources for the billing form — all ExtJS-style row-wrapped.
-export interface UserRecord {
-  user: { id: number; username: string }
-}
-export interface ProjectRecord {
-  project: { id: number; name: string }
-}
-export interface CustomerRecord {
-  customer: { id: number; name: string }
-}
-export interface PresetRecord {
-  preset: { id: number; name: string }
-}
-
 export interface NamedOption {
   id: number
   label: string
 }
 
-export function usersQuery() {
-  return {
-    queryKey: ['all-users'] as const,
-    queryFn: () => getJson<UserRecord[]>('/getAllUsers'),
-    select: (records: UserRecord[]): NamedOption[] =>
-      records.map((r) => ({ id: r.user.id, label: r.user.username })),
-  }
+// Reference dropdown sources (customers/projects/users/teams/presets/ticket
+// systems/activities) are ExtJS-style row-wrapped ([{<rowKey>: {id, name}}])
+// and rarely change within a session, so they share a long staleTime to avoid
+// refetching on every window refocus.
+const REFERENCE_STALE_TIME = 5 * 60_000
+
+type OptionRow = Record<string, { id: number; name?: string; username?: string }>
+
+function optionSourceQuery(
+  key: string,
+  endpoint: string,
+  rowKey: string,
+  nameField: 'name' | 'username' = 'name',
+) {
+  return () => ({
+    queryKey: [key] as const,
+    queryFn: () => getJson<OptionRow[]>(endpoint),
+    select: (records: OptionRow[]): NamedOption[] =>
+      records
+        .map((record) => record[rowKey])
+        .filter((inner): inner is NonNullable<typeof inner> => inner != null)
+        .map((inner) => ({ id: inner.id, label: String(inner[nameField] ?? '') })),
+    staleTime: REFERENCE_STALE_TIME,
+  })
 }
 
-export function projectsQuery() {
-  return {
-    queryKey: ['all-projects'] as const,
-    queryFn: () => getJson<ProjectRecord[]>('/getAllProjects'),
-    select: (records: ProjectRecord[]): NamedOption[] =>
-      records.map((r) => ({ id: r.project.id, label: r.project.name })),
-  }
-}
-
-export function customersQuery() {
-  return {
-    queryKey: ['all-customers'] as const,
-    queryFn: () => getJson<CustomerRecord[]>('/getAllCustomers'),
-    select: (records: CustomerRecord[]): NamedOption[] =>
-      records.map((r) => ({ id: r.customer.id, label: r.customer.name })),
-  }
-}
-
-export function presetsQuery() {
-  return {
-    queryKey: ['all-presets'] as const,
-    queryFn: () => getJson<PresetRecord[]>('/getAllPresets'),
-    select: (records: PresetRecord[]): NamedOption[] =>
-      records.map((r) => ({ id: r.preset.id, label: r.preset.name })),
-  }
-}
-
-// --- Shared option sources (Interpretation/Auswertung + Administration) ---
-
-export interface TeamRecord {
-  team: { id: number; name: string }
-}
-export interface ActivityRecord {
-  activity: { id: number; name: string }
-}
-export interface TicketSystemRecord {
-  ticketSystem: { id: number; name: string }
-}
-
-export function ticketSystemsQuery() {
-  return {
-    queryKey: ['all-ticketsystems'] as const,
-    queryFn: () => getJson<TicketSystemRecord[]>('/getTicketSystems'),
-    select: (records: TicketSystemRecord[]): NamedOption[] =>
-      records.map((r) => ({ id: r.ticketSystem.id, label: r.ticketSystem.name })),
-  }
-}
-
-export function teamsQuery() {
-  return {
-    queryKey: ['all-teams'] as const,
-    queryFn: () => getJson<TeamRecord[]>('/getAllTeams'),
-    select: (records: TeamRecord[]): NamedOption[] =>
-      records.map((r) => ({ id: r.team.id, label: r.team.name })),
-  }
-}
-
-export function activitiesQuery() {
-  return {
-    queryKey: ['all-activities'] as const,
-    queryFn: () => getJson<ActivityRecord[]>('/getActivities'),
-    select: (records: ActivityRecord[]): NamedOption[] =>
-      records.map((r) => ({ id: r.activity.id, label: r.activity.name })),
-  }
-}
+export const usersQuery = optionSourceQuery('all-users', '/getAllUsers', 'user', 'username')
+export const projectsQuery = optionSourceQuery('all-projects', '/getAllProjects', 'project')
+export const customersQuery = optionSourceQuery('all-customers', '/getAllCustomers', 'customer')
+export const presetsQuery = optionSourceQuery('all-presets', '/getAllPresets', 'preset')
+export const teamsQuery = optionSourceQuery('all-teams', '/getAllTeams', 'team')
+export const ticketSystemsQuery = optionSourceQuery('all-ticketsystems', '/getTicketSystems', 'ticketSystem')
+export const activitiesQuery = optionSourceQuery('all-activities', '/getActivities', 'activity')
 
 /** Shared filter shape for every interpretation view. */
 export interface InterpretationFilters {
@@ -179,17 +124,24 @@ function filterParams(filters: InterpretationFilters): Record<string, string | n
 }
 
 export function groupQuery(group: InterpretationGroup, filters: InterpretationFilters) {
+  // Key on the normalized request (filterParams drops zero/empty/irrelevant
+  // fields) so filter changes that don't alter the actual request reuse the
+  // cache instead of refetching all seven interpretation queries.
+  const params = filterParams(filters)
+
   return {
-    queryKey: ['interpretation', group, filters] as const,
-    queryFn: () => getJson<GroupRow[]>(`/interpretation/${group}`, filterParams(filters)),
+    queryKey: ['interpretation', group, params] as const,
+    queryFn: () => getJson<GroupRow[]>(`/interpretation/${group}`, params),
     enabled: hasInterpretationCriteria(filters),
   }
 }
 
 export function timeSeriesQuery(filters: InterpretationFilters) {
+  const params = filterParams(filters)
+
   return {
-    queryKey: ['interpretation', 'time', filters] as const,
-    queryFn: () => getJson<WorktimeRecord[]>('/interpretation/time', filterParams(filters)),
+    queryKey: ['interpretation', 'time', params] as const,
+    queryFn: () => getJson<WorktimeRecord[]>('/interpretation/time', params),
     enabled: hasInterpretationCriteria(filters),
   }
 }
@@ -211,9 +163,11 @@ export interface EntryRecord {
 }
 
 export function lastEntriesQuery(filters: InterpretationFilters) {
+  const params = filterParams(filters)
+
   return {
-    queryKey: ['interpretation', 'entries', filters] as const,
-    queryFn: () => getJson<EntryRecord[]>('/interpretation/entries', filterParams(filters)),
+    queryKey: ['interpretation', 'entries', params] as const,
+    queryFn: () => getJson<EntryRecord[]>('/interpretation/entries', params),
     enabled: hasInterpretationCriteria(filters),
   }
 }
