@@ -1,11 +1,11 @@
 import { A, useSearchParams } from '@solidjs/router'
-import { useQuery } from '@tanstack/solid-query'
+import { useQueries, useQuery } from '@tanstack/solid-query'
 import { createMemo, For, Index, Match, Show, Switch } from 'solid-js'
 
-import { holidaysQuery, monthTimesQuery } from '../api/queries'
+import { holidaysQuery, type HolidayRecord, monthTimesQuery, type WorktimeRecord } from '../api/queries'
 import { appConfig } from '../config'
-import { formatDay, formatMinutes, formatMonthTitle } from '../lib/format'
-import { computeMonth, type DayRow } from '../lib/month'
+import { formatDay, formatMinutes, formatMonthTitle, isoDate } from '../lib/format'
+import { computeMonth, type DayRow, isoWeek, type MonthSummary, summarize } from '../lib/month'
 import { hoursPerWeekday } from '../lib/settings'
 import { m } from '../paraglide/messages.js'
 
@@ -16,11 +16,19 @@ interface MonthTarget {
 }
 
 type DayCategory = 'ok' | 'over' | 'warn' | 'bad' | 'off' | 'future' | 'empty'
+type Scope = 'month' | 'year' | 'selection'
 
 interface CalendarCell {
   day: DayRow | null
   category: DayCategory
   isToday: boolean
+}
+
+interface CalendarWeek {
+  week: number
+  cells: CalendarCell[]
+  /** ISO keys of this week's real (in-month) days. */
+  dayKeys: string[]
 }
 
 function monthHref(year: number, month: number): string {
@@ -75,8 +83,9 @@ function cellAriaLabel(day: DayRow, locale: string): string {
   })
 }
 
-/** Calendar weeks (Mon-Sun), padded with empty cells around the month. */
-function buildWeeks(days: DayRow[], today: Date): CalendarCell[][] {
+/** Calendar weeks (Mon-Sun), padded with empty cells around the month, each
+ *  tagged with its ISO week number and the keys of its real days. */
+function buildWeeks(days: DayRow[], today: Date): CalendarWeek[] {
   const cells: CalendarCell[] = []
   const firstWeekday = days[0] ? (days[0].date.getDay() + 6) % 7 : 0
   for (let i = 0; i < firstWeekday; i++) {
@@ -91,9 +100,15 @@ function buildWeeks(days: DayRow[], today: Date): CalendarCell[][] {
     cells.push({ day: null, category: 'empty', isToday: false })
   }
 
-  const weeks: CalendarCell[][] = []
+  const weeks: CalendarWeek[] = []
   for (let i = 0; i < cells.length; i += 7) {
-    weeks.push(cells.slice(i, i + 7))
+    const slice = cells.slice(i, i + 7)
+    const realDay = slice.find((cell) => cell.day)?.day
+    weeks.push({
+      week: realDay ? isoWeek(realDay.date) : 0,
+      cells: slice,
+      dayKeys: slice.filter((cell) => cell.day).map((cell) => isoDate((cell.day as DayRow).date)),
+    })
   }
 
   return weeks
@@ -104,28 +119,32 @@ function fillPercent(day: DayRow): string {
   return day.expected > 0 ? `${Math.min(100, (day.worked / day.expected) * 100)}%` : '100%'
 }
 
-/** One calendar day cell. Extracted from the grid so the table render doesn't
- *  nest render closures (week → cell → day → switch) more than allowed. */
-function CalendarDayCell(props: { cell: CalendarCell; locale: string }) {
+/** One calendar day cell — a toggle button that adds/removes the day from the
+ *  selection. Extracted so the table render doesn't nest closures too deeply. */
+function CalendarDayCell(props: { cell: CalendarCell; locale: string; selected: boolean; onToggle: (key: string) => void }) {
   return (
     <Show when={props.cell.day} fallback={<td class="cell-empty" />}>
       {(day) => (
-        <td
-          class={`cell cell-${props.cell.category}`}
-          classList={{ 'cell-today': props.cell.isToday }}
-          aria-label={cellAriaLabel(day(), props.locale)}
-        >
-          <span class="cell-num">{day().date.getDate()}</span>
-          <Switch>
-            <Match when={day().holiday !== null && day().date.getDay() !== 0 && day().date.getDay() !== 6}>
-              <span class="cell-holiday">{day().holiday}</span>
-            </Match>
-            <Match when={props.cell.category !== 'off' && props.cell.category !== 'future'}>
-              <span class="cell-time">{formatMinutes(day().worked)}</span>
-              <span class="cell-delta">{formatMinutes(day().diff, true)}</span>
-              <span class="cell-bar" style={{ '--fill': fillPercent(day()) }} />
-            </Match>
-          </Switch>
+        <td class={`cell cell-${props.cell.category}`} classList={{ 'cell-today': props.cell.isToday, 'cell-selected': props.selected }}>
+          <button
+            type="button"
+            class="cell-btn"
+            aria-pressed={props.selected}
+            aria-label={cellAriaLabel(day(), props.locale)}
+            onClick={() => props.onToggle(isoDate(day().date))}
+          >
+            <span class="cell-num">{day().date.getDate()}</span>
+            <Switch>
+              <Match when={day().holiday !== null && day().date.getDay() !== 0 && day().date.getDay() !== 6}>
+                <span class="cell-holiday">{day().holiday}</span>
+              </Match>
+              <Match when={props.cell.category !== 'off' && props.cell.category !== 'future'}>
+                <span class="cell-time">{formatMinutes(day().worked)}</span>
+                <span class="cell-delta">{formatMinutes(day().diff, true)}</span>
+                <span class="cell-bar" style={{ '--fill': fillPercent(day()) }} />
+              </Match>
+            </Switch>
+          </button>
         </td>
       )}
     </Show>
@@ -134,7 +153,7 @@ function CalendarDayCell(props: { cell: CalendarCell; locale: string }) {
 
 export default function Month() {
   const config = appConfig()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const target = createMemo<MonthTarget>(() => {
     const now = new Date()
@@ -150,6 +169,44 @@ export default function Month() {
 
     return { year, month }
   })
+
+  // --- Scope, driven by the URL so it's deep-linkable (header Today/Week badges)
+  //     and survives reloads. `days` is a CSV of YYYY-MM-DD keys; `scope=year`
+  //     widens the summary to the whole year. Precedence: selection > year > month.
+  const selectedKeys = createMemo<ReadonlySet<string>>(() => {
+    const raw = typeof searchParams.days === 'string' ? searchParams.days : ''
+
+    return new Set(raw.split(',').map((key) => key.trim()).filter(Boolean))
+  })
+  const yearMode = createMemo(() => searchParams.scope === 'year')
+  const scope = createMemo<Scope>(() => (selectedKeys().size > 0 ? 'selection' : yearMode() ? 'year' : 'month'))
+
+  const setDays = (keys: ReadonlySet<string>) => {
+    setSearchParams({ days: keys.size > 0 ? [...keys].join(',') : undefined, scope: undefined })
+  }
+  const toggleDay = (key: string) => {
+    const next = new Set(selectedKeys())
+    if (next.has(key)) {
+      next.delete(key)
+    } else {
+      next.add(key)
+    }
+    setDays(next)
+  }
+  const toggleWeek = (dayKeys: string[]) => {
+    const current = selectedKeys()
+    const allSelected = dayKeys.length > 0 && dayKeys.every((key) => current.has(key))
+    const next = new Set(current)
+    for (const key of dayKeys) {
+      if (allSelected) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+    }
+    setDays(next)
+  }
+  const toggleYear = () => setSearchParams({ scope: yearMode() ? undefined : 'year', days: undefined })
 
   const now = new Date()
   const currentTarget: MonthTarget = { year: now.getFullYear(), month: now.getMonth() + 1 }
@@ -170,6 +227,9 @@ export default function Month() {
   const times = useQuery(() => monthTimesQuery(target().year, target().month, config.userId))
   const holidays = useQuery(() => holidaysQuery(target().year, target().month))
 
+  const holidayMap = (records: HolidayRecord[]) => new Map(records.map((record) => [record.holiday.date, record.holiday.name]))
+  const weekendLabels = () => ({ saturday: m.month_saturday(), sunday: m.month_sunday() })
+
   const report = createMemo(() => {
     const timesData = times.data
     const holidaysData = holidays.data
@@ -181,36 +241,113 @@ export default function Month() {
       year: target().year,
       month: target().month,
       entries: timesData,
-      holidays: new Map(holidaysData.map((record) => [record.holiday.date, record.holiday.name])),
+      holidays: holidayMap(holidaysData),
       hoursPerWeekday,
       today: new Date(),
-      weekendLabels: { saturday: m.month_saturday(), sunday: m.month_sunday() },
+      weekendLabels: weekendLabels(),
     })
   })
 
-  const workingDays = createMemo(() => {
-    const data = report()
+  // --- Year scope: fetch all 12 months lazily and aggregate via computeMonth.
+  const yearTimes = useQueries(() => {
+    const enabled = yearMode()
+    const year = target().year
 
-    return data === null ? 0 : data.days.filter((day) => day.holiday === null).length
+    return { queries: Array.from({ length: 12 }, (_, i) => ({ ...monthTimesQuery(year, i + 1, config.userId), enabled })) }
+  })
+  const yearHolidays = useQueries(() => {
+    const enabled = yearMode()
+    const year = target().year
+
+    return { queries: Array.from({ length: 12 }, (_, i) => ({ ...holidaysQuery(year, i + 1), enabled })) }
+  })
+  const yearDays = createMemo<DayRow[] | null>(() => {
+    if (!yearMode()) {
+      return null
+    }
+    const days: DayRow[] = []
+    for (let i = 0; i < 12; i++) {
+      const t = yearTimes[i]?.data as WorktimeRecord[] | undefined
+      const h = yearHolidays[i]?.data as HolidayRecord[] | undefined
+      if (t === undefined || h === undefined) {
+        return null
+      }
+      days.push(...computeMonth({
+        year: target().year,
+        month: i + 1,
+        entries: t,
+        holidays: holidayMap(h),
+        hoursPerWeekday,
+        today: new Date(),
+        weekendLabels: weekendLabels(),
+      }).days)
+    }
+
+    return days
   })
 
-  const ringPercent = createMemo(() => {
+  // Days the active scope summarises over.
+  const scopeDays = createMemo<DayRow[] | null>(() => {
+    if (scope() === 'year') {
+      return yearDays()
+    }
     const data = report()
-    if (data === null || data.sum.expectedUntilToday === 0) {
+    if (data === null) {
+      return null
+    }
+
+    return scope() === 'selection'
+      ? data.days.filter((day) => selectedKeys().has(isoDate(day.date)))
+      : data.days
+  })
+
+  const activeSummary = createMemo<MonthSummary | null>(() => {
+    const days = scopeDays()
+
+    return days === null ? null : summarize(days)
+  })
+  const workingDays = createMemo(() => (scopeDays() ?? []).filter((day) => day.holiday === null).length)
+
+  const ringPercent = createMemo(() => {
+    const sum = activeSummary()
+    if (sum === null) {
+      return 100
+    }
+    // Month/year measure progress against expected-until-today; an explicit
+    // day/week selection measures against its own expected total.
+    const base = scope() === 'selection' ? sum.expected : sum.expectedUntilToday
+    if (base === 0) {
       return 100
     }
 
-    return Math.min(100, Math.round((data.sum.worked / data.sum.expectedUntilToday) * 1000) / 10)
+    return Math.min(100, Math.round((sum.worked / base) * 1000) / 10)
+  })
+
+  const scopeTitle = createMemo(() => {
+    if (scope() === 'year') {
+      return String(target().year)
+    }
+    if (scope() === 'selection') {
+      return m.month_selected_days({ count: selectedKeys().size })
+    }
+
+    return formatMonthTitle(new Date(target().year, target().month - 1, 1), config.locale)
   })
 
   const monthTitle = createMemo(() =>
     formatMonthTitle(new Date(target().year, target().month - 1, 1), config.locale),
   )
-  const weeks = createMemo(() => {
+  const weeks = createMemo<CalendarWeek[]>(() => {
     const data = report()
 
     return data === null ? [] : buildWeeks(data.days, new Date())
   })
+
+  const isLoading = createMemo(() => (scope() === 'year' ? yearDays() === null || report() === null : report() === null))
+  const isError = createMemo(() =>
+    times.isError || holidays.isError
+    || (scope() === 'year' && (yearTimes.some((q) => q.isError) || yearHolidays.some((q) => q.isError))),
+  )
 
   return (
     <section class="month-report">
@@ -225,7 +362,16 @@ export default function Month() {
           >
             <span aria-hidden="true">‹</span>
           </A>
-          <b>{target().year}</b>
+          <button
+            type="button"
+            class="year-toggle"
+            classList={{ 'is-active': yearMode() }}
+            aria-pressed={yearMode()}
+            aria-label={m.month_year_scope({ year: target().year })}
+            onClick={toggleYear}
+          >
+            {target().year}
+          </button>
           <Show
             when={target().year < currentTarget.year}
             fallback={<span class="year-arrow is-disabled" aria-hidden="true">›</span>}
@@ -245,7 +391,7 @@ export default function Month() {
             const isFuture = () =>
               target().year > currentTarget.year
               || (target().year === currentTarget.year && month > currentTarget.month)
-            const isActive = () => month === target().month
+            const isActive = () => month === target().month && scope() === 'month'
 
             return (
               <Show
@@ -270,7 +416,7 @@ export default function Month() {
       </nav>
 
       <Switch>
-        <Match when={times.isError || holidays.isError}>
+        <Match when={isError()}>
           <p role="alert">{m.app_load_error()}</p>
           <button
             type="button"
@@ -283,11 +429,11 @@ export default function Month() {
             {m.app_retry()}
           </button>
         </Match>
-        <Match when={report() === null}>
+        <Match when={isLoading()}>
           <p role="status">{m.app_loading()}</p>
         </Match>
-        <Match when={report()}>
-          {(data) => (
+        <Match when={activeSummary()}>
+          {(sum) => (
             <div class="month-layout">
               <div class="table-scroll">
               <table class="calendar">
@@ -296,60 +442,94 @@ export default function Month() {
                 </caption>
                 <thead>
                   <tr>
+                    <th scope="col"><span class="visually-hidden">{m.month_calendar_week()}</span></th>
                     <For each={weekdayLabels()}>{(label) => <th scope="col">{label}</th>}</For>
                   </tr>
                 </thead>
                 <tbody>
                   <For each={weeks()}>
-                    {(week) => (
-                      <tr>
-                        <For each={week}>
-                          {(cell) => <CalendarDayCell cell={cell} locale={config.locale} />}
-                        </For>
-                      </tr>
-                    )}
+                    {(week) => {
+                      const weekSelected = () => week.dayKeys.length > 0 && week.dayKeys.every((key) => selectedKeys().has(key))
+
+                      return (
+                        <tr classList={{ 'week-selected': weekSelected() }}>
+                          <th scope="row" class="cw-cell">
+                            <button
+                              type="button"
+                              class="cw-badge"
+                              aria-pressed={weekSelected()}
+                              aria-label={m.month_calendar_week_n({ week: week.week })}
+                              onClick={() => toggleWeek(week.dayKeys)}
+                            >
+                              {week.week}
+                            </button>
+                          </th>
+                          <For each={week.cells}>
+                            {(cell) => (
+                              <CalendarDayCell
+                                cell={cell}
+                                locale={config.locale}
+                                selected={cell.day !== null && selectedKeys().has(isoDate(cell.day.date))}
+                                onToggle={toggleDay}
+                              />
+                            )}
+                          </For>
+                        </tr>
+                      )
+                    }}
                   </For>
                 </tbody>
               </table>
               </div>
 
               <aside class="summary-card">
-                <h3>{m.month_summary()}</h3>
+                <h3>{m.month_summary()} · <span class="summary-scope">{scopeTitle()}</span></h3>
                 <div class="summary-ring" style={{ '--pct': `${ringPercent()}%` }}>
                   <div>
-                    <b class={data().sum.diffUntilToday < 0 ? 'is-neg' : 'is-pos'}>
-                      {formatMinutes(data().sum.diffUntilToday, true)}
+                    <b class={(scope() === 'selection' ? sum().diff : sum().diffUntilToday) < 0 ? 'is-neg' : 'is-pos'}>
+                      {formatMinutes(scope() === 'selection' ? sum().diff : sum().diffUntilToday, true)}
                     </b>
-                    <span>{m.month_balance_until_today()}</span>
+                    <span>{scope() === 'selection' ? m.month_balance() : m.month_balance_until_today()}</span>
                   </div>
                   <span class="visually-hidden">{m.month_progress({ pct: ringPercent() })}</span>
                 </div>
                 <table class="summary-table">
                   <tbody>
                     <tr>
-                      <th scope="row">{m.month_expected_month()}</th>
-                      <td>{formatMinutes(data().sum.expected)}<small> · {m.month_working_days({ count: workingDays() })}</small></td>
+                      <th scope="row">{scope() === 'selection' ? m.month_expected() : m.month_expected_month()}</th>
+                      <td>{formatMinutes(sum().expected)}<small> · {m.month_working_days({ count: workingDays() })}</small></td>
                     </tr>
                     <tr>
                       <th scope="row">{m.month_worked()}</th>
-                      <td>{formatMinutes(data().sum.worked)}</td>
+                      <td>{formatMinutes(sum().worked)}</td>
                     </tr>
-                    <tr>
-                      <th scope="row">{m.month_expected_until_today()}</th>
-                      <td>{formatMinutes(data().sum.expectedUntilToday)}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">{m.month_balance_until_today()}</th>
-                      <td class={data().sum.diffUntilToday < 0 ? 'is-neg' : 'is-pos'}>
-                        {formatMinutes(data().sum.diffUntilToday, true)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th scope="row">{m.month_balance_eom()}</th>
-                      <td class={data().sum.diff < 0 ? 'is-neg' : 'is-pos'}>
-                        {formatMinutes(data().sum.diff, true)}
-                      </td>
-                    </tr>
+                    <Show when={scope() === 'selection'} fallback={
+                      <>
+                        <tr>
+                          <th scope="row">{m.month_expected_until_today()}</th>
+                          <td>{formatMinutes(sum().expectedUntilToday)}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">{m.month_balance_until_today()}</th>
+                          <td class={sum().diffUntilToday < 0 ? 'is-neg' : 'is-pos'}>
+                            {formatMinutes(sum().diffUntilToday, true)}
+                          </td>
+                        </tr>
+                        <tr>
+                          <th scope="row">{m.month_balance_eom()}</th>
+                          <td class={sum().diff < 0 ? 'is-neg' : 'is-pos'}>
+                            {formatMinutes(sum().diff, true)}
+                          </td>
+                        </tr>
+                      </>
+                    }>
+                      <tr>
+                        <th scope="row">{m.month_balance()}</th>
+                        <td class={sum().diff < 0 ? 'is-neg' : 'is-pos'}>
+                          {formatMinutes(sum().diff, true)}
+                        </td>
+                      </tr>
+                    </Show>
                   </tbody>
                 </table>
               </aside>

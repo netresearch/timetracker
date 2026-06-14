@@ -21,14 +21,25 @@
             <a href="{{ url('_logout') }}" class="badge-logout" aria-label="{{ 'Logout'|trans }}">{{ 'Logout'|trans }}</a>
         </div>
         <section class="header-worktime" aria-label="{{ 'Working time'|trans }}">
+            {# Each badge deep-links to the Overview pre-scoped to that period:
+               Today selects today's day, Week the current Mon-Sun, Month the
+               whole month. The <a> sits inside <dd> so the <dl> stays valid. #}
+            {% set weekDays = [] %}
+            {% for i in 0..6 %}
+                {% set weekDays = weekDays|merge(["monday this week +#{i} days"|date('Y-m-d')]) %}
+            {% endfor %}
             <dl class="worktime-list">
-                <div class="worktime-item"><dt>{{ 'Today'|trans }}</dt><dd id="worktime-day">0:00</dd></div>
-                <div class="worktime-item"><dt>{{ 'Week'|trans }}</dt><dd id="worktime-week">0:00</dd></div>
-                {# The month total links straight to the monthly overview.
-                   The link sits inside <dd> so the <dl> grouping stays valid. #}
+                <div class="worktime-item worktime-item-link">
+                    <dt>{{ 'Today'|trans }}</dt>
+                    <dd><a id="worktime-day" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}?days={{ 'now'|date('Y-m-d') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Today'|trans }}">0:00</a></dd>
+                </div>
+                <div class="worktime-item worktime-item-link">
+                    <dt>{{ 'Week'|trans }}</dt>
+                    <dd><a id="worktime-week" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}?days={{ weekDays|join(',') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Week'|trans }}">0:00</a></dd>
+                </div>
                 <div class="worktime-item worktime-item-link">
                     <dt>{{ 'Month'|trans }}</dt>
-                    <dd><a id="worktime-month" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}" aria-label="{{ 'Monthly overview'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-month" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}" aria-label="{{ 'Overview'|trans }}: {{ 'Month'|trans }}">0:00</a></dd>
                 </div>
             </dl>
         </section>
@@ -48,7 +59,7 @@
            href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
         <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
            {% if active == 'month' %}aria-current="page"{% endif %}
-           data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}">{{ 'Monthly overview'|trans }}</a>
+           data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}">{{ 'Overview'|trans }}</a>
         <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
            {% if active == 'auswertung' %}aria-current="page"{% endif %}
            data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>

@@ -76,6 +76,45 @@ function dayStatus(day: Pick<DayRow, 'holiday' | 'isFuture' | 'worked' | 'expect
   return 'danger'
 }
 
+/**
+ * Aggregate a set of days into a summary. Scope-agnostic: pass a whole month,
+ * a selection of days, or every day of a year. Each day already carries its
+ * worked/expected/diff and isFuture flag, so the scope is just "which days".
+ */
+export function summarize(days: ReadonlyArray<DayRow>): MonthSummary {
+  const sum: MonthSummary = { worked: 0, expected: 0, expectedUntilToday: 0, diff: 0, diffUntilToday: 0 }
+
+  for (const day of days) {
+    sum.worked += day.worked
+    sum.diff += day.diff
+    if (!day.isFuture) {
+      sum.diffUntilToday += day.diff
+    }
+
+    if (day.holiday === null) {
+      sum.expected += day.expected
+      if (!day.isFuture) {
+        sum.expectedUntilToday += day.expected
+      }
+    }
+  }
+
+  return sum
+}
+
+/** ISO-8601 week number (1–53), week starting Monday — for the calendar-week badges. */
+export function isoWeek(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  // Shift to the Thursday of the current ISO week (Mon=0 … Sun=6).
+  const dayOfWeek = (d.getUTCDay() + 6) % 7
+  d.setUTCDate(d.getUTCDate() - dayOfWeek + 3)
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
+  const firstDayOfWeek = (firstThursday.getUTCDay() + 6) % 7
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayOfWeek + 3)
+
+  return 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 24 * 60 * 60 * 1000))
+}
+
 /** Weekend label, holiday name, or null for a regular working day. */
 function resolveHoliday(date: Date, weekday: number, input: ComputeMonthInput): string | null {
   if (weekday === 0) {
@@ -91,12 +130,9 @@ function resolveHoliday(date: Date, weekday: number, input: ComputeMonthInput): 
 
 export function computeMonth(input: ComputeMonthInput): { days: DayRow[]; sum: MonthSummary } {
   const minutesByDay = new Map<string, number>()
-  const sum: MonthSummary = { worked: 0, expected: 0, expectedUntilToday: 0, diff: 0, diffUntilToday: 0 }
-
   for (const entry of input.entries) {
     const minutes = Math.round(entry.hours * 60)
     minutesByDay.set(entry.name, (minutesByDay.get(entry.name) ?? 0) + minutes)
-    sum.worked += minutes
   }
 
   const days: DayRow[] = []
@@ -108,27 +144,14 @@ export function computeMonth(input: ComputeMonthInput): { days: DayRow[]; sum: M
 
     const expected = holiday !== null ? 0 : input.hoursPerWeekday(weekday) * 60
     const worked = minutesByDay.get(shortDateKey(cursor)) ?? 0
-    const diff = worked - expected
     const isFuture = isAfterDay(cursor, input.today)
-
-    sum.diff += diff
-    if (!isFuture) {
-      sum.diffUntilToday += diff
-    }
-
-    if (holiday === null) {
-      sum.expected += expected
-      if (!isFuture) {
-        sum.expectedUntilToday += expected
-      }
-    }
 
     const day: DayRow = {
       date: new Date(cursor),
       holiday,
       worked,
       expected,
-      diff,
+      diff: worked - expected,
       isFuture,
       status: 'none',
     }
@@ -138,5 +161,5 @@ export function computeMonth(input: ComputeMonthInput): { days: DayRow[]; sum: M
     cursor.setDate(cursor.getDate() + 1)
   }
 
-  return { days, sum }
+  return { days, sum: summarize(days) }
 }
