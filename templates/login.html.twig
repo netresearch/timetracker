@@ -1,5 +1,6 @@
 {# JSON_HEX_* flags so |json_encode output cannot break out of <script> #}
 {% set jsonHexFlags = constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT') %}
+{% set errorMessage = error ? error.messageKey|trans({}, 'security') : null %}
 <!DOCTYPE html>
 <html lang="{{ locale }}">
     <head>
@@ -18,12 +19,41 @@
                 'csrfToken': csrf_token('authenticate'),
                 'loginPath': path('_login'),
                 'lastUsername': last_username is defined ? last_username : '',
-                'error': error ? error.messageKey : null,
+                'error': errorMessage,
             }|json_encode(jsonHexFlags)|raw }};
         </script>
         {{ vite_entry_script_tags('login') }}
     </head>
     <body>
-        <div id="login"></div>
+        {# The SolidJS login (login.tsx) replaces this server-rendered form once it
+           mounts; until then — and if JS fails to load — this native form posts to
+           the same _login route, so login still works (progressive enhancement).
+           Field names and #form-submit match what the firewall and e2e expect. #}
+        <div id="login">
+            <main class="login-page">
+                <form class="login-card" method="post" action="{{ path('_login') }}">
+                    <img class="login-logo" src="{{ logo_url }}" alt="{{ apptitle }}">
+                    <h1 class="login-title">{{ apptitle }}</h1>
+                    {% if errorMessage %}
+                        <p class="form-status is-error" role="alert">{{ errorMessage }}</p>
+                    {% endif %}
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                    <label class="field">
+                        <span>{{ 'Username'|trans }}</span>
+                        <input type="text" name="_username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" required
+                               value="{{ last_username is defined ? last_username : '' }}" autofocus>
+                    </label>
+                    <label class="field">
+                        <span>{{ 'Password'|trans }}</span>
+                        <input type="password" name="_password" autocomplete="current-password" required>
+                    </label>
+                    <label class="field-check">
+                        <input type="checkbox" name="_remember_me" checked>
+                        <span>{{ 'Stay signed in'|trans }}</span>
+                    </label>
+                    <button type="submit" id="form-submit" class="primary-button login-submit">{{ 'Sign in'|trans }}</button>
+                </form>
+            </main>
+        </div>
     </body>
 </html>

@@ -62,9 +62,10 @@ class SecurityController extends AbstractController
         // Render login form with error handling
         // Works for both GET (initial display) and POST (after failed authentication)
         $logoUrl = $this->getParameter('app_logo_url');
+        $locale = $this->requestStack->getCurrentRequest()?->getLocale() ?? 'en';
 
         return $this->render('login.html.twig', [
-            'locale' => 'en',
+            'locale' => $locale,
             'apptitle' => 'Netresearch TimeTracker',
             'logo_url' => is_string($logoUrl) ? $logoUrl : '',
             'last_username' => $this->authenticationUtils->getLastUsername(),
