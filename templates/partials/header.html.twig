@@ -24,15 +24,23 @@
             <dl class="worktime-list">
                 <div class="worktime-item"><dt>{{ 'Today'|trans }}</dt><dd id="worktime-day">0:00</dd></div>
                 <div class="worktime-item"><dt>{{ 'Week'|trans }}</dt><dd id="worktime-week">0:00</dd></div>
-                <div class="worktime-item"><dt>{{ 'Month'|trans }}</dt><dd id="worktime-month">0:00</dd></div>
+                {# The month total links straight to the monthly overview.
+                   The link sits inside <dd> so the <dl> grouping stays valid. #}
+                <div class="worktime-item worktime-item-link">
+                    <dt>{{ 'Month'|trans }}</dt>
+                    <dd><a id="worktime-month" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}" aria-label="{{ 'Monthly overview'|trans }}">0:00</a></dd>
+                </div>
             </dl>
-            {% if globalConfig.monthly_overview_url is defined and globalConfig.monthly_overview_url %}
-                <a id="sumlink" href="{{ globalConfig.monthly_overview_url ~ settings.user_name }}" target="_blank" rel="noopener noreferrer" class="worktime-link">{{ 'Monthly overview'|trans }}</a>
-            {% endif %}
         </section>
-        {# Theme switch — the SolidJS shell portals its ThemeToggle in here
-           (frontend/src/App.tsx); empty on the ExtJS shell, which has no SPA. #}
-        <div id="theme-toggle-mount" class="header-theme"></div>
+        {# Theme switch — framework-neutral; wired by partials/theme-init.html.twig
+           so it works on BOTH the ExtJS shell and the SolidJS /ui shell. #}
+        <div id="theme-toggle-mount" class="header-theme">
+            <div class="theme-toggle" role="group" aria-label="{{ 'Theme'|trans }}">
+                <button type="button" class="theme-toggle-item" data-theme-value="system">{{ 'System'|trans }}</button>
+                <button type="button" class="theme-toggle-item" data-theme-value="light">{{ 'Light'|trans }}</button>
+                <button type="button" class="theme-toggle-item" data-theme-value="dark">{{ 'Dark'|trans }}</button>
+            </div>
+        </div>
     </header>
     <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
         <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"

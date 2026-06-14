@@ -187,19 +187,95 @@
     margin: 0;
 }
 
-.worktime-link {
-    font-size: 12px;
-    color: light-dark(#00525c, #6fd0dd);
-    text-decoration: none;
-    padding: 4px 8px;
-    border-radius: 4px;
+/* The whole month badge is a link to the monthly overview. The <a> stays
+   inside <dd> (so the <dl> grouping is valid), but a stretched ::after overlay
+   makes the entire badge — label included — the click target. */
+.worktime-item-link {
+    position: relative;
+    cursor: pointer;
     transition: background-color 0.2s;
 }
 
-.worktime-link:hover,
-.worktime-link:focus {
-    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.15));
+.worktime-item-link:hover,
+.worktime-item-link:focus-within {
+    background-color: light-dark(rgba(0, 136, 154, 0.12), rgba(111, 208, 221, 0.18));
+}
+
+.worktime-item-link dd a {
+    color: light-dark(#00525c, #6fd0dd);
+    text-decoration: none;
+}
+
+.worktime-item-link dd a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+}
+
+.worktime-item-link:hover dd a {
     text-decoration: underline;
+}
+
+.worktime-item-link dd a:focus-visible::after {
+    outline: 2px solid light-dark(#00889A, #6fd0dd);
+    outline-offset: 1px;
+}
+
+/* Theme toggle (segmented System / Light / Dark) — framework-neutral, lives in
+   the shared header so it works on both shells. Wired by theme-init.html.twig. */
+.header-theme {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.theme-toggle {
+    display: inline-flex;
+    border: 1px solid light-dark(#a9adb2, #3a414a);
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: light-dark(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.04));
+}
+
+.theme-toggle-item {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    margin: 0;
+    padding: 6px 10px;
+    min-height: 32px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    color: light-dark(#3a4047, #c4c9cf);
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.theme-toggle-item + .theme-toggle-item {
+    border-left: 1px solid light-dark(#bcc0c5, #3a414a);
+}
+
+.theme-toggle-item:hover {
+    background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.12));
+}
+
+.theme-toggle-item.is-active {
+    background-color: light-dark(#00889A, #6fd0dd);
+    color: light-dark(#fff, #11151a);
+    font-weight: 600;
+}
+
+.theme-toggle-item:focus-visible {
+    outline: 2px solid light-dark(#00889A, #6fd0dd);
+    outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .theme-toggle-item,
+    .worktime-item-link {
+        transition: none;
+    }
 }
 
 /* External Navigation iFrame */

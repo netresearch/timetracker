@@ -107,8 +107,7 @@ body {
 
 /* WCAG 2.5.5: interactive targets >= 44x44 CSS px. */
 .action-button,
-.today-button,
-.theme-toggle-item {
+.today-button {
   align-items: center;
   display: inline-flex;
   min-height: 44px;
@@ -126,31 +125,6 @@ main {
   padding: 1.5rem 2rem;
 }
 
-/* ---- Toolbar ---- */
-
-.month-toolbar {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.month-toolbar h2 {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.month-toolbar-actions {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
-}
-
 .today-button {
   background: var(--color-surface);
   border: 1px solid var(--color-accent);
@@ -164,6 +138,11 @@ main {
 .today-button:hover,
 .today-button:focus-visible {
   background: var(--color-accent-soft);
+}
+
+/* The Today action sits at the right end of the month-selector row. */
+.month-today {
+  margin-left: auto;
 }
 
 /* ---- Month chips ---- */
@@ -457,25 +436,6 @@ main {
   border-radius: 0.4rem;
   color: var(--color-text);
   cursor: pointer;
-}
-
-/* ---- Theme toggle (Ark UI segment group) ---- */
-
-.theme-toggle {
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  display: inline-flex;
-}
-
-.theme-toggle-item {
-  cursor: pointer;
-  justify-content: center;
-}
-
-.theme-toggle-item[data-state='checked'] {
-  background: var(--color-link);
-  border-radius: 0.4rem;
-  color: var(--color-bg);
 }
 
 /* ---- Form pages (Settings, Extras, Billing) ---- */
