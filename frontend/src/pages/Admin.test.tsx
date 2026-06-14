@@ -1,6 +1,6 @@
 import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, waitFor } from '@solidjs/testing-library'
+import { fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -98,15 +98,11 @@ describe('Admin', () => {
     await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Add' }))
-    // The dialog is portalled to document.body (Ark UI), so query the document.
-    const name = await waitFor(() => {
-      const input = document.querySelector('.modal input[type=text]')
-      if (!(input instanceof HTMLInputElement)) throw new Error('dialog not open')
-
-      return input
-    })
+    // The dialog is portalled to document.body (Ark UI); screen queries the
+    // whole document, and the name field is the dialog's only textbox.
+    const name = (await screen.findByRole('textbox')) as HTMLInputElement
     fireEvent.input(name, { target: { value: 'New' } })
-    fireEvent.submit(document.querySelector('.modal form') as HTMLFormElement)
+    fireEvent.submit(name.closest('form') as HTMLFormElement)
 
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ name: 'New', active: true, global: false })),
@@ -191,17 +187,14 @@ describe('Admin', () => {
     await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Add' }))
-    const name = await waitFor(() => {
-      const input = document.querySelector('.modal input[type=text]')
-      if (!(input instanceof HTMLInputElement)) throw new Error('dialog not open')
-
-      return input
-    })
+    const name = (await screen.findByRole('textbox')) as HTMLInputElement
     fireEvent.input(name, { target: { value: 'New' } })
-    fireEvent.submit(document.querySelector('.modal form') as HTMLFormElement)
+    const form = name.closest('form') as HTMLFormElement
+    fireEvent.submit(form)
 
-    await waitFor(() => expect(document.querySelector('.modal [role=alert]')).toHaveTextContent('Name taken'))
-    expect(document.querySelector('.modal form')).toBeInTheDocument()
+    // The dialog stays open and shows the server error inside the form.
+    await waitFor(() => expect(form.querySelector('[role=alert]')).toHaveTextContent('Name taken'))
+    expect(form).toBeInTheDocument()
     unmount()
   })
 
