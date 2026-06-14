@@ -3,7 +3,7 @@ import { useQueryClient, useQuery } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
-import { ApiError, getJson, postJson } from '../api/client'
+import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -128,7 +128,7 @@ export function AdminCrudShell(props: {
       setEditing(null)
       flashNotice(m.admin_saved())
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : m.app_load_error())
+      setError(apiErrorMessage(caught, m.app_load_error()))
     } finally {
       setSaving(false)
     }
@@ -143,7 +143,7 @@ export function AdminCrudShell(props: {
       await queryClient.invalidateQueries({ queryKey: listKey() })
       flashNotice(m.admin_deleted())
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : m.app_load_error())
+      setError(apiErrorMessage(caught, m.app_load_error()))
     }
   }
 

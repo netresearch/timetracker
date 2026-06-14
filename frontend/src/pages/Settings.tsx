@@ -1,6 +1,6 @@
 import { createSignal, For, Show } from 'solid-js'
 
-import { ApiError, postForm } from '../api/client'
+import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
 import { m } from '../paraglide/messages.js'
 
@@ -66,7 +66,7 @@ export default function Settings() {
 
       setStatus({ kind: 'ok' })
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : m.settings_save_error()
+      const message = apiErrorMessage(error, m.settings_save_error())
       setStatus({ kind: 'error', message })
     }
   }

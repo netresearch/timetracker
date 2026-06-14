@@ -16,6 +16,11 @@ export class ApiError extends Error {
   }
 }
 
+/** The message from an ApiError, or a fallback for any other failure. */
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback
+}
+
 function redirectToLogin(): never {
   window.location.assign('/login')
   throw new SessionExpiredError()
