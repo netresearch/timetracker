@@ -1,6 +1,11 @@
 {# Framework-neutral header interactivity shared by BOTH shells (ExtJS and the
-   SolidJS /ui shell): the "More" overflow disclosure and the mobile hamburger
-   drawer. Theme cycling lives in theme-init.html.twig. Idempotent — guarded so
+   SolidJS /ui shell):
+     - the "More" overflow disclosure + the mobile hamburger drawer, and
+     - a priority-overflow nav: as the viewport narrows, primary nav items move
+       into "More" and the Today/Week/Month badges collapse, so the right-hand
+       cluster (theme, user, logout) is never clipped before the hamburger takes
+       over at very small widths.
+   Theme cycling lives in theme-init.html.twig. Idempotent — guarded so
    re-includes (or a shell that renders the header twice) wire handlers once. #}
 <script>
 (function () {
@@ -8,6 +13,10 @@
         return;
     }
     window.__ttHeaderBehaviorWired = true;
+
+    // Below this width the whole nav collapses into the hamburger drawer (CSS);
+    // above it, the priority-overflow logic governs what stays in the bar.
+    var COLLAPSE_QUERY = '(max-width: 600px)';
 
     function ready(fn) {
         if (document.readyState === 'loading') {
@@ -18,10 +27,13 @@
     }
 
     ready(function () {
+        var header = document.querySelector('.app-header');
         var moreBtn = document.getElementById('nav-more-btn');
         var moreMenu = document.getElementById('nav-more-menu');
+        var moreWrap = moreBtn ? moreBtn.closest('.nav-more') : null;
         var burger = document.getElementById('nav-burger');
         var drawer = document.getElementById('nav-drawer');
+        var nav = header ? header.querySelector('.main-nav') : null;
 
         function setExpanded(button, panel, open) {
             if (button === null || panel === null) {
@@ -30,7 +42,6 @@
             button.setAttribute('aria-expanded', open ? 'true' : 'false');
             panel.hidden = !open;
         }
-
         function closeMore() {
             setExpanded(moreBtn, moreMenu, false);
         }
@@ -51,10 +62,26 @@
                 }
                 setExpanded(moreBtn, moreMenu, !open);
             });
+            // Close once a menu item is chosen — SPA links don't reload the page,
+            // so the menu would otherwise stay open after navigating.
+            moreMenu.addEventListener('click', function (event) {
+                if (event.target.closest('a')) {
+                    closeMore();
+                }
+            });
+            // Close when the pointer leaves the button+menu area.
+            if (moreWrap !== null) {
+                moreWrap.addEventListener('mouseleave', closeMore);
+                // Close when focus moves outside the disclosure (keyboard).
+                moreWrap.addEventListener('focusout', function (event) {
+                    if (!moreWrap.contains(event.relatedTarget)) {
+                        closeMore();
+                    }
+                });
+            }
         }
 
         if (burger !== null && drawer !== null) {
-            // Remember the original label so we can restore it on close.
             burger.setAttribute('data-label-open', burger.getAttribute('aria-label') || 'Open menu');
             burger.addEventListener('click', function (event) {
                 event.stopPropagation();
@@ -66,6 +93,11 @@
                 burger.setAttribute('aria-label', open
                     ? (burger.getAttribute('data-label-open') || 'Open menu')
                     : (burger.getAttribute('data-label-close') || 'Close menu'));
+            });
+            drawer.addEventListener('click', function (event) {
+                if (event.target.closest('a')) {
+                    closeDrawer();
+                }
             });
         }
 
@@ -95,6 +127,89 @@
                 burger.focus();
             }
         });
+
+        /* ---- Priority-overflow nav ------------------------------------- */
+        if (header === null || nav === null || moreMenu === null) {
+            return;
+        }
+        var moreItem = moreWrap; // the .nav-more element, kept last in the nav
+        var staticAnchor = moreMenu.firstElementChild; // dynamic items insert before this
+        var worktime = header.querySelector('.header-worktime');
+        var badges = worktime
+            ? Array.prototype.slice.call(worktime.querySelectorAll('.worktime-item:not(.worktime-item-month)'))
+            : [];
+        // Primary nav links in DOM order (direct <a> children of .main-nav).
+        var primary = Array.prototype.slice.call(nav.children).filter(function (el) {
+            return el.tagName === 'A' && el.classList.contains('main-nav-link');
+        });
+        var collapseMq = window.matchMedia(COLLAPSE_QUERY);
+
+        function restore() {
+            primary.forEach(function (link) {
+                if (link.parentNode === moreMenu) {
+                    nav.insertBefore(link, moreItem);
+                    link.classList.remove('nav-menu-item');
+                    link.removeAttribute('role');
+                    var spacer = link.querySelector('.is-auto-spacer');
+                    if (spacer) {
+                        spacer.remove();
+                    }
+                }
+            });
+            badges.forEach(function (badge) { badge.classList.remove('is-collapsed'); });
+            if (worktime) {
+                worktime.classList.remove('is-collapsed');
+            }
+        }
+
+        function overflowing() {
+            return header.scrollWidth > header.clientWidth + 1;
+        }
+
+        function pushToMenu(link) {
+            link.classList.add('nav-menu-item');
+            link.setAttribute('role', 'menuitem');
+            var spacer = document.createElement('span');
+            spacer.className = 'nav-menu-ico is-auto-spacer';
+            spacer.setAttribute('aria-hidden', 'true');
+            link.insertBefore(spacer, link.firstChild);
+            moreMenu.insertBefore(link, staticAnchor);
+        }
+
+        function layout() {
+            // Below the collapse query the hamburger drawer (CSS) owns the nav.
+            restore();
+            if (collapseMq.matches) {
+                return;
+            }
+            // 1) Move primary items into "More" from the end until the bar fits.
+            for (var i = primary.length - 1; i >= 0 && overflowing(); i--) {
+                pushToMenu(primary[i]);
+            }
+            // Keep the moved items in original order at the top of the menu.
+            primary.forEach(function (link) {
+                if (link.parentNode === moreMenu) {
+                    moreMenu.insertBefore(link, staticAnchor);
+                }
+            });
+            // 2) Still tight → drop the Today/Week badges, then the whole block.
+            for (var j = 0; j < badges.length && overflowing(); j++) {
+                badges[j].classList.add('is-collapsed');
+            }
+            if (worktime && overflowing()) {
+                worktime.classList.add('is-collapsed');
+            }
+        }
+
+        if (typeof window.ResizeObserver === 'function') {
+            new window.ResizeObserver(layout).observe(header);
+        } else {
+            window.addEventListener('resize', layout);
+        }
+        if (typeof collapseMq.addEventListener === 'function') {
+            collapseMq.addEventListener('change', layout);
+        }
+        layout();
     });
 })();
 </script>
