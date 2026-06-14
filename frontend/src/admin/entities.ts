@@ -29,7 +29,7 @@ function pick(row: Row, ...keys: string[]): unknown {
 
 const num = (v: unknown): number => Number(v ?? 0)
 const str = (v: unknown): string => (v === undefined || v === null ? '' : String(v))
-const bool = (v: unknown): boolean => Boolean(v)
+const bool: (v: unknown) => boolean = Boolean
 
 export function adminEntities(): EntityDescriptor[] {
   return [

@@ -8,6 +8,7 @@ use App\Entity\Entry;
 use App\Event\EntryEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 /**
  * Unit tests for EntryEvent.
@@ -44,14 +45,14 @@ final class EntryEventTest extends TestCase
 
     public function testEventConstantsExist(): void
     {
-        // Verify event constants are defined
-        $this->expectNotToPerformAssertions();
+        // Reflection (not the literals directly) so the assertions are real
+        // runtime checks that the event-name constants are defined.
+        $constants = new ReflectionClass(EntryEvent::class)->getConstants();
 
-        // Access constants to verify they exist (will fatal error if not defined)
-        $_ = EntryEvent::CREATED;
-        $_ = EntryEvent::UPDATED;
-        $_ = EntryEvent::DELETED;
-        $_ = EntryEvent::SYNCED;
-        $_ = EntryEvent::SYNC_FAILED;
+        self::assertArrayHasKey('CREATED', $constants);
+        self::assertArrayHasKey('UPDATED', $constants);
+        self::assertArrayHasKey('DELETED', $constants);
+        self::assertArrayHasKey('SYNCED', $constants);
+        self::assertArrayHasKey('SYNC_FAILED', $constants);
     }
 }

@@ -24,11 +24,6 @@ use function is_array;
  */
 final class HolidayDatabaseTest extends AbstractWebTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-    }
-
     public function testPersistAndFind(): void
     {
         if (null === $this->serviceContainer) {

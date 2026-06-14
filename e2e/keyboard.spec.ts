@@ -97,11 +97,6 @@ test.describe('Keyboard Navigation', () => {
       await page.waitForTimeout(200);
     }
 
-    // Should still be in edit mode or have moved to next editable field
-    const hasActiveElement =
-      (await page.locator('.x-editor').isVisible().catch(() => false)) ||
-      (await page.locator('.x-form-field:focus').count()) > 0;
-
     // Cancel editing
     await cancelEdit(page);
   });

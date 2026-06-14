@@ -124,7 +124,7 @@ export function computeMonth(input: ComputeMonthInput): { days: DayRow[]; sum: M
     }
 
     const day: DayRow = {
-      date: new Date(cursor.getTime()),
+      date: new Date(cursor),
       holiday,
       worked,
       expected,

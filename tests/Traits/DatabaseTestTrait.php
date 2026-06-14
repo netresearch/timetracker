@@ -84,6 +84,7 @@ trait DatabaseTestTrait
                     try {
                         $dbal->rollBack();
                     } catch (Throwable) {
+                        // No active transaction to roll back — safe to ignore.
                     }
                 }
             } catch (Exception) {

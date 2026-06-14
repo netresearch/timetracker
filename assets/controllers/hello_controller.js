@@ -9,7 +9,7 @@ import { Controller } from '@hotwired/stimulus';
  *
  * Delete this file or adapt it for your use!
  */
-export default class extends Controller {
+export default class HelloController extends Controller {
     connect() {
         this.element.textContent = 'Hello Stimulus! Edit me in assets/controllers/hello_controller.js';
     }

@@ -108,8 +108,6 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
                 'message' => 'You are not allowed to perform this action.',
             ], Response::HTTP_FORBIDDEN);
             $exceptionEvent->setResponse($response);
-
-            return;
         }
 
         // For HTML requests, let Symfony's default exception handling render error403.html.twig

@@ -47,8 +47,8 @@ final class NrArrayTranslatorTest extends TestCase
     public function testGetName(): void
     {
         self::assertSame(
-            $this->nrArrayTranslator->getName(),
             'nr_array_translator',
+            $this->nrArrayTranslator->getName(),
         );
     }
 

@@ -8,7 +8,7 @@ expect.extend(axeMatchers)
 // Storage and is non-functional without --localstorage-file; replace it with
 // a working in-memory implementation for the test environment.
 class MemoryStorage implements Storage {
-  #data = new Map<string, string>()
+  readonly #data = new Map<string, string>()
 
   get length(): number {
     return this.#data.size

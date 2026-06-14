@@ -338,13 +338,11 @@ final class PerformanceBenchmarkRunner
                 );
 
                 // Fix offsetAccess.nonOffsetAccessible: Check if success and error keys exist
-                if (!isset($result['success']) || true !== $result['success']) {
-                    if (isset($result['error'])) {
-                        // Fix cast.string #8: Safe string casting with type validation (duplicate of #1)
-                        $errorValue = $result['error'] ?? 'unknown';
-                        $errorStr = is_scalar($errorValue) ? (string) $errorValue : 'unknown';
-                        $report[] = '    Error: ' . $errorStr;
-                    }
+                if ((!isset($result['success']) || true !== $result['success']) && isset($result['error'])) {
+                    // Fix cast.string #8: Safe string casting with type validation (duplicate of #1)
+                    $errorValue = $result['error'] ?? 'unknown';
+                    $errorStr = is_scalar($errorValue) ? (string) $errorValue : 'unknown';
+                    $report[] = '    Error: ' . $errorStr;
                 }
             }
             $report[] = '';
