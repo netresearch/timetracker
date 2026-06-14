@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { waitForGrid } from './helpers/grid';
 import { displayDateToIso } from './helpers/date';
+import { openMoreMenu } from './helpers/navigation';
 
 /**
  * E2E tests for error handling and notifications.
@@ -168,7 +169,8 @@ test.describe('Success Notifications', () => {
   });
 
   test('should show success notification after settings save', async ({ page }) => {
-    // Settings moved to the SolidJS UI; reach it via the shared header nav link.
+    // Settings moved to the SolidJS UI; it lives in the header "More" menu.
+    await openMoreMenu(page);
     await page.locator('a.main-nav-link[data-nav="settings"]').click();
     await page.waitForURL(/\/ui\/settings/, { timeout: 10000 });
     await page.waitForSelector('form.stack-form', { timeout: 10000 });

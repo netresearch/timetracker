@@ -6,6 +6,7 @@ import {
   goToSettingsPage,
   goToAdminPage,
   getVisibleTabs,
+  openMoreMenu,
   NAV_LINKS,
 } from './helpers/navigation';
 import { waitForGrid } from './helpers/grid';
@@ -42,6 +43,8 @@ test.describe('Tab Navigation', () => {
     // Settings is no longer an ExtJS tab — it is reached via the header nav link.
     const hasSettingsTab = tabs.some((t) => /Einstellungen|Settings/i.test(t));
     expect(hasSettingsTab).toBe(false);
+    // Settings now lives in the header "More" overflow menu.
+    await openMoreMenu(page);
     await expect(page.locator(NAV_LINKS.settings)).toBeVisible();
   });
 
@@ -104,6 +107,8 @@ test.describe('Role-Based Tab Visibility', () => {
     const hasControllingTab = tabs.some((t) => /Controlling|Abrechnung/i.test(t));
     expect(hasControllingTab).toBe(false);
 
+    // Administration and Billing live in the header "More" overflow menu.
+    await openMoreMenu(page);
     await expect(page.locator(NAV_LINKS.admin)).toBeVisible();
     await expect(page.locator(NAV_LINKS.billing)).toBeVisible();
   });

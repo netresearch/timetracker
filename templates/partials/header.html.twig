@@ -3,9 +3,23 @@
    viewport north region via contentEl) and the SolidJS shell (ui/index.html.twig).
    Required context: globalConfig, settings, apptitle, active.
    `active` marks the current item server-side; SPA routes refine it client-side
-   (frontend/src/nav.ts). settings.roles gates the role-restricted items. #}
+   (frontend/src/nav.ts). settings.roles gates the role-restricted items.
+
+   Layout: a single app-bar. Primary items (Time tracking, Overview, Evaluation)
+   sit inline; secondary + role-gated items (Extras, Billing, Administration) plus
+   Settings and Help fold into a "More" disclosure menu. Worktime badges, a
+   single-button theme cycle and the user/logout cluster follow. Below ~880px the
+   nav collapses behind a hamburger drawer. Behaviour is wired framework-neutrally
+   by partials/header-behavior.html.twig (menu/drawer) and theme-init.html.twig
+   (theme cycle), so it works on BOTH shells. #}
 {% set isAdmin = 'ROLE_ADMIN' in settings.roles %}
 {% set canBill = isAdmin or 'ROLE_PL' in settings.roles %}
+{# Each worktime badge deep-links to the Overview pre-scoped to that period. #}
+{% set weekDays = [] %}
+{% for i in 0..6 %}
+    {% set weekDays = weekDays|merge(["monday this week +#{i} days"|date('Y-m-d')]) %}
+{% endfor %}
+{% set monthPath = path('ui_spa', {'path': 'month'}) %}
 <div id="page-header" class="page-header">
     <a href="#main-content" class="skip-link">{{ 'Skip to main content'|trans }}</a>
     {% if globalConfig.header_url is defined and globalConfig.header_url %}
@@ -15,74 +29,123 @@
         <div class="header-logo">
             <img id="logo" src="{{ globalConfig.logo_url }}" alt="{{ apptitle }} - Home">
         </div>
-        <div id="user-badge" class="user-badge status_active" role="status" aria-live="polite" aria-label="{{ 'User status'|trans }}">
-            <span class="status-indicator" aria-hidden="true"></span>
-            <span class="user-name">{{ settings.user_name }}</span>
-            <a href="{{ url('_logout') }}" class="badge-logout" aria-label="{{ 'Logout'|trans }}">{{ 'Logout'|trans }}</a>
-        </div>
+
+        <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
+            <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"
+               {% if active == 'tracking' %}aria-current="page"{% endif %}
+               href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
+            <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
+               {% if active == 'month' %}aria-current="page"{% endif %}
+               data-nav="month" href="{{ monthPath }}">{{ 'Overview'|trans }}</a>
+            <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
+               {% if active == 'auswertung' %}aria-current="page"{% endif %}
+               data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
+
+            {# Overflow menu — secondary, role-gated, plus Settings & Help. The
+               links keep .main-nav-link + data-nav so routing and active styling
+               are unchanged. #}
+            <div class="nav-more">
+                <button type="button" class="nav-more-btn" id="nav-more-btn"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="nav-more-menu">
+                    {{ 'More'|trans }}
+                    <svg class="nav-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="nav-more-menu" id="nav-more-menu" role="menu" aria-label="{{ 'More'|trans }}" hidden>
+                    {% if isAdmin %}
+                        <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'extras' %} is-active{% endif %}"
+                           {% if active == 'extras' %}aria-current="page"{% endif %}
+                           data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}"><span class="nav-menu-ico" aria-hidden="true"></span>{{ 'Extras'|trans }}</a>
+                    {% endif %}
+                    {% if canBill %}
+                        <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'billing' %} is-active{% endif %}"
+                           {% if active == 'billing' %}aria-current="page"{% endif %}
+                           data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}"><span class="nav-menu-ico" aria-hidden="true"></span>{{ 'Billing'|trans }}</a>
+                    {% endif %}
+                    {% if isAdmin %}
+                        <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'admin' %} is-active{% endif %}"
+                           {% if active == 'admin' %}aria-current="page"{% endif %}
+                           data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}"><span class="nav-menu-ico" aria-hidden="true"></span>{{ 'Administration'|trans }}</a>
+                    {% endif %}
+                    <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'settings' %} is-active{% endif %}"
+                       {% if active == 'settings' %}aria-current="page"{% endif %}
+                       data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0 1.6 1.6 0 0 0-1.7-1.6 1.6 1.6 0 0 0-1.8.3 2 2 0 1 1-2.8-2.8 1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H2a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.5-1.3 1.6 1.6 0 0 0-.3-1.8 2 2 0 1 1 2.8-2.8 1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0 1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3 2 2 0 1 1 2.8 2.8 1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4 1.6 1.6 0 0 0-1.5 1z"/></svg>{{ 'Settings'|trans }}</a>
+                    <a role="menuitem" class="main-nav-link nav-menu-item{% if active == 'help' %} is-active{% endif %}"
+                       {% if active == 'help' %}aria-current="page"{% endif %}
+                       data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.6 2.3-2.6 4"/><circle cx="12" cy="17.4" r="1.1" fill="currentColor" stroke="none"/></svg>{{ 'Help'|trans }}</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="header-spacer"></div>
+
         <section class="header-worktime" aria-label="{{ 'Working time'|trans }}">
-            {# Each badge deep-links to the Overview pre-scoped to that period:
-               Today selects today's day, Week the current Mon-Sun, Month the
-               whole month. The <a> sits inside <dd> so the <dl> stays valid. #}
-            {% set weekDays = [] %}
-            {% for i in 0..6 %}
-                {% set weekDays = weekDays|merge(["monday this week +#{i} days"|date('Y-m-d')]) %}
-            {% endfor %}
             <dl class="worktime-list">
                 <div class="worktime-item worktime-item-link">
                     <dt>{{ 'Today'|trans }}</dt>
-                    <dd><a id="worktime-day" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}?days={{ 'now'|date('Y-m-d') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Today'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-day" data-nav="month" href="{{ monthPath }}?days={{ 'now'|date('Y-m-d') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Today'|trans }}">0:00</a></dd>
                 </div>
                 <div class="worktime-item worktime-item-link">
                     <dt>{{ 'Week'|trans }}</dt>
-                    <dd><a id="worktime-week" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}?days={{ weekDays|join(',') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Week'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-week" data-nav="month" href="{{ monthPath }}?days={{ weekDays|join(',') }}" aria-label="{{ 'Overview'|trans }}: {{ 'Week'|trans }}">0:00</a></dd>
                 </div>
-                <div class="worktime-item worktime-item-link">
+                <div class="worktime-item worktime-item-link worktime-item-month">
                     <dt>{{ 'Month'|trans }}</dt>
-                    <dd><a id="worktime-month" data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}" aria-label="{{ 'Overview'|trans }}: {{ 'Month'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-month" data-nav="month" href="{{ monthPath }}" aria-label="{{ 'Overview'|trans }}: {{ 'Month'|trans }}">0 PT</a></dd>
                 </div>
             </dl>
         </section>
-        {# Theme switch — framework-neutral; wired by partials/theme-init.html.twig
-           so it works on BOTH the ExtJS shell and the SolidJS /ui shell. #}
+
+        {# Theme cycle — framework-neutral; wired by partials/theme-init.html.twig.
+           One button cycling System → Light → Dark; JS shows the current mode's
+           icon and keeps an accessible name in sync. #}
         <div id="theme-toggle-mount" class="header-theme">
-            <div class="theme-toggle" role="group" aria-label="{{ 'Theme'|trans }}">
-                <button type="button" class="theme-toggle-item" data-theme-value="system">{{ 'System'|trans }}</button>
-                <button type="button" class="theme-toggle-item" data-theme-value="light">{{ 'Light'|trans }}</button>
-                <button type="button" class="theme-toggle-item" data-theme-value="dark">{{ 'Dark'|trans }}</button>
-            </div>
+            <button type="button" class="theme-cycle" id="theme-cycle" aria-label="{{ 'Theme'|trans }}">
+                <svg class="theme-ico" data-theme-icon="system" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+                <svg class="theme-ico" data-theme-icon="light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+                <svg class="theme-ico" data-theme-icon="dark" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" hidden><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.3 8.3 0 1 0 20 14.5z"/></svg>
+            </button>
         </div>
+
+        <div class="header-account">
+            <span id="user-badge" class="user-badge status_active" role="status" aria-live="polite" aria-label="{{ 'User status'|trans }}">
+                <span class="status-indicator" aria-hidden="true"></span>
+                <span class="user-name">{{ settings.user_name }}</span>
+            </span>
+            <a href="{{ url('_logout') }}" class="badge-logout" aria-label="{{ 'Logout'|trans }}">{{ 'Logout'|trans }}</a>
+        </div>
+
+        <button type="button" class="nav-burger" id="nav-burger"
+                aria-label="{{ 'Open menu'|trans }}" data-label-close="{{ 'Close menu'|trans }}"
+                aria-expanded="false" aria-controls="nav-drawer">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
     </header>
-    <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
-        <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"
-           {% if active == 'tracking' %}aria-current="page"{% endif %}
-           href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
-        <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
-           {% if active == 'month' %}aria-current="page"{% endif %}
-           data-nav="month" href="{{ path('ui_spa', {'path': 'month'}) }}">{{ 'Overview'|trans }}</a>
-        <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
-           {% if active == 'auswertung' %}aria-current="page"{% endif %}
-           data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
-        {% if isAdmin %}
-            <a class="main-nav-link{% if active == 'extras' %} is-active{% endif %}"
-               {% if active == 'extras' %}aria-current="page"{% endif %}
-               data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}">{{ 'Extras'|trans }}</a>
-        {% endif %}
-        {% if canBill %}
-            <a class="main-nav-link{% if active == 'billing' %} is-active{% endif %}"
-               {% if active == 'billing' %}aria-current="page"{% endif %}
-               data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
-        {% endif %}
-        {% if isAdmin %}
-            <a class="main-nav-link{% if active == 'admin' %} is-active{% endif %}"
-               {% if active == 'admin' %}aria-current="page"{% endif %}
-               data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
-        {% endif %}
-        <a class="main-nav-link{% if active == 'settings' %} is-active{% endif %}"
-           {% if active == 'settings' %}aria-current="page"{% endif %}
-           data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}">{{ 'Settings'|trans }}</a>
-        <a class="main-nav-link{% if active == 'help' %} is-active{% endif %}"
-           {% if active == 'help' %}aria-current="page"{% endif %}
-           data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}">{{ 'Help'|trans }}</a>
-    </nav>
+
+    {# Mobile drawer — opened by the hamburger below ~880px. Its links use
+       .drawer-link (not .main-nav-link) so they don't duplicate the desktop
+       selectors, and it carries no element IDs (worktime IDs stay unique to the
+       bar's Month badge, which remains visible on mobile). #}
+    <div class="mobile-drawer" id="nav-drawer" hidden>
+        <nav class="drawer-nav" aria-label="{{ 'Main navigation'|trans }}">
+            <a class="drawer-link{% if active == 'tracking' %} is-active{% endif %}" href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
+            <a class="drawer-link{% if active == 'month' %} is-active{% endif %}" data-nav="month" href="{{ monthPath }}">{{ 'Overview'|trans }}</a>
+            <a class="drawer-link{% if active == 'auswertung' %} is-active{% endif %}" data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
+            {% if isAdmin %}
+                <a class="drawer-link{% if active == 'extras' %} is-active{% endif %}" data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}">{{ 'Extras'|trans }}</a>
+            {% endif %}
+            {% if canBill %}
+                <a class="drawer-link{% if active == 'billing' %} is-active{% endif %}" data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
+            {% endif %}
+            {% if isAdmin %}
+                <a class="drawer-link{% if active == 'admin' %} is-active{% endif %}" data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
+            {% endif %}
+            <a class="drawer-link{% if active == 'settings' %} is-active{% endif %}" data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}">{{ 'Settings'|trans }}</a>
+            <a class="drawer-link{% if active == 'help' %} is-active{% endif %}" data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}">{{ 'Help'|trans }}</a>
+        </nav>
+        <div class="drawer-foot">
+            <span class="drawer-user"><span class="status-indicator" aria-hidden="true"></span>{{ settings.user_name }}</span>
+            <a href="{{ url('_logout') }}" class="badge-logout">{{ 'Logout'|trans }}</a>
+        </div>
+    </div>
 </div>
+{% include 'partials/header-behavior.html.twig' %}

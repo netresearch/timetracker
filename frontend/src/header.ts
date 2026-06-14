@@ -22,6 +22,13 @@ export function formatDuration(minutes: number, inDays = false): string {
   return inDays && days > 1 ? `${text} (${days} PT)` : text
 }
 
+/** Person-days only (e.g. '18.5 PT') — used for the Month badge. */
+export function formatDays(minutes: number): string {
+  const days = Math.floor((minutes / (60 * 8)) * 100) / 100
+
+  return `${days} PT`
+}
+
 function setText(id: string, text: string): void {
   const element = document.getElementById(id)
   if (element !== null) {
@@ -48,7 +55,12 @@ async function updateWorktime(): Promise<void> {
     const summary = await getJson<TimeSummary>('/getTimeSummary')
     setText('worktime-day', formatDuration(summary.today.duration))
     setText('worktime-week', formatDuration(summary.week.duration))
-    setText('worktime-month', formatDuration(summary.month.duration, true))
+    // Month shows person-days only; the hours stay in the title for reference.
+    setText('worktime-month', formatDays(summary.month.duration))
+    const month = document.getElementById('worktime-month')
+    if (month !== null) {
+      month.title = formatDuration(summary.month.duration)
+    }
   } catch {
     // Header sums are non-critical; leave the rendered defaults.
   }

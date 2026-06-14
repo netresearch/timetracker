@@ -1,0 +1,100 @@
+{# Framework-neutral header interactivity shared by BOTH shells (ExtJS and the
+   SolidJS /ui shell): the "More" overflow disclosure and the mobile hamburger
+   drawer. Theme cycling lives in theme-init.html.twig. Idempotent — guarded so
+   re-includes (or a shell that renders the header twice) wire handlers once. #}
+<script>
+(function () {
+    if (window.__ttHeaderBehaviorWired) {
+        return;
+    }
+    window.__ttHeaderBehaviorWired = true;
+
+    function ready(fn) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fn);
+        } else {
+            fn();
+        }
+    }
+
+    ready(function () {
+        var moreBtn = document.getElementById('nav-more-btn');
+        var moreMenu = document.getElementById('nav-more-menu');
+        var burger = document.getElementById('nav-burger');
+        var drawer = document.getElementById('nav-drawer');
+
+        function setExpanded(button, panel, open) {
+            if (button === null || panel === null) {
+                return;
+            }
+            button.setAttribute('aria-expanded', open ? 'true' : 'false');
+            panel.hidden = !open;
+        }
+
+        function closeMore() {
+            setExpanded(moreBtn, moreMenu, false);
+        }
+        function closeDrawer() {
+            if (burger === null || drawer === null) {
+                return;
+            }
+            setExpanded(burger, drawer, false);
+            burger.setAttribute('aria-label', burger.getAttribute('data-label-open') || 'Open menu');
+        }
+
+        if (moreBtn !== null && moreMenu !== null) {
+            moreBtn.addEventListener('click', function (event) {
+                event.stopPropagation();
+                var open = moreBtn.getAttribute('aria-expanded') === 'true';
+                if (!open) {
+                    closeDrawer();
+                }
+                setExpanded(moreBtn, moreMenu, !open);
+            });
+        }
+
+        if (burger !== null && drawer !== null) {
+            // Remember the original label so we can restore it on close.
+            burger.setAttribute('data-label-open', burger.getAttribute('aria-label') || 'Open menu');
+            burger.addEventListener('click', function (event) {
+                event.stopPropagation();
+                var open = burger.getAttribute('aria-expanded') === 'true';
+                if (!open) {
+                    closeMore();
+                }
+                setExpanded(burger, drawer, !open);
+                burger.setAttribute('aria-label', open
+                    ? (burger.getAttribute('data-label-open') || 'Open menu')
+                    : (burger.getAttribute('data-label-close') || 'Close menu'));
+            });
+        }
+
+        // Click outside closes any open disclosure.
+        document.addEventListener('click', function (event) {
+            if (moreMenu !== null && moreBtn !== null
+                && !moreMenu.contains(event.target) && !moreBtn.contains(event.target)) {
+                closeMore();
+            }
+            if (drawer !== null && burger !== null
+                && !drawer.contains(event.target) && !burger.contains(event.target)) {
+                closeDrawer();
+            }
+        });
+
+        // Escape closes and returns focus to the trigger.
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') {
+                return;
+            }
+            if (moreMenu !== null && moreBtn !== null && moreBtn.getAttribute('aria-expanded') === 'true') {
+                closeMore();
+                moreBtn.focus();
+            }
+            if (burger !== null && drawer !== null && burger.getAttribute('aria-expanded') === 'true') {
+                closeDrawer();
+                burger.focus();
+            }
+        });
+    });
+})();
+</script>

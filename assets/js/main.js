@@ -243,6 +243,15 @@ function formatDuration(duration, inDays) {
     return text;
 }
 
+/**
+ * Formats a duration as person-days only (e.g. '18.5 PT') for the Month badge.
+ */
+function formatDays(duration) {
+    const days = Math.floor(duration / (60 * 8) * 100) / 100;
+
+    return days + ' PT';
+}
+
 /*
  * Counts and displays worktime for today, this week and this month in the header
  */
@@ -254,7 +263,9 @@ function countTime() {
             const data = Ext.decode(response.responseText);
             Ext.get('worktime-day').update(formatDuration(data.today.duration, false));
             Ext.get('worktime-week').update(formatDuration(data.week.duration, false));
-            Ext.get('worktime-month').update(formatDuration(data.month.duration, true));
+            // Month shows person-days only; hours stay in the title for reference.
+            Ext.get('worktime-month').update(formatDays(data.month.duration));
+            Ext.get('worktime-month').set({ title: formatDuration(data.month.duration, false) });
         }
     });
 }
