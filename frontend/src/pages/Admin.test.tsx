@@ -4,21 +4,28 @@ import { fireEvent, render, waitFor } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { ApiError } from '../api/client'
 import Admin from './Admin'
 
 const getJson = vi.fn()
 const postJson = vi.fn()
 
-vi.mock('../api/client', () => ({
-  SessionExpiredError: class extends Error {},
-  ApiError: class extends Error {
+vi.mock('../api/client', () => {
+  class MockApiError extends Error {
     constructor(public status: number, message: string) {
       super(message)
+      this.name = 'ApiError'
     }
-  },
-  getJson: (...args: unknown[]) => getJson(...args),
-  postJson: (...args: unknown[]) => postJson(...args),
-}))
+  }
+
+  return {
+    SessionExpiredError: class extends Error {},
+    ApiError: MockApiError,
+    apiErrorMessage: (error: unknown, fallback: string) => (error instanceof MockApiError ? error.message : fallback),
+    getJson: (...args: unknown[]) => getJson(...args),
+    postJson: (...args: unknown[]) => postJson(...args),
+  }
+})
 
 function mockEndpoints() {
   getJson.mockImplementation((path: string) => {
@@ -58,6 +65,7 @@ function renderAdmin() {
 afterEach(() => {
   getJson.mockReset()
   postJson.mockReset()
+  vi.restoreAllMocks()
 })
 
 describe('Admin', () => {
@@ -148,6 +156,77 @@ describe('Admin', () => {
     await waitFor(() => expect(queryByRole('cell', { name: 'ACME' })).not.toBeInTheDocument())
     expect(getByRole('cell', { name: 'Globex' })).toBeInTheDocument()
 
+    unmount()
+  })
+
+  it('deletes a row after the confirm dialog is accepted', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue(null)
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/customer/delete', { id: 1 }))
+    unmount()
+  })
+
+  it('does not delete when the confirm dialog is cancelled', async () => {
+    mockEndpoints()
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Delete' }))
+
+    expect(postJson).not.toHaveBeenCalled()
+    unmount()
+  })
+
+  it('keeps the dialog open and shows the server error message on save failure', async () => {
+    mockEndpoints()
+    postJson.mockRejectedValue(new ApiError(422, 'Name taken'))
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Add' }))
+    const name = await waitFor(() => {
+      const input = document.querySelector('.modal input[type=text]')
+      if (!(input instanceof HTMLInputElement)) throw new Error('dialog not open')
+
+      return input
+    })
+    fireEvent.input(name, { target: { value: 'New' } })
+    fireEvent.submit(document.querySelector('.modal form') as HTMLFormElement)
+
+    await waitFor(() => expect(document.querySelector('.modal [role=alert]')).toHaveTextContent('Name taken'))
+    expect(document.querySelector('.modal form')).toBeInTheDocument()
+    unmount()
+  })
+
+  it('cycles a column header through ascending, descending and unsorted', async () => {
+    mockEndpoints()
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+
+    const header = getByRole('button', { name: /Name/ })
+    const th = () => header.closest('th')
+    expect(th()).toHaveAttribute('aria-sort', 'none')
+    fireEvent.click(header)
+    expect(th()).toHaveAttribute('aria-sort', 'ascending')
+    fireEvent.click(header)
+    expect(th()).toHaveAttribute('aria-sort', 'descending')
+    fireEvent.click(header)
+    expect(th()).toHaveAttribute('aria-sort', 'none')
+    unmount()
+  })
+
+  it('shows the load-error fallback when the list request fails', async () => {
+    getJson.mockRejectedValue(new ApiError(500, 'boom'))
+    const { findByRole, unmount } = renderAdmin()
+
+    expect(await findByRole('alert')).toBeInTheDocument()
     unmount()
   })
 
