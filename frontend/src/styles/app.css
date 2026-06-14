@@ -766,6 +766,42 @@ kbd {
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
 }
 
+/* Quick date-range presets above the from/to fields. */
+.range-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.range-preset {
+  appearance: none;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  min-height: 44px;
+  padding: 0 0.8rem;
+}
+
+.range-preset:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.range-preset.is-active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-surface);
+}
+
+.range-preset:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .effort-charts {
   display: grid;
   gap: 1.4rem;

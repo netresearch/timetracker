@@ -22,6 +22,42 @@ import { appConfig } from '../config'
 import { isoDate } from '../lib/format'
 import { m } from '../paraglide/messages.js'
 
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date)
+  next.setDate(next.getDate() + days)
+
+  return next
+}
+
+/** Monday of the week containing `date` (ISO weeks, Mon-start). */
+function startOfWeek(date: Date): Date {
+  const monday = new Date(date)
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+
+  return monday
+}
+
+interface RangePreset {
+  key: string
+  label: () => string
+  /** [start, end] for the preset, evaluated against "now" on click. */
+  range: () => [Date, Date]
+}
+
+const RANGE_PRESETS: RangePreset[] = [
+  { key: 'today', label: () => m.range_today(), range: () => { const t = new Date(); return [t, t] } },
+  { key: 'yesterday', label: () => m.range_yesterday(), range: () => { const t = addDays(new Date(), -1); return [t, t] } },
+  { key: 'this_week', label: () => m.range_this_week(), range: () => { const s = startOfWeek(new Date()); return [s, addDays(s, 6)] } },
+  { key: 'last_week', label: () => m.range_last_week(), range: () => { const s = addDays(startOfWeek(new Date()), -7); return [s, addDays(s, 6)] } },
+  { key: 'this_month', label: () => m.range_this_month(), range: () => { const t = new Date(); return [new Date(t.getFullYear(), t.getMonth(), 1), new Date(t.getFullYear(), t.getMonth() + 1, 0)] } },
+  { key: 'last_month', label: () => m.range_last_month(), range: () => { const t = new Date(); return [new Date(t.getFullYear(), t.getMonth() - 1, 1), new Date(t.getFullYear(), t.getMonth(), 0)] } },
+  { key: 'this_year', label: () => m.range_this_year(), range: () => { const y = new Date().getFullYear(); return [new Date(y, 0, 1), new Date(y, 11, 31)] } },
+  { key: 'last_year', label: () => m.range_last_year(), range: () => { const y = new Date().getFullYear() - 1; return [new Date(y, 0, 1), new Date(y, 11, 31)] } },
+  { key: 'last_7', label: () => m.range_last_7_days(), range: () => { const t = new Date(); return [addDays(t, -6), t] } },
+  { key: 'last_30', label: () => m.range_last_30_days(), range: () => { const t = new Date(); return [addDays(t, -29), t] } },
+  { key: 'last_12m', label: () => m.range_last_12_months(), range: () => { const t = new Date(); return [new Date(t.getFullYear(), t.getMonth() - 11, 1), new Date(t.getFullYear(), t.getMonth() + 1, 0)] } },
+]
+
 function defaultFilters(userId: number): InterpretationFilters {
   const now = new Date()
 
@@ -88,6 +124,24 @@ export default function Auswertung() {
   const set = <K extends keyof InterpretationFilters>(key: K, value: InterpretationFilters[K]) =>
     setFilters((current) => ({ ...current, [key]: value }))
 
+  // A preset sets only the date range (other filters stay) and applies at once.
+  const applyPreset = (preset: RangePreset) => {
+    const [start, end] = preset.range()
+    const next = { ...filters(), datestart: isoDate(start), dateend: isoDate(end) }
+    setFilters(next)
+    setApplied(next)
+  }
+  // Highlight whichever preset matches the current range (clears on manual edit).
+  const activePreset = createMemo(() => {
+    const current = filters()
+
+    return RANGE_PRESETS.find((preset) => {
+      const [start, end] = preset.range()
+
+      return isoDate(start) === current.datestart && isoDate(end) === current.dateend
+    })?.key
+  })
+
   const timeRows = createMemo<EffortRow[]>(() =>
     (timeSeries.data ?? []).map((row) => ({
       label: row.day,
@@ -107,6 +161,22 @@ export default function Auswertung() {
           setApplied({ ...filters() })
         }}
       >
+        <div class="range-presets" role="group" aria-label={m.auswertung_range_presets()}>
+          <For each={RANGE_PRESETS}>
+            {(preset) => (
+              <button
+                type="button"
+                class="range-preset"
+                classList={{ 'is-active': activePreset() === preset.key }}
+                aria-pressed={activePreset() === preset.key ? 'true' : 'false'}
+                onClick={() => applyPreset(preset)}
+              >
+                {preset.label()}
+              </button>
+            )}
+          </For>
+        </div>
+
         <div class="field-row">
           <label class="field">
             <span>{m.auswertung_date_start()}</span>

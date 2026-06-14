@@ -44,7 +44,9 @@ test.describe('Evaluation (Auswertung) page', () => {
     await ticket.fill('ABC-123');
     await expect(ticket).toHaveValue('ABC-123');
 
-    await page.locator('form.filter-bar button[type="button"]').click();
+    // Reset lives in .form-actions; scope past the date-range preset buttons
+    // (also button[type="button"]) so this targets the Reset control only.
+    await page.locator('form.filter-bar .form-actions button[type="button"]').click();
     await expect(ticket).toHaveValue('');
   });
 });
