@@ -77,7 +77,7 @@ docker compose run --rm app npm run build
 
 ## Architecture Patterns
 
-- **MVC Pattern:** Using Symfony 7.3 framework
+- **MVC Pattern:** Using Symfony 8 framework
 - **Routing:** PHP attributes for new routes (legacy YAML routes being migrated)
 - **Persistence:** Doctrine ORM with migrations in `migrations/`
 - **Views:** Twig templates in `templates/`

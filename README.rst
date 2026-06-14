@@ -30,7 +30,7 @@ __ https://github.com/netresearch/timalytics
 Technology stack (summary)
 ==========================
 
-- PHP 8.4, Symfony 7.3, Doctrine ORM 3, Twig, Monolog
+- PHP 8.5, Symfony 8, Doctrine ORM 3, Twig, Monolog
 - Docker Compose for local dev; MariaDB; Nginx proxy
 - PHPUnit 12 for tests; PHPStan/Psalm for static analysis; PHPCS for style
 
