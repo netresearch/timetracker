@@ -580,11 +580,12 @@ main {
   text-decoration: none;
 }
 
-.primary-button:hover:not(:disabled) {
+.primary-button:hover:not(:disabled):not(.is-disabled) {
   filter: brightness(1.08);
 }
 
-.primary-button:disabled {
+.primary-button:disabled,
+.primary-button.is-disabled {
   cursor: progress;
   opacity: 0.6;
 }

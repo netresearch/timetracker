@@ -59,6 +59,10 @@ export default function Billing() {
     }),
   )
 
+  // The selects are disabled until their reference data resolves; block the
+  // export the same way so it can't fire against a half-loaded form.
+  const referencesPending = () => users.isPending || projects.isPending || customers.isPending
+
   return (
     <section class="form-page">
       <h2 class="visually-hidden">{m.billing_title()}</h2>
@@ -121,7 +125,16 @@ export default function Billing() {
         <div class="form-actions">
           {/* A real navigation (anchor with download), not fetch, so the
               browser saves the attachment from the XLSX response. */}
-          <a class="primary-button" href={href()} download="">
+          <a
+            class="primary-button"
+            classList={{ 'is-disabled': referencesPending() }}
+            href={href()}
+            download=""
+            aria-disabled={referencesPending() ? 'true' : undefined}
+            onClick={(event) => {
+              if (referencesPending()) event.preventDefault()
+            }}
+          >
             {m.billing_export()}
           </a>
         </div>
