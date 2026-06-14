@@ -19,10 +19,13 @@ use Laminas\Ldap\Exception\LdapException;
 use Override;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
@@ -194,14 +197,36 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
         return $newUser;
     }
 
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): RedirectResponse
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): Response
     {
         $targetPath = $this->getTargetPath($request->getSession(), $firewallName);
-        if (null !== $targetPath && '' !== $targetPath) {
-            return new RedirectResponse($targetPath);
+        $redirect = null !== $targetPath && '' !== $targetPath
+            ? $targetPath
+            : $this->router->generate('_start');
+
+        // The SolidJS login form submits via fetch (X-Requested-With) and expects
+        // JSON so it can redirect without a full-page reload; the session and
+        // remember-me cookies are still attached to this response by the firewall.
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(['ok' => true, 'redirect' => $redirect]);
         }
 
-        return new RedirectResponse($this->router->generate('_start'));
+        return new RedirectResponse($redirect);
+    }
+
+    /**
+     * For XHR logins return a 401 with a JSON body so the SolidJS form can show
+     * an inline error; otherwise fall back to the default redirect-to-login flow
+     * (which stores the error in the session for a server-rendered re-display).
+     */
+    #[Override]
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response
+    {
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(['ok' => false, 'error' => $exception->getMessageKey()], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return parent::onAuthenticationFailure($request, $exception);
     }
 
     protected function getLoginUrl(Request $request): string

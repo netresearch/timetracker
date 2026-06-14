@@ -1,110 +1,59 @@
 {# JSON_HEX_* flags so |json_encode output cannot break out of <script> #}
 {% set jsonHexFlags = constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT') %}
-<!DOCTYPE HTML>
-<html>
+{% set errorMessage = error ? error.messageKey|trans({}, 'security') : null %}
+<!DOCTYPE html>
+<html lang="{{ locale }}">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ apptitle }}</title>
-        <meta name="robots" content="noindex,nofollow" />
-        <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
-        <link rel="stylesheet" href="{{ asset('build/css/timetracker.css') }}" type="text/css">
-        <script type="text/javascript" src="{{ asset('build/js/ext-js/ext-all.js') }}"></script>
-        <script type="text/javascript" src="{{ asset('build/js/ext-js/locale/ext-lang-' ~ locale ~ '.js') }}"></script>
-        <script type="text/javascript">
-            var url = {{ url('_start')|escape|json_encode(jsonHexFlags)|raw }};
-        	Ext.onReady(function() {
-				var window = Ext.create('Ext.window.Window', {
-					title: 'Login',
-                    width: 280,
-					closable: false,
-					modal: true,
-					draggable: false,
-					items: [
-                    {% if error %}
-						Ext.create('Ext.panel.Panel', {
-							html: "{{ error.message is defined ? error.message : 'Authentication error, please try again.' }}"
-						}),
-        			{% endif %}
-					    Ext.create('Ext.form.Panel', {
-					    	bodyPadding: 5,
-					    	standardSubmit: true,
-					    	url: "{{ path('_login') }}",
-					    	items: [
-                            {
-                                xtype: 'hiddenfield',
-                                name: '_csrf_token',
-                                value: '{{ csrf_token('authenticate') }}'
-                            },
-					    		{
-					    			xtype: 'textfield',
-					    			fieldLabel: 'Benutzername',
-					    			name: '_username',
-					    			allowBlank: false,
-                                    {% if last_username is defined %}
-                                        value: '{{ last_username | e('js') }}',
-                                    {% endif %}
-                                    listeners: {
-                                        specialkey: function (field, e) {
-                                            if (e.getKey() == e.ENTER) {
-                                                form = field.up('form').getForm();
-                                                form.submit();
-                                            }
-                                        },
-                                        afterrender: function (field) {
-                                            field.focus(false, 500);
-                                            field.inputEl.set({
-                                                autocomplete: 'off',
-                                                autocorrect: 'off',
-                                                autocapitalize: 'off',
-                                                spellcheck: 'false'
-                                            });
-                                        }
-                                    }
-					    		}, {
-					    			xtype: 'textfield',
-					    			fieldLabel: 'Passwort',
-					    			name: '_password',
-					    			inputType: 'password',
-					    			allowBlank: false,
-					    			listeners: {
-					    				specialkey: function(field, e) {
-					    					if(e.getKey() == e.ENTER) {
-					    						form = field.up('form').getForm();
-					    						form.submit();
-					    					}
-					    				}
-					    			}
-					    		},
-								{
-									xtype: 'checkbox',
-									fieldLabel: 'Angemeldet bleiben',
-									name: '_remember_me',
-									allowBlank: true,
-                                    checked: true
-								}
-					    	],
-					    	buttons: [
-				                {
-				                	text: 'Login',
-				                	id: 'form-submit',
-				                	scope: this,
-				                	handler: function(btn) {
-				                		var form = btn.up('form').getForm();
-
-				                		if(form.isValid()) {
-					                		form.submit();
-				                		}
-				                	}
-				                }
-							]
-					    })
-					]
-				});
-
-				window.show();
-			});
+        <meta name="robots" content="noindex,nofollow">
+        {# Apply the saved light/dark preference before first paint (shared with the app). #}
+        {% include 'partials/theme-init.html.twig' %}
+        {{ vite_entry_link_tags('login') }}
+        <script>
+            window.LOGIN_CONFIG = {{ {
+                'locale': locale,
+                'appTitle': apptitle,
+                'logoUrl': logo_url,
+                'csrfToken': csrf_token('authenticate'),
+                'loginPath': path('_login'),
+                'lastUsername': last_username is defined ? last_username : '',
+                'error': errorMessage,
+            }|json_encode(jsonHexFlags)|raw }};
         </script>
+        {{ vite_entry_script_tags('login') }}
     </head>
     <body>
+        {# The SolidJS login (login.tsx) replaces this server-rendered form once it
+           mounts; until then — and if JS fails to load — this native form posts to
+           the same _login route, so login still works (progressive enhancement).
+           Field names and #form-submit match what the firewall and e2e expect. #}
+        <div id="login">
+            <main class="login-page">
+                <form class="login-card" method="post" action="{{ path('_login') }}">
+                    <img class="login-logo" src="{{ logo_url }}" alt="{{ apptitle }}">
+                    <h1 class="login-title">{{ apptitle }}</h1>
+                    {% if errorMessage %}
+                        <p class="form-status is-error" role="alert">{{ errorMessage }}</p>
+                    {% endif %}
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                    <label class="field">
+                        <span>{{ 'Username'|trans }}</span>
+                        <input type="text" name="_username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" required
+                               value="{{ last_username is defined ? last_username : '' }}" autofocus>
+                    </label>
+                    <label class="field">
+                        <span>{{ 'Password'|trans }}</span>
+                        <input type="password" name="_password" autocomplete="current-password" required>
+                    </label>
+                    <label class="field-check">
+                        <input type="checkbox" name="_remember_me" checked>
+                        <span>{{ 'Stay signed in'|trans }}</span>
+                    </label>
+                    <button type="submit" id="form-submit" class="primary-button login-submit">{{ 'Sign in'|trans }}</button>
+                </form>
+            </main>
+        </div>
     </body>
 </html>

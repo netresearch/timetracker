@@ -95,16 +95,20 @@ final class SecurityControllerTest extends AbstractWebTestCase
 
         self::assertResponseIsSuccessful(); // Asserts 2xx status code
 
-        // Check the JS config for the form URL
-        $content = $kernelBrowser->getResponse()->getContent();
+        $content = (string) $kernelBrowser->getResponse()->getContent();
 
-        // The form is created with ExtJS, so check for the right script elements
-        self::assertStringContainsString('Ext.form.Panel', (string) $content);
-        self::assertStringContainsString("name: '_username'", (string) $content);
-        self::assertStringContainsString("name: '_password'", (string) $content);
-        self::assertStringContainsString("name: '_csrf_token'", (string) $content);
-        // Ensure the form URL now points to /login
-        self::assertStringContainsString('url: "/login"', (string) $content);
+        // The login is now a SolidJS app (login.tsx) mounted on #login, with the
+        // config injected for the client and a server-rendered no-JS fallback form.
+        self::assertStringContainsString('id="login"', $content);
+        self::assertStringContainsString('window.LOGIN_CONFIG', $content);
+        // The fallback form (and the SolidJS form) use the firewall field names.
+        self::assertStringContainsString('name="_username"', $content);
+        self::assertStringContainsString('name="_password"', $content);
+        self::assertStringContainsString('name="_csrf_token"', $content);
+        self::assertStringContainsString('action="/login"', $content);
+        // ExtJS is no longer loaded on the login page.
+        self::assertStringNotContainsString('Ext.form.Panel', $content);
+        self::assertStringNotContainsString('ext-all.js', $content);
     }
 
     #[\PHPUnit\Framework\Attributes\Group('network')]
