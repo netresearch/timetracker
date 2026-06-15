@@ -135,4 +135,17 @@ describe('enableGridNavigation', () => {
     key(document.activeElement!, 'Escape')
     expect(document.activeElement).toBe(actionsCell)
   })
+
+  it('Tab past the last cell control does not trap (no preventDefault)', () => {
+    const actionsCell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
+    actionsCell.focus()
+    key(actionsCell, 'Enter') // Edit
+    key(document.activeElement!, 'Tab') // Delete (last control)
+    // Tabbing off the last control must let native Tab leave the grid: the cell
+    // reclaims the roving tab stop and the event is NOT prevented.
+    const ev = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+    document.activeElement!.dispatchEvent(ev)
+    expect(ev.defaultPrevented).toBe(false)
+    expect(actionsCell.getAttribute('tabindex')).toBe('0')
+  })
 })

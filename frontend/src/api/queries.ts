@@ -1,3 +1,5 @@
+import { keepPreviousData } from '@tanstack/solid-query'
+
 import { getJson } from './client'
 
 // Response shape of GET /interpretation/time (GroupByWorktimeAction):
@@ -180,5 +182,9 @@ export function lastEntriesQuery(filters: InterpretationFilters) {
     queryKey: ['interpretation', 'entries', params] as const,
     queryFn: () => getJson<EntryRecord[]>('/interpretation/entries', params),
     enabled: hasInterpretationCriteria(filters),
+    // Keep the previous rows visible while a filter change refetches, so the
+    // grid stays mounted (its keyboard state/focus survive) instead of being
+    // unmounted by the loading branch.
+    placeholderData: keepPreviousData,
   }
 }

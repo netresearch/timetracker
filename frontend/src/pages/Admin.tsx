@@ -16,7 +16,34 @@ export default function Admin() {
     <section class="admin-page">
       <h2 class="visually-hidden">{m.admin_title()}</h2>
 
-      <nav class="admin-subnav" aria-label={m.admin_title()}>
+      {/* The entity switcher is part of the page's vertical keyboard chain
+          (sub-nav ↔ search ↔ table): Left/Right/Home/End move between entities,
+          ArrowDown hands focus down to the search field so the chain is
+          bidirectional and never traps. Enter/Space (native button) switches. */}
+      <nav
+        class="admin-subnav"
+        aria-label={m.admin_title()}
+        onKeyDown={(event) => {
+          const links = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('.admin-subnav-link'))
+          const i = links.indexOf(document.activeElement as HTMLButtonElement)
+          if (event.key === 'ArrowDown') {
+            event.preventDefault()
+            document.querySelector<HTMLElement>('.admin-filter')?.focus()
+          } else if (event.key === 'ArrowRight') {
+            event.preventDefault()
+            links[Math.min(links.length - 1, i + 1)]?.focus()
+          } else if (event.key === 'ArrowLeft') {
+            event.preventDefault()
+            links[Math.max(0, i - 1)]?.focus()
+          } else if (event.key === 'Home') {
+            event.preventDefault()
+            links[0]?.focus()
+          } else if (event.key === 'End') {
+            event.preventDefault()
+            links[links.length - 1]?.focus()
+          }
+        }}
+      >
         <For each={entities}>
           {(entity) => (
             <button

@@ -242,16 +242,12 @@ export default function Auswertung() {
           <h3>{m.auswertung_last_entries()}</h3>
           <QueryBoundary query={entries}>
             <div class="table-scroll">
-              <table
-                class="data-table"
-                use:gridNav={{
-                  items: () => entries.data ?? [],
-                  readonly: true,
-                  onExit: (dir) => {
-                    if (dir === 'up') document.querySelector<HTMLElement>('.filter-bar input, .filter-bar select')?.focus()
-                  },
-                }}
-              >
+              {/* Read-only grid: arrow-navigated internally, entered/left via
+                  Tab. No onExit arrow-bridge to the filter bar — its date/select
+                  controls own the arrow keys, so an arrow bridge there would be a
+                  one-directional trap (the search↔grid arrow chain only fits the
+                  Admin page's single search field). */}
+              <table class="data-table" use:gridNav={{ items: () => entries.data ?? [], readonly: true }}>
                 <thead>
                   <tr>
                     <th scope="col">{m.auswertung_date()}</th>
