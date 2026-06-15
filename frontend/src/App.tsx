@@ -213,7 +213,7 @@ export default function App() {
       <Route path="/help" component={Help} />
       <Route path="/extras" component={guarded(Extras, canBulkEnter)} />
       <Route path="/billing" component={guarded(Billing, canBill)} />
-      <Route path="/admin" component={guarded(Admin, () => hasRole('ROLE_ADMIN'))} />
+      <Route path="/admin/:entity?" component={guarded(Admin, () => hasRole('ROLE_ADMIN'))} />
       <Route path="*rest" component={RedirectToMonth} />
     </Router>
   )

@@ -1,4 +1,5 @@
-import { createSignal, For, Show } from 'solid-js'
+import { useNavigate, useParams } from '@solidjs/router'
+import { For, Show } from 'solid-js'
 
 import { adminEntities } from '../admin/entities'
 import { useOptionSources } from '../admin/options'
@@ -8,9 +9,14 @@ import { m } from '../paraglide/messages.js'
 
 export default function Admin() {
   const entities = adminEntities()
-  const [activeKey, setActiveKey] = createSignal(entities[0]!.key)
+  const params = useParams()
+  const navigate = useNavigate()
   const { lookup } = useOptionSources()
 
+  // The selected entity is the URL segment (/ui/admin/<key>), so it's
+  // deep-linkable and survives reload/back; an unknown/absent key falls back to
+  // the first entity. Switching navigates (pushes a history entry).
+  const activeKey = () => entities.find((entity) => entity.key === params.entity)?.key ?? entities[0]!.key
   const active = () => entities.find((entity) => entity.key === activeKey()) ?? entities[0]!
 
   return (
@@ -61,7 +67,7 @@ export default function Admin() {
               class="admin-subnav-link"
               classList={{ 'is-active': entity.key === activeKey() }}
               aria-current={entity.key === activeKey() ? 'page' : undefined}
-              onClick={() => setActiveKey(entity.key)}
+              onClick={() => navigate(`/admin/${entity.key}`)}
             >
               {entity.title()}
             </button>

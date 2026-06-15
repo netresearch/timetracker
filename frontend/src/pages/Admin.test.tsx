@@ -48,15 +48,15 @@ function mockEndpoints() {
   })
 }
 
-function renderAdmin() {
+function renderAdmin(path = '/admin') {
   const history = createMemoryHistory()
-  history.set({ value: '/admin' })
+  history.set({ value: path })
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
   return render(() => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter history={history}>
-        <Route path="/admin" component={Admin} />
+        <Route path="/admin/:entity?" component={Admin} />
       </MemoryRouter>
     </QueryClientProvider>
   ))
@@ -77,6 +77,15 @@ describe('Admin', () => {
     // teams relation column resolves id 2 → "Backend"
     expect(getByText('Backend')).toBeInTheDocument()
 
+    unmount()
+  })
+
+  it('deep-links to an entity via the URL segment (/admin/users)', async () => {
+    mockEndpoints()
+    const { getByRole, unmount } = renderAdmin('/admin/users')
+
+    // The URL segment selects the entity directly — Users renders, not Customers.
+    await waitFor(() => expect(getByRole('gridcell', { name: 'jdoe' })).toBeInTheDocument())
     unmount()
   })
 

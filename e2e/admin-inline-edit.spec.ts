@@ -129,3 +129,27 @@ test.describe('Admin list — inactive filter & CSV export', () => {
     await expect(bar).toBeHidden();
   });
 });
+
+test.describe('Admin URL-addressable sub-nav', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page, 'i.myself', 'myself123');
+    await page.goto('/ui/admin');
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+  });
+
+  test('selecting an entity updates the URL and is deep-linkable', async ({ page }) => {
+    await page.locator('.admin-subnav-link', { hasText: /Projekte|Projects/ }).click();
+    await expect(page).toHaveURL(/\/ui\/admin\/projects/);
+
+    // The selection survives a full reload (URL-driven, not client state).
+    await page.reload();
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+    await expect(page).toHaveURL(/\/ui\/admin\/projects/);
+    await expect(page.locator('.admin-subnav-link[aria-current="page"]')).toHaveText(/Projekte|Projects/);
+
+    // Direct deep-link to another entity.
+    await page.goto('/ui/admin/users');
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+    await expect(page.locator('.admin-subnav-link[aria-current="page"]')).toHaveText(/Nutzer|Users/);
+  });
+});
